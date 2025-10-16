@@ -79,10 +79,14 @@ The application is configured to use the external API at `https://localpro-super
 - `POST /api/auth/logout` - User logout
 - `POST /api/auth/[...nextauth]` - NextAuth.js endpoints
 
-### Marketplace (Client-Side Only)
+### Marketplace
 - `GET /api/marketplace/services` - Get all services
 - `GET /api/marketplace/services/nearby` - Get nearby services
 - `GET /api/marketplace/services/:id` - Get specific service
+- `POST /api/marketplace/services` - Create service (Provider/Admin)
+- `PUT /api/marketplace/services/:id` - Update service (Provider/Admin)
+- `DELETE /api/marketplace/services/:id` - Delete service (Provider/Admin)
+- `POST /api/marketplace/services/:id/images` - Upload service images
 - `POST /api/marketplace/bookings` - Create booking
 - `GET /api/marketplace/bookings` - Get user bookings
 - `PUT /api/marketplace/bookings/:id/status` - Update booking status
@@ -92,40 +96,150 @@ The application is configured to use the external API at `https://localpro-super
 - `GET /api/marketplace/bookings/paypal/order/:orderId` - Get PayPal order details
 
 ### Supplies
-- `GET /api/supplies/products` - Get all products
-- `POST /api/supplies/products` - Create product
-- `GET /api/supplies/orders` - Get user orders
-- `POST /api/supplies/orders` - Create order
+- `GET /api/supplies` - Get all supplies
+- `GET /api/supplies/categories` - Get supply categories
+- `GET /api/supplies/featured` - Get featured supplies
+- `GET /api/supplies/nearby` - Get nearby supplies
+- `GET /api/supplies/:id` - Get specific supply
+- `POST /api/supplies` - Create supply (Supplier/Admin)
+- `PUT /api/supplies/:id` - Update supply (Supplier/Admin)
+- `DELETE /api/supplies/:id` - Delete supply (Supplier/Admin)
+- `POST /api/supplies/:id/images` - Upload supply images
+- `DELETE /api/supplies/:id/images/:imageId` - Delete supply image
+- `POST /api/supplies/:id/order` - Order supply
+- `PUT /api/supplies/:id/orders/:orderId/status` - Update order status
+- `POST /api/supplies/:id/reviews` - Add supply review
+- `GET /api/supplies/my-supplies` - Get my supplies
+- `GET /api/supplies/my-orders` - Get my supply orders
+- `GET /api/supplies/statistics` - Get supply statistics (Admin)
 
 ### Academy
 - `GET /api/academy/courses` - Get all courses
-- `POST /api/academy/courses` - Create course
-- `GET /api/academy/enrollments` - Get user enrollments
-- `POST /api/academy/enrollments` - Enroll in course
-
-### Rentals
-- `GET /api/rentals/items` - Get rental items
-- `POST /api/rentals/items` - Create rental item
-- `GET /api/rentals/rentals` - Get user rentals
-- `POST /api/rentals/rentals` - Create rental
+- `GET /api/academy/courses/:id` - Get specific course
+- `GET /api/academy/categories` - Get course categories
+- `GET /api/academy/featured` - Get featured courses
+- `POST /api/academy/courses` - Create course (Instructor/Admin)
+- `PUT /api/academy/courses/:id` - Update course (Instructor/Admin)
+- `DELETE /api/academy/courses/:id` - Delete course (Instructor/Admin)
+- `POST /api/academy/courses/:id/thumbnail` - Upload course thumbnail
+- `POST /api/academy/courses/:id/videos` - Upload course video
+- `DELETE /api/academy/courses/:id/videos/:videoId` - Delete course video
+- `POST /api/academy/courses/:id/enroll` - Enroll in course
+- `PUT /api/academy/courses/:id/progress` - Update course progress
+- `POST /api/academy/courses/:id/reviews` - Add course review
+- `GET /api/academy/my-courses` - Get my enrolled courses
+- `GET /api/academy/my-created-courses` - Get my created courses
+- `GET /api/academy/statistics` - Get course statistics (Admin)
 
 ### Finance
-- `GET /api/finance/loans` - Get user loans
-- `POST /api/finance/loans` - Apply for loan
-- `GET /api/finance/salary-advances` - Get salary advances
-- `POST /api/finance/salary-advances` - Request salary advance
+- `GET /api/finance/overview` - Get financial overview
+- `GET /api/finance/transactions` - Get transactions
+- `GET /api/finance/earnings` - Get earnings
+- `GET /api/finance/expenses` - Get expenses
+- `GET /api/finance/reports` - Get financial reports
+- `POST /api/finance/expenses` - Add expense
+- `POST /api/finance/withdraw` - Request withdrawal
+- `PUT /api/finance/withdrawals/:withdrawalId/process` - Process withdrawal (Admin)
+- `GET /api/finance/tax-documents` - Get tax documents
+- `PUT /api/finance/wallet/settings` - Update wallet settings
 
-### LocalPro Plus
-- `GET /api/plus/subscriptions` - Get user subscriptions
-- `POST /api/plus/subscriptions` - Create subscription
+### Analytics
+- `GET /api/analytics/overview` - Get analytics overview
+- `GET /api/analytics/user` - Get user analytics
+- `GET /api/analytics/marketplace` - Get marketplace analytics
+- `GET /api/analytics/custom` - Get custom analytics (Admin)
+- `POST /api/analytics/track` - Track event
 
-### FacilityCare
-- `GET /api/facility/contracts` - Get facility contracts
-- `POST /api/facility/contracts` - Create contract
+### Rentals
+- `GET /api/rentals` - Get all rentals
+- `GET /api/rentals/categories` - Get rental categories
+- `GET /api/rentals/featured` - Get featured rentals
+- `GET /api/rentals/nearby` - Get nearby rentals
+- `GET /api/rentals/:id` - Get specific rental
+- `POST /api/rentals` - Create rental (Provider/Admin)
+- `PUT /api/rentals/:id` - Update rental (Provider/Admin)
+- `DELETE /api/rentals/:id` - Delete rental (Provider/Admin)
+- `POST /api/rentals/:id/images` - Upload rental images
+- `DELETE /api/rentals/:id/images/:imageId` - Delete rental image
+- `POST /api/rentals/:id/book` - Book rental
+- `PUT /api/rentals/:id/bookings/:bookingId/status` - Update booking status
+- `POST /api/rentals/:id/reviews` - Add rental review
+- `GET /api/rentals/my-rentals` - Get my rentals
+- `GET /api/rentals/my-bookings` - Get my rental bookings
+- `GET /api/rentals/statistics` - Get rental statistics (Admin)
 
-### Advertising
-- `GET /api/ads/advertisements` - Get user advertisements
-- `POST /api/ads/advertisements` - Create advertisement
+### Ads
+- `GET /api/ads` - Get all ads
+- `GET /api/ads/categories` - Get ad categories
+- `GET /api/ads/featured` - Get featured ads
+- `GET /api/ads/:id` - Get specific ad
+- `POST /api/ads/:id/click` - Track ad click
+- `POST /api/ads` - Create ad (Advertiser/Admin)
+- `PUT /api/ads/:id` - Update ad (Advertiser/Admin)
+- `DELETE /api/ads/:id` - Delete ad (Advertiser/Admin)
+- `POST /api/ads/:id/images` - Upload ad images
+- `DELETE /api/ads/:id/images/:imageId` - Delete ad image
+- `POST /api/ads/:id/promote` - Promote ad
+- `GET /api/ads/:id/analytics` - Get ad analytics
+- `GET /api/ads/my-ads` - Get my ads
+- `GET /api/ads/statistics` - Get ad statistics (Admin)
+
+### Communication
+- `GET /api/communication/conversations` - Get conversations
+- `GET /api/communication/conversations/:id` - Get specific conversation
+- `POST /api/communication/conversations` - Create conversation
+- `DELETE /api/communication/conversations/:id` - Delete conversation
+- `POST /api/communication/conversations/:id/messages` - Send message
+- `PUT /api/communication/conversations/:id/messages/:messageId` - Update message
+- `DELETE /api/communication/conversations/:id/messages/:messageId` - Delete message
+- `PUT /api/communication/conversations/:id/read` - Mark as read
+- `GET /api/communication/unread-count` - Get unread count
+- `GET /api/communication/search` - Search conversations
+
+### Maps
+- `POST /api/maps/geocode` - Geocode address
+- `POST /api/maps/reverse-geocode` - Reverse geocode
+- `POST /api/maps/places/search` - Search places
+- `GET /api/maps/places/:placeId` - Get place details
+- `POST /api/maps/distance` - Calculate distance
+- `POST /api/maps/nearby` - Find nearby places
+- `POST /api/maps/validate-service-area` - Validate service area
+- `POST /api/maps/analyze-coverage` - Analyze service coverage
+- `GET /api/maps/test` - Test connection (Admin)
+
+### Jobs
+- `GET /api/jobs` - Get all jobs
+- `GET /api/jobs/search` - Search jobs
+- `GET /api/jobs/:id` - Get specific job
+- `POST /api/jobs` - Create job (Provider/Admin)
+- `PUT /api/jobs/:id` - Update job (Provider/Admin)
+- `DELETE /api/jobs/:id` - Delete job (Provider/Admin)
+- `POST /api/jobs/:id/logo` - Upload company logo
+- `GET /api/jobs/:id/stats` - Get job statistics
+- `POST /api/jobs/:id/apply` - Apply for job
+- `GET /api/jobs/my-applications` - Get my applications
+- `GET /api/jobs/my-jobs` - Get my jobs (Provider/Admin)
+- `GET /api/jobs/:id/applications` - Get job applications (Provider/Admin)
+- `PUT /api/jobs/:id/applications/:applicationId/status` - Update application status (Provider/Admin)
+
+### Providers
+- `GET /api/providers` - Get all providers
+- `GET /api/providers/:id` - Get specific provider
+- `GET /api/providers/profile/me` - Get my provider profile
+- `POST /api/providers/profile` - Create provider profile
+- `PUT /api/providers/profile` - Update provider profile
+- `GET /api/providers/dashboard/overview` - Get provider dashboard
+- `GET /api/providers/analytics/performance` - Get provider analytics
+- `GET /api/providers/admin/all` - Get all providers for admin
+- `PUT /api/providers/admin/:id/status` - Update provider status (Admin)
+
+### Settings
+- `GET /api/settings/user` - Get user settings
+- `PUT /api/settings/user` - Update user settings
+- `GET /api/settings/app` - Get app settings (Admin)
+- `PUT /api/settings/app` - Update app settings (Admin)
+- `GET /api/settings/app/public` - Get public app settings
+- `GET /api/settings/app/health` - Get app health
 
 ## User Roles
 

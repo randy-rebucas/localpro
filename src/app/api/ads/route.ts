@@ -4,25 +4,25 @@ import { API_BASE_URL } from "@/lib/api";
 import { apiProxy } from "@/lib/api-proxy";
 import { authOptions } from "@/lib/auth";
 
-// GET /api/academy/courses - Get all courses
+// GET /api/ads - Get all ads
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    const response = await fetch(`${API_BASE_URL}/api/academy/courses?${queryString}`);
+    const response = await fetch(`${API_BASE_URL}/api/ads?${queryString}`);
     const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || "Failed to fetch courses" },
+        { error: data.error || "Failed to fetch ads" },
         { status: response.status }
       );
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching courses:", error);
+    console.error("Error fetching ads:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/academy/courses - Create course (Instructor/Admin)
+// POST /api/ads - Create ad (Advertiser/Admin)
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   
@@ -38,5 +38,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/academy/courses`, session.user.id);
+  return apiProxy(request, `${API_BASE_URL}/api/ads`, session.user.id);
 }
