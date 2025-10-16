@@ -3,9 +3,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Dashboard } from "@/components/dashboard";
+import { UserProfile } from "@/components/user-profile";
 
-export default function Home() {
+export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -28,5 +28,5 @@ export default function Home() {
     return null;
   }
 
-  return <Dashboard />;
+  return <UserProfile />;
 }
