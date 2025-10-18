@@ -3,16 +3,17 @@ import { API_BASE_URL } from "@/lib/api";
 import { z } from "zod";
 
 const verifyCodeSchema = z.object({
+  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  code: z.string().min(4, "Please enter a valid verification code"),
+  firstName: z.string().min(1, "Please enter a valid first name"),
+  lastName: z.string().min(1, "Please enter a valid last name"),
   email: z.string().email().optional(),
-  phone: z.string().optional(),
-  code: z.string().min(4).max(8),
-  type: z.enum(["email", "phone"]),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, phone, code, type } = verifyCodeSchema.parse(body);
+    const { phoneNumber, code, firstName, lastName, email } = verifyCodeSchema.parse(body);
 
     const response = await fetch(`${API_BASE_URL}/api/auth/verify-code`, {
       method: "POST",
@@ -20,10 +21,11 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        email,
-        phone,
+        phoneNumber,
         code,
-        type,
+        firstName,
+        lastName,
+        email,
       }),
     });
 
