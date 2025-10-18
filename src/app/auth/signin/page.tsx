@@ -12,16 +12,7 @@ const signInSchema = z.object({
   phone: z.string().min(10, "Please enter a valid phone number"),
 });
 
-const VerifyCodeSchema = z.object({
-  code: z.string().min(4, "Please enter a valid verification code"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  firstName: z.string().min(1, "Please enter a valid first name"),
-  lastName: z.string().min(1, "Please enter a valid last name"),
-  email: z.string().email().optional(),
-});
-
 type SignInForm = z.infer<typeof signInSchema>;
-type VerifyCodeForm = z.infer<typeof VerifyCodeSchema>;
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +22,7 @@ export default function SignIn() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [isNewUser, setIsNewUser] = useState(false);
   const router = useRouter();
 
   const {
@@ -44,6 +36,10 @@ export default function SignIn() {
   const sendVerificationCode = async (phone: string) => {
     setIsLoading(true);
     try {
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: {
@@ -52,12 +48,15 @@ export default function SignIn() {
         body: JSON.stringify({
           phoneNumber: phone,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       const result = await response.json();
 
       if (response.ok) {
         setPhoneNumber(phone);
+        setIsNewUser(result.isNewUser || false);
         setStep("code");
         toast.success("Verification code sent to your phone!");
       } else {
@@ -72,7 +71,11 @@ export default function SignIn() {
       }
     } catch (error) {
       console.error("Send code error:", error);
-      toast.error("Network error. Please check your connection and try again.");
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        toast.error("Network error. Please check your connection and try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -81,31 +84,43 @@ export default function SignIn() {
   const verifyAndSignIn = async () => {
     setIsLoading(true);
     try {
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const response = await fetch("/api/auth/verify-code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          phoneNumber: phoneNumber,
+          phoneNumber,
           code: verificationCode,
           firstName: firstName,
           lastName: lastName,
           email: email || undefined,
         }),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
       const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
         toast.success("Signed in successfully!");
-        router.push("/");
+        // The session cookie is automatically set by the server
+        // Redirect to dashboard
+        router.push("/dashboard");
       } else {
         toast.error(result.error || "Invalid verification code");
       }
     } catch (error) {
       console.error("Verify code error:", error);
-      toast.error("An error occurred during verification");
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        toast.error("An error occurred during verification");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +186,7 @@ export default function SignIn() {
           <div className="mt-8 space-y-6">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-4">
-                We've sent a verification code to:
+                We&apos;ve sent a verification code to:
               </p>
               <p className="font-medium text-gray-900">{phoneNumber}</p>
             </div>
@@ -191,50 +206,55 @@ export default function SignIn() {
                 />
               </div>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
-                  placeholder="Enter your first name"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
-                  placeholder="Enter your last name"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
-                  placeholder="Enter your email"
-                />
-              </div>
-            </div>
+
+            {isNewUser && (
+              <>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                      First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                      Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      placeholder="Enter your last name"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      placeholder="Enter your email"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
             
             <div className="flex space-x-3">
               <button

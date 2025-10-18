@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Mail, Phone, ArrowLeft, CheckCircle } from "lucide-react";
+import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 const verificationSchema = z.object({
@@ -34,7 +34,6 @@ export function VerificationModal({
     register,
     handleSubmit,
     formState: { errors },
-    reset,
   } = useForm<VerificationForm>({
     resolver: zodResolver(verificationSchema),
   });
@@ -139,7 +138,7 @@ export function VerificationModal({
             {/* Instructions */}
             <div className="mb-6">
               <p className="text-gray-600 mb-2">
-                We've sent a verification code to:
+                We&apos;ve sent a verification code to:
               </p>
               <p className="font-medium text-gray-900">{contact}</p>
             <p className="text-sm text-gray-500 mt-2">
@@ -188,7 +187,7 @@ export function VerificationModal({
             {/* Help Text */}
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-500">
-                Didn't receive the code? Check your spam folder or try resending.
+                Didn&apos;t receive the code? Check your spam folder or try resending.
               </p>
             </div>
           </>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api";
 
 // GET /api/rentals/featured - Get featured rentals
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/rentals/featured`);
     const data = await response.json();

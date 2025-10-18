@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { apiProxy } from "@/lib/api-proxy";
-import { authOptions } from "@/lib/auth";
+import { createApiProxy } from "@/lib/api-proxy";
+
 
 // GET /api/jobs - Get all jobs
 export async function GET(request: NextRequest) {
@@ -32,11 +32,12 @@ export async function GET(request: NextRequest) {
 
 // POST /api/jobs - Create job (Provider/Admin)
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(request);
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/jobs`, session.user.id);
+  const proxy = createApiProxy('/api/jobs');
+  return proxy.POST(request);
 }

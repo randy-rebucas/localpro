@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
 
 // GET /api/providers/[id] - Get specific provider
 export async function GET(

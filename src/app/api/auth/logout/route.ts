@@ -1,34 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+import { clearSessionCookie } from "@/lib/session";
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
+    // Create response with cleared session cookie
+    const response = NextResponse.json({ 
+      message: "Logged out successfully" 
     });
 
-    const data = await response.json();
+    // Clear the session cookie
+    response.headers.set('Set-Cookie', clearSessionCookie());
 
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: data.error || "Failed to logout" },
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json(data);
+    return response;
   } catch (error) {
     console.error("Logout error:", error);
     return NextResponse.json(

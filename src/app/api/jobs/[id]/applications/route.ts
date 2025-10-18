@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
 
 // GET /api/jobs/[id]/applications - Get job applications (Provider/Admin)
 export async function GET(
@@ -9,7 +8,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

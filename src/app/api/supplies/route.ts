@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 import { apiProxy } from "@/lib/api-proxy";
-import { authOptions } from "@/lib/auth";
+
 
 // GET /api/supplies - Get all supplies
 export async function GET(request: NextRequest) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/supplies - Create supply (Supplier/Admin)
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(request);
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

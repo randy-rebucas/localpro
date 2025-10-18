@@ -1,7 +1,8 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "@/hooks/useAuth";
 import { 
   Shield, 
   Package, 
@@ -103,8 +104,60 @@ const serviceModules: ServiceModule[] = [
 ];
 
 export function Dashboard() {
-  const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<{ name?: string; role?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const _router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    // Check NextAuth session first
+    if (status === "loading") return;
+    
+    if (session) {
+      // Use NextAuth session data
+      setUser({
+        name: session.user?.name,
+        role: session.user?.role,
+      });
+      setLoading(false);
+      return;
+    }
+
+    // If no NextAuth session, fetch user data from custom API
+    // Middleware ensures user is authenticated, so this should always succeed
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [session, status]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
+
+  if (loading || status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -132,7 +185,7 @@ export function Dashboard() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <User className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-700">{session?.user?.name}</span>
+                <span className="text-sm text-gray-700">{user?.name || "User"}</span>
               </div>
               <a
                 href="/profile"
@@ -142,7 +195,7 @@ export function Dashboard() {
                 <span>Profile</span>
               </a>
               <button
-                onClick={() => signOut()}
+                onClick={handleSignOut}
                 className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700"
               >
                 <LogOut className="w-4 h-4" />
@@ -157,7 +210,7 @@ export function Dashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {session?.user?.name}!
+            Welcome back, {user?.name || "User"}!
           </h2>
           <p className="text-gray-600">
             Access all your professional services in one place
@@ -215,7 +268,7 @@ export function Dashboard() {
               User Role
             </h3>
             <p className="text-3xl font-bold text-blue-600 capitalize">
-              {session?.user?.role}
+              {user?.role || "User"}
             </p>
             <p className="text-sm text-gray-500">Account type</p>
           </div>

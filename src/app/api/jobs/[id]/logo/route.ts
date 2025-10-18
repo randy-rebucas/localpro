@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
 
 // POST /api/jobs/[id]/logo - Upload company logo
 export async function POST(

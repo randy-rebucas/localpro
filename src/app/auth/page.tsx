@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+// Removed NextAuth import - using custom authentication
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -64,19 +64,27 @@ export default function SignIn() {
   const verifyAndSignIn = async () => {
     setIsLoading(true);
     try {
-      const result = await signIn("credentials", {
-        phone: phoneNumber,
-        code: verificationCode,
-        redirect: false,
+      const response = await fetch("/api/auth/verify-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          code: verificationCode,
+        }),
       });
 
-      if (result?.error) {
-        toast.error("Invalid verification code");
-      } else {
+      const result = await response.json();
+
+      if (response.ok) {
         toast.success("Signed in successfully!");
         router.push("/");
+      } else {
+        toast.error(result.error || "Invalid verification code");
       }
     } catch (error) {
+      console.error("Verify code error:", error);
       toast.error("An error occurred during sign in");
     } finally {
       setIsLoading(false);
@@ -143,7 +151,7 @@ export default function SignIn() {
           <div className="mt-8 space-y-6">
             <div className="text-center">
               <p className="text-sm text-gray-600 mb-4">
-                We've sent a verification code to:
+                We&apos;ve sent a verification code to:
               </p>
               <p className="font-medium text-gray-900">{phoneNumber}</p>
             </div>

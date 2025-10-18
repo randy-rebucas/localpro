@@ -30,7 +30,7 @@ A comprehensive super app platform that integrates multiple professional service
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS
 - **Backend API**: External API at https://localpro-super-app.onrender.com
-- **Authentication**: NextAuth.js
+- **Authentication**: Custom JWT-based session management
 - **Form Handling**: React Hook Form with Zod validation
 - **Icons**: Lucide React
 - **Notifications**: React Hot Toast
@@ -55,12 +55,22 @@ A comprehensive super app platform that integrates multiple professional service
    pnpm install
    ```
 
-3. **Start the development server**
+3. **Set up environment variables**
+   Create a `.env.local` file with the following variables:
+   ```bash
+   # Session Management
+   SESSION_SECRET=your-super-secret-key-change-this-in-production
+   
+   # API Configuration
+   API_BASE_URL=http://localhost:3001
+   ```
+
+4. **Start the development server**
    ```bash
    pnpm dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### API Configuration
@@ -77,7 +87,6 @@ The application is configured to use the external API at `https://localpro-super
 - `POST /api/auth/upload-avatar` - Upload user avatar
 - `POST /api/auth/upload-portfolio` - Upload portfolio images
 - `POST /api/auth/logout` - User logout
-- `POST /api/auth/[...nextauth]` - NextAuth.js endpoints
 
 ### Marketplace
 - `GET /api/marketplace/services` - Get all services

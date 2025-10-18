@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api";
 import { z } from "zod";
+import { encrypt, createSessionCookie, SessionData } from "@/lib/session";
 
 const verifyCodeSchema = z.object({
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
@@ -38,7 +39,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(data, { status: response.status });
+    // Extract user data from the API response
+    const { user, token } = data;
+
+    // Create session data from the verified user
+    const sessionData: SessionData = {
+      userId: user.id,
+      email: user.email,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+      role: user.role,
+      phone: user.phoneNumber,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    // Encrypt session data
+    const encryptedSession = await encrypt(sessionData);
+    
+    // Create session cookie
+    const sessionCookie = createSessionCookie(encryptedSession);
+
+    // Return success response with session cookie
+    const response_data = NextResponse.json(
+      { 
+        success: true,
+        message: "Verification successful",
+        token: token,
+        user: {
+          id: user.id,
+          phoneNumber: user.phoneNumber,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+          subscription: user.subscription
+        }
+      }, 
+      { status: 200 }
+    );
+
+    // Set the session cookie
+    response_data.headers.set('Set-Cookie', sessionCookie);
+
+    return response_data;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
