@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "./api";
 
 // Generic API proxy function
-export async function createApiProxy(endpoint: string) {
+export function createApiProxy(endpoint: string) {
   return {
     async GET(request: NextRequest) {
       try {

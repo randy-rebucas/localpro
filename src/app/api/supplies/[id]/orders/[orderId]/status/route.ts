@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+
 
 // PUT /api/supplies/[id]/orders/[orderId]/status - Update order status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; orderId: string } }
+  { params }: { params: Promise<{ id: string; orderId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +18,7 @@ export async function PUT(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/supplies/${params.id}/orders/${params.orderId}/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/supplies/${id}/orders/${params.orderId}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

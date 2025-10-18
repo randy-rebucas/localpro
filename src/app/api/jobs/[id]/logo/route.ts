@@ -5,10 +5,11 @@ import { API_BASE_URL } from "@/lib/api";
 // POST /api/jobs/[id]/logo - Upload company logo
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function POST(
 
     const formData = await request.formData();
 
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${params.id}/logo`, {
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}/logo`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${session.user.id}`,

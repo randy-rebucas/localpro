@@ -17,11 +17,27 @@ import {
   Plus
 } from "lucide-react";
 
+interface FinanceOverview {
+  totalRevenue?: string;
+  totalExpenses?: string;
+  netProfit?: string;
+  profitMargin?: string;
+}
+
+interface Transaction {
+  id: string;
+  description?: string;
+  reference?: string;
+  type?: string;
+  amount?: string;
+  date?: string;
+}
+
 export default function FinanceAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [overview, setOverview] = useState(null);
-  const [transactions, setTransactions] = useState([]);
+  const [overview, setOverview] = useState<FinanceOverview | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

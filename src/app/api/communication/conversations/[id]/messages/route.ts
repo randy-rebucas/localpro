@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
 
 // POST /api/communication/conversations/[id]/messages - Send message
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +17,7 @@ export async function POST(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/communication/conversations/${params.id}/messages`, {
+    const response = await fetch(`${API_BASE_URL}/api/communication/conversations/${id}/messages`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

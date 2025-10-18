@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+
 
 // DELETE /api/academy/courses/[id]/videos/[videoId] - Delete course video
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; videoId: string } }
+  { params }: { params: Promise<{ id: string; videoId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { id, videoId } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/academy/courses/${params.id}/videos/${params.videoId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/academy/courses/${id}/videos/${videoId}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${session.user.id}`,

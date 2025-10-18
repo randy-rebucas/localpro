@@ -111,20 +111,7 @@ export function Dashboard() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    // Check NextAuth session first
-    if (status === "loading") return;
-    
-    if (session) {
-      // Use NextAuth session data
-      setUser({
-        name: session.user?.name,
-        role: session.user?.role,
-      });
-      setLoading(false);
-      return;
-    }
-
-    // If no NextAuth session, fetch user data from custom API
+    // Fetch user data from custom API
     // Middleware ensures user is authenticated, so this should always succeed
     const fetchUser = async () => {
       try {

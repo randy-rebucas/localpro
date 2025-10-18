@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+
 
 // PUT /api/finance/withdrawals/[withdrawalId]/process - Process withdrawal (Admin)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { withdrawalId: string } }
+  { params }: { params: Promise<{ withdrawalId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { withdrawalId } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +18,7 @@ export async function PUT(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/finance/withdrawals/${params.withdrawalId}/process`, {
+    const response = await fetch(`${API_BASE_URL}/api/finance/withdrawals/${withdrawalId}/process`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

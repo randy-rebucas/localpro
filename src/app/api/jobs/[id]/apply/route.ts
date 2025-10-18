@@ -5,10 +5,11 @@ import { API_BASE_URL } from "@/lib/api";
 // POST /api/jobs/[id]/apply - Apply for job
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function POST(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${params.id}/apply`, {
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}/apply`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

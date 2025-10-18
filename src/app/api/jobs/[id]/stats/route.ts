@@ -5,16 +5,17 @@ import { API_BASE_URL } from "@/lib/api";
 // GET /api/jobs/[id]/stats - Get job statistics
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${params.id}/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}/stats`, {
       headers: {
         "Authorization": `Bearer ${session.user.id}`,
       },

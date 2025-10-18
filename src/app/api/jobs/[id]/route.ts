@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { apiProxy } from "@/lib/api-proxy";
+
 
 // GET /api/jobs/[id] - Get specific job
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${params.id}`);
+    const { id } = await params;
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -32,7 +33,7 @@ export async function GET(
 // PUT /api/jobs/[id] - Update job (Provider/Admin)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(request);
   
@@ -40,13 +41,42 @@ export async function PUT(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/jobs/${params.id}`, session.user.id);
+  const { id } = await params;
+  try {
+    const body = await request.json();
+    
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+      method: request.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Request failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(`Error in ${request.method} /api/jobs/${id}:`, error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 // DELETE /api/jobs/[id] - Delete job (Provider/Admin)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
     const session = await getServerSession(request);
   
@@ -54,5 +84,34 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/jobs/${params.id}`, session.user.id);
+  const { id } = await params;
+  try {
+    const body = await request.json();
+    
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}`, {
+      method: request.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Request failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(`Error in ${request.method} /api/jobs/${id}:`, error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

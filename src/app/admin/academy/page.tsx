@@ -18,10 +18,20 @@ import {
   TrendingUp
 } from "lucide-react";
 
+interface Course {
+  id: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  duration?: string;
+  students?: string;
+  rating?: string;
+}
+
 export default function AcademyAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [courses, setCourses] = useState([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");

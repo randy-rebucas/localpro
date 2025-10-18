@@ -18,10 +18,20 @@ import {
   Users
 } from "lucide-react";
 
+interface Rental {
+  id: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  dailyRate?: string;
+  location?: string;
+  rating?: string;
+}
+
 export default function RentalsAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [rentals, setRentals] = useState([]);
+  const [rentals, setRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { apiProxy } from "@/lib/api-proxy";
+
 
 
 // GET /api/supplies - Get all supplies
@@ -38,5 +38,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/supplies`, session.user.id);
+    try {
+    const body = await request.json();
+    
+    const response = await fetch(`${API_BASE_URL}/api/supplies`, {
+      method: request.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Request failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(`Error in ${request.method} /api/supplies:`, error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

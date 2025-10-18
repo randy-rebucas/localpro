@@ -5,10 +5,11 @@ import { API_BASE_URL } from "@/lib/api";
 // PUT /api/providers/admin/[id]/status - Update provider status (Admin)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(request);
+    const { id } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function PUT(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/providers/admin/${params.id}/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/providers/admin/${id}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { apiProxy } from "@/lib/api-proxy";
-import { authOptions } from "@/lib/auth";
+
 
 // GET /api/rentals/[id] - Get specific rental
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/rentals/${params.id}`);
+    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -33,27 +32,83 @@ export async function GET(
 // PUT /api/rentals/[id] - Update rental (Provider/Admin)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(request);
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/rentals/${params.id}`, session.user.id);
+    try {
+    const body = await request.json();
+    
+    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`, {
+      method: request.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Request failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(`Error in ${request.method} /api/rentals/${id}:`, error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }
 
 // DELETE /api/rentals/[id] - Delete rental (Provider/Admin)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(request);
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  return apiProxy(request, `${API_BASE_URL}/api/rentals/${params.id}`, session.user.id);
+    try {
+    const body = await request.json();
+    
+    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`, {
+      method: request.method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: data.error || "Request failed" },
+        { status: response.status }
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error(`Error in ${request.method} /api/rentals/${id}:`, error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
 }

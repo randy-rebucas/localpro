@@ -17,10 +17,20 @@ import {
   Star
 } from "lucide-react";
 
+interface Supply {
+  id: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  price?: string;
+  stock?: string;
+  rating?: string;
+}
+
 export default function SuppliesAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [supplies, setSupplies] = useState([]);
+  const [supplies, setSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");

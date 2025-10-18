@@ -4,10 +4,10 @@ import { API_BASE_URL } from "@/lib/api";
 // GET /api/marketplace/services/[id] - Get specific service
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/services/${params.id}`);
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/services/${id}`);
     const data = await response.json();
 
     if (!response.ok) {

@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
-import { authOptions } from "@/lib/auth";
+
 
 // GET /api/marketplace/bookings/paypal/order/[orderId] - Get PayPal order details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(request);
+    const { orderId } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings/paypal/order/${params.orderId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings/paypal/order/${orderId}`, {
       headers: {
         "Authorization": `Bearer ${session.user.id}`,
       },
