@@ -16,8 +16,10 @@ import {
 
 export default function DashboardLayout({
   children,
+  edit,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  edit: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ 
@@ -151,13 +153,19 @@ export default function DashboardLayout({
             </div>
             
             <div className="flex items-center space-x-3">
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <Bell className="w-5 h-5" />
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <HelpCircle className="w-5 h-5" />
               </button>
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <button 
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
                 <Settings className="w-5 h-5" />
               </button>
               <button
@@ -205,6 +213,9 @@ export default function DashboardLayout({
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+
+      {/* Edit Modal Slot */}
+      {edit}
     </div>
   );
 }
