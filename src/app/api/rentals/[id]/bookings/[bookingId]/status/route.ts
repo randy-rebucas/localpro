@@ -10,7 +10,7 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(request);
-    const { id } = await params;
+    const { id, bookingId } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -18,7 +18,7 @@ export async function PUT(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/bookings/${params.bookingId}/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/bookings/${bookingId}/status`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

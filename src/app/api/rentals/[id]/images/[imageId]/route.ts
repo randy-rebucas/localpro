@@ -10,13 +10,13 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(request);
-    const { id } = await params;
+    const { id, imageId } = await params;
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/images/${params.imageId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/images/${imageId}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${session.user.id}`,

@@ -1,6 +1,8 @@
 // API configuration
 export const API_BASE_URL = "https://localpro-super-app.onrender.com";
 
+import { createAuthFetchOptions } from './auth-utils';
+
 // Helper function to make API requests
 export async function apiRequest<T>(
   endpoint: string,
@@ -8,13 +10,9 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   
-  const response = await fetch(url, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-    ...options,
-  });
+  const response = await fetch(url, 
+    createAuthFetchOptions(options)
+  );
 
   if (!response.ok) {
     throw new Error(`API request failed: ${response.status} ${response.statusText}`);
@@ -30,6 +28,7 @@ export const API_ENDPOINTS = {
   verifyCode: "/api/auth/verify-code",
   me: "/api/auth/me",
   profile: "/api/auth/profile",
+  profileCompleteness: "/api/auth/profile-completeness",
   uploadAvatar: "/api/auth/upload-avatar",
   uploadPortfolio: "/api/auth/upload-portfolio",
   logout: "/api/auth/logout",

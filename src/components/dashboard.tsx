@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "@/hooks/useAuth";
+import { useSession } from "@/hooks/useAuth";
 import { 
   Shield, 
   Package, 
@@ -12,10 +12,13 @@ import {
   Home, 
   Megaphone, 
   DollarSign,
-  Menu,
-  X,
+  Search,
   User,
-  LogOut
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  ArrowRight,
+  Activity
 } from "lucide-react";
 
 interface ServiceModule {
@@ -104,171 +107,336 @@ const serviceModules: ServiceModule[] = [
 ];
 
 export function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [user, setUser] = useState<{ name?: string; role?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const _router = useRouter();
+  const [user, setUser] = useState<{ 
+    name?: string; 
+    role?: string; 
+    phone?: string; 
+    firstName?: string; 
+    lastName?: string;
+    profileCompleteness?: {
+      percentage: number;
+      completedFields: number;
+      totalFields: number;
+      missingFields: string[];
+      fields: Record<string, { completed: boolean; required: boolean }>;
+    };
+  } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [recentActivity, setRecentActivity] = useState<unknown[]>([]);
+  const router = useRouter();
   const { data: session, status } = useSession();
 
   useEffect(() => {
+    // Log session data to console
+    console.log("=== SESSION DATA ===");
+    console.log("Session:", session);
+    console.log("Status:", status);
+    
+    if (session?.user) {
+      console.log("User ID:", session.user.id);
+      console.log("User Email:", session.user.email);
+      console.log("User Name:", session.user.name);
+      console.log("User Role:", session.user.role);
+      console.log("User Phone:", session.user.phone);
+      console.log("User First Name:", session.user.firstName);
+      console.log("User Last Name:", session.user.lastName);
+    }
+    console.log("===================");
+
     // Fetch user data from custom API
     // Middleware ensures user is authenticated, so this should always succeed
     const fetchUser = async () => {
       try {
-        const response = await fetch("/api/auth/me");
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
+        if (session?.user?.id) {
+          const response = await fetch(`/api/users/${session.user.id}`);
+          if (response.ok) {
+            const userData = await response.json();
+            console.log("=== USER DATA FROM API ===");
+            console.log("User Data:", userData);
+            console.log("User Data Keys:", Object.keys(userData));
+            console.log("==========================");
+            setUser(userData);
+          } else {
+            throw new Error(`Failed to fetch user data: ${response.status}`);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchUser();
+
+    // Fetch recent activity data
+    const fetchRecentActivity = async () => {
+      try {
+        if (session?.user?.id) {
+          const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
+          if (response.ok) {
+            const activityData = await response.json();
+            console.log("=== RECENT ACTIVITY DATA ===");
+            console.log("Activity Data:", activityData);
+            console.log("=============================");
+            setRecentActivity(activityData);
+          } else {
+            console.warn("Failed to fetch recent activity:", response.status);
+            // Set fallback activity data if API fails
+            setRecentActivity([
+              { id: 1, action: "Dashboard loaded", time: "Just now", icon: "dashboard" },
+              { id: 2, action: "Profile viewed", time: "Recently", icon: "user" }
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch recent activity:", error);
+        // Set fallback activity data if API fails
+        setRecentActivity([
+          { id: 1, action: "Dashboard loaded", time: "Just now", icon: "dashboard" },
+          { id: 2, action: "Profile viewed", time: "Recently", icon: "user" }
+        ]);
+      }
+    };
+
+    // Fetch user data and recent activity
+    Promise.all([fetchUser(), fetchRecentActivity()]);
   }, [session, status]);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Sign out error:", error);
+
+  const filteredModules = serviceModules.filter(module =>
+    module.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    module.services.some(service => service.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleModuleClick = (route: string) => {
+    router.push(route);
+  };
+
+  // Helper function to get icon for activity type
+  const getActivityIcon = (activityType: string) => {
+    switch (activityType?.toLowerCase()) {
+      case 'marketplace':
+      case 'service':
+        return <Shield className="w-4 h-4" />;
+      case 'profile':
+      case 'user':
+        return <User className="w-4 h-4" />;
+      case 'academy':
+      case 'course':
+        return <GraduationCap className="w-4 h-4" />;
+      case 'supplies':
+      case 'order':
+        return <Package className="w-4 h-4" />;
+      case 'rentals':
+      case 'rental':
+        return <Car className="w-4 h-4" />;
+      case 'finance':
+      case 'payment':
+        return <DollarSign className="w-4 h-4" />;
+      case 'dashboard':
+        return <Activity className="w-4 h-4" />;
+      default:
+        return <Activity className="w-4 h-4" />;
     }
   };
 
-  if (loading || status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-              >
-                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-              <div className="flex items-center ml-4">
-                <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">P</span>
-                </div>
-                <h1 className="ml-3 text-xl font-semibold text-gray-900">
-                  LocalPro Super App
-                </h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <User className="w-5 h-5 text-gray-400" />
-                <span className="text-sm text-gray-700">{user?.name || "User"}</span>
-              </div>
-              <a
-                href="/profile"
-                className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700"
-              >
-                <User className="w-4 h-4" />
-                <span>Profile</span>
-              </a>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.name || "User"}!
-          </h2>
-          <p className="text-gray-600">
-            Access all your professional services in one place
-          </p>
-        </div>
+    <div>
 
         {/* Service Modules Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {serviceModules.map((module) => (
-            <div
-              key={module.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => {
-                // Navigate to module route
-                console.log(`Navigate to ${module.route}`);
-              }}
-            >
-              <div className="flex items-center mb-4">
-                <div className={`w-12 h-12 rounded-lg ${module.color} flex items-center justify-center mr-4`}>
-                  {module.icon}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-semibold text-gray-900">Service Modules</h3>
+            <div className="text-sm text-gray-500">
+              {filteredModules.length} of {serviceModules.length} services
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredModules.map((module) => (
+              <div
+                key={module.id}
+                className="group bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                onClick={() => handleModuleClick(module.route)}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-14 h-14 rounded-xl ${module.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
+                    {module.icon}
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-green-700 transition-colors">
                     {module.name}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {module.description}
                   </p>
                 </div>
+                
+                <div className="space-y-2">
+                  {module.services.slice(0, 3).map((service, index) => (
+                    <div key={index} className="flex items-center text-sm text-gray-600">
+                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></div>
+                      {service}
+                    </div>
+                  ))}
+                  {module.services.length > 3 && (
+                    <div className="text-xs text-gray-400">
+                      +{module.services.length - 3} more services
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className="space-y-1">
-                {module.services.map((service, index) => (
-                  <div key={index} className="text-sm text-gray-600">
-                    • {service}
-                  </div>
-                ))}
-              </div>
+            ))}
+          </div>
+          {filteredModules.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+              <p className="text-gray-500">Try adjusting your search terms</p>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Quick Stats */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Active Services
-            </h3>
-            <p className="text-3xl font-bold text-green-600">8</p>
-            <p className="text-sm text-gray-500">All modules available</p>
+        {/* Dashboard Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Quick Stats */}
+          <div className="lg:col-span-2">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Overview</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-green-600" />
+                  </div>
+                  <TrendingUp className="w-5 h-5 text-green-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Active Services
+                </h3>
+                <p className="text-3xl font-bold text-green-600 mb-1">8</p>
+                <p className="text-sm text-gray-500">All modules available</p>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  User Role
+                </h3>
+                <p className="text-3xl font-bold text-blue-600 mb-1 capitalize">
+                  {user?.role || "User"}
+                </p>
+                <p className="text-sm text-gray-500">Account type</p>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <User className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="text-right">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-purple-600">
+                      {user?.profileCompleteness?.percentage || 0}%
+                    </span>
+                  </div>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Profile Completeness
+                </h3>
+                <div className="mb-3">
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${user?.profileCompleteness?.percentage || 0}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500">
+                  {user?.profileCompleteness?.completedFields ? 
+                    `${user.profileCompleteness.completedFields}/${user.profileCompleteness.totalFields} fields` : 
+                    "Profile status"
+                  }
+                </p>
+                {user?.profileCompleteness?.missingFields && user.profileCompleteness.missingFields.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-400">Missing: {user.profileCompleteness.missingFields.slice(0, 2).join(", ")}</p>
+                    {user.profileCompleteness.missingFields.length > 2 && (
+                      <p className="text-xs text-gray-400">+{user.profileCompleteness.missingFields.length - 2} more</p>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-green-600 font-medium">Live</span>
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Platform Status
+                </h3>
+                <p className="text-3xl font-bold text-green-600 mb-1">Online</p>
+                <p className="text-sm text-gray-500">All systems operational</p>
+              </div>
+            </div>
           </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              User Role
-            </h3>
-            <p className="text-3xl font-bold text-blue-600 capitalize">
-              {user?.role || "User"}
-            </p>
-            <p className="text-sm text-gray-500">Account type</p>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Platform Status
-            </h3>
-            <p className="text-3xl font-bold text-green-600">Online</p>
-            <p className="text-sm text-gray-500">All systems operational</p>
+
+          {/* Recent Activity */}
+          <div className="lg:col-span-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="space-y-4">
+                {recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 5).map((activity, index) => {
+                    const activityObj = activity as Record<string, unknown>;
+                    return (
+                    <div key={(activityObj.id as string) || index} className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        {getActivityIcon((activityObj.type as string) || (activityObj.icon as string) || 'default')}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">
+                          {(activityObj.action as string) || (activityObj.description as string) || (activityObj.title as string) || 'Activity'}
+                        </p>
+                        <p className="text-xs text-gray-500 flex items-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {(activityObj.time as string) || (activityObj.timestamp as string) || (activityObj.createdAt as string) || 'Recently'}
+                        </p>
+                      </div>
+                    </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-4">
+                    <Activity className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">No recent activity</p>
+                  </div>
+                )}
+              </div>
+              {recentActivity.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <button className="w-full text-sm text-green-600 hover:text-green-700 font-medium flex items-center justify-center">
+                    View all activity
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

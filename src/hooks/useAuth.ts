@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { createAuthFetchOptions } from '@/lib/auth-utils';
 
 export interface User {
   id: string;
@@ -23,7 +24,10 @@ export function useSession() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', 
+          createAuthFetchOptions()
+        );
+        
         if (response.ok) {
           const userData = await response.json();
           setSession({ user: userData });
@@ -46,8 +50,12 @@ export function useSession() {
 
 export async function signOut() {
   try {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/auth/signin';
+    await fetch('/api/auth/logout', 
+      createAuthFetchOptions({
+        method: 'POST'
+      })
+    );
+    window.location.href = '/auth';
   } catch (error) {
     console.error('Failed to sign out:', error);
   }

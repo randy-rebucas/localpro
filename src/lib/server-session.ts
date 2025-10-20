@@ -10,24 +10,42 @@ export interface ServerSession {
     phone: string;
     firstName?: string;
     lastName?: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    skills?: string[];
+    experience?: string;
+    avatar?: string;
+    portfolio?: unknown[];
+    createdAt?: string;
+    updatedAt?: string;
+    isVerified?: boolean;
   };
 }
 
 export async function getServerSession(request: NextRequest): Promise<ServerSession | null> {
   try {
-    // Get session cookie from request
-    const cookieHeader = request.headers.get("cookie") || "";
-    const sessionCookie = cookieHeader
-      .split(';')
-      .find(c => c.trim().startsWith('session='))
-      ?.split('=')[1];
+    // First, try to get Bearer token from Authorization header
+    const authHeader = request.headers.get("authorization");
+    let sessionToken: string | null = null;
+    
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      sessionToken = authHeader.substring(7);
+    } else {
+      // Fallback to session cookie
+      const cookieHeader = request.headers.get("cookie") || "";
+      sessionToken = cookieHeader
+        .split(';')
+        .find(c => c.trim().startsWith('session='))
+        ?.split('=')[1] || null;
+    }
 
-    if (!sessionCookie) {
+    if (!sessionToken) {
       return null;
     }
 
     // Decrypt session
-    const session = await decrypt(sessionCookie);
+    const session = await decrypt(sessionToken);
     
     if (!session || !session.userId) {
       return null;
@@ -42,6 +60,16 @@ export async function getServerSession(request: NextRequest): Promise<ServerSess
         phone: session.phone,
         firstName: session.firstName,
         lastName: session.lastName,
+        bio: session.bio,
+        location: session.location,
+        website: session.website,
+        skills: session.skills,
+        experience: session.experience,
+        avatar: session.avatar,
+        portfolio: session.portfolio as unknown[],
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        isVerified: session.isVerified,
       }
     };
   } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,7 +14,7 @@ const signInSchema = z.object({
 
 type SignInForm = z.infer<typeof signInSchema>;
 
-export default function SignIn() {
+function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -23,7 +23,17 @@ export default function SignIn() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
+  const [redirectTo, setRedirectTo] = useState("/dashboard");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Get redirect parameter from URL
+  useEffect(() => {
+    const redirect = searchParams.get("redirect");
+    if (redirect) {
+      setRedirectTo(redirect);
+    }
+  }, [searchParams]);
 
   const {
     register,
@@ -109,8 +119,8 @@ export default function SignIn() {
       if (response.ok && result.success) {
         toast.success("Signed in successfully!");
         // The session cookie is automatically set by the server
-        // Redirect to dashboard
-        router.push("/dashboard");
+        // Redirect to intended destination or dashboard
+        router.push(redirectTo);
       } else {
         toast.error(result.error || "Invalid verification code");
       }
@@ -289,5 +299,22 @@ export default function SignIn() {
 
       </div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-green-600 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <span className="text-white font-bold text-2xl">P</span>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignInForm />
+    </Suspense>
   );
 }

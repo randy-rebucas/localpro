@@ -13,6 +13,16 @@ export interface SessionData extends JWTPayload {
   phone: string;
   firstName?: string;
   lastName?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  skills?: string[];
+  experience?: string;
+  avatar?: string;
+  portfolio?: unknown[];
+  createdAt?: string;
+  updatedAt?: string;
+  isVerified?: boolean;
 }
 
 export async function encrypt(payload: SessionData): Promise<string> {

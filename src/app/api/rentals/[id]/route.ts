@@ -9,6 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`);
     const data = await response.json();
 
@@ -41,6 +42,7 @@ export async function PUT(
   }
 
     try {
+    const { id } = await params;
     const body = await request.json();
     
     const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`, {
@@ -63,7 +65,7 @@ export async function PUT(
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`Error in ${request.method} /api/rentals/${id}:`, error);
+    console.error(`Error in ${request.method} /api/rentals:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -83,6 +85,7 @@ export async function DELETE(
   }
 
     try {
+    const { id } = await params;
     const body = await request.json();
     
     const response = await fetch(`${API_BASE_URL}/api/rentals/${id}`, {
@@ -105,7 +108,7 @@ export async function DELETE(
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`Error in ${request.method} /api/rentals/${id}:`, error);
+    console.error(`Error in ${request.method} /api/rentals:`, error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

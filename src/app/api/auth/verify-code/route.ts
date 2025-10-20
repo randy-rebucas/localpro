@@ -6,15 +6,12 @@ import { encrypt, createSessionCookie, SessionData } from "@/lib/session";
 const verifyCodeSchema = z.object({
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
   code: z.string().min(4, "Please enter a valid verification code"),
-  firstName: z.string().min(1, "Please enter a valid first name"),
-  lastName: z.string().min(1, "Please enter a valid last name"),
-  email: z.string().email().optional(),
 });
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { phoneNumber, code, firstName, lastName, email } = verifyCodeSchema.parse(body);
+    const { phoneNumber, code } = verifyCodeSchema.parse(body);
 
     const response = await fetch(`${API_BASE_URL}/api/auth/verify-code`, {
       method: "POST",
@@ -24,9 +21,6 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         phoneNumber,
         code,
-        firstName,
-        lastName,
-        email,
       }),
     });
 

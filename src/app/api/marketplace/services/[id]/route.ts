@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const response = await fetch(`${API_BASE_URL}/api/marketplace/services/${id}`);
     const data = await response.json();
 

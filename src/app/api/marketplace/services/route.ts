@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api";
+import { getServerSession } from "@/lib/server-session";
 import { z } from "zod";
 
 const serviceSchema = z.object({
@@ -13,10 +14,24 @@ const serviceSchema = z.object({
 // GET /api/marketplace/services - Get all services
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
     
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/services?${queryString}`);
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/services?${queryString}`, {
+      headers: {
+        "Authorization": `Bearer ${session.user.id}`,
+        "Content-Type": "application/json"
+      }
+    });
     const data = await response.json();
 
     if (!response.ok) {
@@ -39,6 +54,15 @@ export async function GET(request: NextRequest) {
 // POST /api/marketplace/services - Create a new service
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { name, description, category, price, duration } = serviceSchema.parse(body);
 
@@ -46,6 +70,7 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
       },
       body: JSON.stringify({
         name,
