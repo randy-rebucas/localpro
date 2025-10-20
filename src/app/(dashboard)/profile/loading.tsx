@@ -1,4 +1,4 @@
-import { SkeletonDashboard, Skeleton } from "@/components/ui/skeleton";
+import { SkeletonProfile, Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
@@ -21,9 +21,9 @@ export default function Loading() {
         </div>
       </header>
 
-      {/* Main Content Skeleton */}
+      {/* Profile Content Skeleton */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <SkeletonDashboard />
+        <SkeletonProfile />
       </main>
     </div>
   );

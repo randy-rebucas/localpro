@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "@/hooks/useAuth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,11 +11,8 @@ import {
   MapPin, 
   Globe, 
   Briefcase, 
-  Camera, 
-  Upload,
   Save,
   Edit3,
-  Activity,
   CheckCircle,
   AlertCircle
 } from "lucide-react";
@@ -71,7 +68,6 @@ export function UserProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -125,14 +121,7 @@ export function UserProfile() {
     return () => clearTimeout(timeoutId);
   }, [watchedValues, isEditing, session?.user?.id]);
 
-  // Fetch user profile
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchProfile();
-    }
-  }, [session]);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!session?.user?.id) return;
     
     try {
@@ -160,7 +149,14 @@ export function UserProfile() {
       console.error("Error fetching profile:", error);
       toast.error("Failed to fetch profile");
     }
-  };
+  }, [session?.user?.id, reset]);
+
+  // Fetch user profile
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchProfile();
+    }
+  }, [session, fetchProfile]);
 
   const onSubmit = async (data: ProfileForm) => {
     if (!session?.user?.id) return;

@@ -6,13 +6,11 @@ import { useSession, signOut } from "@/hooks/useAuth";
 import {
   Menu,
   X,
-  User,
   LogOut,
   Search,
   Bell,
   Settings,
   HelpCircle,
-  Phone,
   Activity
 } from "lucide-react";
 
@@ -43,32 +41,37 @@ export default function DashboardLayout({
   const { data: session, status } = useSession();
 
   useEffect(() => {
-    // Redirect to auth if not authenticated
-    if (status === "loading") return;
-    if (!session) {
+    // Only redirect if we're sure the session is not loading and user is not authenticated
+    if (status === "unauthenticated") {
       router.push("/auth");
       return;
     }
 
-    // Fetch user data from custom API
-    const fetchUser = async () => {
-      try {
-        if (session?.user?.id) {
+    // Only fetch user data if we have a session
+    if (status === "authenticated" && session?.user?.id) {
+      const fetchUser = async () => {
+        try {
           const response = await fetch(`/api/users/${session.user.id}`);
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
           }
+        } catch (error) {
+          console.error("Failed to fetch user data:", error);
+          setError("Failed to load user data. Please try refreshing the page.");
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
-        setError("Failed to load user data. Please try refreshing the page.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchUser();
+      fetchUser();
+    } else if (status === "loading") {
+      // Keep loading state while session is being checked
+      setLoading(true);
+    } else {
+      // If no session and not loading, stop loading
+      setLoading(false);
+    }
   }, [session, status, router]);
 
   const handleSignOut = async () => {
@@ -80,20 +83,7 @@ export default function DashboardLayout({
   };
 
   if (loading || status === "loading") {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
-            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
-              <span className="text-white font-bold text-xl">P</span>
-            </div>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Dashboard</h2>
-          <p className="text-gray-500">Setting up your workspace...</p>
-        </div>
-      </div>
-    );
+    return null; // Let the loading.tsx file handle the loading state
   }
 
   if (error) {
@@ -116,8 +106,8 @@ export default function DashboardLayout({
     );
   }
 
-  if (!session) {
-    return null;
+  if (status === "unauthenticated" || !session) {
+    return null; // Will be handled by the redirect in useEffect
   }
 
   return (

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Upload, X, Eye, Download, ExternalLink, Plus, Grid, List } from "lucide-react";
+import Image from "next/image";
 
 interface PortfolioGalleryProps {
   portfolio: string[];
@@ -115,10 +116,11 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
             >
               {viewMode === 'grid' ? (
                 <div className="aspect-square relative overflow-hidden rounded-lg border border-gray-200">
-                  <img
+                  <Image
                     src={image}
                     alt={`Portfolio ${index + 1}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                   
                   {/* Overlay */}
@@ -147,9 +149,11 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
                 </div>
               ) : (
                 <>
-                  <img
+                  <Image
                     src={image}
                     alt={`Portfolio ${index + 1}`}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                   />
                   <div className="flex-1">
@@ -187,9 +191,11 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
             >
               <X className="w-8 h-8" />
             </button>
-            <img
+            <Image
               src={selectedImage}
               alt="Portfolio"
+              width={800}
+              height={600}
               className="max-w-full max-h-full object-contain"
             />
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">

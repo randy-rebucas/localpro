@@ -121,7 +121,7 @@ export function Dashboard() {
       fields: Record<string, { completed: boolean; required: boolean }>;
     };
   } | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery] = useState("");
   const [recentActivity, setRecentActivity] = useState<unknown[]>([]);
   const router = useRouter();
   const { data: session, status } = useSession();

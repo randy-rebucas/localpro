@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { User, Briefcase, MapPin, Globe, Camera, CheckCircle } from "lucide-react";
+import { User, Briefcase, MapPin, Camera, CheckCircle } from "lucide-react";
 
 interface ProfileStepsProps {
   currentStep: number;
@@ -40,7 +39,7 @@ const steps = [
   }
 ];
 
-export function ProfileSteps({ currentStep, onStepChange, profileData }: ProfileStepsProps) {
+export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
   const getStepStatus = (stepId: number) => {
     if (stepId < currentStep) return "completed";
     if (stepId === currentStep) return "current";

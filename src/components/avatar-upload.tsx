@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Camera, Upload, X, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import Image from "next/image";
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -33,7 +34,7 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading }: AvatarUploa
     if (canvasRef.current && preview) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      const img = new Image();
+      const img = new window.Image();
       
       img.onload = () => {
         canvas.width = 200;
@@ -79,9 +80,11 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading }: AvatarUploa
       {/* Current Avatar Display */}
       <div className="relative group">
         {currentAvatar ? (
-          <img
+          <Image
             src={currentAvatar}
             alt="Avatar"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-green-300 transition-colors"
           />
         ) : (
@@ -120,9 +123,11 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading }: AvatarUploa
             </div>
             
             <div className="mb-4">
-              <img
+              <Image
                 src={preview}
                 alt="Preview"
+                width={400}
+                height={192}
                 className="w-full h-48 object-contain border border-gray-200 rounded"
                 style={{
                   transform: `rotate(${rotation}deg) scale(${scale})`,

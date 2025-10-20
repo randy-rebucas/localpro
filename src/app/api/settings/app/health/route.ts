@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api";
 
 // GET /api/settings/app/health - Get app health
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const response = await fetch(`${API_BASE_URL}/api/settings/app/health`);
     const data = await response.json();

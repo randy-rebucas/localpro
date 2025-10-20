@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, AlertCircle, Lightbulb, TrendingUp, Target } from "lucide-react";
+import { CheckCircle, Lightbulb, TrendingUp, Target } from "lucide-react";
 
 interface ProfileCompletenessProps {
   profileData: Record<string, unknown>;
@@ -32,7 +32,6 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
   };
 
   const getAIRecommendations = () => {
-    const score = getCompletenessScore();
     const recommendations = [];
 
     if (!profileData?.bio) {

@@ -187,7 +187,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Get authentication status
-  const { isAuthenticated, userRole, userId } = await checkAuth(request);
+  const { isAuthenticated, userRole } = await checkAuth(request);
 
   // Handle API routes
   if (pathname.startsWith("/api/")) {

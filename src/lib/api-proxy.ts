@@ -98,7 +98,7 @@ export function createApiProxy(endpoint: string) {
       }
     },
 
-    async DELETE(_request: NextRequest) {
+    async DELETE() {
       try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
           method: "DELETE",

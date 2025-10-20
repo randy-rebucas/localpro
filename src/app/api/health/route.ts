@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { API_BASE_URL } from "@/lib/api";
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Test connectivity to external API
     const controller = new AbortController();

@@ -108,6 +108,9 @@ export const API_ENDPOINTS = {
   communicationConversations: "/api/communication/conversations",
   communicationUnreadCount: "/api/communication/unread-count",
   communicationSearch: "/api/communication/search",
+  communicationNotifications: "/api/communication/notifications",
+  communicationNotificationsCount: "/api/communication/notifications/count",
+  communicationNotificationsReadAll: "/api/communication/notifications/read-all",
   
   // Analytics
   analyticsOverview: "/api/analytics/overview",
@@ -184,4 +187,9 @@ export const API_ENDPOINTS = {
   logsUserActivity: "/api/logs/user",
   logsDashboard: "/api/logs/dashboard/summary",
   logsSearchGlobal: "/api/logs/search/global",
+  
+  // Search
+  search: "/api/search",
+  searchSuggestions: "/api/search/suggestions",
+  searchPopular: "/api/search/popular",
 } as const;

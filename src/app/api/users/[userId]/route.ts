@@ -131,8 +131,8 @@ function calculateProfileCompleteness(user: Record<string, unknown>): {
   const percentage = Math.round((completedFields / totalFields) * 100);
   
   const missingFields = Object.entries(fields)
-    .filter(([_, field]) => !field.completed)
-    .map(([key, _]) => key);
+    .filter(([, field]) => !field.completed)
+    .map(([key]) => key);
 
   return {
     percentage,
