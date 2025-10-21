@@ -198,7 +198,7 @@ export default function BookingsPage() {
       <div className="text-center py-12">
         <div className="text-red-600 mb-4">{error}</div>
         <button
-          onClick={fetchBookings}
+          onClick={() => fetchBookings()}
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
         >
           Try Again

@@ -104,11 +104,17 @@ export default function FinanceAdmin() {
               </div>
             </div>
             <div className="flex space-x-3">
-              <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
+              <button 
+                onClick={() => console.log('Export clicked')}
+                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center"
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Export
               </button>
-              <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 flex items-center">
+              <button 
+                onClick={() => console.log('Add expense clicked')}
+                className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 flex items-center"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Expense
               </button>
@@ -211,11 +217,17 @@ export default function FinanceAdmin() {
                 <option value="expense">Expense</option>
                 <option value="withdrawal">Withdrawal</option>
               </select>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
+              <button 
+                onClick={() => console.log('Date range clicked')}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center"
+              >
                 <Calendar className="w-4 h-4 mr-2" />
                 Date Range
               </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
+              <button 
+                onClick={() => console.log('Filters clicked')}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center"
+              >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
               </button>
@@ -280,7 +292,10 @@ export default function FinanceAdmin() {
                       </span>
                     </Td>
                     <Td>
-                      <button className="text-blue-600 hover:text-blue-900">
+                      <button 
+                        onClick={() => console.log('View transaction clicked')}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </Td>
