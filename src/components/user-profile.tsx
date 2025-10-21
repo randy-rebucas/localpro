@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -19,7 +19,7 @@ import toast from "react-hot-toast";
 import { ProfileCompleteness } from "./profile-completeness";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 
-interface UserProfile {
+interface UserProfileData {
   id: string;
   email: string;
   name: string;
@@ -46,46 +46,85 @@ interface UserProfile {
   };
 }
 
-export function UserProfile() {
+export function UserProfile({ initialProfile }: { initialProfile?: UserProfileData }) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfileData | null>(initialProfile ?? null);
 
-  const fetchProfile = useCallback(async () => {
+  // Prefetch edit route for snappier navigation
+  useEffect(() => {
+    router.prefetch('/profile/edit');
+  }, [router]);
+
+  // Fetch user profile with abort to avoid setting state on unmounted component
+  const fetchProfile = useCallback(async (signal?: AbortSignal) => {
     if (!session?.user?.id) return;
-    
+    // Avoid refetch if we already have profile data
+    if (profile) return;
+
     try {
-      const response = await fetch(`/api/users/${session.user.id}`, 
-        createAuthFetchOptions()
+      const baseOptions = createAuthFetchOptions();
+      const response = await fetch(
+        `/api/users/${session.user.id}`,
+        { ...baseOptions, signal }
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setProfile(data);
       } else {
-        const error = await response.json();
-        toast.error(error.error || "Failed to fetch profile");
+        // Try to parse error body; fall back to generic
+        let message = "Failed to fetch profile";
+        try {
+          const error = await response.json();
+          message = error.error || message;
+        } catch {}
+        toast.error(message);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      // AbortError is expected on unmount
+      if (typeof error === 'object' && error && 'name' in error && (error as { name: string }).name === 'AbortError') {
+        return;
+      }
       console.error("Error fetching profile:", error);
       toast.error("Failed to fetch profile");
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, profile]);
 
   // Fetch user profile
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchProfile();
-    }
-  }, [session, fetchProfile]);
+    if (!session?.user?.id) return;
+    if (profile) return;
+    const controller = new AbortController();
+    fetchProfile(controller.signal);
+    return () => controller.abort();
+  }, [session?.user?.id, fetchProfile, profile]);
 
-  const handleEditProfile = () => {
+  const handleEditProfile = useCallback(() => {
     router.push('/profile/edit');
-  };
+  }, [router]);
 
   const handleSuggestionClick = () => {
     handleEditProfile();
   };
+
+  const formattedCreatedAt = useMemo(() => (
+    profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"
+  ), [profile?.createdAt]);
+
+  const formattedUpdatedAt = useMemo(() => (
+    profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "N/A"
+  ), [profile?.updatedAt]);
+
+  const normalizedWebsite = useMemo(() => {
+    if (!profile?.website) return null;
+    try {
+      const hasProtocol = /^(https?:)?\/\//i.test(profile.website);
+      return hasProtocol ? profile.website : `https://${profile.website}`;
+    } catch {
+      return profile.website;
+    }
+  }, [profile?.website]);
 
   if (!profile) {
     return (
@@ -133,12 +172,10 @@ export function UserProfile() {
             </button>
             
             {/* Last updated info */}
-            <div className="hidden lg:flex items-center space-x-4">
+              <div className="hidden lg:flex items-center space-x-4" aria-label="Last updated">
               <div className="text-right">
                 <p className="text-sm text-gray-500">Last updated</p>
-                <p className="text-sm font-medium text-gray-900">
-                  {profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "N/A"}
-                </p>
+                  <p className="text-sm font-medium text-gray-900">{formattedUpdatedAt}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
@@ -221,8 +258,8 @@ export function UserProfile() {
                       Website
                     </label>
                     <p className="text-gray-900 py-2">
-                      {profile.website ? (
-                        <a href={profile.website} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">
+                      {normalizedWebsite ? (
+                        <a href={normalizedWebsite} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">
                           {profile.website}
                         </a>
                       ) : (
@@ -237,16 +274,20 @@ export function UserProfile() {
                       <Briefcase className="w-4 h-4 inline mr-2" />
                       Skills
                     </label>
-                    <div className="flex flex-wrap gap-2 py-2">
-                      {profile.skills?.map((skill, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
-                        >
-                          {skill}
-                        </span>
-                      )) || <p className="text-gray-500">No skills listed</p>}
-                    </div>
+                    {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 py-2">
+                        {profile.skills.map((skill, index) => (
+                          <span
+                            key={`${skill}-${index}`}
+                            className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 py-2">No skills listed</p>
+                    )}
                   </div>
                 </div>
 
@@ -277,7 +318,7 @@ export function UserProfile() {
                         <div key={index} className="relative group">
                           <Image
                             src={image}
-                            alt={`Portfolio ${index + 1}`}
+                            alt={`Portfolio image ${index + 1}`}
                             width={200}
                             height={128}
                             className="w-full h-32 object-cover rounded-lg shadow-sm"
@@ -306,9 +347,7 @@ export function UserProfile() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Member since</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"}
-                    </span>
+                    <span className="text-sm font-medium text-gray-900">{formattedCreatedAt}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Role</span>

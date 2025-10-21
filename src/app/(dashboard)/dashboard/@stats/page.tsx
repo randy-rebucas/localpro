@@ -50,8 +50,8 @@ export default function StatsPage() {
   return (
     <div className="lg:col-span-2">
       <h3 className="text-xl font-semibold text-gray-900 mb-6">Overview</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-green-600" />
@@ -65,7 +65,7 @@ export default function StatsPage() {
           <p className="text-sm text-gray-500">All modules available</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <User className="w-6 h-6 text-blue-600" />
@@ -81,7 +81,7 @@ export default function StatsPage() {
           <p className="text-sm text-gray-500">Account type</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <User className="w-6 h-6 text-purple-600" />
@@ -121,7 +121,7 @@ export default function StatsPage() {
           )}
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Activity className="w-6 h-6 text-green-600" />

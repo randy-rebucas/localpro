@@ -3,6 +3,10 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingPage } from "@/components/ui/loading";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { 
   BookOpen, 
   Plus, 
@@ -61,11 +65,7 @@ export default function AcademyAdmin() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
-      </div>
-    );
+    return <LoadingPage label="Loading academy" />;
   }
 
   if (!session) {
@@ -160,7 +160,7 @@ export default function AcademyAdmin() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <Card className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -192,41 +192,35 @@ export default function AcademyAdmin() {
               </button>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Courses Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Duration
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Students
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCourses.map((course, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Course</Th>
+                <Th>Category</Th>
+                <Th>Duration</Th>
+                <Th>Students</Th>
+                <Th>Rating</Th>
+                <Th>Status</Th>
+                <Th>Actions</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {filteredCourses.length === 0 ? (
+                <TableEmptyRow colSpan={7}>
+                  <EmptyState
+                    title="No courses found"
+                    description="Try adjusting your search or filters."
+                    icon={<BookOpen className="w-7 h-7 text-gray-400" />}
+                  />
+                </TableEmptyRow>
+              ) : (
+                filteredCourses.map((course, index) => (
+                  <Tr key={index}>
+                    <Td>
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -242,35 +236,33 @@ export default function AcademyAdmin() {
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
                         {course.category || "Technical"}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    </Td>
+                    <Td>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 text-gray-400 mr-1" />
                         {course.duration || "2h 30m"}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {course.students || "45"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>{course.students || "45"}</Td>
+                    <Td>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
                         <span className="ml-1 text-sm text-gray-900">
                           {course.rating || "4.8"}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                         Active
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    </Td>
+                    <Td>
                       <div className="flex space-x-2">
                         <button className="text-blue-600 hover:text-blue-900">
                           <Eye className="w-4 h-4" />
@@ -282,12 +274,12 @@ export default function AcademyAdmin() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </TBody>
+          </Table>
         </div>
       </div>
     </div>

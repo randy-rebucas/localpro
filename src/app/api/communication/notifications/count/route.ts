@@ -6,8 +6,14 @@ import { API_BASE_URL } from "@/lib/api";
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
+    // Try to get bearer from cookie if present
+    const cookieHeader = request.headers.get("cookie") || "";
+    const cookieToken = cookieHeader
+      .split(';')
+      .find(c => c.trim().startsWith('session='))
+      ?.split('=')[1] || null;
+    const bearer = cookieToken || session?.user?.id || null;
+    if (!bearer) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(`${API_BASE_URL}/api/communication/notifications/count?${queryString}`, {
       headers: {
-        "Authorization": `Bearer ${session.user.id}`,
+        "Authorization": `Bearer ${bearer}`,
       },
     });
 

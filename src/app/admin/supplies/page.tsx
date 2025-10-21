@@ -3,6 +3,10 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingPage } from "@/components/ui/loading";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { 
   Package, 
   Plus, 
@@ -60,11 +64,7 @@ export default function SuppliesAdmin() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
-      </div>
-    );
+    return <LoadingPage label="Loading supplies" />;
   }
 
   if (!session) {
@@ -159,7 +159,7 @@ export default function SuppliesAdmin() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <Card className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -191,41 +191,35 @@ export default function SuppliesAdmin() {
               </button>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Supplies Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Supply
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredSupplies.map((supply, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Supply</Th>
+                <Th>Category</Th>
+                <Th>Price</Th>
+                <Th>Stock</Th>
+                <Th>Rating</Th>
+                <Th>Status</Th>
+                <Th>Actions</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {filteredSupplies.length === 0 ? (
+                <TableEmptyRow colSpan={7}>
+                  <EmptyState
+                    title="No supplies found"
+                    description="Try adjusting your search or filters."
+                    icon={<Package className="w-7 h-7 text-gray-400" />}
+                  />
+                </TableEmptyRow>
+              ) : (
+                filteredSupplies.map((supply, index) => (
+                  <Tr key={index}>
+                    <Td>
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -241,32 +235,26 @@ export default function SuppliesAdmin() {
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                         {supply.category || "Tools"}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${supply.price || "25.99"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {supply.stock || "45"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>${supply.price || "25.99"}</Td>
+                    <Td>{supply.stock || "45"}</Td>
+                    <Td>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-900">
-                          {supply.rating || "4.5"}
-                        </span>
+                        <span className="ml-1 text-sm text-gray-900">{supply.rating || "4.5"}</span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                         Active
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    </Td>
+                    <Td>
                       <div className="flex space-x-2">
                         <button className="text-blue-600 hover:text-blue-900">
                           <Eye className="w-4 h-4" />
@@ -278,12 +266,12 @@ export default function SuppliesAdmin() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </TBody>
+          </Table>
         </div>
       </div>
     </div>

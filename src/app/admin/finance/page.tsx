@@ -3,6 +3,10 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LoadingPage } from "@/components/ui/loading";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { 
   CreditCard, 
   TrendingUp, 
@@ -72,11 +76,7 @@ export default function FinanceAdmin() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
-      </div>
-    );
+    return <LoadingPage label="Loading finance" />;
   }
 
   if (!session) {
@@ -193,7 +193,7 @@ export default function FinanceAdmin() {
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <Card className="mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -221,38 +221,34 @@ export default function FinanceAdmin() {
               </button>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Transactions Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Transaction
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {transactions.map((transaction, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <Table>
+            <THead>
+              <Tr>
+                <Th>Transaction</Th>
+                <Th>Type</Th>
+                <Th>Amount</Th>
+                <Th>Date</Th>
+                <Th>Status</Th>
+                <Th>Actions</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {transactions.length === 0 ? (
+                <TableEmptyRow colSpan={6}>
+                  <EmptyState
+                    title="No transactions"
+                    description="Transactions will appear here when available."
+                    icon={<CreditCard className="w-7 h-7 text-gray-400" />}
+                  />
+                </TableEmptyRow>
+              ) : (
+                transactions.map((transaction, index) => (
+                  <Tr key={index}>
+                    <Td>
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0">
                           <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -268,37 +264,31 @@ export default function FinanceAdmin() {
                           </div>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        transaction.type === 'revenue' 
+                    </Td>
+                    <Td>
+                      <span className={`${transaction.type === 'revenue' 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
+                          : 'bg-red-100 text-red-800'} px-2 inline-flex text-xs leading-5 font-semibold rounded-full`}>
                         {transaction.type || "Revenue"}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      ${transaction.amount || "125.00"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.date || "2024-01-15"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </Td>
+                    <Td>${transaction.amount || "125.00"}</Td>
+                    <Td>{transaction.date || "2024-01-15"}</Td>
+                    <Td>
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                         Completed
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    </Td>
+                    <Td>
                       <button className="text-blue-600 hover:text-blue-900">
                         <Eye className="w-4 h-4" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </Td>
+                  </Tr>
+                ))
+              )}
+            </TBody>
+          </Table>
         </div>
       </div>
     </div>

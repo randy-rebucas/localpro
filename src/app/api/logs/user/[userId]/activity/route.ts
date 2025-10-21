@@ -9,8 +9,15 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
+    // Derive bearer from cookie if present, otherwise from session
+    const cookieHeader = request.headers.get("cookie") || "";
+    const cookieToken = cookieHeader
+      .split(';')
+      .find(c => c.trim().startsWith('session='))
+      ?.split('=')[1] || null;
+    const bearer = cookieToken || session?.user?.id || null;
+
+    if (!bearer) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -21,7 +28,7 @@ export async function GET(
     // Forward the request to the external API
     const response = await fetch(`${API_BASE_URL}/api/logs/user/${userId}/activity?${queryString}`, {
       headers: {
-        "Authorization": `Bearer ${session.user.id}`,
+        "Authorization": `Bearer ${bearer}`,
         "Content-Type": "application/json",
       },
     });

@@ -1,30 +1,22 @@
 "use client";
 
+import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { UserProfile } from "@/components/user-profile";
-import { useSession } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+  return (
+    <div>
+      <Breadcrumbs
+        className="text-sm text-gray-500 mb-4"
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Profile" },
+        ]}
+      />
 
-  useEffect(() => {
-    // Only redirect if we're sure the session is not loading and user is not authenticated
-    if (status === "unauthenticated") {
-      router.push("/auth");
-    }
-  }, [status, router]);
-
-  // Show loading state while session is being checked
-  if (status === "loading") {
-    return null; // Let the loading.tsx file handle the loading state
-  }
-
-  // Show loading state if no session (but don't redirect immediately)
-  if (!session) {
-    return null; // Let the loading.tsx file handle the loading state
-  }
-
-  return <UserProfile />;
+      <UserProfile />
+    </div>
+  );
 }
+
+
