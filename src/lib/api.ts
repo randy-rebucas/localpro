@@ -1,5 +1,5 @@
 // API configuration
-export const API_BASE_URL = "https://localpro-super-app.onrender.com";
+export const API_BASE_URL = process.env.API_ENDPOINT || "https://localpro-super-app.onrender.com";
 
 import { createAuthFetchOptions } from './auth-utils';
 
