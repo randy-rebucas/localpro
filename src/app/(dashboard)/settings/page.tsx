@@ -5,6 +5,7 @@ import { Settings as SettingsIcon, Save, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
+import { useSession } from "@/hooks/useAuth";
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 
@@ -13,11 +14,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>("");
+  const { data: session } = useSession();
 
-  const fieldClass = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600";
-  const selectClass = fieldClass;
+  const fieldClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600";
+  const selectClass = "w-full px-3 py-2 pr-8 bg-white border border-gray-200 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 appearance-none bg-no-repeat bg-right bg-[length:16px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzY2NzU4MSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K')]";
   const textareaClass = fieldClass;
-  const checkboxClass = "rounded border-gray-300 text-green-600 focus:ring-green-600";
+  const checkboxClass = "rounded border-gray-200 text-green-600 focus:ring-green-600";
 
   useEffect(() => {
     let isMounted = true;
@@ -41,6 +43,27 @@ export default function SettingsPage() {
   }, []);
 
   const canSave = useMemo(() => !!settings && !saving, [settings, saving]);
+  
+  // Get user role for conditional rendering
+  const userRole = session?.user?.role;
+  
+  // Role-based visibility helpers
+  const isClient = userRole === 'CLIENT';
+  const isProvider = userRole === 'PROVIDER';
+  const isSupplier = userRole === 'SUPPLIER';
+  const isInstructor = userRole === 'INSTRUCTOR';
+  const isAgencyOwner = userRole === 'AGENCY_OWNER';
+  const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
+  const isAdmin = userRole === 'ADMIN';
+  
+  // Business roles (providers, suppliers, instructors, agency roles)
+  const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Service provider roles (providers, agency roles)
+  const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Administrative roles
+  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
 
   function mergeWithDefaults(incoming: Partial<UserSettings>): UserSettings {
     return {
@@ -276,8 +299,13 @@ export default function SettingsPage() {
               ["Show rating", "privacy.showRating"],
               ["Show portfolio", "privacy.showPortfolio"],
               ["Allow direct messages", "privacy.allowDirectMessages"],
-              ["Allow job invitations", "privacy.allowJobInvitations"],
-              ["Allow referral requests", "privacy.allowReferralRequests"],
+              // Role-specific privacy settings
+              ...(isServiceProvider ? [
+                ["Allow job invitations", "privacy.allowJobInvitations"],
+              ] : []),
+              ...(isBusinessRole ? [
+                ["Allow referral requests", "privacy.allowReferralRequests"],
+              ] : []),
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
@@ -292,10 +320,15 @@ export default function SettingsPage() {
             {[
               ["Enabled", "notifications.push.enabled"],
               ["New messages", "notifications.push.newMessages"],
-              ["Job matches", "notifications.push.jobMatches"],
-              ["Booking updates", "notifications.push.bookingUpdates"],
-              ["Payment updates", "notifications.push.paymentUpdates"],
-              ["Referral updates", "notifications.push.referralUpdates"],
+              // Role-specific notifications
+              ...(isServiceProvider ? [
+                ["Job matches", "notifications.push.jobMatches"],
+                ["Booking updates", "notifications.push.bookingUpdates"],
+              ] : []),
+              ...(isBusinessRole ? [
+                ["Payment updates", "notifications.push.paymentUpdates"],
+                ["Referral updates", "notifications.push.referralUpdates"],
+              ] : []),
               ["System updates", "notifications.push.systemUpdates"],
               ["Marketing", "notifications.push.marketing"],
             ].map(([label, path]) => (
@@ -307,14 +340,19 @@ export default function SettingsPage() {
             {[
               ["Enabled", "notifications.email.enabled"],
               ["New messages", "notifications.email.newMessages"],
-              ["Job matches", "notifications.email.jobMatches"],
-              ["Booking updates", "notifications.email.bookingUpdates"],
-              ["Payment updates", "notifications.email.paymentUpdates"],
-              ["Referral updates", "notifications.email.referralUpdates"],
+              // Role-specific email notifications
+              ...(isServiceProvider ? [
+                ["Job matches", "notifications.email.jobMatches"],
+                ["Booking updates", "notifications.email.bookingUpdates"],
+              ] : []),
+              ...(isBusinessRole ? [
+                ["Payment updates", "notifications.email.paymentUpdates"],
+                ["Referral updates", "notifications.email.referralUpdates"],
+                ["Weekly digest", "notifications.email.weeklyDigest"],
+                ["Monthly report", "notifications.email.monthlyReport"],
+              ] : []),
               ["System updates", "notifications.email.systemUpdates"],
               ["Marketing", "notifications.email.marketing"],
-              ["Weekly digest", "notifications.email.weeklyDigest"],
-              ["Monthly report", "notifications.email.monthlyReport"],
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
@@ -324,8 +362,13 @@ export default function SettingsPage() {
             {[
               ["Enabled", "notifications.sms.enabled"],
               ["Urgent messages", "notifications.sms.urgentMessages"],
-              ["Booking reminders", "notifications.sms.bookingReminders"],
-              ["Payment alerts", "notifications.sms.paymentAlerts"],
+              // Role-specific SMS notifications
+              ...(isServiceProvider ? [
+                ["Booking reminders", "notifications.sms.bookingReminders"],
+              ] : []),
+              ...(isBusinessRole ? [
+                ["Payment alerts", "notifications.sms.paymentAlerts"],
+              ] : []),
               ["Security alerts", "notifications.sms.securityAlerts"],
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
@@ -368,51 +411,56 @@ export default function SettingsPage() {
               <input className={fieldClass} value={settings.communication.currency} onChange={onInput("communication.currency")} />
             </div>
           </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
-            <div className="md:col-span-2">
-              <label className="block text-sm text-gray-700 mb-1">Auto-reply message</label>
-              <textarea className={textareaClass} rows={3} value={settings.communication.autoReply.message} onChange={onInput("communication.autoReply.message")} />
-            </div>
-          </div>
-        </section>
-
-        {/* Service */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Service</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <NumberInput label="Default service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={0} />
-            <ToggleRow label="Auto-accept jobs" checked={settings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
-            <div />
-            <NumberInput label="Minimum job value" value={settings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
-            <NumberInput label="Maximum job value" value={settings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
-          </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Working hours start</label>
-              <input type="time" className={fieldClass} value={settings.service.workingHours.start} onChange={onInput("service.workingHours.start")} />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Working hours end</label>
-              <input type="time" className={fieldClass} value={settings.service.workingHours.end} onChange={onInput("service.workingHours.end")} />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Working days</label>
-              <div className="flex flex-wrap gap-3">
-                {(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const).map((d) => (
-                  <label key={d} className="inline-flex items-center gap-2 text-sm">
-                    <input type="checkbox" className={checkboxClass} checked={settings.service.workingHours.days.includes(d)} onChange={onArrayToggle("service.workingHours.days", d)} />
-                    <span className="capitalize">{d}</span>
-                  </label>
-                ))}
+          {/* Auto-reply settings - only for business roles */}
+          {isBusinessRole && (
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
+              <div className="md:col-span-2">
+                <label className="block text-sm text-gray-700 mb-1">Auto-reply message</label>
+                <textarea className={textareaClass} rows={3} value={settings.communication.autoReply.message} onChange={onInput("communication.autoReply.message")} />
               </div>
             </div>
-          </div>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <ToggleRow label="Emergency service" checked={settings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
-            <NumberInput label="Emergency surcharge (%)" value={settings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
-          </div>
+          )}
         </section>
+
+        {/* Service - Only show for service providers */}
+        {isServiceProvider && (
+          <section className="bg-white rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Service</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <NumberInput label="Default service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={0} />
+              <ToggleRow label="Auto-accept jobs" checked={settings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
+              <div />
+              <NumberInput label="Minimum job value" value={settings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
+              <NumberInput label="Maximum job value" value={settings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
+            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Working hours start</label>
+                <input type="time" className={fieldClass} value={settings.service.workingHours.start} onChange={onInput("service.workingHours.start")} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Working hours end</label>
+                <input type="time" className={fieldClass} value={settings.service.workingHours.end} onChange={onInput("service.workingHours.end")} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Working days</label>
+                <div className="flex flex-wrap gap-3">
+                  {(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const).map((d) => (
+                    <label key={d} className="inline-flex items-center gap-2 text-sm">
+                      <input type="checkbox" className={checkboxClass} checked={settings.service.workingHours.days.includes(d)} onChange={onArrayToggle("service.workingHours.days", d)} />
+                      <span className="capitalize">{d}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ToggleRow label="Emergency service" checked={settings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
+              <NumberInput label="Emergency surcharge (%)" value={settings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
+            </div>
+          </section>
+        )}
 
         {/* Payment */}
         <section className="bg-white rounded-lg p-4">
@@ -428,24 +476,68 @@ export default function SettingsPage() {
                 <option value="cash">Cash</option>
               </select>
             </div>
-            <ToggleRow label="Auto-withdraw" checked={settings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
-            <NumberInput label="Auto-withdraw threshold" value={settings.payment.autoWithdraw.threshold} onChange={onInput("payment.autoWithdraw.threshold", (v) => Number(v))} min={0} />
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Auto-withdraw frequency</label>
-              <select className={selectClass} value={settings.payment.autoWithdraw.frequency} onChange={onInput("payment.autoWithdraw.frequency")}>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-            <ToggleRow label="Include tax on invoices" checked={settings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
-            <NumberInput label="Tax rate (%)" value={settings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} />
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">Invoice template</label>
-              <input className={fieldClass} value={settings.payment.invoiceSettings.invoiceTemplate} onChange={onInput("payment.invoiceSettings.invoiceTemplate")} />
-            </div>
+            {/* Auto-withdraw settings - only for business roles */}
+            {isBusinessRole && (
+              <>
+                <ToggleRow label="Auto-withdraw" checked={settings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
+                <NumberInput label="Auto-withdraw threshold" value={settings.payment.autoWithdraw.threshold} onChange={onInput("payment.autoWithdraw.threshold", (v) => Number(v))} min={0} />
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Auto-withdraw frequency</label>
+                  <select className={selectClass} value={settings.payment.autoWithdraw.frequency} onChange={onInput("payment.autoWithdraw.frequency")}>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <ToggleRow label="Include tax on invoices" checked={settings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
+                <NumberInput label="Tax rate (%)" value={settings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} />
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Invoice template</label>
+                  <input className={fieldClass} value={settings.payment.invoiceSettings.invoiceTemplate} onChange={onInput("payment.invoiceSettings.invoiceTemplate")} />
+                </div>
+              </>
+            )}
           </div>
         </section>
+
+        {/* Supplier-specific settings */}
+        {isSupplier && (
+          <section className="bg-white rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Supply Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow label="Low stock alerts" checked={true} onChange={() => {}} />
+              <ToggleRow label="Order notifications" checked={true} onChange={() => {}} />
+              <ToggleRow label="Inventory updates" checked={true} onChange={() => {}} />
+              <ToggleRow label="Delivery notifications" checked={true} onChange={() => {}} />
+            </div>
+          </section>
+        )}
+
+        {/* Instructor-specific settings */}
+        {isInstructor && (
+          <section className="bg-white rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Academy Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow label="Student enrollment alerts" checked={true} onChange={() => {}} />
+              <ToggleRow label="Course completion notifications" checked={true} onChange={() => {}} />
+              <ToggleRow label="Content upload reminders" checked={true} onChange={() => {}} />
+              <ToggleRow label="Student message notifications" checked={true} onChange={() => {}} />
+            </div>
+          </section>
+        )}
+
+        {/* Agency-specific settings */}
+        {isAdministrative && (
+          <section className="bg-white rounded-lg p-4">
+            <h3 className="font-semibold text-gray-700 mb-3">Agency Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ToggleRow label="Team member notifications" checked={true} onChange={() => {}} />
+              <ToggleRow label="Performance alerts" checked={true} onChange={() => {}} />
+              <ToggleRow label="Business analytics updates" checked={true} onChange={() => {}} />
+              <ToggleRow label="Compliance reminders" checked={true} onChange={() => {}} />
+            </div>
+          </section>
+        )}
 
         {/* Security */}
         <section className="bg-white rounded-lg p-4">
@@ -539,7 +631,7 @@ export default function SettingsPage() {
 
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="flex items-center justify-between py-2 border-b last:border-b-0">
+    <label className="flex items-center justify-between py-2">
       <span className="text-sm text-gray-700">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
@@ -555,7 +647,7 @@ function NumberInput(props: { label: string; value: number; onChange: (e: Change
   return (
     <div>
       <label className="block text-sm text-gray-700 mb-1">{props.label}</label>
-      <input type="number" className="w-full border rounded-md px-2 py-2" value={Number.isFinite(props.value) ? props.value : 0} onChange={props.onChange} min={props.min} max={props.max} />
+      <input type="number" className="w-full border border-gray-200 rounded-md px-2 py-2" value={Number.isFinite(props.value) ? props.value : 0} onChange={props.onChange} min={props.min} max={props.max} />
     </div>
   );
 }

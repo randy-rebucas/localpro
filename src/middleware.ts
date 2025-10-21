@@ -174,6 +174,8 @@ function isStaticOrInternal(pathname: string): boolean {
     pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/robots.txt") ||
     pathname.startsWith("/sitemap.xml") ||
+    pathname.startsWith("/api/health") ||
+    pathname.startsWith("/api/test") ||
     pathname.includes(".") // Files with extensions
   );
 }

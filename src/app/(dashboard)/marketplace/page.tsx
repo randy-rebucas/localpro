@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Loading, GridSkeleton } from "@/components/ui/loading";
 import { 
   Search, 
   // Filter, 
@@ -15,7 +16,8 @@ import {
   List,
   SlidersHorizontal,
   Plus,
-  Store
+  Store,
+  RefreshCw
 } from "lucide-react";
 
 interface Service {
@@ -338,40 +340,56 @@ export default function MarketplacePage() {
         </div>
 
         {/* Service Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
-              <div className="w-full h-48 bg-gray-200 rounded-lg mb-4"></div>
-              <div className="space-y-3">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-24"></div>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
-                  <div className="h-4 bg-gray-200 rounded w-20"></div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <GridSkeleton count={6} columns={3} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button
-          onClick={fetchServices}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          Try Again
-        </button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Search className="w-8 h-8 text-red-600" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Unable to load services
+          </h2>
+          
+          <p className="text-gray-600 mb-6">
+            {error}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={fetchServices}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+            
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setFilters({
+                  category: "",
+                  priceRange: [0, 1000],
+                  rating: 0,
+                  location: "",
+                  availability: true,
+                  coordinates: undefined,
+                  radius: 10000
+                });
+                fetchServices();
+              }}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

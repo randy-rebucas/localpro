@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+import ErrorBoundary from "@/components/error-boundary";
 // import Navigation from "@/components/navigation";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
@@ -209,7 +210,20 @@ export default function DashboardLayout({
   };
 
   if (loading || status === "loading") {
-    return null; // Let the loading.tsx file handle the loading state
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
+            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
+              <span className="text-white font-bold text-xl">P</span>
+            </div>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Dashboard</h2>
+          <p className="text-gray-500">Setting up your workspace...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -237,19 +251,21 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
               >
                 {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
-              <div className="ml-4">
+              <div className="flex items-center">
                 <Logo />
               </div>
             </div>
@@ -293,77 +309,96 @@ export default function DashboardLayout({
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
-              <Link 
-                href="/notifications"
-                className={
-                  `relative p-2 rounded-lg transition-colors ` +
-                  (pathname?.startsWith("/notifications")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                }
-                aria-current={pathname?.startsWith("/notifications") ? "page" : undefined}
-              >
-                <Bell className="w-5 h-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 h-4 text-[10px] font-medium text-white bg-green-600 rounded-full">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Link>
-              <Link 
-                href="/help"
-                className={
-                  `p-2 rounded-lg transition-colors ` +
-                  (pathname?.startsWith("/help")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                }
-                aria-current={pathname?.startsWith("/help") ? "page" : undefined}
-              >
-                <HelpCircle className="w-5 h-5" />
-              </Link>
-              <Link 
-                href="/settings"
-                className={
-                  `p-2 rounded-lg transition-colors ` +
-                  (pathname?.startsWith("/settings")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                }
-                aria-current={pathname?.startsWith("/settings") ? "page" : undefined}
-              >
-                <Settings className="w-5 h-5" />
-              </Link>
-              <Link
-                href="/profile"
-                className="flex items-center space-x-2 px-3 py-1 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                <div className="flex flex-col text-left">
-                  <span className="text-sm font-medium text-gray-700">
-                    {user?.name || user?.firstName || "User"}
-                  </span>
-                  {user?.phone && (
-                    <span className="text-xs text-gray-500">
-                      {user.phone}
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              {/* Navigation Icons */}
+              <div className="flex items-center space-x-1">
+                <Link 
+                  href="/notifications"
+                  className={
+                    `relative p-2 rounded-lg transition-colors ` +
+                    (pathname?.startsWith("/notifications")
+                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                  }
+                  aria-current={pathname?.startsWith("/notifications") ? "page" : undefined}
+                  title="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 h-4 text-[10px] font-medium text-white bg-green-600 rounded-full">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
-                </div>
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-2 text-sm text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out</span>
-              </button>
+                </Link>
+                <Link 
+                  href="/help"
+                  className={
+                    `p-2 rounded-lg transition-colors ` +
+                    (pathname?.startsWith("/help")
+                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                  }
+                  aria-current={pathname?.startsWith("/help") ? "page" : undefined}
+                  title="Help"
+                >
+                  <HelpCircle className="w-5 h-5" />
+                </Link>
+                <Link 
+                  href="/settings"
+                  className={
+                    `p-2 rounded-lg transition-colors ` +
+                    (pathname?.startsWith("/settings")
+                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                  }
+                  aria-current={pathname?.startsWith("/settings") ? "page" : undefined}
+                  title="Settings"
+                >
+                  <Settings className="w-5 h-5" />
+                </Link>
+              </div>
+
+              {/* Divider - Hidden on mobile */}
+              <div className="hidden sm:block h-6 w-px bg-gray-300 mx-2"></div>
+
+              {/* User Profile & Actions */}
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <Link
+                  href="/profile"
+                  className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-medium text-sm">
+                      {(user?.name || user?.firstName || "U").charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-left hidden sm:block">
+                    <span className="text-sm font-medium text-gray-700">
+                      {user?.name || user?.firstName || "User"}
+                    </span>
+                    {user?.phone && (
+                      <span className="text-xs text-gray-500">
+                        {user.phone}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-1 sm:space-x-2 text-sm text-gray-500 hover:text-gray-700 px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="hidden lg:inline">Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Mobile Search Bar */}
-      <div className="md:hidden px-4 py-4 bg-white border-b">
+      <div className="md:hidden px-4 py-3 bg-white border-b border-gray-200">
         <div className="relative" ref={suggestionsContainerRef}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
@@ -373,10 +408,10 @@ export default function DashboardLayout({
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             ref={mobileInputRef}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm"
           />
           {showSuggestions && (
-            <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg max-h-72 overflow-auto">
+            <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg max-h-72 overflow-auto border border-gray-200">
               {suggestionsLoading && (
                 <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
               )}
@@ -401,10 +436,11 @@ export default function DashboardLayout({
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </div>
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
+      </div>
+    </ErrorBoundary>
   );
 }
