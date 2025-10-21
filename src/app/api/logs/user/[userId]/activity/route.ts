@@ -9,45 +9,60 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(request);
-    // Derive bearer from cookie if present, otherwise from session
-    const cookieHeader = request.headers.get("cookie") || "";
-    const cookieToken = cookieHeader
-      .split(';')
-      .find(c => c.trim().startsWith('session='))
-      ?.split('=')[1] || null;
-    const bearer = cookieToken || session?.user?.id || null;
-
-    if (!bearer) {
+    
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Use the same simple authentication method as other API routes
+    const bearer = session.user.id;
 
     const { userId } = await params;
     const { searchParams } = new URL(request.url);
     const queryString = searchParams.toString();
 
-    // Forward the request to the external API
+    const requestHeaders = {
+      "Authorization": `Bearer ${bearer}`,
+      "Content-Type": "application/json",
+    };
+    
     const response = await fetch(`${API_BASE_URL}/api/logs/user/${userId}/activity?${queryString}`, {
-      headers: {
-        "Authorization": `Bearer ${bearer}`,
-        "Content-Type": "application/json",
-      },
+      headers: requestHeaders,
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
-
-    const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || "Failed to fetch user activity logs" },
+        { error: `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching user activity logs:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
