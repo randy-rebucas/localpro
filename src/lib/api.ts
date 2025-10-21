@@ -43,7 +43,9 @@ export const API_ENDPOINTS = {
   marketplaceBookingReview: "/api/marketplace/bookings",
   marketplacePayPalApprove: "/api/marketplace/bookings/paypal/approve",
   marketplacePayPalOrder: "/api/marketplace/bookings/paypal/order",
-  
+  // Get all user's services
+  myServices: "/api/marketplace/my-services",
+
   // Supplies
   supplies: "/api/supplies",
   suppliesCategories: "/api/supplies/categories",

@@ -129,7 +129,7 @@ const ROUTE_PATTERNS = {
   
   // API routes that require Bearer token authentication (no session cookie fallback)
   bearerTokenApi: [
-    "/api/marketplace/",
+    "/api/marketplace/bookings",
     "/api/academy/",
     "/api/rentals/",
     "/api/supplies/",

@@ -6,7 +6,6 @@ import {
   Store, 
   Calendar, 
   BarChart3,
-  Plus,
   Briefcase
 } from "lucide-react";
 
@@ -90,16 +89,6 @@ export default function MarketplaceNav() {
         </div>
       </div>
 
-      {/* Right side - Action Button */}
-      <div className="flex-shrink-0 ml-4">
-        <Link
-          href="/marketplace/create-service"
-          className="inline-flex items-center px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 hover:shadow-lg transition-all duration-200 whitespace-nowrap transform hover:scale-105 hover:-translate-y-0.5"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Service
-        </Link>
-      </div>
     </div>
   );
 }

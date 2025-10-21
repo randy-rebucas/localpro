@@ -49,6 +49,8 @@ interface FilterOptions {
   rating: number;
   location: string;
   availability: boolean;
+  coordinates?: { lat: number; lng: number };
+  radius?: number;
 }
 
 export default function MarketplacePage() {
@@ -56,15 +58,17 @@ export default function MarketplacePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("relevance");
+  const [sortBy, setSortBy] = useState("price_low");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterOptions>({
-    category: "",
-    priceRange: [0, 1000],
-    rating: 0,
-    location: "",
-    availability: true
+    category: "CLEANING",
+    priceRange: [25, 100],
+    rating: 4,
+    location: "Manila",
+    availability: true,
+    coordinates: undefined,
+    radius: 10000 // 10km default radius
   });
 
   const categories = [
@@ -83,6 +87,23 @@ export default function MarketplacePage() {
     { value: "newest", label: "Newest First" }
   ];
 
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coordinates = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setFilters(prev => ({ ...prev, coordinates }));
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  };
+
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
@@ -94,10 +115,37 @@ export default function MarketplacePage() {
       if (filters.category) params.append("category", filters.category);
       if (filters.location) params.append("location", filters.location);
       if (filters.availability) params.append("available", "true");
-      if (filters.rating > 0) params.append("minRating", filters.rating.toString());
+      if (filters.rating > 0) {
+        params.append("rating", filters.rating.toString());
+        params.append("sortBy", "rating.average");
+        params.append("sortOrder", "desc");
+      }
       if (filters.priceRange[0] > 0) params.append("minPrice", filters.priceRange[0].toString());
       if (filters.priceRange[1] < 1000) params.append("maxPrice", filters.priceRange[1].toString());
-      params.append("sort", sortBy);
+      
+      // Add coordinates and radius if available
+      if (filters.coordinates) {
+        params.append("coordinates", JSON.stringify(filters.coordinates));
+        if (filters.radius) params.append("radius", filters.radius.toString());
+      }
+      
+      // Enhanced sorting
+      if (sortBy === "price_low") {
+        params.append("sortBy", "pricing.basePrice");
+        params.append("sortOrder", "asc");
+      } else if (sortBy === "price_high") {
+        params.append("sortBy", "pricing.basePrice");
+        params.append("sortOrder", "desc");
+      } else if (sortBy === "rating") {
+        params.append("sortBy", "rating.average");
+        params.append("sortOrder", "desc");
+      } else {
+        params.append("sort", sortBy);
+      }
+      
+      // Add pagination with the specified parameters
+      params.append("page", "1");
+      params.append("limit", "15");
 
       console.log("Fetching services with params:", params.toString());
       
@@ -131,7 +179,17 @@ export default function MarketplacePage() {
 
       const data = await response.json();
       console.log("Services data:", data);
-      setServices(Array.isArray(data) ? data : data.services || []);
+      
+      // Handle different response formats
+      if (Array.isArray(data)) {
+        setServices(data);
+      } else if (data.services) {
+        setServices(data.services);
+      } else if (data.data) {
+        setServices(data.data);
+      } else {
+        setServices([]);
+      }
     } catch (error) {
       console.error("Error fetching services:", error);
       
@@ -218,7 +276,9 @@ export default function MarketplacePage() {
       priceRange: [0, 1000],
       rating: 0,
       location: "",
-      availability: true
+      availability: true,
+      coordinates: undefined,
+      radius: 10000
     });
   };
 
@@ -324,7 +384,14 @@ export default function MarketplacePage() {
           <h1 className="text-2xl font-bold text-gray-700">Browse Services</h1>
           <p className="text-gray-600">Find and book services from local providers</p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex gap-3">
+          <button
+            onClick={getCurrentLocation}
+            className="px-4 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"
+          >
+            <MapPin className="w-4 h-4" />
+            Use Current Location
+          </button>
           <Link
             href="/marketplace/create-service"
             className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center gap-2"
@@ -374,12 +441,6 @@ export default function MarketplacePage() {
               ))}
             </select>
 
-            <button
-              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-            </button>
 
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -488,6 +549,13 @@ export default function MarketplacePage() {
           <p className="text-gray-600">
             {services.length} service{services.length !== 1 ? 's' : ''} found
           </p>
+          <button
+            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+          >
+            {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+          </button>
         </div>
 
         {services.length === 0 ? (
@@ -508,7 +576,9 @@ export default function MarketplacePage() {
                     priceRange: [0, 1000],
                     rating: 0,
                     location: "",
-                    availability: true
+                    availability: true,
+                    coordinates: undefined,
+                    radius: 10000
                   });
                 }}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"

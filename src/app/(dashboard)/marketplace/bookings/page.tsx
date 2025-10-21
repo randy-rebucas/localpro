@@ -51,16 +51,32 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
+      
       if (statusFilter !== "all") {
         params.append("status", statusFilter);
       }
+      
+      if (typeFilter !== "all") {
+        params.append("type", typeFilter);
+      }
+      
+      if (dateFrom) {
+        params.append("dateFrom", dateFrom);
+      }
+      
+      if (dateTo) {
+        params.append("dateTo", dateTo);
+      }
 
-      const response = await fetch(`/api/marketplace/bookings?${params.toString()}`);
+      const response = await fetch(`/api/marketplace/my-bookings?${params.toString()}`);
       
       if (!response.ok) {
         throw new Error("Failed to fetch bookings");
@@ -74,7 +90,7 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, typeFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     fetchBookings();
@@ -211,8 +227,8 @@ export default function BookingsPage() {
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Filter by Status
             </label>
@@ -227,6 +243,45 @@ export default function BookingsPage() {
                 </option>
               ))}
             </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Filter by Type
+            </label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            >
+              <option value="all">All Bookings</option>
+              <option value="client">As Client</option>
+              <option value="provider">As Provider</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date From
+            </label>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date To
+            </label>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
           </div>
         </div>
       </div>

@@ -7,12 +7,7 @@ import {
   Edit,
   Trash2,
   Eye,
-  Star,
-  Calendar,
-  DollarSign,
-  // Users,
-  TrendingUp,
-  // MoreHorizontal
+  Star
 } from "lucide-react";
 
 interface Service {
@@ -32,17 +27,9 @@ interface Service {
   updatedAt: string;
 }
 
-interface ServiceStats {
-  totalServices: number;
-  activeServices: number;
-  totalBookings: number;
-  totalEarnings: number;
-  averageRating: number;
-}
 
 export default function MyServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
-  const [stats, setStats] = useState<ServiceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -71,22 +58,10 @@ export default function MyServicesPage() {
     }
   }, [statusFilter]);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const response = await fetch('/api/marketplace/my-services/stats');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  }, []);
 
   useEffect(() => {
     fetchServices();
-    fetchStats();
-  }, [fetchServices, fetchStats]);
+  }, [fetchServices]);
 
   const updateServiceStatus = async (serviceId: string, status: string) => {
     try {
@@ -211,58 +186,6 @@ export default function MyServicesPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Services</p>
-                <p className="text-2xl font-bold text-gray-700">{stats.totalServices}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                <p className="text-2xl font-bold text-gray-700">{stats.totalBookings}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Earnings</p>
-                <p className="text-2xl font-bold text-gray-700">{formatPrice(stats.totalEarnings)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Star className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-700">{stats.averageRating.toFixed(1)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6">

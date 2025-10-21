@@ -18,7 +18,7 @@ const mockServices = [
     name: "Professional House Cleaning",
     description: "Complete house cleaning service including kitchen, bathrooms, living areas, and bedrooms. We use eco-friendly products and provide all cleaning supplies.",
     category: "CLEANING",
-    price: 150,
+    price: 80,
     duration: 180,
     provider: {
       id: "provider-1",
@@ -28,8 +28,8 @@ const mockServices = [
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
     },
     location: {
-      city: "New York",
-      state: "NY"
+      city: "Manila",
+      state: "Metro Manila"
     },
     images: [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
@@ -42,13 +42,65 @@ const mockServices = [
   },
   {
     id: "2",
+    name: "Deep Cleaning Service",
+    description: "Thorough deep cleaning for homes and offices. Includes detailed scrubbing, sanitizing, and organizing services.",
+    category: "CLEANING",
+    price: 50,
+    duration: 240,
+    provider: {
+      id: "provider-2",
+      name: "Maria Santos",
+      rating: 4.5,
+      reviewCount: 89,
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
+    },
+    location: {
+      city: "Manila",
+      state: "Metro Manila"
+    },
+    images: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+    ],
+    rating: 4.5,
+    reviewCount: 89,
+    isAvailable: true,
+    createdAt: "2024-01-10T14:30:00Z"
+  },
+  {
+    id: "3",
+    name: "Office Cleaning",
+    description: "Professional office cleaning service for commercial spaces. Regular maintenance and deep cleaning available.",
+    category: "CLEANING",
+    price: 75,
+    duration: 120,
+    provider: {
+      id: "provider-3",
+      name: "Juan Dela Cruz",
+      rating: 4.2,
+      reviewCount: 156,
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
+    },
+    location: {
+      city: "Manila",
+      state: "Metro Manila"
+    },
+    images: [
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+    ],
+    rating: 4.2,
+    reviewCount: 156,
+    isAvailable: true,
+    createdAt: "2024-01-08T09:15:00Z"
+  },
+  {
+    id: "4",
     name: "Emergency Plumbing Repair",
     description: "24/7 emergency plumbing services for leaks, clogs, and repairs. Licensed plumber with 10+ years experience. Same-day service available.",
     category: "PLUMBING",
     price: 200,
     duration: 120,
     provider: {
-      id: "provider-2",
+      id: "provider-4",
       name: "Mike Rodriguez",
       rating: 4.9,
       reviewCount: 89,
@@ -67,14 +119,14 @@ const mockServices = [
     createdAt: "2024-01-10T14:30:00Z"
   },
   {
-    id: "3",
+    id: "5",
     name: "Electrical Installation",
     description: "Professional electrical services including outlet installation, lighting, and electrical repairs. Fully licensed and insured electrician.",
     category: "ELECTRICAL",
     price: 175,
     duration: 150,
     provider: {
-      id: "provider-3",
+      id: "provider-5",
       name: "David Chen",
       rating: 4.7,
       reviewCount: 156,
@@ -93,14 +145,14 @@ const mockServices = [
     createdAt: "2024-01-08T09:15:00Z"
   },
   {
-    id: "4",
+    id: "6",
     name: "Full Service Moving",
     description: "Complete moving service including packing, loading, transportation, and unpacking. We handle everything from start to finish.",
     category: "MOVING",
     price: 500,
     duration: 480,
     provider: {
-      id: "provider-4",
+      id: "provider-6",
       name: "Moving Pros LLC",
       rating: 4.6,
       reviewCount: 203,
@@ -127,31 +179,38 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(request);
     console.log("API: Session:", session);
     
-    if (!session?.user?.id) {
-      console.log("API: No session or user ID");
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    // For development, allow unauthenticated requests for public marketplace
+    // In production, you might want to require authentication for certain features
 
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
     const location = searchParams.get('location');
     const minRating = searchParams.get('minRating');
+    const rating = searchParams.get('rating'); // Alternative to minRating
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const available = searchParams.get('available');
     const sort = searchParams.get('sort');
+    const sortBy = searchParams.get('sortBy');
+    const sortOrder = searchParams.get('sortOrder');
+    const coordinates = searchParams.get('coordinates');
+    const radius = searchParams.get('radius');
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
 
-    console.log("API: Query parameters:", { category, search, location, minRating, minPrice, maxPrice, available, sort });
+    console.log("API: Query parameters:", { 
+      category, search, location, minRating, rating, minPrice, maxPrice, 
+      available, sort, sortBy, sortOrder, coordinates, radius, page, limit 
+    });
 
     // Filter mock data based on query parameters
     let filteredServices = [...mockServices];
 
     if (category) {
-      filteredServices = filteredServices.filter(service => service.category === category);
+      filteredServices = filteredServices.filter(service => 
+        service.category.toLowerCase() === category.toLowerCase()
+      );
     }
 
     if (search) {
@@ -170,9 +229,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (minRating) {
-      const minRatingNum = parseFloat(minRating);
-      filteredServices = filteredServices.filter(service => service.rating >= minRatingNum);
+    // Support both minRating and rating parameters
+    const ratingFilter = rating || minRating;
+    if (ratingFilter) {
+      const ratingNum = parseFloat(ratingFilter);
+      filteredServices = filteredServices.filter(service => service.rating >= ratingNum);
     }
 
     if (minPrice) {
@@ -190,16 +251,21 @@ export async function GET(request: NextRequest) {
     }
 
     // Sort services
-    if (sort) {
-      switch (sort) {
+    const sortField = sortBy || sort;
+    const order = sortOrder || 'desc';
+    
+    if (sortField) {
+      switch (sortField) {
         case 'price_low':
-          filteredServices.sort((a, b) => a.price - b.price);
+        case 'pricing.basePrice':
+          filteredServices.sort((a, b) => order === 'asc' ? a.price - b.price : b.price - a.price);
           break;
         case 'price_high':
           filteredServices.sort((a, b) => b.price - a.price);
           break;
         case 'rating':
-          filteredServices.sort((a, b) => b.rating - a.rating);
+        case 'rating.average':
+          filteredServices.sort((a, b) => order === 'asc' ? a.rating - b.rating : b.rating - a.rating);
           break;
         case 'newest':
           filteredServices.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -215,7 +281,7 @@ export async function GET(request: NextRequest) {
       const queryString = searchParams.toString();
       const response = await fetch(`${API_BASE_URL}/api/marketplace/services?${queryString}`, {
         headers: {
-          "Authorization": `Bearer ${session.user.id}`,
+          "Authorization": `Bearer ${session?.user?.id || ''}`,
           "Content-Type": "application/json"
         },
         // Add timeout to prevent hanging
@@ -230,13 +296,19 @@ export async function GET(request: NextRequest) {
       console.log("External API unavailable, using mock data:", fetchError);
     }
 
-    // Return mock data
-    console.log("API: Returning mock data with", filteredServices.length, "services");
+    // Apply pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedServices = filteredServices.slice(startIndex, endIndex);
+
+    // Return mock data with pagination
+    console.log("API: Returning mock data with", paginatedServices.length, "services");
     const response = {
-      services: filteredServices,
+      services: paginatedServices,
       total: filteredServices.length,
-      page: 1,
-      limit: 20
+      page: page,
+      limit: limit,
+      totalPages: Math.ceil(filteredServices.length / limit)
     };
     
     console.log("API: Response data:", JSON.stringify(response, null, 2));
