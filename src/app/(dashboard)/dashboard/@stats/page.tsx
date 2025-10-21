@@ -49,30 +49,30 @@ export default function StatsPage() {
 
   return (
     <div className="lg:col-span-2">
-      <h3 className="text-xl font-semibold text-gray-900 mb-6">Overview</h3>
+      <h3 className="text-xl font-semibold text-gray-700 mb-6">Overview</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Shield className="w-6 h-6 text-green-600" />
             </div>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Active Services
           </h3>
           <p className="text-3xl font-bold text-green-600 mb-1">8</p>
           <p className="text-sm text-gray-500">All modules available</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <User className="w-6 h-6 text-blue-600" />
             </div>
             <CheckCircle className="w-5 h-5 text-blue-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
             User Role
           </h3>
           <p className="text-3xl font-bold text-blue-600 mb-1 capitalize">
@@ -81,7 +81,7 @@ export default function StatsPage() {
           <p className="text-sm text-gray-500">Account type</p>
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <User className="w-6 h-6 text-purple-600" />
@@ -94,7 +94,7 @@ export default function StatsPage() {
               </div>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Profile Completeness
           </h3>
           <div className="mb-3">
@@ -121,7 +121,7 @@ export default function StatsPage() {
           )}
         </div>
         
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow h-full flex flex-col">
+        <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow h-full flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <Activity className="w-6 h-6 text-green-600" />
@@ -131,7 +131,7 @@ export default function StatsPage() {
               <span className="text-xs text-green-600 font-medium">Live</span>
             </div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
             Platform Status
           </h3>
           <p className="text-3xl font-bold text-green-600 mb-1">Online</p>

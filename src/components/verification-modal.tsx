@@ -110,7 +110,7 @@ export function VerificationModal({
         {isVerified ? (
           <div className="text-center">
             <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <h2 className="text-2xl font-bold text-gray-700 mb-2">
               Verification Successful!
             </h2>
             <p className="text-gray-600">
@@ -123,7 +123,7 @@ export function VerificationModal({
             <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <Phone className="w-6 h-6 text-green-600" />
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-700">
                 Verify Phone Number
               </h2>
             </div>
@@ -140,7 +140,7 @@ export function VerificationModal({
               <p className="text-gray-600 mb-2">
                 We&apos;ve sent a verification code to:
               </p>
-              <p className="font-medium text-gray-900">{contact}</p>
+              <p className="font-medium text-gray-700">{contact}</p>
             <p className="text-sm text-gray-500 mt-2">
               Please enter the code below to verify your phone number.
             </p>

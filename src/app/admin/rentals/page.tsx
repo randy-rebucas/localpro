@@ -90,7 +90,7 @@ export default function RentalsAdmin() {
                 ← Back to Admin
               </a>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-3xl font-bold text-gray-700 flex items-center">
                   <Home className="w-8 h-8 mr-3 text-orange-600" />
                   Rentals Management
                 </h1>
@@ -117,7 +117,7 @@ export default function RentalsAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Rentals</p>
-                <p className="text-2xl font-bold text-gray-900">{rentals.length}</p>
+                <p className="text-2xl font-bold text-gray-700">{rentals.length}</p>
               </div>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function RentalsAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Bookings</p>
-                <p className="text-2xl font-bold text-gray-900">89</p>
+                <p className="text-2xl font-bold text-gray-700">89</p>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function RentalsAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">$8,945</p>
+                <p className="text-2xl font-bold text-gray-700">$8,945</p>
               </div>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function RentalsAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Providers</p>
-                <p className="text-2xl font-bold text-gray-900">23</p>
+                <p className="text-2xl font-bold text-gray-700">23</p>
               </div>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function RentalsAdmin() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-700">
                             {rental.name || "Sample Rental"}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -252,7 +252,7 @@ export default function RentalsAdmin() {
                     <Td>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-900">{rental.rating || "4.7"}</span>
+                        <span className="ml-1 text-sm text-gray-700">{rental.rating || "4.7"}</span>
                       </div>
                     </Td>
                     <Td>

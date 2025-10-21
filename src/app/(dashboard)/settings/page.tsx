@@ -14,7 +14,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>("");
 
-  const fieldClass = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600";
+  const fieldClass = "w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600";
   const selectClass = fieldClass;
   const textareaClass = fieldClass;
   const checkboxClass = "rounded border-gray-300 text-green-600 focus:ring-green-600";
@@ -227,7 +227,7 @@ export default function SettingsPage() {
             <Link href="/dashboard" className="hover:text-gray-700">Dashboard</Link>
           </li>
           <li className="select-none">/</li>
-          <li className="text-gray-900 font-medium">Settings</li>
+          <li className="text-gray-700 font-medium">Settings</li>
         </ol>
       </nav>
 
@@ -236,7 +236,7 @@ export default function SettingsPage() {
           <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center">
             <SettingsIcon className="w-5 h-5" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+          <h2 className="text-xl font-semibold text-gray-700">Settings</h2>
         </div>
         <button
           onClick={onSave}
@@ -254,8 +254,8 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 gap-6">
         {/* Privacy */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Privacy</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Privacy</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-700 mb-1">Profile visibility</label>
@@ -285,9 +285,9 @@ export default function SettingsPage() {
         </section>
 
         {/* Notifications */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Notifications</h3>
-          <h4 className="text-sm font-medium text-gray-900">Push</h4>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Notifications</h3>
+          <h4 className="text-sm font-medium text-gray-700">Push</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {[
               ["Enabled", "notifications.push.enabled"],
@@ -302,7 +302,7 @@ export default function SettingsPage() {
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
           </div>
-          <h4 className="text-sm font-medium text-gray-900">Email</h4>
+          <h4 className="text-sm font-medium text-gray-700">Email</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {[
               ["Enabled", "notifications.email.enabled"],
@@ -319,7 +319,7 @@ export default function SettingsPage() {
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
           </div>
-          <h4 className="text-sm font-medium text-gray-900">SMS</h4>
+          <h4 className="text-sm font-medium text-gray-700">SMS</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               ["Enabled", "notifications.sms.enabled"],
@@ -334,8 +334,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Communication */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Communication</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Communication</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-700 mb-1">Preferred language</label>
@@ -378,8 +378,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Service */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Service</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Service</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <NumberInput label="Default service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={0} />
             <ToggleRow label="Auto-accept jobs" checked={settings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
@@ -415,8 +415,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Payment */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Payment</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Payment</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-700 mb-1">Preferred method</label>
@@ -448,8 +448,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Security */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Security</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Security</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <ToggleRow label="Two-factor authentication" checked={settings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
             <div>
@@ -470,8 +470,8 @@ export default function SettingsPage() {
         </section>
 
         {/* App */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">App</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">App</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-700 mb-1">Theme</label>
@@ -519,8 +519,8 @@ export default function SettingsPage() {
         </section>
 
         {/* Analytics */}
-        <section className="bg-white border rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Analytics & Personalization</h3>
+        <section className="bg-white rounded-lg p-4">
+          <h3 className="font-semibold text-gray-700 mb-3">Analytics & Personalization</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               ["Share usage data", "analytics.shareUsageData"],
@@ -540,7 +540,7 @@ export default function SettingsPage() {
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
     <label className="flex items-center justify-between py-2 border-b last:border-b-0">
-      <span className="text-sm text-gray-900">{props.label}</span>
+      <span className="text-sm text-gray-700">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
         <span className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-600 transition-colors relative">

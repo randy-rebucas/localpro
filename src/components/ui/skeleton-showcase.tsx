@@ -16,7 +16,7 @@ export function SkeletonShowcase() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-gray-700 dark:text-white">
             Loading Skeleton Showcase
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
@@ -26,7 +26,7 @@ export function SkeletonShowcase() {
 
         {/* Basic Skeletons */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
             Basic Skeletons
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -67,7 +67,7 @@ export function SkeletonShowcase() {
 
         {/* Card Skeletons */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
             Card Skeletons
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,7 +79,7 @@ export function SkeletonShowcase() {
 
         {/* Table Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
             Table Skeleton
           </h2>
           <SkeletonTable />
@@ -87,7 +87,7 @@ export function SkeletonShowcase() {
 
         {/* Dashboard Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
             Dashboard Skeleton
           </h2>
           <SkeletonDashboard />
@@ -95,7 +95,7 @@ export function SkeletonShowcase() {
 
         {/* Profile Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
             Profile Skeleton
           </h2>
           <SkeletonProfile />

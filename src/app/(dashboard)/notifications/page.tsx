@@ -131,7 +131,7 @@ export default function NotificationsPage() {
           <div className="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
             <Bell className="w-5 h-5" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
+          <h2 className="text-xl font-semibold text-gray-700">Notifications</h2>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -167,7 +167,7 @@ export default function NotificationsPage() {
       {loading && (
         <ul className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i} className="bg-white border rounded-lg p-4 animate-pulse">
+            <li key={i} className="bg-white rounded-lg p-4 animate-pulse">
               <div className="flex items-start justify-between">
                 <div className="space-y-2 w-3/4">
                   <div className="h-3 bg-gray-200 rounded w-1/3" />
@@ -192,10 +192,10 @@ export default function NotificationsPage() {
 
       <ul className="space-y-3">
         {visibleItems.map((n) => (
-          <li key={n.id} className={`bg-white border rounded-lg p-4 ${n.read ? "opacity-80" : ""}`}>
+          <li key={n.id} className={`bg-white rounded-lg p-4 ${n.read ? "opacity-80" : ""}`}>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-medium text-gray-900 truncate">{n.title || "Notification"}</p>
+                <p className="font-medium text-gray-700 truncate">{n.title || "Notification"}</p>
                 <p className="text-sm text-gray-600 break-words">{n.message}</p>
                 <div className="mt-2 flex items-center gap-3">
                   {n.href && (

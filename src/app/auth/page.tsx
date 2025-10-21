@@ -149,7 +149,7 @@ function SignInForm() {
               <span className="text-white font-bold text-2xl">P</span>
             </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-700">
             Sign in to LocalPro
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
@@ -171,7 +171,7 @@ function SignInForm() {
                   <input
                     {...register("phone")}
                     type="tel"
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
                     placeholder="Enter your phone number"
                   />
                 </div>
@@ -198,7 +198,7 @@ function SignInForm() {
               <p className="text-sm text-gray-600 mb-4">
                 We&apos;ve sent a verification code to:
               </p>
-              <p className="font-medium text-gray-900">{phoneNumber}</p>
+              <p className="font-medium text-gray-700">{phoneNumber}</p>
             </div>
 
             <div className="space-y-4">
@@ -210,7 +210,7 @@ function SignInForm() {
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                   placeholder="Enter verification code"
                   maxLength={8}
                 />
@@ -228,7 +228,7 @@ function SignInForm() {
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your first name"
                     />
                   </div>
@@ -243,7 +243,7 @@ function SignInForm() {
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your last name"
                     />
                   </div>
@@ -258,7 +258,7 @@ function SignInForm() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your email"
                     />
                   </div>

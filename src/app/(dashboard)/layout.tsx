@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+// import Navigation from "@/components/navigation";
+// import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
 import {
   Menu,
@@ -217,7 +219,7 @@ export default function DashboardLayout({
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Activity className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Something went wrong</h2>
           <p className="text-gray-500 mb-6">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -237,7 +239,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -266,7 +268,7 @@ export default function DashboardLayout({
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 />
                 {showSuggestions && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-auto">
+                  <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg max-h-72 overflow-auto">
                     {suggestionsLoading && (
                       <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
                     )}
@@ -374,7 +376,7 @@ export default function DashboardLayout({
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
           />
           {showSuggestions && (
-            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-auto">
+            <div className="absolute z-50 mt-1 w-full bg-white rounded-lg shadow-lg max-h-72 overflow-auto">
               {suggestionsLoading && (
                 <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>
               )}

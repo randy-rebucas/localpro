@@ -59,7 +59,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-900">Search</h1>
+        <h1 className="text-xl font-semibold text-gray-700">Search</h1>
         <div className="text-sm text-gray-500">Query: <span className="font-medium">{q || ""}</span></div>
       </div>
 
@@ -77,7 +77,7 @@ export default function SearchPage() {
       {!loading && !error && (
         <div className="grid grid-cols-1 gap-6">
           {Object.entries(results).map(([group, items]) => (
-            <div key={group} className="bg-white rounded-lg border shadow-sm">
+            <div key={group} className="bg-white rounded-lg shadow-sm">
               <div className="px-4 py-3 border-b bg-gray-50 rounded-t-lg">
                 <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{group}</h2>
               </div>
@@ -86,7 +86,7 @@ export default function SearchPage() {
                   <li key={`${group}-${idx}`} className="px-4 py-3 hover:bg-gray-50">
                     {getItemHref(item) !== "#" ? (
                       <Link href={getItemHref(item)} className="block">
-                        <div className="font-medium text-gray-900">{getItemLabel(item)}</div>
+                        <div className="font-medium text-gray-700">{getItemLabel(item)}</div>
                         {item.description && (
                           <div className="text-sm text-gray-500 truncate">{item.description}</div>
                         )}
@@ -96,7 +96,7 @@ export default function SearchPage() {
                       </Link>
                     ) : (
                       <div>
-                        <div className="font-medium text-gray-900">{getItemLabel(item)}</div>
+                        <div className="font-medium text-gray-700">{getItemLabel(item)}</div>
                         {item.description && (
                           <div className="text-sm text-gray-500 truncate">{item.description}</div>
                         )}

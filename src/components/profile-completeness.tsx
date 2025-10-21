@@ -103,9 +103,9 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Profile Completeness</h3>
+        <h3 className="text-lg font-semibold text-gray-700">Profile Completeness</h3>
         <button
           onClick={() => setShowSuggestions(!showSuggestions)}
           className="flex items-center space-x-2 text-sm text-green-600 hover:text-green-700"
@@ -118,7 +118,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
       {/* Score Display */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-2xl font-bold text-gray-900">{score.percentage}%</span>
+          <span className="text-2xl font-bold text-gray-700">{score.percentage}%</span>
           <div className="flex items-center space-x-1">
             <TrendingUp className="w-4 h-4 text-green-600" />
             <span className="text-sm text-gray-600">
@@ -148,17 +148,17 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
         <div className="space-y-4">
           <div className="flex items-center space-x-2 mb-3">
             <Target className="w-4 h-4 text-green-600" />
-            <h4 className="font-medium text-gray-900">AI-Powered Recommendations</h4>
+            <h4 className="font-medium text-gray-700">AI-Powered Recommendations</h4>
           </div>
           
           {recommendations.map((rec, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors">
+            <div key={index} className="rounded-lg p-4 hover:bg-green-50 transition-colors">
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${
                     rec.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'
                   }`}></div>
-                  <h5 className="font-medium text-gray-900">{rec.title}</h5>
+                  <h5 className="font-medium text-gray-700">{rec.title}</h5>
                 </div>
                 <button
                   onClick={() => onSuggestionClick(rec.field)}
@@ -188,13 +188,13 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
       <div className="mt-6 pt-4 border-t border-gray-200">
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="text-center">
-            <div className="font-semibold text-gray-900">
+            <div className="font-semibold text-gray-700">
               {score.percentage >= 80 ? "7x" : score.percentage >= 60 ? "3x" : "1x"}
             </div>
             <div className="text-gray-600">More views</div>
           </div>
           <div className="text-center">
-            <div className="font-semibold text-gray-900">
+            <div className="font-semibold text-gray-700">
               {score.percentage >= 80 ? "85%" : score.percentage >= 60 ? "60%" : "30%"}
             </div>
             <div className="text-gray-600">More opportunities</div>

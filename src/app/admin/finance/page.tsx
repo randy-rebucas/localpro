@@ -94,7 +94,7 @@ export default function FinanceAdmin() {
                 ← Back to Admin
               </a>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-3xl font-bold text-gray-700 flex items-center">
                   <CreditCard className="w-8 h-8 mr-3 text-yellow-600" />
                   Finance Management
                 </h1>
@@ -127,7 +127,7 @@ export default function FinanceAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">${overview?.totalRevenue || "45,678"}</p>
+                <p className="text-2xl font-bold text-gray-700">${overview?.totalRevenue || "45,678"}</p>
                 <p className="text-xs text-green-600">+12.5% from last month</p>
               </div>
             </div>
@@ -140,7 +140,7 @@ export default function FinanceAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">${overview?.totalExpenses || "12,345"}</p>
+                <p className="text-2xl font-bold text-gray-700">${overview?.totalExpenses || "12,345"}</p>
                 <p className="text-xs text-red-600">+5.2% from last month</p>
               </div>
             </div>
@@ -153,7 +153,7 @@ export default function FinanceAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Net Profit</p>
-                <p className="text-2xl font-bold text-gray-900">${overview?.netProfit || "33,333"}</p>
+                <p className="text-2xl font-bold text-gray-700">${overview?.netProfit || "33,333"}</p>
                 <p className="text-xs text-green-600">+18.7% from last month</p>
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function FinanceAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Profit Margin</p>
-                <p className="text-2xl font-bold text-gray-900">{overview?.profitMargin || "73.1"}%</p>
+                <p className="text-2xl font-bold text-gray-700">{overview?.profitMargin || "73.1"}%</p>
                 <p className="text-xs text-green-600">+2.1% from last month</p>
               </div>
             </div>
@@ -176,7 +176,7 @@ export default function FinanceAdmin() {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Trend</h3>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Revenue Trend</h3>
             <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
               <BarChart3 className="w-16 h-16 text-gray-400" />
               <p className="ml-4 text-gray-500">Revenue chart will be displayed here</p>
@@ -184,7 +184,7 @@ export default function FinanceAdmin() {
           </div>
           
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Expense Breakdown</h3>
+            <h3 className="text-lg font-semibold text-gray-700 mb-4">Expense Breakdown</h3>
             <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
               <PieChart className="w-16 h-16 text-gray-400" />
               <p className="ml-4 text-gray-500">Expense breakdown chart will be displayed here</p>
@@ -256,7 +256,7 @@ export default function FinanceAdmin() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-700">
                             {transaction.description || "Service Payment"}
                           </div>
                           <div className="text-sm text-gray-500">

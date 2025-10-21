@@ -576,11 +576,11 @@ export function EditProfileForm() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
+    <div className="bg-white rounded-xl shadow-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Edit Profile</h2>
+          <h2 className="text-2xl font-bold text-gray-700">Edit Profile</h2>
           <p className="text-sm text-gray-600 mt-1">Update your personal information and preferences</p>
         </div>
       </div>
@@ -636,7 +636,7 @@ export function EditProfileForm() {
                   isLoading={isLoading}
                 />
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{profile?.name || "User"}</h3>
+                  <h3 className="text-lg font-semibold text-gray-700">{profile?.name || "User"}</h3>
                   <p className="text-gray-600 capitalize">{profile?.role || "User"}</p>
                   {profile?.isVerified && (
                     <div className="flex items-center mt-1">
@@ -651,7 +651,7 @@ export function EditProfileForm() {
               <div className="space-y-8">
                 {/* Personal */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Personal</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Personal</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Name */}
                 <div>
@@ -662,7 +662,7 @@ export function EditProfileForm() {
                   <input
                     {...register("name")}
                     type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -671,24 +671,24 @@ export function EditProfileForm() {
 
                 {/* Contact */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Contact</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Contact</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                    <input {...register("firstName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("firstName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                    <input {...register("lastName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("lastName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input {...register("email")} type="email" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("email")} type="email" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input {...register("phoneNumber")} type="tel" placeholder="+63-900-000-0000" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("phoneNumber")} type="tel" placeholder="+63-900-000-0000" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                 </div>
 
@@ -701,13 +701,13 @@ export function EditProfileForm() {
                   <input
                     {...register("phone")}
                     type="tel"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
                   />
                 </div>
 
                 {/* Address */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Address</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Address</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Location */}
                 <div>
@@ -718,30 +718,30 @@ export function EditProfileForm() {
                   <input
                     {...register("location")}
                     type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Street</label>
-                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                 </div>
                 </div>
@@ -755,7 +755,7 @@ export function EditProfileForm() {
                   <input
                     {...register("website")}
                     type="url"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
                   />
                   {errors.website && (
                     <p className="mt-1 text-sm text-red-600">{errors.website.message}</p>
@@ -764,7 +764,7 @@ export function EditProfileForm() {
 
                 {/* Skills & Specialties */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Skills & Specialties</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Skills & Specialties</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Skills */}
                 <div>
@@ -776,18 +776,18 @@ export function EditProfileForm() {
                     {...register("skills")}
                     type="text"
                     placeholder="Enter skills separated by commas"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
-                    <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
-                    <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                 </div>
                 </div>
@@ -800,14 +800,14 @@ export function EditProfileForm() {
                   <textarea
                     {...register("bio")}
                     rows={3}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400 resize-none"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400 resize-none"
                     placeholder="Tell us about yourself..."
                   />
                 </div>
 
                 {/* Professional & Business */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Professional & Business</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Professional & Business</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Experience */}
                 <div>
@@ -815,19 +815,19 @@ export function EditProfileForm() {
                     Experience
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input {...register("experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                    <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                    <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <input {...register("profile.businessType")} type="text" placeholder="Business type" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.businessType")} type="text" placeholder="Business type" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                   </div>
                 </div>
                 </div>
 
                 {/* Media */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Media</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Media</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Portfolio Gallery */}
                 <PortfolioGallery
@@ -840,7 +840,7 @@ export function EditProfileForm() {
 
                 {/* Certifications */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Certifications</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Certifications</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -863,7 +863,7 @@ export function EditProfileForm() {
 
                 {/* Insurance */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Insurance</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Insurance</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -881,7 +881,7 @@ export function EditProfileForm() {
 
                 {/* Background Check */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Background Check</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Background Check</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -894,7 +894,7 @@ export function EditProfileForm() {
 
                 {/* Availability */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Availability</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Availability</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -925,7 +925,7 @@ export function EditProfileForm() {
 
                 {/* Preferences and Agency */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Preferences & Agency</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Preferences & Agency</h3>
                   <div className="h-px bg-gray-200" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
@@ -951,12 +951,12 @@ export function EditProfileForm() {
 
                 {/* Tags & Notes */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-900 tracking-wide">Tags & Notes</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Tags & Notes</h3>
                   <div className="h-px bg-gray-200" />
                 {/* Tags */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                  <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                  <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
                 </div>
 
                 {/* Notes */}

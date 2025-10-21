@@ -95,7 +95,7 @@ export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
                     <div className="ml-4 min-w-0">
                       <div className={`text-sm font-medium ${
                         status === "current" ? "text-green-600" : 
-                        status === "completed" ? "text-gray-900" : "text-gray-500"
+                        status === "completed" ? "text-gray-700" : "text-gray-500"
                       }`}>
                         {step.title}
                       </div>

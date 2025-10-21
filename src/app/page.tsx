@@ -3,7 +3,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-700 dark:text-white mb-6">
             Welcome to{" "}
             <span className="text-blue-600 dark:text-blue-400">LocalPro</span>
           </h1>
@@ -35,7 +35,7 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V8a2 2 0 012-2V6" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Professional Services</h3>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">Professional Services</h3>
             <p className="text-gray-600 dark:text-gray-300">
               Connect with skilled professionals in your area for any service you need.
             </p>
@@ -47,7 +47,7 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Supplies & Equipment</h3>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">Supplies & Equipment</h3>
             <p className="text-gray-600 dark:text-gray-300">
               Find and order professional supplies and equipment from verified suppliers.
             </p>
@@ -59,7 +59,7 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Academy</h3>
+            <h3 className="text-xl font-semibold text-gray-700 dark:text-white mb-2">Academy</h3>
             <p className="text-gray-600 dark:text-gray-300">
               Learn new skills and advance your career with our comprehensive courses.
             </p>

@@ -136,7 +136,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               <span className="text-white font-bold text-xl">P</span>
             </div>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Profile</h2>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Profile</h2>
           <p className="text-gray-500">Setting up your profile...</p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
       <div className="mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-gray-700 mb-2">
               Profile Settings
             </h2>
             <p className="text-gray-600 text-lg">
@@ -175,7 +175,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               <div className="hidden lg:flex items-center space-x-4" aria-label="Last updated">
               <div className="text-right">
                 <p className="text-sm text-gray-500">Last updated</p>
-                  <p className="text-sm font-medium text-gray-900">{formattedUpdatedAt}</p>
+                  <p className="text-sm font-medium text-gray-700">{formattedUpdatedAt}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <User className="w-6 h-6 text-white" />
@@ -189,7 +189,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Profile Display */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
               {/* Avatar Section */}
               <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-6 border-b border-gray-200">
                 <div className="flex-shrink-0">
@@ -210,7 +210,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   )}
                 </div>
                 <div className="text-center sm:text-left">
-                  <h3 className="text-xl font-semibold text-gray-900">{profile?.name || "User"}</h3>
+                  <h3 className="text-xl font-semibold text-gray-700">{profile?.name || "User"}</h3>
                   <p className="text-gray-600 capitalize">{profile?.role || "User"}</p>
                   {profile?.isVerified && (
                     <div className="flex items-center justify-center sm:justify-start mt-1">
@@ -230,7 +230,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       <User className="w-4 h-4 inline mr-2" />
                       Full Name
                     </label>
-                    <p className="text-gray-900 py-2">{profile.name}</p>
+                    <p className="text-gray-700 py-2">{profile.name}</p>
                   </div>
 
                   {/* Phone */}
@@ -239,7 +239,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       <Phone className="w-4 h-4 inline mr-2" />
                       Phone
                     </label>
-                    <p className="text-gray-900 py-2">{profile.phone || "Not provided"}</p>
+                    <p className="text-gray-700 py-2">{profile.phone || "Not provided"}</p>
                   </div>
 
                   {/* Location */}
@@ -248,7 +248,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       <MapPin className="w-4 h-4 inline mr-2" />
                       Location
                     </label>
-                    <p className="text-gray-900 py-2">{profile.location || "Not provided"}</p>
+                    <p className="text-gray-700 py-2">{profile.location || "Not provided"}</p>
                   </div>
 
                   {/* Website */}
@@ -257,7 +257,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       <Globe className="w-4 h-4 inline mr-2" />
                       Website
                     </label>
-                    <p className="text-gray-900 py-2">
+                    <p className="text-gray-700 py-2">
                       {normalizedWebsite ? (
                         <a href={normalizedWebsite} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">
                           {profile.website}
@@ -296,7 +296,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Bio
                   </label>
-                  <p className="text-gray-900 py-2">{profile.bio || "No bio provided"}</p>
+                  <p className="text-gray-700 py-2">{profile.bio || "No bio provided"}</p>
                 </div>
 
                 {/* Experience */}
@@ -304,7 +304,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Experience
                   </label>
-                  <p className="text-gray-900 py-2">{profile.experience || "No experience provided"}</p>
+                  <p className="text-gray-700 py-2">{profile.experience || "No experience provided"}</p>
                 </div>
 
                 {/* Portfolio Gallery */}
@@ -342,16 +342,16 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               />
 
               {/* Account Info */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Info</h3>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Account Info</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Member since</span>
-                    <span className="text-sm font-medium text-gray-900">{formattedCreatedAt}</span>
+                    <span className="text-sm font-medium text-gray-700">{formattedCreatedAt}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Role</span>
-                    <span className="text-sm font-medium text-gray-900 capitalize">
+                    <span className="text-sm font-medium text-gray-700 capitalize">
                       {profile?.role || "User"}
                     </span>
                   </div>
@@ -382,8 +382,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-700 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                     View Public Profile

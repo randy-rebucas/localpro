@@ -89,7 +89,7 @@ export default function SuppliesAdmin() {
                 ← Back to Admin
               </a>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-3xl font-bold text-gray-700 flex items-center">
                   <Package className="w-8 h-8 mr-3 text-green-600" />
                   Supplies Management
                 </h1>
@@ -116,7 +116,7 @@ export default function SuppliesAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Supplies</p>
-                <p className="text-2xl font-bold text-gray-900">{supplies.length}</p>
+                <p className="text-2xl font-bold text-gray-700">{supplies.length}</p>
               </div>
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function SuppliesAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Orders</p>
-                <p className="text-2xl font-bold text-gray-900">234</p>
+                <p className="text-2xl font-bold text-gray-700">234</p>
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function SuppliesAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">$12,345</p>
+                <p className="text-2xl font-bold text-gray-700">$12,345</p>
               </div>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function SuppliesAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Suppliers</p>
-                <p className="text-2xl font-bold text-gray-900">45</p>
+                <p className="text-2xl font-bold text-gray-700">45</p>
               </div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function SuppliesAdmin() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-700">
                             {supply.name || "Sample Supply"}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -246,7 +246,7 @@ export default function SuppliesAdmin() {
                     <Td>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-900">{supply.rating || "4.5"}</span>
+                        <span className="ml-1 text-sm text-gray-700">{supply.rating || "4.5"}</span>
                       </div>
                     </Td>
                     <Td>

@@ -246,7 +246,7 @@ export function Dashboard() {
         {/* Service Modules Grid */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Service Modules</h3>
+            <h3 className="text-xl font-semibold text-gray-700">Service Modules</h3>
             <div className="text-sm text-gray-500">
               {filteredModules.length} of {serviceModules.length} services
             </div>
@@ -255,7 +255,7 @@ export function Dashboard() {
             {filteredModules.map((module) => (
               <div
                 key={module.id}
-                className="group bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                className="group bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
                 onClick={() => handleModuleClick(module.route)}
               >
                 <div className="flex items-start justify-between mb-4">
@@ -266,7 +266,7 @@ export function Dashboard() {
                 </div>
                 
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-green-700 transition-colors">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-1 group-hover:text-green-700 transition-colors">
                     {module.name}
                   </h3>
                   <p className="text-sm text-gray-500">
@@ -293,7 +293,7 @@ export function Dashboard() {
           {filteredModules.length === 0 && (
             <div className="text-center py-12">
               <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No services found</h3>
               <p className="text-gray-500">Try adjusting your search terms</p>
             </div>
           )}
@@ -303,30 +303,30 @@ export function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Quick Stats */}
           <div className="lg:col-span-2">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Overview</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-6">Overview</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <Shield className="w-6 h-6 text-green-600" />
                   </div>
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Active Services
                 </h3>
                 <p className="text-3xl font-bold text-green-600 mb-1">8</p>
                 <p className="text-sm text-gray-500">All modules available</p>
               </div>
               
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <User className="w-6 h-6 text-blue-600" />
                   </div>
                   <CheckCircle className="w-5 h-5 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   User Role
                 </h3>
                 <p className="text-3xl font-bold text-blue-600 mb-1 capitalize">
@@ -335,7 +335,7 @@ export function Dashboard() {
                 <p className="text-sm text-gray-500">Account type</p>
               </div>
               
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                     <User className="w-6 h-6 text-purple-600" />
@@ -348,7 +348,7 @@ export function Dashboard() {
                   </div>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Profile Completeness
                 </h3>
                 <div className="mb-3">
@@ -375,7 +375,7 @@ export function Dashboard() {
                 )}
               </div>
               
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                     <Activity className="w-6 h-6 text-green-600" />
@@ -385,7 +385,7 @@ export function Dashboard() {
                     <span className="text-xs text-green-600 font-medium">Live</span>
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">
                   Platform Status
                 </h3>
                 <p className="text-3xl font-bold text-green-600 mb-1">Online</p>
@@ -396,8 +396,8 @@ export function Dashboard() {
 
           {/* Recent Activity */}
           <div className="lg:col-span-1">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-xl font-semibold text-gray-700 mb-6">Recent Activity</h3>
+            <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="space-y-4">
                 {recentActivity.length > 0 ? (
                   recentActivity.slice(0, 5).map((activity, index) => {
@@ -408,7 +408,7 @@ export function Dashboard() {
                         {getActivityIcon((activityObj.type as string) || (activityObj.icon as string) || 'default')}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-700">
                           {(activityObj.action as string) || (activityObj.description as string) || (activityObj.title as string) || 'Activity'}
                         </p>
                         <p className="text-xs text-gray-500 flex items-center">

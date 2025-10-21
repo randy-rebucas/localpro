@@ -117,7 +117,7 @@ export default function ServicesPage() {
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-gray-900">Service Modules</h3>
+        <h3 className="text-xl font-semibold text-gray-700">Service Modules</h3>
         <div className="text-sm text-gray-500">
           {filteredModules.length} of {serviceModules.length} services
         </div>
@@ -126,7 +126,7 @@ export default function ServicesPage() {
         {filteredModules.map((module) => (
           <div
             key={module.id}
-            className="group bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-green-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+            className="group bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
             onClick={() => handleModuleClick(module.route)}
           >
             <div className="flex items-start justify-between mb-4">
@@ -137,7 +137,7 @@ export default function ServicesPage() {
             </div>
             
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-green-700 transition-colors">
+              <h3 className="text-lg font-semibold text-gray-700 mb-1 group-hover:text-green-700 transition-colors">
                 {module.name}
               </h3>
               <p className="text-sm text-gray-500">
@@ -164,7 +164,7 @@ export default function ServicesPage() {
       {filteredModules.length === 0 && (
         <div className="text-center py-12">
           <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">No services found</h3>
           <p className="text-gray-500">Try adjusting your search terms</p>
         </div>
       )}

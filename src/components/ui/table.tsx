@@ -29,7 +29,7 @@ export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCell
 }
 
 export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
-	return <td className={cn("px-6 py-4 whitespace-nowrap text-sm text-gray-900", className)} {...props} />;
+	return <td className={cn("px-6 py-4 whitespace-nowrap text-sm text-gray-700", className)} {...props} />;
 }
 
 export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {

@@ -50,7 +50,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Portfolio Gallery</h3>
+        <h3 className="text-lg font-semibold text-gray-700">Portfolio Gallery</h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setViewMode('grid')}
@@ -157,7 +157,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
                     className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                   />
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">Portfolio Image {index + 1}</p>
+                    <p className="font-medium text-gray-700">Portfolio Image {index + 1}</p>
                     <p className="text-sm text-gray-500">Click to view full size</p>
                   </div>
                   <div className="flex space-x-2">

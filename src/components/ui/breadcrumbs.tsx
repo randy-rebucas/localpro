@@ -26,7 +26,7 @@ export function Breadcrumbs({
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={`${item.label}-${index}`} className={isLast ? "text-gray-900 font-medium" : undefined}>
+            <li key={`${item.label}-${index}`} className={isLast ? "text-gray-700 font-medium" : undefined}>
               {item.href && !isLast ? (
                 <div className="flex items-center gap-2">
                   <Link href={item.href} className="hover:text-gray-700">

@@ -90,7 +90,7 @@ export default function AcademyAdmin() {
                 ← Back to Admin
               </a>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <h1 className="text-3xl font-bold text-gray-700 flex items-center">
                   <BookOpen className="w-8 h-8 mr-3 text-purple-600" />
                   Academy Management
                 </h1>
@@ -117,7 +117,7 @@ export default function AcademyAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{courses.length}</p>
+                <p className="text-2xl font-bold text-gray-700">{courses.length}</p>
               </div>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function AcademyAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Enrollments</p>
-                <p className="text-2xl font-bold text-gray-900">1,234</p>
+                <p className="text-2xl font-bold text-gray-700">1,234</p>
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function AcademyAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Students</p>
-                <p className="text-2xl font-bold text-gray-900">567</p>
+                <p className="text-2xl font-bold text-gray-700">567</p>
               </div>
             </div>
           </div>
@@ -153,7 +153,7 @@ export default function AcademyAdmin() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">78%</p>
+                <p className="text-2xl font-bold text-gray-700">78%</p>
               </div>
             </div>
           </div>
@@ -228,7 +228,7 @@ export default function AcademyAdmin() {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-700">
                             {course.title || "Sample Course"}
                           </div>
                           <div className="text-sm text-gray-500">
@@ -252,7 +252,7 @@ export default function AcademyAdmin() {
                     <Td>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-900">
+                        <span className="ml-1 text-sm text-gray-700">
                           {course.rating || "4.8"}
                         </span>
                       </div>

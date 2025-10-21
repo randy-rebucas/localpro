@@ -80,8 +80,8 @@ export default function ActivityPage() {
 
   return (
     <div className="lg:col-span-1">
-      <h3 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h3>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 className="text-xl font-semibold text-gray-700 mb-6">Recent Activity</h3>
+      <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="space-y-4">
           {recentActivity.length > 0 ? (
             recentActivity.slice(0, 5).map((activity, index) => {
@@ -92,7 +92,7 @@ export default function ActivityPage() {
                   {getActivityIcon((activityObj.type as string) || (activityObj.icon as string) || 'default')}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-700">
                     {(activityObj.action as string) || (activityObj.description as string) || (activityObj.title as string) || 'Activity'}
                   </p>
                   <p className="text-xs text-gray-500 flex items-center">
