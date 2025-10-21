@@ -18,9 +18,9 @@ export const metadata: Metadata = {
   title: "LocalPro Super App",
   description: "Your all-in-one platform for professional services, supplies, education, and more",
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/logo.svg",
+    shortcut: "/logo.svg",
+    apple: "/logo.svg",
   },
 };
 

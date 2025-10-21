@@ -296,7 +296,7 @@ export default function BrowseJobsPage() {
           <p className="text-gray-600 mt-1">Find and apply to jobs from clients</p>
         </div>
         <Link
-          href="/marketplace/create-service"
+          href="/marketplace/create-job"
           className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <Briefcase className="w-4 h-4 mr-2" />

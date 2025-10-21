@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Eye,
   MessageCircle,
-  Star
+  Star,
+  Store
 } from "lucide-react";
 
 interface Booking {
@@ -300,8 +301,9 @@ export default function BookingsPage() {
             </p>
             <Link
               href="/marketplace"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
+              <Store className="w-4 h-4 mr-2" />
               Browse Services
             </Link>
           </div>
