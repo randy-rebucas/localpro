@@ -103,7 +103,7 @@ export default function DashboardPage() {
           {/* This page can be used for any additional dashboard-specific content */}
           
           {/* Quick Actions Section */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
                 <Activity className="w-4 h-4 text-green-600" />

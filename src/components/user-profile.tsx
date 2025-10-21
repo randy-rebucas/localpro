@@ -50,6 +50,26 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   const { data: session } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfileData | null>(initialProfile ?? null);
+  
+  // Get user role for conditional rendering
+  const userRole = session?.user?.role;
+  
+  // Role-based visibility helpers
+  const isProvider = userRole === 'PROVIDER';
+  const isSupplier = userRole === 'SUPPLIER';
+  const isInstructor = userRole === 'INSTRUCTOR';
+  const isAgencyOwner = userRole === 'AGENCY_OWNER';
+  const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
+  const isAdmin = userRole === 'ADMIN';
+  
+  // Business roles (providers, suppliers, instructors, agency roles)
+  const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Service provider roles (providers, agency roles)
+  const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Administrative roles
+  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
 
   // Prefetch edit route for snappier navigation
   useEffect(() => {
@@ -104,9 +124,9 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     router.push('/profile/edit');
   }, [router]);
 
-  const handleSuggestionClick = () => {
+  const handleSuggestionClick = useCallback(() => {
     handleEditProfile();
-  };
+  }, [handleEditProfile]);
 
   const formattedCreatedAt = useMemo(() => (
     profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"
@@ -268,11 +288,11 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                     </p>
                   </div>
 
-                  {/* Skills */}
+                  {/* Skills - Show for all roles */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <Briefcase className="w-4 h-4 inline mr-2" />
-                      Skills
+                      {isBusinessRole ? "Professional Skills" : "Skills"}
                     </label>
                     {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
                       <div className="flex flex-wrap gap-2 py-2">
@@ -299,19 +319,21 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <p className="text-gray-700 py-2">{profile.bio || "No bio provided"}</p>
                 </div>
 
-                {/* Experience */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Experience
-                  </label>
-                  <p className="text-gray-700 py-2">{profile.experience || "No experience provided"}</p>
-                </div>
-
-                {/* Portfolio Gallery */}
-                {profile.portfolio && profile.portfolio.length > 0 && (
+                {/* Experience - Show for business roles */}
+                {isBusinessRole && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Portfolio
+                      {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
+                    </label>
+                    <p className="text-gray-700 py-2">{profile.experience || "No experience provided"}</p>
+                  </div>
+                )}
+
+                {/* Portfolio Gallery - Show for business roles */}
+                {isBusinessRole && profile.portfolio && profile.portfolio.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {isServiceProvider ? "Service Portfolio" : isInstructor ? "Teaching Portfolio" : "Professional Portfolio"}
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {profile.portfolio.map((image, index) => (
@@ -388,9 +410,32 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                     View Public Profile
                   </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Download Resume
-                  </button>
+                  {/* Role-specific actions */}
+                  {isBusinessRole && (
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      Download Resume
+                    </button>
+                  )}
+                  {isServiceProvider && (
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      Service Dashboard
+                    </button>
+                  )}
+                  {isSupplier && (
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      Supply Dashboard
+                    </button>
+                  )}
+                  {isInstructor && (
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      Academy Dashboard
+                    </button>
+                  )}
+                  {isAdministrative && (
+                    <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
+                      Agency Dashboard
+                    </button>
+                  )}
                   <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                     Privacy Settings
                   </button>

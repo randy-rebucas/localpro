@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
+  } catch {
     // Fallback to mock suggestions if external API fails
     const { searchParams } = new URL(request.url);
     const q = searchParams.get('q') || '';

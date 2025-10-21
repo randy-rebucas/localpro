@@ -14,6 +14,9 @@ import {
   // MapPin,
   // FileText
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ServiceForm {
   name: string;
@@ -220,84 +223,60 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Service Name *
-                  </label>
-                  <input
+                  <Input
+                    label="Service Name *"
                     type="text"
                     required
                     value={form.name}
                     onChange={(e) => handleInputChange("name", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="e.g., Professional House Cleaning"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
-                  </label>
-                  <select
+                  <Select
+                    label="Category *"
                     value={form.category}
                     onChange={(e) => handleInputChange("category", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    {categories.map(category => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={categories}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price (USD) *
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      step="0.01"
-                      value={form.price}
-                      onChange={(e) => handleInputChange("price", Number(e.target.value))}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
+                  <Input
+                    label="Price (USD) *"
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={form.price}
+                    onChange={(e) => handleInputChange("price", Number(e.target.value))}
+                    placeholder="0.00"
+                    leftIcon={<DollarSign />}
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Duration (minutes) *
-                  </label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="number"
-                      required
-                      min="15"
-                      step="15"
-                      value={form.duration}
-                      onChange={(e) => handleInputChange("duration", Number(e.target.value))}
-                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="60"
-                    />
-                  </div>
+                  <Input
+                    label="Duration (minutes) *"
+                    type="number"
+                    required
+                    min="15"
+                    step="15"
+                    value={form.duration}
+                    onChange={(e) => handleInputChange("duration", Number(e.target.value))}
+                    placeholder="60"
+                    leftIcon={<Clock />}
+                  />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description *
-                  </label>
-                  <textarea
+                  <Textarea
+                    label="Description *"
                     required
                     rows={4}
                     value={form.description}
                     onChange={(e) => handleInputChange("description", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="Describe your service in detail..."
                   />
                 </div>
@@ -309,40 +288,31 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Location</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City *
-                  </label>
-                  <input
+                  <Input
+                    label="City *"
                     type="text"
                     required
                     value={form.location.city}
                     onChange={(e) => handleLocationChange("city", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="New York"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State *
-                  </label>
-                  <input
+                  <Input
+                    label="State *"
                     type="text"
                     required
                     value={form.location.state}
                     onChange={(e) => handleLocationChange("state", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="NY"
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Address
-                  </label>
-                  <input
+                  <Input
+                    label="Address"
                     type="text"
                     value={form.location.address}
                     onChange={(e) => handleLocationChange("address", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     placeholder="123 Main St, New York, NY 10001"
                   />
                 </div>
@@ -354,14 +324,20 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">What&apos;s Included</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newFeature}
-                    onChange={(e) => setNewFeature(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFeature())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Add a feature..."
-                  />
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      value={newFeature}
+                      onChange={(e) => setNewFeature(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addFeature();
+                        }
+                      }}
+                      placeholder="Add a feature..."
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={addFeature}
@@ -392,14 +368,20 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Requirements</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newRequirement}
-                    onChange={(e) => setNewRequirement(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addRequirement())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Add a requirement..."
-                  />
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      value={newRequirement}
+                      onChange={(e) => setNewRequirement(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addRequirement();
+                        }
+                      }}
+                      placeholder="Add a requirement..."
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={addRequirement}

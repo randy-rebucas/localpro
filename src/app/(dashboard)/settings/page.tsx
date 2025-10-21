@@ -6,6 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 
@@ -16,10 +20,6 @@ export default function SettingsPage() {
   const [saveMessage, setSaveMessage] = useState<string>("");
   const { data: session } = useSession();
 
-  const fieldClass = "w-full px-3 py-2 bg-white border border-gray-200 rounded-md text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600";
-  const selectClass = "w-full px-3 py-2 pr-8 bg-white border border-gray-200 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 appearance-none bg-no-repeat bg-right bg-[length:16px] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgNkw4IDEwTDEyIDYiIHN0cm9rZT0iIzY2NzU4MSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K')]";
-  const textareaClass = fieldClass;
-  const checkboxClass = "rounded border-gray-200 text-green-600 focus:ring-green-600";
 
   useEffect(() => {
     let isMounted = true;
@@ -48,7 +48,6 @@ export default function SettingsPage() {
   const userRole = session?.user?.role;
   
   // Role-based visibility helpers
-  const isClient = userRole === 'CLIENT';
   const isProvider = userRole === 'PROVIDER';
   const isSupplier = userRole === 'SUPPLIER';
   const isInstructor = userRole === 'INSTRUCTOR';
@@ -281,16 +280,16 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-gray-700 mb-3">Privacy</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Profile visibility</label>
-              <select
-                className={selectClass}
+              <Select
+                label="Profile visibility"
                 value={settings.privacy.profileVisibility}
                 onChange={onInput("privacy.profileVisibility", (v) => v)}
-              >
-                <option value="public">Public</option>
-                <option value="private">Private</option>
-                <option value="connections">Connections</option>
-              </select>
+                options={[
+                  { value: "public", label: "Public" },
+                  { value: "private", label: "Private" },
+                  { value: "connections", label: "Connections" }
+                ]}
+              />
             </div>
             {[
               ["Show phone number", "privacy.showPhoneNumber"],
@@ -381,34 +380,52 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-gray-700 mb-3">Communication</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Preferred language</label>
-              <select className={selectClass} value={settings.communication.preferredLanguage} onChange={onInput("communication.preferredLanguage")}>
-                <option value="en">English</option>
-                <option value="fil">Filipino</option>
-              </select>
+              <Select
+                label="Preferred language"
+                value={settings.communication.preferredLanguage}
+                onChange={onInput("communication.preferredLanguage")}
+                options={[
+                  { value: "en", label: "English" },
+                  { value: "fil", label: "Filipino" }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Timezone</label>
-              <input className={fieldClass} value={settings.communication.timezone} onChange={onInput("communication.timezone")} />
+              <Input
+                label="Timezone"
+                value={settings.communication.timezone}
+                onChange={onInput("communication.timezone")}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Date format</label>
-              <select className={selectClass} value={settings.communication.dateFormat} onChange={onInput("communication.dateFormat")}>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-              </select>
+              <Select
+                label="Date format"
+                value={settings.communication.dateFormat}
+                onChange={onInput("communication.dateFormat")}
+                options={[
+                  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
+                  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
+                  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Time format</label>
-              <select className={selectClass} value={settings.communication.timeFormat} onChange={onInput("communication.timeFormat")}>
-                <option value="12h">12-hour</option>
-                <option value="24h">24-hour</option>
-              </select>
+              <Select
+                label="Time format"
+                value={settings.communication.timeFormat}
+                onChange={onInput("communication.timeFormat")}
+                options={[
+                  { value: "12h", label: "12-hour" },
+                  { value: "24h", label: "24-hour" }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Currency</label>
-              <input className={fieldClass} value={settings.communication.currency} onChange={onInput("communication.currency")} />
+              <Input
+                label="Currency"
+                value={settings.communication.currency}
+                onChange={onInput("communication.currency")}
+              />
             </div>
           </div>
           {/* Auto-reply settings - only for business roles */}
@@ -416,8 +433,12 @@ export default function SettingsPage() {
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
               <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
               <div className="md:col-span-2">
-                <label className="block text-sm text-gray-700 mb-1">Auto-reply message</label>
-                <textarea className={textareaClass} rows={3} value={settings.communication.autoReply.message} onChange={onInput("communication.autoReply.message")} />
+                <Textarea
+                  label="Auto-reply message"
+                  rows={3}
+                  value={settings.communication.autoReply.message}
+                  onChange={onInput("communication.autoReply.message")}
+                />
               </div>
             </div>
           )}
@@ -436,21 +457,31 @@ export default function SettingsPage() {
             </div>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Working hours start</label>
-                <input type="time" className={fieldClass} value={settings.service.workingHours.start} onChange={onInput("service.workingHours.start")} />
+                <Input
+                  label="Working hours start"
+                  type="time"
+                  value={settings.service.workingHours.start}
+                  onChange={onInput("service.workingHours.start")}
+                />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Working hours end</label>
-                <input type="time" className={fieldClass} value={settings.service.workingHours.end} onChange={onInput("service.workingHours.end")} />
+                <Input
+                  label="Working hours end"
+                  type="time"
+                  value={settings.service.workingHours.end}
+                  onChange={onInput("service.workingHours.end")}
+                />
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Working days</label>
                 <div className="flex flex-wrap gap-3">
                   {(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const).map((d) => (
-                    <label key={d} className="inline-flex items-center gap-2 text-sm">
-                      <input type="checkbox" className={checkboxClass} checked={settings.service.workingHours.days.includes(d)} onChange={onArrayToggle("service.workingHours.days", d)} />
-                      <span className="capitalize">{d}</span>
-                    </label>
+                    <Checkbox
+                      key={d}
+                      label={d.charAt(0).toUpperCase() + d.slice(1)}
+                      checked={settings.service.workingHours.days.includes(d)}
+                      onChange={onArrayToggle("service.workingHours.days", d)}
+                    />
                   ))}
                 </div>
               </div>
@@ -467,14 +498,18 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-gray-700 mb-3">Payment</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Preferred method</label>
-              <select className={selectClass} value={settings.payment.preferredPaymentMethod} onChange={onInput("payment.preferredPaymentMethod")}>
-                <option value="paypal">PayPal</option>
-                <option value="paymaya">PayMaya</option>
-                <option value="gcash">GCash</option>
-                <option value="bank">Bank</option>
-                <option value="cash">Cash</option>
-              </select>
+              <Select
+                label="Preferred method"
+                value={settings.payment.preferredPaymentMethod}
+                onChange={onInput("payment.preferredPaymentMethod")}
+                options={[
+                  { value: "paypal", label: "PayPal" },
+                  { value: "paymaya", label: "PayMaya" },
+                  { value: "gcash", label: "GCash" },
+                  { value: "bank", label: "Bank" },
+                  { value: "cash", label: "Cash" }
+                ]}
+              />
             </div>
             {/* Auto-withdraw settings - only for business roles */}
             {isBusinessRole && (
@@ -482,18 +517,25 @@ export default function SettingsPage() {
                 <ToggleRow label="Auto-withdraw" checked={settings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
                 <NumberInput label="Auto-withdraw threshold" value={settings.payment.autoWithdraw.threshold} onChange={onInput("payment.autoWithdraw.threshold", (v) => Number(v))} min={0} />
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">Auto-withdraw frequency</label>
-                  <select className={selectClass} value={settings.payment.autoWithdraw.frequency} onChange={onInput("payment.autoWithdraw.frequency")}>
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
+                  <Select
+                    label="Auto-withdraw frequency"
+                    value={settings.payment.autoWithdraw.frequency}
+                    onChange={onInput("payment.autoWithdraw.frequency")}
+                    options={[
+                      { value: "daily", label: "Daily" },
+                      { value: "weekly", label: "Weekly" },
+                      { value: "monthly", label: "Monthly" }
+                    ]}
+                  />
                 </div>
                 <ToggleRow label="Include tax on invoices" checked={settings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
                 <NumberInput label="Tax rate (%)" value={settings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} />
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">Invoice template</label>
-                  <input className={fieldClass} value={settings.payment.invoiceSettings.invoiceTemplate} onChange={onInput("payment.invoiceSettings.invoiceTemplate")} />
+                  <Input
+                    label="Invoice template"
+                    value={settings.payment.invoiceSettings.invoiceTemplate}
+                    onChange={onInput("payment.invoiceSettings.invoiceTemplate")}
+                  />
                 </div>
               </>
             )}
@@ -545,12 +587,16 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <ToggleRow label="Two-factor authentication" checked={settings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
             <div>
-              <label className="block text-sm text-gray-700 mb-1">2FA method</label>
-              <select className={selectClass} value={settings.security.twoFactorAuth.method} onChange={onInput("security.twoFactorAuth.method")}>
-                <option value="sms">SMS</option>
-                <option value="email">Email</option>
-                <option value="authenticator">Authenticator</option>
-              </select>
+              <Select
+                label="2FA method"
+                value={settings.security.twoFactorAuth.method}
+                onChange={onInput("security.twoFactorAuth.method")}
+                options={[
+                  { value: "sms", label: "SMS" },
+                  { value: "email", label: "Email" },
+                  { value: "authenticator", label: "Authenticator" }
+                ]}
+              />
             </div>
             <ToggleRow label="Login alerts enabled" checked={settings.security.loginAlerts.enabled} onChange={onToggle("security.loginAlerts.enabled")} />
             <ToggleRow label="Alert on new device" checked={settings.security.loginAlerts.newDevice} onChange={onToggle("security.loginAlerts.newDevice")} />
@@ -566,20 +612,28 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-gray-700 mb-3">App</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Theme</label>
-              <select className={selectClass} value={settings.app.theme} onChange={onInput("app.theme")}>
-                <option value="auto">Auto</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-              </select>
+              <Select
+                label="Theme"
+                value={settings.app.theme}
+                onChange={onInput("app.theme")}
+                options={[
+                  { value: "auto", label: "Auto" },
+                  { value: "light", label: "Light" },
+                  { value: "dark", label: "Dark" }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Font size</label>
-              <select className={selectClass} value={settings.app.fontSize} onChange={onInput("app.fontSize")}>
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large">Large</option>
-              </select>
+              <Select
+                label="Font size"
+                value={settings.app.fontSize}
+                onChange={onInput("app.fontSize")}
+                options={[
+                  { value: "small", label: "Small" },
+                  { value: "medium", label: "Medium" },
+                  { value: "large", label: "Large" }
+                ]}
+              />
             </div>
             <ToggleRow label="Sound effects" checked={settings.app.soundEffects.enabled} onChange={onToggle("app.soundEffects.enabled")} />
             <div>
@@ -591,20 +645,28 @@ export default function SettingsPage() {
             <ToggleRow label="Auto-save" checked={settings.app.autoSave.enabled} onChange={onToggle("app.autoSave.enabled")} />
             <NumberInput label="Auto-save interval (sec)" value={settings.app.autoSave.interval} onChange={onInput("app.autoSave.interval", (v) => Number(v))} min={5} />
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Image quality</label>
-              <select className={selectClass} value={settings.app.dataUsage.imageQuality} onChange={onInput("app.dataUsage.imageQuality")}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+              <Select
+                label="Image quality"
+                value={settings.app.dataUsage.imageQuality}
+                onChange={onInput("app.dataUsage.imageQuality")}
+                options={[
+                  { value: "low", label: "Low" },
+                  { value: "medium", label: "Medium" },
+                  { value: "high", label: "High" }
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Video quality</label>
-              <select className={selectClass} value={settings.app.dataUsage.videoQuality} onChange={onInput("app.dataUsage.videoQuality")}>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+              <Select
+                label="Video quality"
+                value={settings.app.dataUsage.videoQuality}
+                onChange={onInput("app.dataUsage.videoQuality")}
+                options={[
+                  { value: "low", label: "Low" },
+                  { value: "medium", label: "Medium" },
+                  { value: "high", label: "High" }
+                ]}
+              />
             </div>
             <ToggleRow label="Auto-download media" checked={settings.app.dataUsage.autoDownload} onChange={onToggle("app.dataUsage.autoDownload")} />
           </div>

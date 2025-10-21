@@ -5,7 +5,7 @@ import { CheckCircle, Lightbulb, TrendingUp, Target } from "lucide-react";
 
 interface ProfileCompletenessProps {
   profileData: Record<string, unknown>;
-  onSuggestionClick: (field: string) => void;
+  onSuggestionClick?: (field: string) => void;
 }
 
 export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileCompletenessProps) {
@@ -161,7 +161,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
                   <h5 className="font-medium text-gray-700">{rec.title}</h5>
                 </div>
                 <button
-                  onClick={() => onSuggestionClick(rec.field)}
+                  onClick={() => onSuggestionClick?.(rec.field)}
                   className="text-green-600 hover:text-green-700 text-sm font-medium"
                 >
                   Add Now

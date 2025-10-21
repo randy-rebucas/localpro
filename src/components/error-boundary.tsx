@@ -35,9 +35,9 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     }
   }
 
-  resetError = () => {
+  resetError() {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
-  };
+  }
 
   render() {
     if (this.state.hasError) {
@@ -58,7 +58,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             </h1>
             
             <p className="text-gray-600 mb-6">
-              We encountered an unexpected error. This has been logged and we'll look into it.
+              We encountered an unexpected error. This has been logged and we&apos;ll look into it.
             </p>
             
             {process.env.NODE_ENV === 'development' && this.state.error && (
@@ -77,7 +77,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={this.resetError}
+                onClick={() => this.resetError()}
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />

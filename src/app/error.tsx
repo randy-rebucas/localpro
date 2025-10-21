@@ -28,7 +28,7 @@ export default function Error({
         </h1>
         
         <p className="text-gray-600 mb-6">
-          We encountered an unexpected error. This has been logged and we'll look into it.
+          We encountered an unexpected error. This has been logged and we&apos;ll look into it.
         </p>
         
         {process.env.NODE_ENV === 'development' && (

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loading, GridSkeleton } from "@/components/ui/loading";
+import { GridSkeleton } from "@/components/ui/loading";
 import { 
   Search, 
   // Filter, 

@@ -3,7 +3,7 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LoadingPage } from "@/components/ui/loading";
+import { Loading } from "@/components/ui/loading";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
@@ -65,7 +65,7 @@ export default function RentalsAdmin() {
   };
 
   if (status === "loading" || loading) {
-    return <LoadingPage label="Loading rentals" />;
+    return <Loading text="Loading rentals" fullScreen />;
   }
 
   if (!session) {

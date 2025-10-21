@@ -18,6 +18,8 @@ import {
 import toast from "react-hot-toast";
 import { AvatarUpload } from "./avatar-upload";
 import { PortfolioGallery } from "./portfolio-gallery";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 const documentSchema = z.object({
@@ -174,6 +176,26 @@ interface UserProfile {
 export function EditProfileForm() {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  
+  // Get user role for conditional rendering
+  const userRole = session?.user?.role;
+  
+  // Role-based visibility helpers
+  const isProvider = userRole === 'PROVIDER';
+  const isSupplier = userRole === 'SUPPLIER';
+  const isInstructor = userRole === 'INSTRUCTOR';
+  const isAgencyOwner = userRole === 'AGENCY_OWNER';
+  const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
+  const isAdmin = userRole === 'ADMIN';
+  
+  // Business roles (providers, suppliers, instructors, agency roles)
+  const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Service provider roles (providers, agency roles)
+  const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
+  
+  // Administrative roles
+  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -347,7 +369,6 @@ export function EditProfileForm() {
 
   const fetchProfile = useCallback(async () => {
     if (!session?.user?.id) return;
-    if (profile) return;
     
     try {
       const response = await fetch(`/api/users/${session.user.id}`, 
@@ -427,7 +448,7 @@ export function EditProfileForm() {
       console.error("Error fetching profile:", error);
       toast.error("Failed to fetch profile");
     }
-  }, [session?.user?.id, reset, profile]);
+  }, [session?.user?.id, reset]);
 
   // Fetch user profile
   useEffect(() => {
@@ -566,7 +587,7 @@ export function EditProfileForm() {
 
   if (!profile) {
     return (
-      <div className="min-h-[200px] bg-gray-50 flex items-center justify-center rounded-lg border">
+      <div className="min-h-[200px] bg-gray-50 flex items-center justify-center rounded-lg">
         <div className="bg-white rounded-lg p-6">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading profile...</p>
@@ -578,7 +599,7 @@ export function EditProfileForm() {
   return (
     <div className="bg-white rounded-xl shadow-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+      <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
         <div>
           <h2 className="text-2xl font-bold text-gray-700">Edit Profile</h2>
           <p className="text-sm text-gray-600 mt-1">Update your personal information and preferences</p>
@@ -587,7 +608,7 @@ export function EditProfileForm() {
 
           {/* Auto-save Status */}
           {(autoSaveStatus !== 'idle' || hasUnsavedChanges) && (
-            <div className="px-6 py-2 bg-gray-50 border-b border-gray-200">
+            <div className="px-6 py-2 bg-gray-50 border-b border-gray-100">
               <div className="flex items-center space-x-2 text-sm">
                 {autoSaveStatus === 'saving' && (
                   <>
@@ -629,7 +650,7 @@ export function EditProfileForm() {
       <div className="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Avatar Section */}
-          <div className="flex items-center space-x-4 pb-6 border-b border-gray-200">
+          <div className="flex items-center space-x-4 pb-6 border-b border-gray-100">
                 <AvatarUpload
                   currentAvatar={profile.avatar}
                   onUpload={handleAvatarUpload}
@@ -662,7 +683,7 @@ export function EditProfileForm() {
                   <input
                     {...register("name")}
                     type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -675,20 +696,33 @@ export function EditProfileForm() {
                   <div className="h-px bg-gray-200" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
-                    <input {...register("firstName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <Input
+                      label="First Name"
+                      {...register("firstName")}
+                      type="text"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
-                    <input {...register("lastName")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <Input
+                      label="Last Name"
+                      {...register("lastName")}
+                      type="text"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input {...register("email")} type="email" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <Input
+                      label="Email"
+                      {...register("email")}
+                      type="email"
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                    <input {...register("phoneNumber")} type="tel" placeholder="+63-900-000-0000" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <Input
+                      label="Phone Number"
+                      {...register("phoneNumber")}
+                      type="tel"
+                      placeholder="+63-900-000-0000"
+                    />
                   </div>
                 </div>
 
@@ -701,7 +735,7 @@ export function EditProfileForm() {
                   <input
                     {...register("phone")}
                     type="tel"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
                   />
                 </div>
 
@@ -718,30 +752,30 @@ export function EditProfileForm() {
                   <input
                     {...register("location")}
                     type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Street</label>
-                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                 </div>
                 </div>
@@ -755,7 +789,7 @@ export function EditProfileForm() {
                   <input
                     {...register("website")}
                     type="url"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
                   />
                   {errors.website && (
                     <p className="mt-1 text-sm text-red-600">{errors.website.message}</p>
@@ -764,168 +798,194 @@ export function EditProfileForm() {
 
                 {/* Skills & Specialties */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Skills & Specialties</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                    {isBusinessRole ? "Professional Skills & Specialties" : "Skills"}
+                  </h3>
                   <div className="h-px bg-gray-200" />
                 {/* Skills */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Briefcase className="w-4 h-4 inline mr-2" />
-                    Skills
+                    {isBusinessRole ? "Professional Skills" : "Skills"}
                   </label>
                   <input
                     {...register("skills")}
                     type="text"
                     placeholder="Enter skills separated by commas"
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400"
+                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
-                    <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                {/* Service Areas and Specialties - Only for service providers */}
+                {isServiceProvider && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
+                      <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+                      <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
-                    <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                  </div>
-                </div>
+                )}
                 </div>
 
                 {/* Bio */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Bio
-                  </label>
-                  <textarea
+                  <Textarea
+                    label="Bio"
                     {...register("bio")}
                     rows={3}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400 resize-none"
                     placeholder="Tell us about yourself..."
                   />
                 </div>
 
-                {/* Professional & Business */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Professional & Business</h3>
-                  <div className="h-px bg-gray-200" />
-                {/* Experience */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Experience
-                  </label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input {...register("experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                    <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                    <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <input {...register("profile.businessType")} type="text" placeholder="Business type" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
-                  </div>
-                </div>
-                </div>
-
-                {/* Media */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Media</h3>
-                  <div className="h-px bg-gray-200" />
-                {/* Portfolio Gallery */}
-                <PortfolioGallery
-                  portfolio={profile.portfolio || []}
-                  onUpload={handlePortfolioUpload}
-                  onDelete={handlePortfolioDelete}
-                  isLoading={isLoading}
-                />
-                </div>
-
-                {/* Certifications */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Certifications</h3>
-                  <div className="h-px bg-gray-200" />
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <button type="button" onClick={() => addCertification({ name: "", issuer: "", issueDate: "", expiryDate: "", document: { url: "", publicId: "", filename: "" } })} className="text-green-600 text-sm">Add</button>
-                  </div>
-                  {certificationFields.map((field, idx) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
-                      <input {...register(`profile.certifications.${idx}.name` as const)} placeholder="Name" className="px-3 py-2 border rounded" />
-                      <input {...register(`profile.certifications.${idx}.issuer` as const)} placeholder="Issuer" className="px-3 py-2 border rounded" />
-                      <input {...register(`profile.certifications.${idx}.issueDate` as const)} type="date" className="px-3 py-2 border rounded" />
-                      <input {...register(`profile.certifications.${idx}.expiryDate` as const)} type="date" className="px-3 py-2 border rounded" />
-                      <div className="flex items-center gap-2">
-                        <input {...register(`profile.certifications.${idx}.document.url` as const)} placeholder="Doc URL" className="flex-1 px-3 py-2 border rounded" />
-                        <button type="button" onClick={() => removeCertification(idx)} className="text-red-600 text-sm">Remove</button>
+                {/* Professional & Business - Only for business roles */}
+                {isBusinessRole && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isServiceProvider ? "Service & Business" : isInstructor ? "Teaching & Business" : "Professional & Business"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    {/* Experience */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input {...register("experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <input {...register("profile.businessType")} type="text" placeholder="Business type" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                       </div>
                     </div>
-                  ))}
-                </div>
-                </div>
+                  </div>
+                )}
 
-                {/* Insurance */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Insurance</h3>
-                  <div className="h-px bg-gray-200" />
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                      <input type="checkbox" {...register("profile.insurance.hasInsurance")} className="rounded" /> Has insurance
-                    </label>
-                    <input {...register("profile.insurance.provider")} placeholder="Provider" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.insurance.policyNumber")} placeholder="Policy number" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.insurance.coverageAmount")} type="number" placeholder="Coverage amount" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.insurance.expiryDate")} type="date" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.insurance.document.url")} placeholder="Document URL" className="px-3 py-2 border rounded" />
+                {/* Media - Only for business roles */}
+                {isBusinessRole && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isServiceProvider ? "Service Portfolio" : isInstructor ? "Teaching Portfolio" : "Professional Portfolio"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    {/* Portfolio Gallery */}
+                    <PortfolioGallery
+                      portfolio={profile.portfolio || []}
+                      onUpload={handlePortfolioUpload}
+                      onDelete={handlePortfolioDelete}
+                      isLoading={isLoading}
+                    />
                   </div>
-                </div>
-                </div>
+                )}
 
-                {/* Background Check */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Background Check</h3>
-                  <div className="h-px bg-gray-200" />
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input {...register("profile.backgroundCheck.status")} placeholder="Status" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.backgroundCheck.completedAt")} type="date" className="px-3 py-2 border rounded" />
-                    <input {...register("profile.backgroundCheck.document.url")} placeholder="Document URL" className="px-3 py-2 border rounded" />
-                  </div>
-                </div>
-                </div>
-
-                {/* Availability */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Availability</h3>
-                  <div className="h-px bg-gray-200" />
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <button type="button" onClick={() => addSchedule({ day: "monday", startTime: "08:00", endTime: "17:00", isAvailable: true })} className="text-green-600 text-sm">Add day</button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input {...register("profile.availability.timezone")} placeholder="Timezone (e.g. Asia/Manila)" className="px-3 py-2 border rounded" />
-                    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                      <input type="checkbox" {...register("profile.availability.emergencyService")} className="rounded" /> Emergency service
-                    </label>
-                  </div>
-                  {scheduleFields.map((field, idx) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
-                      <select {...register(`profile.availability.schedule.${idx}.day` as const)} className="px-3 py-2 border rounded">
-                        {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => (<option key={d} value={d}>{d}</option>))}
-                      </select>
-                      <input {...register(`profile.availability.schedule.${idx}.startTime` as const)} type="time" className="px-3 py-2 border rounded" />
-                      <input {...register(`profile.availability.schedule.${idx}.endTime` as const)} type="time" className="px-3 py-2 border rounded" />
-                      <label className="inline-flex items-center gap-2">
-                        <input type="checkbox" {...register(`profile.availability.schedule.${idx}.isAvailable` as const)} className="rounded" />
-                        <span className="text-sm text-gray-700">Available</span>
-                      </label>
-                      <button type="button" onClick={() => removeSchedule(idx)} className="text-red-600 text-sm">Remove</button>
+                {/* Certifications - Only for business roles */}
+                {isBusinessRole && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isServiceProvider ? "Professional Certifications" : isInstructor ? "Teaching Certifications" : "Professional Certifications"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <button type="button" onClick={() => addCertification({ name: "", issuer: "", issueDate: "", expiryDate: "", document: { url: "", publicId: "", filename: "" } })} className="text-green-600 text-sm">Add</button>
+                      </div>
+                      {certificationFields.map((field, idx) => (
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
+                          <input {...register(`profile.certifications.${idx}.name` as const)} placeholder="Name" className="px-3 py-2 border border-gray-200 rounded" />
+                          <input {...register(`profile.certifications.${idx}.issuer` as const)} placeholder="Issuer" className="px-3 py-2 border border-gray-200 rounded" />
+                          <input {...register(`profile.certifications.${idx}.issueDate` as const)} type="date" className="px-3 py-2 border border-gray-200 rounded" />
+                          <input {...register(`profile.certifications.${idx}.expiryDate` as const)} type="date" className="px-3 py-2 border border-gray-200 rounded" />
+                          <div className="flex items-center gap-2">
+                            <input {...register(`profile.certifications.${idx}.document.url` as const)} placeholder="Doc URL" className="flex-1 px-3 py-2 border border-gray-200 rounded" />
+                            <button type="button" onClick={() => removeCertification(idx)} className="text-red-600 text-sm">Remove</button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                </div>
+                  </div>
+                )}
+
+                {/* Insurance - Only for business roles */}
+                {isBusinessRole && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isServiceProvider ? "Professional Insurance" : isInstructor ? "Teaching Insurance" : "Business Insurance"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" {...register("profile.insurance.hasInsurance")} className="rounded" /> Has insurance
+                        </label>
+                        <input {...register("profile.insurance.provider")} placeholder="Provider" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.insurance.policyNumber")} placeholder="Policy number" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.insurance.coverageAmount")} type="number" placeholder="Coverage amount" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.insurance.expiryDate")} type="date" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.insurance.document.url")} placeholder="Document URL" className="px-3 py-2 border border-gray-200 rounded" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Background Check - Only for business roles */}
+                {isBusinessRole && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isServiceProvider ? "Professional Background Check" : isInstructor ? "Teaching Background Check" : "Business Background Check"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input {...register("profile.backgroundCheck.status")} placeholder="Status" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.backgroundCheck.completedAt")} type="date" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("profile.backgroundCheck.document.url")} placeholder="Document URL" className="px-3 py-2 border border-gray-200 rounded" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Availability - Only for service providers */}
+                {isServiceProvider && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Service Availability</h3>
+                    <div className="h-px bg-gray-200" />
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <button type="button" onClick={() => addSchedule({ day: "monday", startTime: "08:00", endTime: "17:00", isAvailable: true })} className="text-green-600 text-sm">Add day</button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <input {...register("profile.availability.timezone")} placeholder="Timezone (e.g. Asia/Manila)" className="px-3 py-2 border border-gray-200 rounded" />
+                        <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                          <input type="checkbox" {...register("profile.availability.emergencyService")} className="rounded" /> Emergency service
+                        </label>
+                      </div>
+                      {scheduleFields.map((field, idx) => (
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
+                          <select {...register(`profile.availability.schedule.${idx}.day` as const)} className="px-3 py-2 border border-gray-200 rounded">
+                            {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => (<option key={d} value={d}>{d}</option>))}
+                          </select>
+                          <input {...register(`profile.availability.schedule.${idx}.startTime` as const)} type="time" className="px-3 py-2 border border-gray-200 rounded" />
+                          <input {...register(`profile.availability.schedule.${idx}.endTime` as const)} type="time" className="px-3 py-2 border border-gray-200 rounded" />
+                          <label className="inline-flex items-center gap-2">
+                            <input type="checkbox" {...register(`profile.availability.schedule.${idx}.isAvailable` as const)} className="rounded" />
+                            <span className="text-sm text-gray-700">Available</span>
+                          </label>
+                          <button type="button" onClick={() => removeSchedule(idx)} className="text-red-600 text-sm">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Preferences and Agency */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Preferences & Agency</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                    {isAdministrative ? "Preferences & Agency" : "Preferences"}
+                  </h3>
                   <div className="h-px bg-gray-200" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
@@ -934,16 +994,19 @@ export function EditProfileForm() {
                       <label className="inline-flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" {...register("preferences.notifications.email")} className="rounded" /> Email</label>
                       <label className="inline-flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" {...register("preferences.notifications.push")} className="rounded" /> Push</label>
                     </div>
-                    <input {...register("preferences.language")} placeholder="Language code (e.g. en)" className="px-3 py-2 border rounded w-full" />
+                    <input {...register("preferences.language")} placeholder="Language code (e.g. en)" className="px-3 py-2 border border-gray-200 rounded w-full" />
                   </div>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input {...register("agency.agencyId")} placeholder="Agency ID" className="px-3 py-2 border rounded" />
-                      <input {...register("agency.role")} placeholder="Role" className="px-3 py-2 border rounded" />
-                      <input {...register("agency.status")} placeholder="Status" className="px-3 py-2 border rounded" />
-                      <input {...register("agency.commissionRate")} type="number" placeholder="Commission %" className="px-3 py-2 border rounded" />
+                  {/* Agency information - Only for administrative roles */}
+                  {isAdministrative && (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <input {...register("agency.agencyId")} placeholder="Agency ID" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("agency.role")} placeholder="Role" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("agency.status")} placeholder="Status" className="px-3 py-2 border border-gray-200 rounded" />
+                        <input {...register("agency.commissionRate")} type="number" placeholder="Commission %" className="px-3 py-2 border border-gray-200 rounded" />
+                      </div>
                     </div>
-                </div>
+                  )}
                 </div>
                 </div>
               </div>
@@ -956,7 +1019,7 @@ export function EditProfileForm() {
                 {/* Tags */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                  <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-400" />
+                  <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                 </div>
 
                 {/* Notes */}
@@ -967,7 +1030,7 @@ export function EditProfileForm() {
                   </div>
                   {noteFields.map((field, idx) => (
                     <div key={field.id} className="flex items-center gap-2">
-                      <input {...register(`notes.${idx}.note` as const)} placeholder="Note" className="flex-1 px-3 py-2 border rounded" />
+                      <input {...register(`notes.${idx}.note` as const)} placeholder="Note" className="flex-1 px-3 py-2 border border-gray-200 rounded" />
                       <button type="button" onClick={() => removeNote(idx)} className="text-red-600 text-sm">Remove</button>
                     </div>
                   ))}

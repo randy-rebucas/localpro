@@ -12,7 +12,6 @@ import {
   ArrowRight,
   ChevronRight,
   Search,
-  Phone,
   Clock
 } from "lucide-react";
 

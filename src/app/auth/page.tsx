@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Phone, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
+import { Input } from "@/components/ui/input";
 
 const signInSchema = z.object({
   phone: z.string().min(10, "Please enter a valid phone number"),
@@ -161,23 +162,14 @@ function SignInForm() {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  Phone Number
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    {...register("phone")}
-                    type="tel"
-                    className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
-                    placeholder="Enter your phone number"
-                  />
-                </div>
-                {errors.phone && (
-                  <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-                )}
+                <Input
+                  label="Phone Number"
+                  {...register("phone")}
+                  type="tel"
+                  leftIcon={<Phone />}
+                  placeholder="Enter your phone number"
+                  error={errors.phone?.message}
+                />
               </div>
             </div>
 
@@ -203,16 +195,14 @@ function SignInForm() {
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="code" className="block text-sm font-medium text-gray-700">
-                  Verification Code
-                </label>
-                <input
+                <Input
+                  label="Verification Code"
                   type="text"
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value)}
-                  className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                   placeholder="Enter verification code"
                   maxLength={8}
+                  className="text-center text-lg tracking-widest"
                 />
               </div>
             </div>
@@ -221,14 +211,11 @@ function SignInForm() {
               <>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                      First Name
-                    </label>
-                    <input
+                    <Input
+                      label="First Name"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your first name"
                     />
                   </div>
@@ -236,14 +223,11 @@ function SignInForm() {
                 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                      Last Name
-                    </label>
-                    <input
+                    <Input
+                      label="Last Name"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your last name"
                     />
                   </div>
@@ -251,14 +235,11 @@ function SignInForm() {
                 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
+                    <Input
+                      label="Email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="mt-1 appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-700 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
                       placeholder="Enter your email"
                     />
                   </div>
