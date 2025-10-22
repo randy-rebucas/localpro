@@ -17,7 +17,10 @@ import {
   Search,
   Bell,
   Settings,
-  HelpCircle
+  HelpCircle,
+  User,
+  ChevronDown,
+  MessageSquare
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -52,6 +55,8 @@ export default function DashboardLayout({
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement | null>(null);
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
@@ -164,6 +169,21 @@ export default function DashboardLayout({
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showSuggestions]);
+
+  // Hide profile dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (!profileDropdownRef.current) return;
+      const target = e.target as Node;
+      if (!profileDropdownRef.current.contains(target)) {
+        setProfileDropdownOpen(false);
+      }
+    }
+    if (profileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [profileDropdownOpen]);
 
   const getSuggestionLabel = (item: { label?: string; title?: string; name?: string; query?: string } | string): string => {
     if (typeof item === 'string') return item;
@@ -318,30 +338,17 @@ export default function DashboardLayout({
                   )}
                 </Link>
                 <Link 
-                  href="/help"
+                  href="/messages"
                   className={
                     `p-2 rounded-lg transition-colors ` +
-                    (pathname?.startsWith("/help")
+                    (pathname?.startsWith("/messages")
                       ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
                       : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
                   }
-                  aria-current={pathname?.startsWith("/help") ? "page" : undefined}
-                  title="Help"
+                  aria-current={pathname?.startsWith("/messages") ? "page" : undefined}
+                  title="Messages"
                 >
-                  <HelpCircle className="w-5 h-5" />
-                </Link>
-                <Link 
-                  href="/settings"
-                  className={
-                    `p-2 rounded-lg transition-colors ` +
-                    (pathname?.startsWith("/settings")
-                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                  }
-                  aria-current={pathname?.startsWith("/settings") ? "page" : undefined}
-                  title="Settings"
-                >
-                  <Settings className="w-5 h-5" />
+                  <MessageSquare className="w-5 h-5" />
                 </Link>
               </div>
 
@@ -350,34 +357,67 @@ export default function DashboardLayout({
 
               {/* User Profile & Actions */}
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <Link
-                  href="/profile"
-                  className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-white font-medium text-sm">
-                      {(user?.name || user?.firstName || "U").charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col text-left hidden sm:block">
-                    <span className="text-sm font-medium text-gray-700">
-                      {user?.name || user?.firstName || "User"}
-                    </span>
-                    {user?.phone && (
-                      <span className="text-xs text-gray-500">
-                        {user.phone}
+                {/* Profile Dropdown */}
+                <div className="relative" ref={profileDropdownRef}>
+                  <button
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    className="flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-medium text-sm">
+                        {(user?.name || user?.firstName || "U").charAt(0).toUpperCase()}
                       </span>
-                    )}
-                  </div>
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-1 sm:space-x-2 text-sm text-gray-500 hover:text-gray-700 px-2 sm:px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="Sign Out"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden lg:inline">Sign Out</span>
-                </button>
+                    </div>
+                    <div className="flex flex-col text-left hidden sm:block">
+                      <span className="text-sm font-medium text-gray-700">
+                        {user?.name || user?.firstName || "User"}
+                      </span>
+
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {profileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                      <Link
+                        href="/profile"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>Profile</span>
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </Link>
+                      <Link
+                        href="/help"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setProfileDropdownOpen(false)}
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>Help</span>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={() => {
+                          setProfileDropdownOpen(false);
+                          handleSignOut();
+                        }}
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors w-full text-left"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

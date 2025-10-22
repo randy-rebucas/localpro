@@ -1,5 +1,7 @@
+import { API_CONFIG } from './env';
+
 // API configuration
-export const API_BASE_URL = process.env.API_ENDPOINT || "https://localpro-super-app.onrender.com";
+export const API_BASE_URL = API_CONFIG.apiBaseUrl;
 
 import { createAuthFetchOptions } from './auth-utils';
 
@@ -109,6 +111,11 @@ export const API_ENDPOINTS = {
   // Communication
   communicationConversations: "/api/communication/conversations",
   communicationUnreadCount: "/api/communication/unread-count",
+  communicationConversationsId: "/api/communication/conversations/{id}",
+  communicationConversationsIdMessages: "/api/communication/conversations/{id}/messages",
+  communicationConversationsIdMessagesMessageId: "/api/communication/conversations/{id}/messages/{messageId}",
+  communicationConversationsIdRead: "/api/communication/conversations/{id}/read",
+
   communicationSearch: "/api/communication/search",
   communicationNotifications: "/api/communication/notifications",
   communicationNotificationsCount: "/api/communication/notifications/count",

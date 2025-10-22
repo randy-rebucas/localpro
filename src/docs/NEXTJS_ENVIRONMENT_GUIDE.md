@@ -1,0 +1,271 @@
+# Next.js Environment Variables Implementation Guide
+
+This guide explains how our environment variable system follows [Next.js App Router best practices](https://nextjs.org/docs/app/guides/environment-variables) for proper implementation.
+
+## 🎯 Next.js Compliance Features
+
+### ✅ Client-Side vs Server-Side Separation
+Our implementation properly separates client-side and server-side environment variables:
+
+```typescript
+// Client-side variables (NEXT_PUBLIC_*)
+export const CLIENT_CONFIG = {
+  appName: getOptionalEnvVar('NEXT_PUBLIC_APP_NAME', 'LocalPro'),
+  debug: getBooleanEnvVar('NEXT_PUBLIC_DEBUG_MODE', false),
+  // ... other public variables
+};
+
+// Server-side variables (server-only)
+export const SERVER_CONFIG = {
+  apiBaseUrl: getServerEnvVar('API_BASE_URL', 'https://api.example.com'),
+  // ... other server-only variables
+};
+```
+
+### ✅ Environment Variable Load Order
+Following Next.js load order:
+1. `process.env`
+2. `.env.$(NODE_ENV).local`
+3. `.env.local` (Not checked when `NODE_ENV` is `test`)
+4. `.env.$(NODE_ENV)`
+5. `.env`
+
+### ✅ NEXT_PUBLIC_ Prefix Handling
+- **Client-side access**: Variables prefixed with `NEXT_PUBLIC_` are available in both server and client code
+- **Server-only access**: Non-prefixed variables are only available on the server
+- **Security**: Server-only variables are protected from client-side access
+
+### ✅ App Router Runtime Environment Variables
+- **Runtime evaluation**: Environment variables are evaluated at runtime during dynamic rendering
+- **Docker compatibility**: Supports single Docker image deployment across multiple environments
+- **Dynamic rendering**: Variables are accessible in server components during dynamic rendering
+
+## 🔧 Implementation Details
+
+### Client-Side Variables (NEXT_PUBLIC_*)
+These variables are inlined into the JavaScript bundle at build time:
+
+```typescript
+// ✅ Available in both server and client
+const appName = process.env.NEXT_PUBLIC_APP_NAME;
+const debugMode = process.env.NEXT_PUBLIC_DEBUG_MODE;
+```
+
+### Server-Side Variables
+These variables are only available on the server:
+
+```typescript
+// ✅ Server-only access with protection
+const apiKey = getServerEnvVar('API_SECRET_KEY');
+const dbUrl = getServerEnvVar('DATABASE_URL');
+```
+
+### Security Protection
+Our implementation includes client-side protection:
+
+```typescript
+function getServerEnvVar(key: string, defaultValue?: string): string | undefined {
+  if (isClient) {
+    console.warn(`Attempting to access server-only environment variable ${key} on client side`);
+    return defaultValue;
+  }
+  return getOptionalEnvVar(key, defaultValue);
+}
+```
+
+## 📁 Environment File Structure
+
+### Development Setup
+```bash
+# Copy development template
+cp env.development .env.local
+
+# Edit with your values
+nano .env.local
+```
+
+### Production Setup
+```bash
+# Copy full template
+cp env.example .env.local
+
+# Fill in production values
+nano .env.local
+```
+
+## 🔐 Security Best Practices
+
+### ✅ DO
+- Use `NEXT_PUBLIC_` prefix only for variables that are safe to expose
+- Keep sensitive data in server-only variables
+- Use strong, unique secrets for production
+- Rotate secrets regularly
+
+### ❌ DON'T
+- Never use `NEXT_PUBLIC_` for sensitive data
+- Don't expose API keys or secrets to the client
+- Don't commit `.env.local` to version control
+- Don't use weak or default secrets
+
+## 🚀 Usage Examples
+
+### Client-Side Usage
+```typescript
+import { CLIENT_CONFIG } from '@/lib/env';
+
+// ✅ Safe to use in client components
+function MyComponent() {
+  return (
+    <div>
+      <h1>{CLIENT_CONFIG.appName}</h1>
+      {CLIENT_CONFIG.debug && <DebugPanel />}
+    </div>
+  );
+}
+```
+
+### Server-Side Usage
+```typescript
+import { SERVER_CONFIG, AUTH_CONFIG } from '@/lib/env';
+
+// ✅ Safe to use in API routes and server components
+export async function GET() {
+  const response = await fetch(SERVER_CONFIG.apiBaseUrl, {
+    headers: {
+      'Authorization': `Bearer ${AUTH_CONFIG.jwtSecret}`,
+    },
+  });
+  
+  return response.json();
+}
+```
+
+### Mixed Usage
+```typescript
+import { CLIENT_CONFIG, SERVER_CONFIG } from '@/lib/env';
+
+// ✅ Use appropriate config for the context
+function MyServerComponent() {
+  // Server-side: Use SERVER_CONFIG
+  const apiUrl = SERVER_CONFIG.apiBaseUrl;
+  
+  return (
+    <ClientComponent 
+      appName={CLIENT_CONFIG.appName} // Client-side: Use CLIENT_CONFIG
+    />
+  );
+}
+```
+
+## 🔄 Backward Compatibility
+
+Our implementation maintains backward compatibility:
+
+```typescript
+// Legacy exports for existing code
+export const APP_CONFIG = CLIENT_CONFIG;
+export const API_CONFIG = SERVER_CONFIG;
+```
+
+This ensures existing code continues to work while encouraging migration to the new structure.
+
+## 📊 Environment Variable Categories
+
+### Client-Side (NEXT_PUBLIC_*)
+- Application configuration
+- Public API endpoints
+- External service public keys
+- Analytics IDs
+- Feature flags
+
+### Server-Side
+- Authentication secrets
+- Database credentials
+- API keys and secrets
+- Payment gateway credentials
+- File storage credentials
+
+## 🛠️ Development Tools
+
+### Environment Validation
+```typescript
+import { validateRequiredEnvVars } from '@/lib/env';
+
+// Validates required variables on startup
+validateRequiredEnvVars();
+```
+
+### Environment Information
+```typescript
+import { getEnvironmentInfo } from '@/lib/env';
+
+// Get environment information for debugging
+console.log(getEnvironmentInfo());
+```
+
+## 🚨 Common Issues & Solutions
+
+### Issue: Variable Not Available on Client
+```
+Error: process.env.SECRET_KEY is undefined
+```
+**Solution**: Use `NEXT_PUBLIC_` prefix for client-side variables or use server-only variables in API routes.
+
+### Issue: Server Variable Accessed on Client
+```
+Warning: Attempting to access server-only environment variable on client side
+```
+**Solution**: Use `CLIENT_CONFIG` for client-side code and `SERVER_CONFIG` for server-side code.
+
+### Issue: Environment Not Loading
+```
+Error: Environment variables not found
+```
+**Solution**: Ensure `.env.local` file exists and follows the correct format.
+
+## 📚 Additional Resources
+
+- [Next.js App Router Environment Variables Documentation](https://nextjs.org/docs/app/guides/environment-variables)
+- [Environment Setup Guide](./ENVIRONMENT_SETUP.md)
+- [API Authentication Guide](./API_AUTHENTICATION.md)
+
+## 🤝 Contributing
+
+When adding new environment variables:
+
+1. **Determine scope**: Client-side or server-side?
+2. **Add to appropriate config**: `CLIENT_CONFIG` or `SERVER_CONFIG`
+3. **Update templates**: Add to `env.example` and `env.development`
+4. **Update documentation**: Document the new variable
+5. **Test both sides**: Ensure proper client/server separation
+
+## 🔍 Testing Environment Variables
+
+### Unit Tests
+```typescript
+// Test environment variable loading
+import { loadEnvConfig } from '@next/env';
+
+beforeAll(() => {
+  const projectDir = process.cwd();
+  loadEnvConfig(projectDir);
+});
+```
+
+### Integration Tests
+```typescript
+// Test environment variable access
+import { CLIENT_CONFIG, SERVER_CONFIG } from '@/lib/env';
+
+describe('Environment Variables', () => {
+  it('should load client config', () => {
+    expect(CLIENT_CONFIG.appName).toBeDefined();
+  });
+  
+  it('should load server config', () => {
+    expect(SERVER_CONFIG.nodeEnv).toBeDefined();
+  });
+});
+```
+
+This implementation ensures our environment variable system follows Next.js best practices while maintaining security, type safety, and developer experience.

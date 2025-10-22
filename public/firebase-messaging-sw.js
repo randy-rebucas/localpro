@@ -5,7 +5,7 @@
 console.log('Firebase messaging service worker loaded (placeholder)');
 
 // Basic service worker functionality
-self.addEventListener('install', function(event) {
+self.addEventListener('install', function() {
   console.log('Service worker installing');
   self.skipWaiting();
 });
