@@ -17,10 +17,7 @@ type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTML
 export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  // const [saving, setSaving] = useState<boolean>(false);
-  // const [saveMessage, setSaveMessage] = useState<string>("");
   const { data: session } = useSession();
-
 
   useEffect(() => {
     let isMounted = true;
@@ -38,31 +35,18 @@ export default function SettingsPage() {
       }
     }
     load();
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
-  // const canSave = useMemo(() => !!settings && !saving, [settings, saving]);
-
-  // Get user role for conditional rendering
   const userRole = session?.user?.role;
-
-  // Role-based visibility helpers
   const isProvider = userRole === 'PROVIDER';
   const isSupplier = userRole === 'SUPPLIER';
   const isInstructor = userRole === 'INSTRUCTOR';
   const isAgencyOwner = userRole === 'AGENCY_OWNER';
   const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
   const isAdmin = userRole === 'ADMIN';
-
-  // Business roles (providers, suppliers, instructors, agency roles)
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
-
-  // Service provider roles (providers, agency roles)
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
-
-  // Administrative roles
   const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
 
   function mergeWithDefaults(incoming: Partial<UserSettings>): UserSettings {
@@ -213,33 +197,12 @@ export default function SettingsPage() {
     return output;
   }
 
-  // async function onSave() {
-  //   if (!settings) return;
-  //   setSaving(true);
-  //   setSaveMessage("");
-  //   try {
-  //     const updated = await apiRequest<UserSettings>(API_ENDPOINTS.settingsUser, {
-  //       method: "PUT",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(settings),
-  //     });
-  //     setSettings(mergeWithDefaults(updated));
-  //     setSaveMessage("Saved");
-  //   } catch {
-  //     setSaveMessage("Failed to save");
-  //   } finally {
-  //     setSaving(false);
-  //     setTimeout(() => setSaveMessage(""), 2000);
-  //   }
-  // }
-
   if (loading || !settings) {
     return <Loading variant="dashboard" fullScreen text="Loading Settings" subtitle="Preparing your account settings..." />;
   }
 
   return (
     <div>
-      {/* Breadcrumbs */}
       <Breadcrumbs
         className="text-sm text-gray-500 mb-4"
         items={[
@@ -248,27 +211,20 @@ export default function SettingsPage() {
         ]}
       />
 
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
-            <SettingsIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-700">Settings</h1>
-            <p className="text-sm text-gray-500">
-              Manage your account settings and preferences
-            </p>
-          </div>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
+          <SettingsIcon className="w-4 h-4" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold text-gray-700">Settings</h1>
+          <p className="text-sm text-gray-500">Manage your account preferences</p>
         </div>
       </div>
 
-      {/* Settings Content */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Privacy */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Privacy</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Privacy</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Select
                 label="Profile visibility"
@@ -288,76 +244,46 @@ export default function SettingsPage() {
               ["Show rating", "privacy.showRating"],
               ["Show portfolio", "privacy.showPortfolio"],
               ["Allow direct messages", "privacy.allowDirectMessages"],
-              // Role-specific privacy settings
-              ...(isServiceProvider ? [
-                ["Allow job invitations", "privacy.allowJobInvitations"],
-              ] : []),
-              ...(isBusinessRole ? [
-                ["Allow referral requests", "privacy.allowReferralRequests"],
-              ] : []),
+              ...(isServiceProvider ? [["Allow job invitations", "privacy.allowJobInvitations"]] : []),
+              ...(isBusinessRole ? [["Allow referral requests", "privacy.allowReferralRequests"]] : []),
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
           </div>
         </section>
 
-        {/* Notifications */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Notifications</h3>
-          <h4 className="text-sm font-medium text-gray-700">Push</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Notifications</h3>
+          <h4 className="text-xs font-medium text-gray-700 mb-2">Push</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
             {[
               ["Enabled", "notifications.push.enabled"],
-              ["New messages", "notifications.push.newMessages"],
-              // Role-specific notifications
-              ...(isServiceProvider ? [
-                ["Job matches", "notifications.push.jobMatches"],
-                ["Booking updates", "notifications.push.bookingUpdates"],
-              ] : []),
-              ...(isBusinessRole ? [
-                ["Payment updates", "notifications.push.paymentUpdates"],
-                ["Referral updates", "notifications.push.referralUpdates"],
-              ] : []),
+              ...(isServiceProvider ? [["Job matches", "notifications.push.jobMatches"], ["Booking updates", "notifications.push.bookingUpdates"]] : []),
+              ...(isBusinessRole ? [["Payment updates", "notifications.push.paymentUpdates"], ["Referral updates", "notifications.push.referralUpdates"]] : []),
               ["System updates", "notifications.push.systemUpdates"],
               ["Marketing", "notifications.push.marketing"],
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
           </div>
-          <h4 className="text-sm font-medium text-gray-700">Email</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <h4 className="text-xs font-medium text-gray-700 mb-2">Email</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
             {[
               ["Enabled", "notifications.email.enabled"],
-              ["New messages", "notifications.email.newMessages"],
-              // Role-specific email notifications
-              ...(isServiceProvider ? [
-                ["Job matches", "notifications.email.jobMatches"],
-                ["Booking updates", "notifications.email.bookingUpdates"],
-              ] : []),
-              ...(isBusinessRole ? [
-                ["Payment updates", "notifications.email.paymentUpdates"],
-                ["Referral updates", "notifications.email.referralUpdates"],
-                ["Weekly digest", "notifications.email.weeklyDigest"],
-                ["Monthly report", "notifications.email.monthlyReport"],
-              ] : []),
+              ...(isServiceProvider ? [["Job matches", "notifications.email.jobMatches"], ["Booking updates", "notifications.email.bookingUpdates"]] : []),
+              ...(isBusinessRole ? [["Payment updates", "notifications.email.paymentUpdates"], ["Referral updates", "notifications.email.referralUpdates"], ["Weekly digest", "notifications.email.weeklyDigest"], ["Monthly report", "notifications.email.monthlyReport"]] : []),
               ["System updates", "notifications.email.systemUpdates"],
               ["Marketing", "notifications.email.marketing"],
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
             ))}
           </div>
-          <h4 className="text-sm font-medium text-gray-700">SMS</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <h4 className="text-xs font-medium text-gray-700 mb-2">SMS</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               ["Enabled", "notifications.sms.enabled"],
-              ["Urgent messages", "notifications.sms.urgentMessages"],
-              // Role-specific SMS notifications
-              ...(isServiceProvider ? [
-                ["Booking reminders", "notifications.sms.bookingReminders"],
-              ] : []),
-              ...(isBusinessRole ? [
-                ["Payment alerts", "notifications.sms.paymentAlerts"],
-              ] : []),
+              ...(isServiceProvider ? [["Booking reminders", "notifications.sms.bookingReminders"]] : []),
+              ...(isBusinessRole ? [["Payment alerts", "notifications.sms.paymentAlerts"]] : []),
               ["Security alerts", "notifications.sms.securityAlerts"],
             ].map(([label, path]) => (
               <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
@@ -365,10 +291,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Communication */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Communication</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Communication</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Select
                 label="Preferred language"
@@ -418,14 +343,13 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          {/* Auto-reply settings - only for business roles */}
           {isBusinessRole && (
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
               <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
               <div className="md:col-span-2">
                 <Textarea
                   label="Auto-reply message"
-                  rows={3}
+                  rows={2}
                   value={settings.communication.autoReply.message}
                   onChange={onInput("communication.autoReply.message")}
                 />
@@ -434,18 +358,17 @@ export default function SettingsPage() {
           )}
         </section>
 
-        {/* Service - Only show for service providers */}
         {isServiceProvider && (
-          <section className="bg-white rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Service</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <section className="bg-white rounded-lg p-3">
+            <h3 className="font-semibold text-gray-700 mb-3 text-sm">Service</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <NumberInput label="Default service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={0} />
               <ToggleRow label="Auto-accept jobs" checked={settings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
               <div />
               <NumberInput label="Minimum job value" value={settings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
               <NumberInput label="Maximum job value" value={settings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
             </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <Input
                   label="Working hours start"
@@ -464,7 +387,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Working days</label>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const).map((d) => (
                     <Checkbox
                       key={d}
@@ -476,17 +399,16 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <ToggleRow label="Emergency service" checked={settings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
               <NumberInput label="Emergency surcharge (%)" value={settings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
             </div>
           </section>
         )}
 
-        {/* Payment */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Payment</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Payment</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <Select
                 label="Preferred method"
@@ -501,7 +423,6 @@ export default function SettingsPage() {
                 ]}
               />
             </div>
-            {/* Auto-withdraw settings - only for business roles */}
             {isBusinessRole && (
               <>
                 <ToggleRow label="Auto-withdraw" checked={settings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
@@ -532,11 +453,10 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Supplier-specific settings */}
         {isSupplier && (
-          <section className="bg-white rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Supply Management</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-white rounded-lg p-3">
+            <h3 className="font-semibold text-gray-700 mb-3 text-sm">Supply Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ToggleRow label="Low stock alerts" checked={true} onChange={() => { }} />
               <ToggleRow label="Order notifications" checked={true} onChange={() => { }} />
               <ToggleRow label="Inventory updates" checked={true} onChange={() => { }} />
@@ -545,11 +465,10 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* Instructor-specific settings */}
         {isInstructor && (
-          <section className="bg-white rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Academy Management</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-white rounded-lg p-3">
+            <h3 className="font-semibold text-gray-700 mb-3 text-sm">Academy Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ToggleRow label="Student enrollment alerts" checked={true} onChange={() => { }} />
               <ToggleRow label="Course completion notifications" checked={true} onChange={() => { }} />
               <ToggleRow label="Content upload reminders" checked={true} onChange={() => { }} />
@@ -558,11 +477,10 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* Agency-specific settings */}
         {isAdministrative && (
-          <section className="bg-white rounded-lg p-4">
-            <h3 className="font-semibold text-gray-700 mb-3">Agency Management</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <section className="bg-white rounded-lg p-3">
+            <h3 className="font-semibold text-gray-700 mb-3 text-sm">Agency Management</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <ToggleRow label="Team member notifications" checked={true} onChange={() => { }} />
               <ToggleRow label="Performance alerts" checked={true} onChange={() => { }} />
               <ToggleRow label="Business analytics updates" checked={true} onChange={() => { }} />
@@ -571,10 +489,9 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {/* Security */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Security</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Security</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <ToggleRow label="Two-factor authentication" checked={settings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
             <div>
               <Select
@@ -597,10 +514,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* App */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">App</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">App</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <Select
                 label="Theme"
@@ -662,10 +578,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Analytics */}
-        <section className="bg-white rounded-lg p-4">
-          <h3 className="font-semibold text-gray-700 mb-3">Analytics & Personalization</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="bg-white rounded-lg p-3">
+          <h3 className="font-semibold text-gray-700 mb-3 text-sm">Analytics & Personalization</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               ["Share usage data", "analytics.shareUsageData"],
               ["Share location data", "analytics.shareLocationData"],
@@ -683,12 +598,12 @@ export default function SettingsPage() {
 
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="flex items-center justify-between py-2">
-      <span className="text-sm text-gray-700">{props.label}</span>
+    <label className="flex items-center justify-between py-1">
+      <span className="text-xs text-gray-700">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
-        <span className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-600 transition-colors relative">
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${props.checked ? 'translate-x-5' : ''}`}></span>
+        <span className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-600 transition-colors relative">
+          <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${props.checked ? 'translate-x-4' : ''}`}></span>
         </span>
       </span>
     </label>
@@ -698,10 +613,8 @@ function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React
 function NumberInput(props: { label: string; value: number; onChange: (e: ChangeEvent) => void; min?: number; max?: number }) {
   return (
     <div>
-      <label className="block text-sm text-gray-700 mb-1">{props.label}</label>
-      <input type="number" className="w-full border border-gray-200 rounded-md px-2 py-2" value={Number.isFinite(props.value) ? props.value : 0} onChange={props.onChange} min={props.min} max={props.max} />
+      <label className="block text-xs text-gray-700 mb-1">{props.label}</label>
+      <input type="number" className="w-full border border-gray-200 rounded-md px-2 py-1 text-sm" value={Number.isFinite(props.value) ? props.value : 0} onChange={props.onChange} min={props.min} max={props.max} />
     </div>
   );
 }
-
-

@@ -10,13 +10,9 @@ import {
   ArrowRight, 
   Shield, 
   CheckCircle, 
-  AlertCircle, 
   Loader2,
-  Eye,
-  EyeOff,
   Mail,
-  User,
-  Lock
+  User
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
@@ -56,8 +52,8 @@ const newUserSchema = z.object({
 });
 
 type SignInForm = z.infer<typeof signInSchema>;
-type VerificationForm = z.infer<typeof verificationSchema>;
-type NewUserForm = z.infer<typeof newUserSchema>;
+// type VerificationForm = z.infer<typeof verificationSchema>;
+// type NewUserForm = z.infer<typeof newUserSchema>;
 
 function SignInForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +65,7 @@ function SignInForm() {
   const [email, setEmail] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
   const [redirectTo, setRedirectTo] = useState("/dashboard");
-  const [showPassword, setShowPassword] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAnimating, setIsAnimating] = useState(false);
@@ -111,21 +107,21 @@ function SignInForm() {
     resolver: zodResolver(signInSchema),
   });
 
-  const {
-    register: registerCode,
-    handleSubmit: handleCodeSubmit,
-    formState: { errors: codeErrors },
-  } = useForm<VerificationForm>({
-    resolver: zodResolver(verificationSchema),
-  });
+  // const {
+  //   register: registerCode,
+  //   handleSubmit: handleCodeSubmit,
+  //   formState: { errors: codeErrors },
+  // } = useForm<VerificationForm>({
+  //   resolver: zodResolver(verificationSchema),
+  // });
 
-  const {
-    register: registerNewUser,
-    handleSubmit: handleNewUserSubmit,
-    formState: { errors: newUserErrors },
-  } = useForm<NewUserForm>({
-    resolver: zodResolver(newUserSchema),
-  });
+  // const {
+  //   register: registerNewUser,
+  //   handleSubmit: handleNewUserSubmit,
+  //   formState: { errors: newUserErrors },
+  // } = useForm<NewUserForm>({
+  //   resolver: zodResolver(newUserSchema),
+  // });
 
   const sendVerificationCode = async (phone: string) => {
     setIsLoading(true);
@@ -312,7 +308,7 @@ function SignInForm() {
                     autoComplete="tel"
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    We'll send you a verification code via SMS
+                    We&apos;ll send you a verification code via SMS
                   </p>
                 </div>
               </div>
@@ -433,7 +429,7 @@ function SignInForm() {
                         autoComplete="email"
                       />
                       <p className="mt-1 text-xs text-gray-500">
-                        We'll use this to send you important updates
+                        We&apos;ll use this to send you important updates
                       </p>
                     </div>
                   </div>
@@ -489,7 +485,7 @@ function SignInForm() {
                   )}
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  Didn't receive the code? Check your spam folder or try again.
+                  Didn&apos;t receive the code? Check your spam folder or try again.
                 </p>
               </div>
             </div>

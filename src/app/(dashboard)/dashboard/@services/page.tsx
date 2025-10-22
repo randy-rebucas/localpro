@@ -17,7 +17,6 @@ import {
   Grid3X3,
   List,
   X,
-  TrendingUp,
   Users,
   Clock
 } from "lucide-react";

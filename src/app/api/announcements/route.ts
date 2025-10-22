@@ -76,7 +76,7 @@ const mockAnnouncements = [
   }
 ];
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // In a real application, you would:
     // 1. Get user information from session/auth
@@ -84,9 +84,9 @@ export async function GET(request: NextRequest) {
     // 3. Check if announcements are dismissed by the user
     // 4. Fetch from database with proper filtering
 
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    const includeDismissed = url.searchParams.get('includeDismissed') === 'true';
+    // const url = new URL(request.url);
+    // const userId = url.searchParams.get('userId');
+    // const includeDismissed = url.searchParams.get('includeDismissed') === 'true';
 
     // Filter active announcements
     const activeAnnouncements = mockAnnouncements.filter(announcement => {

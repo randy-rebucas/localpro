@@ -8,9 +8,9 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export function Card({ className, padding = "md", interactive = true, ...props }: CardProps) {
 	const paddingMap = {
 		none: "p-0",
-		sm: "p-4",
-		md: "p-6",
-		lg: "p-8",
+		sm: "p-3",
+		md: "p-4",
+		lg: "p-6",
 	};
 
 	return (
@@ -28,7 +28,7 @@ export function Card({ className, padding = "md", interactive = true, ...props }
 
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
-		<div className={cn("mb-4 flex items-center justify-between", className)} {...props} />
+		<div className={cn("mb-3 flex items-center justify-between", className)} {...props} />
 	);
 }
 
@@ -37,7 +37,7 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-	return <div className={cn("space-y-3", className)} {...props} />;
+	return <div className={cn("space-y-2", className)} {...props} />;
 }
 
 

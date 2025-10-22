@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 type SearchResultItem = {
   id?: string | number;
   title?: string;
   name?: string;
   label?: string;
-  type?: string; // e.g., service, course, job, product, etc.
-  href?: string; // optional direct link
+  type?: string;
+  href?: string;
   description?: string;
 };
 
@@ -30,10 +31,8 @@ export default function SearchPage() {
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
         const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data?.error || "Search failed");
-        }
-        // Accept either an object of arrays or a flat array
+        if (!res.ok) throw new Error(data?.error || "Search failed");
+        
         if (Array.isArray(data)) {
           setResults({ results: data });
         } else if (data && typeof data === 'object') {
@@ -57,38 +56,38 @@ export default function SearchPage() {
   const getItemHref = (item: SearchResultItem) => item.href || "#";
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-gray-700">Search</h1>
-        <div className="text-sm text-gray-500">Query: <span className="font-medium">{q || ""}</span></div>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+          <Search className="w-4 h-4" />
+        </div>
+        <div>
+          <h1 className="text-lg font-semibold text-gray-700">Search</h1>
+          <p className="text-sm text-gray-500">Query: <span className="font-medium">{q || "No query"}</span></p>
+        </div>
       </div>
 
-      {loading && (
-        <div className="text-gray-500">Loading results…</div>
-      )}
-      {error && (
-        <div className="text-red-600">{error}</div>
-      )}
-
+      {loading && <div className="text-gray-500 text-sm">Loading results…</div>}
+      {error && <div className="text-red-600 text-sm">{error}</div>}
       {!loading && !error && q && Object.keys(results).length === 0 && (
-        <div className="text-gray-500">No results found.</div>
+        <div className="text-gray-500 text-sm">No results found.</div>
       )}
 
       {!loading && !error && (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-4">
           {Object.entries(results).map(([group, items]) => (
             <div key={group} className="bg-white rounded-lg shadow-sm">
-              <div className="px-4 py-3 border-b bg-gray-50 rounded-t-lg">
-                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{group}</h2>
+              <div className="px-3 py-2 border-b bg-gray-50 rounded-t-lg">
+                <h2 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">{group}</h2>
               </div>
               <ul className="divide-y">
                 {Array.isArray(items) && items.length > 0 ? items.map((item, idx) => (
-                  <li key={`${group}-${idx}`} className="px-4 py-3 hover:bg-gray-50">
+                  <li key={`${group}-${idx}`} className="px-3 py-2 hover:bg-gray-50">
                     {getItemHref(item) !== "#" ? (
                       <Link href={getItemHref(item)} className="block">
-                        <div className="font-medium text-gray-700">{getItemLabel(item)}</div>
+                        <div className="font-medium text-gray-700 text-sm">{getItemLabel(item)}</div>
                         {item.description && (
-                          <div className="text-sm text-gray-500 truncate">{item.description}</div>
+                          <div className="text-xs text-gray-500 truncate">{item.description}</div>
                         )}
                         {item.type && (
                           <div className="mt-1 inline-flex items-center text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">{item.type}</div>
@@ -96,9 +95,9 @@ export default function SearchPage() {
                       </Link>
                     ) : (
                       <div>
-                        <div className="font-medium text-gray-700">{getItemLabel(item)}</div>
+                        <div className="font-medium text-gray-700 text-sm">{getItemLabel(item)}</div>
                         {item.description && (
-                          <div className="text-sm text-gray-500 truncate">{item.description}</div>
+                          <div className="text-xs text-gray-500 truncate">{item.description}</div>
                         )}
                         {item.type && (
                           <div className="mt-1 inline-flex items-center text-xs text-gray-500 bg-gray-100 rounded px-2 py-0.5">{item.type}</div>
@@ -107,7 +106,7 @@ export default function SearchPage() {
                     )}
                   </li>
                 )) : (
-                  <li className="px-4 py-3 text-sm text-gray-500">No items</li>
+                  <li className="px-3 py-2 text-xs text-gray-500">No items</li>
                 )}
               </ul>
             </div>

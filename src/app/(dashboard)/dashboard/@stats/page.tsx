@@ -5,17 +5,12 @@ import { useSession } from "@/hooks/useAuth";
 import { 
   Shield, 
   User, 
-  TrendingUp,
   CheckCircle,
   Activity,
   DollarSign,
   Users,
-  Clock,
   BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
-  Eye,
-  Star
+  ArrowUpRight
 } from "lucide-react";
 
 export default function StatsPage() {

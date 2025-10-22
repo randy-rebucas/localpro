@@ -52,7 +52,7 @@ export async function decrypt(session: string | undefined = ''): Promise<Session
       console.error('Session decryption failed:', {
         message: error.message,
         name: error.name,
-        code: (error as any).code,
+        code: (error as Error & { code?: string }).code,
         stack: error.stack
       });
     } else {

@@ -1,13 +1,11 @@
 export default function DashboardLayout({
   children,
   services,
-  stats,
   activity,
   header,
 }: {
   children: React.ReactNode;
   services: React.ReactNode;
-  stats: React.ReactNode;
   activity: React.ReactNode;
   header: React.ReactNode;
 }) {

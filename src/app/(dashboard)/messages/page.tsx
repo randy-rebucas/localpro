@@ -134,7 +134,11 @@ export default function MessagesPage() {
         // For 401 errors, treat as API unavailable and use mock data
         if (response.status === 401) {
           console.log('Authentication failed, using mock data');
-          throw new Error('API_UNAVAILABLE');
+          // Use mock data instead of throwing error
+          setConversations(mockConversations);
+          setUsingMockData(true);
+          setError(null);
+          return;
         }
         throw new Error(`API returned ${response.status}: ${response.statusText}`);
       }
@@ -156,11 +160,6 @@ export default function MessagesPage() {
         setConversations(mockConversations);
         setUsingMockData(true);
         setError(null); // Clear error since we have mock data
-      }
-      
-      // If this is an authentication error, we can try to refresh the session
-      if (err instanceof Error && err.message === 'API_UNAVAILABLE') {
-        console.log('Authentication issue detected, but continuing with mock data');
       }
     } finally {
       setLoading(false);

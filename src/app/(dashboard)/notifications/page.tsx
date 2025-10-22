@@ -31,14 +31,14 @@ const NotificationItem = ({
   onDelete: (id: string) => void;
 }) => {
   return (
-    <div className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 ${notification.read ? "opacity-60" : "shadow-md"}`}>
+    <div className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 ${notification.read ? "opacity-60" : "shadow-md"}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className={`font-medium text-gray-900 ${!notification.read ? 'font-bold' : ''}`}>
             {notification.title}
           </h3>
           <p className="text-gray-600 mt-1 text-sm">{notification.message}</p>
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-3 mt-2">
             {!notification.read && (
               <button 
                 onClick={() => onMarkAsRead(notification.id)} 
@@ -202,13 +202,13 @@ export default function NotificationsPage() {
       />
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
-            <Bell className="w-5 h-5" />
+          <div className="w-8 h-8 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
+            <Bell className="w-4 h-4" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-700">Notifications</h1>
+            <h1 className="text-lg font-semibold text-gray-700">Notifications</h1>
             <p className="text-sm text-gray-500">
               {items.filter(item => !item.read).length} unread notifications
             </p>
@@ -224,11 +224,11 @@ export default function NotificationsPage() {
       </div>
 
       {/* Notifications List */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
+          <div className="text-center py-8">
+            <Bell className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+            <h3 className="text-base font-medium text-gray-900 mb-1">No notifications</h3>
             <p className="text-gray-500">You&apos;re all caught up! No new notifications.</p>
           </div>
         ) : (

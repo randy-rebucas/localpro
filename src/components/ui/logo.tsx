@@ -18,9 +18,10 @@ export function Logo({ withText = false, size = 40, className }: LogoProps) {
 				height={size}
 				priority
 				className="rounded-md object-contain"
+				unoptimized
 			/>
 			{withText && (
-				<span className="ml-3 text-xl font-semibold text-gray-700">LocalPro Super App</span>
+				<span className="ml-3 text-xl font-semibold text-gray-700 dark:text-white">LocalPro Super App</span>
 			)}
 		</Link>
 	);

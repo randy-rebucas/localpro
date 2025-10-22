@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { clearAllSessionCookies } from '@/lib/session';
 
 /**
  * Clear all session cookies
  * Useful for debugging or when session secrets change
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     const response = NextResponse.json({ 
       message: 'All session cookies cleared successfully' 

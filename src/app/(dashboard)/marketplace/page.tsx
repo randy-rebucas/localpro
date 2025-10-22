@@ -338,11 +338,11 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-700">Browse Services</h1>
+          <h1 className="text-xl font-bold text-gray-700">Browse Services</h1>
           <p className="text-gray-600">Find and book services from local providers</p>
         </div>
         <div className="mt-4 sm:mt-0 flex gap-3">
@@ -364,8 +364,8 @@ export default function MarketplacePage() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
+      <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
           {/* Search */}
           <div className="flex-1">
             <div className="relative group">
@@ -416,8 +416,8 @@ export default function MarketplacePage() {
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="mt-6 pt-6 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="mt-4 pt-4 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Category Filter */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -505,7 +505,7 @@ export default function MarketplacePage() {
       </div>
 
       {/* Results */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="text-gray-600">
             {services.length} service{services.length !== 1 ? 's' : ''} found
@@ -520,12 +520,12 @@ export default function MarketplacePage() {
         </div>
 
         {services.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Search className="w-12 h-12 text-gray-400" />
+          <div className="text-center py-12">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="w-10 h-10 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">No services found</h3>
-            <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold text-gray-700 mb-1">No services found</h3>
+            <p className="text-gray-500 mb-4 max-w-md mx-auto">
               We couldn&apos;t find any services matching your criteria. Try adjusting your search terms or filters.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -555,7 +555,7 @@ export default function MarketplacePage() {
             </div>
           </div>
         ) : (
-          <div className={`grid gap-6 ${
+          <div className={`grid gap-4 ${
             viewMode === "grid" 
               ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
               : "grid-cols-1"
@@ -593,10 +593,10 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
         viewMode === "list" ? "flex" : ""
       }`}
     >
-      <div className={viewMode === "list" ? "flex-1 p-6" : "p-6"}>
+      <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
         <div className={viewMode === "list" ? "flex gap-6" : ""}>
           {/* Service Image */}
-          <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-48"} bg-gray-200 rounded-lg mb-4 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
+          <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
             {service.images && service.images.length > 0 ? (
               <Image
                 src={service.images[0]}
@@ -619,21 +619,21 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
 
           {/* Service Details */}
           <div className={viewMode === "list" ? "flex-1" : ""}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-700 line-clamp-1 flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-base font-semibold text-gray-700 line-clamp-1 flex-1">
                 {service.name}
               </h3>
-              <span className="text-2xl font-bold text-green-600 ml-4 flex-shrink-0">
+              <span className="text-xl font-bold text-green-600 ml-3 flex-shrink-0">
                 {formatPrice(service.price)}
               </span>
             </div>
 
-            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+            <p className="text-gray-600 text-sm mb-2 line-clamp-2">
               {service.description}
             </p>
 
             {/* Provider Info */}
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                 {service.provider.avatar ? (
                   <Image
@@ -662,7 +662,7 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
 
             {/* Service Meta */}
             <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
                   <span>{formatDuration(service.duration)}</span>
@@ -679,7 +679,7 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
             </div>
 
             {/* Category Badge */}
-            <div className="mt-3">
+            <div className="mt-2">
               <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                 {service.category.toLowerCase().replace('_', ' ')}
               </span>
