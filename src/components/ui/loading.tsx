@@ -1,24 +1,58 @@
 import { Loader2 } from "lucide-react";
 
 interface LoadingProps {
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
   text?: string;
   fullScreen?: boolean;
   className?: string;
+  variant?: "default" | "dashboard" | "spinner";
+  subtitle?: string;
 }
 
 export function Loading({ 
   size = "md", 
   text = "Loading...", 
   fullScreen = false,
-  className = ""
+  className = "",
+  variant = "default",
+  subtitle
 }: LoadingProps) {
   const sizeClasses = {
     sm: "w-4 h-4",
     md: "w-6 h-6", 
-    lg: "w-8 h-8"
+    lg: "w-8 h-8",
+    xl: "w-16 h-16"
   };
 
+  // Dashboard variant with the custom P logo design
+  if (variant === "dashboard") {
+    const content = (
+      <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
+        <div className="relative">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
+          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
+            <span className="text-white font-bold text-xl">P</span>
+          </div>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">{text}</h2>
+        <p className="text-gray-500">{subtitle || "Please wait while we load your content..."}</p>
+      </div>
+    );
+
+    if (fullScreen) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            {content}
+          </div>
+        </div>
+      );
+    }
+
+    return content;
+  }
+
+  // Default spinner variant
   const content = (
     <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
       <Loader2 className={`${sizeClasses[size]} animate-spin text-green-600`} />
@@ -32,14 +66,7 @@ export function Loading({
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
-            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
-              <span className="text-white font-bold text-xl">P</span>
-            </div>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">{text}</h2>
-          <p className="text-gray-500">Please wait while we load your content...</p>
+          {content}
         </div>
       </div>
     );

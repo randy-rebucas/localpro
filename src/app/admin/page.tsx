@@ -3,6 +3,7 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Loading } from "@/components/ui/loading";
 import { 
   BarChart3, 
   Users, 
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+        <Loading size="xl" text="Loading admin panel..." />
       </div>
     );
   }

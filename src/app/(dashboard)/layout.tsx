@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import ErrorBoundary from "@/components/error-boundary";
+import { Loading } from "@/components/ui/loading";
+import { Error } from "@/components/ui/error";
 // import Navigation from "@/components/navigation";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
@@ -15,8 +17,7 @@ import {
   Search,
   Bell,
   Settings,
-  HelpCircle,
-  Activity
+  HelpCircle
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -127,13 +128,13 @@ export default function DashboardLayout({
     const timeout = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-        if (!res.ok) throw new Error("Failed to fetch suggestions");
+        if (!res.ok) throw new globalThis.Error("Failed to fetch suggestions");
         const data = await res.json();
         const items = Array.isArray(data) ? data : (Array.isArray(data?.suggestions) ? data.suggestions : []);
         setSuggestions(items);
         setShowSuggestions(true);
       } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
+        if (error instanceof globalThis.Error && error.name !== 'AbortError') {
           setSuggestions([]);
           setShowSuggestions(false);
         }
@@ -211,38 +212,24 @@ export default function DashboardLayout({
 
   if (loading || status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
-            <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
-              <span className="text-white font-bold text-xl">P</span>
-            </div>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Dashboard</h2>
-          <p className="text-gray-500">Setting up your workspace...</p>
-        </div>
-      </div>
+      <Loading 
+        variant="dashboard" 
+        text="Loading Dashboard" 
+        subtitle="Setting up your workspace..."
+        fullScreen 
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Activity className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Something went wrong</h2>
-          <p className="text-gray-500 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <Error 
+        title="Something went wrong"
+        message={error}
+        fullScreen
+        showRetry
+        showGoHome
+      />
     );
   }
 
