@@ -59,6 +59,18 @@ export function createBearerTokenOptions(token: string, options: RequestInit = {
 }
 
 /**
+ * Create standardized headers for external API requests
+ * Ensures all requests have Content-Type and Authorization headers
+ */
+export function createExternalApiHeaders(token: string, additionalHeaders: Record<string, string> = {}): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+    ...additionalHeaders
+  };
+}
+
+/**
  * Extract Bearer token from request headers (for server-side use)
  */
 export function extractBearerToken(request: Request): string | null {

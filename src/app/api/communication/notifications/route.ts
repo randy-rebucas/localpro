@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(`${API_BASE_URL}/api/communication/notifications?${queryString}`, {
       headers: {
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${session.user.id}`,
       },
       signal: AbortSignal.timeout(30000),

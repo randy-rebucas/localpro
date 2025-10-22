@@ -43,8 +43,8 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${API_BASE_URL}/api/jobs?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
-        "Authorization": session?.user?.id ? `Bearer ${session.user.id}` : "",
         "Content-Type": "application/json",
+        "Authorization": session?.user?.id ? `Bearer ${session.user.id}` : "",
       },
       signal: AbortSignal.timeout(30000),
     });
@@ -113,8 +113,8 @@ export async function POST(request: NextRequest) {
     const response = await fetch(`${API_BASE_URL}/api/jobs`, {
       method: 'POST',
       headers: {
-        "Authorization": `Bearer ${session.user.id}`,
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30000),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton, ListSkeleton } from "@/components/ui/loading";
 import { 
@@ -8,7 +8,6 @@ import {
   RefreshCw
 } from "lucide-react";
 import { useSession } from "@/hooks/useAuth";
-import { API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 type NotificationItem = {
@@ -20,18 +19,51 @@ type NotificationItem = {
   href?: string | null;
 };
 
+// Format notification date for display
+const formatNotificationDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) {
+    return "Just now";
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes}m ago`;
+  } else if (diffInHours < 24) {
+    return `${diffInHours}h ago`;
+  } else if (diffInDays < 7) {
+    return `${diffInDays}d ago`;
+  } else {
+    return date.toLocaleDateString();
+  }
+};
+
 // Simple notification item component
 const NotificationItem = ({ 
   notification, 
   onMarkAsRead, 
-  onDelete 
+  onDelete,
+  actionLoading
 }: {
   notification: NotificationItem;
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
+  actionLoading: Set<string>;
 }) => {
+  const handleClick = () => {
+    if (notification.href) {
+      window.location.href = notification.href;
+    }
+  };
+
   return (
-    <div className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 ${notification.read ? "opacity-60" : "shadow-md"}`}>
+    <div 
+      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 ${notification.read ? "opacity-60" : "shadow-md"} ${notification.href ? "cursor-pointer" : ""}`}
+      onClick={notification.href ? handleClick : undefined}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <h3 className={`font-medium text-gray-900 ${!notification.read ? 'font-bold' : ''}`}>
@@ -41,22 +73,30 @@ const NotificationItem = ({
           <div className="flex items-center gap-3 mt-2">
             {!notification.read && (
               <button 
-                onClick={() => onMarkAsRead(notification.id)} 
-                className="text-sm text-green-600 hover:text-green-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onMarkAsRead(notification.id);
+                }} 
+                disabled={actionLoading.has(notification.id)}
+                className="text-sm text-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Mark as read
+                {actionLoading.has(notification.id) ? "Loading..." : "Mark as read"}
               </button>
             )}
             <button 
-              onClick={() => onDelete(notification.id)} 
-              className="text-sm text-gray-500 hover:text-red-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(notification.id);
+              }} 
+              disabled={actionLoading.has(notification.id)}
+              className="text-sm text-gray-500 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Delete
+              {actionLoading.has(notification.id) ? "Deleting..." : "Delete"}
             </button>
           </div>
         </div>
         <div className="text-xs text-gray-500 ml-4">
-          {new Date(notification.createdAt).toLocaleDateString()}
+          {formatNotificationDate(notification.createdAt)}
         </div>
       </div>
     </div>
@@ -66,98 +106,178 @@ const NotificationItem = ({
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
+  const [markAllLoading, setMarkAllLoading] = useState(false);
   
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
 
-  // Mock data for development
-  const mockNotifications: NotificationItem[] = useMemo(() => [
-    {
-      id: "1",
-      title: "New booking request",
-      message: "You have received a new booking request for 'House Cleaning Service' from John Doe.",
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      href: "/dashboard/bookings"
-    },
-    {
-      id: "2", 
-      title: "Payment received",
-      message: "Payment of $150 has been received for your 'Garden Maintenance' service.",
-      createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-      read: false,
-      href: "/dashboard/finance"
-    },
-    {
-      id: "3",
-      title: "Service reminder",
-      message: "Don't forget! You have a scheduled service appointment tomorrow at 10:00 AM.",
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      read: true,
-      href: "/dashboard/schedule"
-    }
-  ], []);
 
   // Load notifications
   const load = useCallback(async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || sessionStatus === 'loading') return;
     
     setLoading(true);
-    
     try {
-      const response = await fetch(`${API_ENDPOINTS.communicationNotifications}`, createAuthFetchOptions());
+      const url = `/api/communication/notifications`;
+      console.log("Fetching notifications from:", url);
+      const response = await fetch(url, createAuthFetchOptions());
       
       if (!response.ok) {
-        // If API fails, use mock data instead of throwing error
-        console.log("API unavailable, using mock data");
-        setItems(mockNotifications);
-        return;
+        if (response.status === 401) {
+          console.error("Authentication failed - session may have expired");
+          // Don't throw error for 401, just show empty state
+          setItems([]);
+          return;
+        }
+        throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
       
       const data = await response.json();
-      setItems(data.notifications || mockNotifications);
+      const notifications = data.notifications || [];
+      // Sort notifications by date (newest first)
+      const sortedNotifications = notifications.sort((a: NotificationItem, b: NotificationItem) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setItems(sortedNotifications);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      // Always fallback to mock data instead of showing error
-      setItems(mockNotifications);
+      setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, mockNotifications]);
+  }, [session?.user?.id, sessionStatus]);
 
-  // Load notifications on mount
+  // Load notifications on mount and when session changes
   useEffect(() => {
-    load();
-  }, [session?.user?.id, load]);
+    if (sessionStatus === 'authenticated' && session?.user?.id) {
+      load();
+    } else if (sessionStatus === 'unauthenticated') {
+      setLoading(false);
+      setItems([]);
+    }
+  }, [sessionStatus, session?.user?.id, load]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
+    setActionLoading(prev => new Set(prev).add(id));
+    
     // Optimistically update the UI first
     setItems(prev => prev.map(item => 
       item.id === id ? { ...item, read: true } : item
     ));
     
     try {
-      await fetch(`${API_ENDPOINTS.communicationNotifications}/${id}/read`, createAuthFetchOptions({ method: "PUT" }));
+      const url = `/api/communication/notifications/${id}/read`;
+      console.log("Marking notification as read:", url);
+      const response = await fetch(url, createAuthFetchOptions({
+        method: "PUT"
+      }));
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error("Authentication failed - session may have expired");
+          // Don't revert optimistic update for 401, just log the error
+          return;
+        }
+        throw new Error(`Failed to mark notification as read: ${response.status}`);
+      }
     } catch (err) {
       console.error("Error marking notification as read:", err);
-      // The UI is already updated optimistically, so we don't need to revert
+      // Revert optimistic update on error
+      setItems(prev => prev.map(item => 
+        item.id === id ? { ...item, read: false } : item
+      ));
+    } finally {
+      setActionLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   }, []);
 
   // Delete notification
   const deleteNotification = useCallback(async (id: string) => {
+    setActionLoading(prev => new Set(prev).add(id));
+    
+    // Store the item to restore if deletion fails
+    const itemToDelete = items.find(item => item.id === id);
+    
     // Optimistically update the UI first
     setItems(prev => prev.filter(item => item.id !== id));
     
     try {
-      await fetch(`${API_ENDPOINTS.communicationNotifications}/${id}`, createAuthFetchOptions({ method: "DELETE" }));
+      const url = `/api/communication/notifications/${id}`;
+      console.log("Deleting notification:", url);
+      const response = await fetch(url, createAuthFetchOptions({
+        method: "DELETE"
+      }));
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error("Authentication failed - session may have expired");
+          // Don't revert optimistic update for 401, just log the error
+          return;
+        }
+        throw new Error(`Failed to delete notification: ${response.status}`);
+      }
     } catch (err) {
       console.error("Error deleting notification:", err);
-      // The UI is already updated optimistically, so we don't need to revert
+      // Revert optimistic update on error
+      if (itemToDelete) {
+        setItems(prev => [...prev, itemToDelete].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ));
+      }
+    } finally {
+      setActionLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
-  }, []);
+  }, [items]);
 
-  if (loading) {
+  // Mark all notifications as read
+  const markAllAsRead = useCallback(async () => {
+    const unreadItems = items.filter(item => !item.read);
+    if (unreadItems.length === 0) return;
+    
+    setMarkAllLoading(true);
+    
+    // Optimistically update the UI first
+    setItems(prev => prev.map(item => ({ ...item, read: true })));
+    
+    try {
+      const url = `/api/communication/notifications/read-all`;
+      console.log("Marking all notifications as read:", url);
+      const response = await fetch(url, createAuthFetchOptions({
+        method: "PUT"
+      }));
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.error("Authentication failed - session may have expired");
+          // Don't revert optimistic update for 401, just log the error
+          return;
+        }
+        throw new Error(`Failed to mark all notifications as read: ${response.status}`);
+      }
+    } catch (err) {
+      console.error("Error marking all notifications as read:", err);
+      // Revert optimistic update on error
+      setItems(prev => prev.map(item => 
+        unreadItems.some(unread => unread.id === item.id) 
+          ? { ...item, read: false } 
+          : item
+      ));
+    } finally {
+      setMarkAllLoading(false);
+    }
+  }, [items]);
+
+  // Show loading state while session is loading or notifications are loading
+  if (sessionStatus === 'loading' || loading) {
     return (
       <div className="space-y-6">
         {/* Breadcrumbs Skeleton */}
@@ -189,6 +309,25 @@ export default function NotificationsPage() {
     );
   }
 
+  // Show message for unauthenticated users
+  if (sessionStatus === 'unauthenticated') {
+    return (
+      <div>
+        <Breadcrumbs
+          className="text-sm text-gray-500 mb-4"
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Notifications" },
+          ]}
+        />
+        <div className="text-center py-8">
+          <Bell className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+          <h3 className="text-base font-medium text-gray-900 mb-1">Authentication Required</h3>
+          <p className="text-gray-500">Please log in to view your notifications.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -214,13 +353,24 @@ export default function NotificationsPage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={load}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {items.filter(item => !item.read).length > 0 && (
+            <button
+              onClick={markAllAsRead}
+              disabled={markAllLoading}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {markAllLoading ? "Marking all as read..." : "Mark all as read"}
+            </button>
+          )}
+          <button
+            onClick={load}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Notifications List */}
@@ -238,6 +388,7 @@ export default function NotificationsPage() {
               notification={notification}
               onMarkAsRead={markAsRead}
               onDelete={deleteNotification}
+              actionLoading={actionLoading}
             />
           ))
         )}

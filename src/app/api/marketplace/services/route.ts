@@ -66,8 +66,8 @@ export async function GET(request: NextRequest) {
     const response = await fetch(`${API_BASE_URL}/api/marketplace/services?${queryParams.toString()}`, {
       method: 'GET',
       headers: {
+        "Content-Type": "application/json",
         "Authorization": `Bearer ${session?.user?.id || ''}`,
-        "Content-Type": "application/json"
       },
       signal: AbortSignal.timeout(30000)
     });

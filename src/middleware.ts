@@ -135,7 +135,6 @@ const ROUTE_PATTERNS = {
     "/api/supplies/",
     "/api/ads/",
     "/api/finance/",
-    "/api/communication/",
     "/api/analytics/",
     "/api/providers/",
     "/api/jobs/",

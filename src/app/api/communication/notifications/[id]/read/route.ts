@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 
-// PUT /api/communication/notifications/:notificationId/read - Mark specific notification as read
+// PUT /api/communication/notifications/:id/read - Mark specific notification as read
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ notificationId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(request);
@@ -14,9 +14,9 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { notificationId } = await params;
+    const { id } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${notificationId}/read`, {
+    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${id}/read`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

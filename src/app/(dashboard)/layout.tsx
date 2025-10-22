@@ -10,6 +10,7 @@ import { Error } from "@/components/ui/error";
 // import Navigation from "@/components/navigation";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 import {
   Menu,
   X,
@@ -20,9 +21,7 @@ import {
   HelpCircle,
   User,
   ChevronDown,
-  MessageSquare,
-  Megaphone,
-  Activity
+  MessageSquare
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -97,10 +96,10 @@ export default function DashboardLayout({
   }, [session, status, router]);
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" && session?.user?.id) {
       const fetchUnread = async () => {
         try {
-          const res = await fetch('/api/communication/notifications/count');
+          const res = await fetch('/api/communication/notifications/count', createAuthFetchOptions());
           if (res.ok) {
             const data = await res.json();
             setUnreadCount(data.count ?? 0);
@@ -111,7 +110,7 @@ export default function DashboardLayout({
       };
       fetchUnread();
     }
-  }, [status]);
+  }, [status, session?.user?.id]);
 
   const navigateToSearch = useCallback((query: string) => {
     const trimmed = query.trim();
@@ -321,32 +320,6 @@ export default function DashboardLayout({
             <div className="flex items-center space-x-1 sm:space-x-2">
               {/* Navigation Icons */}
               <div className="flex items-center space-x-1">
-                <Link 
-                  href="/announcements"
-                  className={
-                    `p-2 rounded-lg transition-colors ` +
-                    (pathname?.startsWith("/announcements")
-                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                  }
-                  aria-current={pathname?.startsWith("/announcements") ? "page" : undefined}
-                  title="Announcements"
-                >
-                  <Megaphone className="w-5 h-5" />
-                </Link>
-                <Link 
-                  href="/activity"
-                  className={
-                    `p-2 rounded-lg transition-colors ` +
-                    (pathname?.startsWith("/activity")
-                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
-                  }
-                  aria-current={pathname?.startsWith("/activity") ? "page" : undefined}
-                  title="Activity"
-                >
-                  <Activity className="w-5 h-5" />
-                </Link>
                 <Link 
                   href="/notifications"
                   className={

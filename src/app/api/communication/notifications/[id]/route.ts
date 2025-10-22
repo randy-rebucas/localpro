@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 
-// DELETE /api/communication/notifications/:notificationId - Delete a notification
+// DELETE /api/communication/notifications/:id - Delete a notification
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ notificationId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(request);
@@ -14,9 +14,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { notificationId } = await params;
+    const { id } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${notificationId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${id}`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${session.user.id}`,
