@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 
-
 // GET /api/communication/conversations - Get conversations
 export async function GET(request: NextRequest) {
   try {
@@ -19,23 +18,41 @@ export async function GET(request: NextRequest) {
       headers: {
         "Authorization": `Bearer ${session.user.id}`,
       },
+      signal: AbortSignal.timeout(30000),
     });
-
-    const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || "Failed to fetch conversations" },
+        { error: `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching conversations:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
@@ -50,31 +67,49 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     const response = await fetch(`${API_BASE_URL}/api/communication/conversations`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
         "Authorization": `Bearer ${session.user.id}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000),
     });
-
-    const data = await response.json();
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: data.error || "Failed to create conversation" },
+        { error: `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error creating conversation:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

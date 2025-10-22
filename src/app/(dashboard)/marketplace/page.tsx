@@ -101,8 +101,13 @@ export default function MarketplacePage() {
         },
         (error) => {
           console.error("Error getting location:", error);
+          // Optionally show user-friendly error message
+          setError("Unable to get your location. Please enter your location manually.");
         }
       );
+    } else {
+      console.warn("Geolocation is not supported by this browser.");
+      setError("Location services are not available. Please enter your location manually.");
     }
   };
 

@@ -37,22 +37,34 @@ export default function MyServicesPage() {
   const fetchServices = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const params = new URLSearchParams();
       if (statusFilter !== "all") {
         params.append("status", statusFilter);
       }
 
-      const response = await fetch(`/api/marketplace/my-services?${params.toString()}`);
+      const url = `/api/marketplace/my-services?${params.toString()}`;
+      console.log("Fetching services from:", url);
+      
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error("Failed to fetch services");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("Services API response:", data);
       setServices(Array.isArray(data) ? data : data.services || []);
     } catch (error) {
       console.error("Error fetching services:", error);
-      setError("Failed to load services. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to load services. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -147,22 +159,112 @@ export default function MyServicesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      <div className="p-4 space-y-4">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-2">
+            <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <div className="h-10 bg-gray-200 rounded w-40 animate-pulse"></div>
+          </div>
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="h-4 bg-gray-200 rounded w-24 mb-2 animate-pulse"></div>
+          <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+
+        {/* Services Skeleton */}
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex-1">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="space-y-2">
+                      <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                      <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-3 animate-pulse"></div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    {Array.from({ length: 4 }).map((_, j) => (
+                      <div key={j} className="text-center space-y-1">
+                        <div className="h-6 bg-gray-200 rounded w-8 mx-auto animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-12 mx-auto animate-pulse"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 mt-3 lg:mt-0 lg:ml-4">
+                  {Array.from({ length: 4 }).map((_, k) => (
+                    <div key={k} className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button
-          onClick={fetchServices}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          Try Again
-        </button>
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div>
+            <h1 className="text-xl font-bold text-gray-700">My Services</h1>
+            <p className="text-gray-600">Manage your service listings</p>
+          </div>
+          <div className="mt-4 sm:mt-0">
+            <Link
+              href="/marketplace/create-service"
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Service
+            </Link>
+          </div>
+        </div>
+
+        {/* Error State */}
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Services</h3>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+            {error}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={fetchServices}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Try Again
+            </button>
+            <Link
+              href="/marketplace/create-service"
+              className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Create New Service
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -211,23 +313,38 @@ export default function MyServicesPage() {
       {/* Services List */}
       <div className="space-y-3">
         {services.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Plus className="w-6 h-6 text-gray-400" />
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Plus className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="text-base font-medium text-gray-700 mb-1">No services found</h3>
-            <p className="text-gray-500 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {statusFilter === "all" 
-                ? "You haven't created any services yet." 
-                : `No services with status "${statusFilter.toLowerCase()}".`
+                ? "No Services Yet" 
+                : `No ${statusFilter.toLowerCase()} services`
+              }
+            </h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              {statusFilter === "all" 
+                ? "Start building your service business by creating your first service listing. Share your skills and start earning!" 
+                : `You don't have any services with status "${statusFilter.toLowerCase()}". Try changing the filter or create a new service.`
               }
             </p>
-            <Link
-              href="/marketplace/create-service"
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Create Your First Service
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/marketplace/create-service"
+                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Create Your First Service
+              </Link>
+              {statusFilter !== "all" && (
+                <button
+                  onClick={() => setStatusFilter("all")}
+                  className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Show All Services
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid gap-4">

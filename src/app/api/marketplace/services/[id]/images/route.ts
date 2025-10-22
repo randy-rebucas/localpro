@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 
-// PUT /api/communication/conversations/:id/read - Mark as read
-export async function PUT(
+// POST /api/marketplace/services/:id/images - Upload service images
+export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -15,15 +15,14 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const formData = await request.formData();
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/conversations/${id}/read`, {
-      method: 'PUT',
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/services/${id}/images`, {
+      method: 'POST',
       headers: {
         "Authorization": `Bearer ${session.user.id}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      body: formData,
       signal: AbortSignal.timeout(30000),
     });
 

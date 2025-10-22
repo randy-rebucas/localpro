@@ -51,6 +51,7 @@ export default function BrowseJobsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("relevance");
+  const [isFiltering, setIsFiltering] = useState(false);
   const [filters, setFilters] = useState({
     category: "",
     location: "",
@@ -96,91 +97,58 @@ export default function BrowseJobsPage() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      let response;
       try {
-        response = await fetch(`/api/jobs?${params.toString()}`, {
-          signal: controller.signal
-        });
-      } catch (fetchError) {
-        console.log("Primary API failed, using mock data:", fetchError);
-        // Use mock data as fallback
-        const mockJobs: Job[] = [
-          {
-            id: "1",
-            title: "E-commerce Website Development",
-            description: "Need a full-stack developer to build a modern e-commerce platform with React and Node.js. Must include payment integration, user authentication, and admin dashboard.",
-            category: "WEB_DEVELOPMENT",
-            budget: 5000,
-            duration: 30,
-            client: {
-              id: "client-1",
-              name: "Sarah Johnson",
-              rating: 4.8,
-              reviewCount: 45,
-              avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-            },
-            location: {
-              city: "New York",
-              state: "NY"
-            },
-            images: [
-              "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop"
-            ],
-            rating: 4.8,
-            reviewCount: 45,
-            isAvailable: true,
-            createdAt: "2024-01-15T10:00:00Z",
-            deadline: "2024-02-15T23:59:59Z",
-            skills: ["React", "Node.js", "JavaScript", "E-commerce"]
+        const response = await fetch(`/api/jobs?${params.toString()}`, {
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
           },
-          {
-            id: "2",
-            title: "Mobile App UI/UX Design",
-            description: "Looking for a talented UI/UX designer to create wireframes and high-fidelity designs for a fitness tracking mobile app.",
-            category: "DESIGN",
-            budget: 2500,
-            duration: 14,
-            client: {
-              id: "client-2",
-              name: "Mike Rodriguez",
-              rating: 4.9,
-              reviewCount: 32,
-              avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-            },
-            location: {
-              city: "Los Angeles",
-              state: "CA"
-            },
-            images: [
-              "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=300&fit=crop"
-            ],
-            rating: 4.9,
-            reviewCount: 32,
-            isAvailable: true,
-            createdAt: "2024-01-10T14:30:00Z",
-            deadline: "2024-01-25T23:59:59Z",
-            skills: ["UI/UX Design", "Figma", "Mobile Design", "Prototyping"]
-          }
-        ];
+        });
 
-        setJobs(mockJobs);
-        return;
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("API Error:", errorData);
+          throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch jobs`);
+        }
+
+        const data = await response.json();
+        console.log("Jobs data:", data);
+        
+        // Handle both array and object responses
+        let jobsData = [];
+        if (Array.isArray(data)) {
+          jobsData = data;
+        } else if (data && typeof data === 'object') {
+          jobsData = data.jobs || data.data || [];
+        }
+        
+        // Ensure jobsData is always an array
+        if (!Array.isArray(jobsData)) {
+          console.warn("Jobs data is not an array:", jobsData);
+          jobsData = [];
+        }
+        
+        setJobs(jobsData);
+        
+        // Clear any previous errors on successful fetch
+        setError(null);
+        setIsFiltering(false);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error("Request timed out. Please try again.");
+        }
+        
+        console.error("API fetch error:", fetchError);
+        throw fetchError;
       }
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API Error:", errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch jobs`);
-      }
-
-      const data = await response.json();
-      console.log("Jobs data:", data);
-      setJobs(Array.isArray(data) ? data : data.jobs || []);
     } catch (error) {
       console.error("Error fetching jobs:", error);
-      setError("Failed to load jobs. Please try again.");
+      setError(error instanceof Error ? error.message : "Failed to load jobs. Please try again.");
+      setIsFiltering(false);
     } finally {
       setLoading(false);
     }
@@ -197,6 +165,7 @@ export default function BrowseJobsPage() {
 
   const handleFilterChange = (key: string, value: string | number | boolean | number[]) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+    setIsFiltering(true);
   };
 
   const handleSkillToggle = (skill: string) => {
@@ -206,6 +175,7 @@ export default function BrowseJobsPage() {
         ? prev.skills.filter(s => s !== skill)
         : [...prev.skills, skill]
     }));
+    setIsFiltering(true);
   };
 
   const clearFilters = () => {
@@ -279,6 +249,12 @@ export default function BrowseJobsPage() {
                     <div className="h-3 bg-gray-200 rounded w-16"></div>
                   </div>
                 </div>
+                <div className="flex gap-2">
+                  <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                  <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                  <div className="h-6 bg-gray-200 rounded-full w-14"></div>
+                </div>
+                <div className="h-10 bg-gray-200 rounded-lg"></div>
               </div>
             </div>
           ))}
@@ -348,6 +324,9 @@ export default function BrowseJobsPage() {
           >
             <Filter className="w-4 h-4" />
             Filters
+            {isFiltering && (
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            )}
             <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
           </button>
         </div>
@@ -472,36 +451,50 @@ export default function BrowseJobsPage() {
       {/* Results */}
       {error ? (
         <div className="text-center py-12">
-          <div className="text-red-600 mb-4">{error}</div>
+          <div className="text-red-600 mb-4">
+            <div className="flex items-center justify-center mb-2">
+              <X className="w-6 h-6 mr-2" />
+              <span className="font-medium">Error loading jobs</span>
+            </div>
+            <p className="text-sm text-gray-600">{error}</p>
+          </div>
           <button
             onClick={fetchJobs}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             Try Again
           </button>
         </div>
-      ) : jobs.length === 0 ? (
+      ) : !Array.isArray(jobs) || jobs.length === 0 ? (
         <div className="text-center py-12">
           <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-700 mb-2">No jobs found</h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-6 max-w-md mx-auto">
             {searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))
-              ? "Try adjusting your search or filters"
-              : "No jobs are currently available"
+              ? "We couldn't find any jobs matching your search criteria. Try adjusting your filters or search terms."
+              : "There are no jobs available at the moment. Check back later or create a job posting to get started."
             }
           </p>
-          {(searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))) && (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {(searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Clear Search & Filters
+              </button>
+            )}
+            <Link
+              href="/marketplace/create-job"
+              className="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors"
             >
-              Clear Search & Filters
-            </button>
-          )}
+              Post a Job
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobs.map((job) => (
+          {Array.isArray(jobs) && jobs.map((job) => (
             <div
               key={job.id}
               className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"

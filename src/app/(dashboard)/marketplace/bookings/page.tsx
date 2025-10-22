@@ -59,6 +59,8 @@ export default function BookingsPage() {
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const params = new URLSearchParams();
       
       if (statusFilter !== "all") {
@@ -77,13 +79,23 @@ export default function BookingsPage() {
         params.append("dateTo", dateTo);
       }
 
-      const response = await fetch(`/api/marketplace/my-bookings?${params.toString()}`);
+      const url = `/api/marketplace/my-bookings?${params.toString()}`;
+      console.log("Fetching bookings from:", url);
+
+      const response = await fetch(url);
       
       if (!response.ok) {
-        throw new Error("Failed to fetch bookings");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("API Error Response:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("Bookings API Response:", data);
       setBookings(Array.isArray(data) ? data : data.bookings || []);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -219,8 +231,9 @@ export default function BookingsPage() {
         <div className="mt-4 sm:mt-0">
           <Link
             href="/marketplace"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
+            <Store className="w-4 h-4 mr-2" />
             Browse Services
           </Link>
         </div>

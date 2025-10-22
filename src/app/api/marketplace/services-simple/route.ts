@@ -1,77 +1,61 @@
-import { NextResponse } from "next/server";
-
-// Simple mock data
-const mockServices = [
-  {
-    id: "1",
-    name: "Professional House Cleaning",
-    description: "Complete house cleaning service including kitchen, bathrooms, living areas, and bedrooms.",
-    category: "CLEANING",
-    price: 150,
-    duration: 180,
-    provider: {
-      id: "provider-1",
-      name: "Sarah Johnson",
-      rating: 4.8,
-      reviewCount: 127,
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-    },
-    location: {
-      city: "New York",
-      state: "NY"
-    },
-    images: [
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
-    ],
-    rating: 4.8,
-    reviewCount: 127,
-    isAvailable: true,
-    createdAt: "2024-01-15T10:00:00Z"
-  },
-  {
-    id: "2",
-    name: "Emergency Plumbing Repair",
-    description: "24/7 emergency plumbing services for leaks, clogs, and repairs.",
-    category: "PLUMBING",
-    price: 200,
-    duration: 120,
-    provider: {
-      id: "provider-2",
-      name: "Mike Rodriguez",
-      rating: 4.9,
-      reviewCount: 89,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-    },
-    location: {
-      city: "Los Angeles",
-      state: "CA"
-    },
-    images: [
-      "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop"
-    ],
-    rating: 4.9,
-    reviewCount: 89,
-    isAvailable: true,
-    createdAt: "2024-01-10T14:30:00Z"
-  }
-];
+import { NextRequest, NextResponse } from "next/server";
+import { API_BASE_URL } from "@/lib/api";
+import { getServerSession } from "@/lib/server-session";
 
 // GET /api/marketplace/services-simple - Simple services endpoint
-export async function GET() {
-  console.log("Simple API: Fetching services...");
-  
+export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json({
-      services: mockServices,
-      total: mockServices.length,
-      page: 1,
-      limit: 20
+    console.log("Simple API: Fetching services...");
+    const session = await getServerSession(request);
+    
+    // Make request to external API
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/services-simple`, {
+      method: 'GET',
+      headers: {
+        "Authorization": `Bearer ${session?.user?.id || ''}`,
+        "Content-Type": "application/json"
+      },
+      signal: AbortSignal.timeout(30000)
     });
+
+    if (!response.ok) {
+      console.error("External API error:", response.status, response.statusText);
+      return NextResponse.json(
+        { 
+          error: `External service error: ${response.status}`,
+          errorMessage: `Failed to fetch services from external service`
+        },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    console.log("Simple API: External API response:", data);
+
+    return NextResponse.json(data);
+
   } catch (error) {
     console.error("Simple API: Error:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Failed to fetch services" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        errorMessage: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: statusCode }
     );
   }
 }

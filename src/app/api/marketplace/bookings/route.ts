@@ -2,68 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
 
-// Mock data for development
-const mockBookings = [
-  {
-    id: "booking-1",
-    service: {
-      id: "1",
-      name: "Professional House Cleaning",
-      category: "CLEANING",
-      price: 150,
-      duration: 180,
-      provider: {
-        id: "provider-1",
-        name: "Sarah Johnson",
-        phone: "+1 (555) 123-4567",
-        email: "sarah.johnson@email.com",
-        avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-      }
-    },
-    status: "CONFIRMED",
-    date: "2024-01-25",
-    time: "10:00",
-    duration: 180,
-    totalPrice: 150,
-    notes: "Please focus on the kitchen and bathrooms",
-    contactPhone: "+1 (555) 987-6543",
-    contactEmail: "customer@email.com",
-    createdAt: "2024-01-20T10:00:00Z",
-    updatedAt: "2024-01-20T10:00:00Z",
-    paymentStatus: "PAID",
-    paymentMethod: "Credit Card"
-  },
-  {
-    id: "booking-2",
-    service: {
-      id: "2",
-      name: "Emergency Plumbing Repair",
-      category: "PLUMBING",
-      price: 200,
-      duration: 120,
-      provider: {
-        id: "provider-2",
-        name: "Mike Rodriguez",
-        phone: "+1 (555) 234-5678",
-        email: "mike.rodriguez@email.com",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-      }
-    },
-    status: "COMPLETED",
-    date: "2024-01-18",
-    time: "14:00",
-    duration: 120,
-    totalPrice: 200,
-    notes: "Kitchen sink is completely blocked",
-    contactPhone: "+1 (555) 987-6543",
-    contactEmail: "customer@email.com",
-    createdAt: "2024-01-17T09:00:00Z",
-    updatedAt: "2024-01-18T16:00:00Z",
-    paymentStatus: "PAID",
-    paymentMethod: "PayPal"
-  }
-];
-
 // GET /api/marketplace/bookings - Get user bookings
 export async function GET(request: NextRequest) {
   try {
@@ -79,37 +17,60 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    // Try to fetch from external API first, fallback to mock data
-    try {
-      const queryString = searchParams.toString();
-      const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings?${queryString}`, {
-        headers: {
-          "Authorization": `Bearer ${session.user.id}`,
-          "Content-Type": "application/json"
-        },
-        signal: AbortSignal.timeout(5000)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return NextResponse.json(data);
-      }
-    } catch (fetchError) {
-      console.log("External API unavailable, using mock data:", fetchError);
-    }
-
-    // Filter mock data
-    let filteredBookings = [...mockBookings];
+    // Build query parameters for external API
+    const queryParams = new URLSearchParams();
     if (status && status !== 'all') {
-      filteredBookings = filteredBookings.filter(booking => booking.status === status);
+      queryParams.append('status', status);
     }
 
-    return NextResponse.json(filteredBookings);
+    // Make request to external API
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings?${queryParams.toString()}`, {
+      method: 'GET',
+      headers: {
+        "Authorization": `Bearer ${session.user.id}`,
+        "Content-Type": "application/json"
+      },
+      signal: AbortSignal.timeout(30000)
+    });
+
+    if (!response.ok) {
+      console.error("External API error:", response.status, response.statusText);
+      return NextResponse.json(
+        { 
+          error: `External service error: ${response.status}`,
+          errorMessage: `Failed to fetch bookings from external service`
+        },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    console.log("Bookings API: External API response:", data);
+
+    return NextResponse.json(data);
+
   } catch (error) {
     console.error("Error fetching bookings:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        errorMessage: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: statusCode }
     );
   }
 }
@@ -127,43 +88,57 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    console.log("Bookings API: Creating booking:", body);
     
-    // Try to create booking via external API first
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.user.id}`,
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(5000)
-      });
+    // Make request to external API
+    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.user.id}`,
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(30000)
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        return NextResponse.json(data);
-      }
-    } catch (fetchError) {
-      console.log("External API unavailable, using mock response:", fetchError);
+    if (!response.ok) {
+      console.error("External API error:", response.status, response.statusText);
+      return NextResponse.json(
+        { 
+          error: `External service error: ${response.status}`,
+          errorMessage: `Failed to create booking in external service`
+        },
+        { status: response.status }
+      );
     }
 
-    // Create mock booking response
-    const newBooking = {
-      id: `booking-${Date.now()}`,
-      ...body,
-      status: "PENDING",
-      paymentStatus: "PENDING",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    const data = await response.json();
+    console.log("Bookings API: External API response:", data);
 
-    return NextResponse.json(newBooking, { status: 201 });
+    return NextResponse.json(data, { status: 201 });
+
   } catch (error) {
     console.error("Error creating booking:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        errorMessage: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: statusCode }
     );
   }
 }
