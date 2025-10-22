@@ -1,9 +1,8 @@
 import { serialize } from 'cookie';
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
+import { AUTH_CONFIG } from './env';
 
-const secret = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production'
-);
+const secret = new TextEncoder().encode(AUTH_CONFIG.sessionSecret);
 
 export interface SessionData extends JWTPayload {
   userId: string;
@@ -48,7 +47,17 @@ export async function decrypt(session: string | undefined = ''): Promise<Session
     
     return null;
   } catch (error) {
-    console.error('Session decryption failed:', error);
+    // Enhanced error logging for debugging
+    if (error instanceof Error) {
+      console.error('Session decryption failed:', {
+        message: error.message,
+        name: error.name,
+        code: (error as any).code,
+        stack: error.stack
+      });
+    } else {
+      console.error('Session decryption failed:', error);
+    }
     return null;
   }
 }
@@ -71,4 +80,22 @@ export function clearSessionCookie(): string {
     path: '/',
     sameSite: 'lax',
   });
+}
+
+/**
+ * Clear all session-related cookies
+ * Useful when session secrets change or for debugging
+ */
+export function clearAllSessionCookies(): string[] {
+  return [
+    clearSessionCookie(),
+    serialize('session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 0,
+      path: '/',
+      sameSite: 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.localpro.com' : 'localhost',
+    })
+  ];
 }

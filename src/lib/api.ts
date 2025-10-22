@@ -25,30 +25,56 @@ export async function apiRequest<T>(
 
 // API endpoints
 export const API_ENDPOINTS = {
-  // Authentication
-  sendCode: "/api/auth/send-code",
-  verifyCode: "/api/auth/verify-code",
-  me: "/api/auth/me",
-  profile: "/api/auth/profile",
-  profileCompleteness: "/api/auth/profile-completeness",
-  uploadAvatar: "/api/auth/upload-avatar",
-  uploadPortfolio: "/api/auth/upload-portfolio",
-  logout: "/api/auth/logout",
+  // Authentication & User Management
+  authSendCode: "/api/auth/send-code",
+  authVerifyCode: "/api/auth/verify-code",
+  authCompleteOnboarding: "/api/auth/complete-onboarding",
+  authProfileCompleteness: "/api/auth/profile-completeness",
+  authMe: "/api/auth/me",
+  authProfile: "/api/auth/profile",
+  authUploadAvatar: "/api/auth/upload-avatar",
+  authUploadPortfolio: "/api/auth/upload-portfolio",
+  authLogout: "/api/auth/logout",
   
-  // Marketplace
+  // Marketplace Services
   marketplaceServices: "/api/marketplace/services",
   marketplaceServicesNearby: "/api/marketplace/services/nearby",
   marketplaceServiceById: "/api/marketplace/services",
+  marketplaceMyServices: "/api/marketplace/my-services",
+  marketplaceMyBookings: "/api/marketplace/my-bookings",
   marketplaceBookings: "/api/marketplace/bookings",
   marketplaceBookingStatus: "/api/marketplace/bookings",
   marketplaceBookingPhotos: "/api/marketplace/bookings",
   marketplaceBookingReview: "/api/marketplace/bookings",
   marketplacePayPalApprove: "/api/marketplace/bookings/paypal/approve",
   marketplacePayPalOrder: "/api/marketplace/bookings/paypal/order",
-  // Get all user's services
-  myServices: "/api/marketplace/my-services",
-
-  // Supplies
+  
+  // Job Board
+  jobs: "/api/jobs",
+  jobsSearch: "/api/jobs/search",
+  jobsById: "/api/jobs",
+  jobsMyApplications: "/api/jobs/my-applications",
+  jobsMyJobs: "/api/jobs/my-jobs",
+  jobsApply: "/api/jobs",
+  jobsStats: "/api/jobs",
+  jobsApplications: "/api/jobs",
+  jobsApplicationStatus: "/api/jobs",
+  
+  // Academy & Learning
+  academyCourses: "/api/academy/courses",
+  academyCourseById: "/api/academy/courses",
+  academyCategories: "/api/academy/categories",
+  academyFeatured: "/api/academy/featured",
+  academyMyCourses: "/api/academy/my-courses",
+  academyMyCreatedCourses: "/api/academy/my-created-courses",
+  academyCourseThumbnail: "/api/academy/courses",
+  academyCourseVideos: "/api/academy/courses",
+  academyCourseVideoDelete: "/api/academy/courses",
+  academyEnroll: "/api/academy/courses",
+  academyProgress: "/api/academy/courses",
+  academyReviews: "/api/academy/courses",
+  
+  // Supplies & Equipment
   supplies: "/api/supplies",
   suppliesCategories: "/api/supplies/categories",
   suppliesFeatured: "/api/supplies/featured",
@@ -56,101 +82,77 @@ export const API_ENDPOINTS = {
   suppliesById: "/api/supplies",
   suppliesMySupplies: "/api/supplies/my-supplies",
   suppliesMyOrders: "/api/supplies/my-orders",
-  suppliesStatistics: "/api/supplies/statistics",
+  suppliesImages: "/api/supplies",
+  suppliesImageDelete: "/api/supplies",
+  suppliesOrder: "/api/supplies",
+  suppliesOrderStatus: "/api/supplies",
+  suppliesReviews: "/api/supplies",
   
-  // Academy
-  academyCourses: "/api/academy/courses",
-  academyCategories: "/api/academy/categories",
-  academyFeatured: "/api/academy/featured",
-  academyMyCourses: "/api/academy/my-courses",
-  academyMyCreatedCourses: "/api/academy/my-created-courses",
-  academyStatistics: "/api/academy/statistics",
-  
-  // Finance
-  financeOverview: "/api/finance/overview",
-  financeTransactions: "/api/finance/transactions",
-  financeEarnings: "/api/finance/earnings",
-  financeExpenses: "/api/finance/expenses",
-  financeReports: "/api/finance/reports",
-  financeTaxDocuments: "/api/finance/tax-documents",
-  
-  // Rentals
+  // Equipment Rentals
   rentals: "/api/rentals",
   rentalsCategories: "/api/rentals/categories",
   rentalsFeatured: "/api/rentals/featured",
   rentalsNearby: "/api/rentals/nearby",
+  rentalsById: "/api/rentals",
   rentalsMyRentals: "/api/rentals/my-rentals",
   rentalsMyBookings: "/api/rentals/my-bookings",
-  rentalsStatistics: "/api/rentals/statistics",
+  rentalsImages: "/api/rentals",
+  rentalsImageDelete: "/api/rentals",
+  rentalsBook: "/api/rentals",
+  rentalsBookingStatus: "/api/rentals",
+  rentalsReviews: "/api/rentals",
   
-  // Ads
+  // Facility Care Services
+  facilityCare: "/api/facility-care",
+  facilityCareNearby: "/api/facility-care/nearby",
+  facilityCareById: "/api/facility-care",
+  facilityCareMyServices: "/api/facility-care/my-services",
+  facilityCareMyBookings: "/api/facility-care/my-bookings",
+  facilityCareImages: "/api/facility-care",
+  facilityCareImageDelete: "/api/facility-care",
+  facilityCareBook: "/api/facility-care",
+  facilityCareBookingStatus: "/api/facility-care",
+  facilityCareReviews: "/api/facility-care",
+  
+  // Communication & Messaging
+  communicationConversations: "/api/communication/conversations",
+  communicationConversationById: "/api/communication/conversations",
+  communicationMessages: "/api/communication/conversations",
+  communicationMessageUpdate: "/api/communication/conversations",
+  communicationMessageDelete: "/api/communication/conversations",
+  communicationRead: "/api/communication/conversations",
+  communicationNotifications: "/api/communication/notifications",
+  communicationNotificationCount: "/api/communication/notifications/count",
+  communicationNotificationRead: "/api/communication/notifications",
+  communicationNotificationReadAll: "/api/communication/notifications/read-all",
+  communicationNotificationDelete: "/api/communication/notifications",
+  communicationEmailNotification: "/api/communication/notifications/email",
+  communicationSmsNotification: "/api/communication/notifications/sms",
+  communicationUnreadCount: "/api/communication/unread-count",
+  communicationSearch: "/api/communication/search",
+  communicationConversationWith: "/api/communication/conversation-with",
+  
+  // Advertising & Promotions
   ads: "/api/ads",
   adsCategories: "/api/ads/categories",
   adsFeatured: "/api/ads/featured",
+  adsById: "/api/ads",
+  adsClick: "/api/ads",
   adsMyAds: "/api/ads/my-ads",
-  adsStatistics: "/api/ads/statistics",
+  adsImages: "/api/ads",
+  adsImageDelete: "/api/ads",
+  adsPromote: "/api/ads",
+  adsAnalytics: "/api/ads",
   
-  // Facility Care
-  facilityCare: "/api/facility-care",
-  facilityCareNearby: "/api/facility-care/nearby",
-  facilityCareMyServices: "/api/facility-care/my-services",
-  facilityCareMyBookings: "/api/facility-care/my-bookings",
-  
-  // LocalPro Plus
-  localProPlusPlans: "/api/localpro-plus/plans",
-  localProPlusMySubscription: "/api/localpro-plus/my-subscription",
-  localProPlusUsage: "/api/localpro-plus/usage",
-  localProPlusAnalytics: "/api/localpro-plus/analytics",
-  
-  // Trust Verification
+  // Trust & Verification
   trustVerificationVerifiedUsers: "/api/trust-verification/verified-users",
   trustVerificationRequests: "/api/trust-verification/requests",
+  trustVerificationRequestById: "/api/trust-verification/requests",
+  trustVerificationRequestDocuments: "/api/trust-verification/requests",
+  trustVerificationDocumentDelete: "/api/trust-verification/requests",
   trustVerificationMyRequests: "/api/trust-verification/my-requests",
-  trustVerificationStatistics: "/api/trust-verification/statistics",
   
-  // Communication
-  communicationConversations: "/api/communication/conversations",
-  communicationUnreadCount: "/api/communication/unread-count",
-  communicationConversationsId: "/api/communication/conversations/{id}",
-  communicationConversationsIdMessages: "/api/communication/conversations/{id}/messages",
-  communicationConversationsIdMessagesMessageId: "/api/communication/conversations/{id}/messages/{messageId}",
-  communicationConversationsIdRead: "/api/communication/conversations/{id}/read",
-
-  communicationSearch: "/api/communication/search",
-  communicationNotifications: "/api/communication/notifications",
-  communicationNotificationsCount: "/api/communication/notifications/count",
-  communicationNotificationsReadAll: "/api/communication/notifications/read-all",
-  
-  // Analytics
-  analyticsOverview: "/api/analytics/overview",
-  analyticsUser: "/api/analytics/user",
-  analyticsMarketplace: "/api/analytics/marketplace",
-  analyticsCustom: "/api/analytics/custom",
-  
-  // Maps
-  mapsGeocode: "/api/maps/geocode",
-  mapsReverseGeocode: "/api/maps/reverse-geocode",
-  mapsPlacesSearch: "/api/maps/places/search",
-  mapsDistance: "/api/maps/distance",
-  mapsNearby: "/api/maps/nearby",
-  
-  // PayPal
-  paypalWebhook: "/api/paypal/webhook",
-  paypalWebhookEvents: "/api/paypal/webhook/events",
-  
-  // PayMaya
-  paymayaWebhook: "/api/paymaya/webhook",
-  paymayaCheckout: "/api/paymaya/checkout",
-  paymayaPayment: "/api/paymaya/payment",
-  paymayaInvoice: "/api/paymaya/invoice",
-  
-  // Jobs
-  jobs: "/api/jobs",
-  jobsSearch: "/api/jobs/search",
-  jobsMyApplications: "/api/jobs/my-applications",
-  jobsMyJobs: "/api/jobs/my-jobs",
-  
-  // Referrals
+  // Referral System
   referralsValidate: "/api/referrals/validate",
   referralsTrack: "/api/referrals/track",
   referralsLeaderboard: "/api/referrals/leaderboard",
@@ -158,47 +160,105 @@ export const API_ENDPOINTS = {
   referralsStats: "/api/referrals/stats",
   referralsLinks: "/api/referrals/links",
   referralsRewards: "/api/referrals/rewards",
-  referralsAnalytics: "/api/referrals/analytics",
+  referralsInvite: "/api/referrals/invite",
+  referralsPreferences: "/api/referrals/preferences",
   
-  // Agencies
+  // Financial Management
+  financeOverview: "/api/finance/overview",
+  financeTransactions: "/api/finance/transactions",
+  financeEarnings: "/api/finance/earnings",
+  financeExpenses: "/api/finance/expenses",
+  financeReports: "/api/finance/reports",
+  financeExpenseAdd: "/api/finance/expenses",
+  financeWithdraw: "/api/finance/withdraw",
+  financeTaxDocuments: "/api/finance/tax-documents",
+  financeWalletSettings: "/api/finance/wallet/settings",
+  
+  // Google Maps Integration
+  mapsGeocode: "/api/maps/geocode",
+  mapsReverseGeocode: "/api/maps/reverse-geocode",
+  mapsPlacesSearch: "/api/maps/places/search",
+  mapsPlaceById: "/api/maps/places",
+  mapsDistance: "/api/maps/distance",
+  mapsNearby: "/api/maps/nearby",
+  mapsValidateServiceArea: "/api/maps/validate-service-area",
+  mapsAnalyzeCoverage: "/api/maps/analyze-coverage",
+  
+  // PayPal Integration
+  paypalWebhook: "/api/paypal/webhook",
+  
+  // PayMaya Integration
+  paymayaWebhook: "/api/paymaya/webhook",
+  paymayaCheckout: "/api/paymaya/checkout",
+  paymayaCheckoutById: "/api/paymaya/checkout",
+  paymayaPayment: "/api/paymaya/payment",
+  paymayaPaymentById: "/api/paymaya/payment",
+  paymayaInvoice: "/api/paymaya/invoice",
+  paymayaInvoiceById: "/api/paymaya/invoice",
+  
+  // Provider Management
+  providers: "/api/providers",
+  providersById: "/api/providers",
+  providersProfileMe: "/api/providers/profile/me",
+  providersProfile: "/api/providers/profile",
+  providersOnboardingStep: "/api/providers/onboarding/step",
+  providersDocumentsUpload: "/api/providers/documents/upload",
+  providersDashboard: "/api/providers/dashboard/overview",
+  providersAnalytics: "/api/providers/analytics/performance",
+  
+  // Agency Management
   agencies: "/api/agencies",
+  agenciesById: "/api/agencies",
+  agenciesLogo: "/api/agencies",
+  agenciesProviders: "/api/agencies",
+  agenciesProviderDelete: "/api/agencies",
+  agenciesProviderStatus: "/api/agencies",
+  agenciesAdmins: "/api/agencies",
+  agenciesAdminDelete: "/api/agencies",
+  agenciesAnalytics: "/api/agencies",
   agenciesMyAgencies: "/api/agencies/my/agencies",
+  agenciesJoin: "/api/agencies/join",
+  agenciesLeave: "/api/agencies/leave",
   
-  // Settings
+  // LocalPro Plus Subscriptions
+  localProPlusPlans: "/api/localpro-plus/plans",
+  localProPlusPlanById: "/api/localpro-plus/plans",
+  localProPlusSubscribe: "/api/localpro-plus/subscribe",
+  localProPlusConfirmPayment: "/api/localpro-plus/confirm-payment",
+  localProPlusCancel: "/api/localpro-plus/cancel",
+  localProPlusRenew: "/api/localpro-plus/renew",
+  localProPlusMySubscription: "/api/localpro-plus/my-subscription",
+  localProPlusSettings: "/api/localpro-plus/settings",
+  localProPlusUsage: "/api/localpro-plus/usage",
+  
+  // Settings Management
   settingsUser: "/api/settings/user",
+  settingsUserCategory: "/api/settings/user",
+  settingsUserReset: "/api/settings/user/reset",
+  settingsUserDelete: "/api/settings/user",
   settingsApp: "/api/settings/app",
+  settingsAppCategory: "/api/settings/app",
+  settingsAppFeaturesToggle: "/api/settings/app/features/toggle",
   settingsAppPublic: "/api/settings/app/public",
   settingsAppHealth: "/api/settings/app/health",
   
-  // Error Monitoring
-  errorMonitoringStats: "/api/error-monitoring/stats",
-  errorMonitoringUnresolved: "/api/error-monitoring/unresolved",
-  errorMonitoringDashboard: "/api/error-monitoring/dashboard/summary",
+  // Analytics & Insights
+  analyticsOverview: "/api/analytics/overview",
+  analyticsUser: "/api/analytics/user",
+  analyticsMarketplace: "/api/analytics/marketplace",
+  analyticsJobs: "/api/analytics/jobs",
+  analyticsReferrals: "/api/analytics/referrals",
+  analyticsAgencies: "/api/analytics/agencies",
+  analyticsTrack: "/api/analytics/track",
   
-  // Audit Logs
-  auditLogs: "/api/audit-logs",
-  auditLogsStats: "/api/audit-logs/stats",
-  auditLogsUserActivity: "/api/audit-logs/user",
-  auditLogsDashboard: "/api/audit-logs/dashboard/summary",
-  
-  // Providers
-  providers: "/api/providers",
-  providersProfileMe: "/api/providers/profile/me",
-  providersDashboard: "/api/providers/dashboard/overview",
-  providersAnalytics: "/api/providers/analytics/performance",
-  providersAdminAll: "/api/providers/admin/all",
-  
-  // Logs
-  logsStats: "/api/logs/stats",
-  logs: "/api/logs",
-  logsAnalyticsErrorTrends: "/api/logs/analytics/error-trends",
-  logsAnalyticsPerformance: "/api/logs/analytics/performance",
-  logsUserActivity: "/api/logs/user",
-  logsDashboard: "/api/logs/dashboard/summary",
-  logsSearchGlobal: "/api/logs/search/global",
-  
-  // Search
+  // Global Search
   search: "/api/search",
   searchSuggestions: "/api/search/suggestions",
   searchPopular: "/api/search/popular",
+  searchAdvanced: "/api/search/advanced",
+  searchEntities: "/api/search/entities",
+  searchCategories: "/api/search/categories",
+  searchLocations: "/api/search/locations",
+  searchTrending: "/api/search/trending",
+  searchAnalytics: "/api/search/analytics",
 } as const;
