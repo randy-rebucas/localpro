@@ -2,7 +2,6 @@
 
 import { Suspense } from "react";
 import ErrorBoundary from "@/components/error-boundary";
-import { Activity } from "lucide-react";
 
 // Loading component for dashboard sections
 function DashboardLoading() {
@@ -101,45 +100,6 @@ export default function DashboardPage() {
         <div className="space-y-6">
           {/* Dashboard content is now handled by parallel routes in layout.tsx */}
           {/* This page can be used for any additional dashboard-specific content */}
-          
-          {/* Quick Actions Section */}
-          <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                <Activity className="w-4 h-4 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-700">Quick Actions</h3>
-            </div>
-            <p className="text-gray-600 mb-4">
-              Access your most used features and recent activity from here.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors cursor-pointer">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <span className="text-blue-600 font-bold text-sm">M</span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">Marketplace</span>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors cursor-pointer">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <span className="text-green-600 font-bold text-sm">N</span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">Notifications</span>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors cursor-pointer">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <span className="text-purple-600 font-bold text-sm">P</span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">Profile</span>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-lg text-center hover:bg-gray-100 transition-colors cursor-pointer">
-                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                  <span className="text-orange-600 font-bold text-sm">S</span>
-                </div>
-                <span className="text-sm font-medium text-gray-700">Settings</span>
-              </div>
-            </div>
-          </div>
         </div>
       </Suspense>
     </ErrorBoundary>

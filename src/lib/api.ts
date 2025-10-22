@@ -261,4 +261,19 @@ export const API_ENDPOINTS = {
   searchLocations: "/api/search/locations",
   searchTrending: "/api/search/trending",
   searchAnalytics: "/api/search/analytics",
+  
+  // Announcements
+  announcements: "/api/announcements",
+  announcementsById: "/api/announcements",
+  
+  // Activities & Discovery
+  activitiesFeed: "/api/activities/feed",
+  activitiesMy: "/api/activities/my",
+  activitiesUser: "/api/activities/user",
+  activitiesById: "/api/activities",
+  activities: "/api/activities",
+  activitiesInteractions: "/api/activities",
+  activitiesStatsMy: "/api/activities/stats/my",
+  activitiesStatsGlobal: "/api/activities/stats/global",
+  activitiesMetadata: "/api/activities/metadata",
 } as const;

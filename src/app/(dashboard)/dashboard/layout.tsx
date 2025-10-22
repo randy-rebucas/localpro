@@ -19,14 +19,8 @@ export default function DashboardLayout({
       {/* Services Section */}
       {services && <div key="dashboard-services">{services}</div>}
       
-      {/* Dashboard Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Stats Section */}
-        {stats && <div key="dashboard-stats" className="lg:col-span-2">{stats}</div>}
-        
-        {/* Activity Section */}
-        {activity && <div key="dashboard-activity" className="lg:col-span-1">{activity}</div>}
-      </div>
+      {/* Activity Section - Full Width */}
+      {activity && <div key="dashboard-activity" className="mt-8">{activity}</div>}
       
       {/* Main Content (children) - for any additional content */}
       {children}
