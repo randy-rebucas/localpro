@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
+import { Skeleton, ListSkeleton } from "@/components/ui/loading";
 import { 
   Bell, 
   RefreshCw
@@ -158,18 +159,31 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm p-4">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))}
+      <div className="space-y-6">
+        {/* Breadcrumbs Skeleton */}
+        <Breadcrumbs
+          className="text-sm text-gray-500 mb-4"
+          items={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Notifications" },
+          ]}
+        />
+
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-lg" />
+            <div>
+              <Skeleton className="h-6 w-32 mb-2" />
+              <Skeleton className="h-4 w-48" />
+            </div>
           </div>
+          <Skeleton className="h-9 w-24 rounded-lg" />
+        </div>
+
+        {/* Notifications List Skeleton */}
+        <div className="space-y-4">
+          <ListSkeleton count={5} />
         </div>
       </div>
     );

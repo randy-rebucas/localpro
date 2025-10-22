@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Settings as SettingsIcon, Save, Loader2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Settings as SettingsIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
@@ -10,14 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import Breadcrumbs from "@/components/ui/breadcrumbs";
+import { Loading } from "@/components/ui/loading";
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [saveMessage, setSaveMessage] = useState<string>("");
+  // const [saving, setSaving] = useState<boolean>(false);
+  // const [saveMessage, setSaveMessage] = useState<string>("");
   const { data: session } = useSession();
 
 
@@ -42,11 +43,11 @@ export default function SettingsPage() {
     };
   }, []);
 
-  const canSave = useMemo(() => !!settings && !saving, [settings, saving]);
-  
+  // const canSave = useMemo(() => !!settings && !saving, [settings, saving]);
+
   // Get user role for conditional rendering
   const userRole = session?.user?.role;
-  
+
   // Role-based visibility helpers
   const isProvider = userRole === 'PROVIDER';
   const isSupplier = userRole === 'SUPPLIER';
@@ -54,13 +55,13 @@ export default function SettingsPage() {
   const isAgencyOwner = userRole === 'AGENCY_OWNER';
   const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
   const isAdmin = userRole === 'ADMIN';
-  
+
   // Business roles (providers, suppliers, instructors, agency roles)
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
-  
+
   // Service provider roles (providers, agency roles)
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
-  
+
   // Administrative roles
   const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
 
@@ -212,68 +213,57 @@ export default function SettingsPage() {
     return output;
   }
 
-  async function onSave() {
-    if (!settings) return;
-    setSaving(true);
-    setSaveMessage("");
-    try {
-      const updated = await apiRequest<UserSettings>(API_ENDPOINTS.settingsUser, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-      setSettings(mergeWithDefaults(updated));
-      setSaveMessage("Saved");
-    } catch {
-      setSaveMessage("Failed to save");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setSaveMessage(""), 2000);
-    }
-  }
+  // async function onSave() {
+  //   if (!settings) return;
+  //   setSaving(true);
+  //   setSaveMessage("");
+  //   try {
+  //     const updated = await apiRequest<UserSettings>(API_ENDPOINTS.settingsUser, {
+  //       method: "PUT",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(settings),
+  //     });
+  //     setSettings(mergeWithDefaults(updated));
+  //     setSaveMessage("Saved");
+  //   } catch {
+  //     setSaveMessage("Failed to save");
+  //   } finally {
+  //     setSaving(false);
+  //     setTimeout(() => setSaveMessage(""), 2000);
+  //   }
+  // }
 
   if (loading || !settings) {
-    return (
-      <div className="flex items-center gap-2 text-gray-600">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span>Loading settings…</span>
-      </div>
-    );
+    return <Loading variant="dashboard" fullScreen text="Loading Settings" subtitle="Preparing your account settings..." />;
   }
 
   return (
     <div>
-      <nav className="text-sm text-gray-500 mb-4" aria-label="Breadcrumb">
-        <ol className="flex items-center space-x-2">
-          <li>
-            <Link href="/dashboard" className="hover:text-gray-700">Dashboard</Link>
-          </li>
-          <li className="select-none">/</li>
-          <li className="text-gray-700 font-medium">Settings</li>
-        </ol>
-      </nav>
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        className="text-sm text-gray-500 mb-4"
+        items={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Settings" },
+        ]}
+      />
 
+      {/* Header Section */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gray-100 text-gray-700 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-green-50 text-green-700 flex items-center justify-center">
             <SettingsIcon className="w-5 h-5" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700">Settings</h2>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-700">Settings</h1>
+            <p className="text-sm text-gray-500">
+              Manage your account settings and preferences
+            </p>
+          </div>
         </div>
-        <button
-          onClick={onSave}
-          disabled={!canSave}
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm disabled:opacity-50 disabled:cursor-not-allowed bg-gray-900 text-white hover:bg-gray-800"
-        >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          <span>{saving ? "Saving…" : "Save"}</span>
-        </button>
       </div>
 
-      {saveMessage && (
-        <div className="mb-4 text-sm text-gray-700">{saveMessage}</div>
-      )}
-
+      {/* Settings Content */}
       <div className="grid grid-cols-1 gap-6">
         {/* Privacy */}
         <section className="bg-white rounded-lg p-4">
@@ -475,7 +465,7 @@ export default function SettingsPage() {
               <div>
                 <label className="block text-sm text-gray-700 mb-1">Working days</label>
                 <div className="flex flex-wrap gap-3">
-                  {(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"] as const).map((d) => (
+                  {(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const).map((d) => (
                     <Checkbox
                       key={d}
                       label={d.charAt(0).toUpperCase() + d.slice(1)}
@@ -547,10 +537,10 @@ export default function SettingsPage() {
           <section className="bg-white rounded-lg p-4">
             <h3 className="font-semibold text-gray-700 mb-3">Supply Management</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ToggleRow label="Low stock alerts" checked={true} onChange={() => {}} />
-              <ToggleRow label="Order notifications" checked={true} onChange={() => {}} />
-              <ToggleRow label="Inventory updates" checked={true} onChange={() => {}} />
-              <ToggleRow label="Delivery notifications" checked={true} onChange={() => {}} />
+              <ToggleRow label="Low stock alerts" checked={true} onChange={() => { }} />
+              <ToggleRow label="Order notifications" checked={true} onChange={() => { }} />
+              <ToggleRow label="Inventory updates" checked={true} onChange={() => { }} />
+              <ToggleRow label="Delivery notifications" checked={true} onChange={() => { }} />
             </div>
           </section>
         )}
@@ -560,10 +550,10 @@ export default function SettingsPage() {
           <section className="bg-white rounded-lg p-4">
             <h3 className="font-semibold text-gray-700 mb-3">Academy Management</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ToggleRow label="Student enrollment alerts" checked={true} onChange={() => {}} />
-              <ToggleRow label="Course completion notifications" checked={true} onChange={() => {}} />
-              <ToggleRow label="Content upload reminders" checked={true} onChange={() => {}} />
-              <ToggleRow label="Student message notifications" checked={true} onChange={() => {}} />
+              <ToggleRow label="Student enrollment alerts" checked={true} onChange={() => { }} />
+              <ToggleRow label="Course completion notifications" checked={true} onChange={() => { }} />
+              <ToggleRow label="Content upload reminders" checked={true} onChange={() => { }} />
+              <ToggleRow label="Student message notifications" checked={true} onChange={() => { }} />
             </div>
           </section>
         )}
@@ -573,10 +563,10 @@ export default function SettingsPage() {
           <section className="bg-white rounded-lg p-4">
             <h3 className="font-semibold text-gray-700 mb-3">Agency Management</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ToggleRow label="Team member notifications" checked={true} onChange={() => {}} />
-              <ToggleRow label="Performance alerts" checked={true} onChange={() => {}} />
-              <ToggleRow label="Business analytics updates" checked={true} onChange={() => {}} />
-              <ToggleRow label="Compliance reminders" checked={true} onChange={() => {}} />
+              <ToggleRow label="Team member notifications" checked={true} onChange={() => { }} />
+              <ToggleRow label="Performance alerts" checked={true} onChange={() => { }} />
+              <ToggleRow label="Business analytics updates" checked={true} onChange={() => { }} />
+              <ToggleRow label="Compliance reminders" checked={true} onChange={() => { }} />
             </div>
           </section>
         )}
