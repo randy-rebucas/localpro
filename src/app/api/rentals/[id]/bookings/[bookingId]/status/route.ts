@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // PUT /api/rentals/[id]/bookings/[bookingId]/status - Update booking status
 export async function PUT(
@@ -18,30 +17,50 @@ export async function PUT(
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/bookings/${bookingId}/status`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'rentalsBookingStatus',
+      [id, bookingId, 'status'],
+      {},
+      {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: data.error || "Failed to update booking status" },
+        { error: errorData.error || "Failed to update booking status" },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error updating booking status:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

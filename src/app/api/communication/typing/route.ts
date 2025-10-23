@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // POST /api/communication/typing - Handle typing indicators
 export async function POST(request: NextRequest) {
@@ -30,9 +29,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward to external API using proper authentication
-    const response = await makeAuthenticatedRequestFromSession(
+    const response = await makeAuthenticatedRequestWithEndpoint(
       session,
-      `${API_BASE_URL}/api/communication/typing`,
+      'communicationTyping',
       {
         method: 'POST',
         body: JSON.stringify({
@@ -45,8 +44,9 @@ export async function POST(request: NextRequest) {
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }

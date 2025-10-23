@@ -1,79 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decrypt } from "@/lib/session";
+import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/auth/profile-completeness - Get user profile completeness
 export async function GET(request: NextRequest) {
   try {
-    // Get session cookie from request (same approach as /api/auth/me)
-    const cookieHeader = request.headers.get("cookie") || "";
-    const sessionCookie = cookieHeader
-      .split(';')
-      .find(c => c.trim().startsWith('session='))
-      ?.split('=')[1];
-
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Decrypt session
-    const session = await decrypt(sessionCookie);
+    const session = await getServerSession(request);
     
-    if (!session || !session.userId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use session data directly (same as /api/auth/me)
-    const userData = {
-      id: session.userId,
-      email: session.email,
-      name: session.name,
-      role: session.role,
-      phone: session.phone,
-      firstName: session.firstName,
-      lastName: session.lastName,
-    };
-      
-    // Calculate profile completeness based on available fields
-    const fields = [
-      { key: 'firstName', label: 'First Name', value: userData.firstName },
-      { key: 'lastName', label: 'Last Name', value: userData.lastName },
-      { key: 'email', label: 'Email', value: userData.email },
-      { key: 'phone', label: 'Phone Number', value: userData.phone },
-      { key: 'name', label: 'Full Name', value: userData.name },
-      { key: 'role', label: 'Role', value: userData.role },
-    ];
-
-    const completedFields = fields.filter(field => 
-      field.value && 
-      field.value !== '' && 
-      field.value !== null && 
-      field.value !== undefined &&
-      (Array.isArray(field.value) ? field.value.length > 0 : true)
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      session,
+      'authProfileCompleteness',
+      { method: 'GET' }
     );
 
-    const totalFields = fields.length;
-    const completedCount = completedFields.length;
-    const percentage = Math.round((completedCount / totalFields) * 100);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.error || "Failed to fetch profile completeness" },
+        { status: response.status }
+      );
+    }
 
-    const completenessData = {
-      percentage,
-      completedFields: completedCount,
-      totalFields,
-      fields: fields.map(field => ({
-        ...field,
-        completed: completedFields.some(cf => cf.key === field.key)
-      })),
-      missingFields: fields.filter(field => 
-        !completedFields.some(cf => cf.key === field.key)
-      ).map(field => field.label)
-    };
+    const data = await response.json();
+    return NextResponse.json(data);
 
-    return NextResponse.json(completenessData);
   } catch (error) {
-    console.error("Error in profile completeness endpoint:", error);
+    console.error("Error fetching profile completeness:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

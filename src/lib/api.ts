@@ -25,6 +25,8 @@ export async function apiRequest<T>(
 
 // API endpoints
 export const API_ENDPOINTS = {
+  apiHealth: "/health",
+  
   // Authentication & User Management
   authSendCode: "/api/auth/send-code",
   authVerifyCode: "/api/auth/verify-code",
@@ -109,6 +111,7 @@ export const API_ENDPOINTS = {
   rentalsBook: "/api/rentals",
   rentalsBookingStatus: "/api/rentals",
   rentalsReviews: "/api/rentals",
+  rentalsStatistics: "/api/rentals/statistics",
   
   // Facility Care Services
   facilityCare: "/api/facility-care",
@@ -125,6 +128,10 @@ export const API_ENDPOINTS = {
   // Communication & Messaging
   communicationConversations: "/api/communication/conversations",
   communicationConversationById: "/api/communication/conversations",
+  communicationConversationsMessagesById: "/api/communication/conversations/[id]/messages/[messageId]",
+  communicationConversationsMessages: "/api/communication/conversations/[id]/messages",
+  communicationConversationsRead: "/api/communication/conversations/[id]/read",
+  communicationConversationsById: "/api/communication/conversations/[id]",
   communicationMessages: "/api/communication/conversations",
   communicationMessageUpdate: "/api/communication/conversations",
   communicationMessageDelete: "/api/communication/conversations",
@@ -134,6 +141,9 @@ export const API_ENDPOINTS = {
   communicationNotificationRead: "/api/communication/notifications",
   communicationNotificationReadAll: "/api/communication/notifications/read-all",
   communicationNotificationDelete: "/api/communication/notifications",
+  communicationNotificationsReadAll: "/api/communication/notifications/read-all",
+  communicationNotificationsRead: "/api/communication/notifications/[id]/read",
+  communicationNotificationsById: "/api/communication/notifications/[id]",
   communicationEmailNotification: "/api/communication/notifications/email",
   communicationSmsNotification: "/api/communication/notifications/sms",
   communicationUnreadCount: "/api/communication/unread-count",
@@ -218,6 +228,8 @@ export const API_ENDPOINTS = {
   providersDocumentsUpload: "/api/providers/documents/upload",
   providersDashboard: "/api/providers/dashboard/overview",
   providersAnalytics: "/api/providers/analytics/performance",
+  providersDashboardOverview: "/api/providers/dashboard/overview",
+  providersAnalyticsPerformance: "/api/providers/analytics/performance",
   
   // Agency Management
   agencies: "/api/agencies",
@@ -290,4 +302,6 @@ export const API_ENDPOINTS = {
   activitiesStatsGlobal: "/api/activities/stats/global",
   activitiesMetadata: "/api/activities/metadata",
   activitiesUserById: "/api/activities/user/[userId]",
+
+  usersById: "/api/users/[userId]",
 } as const;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 export async function GET(
   request: NextRequest,
@@ -17,47 +18,48 @@ export async function GET(
 
     const { userId } = await params;
 
-    // For now, we'll use the same logic as /api/auth/me
-    // In a real implementation, this would fetch from a users table
-    // and could be used to fetch other users' profiles as well
-    
-    if (userId === session.user.id) {
-      // Return current user's data
-      const userData = {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name || `${session.user.firstName || ''} ${session.user.lastName || ''}`.trim(),
-        firstName: session.user.firstName,
-        lastName: session.user.lastName,
-        phone: session.user.phone,
-        role: session.user.role,
-        bio: session.user.bio,
-        location: session.user.location,
-        website: session.user.website,
-        skills: session.user.skills || [],
-        experience: session.user.experience,
-        avatar: session.user.avatar,
-        portfolio: session.user.portfolio || [],
-        createdAt: session.user.createdAt || new Date().toISOString(),
-        updatedAt: session.user.updatedAt || new Date().toISOString(),
-        isVerified: session.user.isVerified || false,
-        profileCompleteness: calculateProfileCompleteness(session.user)
-      };
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'usersById',
+      [userId],
+      {},
+      { method: 'GET' }
+    );
 
-      return NextResponse.json(userData);
-    } else {
-      // For other users, return public profile data only
-      // This would typically fetch from a users table
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: "User not found or access denied" },
-        { status: 404 }
+        { error: errorData.error || "Failed to fetch user data" },
+        { status: response.status }
       );
     }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+
   } catch (error) {
     console.error("Error fetching user data:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
@@ -77,68 +79,54 @@ export async function PUT(
     }
 
     const { userId } = await params;
+    const body = await request.json();
 
-    // Only allow users to update their own profile
-    if (userId !== session.user.id) {
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'usersById',
+      [userId],
+      {},
+      { 
+        method: 'PUT',
+        body: JSON.stringify(body)
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 }
+        { error: errorData.error || "Failed to update user data" },
+        { status: response.status }
       );
     }
 
-    const body = await request.json();
-    
-    // Update user data (in a real implementation, this would update the database)
-    const updatedUser = {
-      ...session.user,
-      ...body,
-      updatedAt: new Date().toISOString(),
-      profileCompleteness: calculateProfileCompleteness({ ...session.user, ...body })
-    };
+    const data = await response.json();
+    return NextResponse.json(data);
 
-    return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Error updating user data:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
 
-function calculateProfileCompleteness(user: Record<string, unknown>): {
-  percentage: number;
-  completedFields: number;
-  totalFields: number;
-  missingFields: string[];
-  fields: Record<string, { completed: boolean; required: boolean }>;
-} {
-  const fields = {
-    name: { completed: !!(user.name || (user.firstName && user.lastName)), required: true },
-    email: { completed: !!user.email, required: true },
-    phone: { completed: !!user.phone, required: false },
-    bio: { completed: !!user.bio, required: false },
-    location: { completed: !!user.location, required: false },
-    website: { completed: !!user.website, required: false },
-    skills: { completed: !!(user.skills && Array.isArray(user.skills) && user.skills.length > 0), required: false },
-    experience: { completed: !!user.experience, required: false },
-    avatar: { completed: !!user.avatar, required: false },
-    portfolio: { completed: !!(user.portfolio && Array.isArray(user.portfolio) && user.portfolio.length > 0), required: false }
-  };
-
-  const completedFields = Object.values(fields).filter(field => field.completed).length;
-  const totalFields = Object.keys(fields).length;
-  const percentage = Math.round((completedFields / totalFields) * 100);
-  
-  const missingFields = Object.entries(fields)
-    .filter(([, field]) => !field.completed)
-    .map(([key]) => key);
-
-  return {
-    percentage,
-    completedFields,
-    totalFields,
-    missingFields,
-    fields
-  };
-}

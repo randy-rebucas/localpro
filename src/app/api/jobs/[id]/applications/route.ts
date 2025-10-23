@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/jobs/:id/applications - Get job applications (employer/admin)
 export async function GET(
@@ -16,24 +16,25 @@ export async function GET(
 
     const { id } = await params;
     const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}/applications?${queryString}`, {
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'jobsApplications',
+      [id],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

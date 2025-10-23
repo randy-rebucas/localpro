@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // POST /api/rentals/:id/book - Book rental
 export async function POST(
@@ -17,25 +17,26 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    const response = await fetch(`${API_BASE_URL}/api/rentals/${id}/book`, {
-      method: 'POST',
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'rentalsBook',
+      [id],
+      {},
+      {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

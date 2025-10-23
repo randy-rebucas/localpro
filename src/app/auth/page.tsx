@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
+import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 
 const signInSchema = z.object({
   phone: z
@@ -28,9 +29,8 @@ const signInSchema = z.object({
 const verificationSchema = z.object({
   code: z
     .string()
-    .min(4, "Verification code must be at least 4 digits")
-    .max(8, "Verification code is too long")
-    .regex(/^\d+$/, "Verification code must contain only numbers"),
+    .length(6, "Verification code must be exactly 6 digits")
+    .regex(/^\d{6}$/, "Verification code must contain exactly 6 numbers"),
 });
 
 const newUserSchema = z.object({
@@ -352,22 +352,27 @@ function SignInForm() {
               {/* Verification code input */}
               <div className="space-y-4">
                 <div>
-                  <Input
-                    label="Verification Code"
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+                    Verification Code
+                  </label>
+                  <VerificationCodeInput
                     value={verificationCode}
-                    onChange={(e) => {
-                      setVerificationCode(e.target.value);
+                    onChange={(code) => {
+                      setVerificationCode(code);
                       setErrors({ ...errors, code: "" });
                     }}
-                    placeholder="Enter 6-digit code"
-                    maxLength={8}
-                    className="text-center text-2xl tracking-widest font-mono"
+                    onComplete={(code) => {
+                      // Auto-submit when code is complete
+                      if (code.length === 6 && !isNewUser) {
+                        verifyAndSignIn();
+                      }
+                    }}
                     error={errors.code}
-                    autoComplete="one-time-code"
+                    disabled={isLoading}
+                    length={6}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Enter the code from your SMS message
+                  <p className="mt-3 text-xs text-gray-500 text-center">
+                    Enter the 6-digit code from your SMS message
                   </p>
                 </div>
               </div>
@@ -452,7 +457,7 @@ function SignInForm() {
                 <button
                   type="button"
                   onClick={verifyAndSignIn}
-                  disabled={isLoading || !verificationCode || (isNewUser && (!firstName || !lastName))}
+                  disabled={isLoading || verificationCode.length !== 6 || (isNewUser && (!firstName || !lastName))}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isLoading ? (

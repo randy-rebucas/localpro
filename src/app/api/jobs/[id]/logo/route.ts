@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // POST /api/jobs/:id/logo - Upload company logo
 export async function POST(
@@ -17,24 +17,26 @@ export async function POST(
     const { id } = await params;
     const formData = await request.formData();
 
-    const response = await fetch(`${API_BASE_URL}/api/jobs/${id}/logo`, {
-      method: 'POST',
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: formData,
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'jobsLogo',
+      [id],
+      {},
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

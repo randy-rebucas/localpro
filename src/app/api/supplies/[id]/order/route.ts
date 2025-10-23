@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // POST /api/supplies/:id/order - Order supply
 export async function POST(
@@ -18,9 +17,11 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
-    const response = await makeAuthenticatedRequestFromSession(
+    const response = await makeAuthenticatedRequestWithPath(
       session,
-      `${API_BASE_URL}/api/supplies/${id}/order`,
+      'suppliesOrder',
+      [id],
+      {},
       {
         method: 'POST',
         body: JSON.stringify(body)
@@ -28,14 +29,14 @@ export async function POST(
     );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

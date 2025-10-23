@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // DELETE /api/communication/notifications/:id - Delete a notification
 export async function DELETE(
@@ -17,27 +16,47 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const response = await makeAuthenticatedRequestFromSession(
+    const response = await makeAuthenticatedRequestWithPath(
       session,
-      `${API_BASE_URL}/api/communication/notifications/${id}`,
+      'communicationNotificationsById',
+      [id],
+      {},
       { method: 'DELETE' }
     );
 
-    const data = await response.json();
-
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: data.error || "Failed to delete notification" },
+        { error: errorData.error || "Failed to delete notification" },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error deleting notification:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
