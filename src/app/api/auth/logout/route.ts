@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 import { clearSessionCookie } from "@/lib/session";
 
 export async function POST(request: NextRequest) {
@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Call the backend logout endpoint first
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'authLogout',
       { method: 'POST' }
     );

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // PUT /api/finance/wallet/settings - Update wallet settings
 export async function PUT(request: NextRequest) {
@@ -13,8 +13,8 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'financeWalletSettings',
       {
         method: 'PUT',

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // Mock statistics data
 const mockStats = {
@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
     // Try to fetch from external API first (only if authenticated), fallback to mock data
     if (isAuthenticated) {
       try {
-        const response = await makeAuthenticatedRequestWithEndpoint(
-          session,
-          'marketplaceMyServices',
+        const response = await handleApiRequestWithEndpoint(
+      request,
+      'marketplaceMyServices',
           { method: 'GET' }
         );
 

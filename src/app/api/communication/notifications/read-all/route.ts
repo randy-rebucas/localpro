@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // PUT /api/communication/notifications/read-all - Mark all notifications as read
 export async function PUT(request: NextRequest) {
@@ -11,8 +11,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'communicationNotificationsReadAll',
       {
         method: "PUT"

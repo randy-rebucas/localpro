@@ -131,7 +131,7 @@ function SignInForm() {
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
       const response = await fetch("/api/auth/send-code", {
         method: "POST",
@@ -215,7 +215,7 @@ function SignInForm() {
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
       const response = await fetch("/api/auth/verify-code", {
         method: "POST",

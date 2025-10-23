@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/analytics/overview - Get analytics overview
 export async function GET(request: NextRequest) {
@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'analyticsOverview',
       { method: 'GET' }
     );

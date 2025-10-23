@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 // GET /api/settings/app/public - Get public app settings
 export async function GET() {

@@ -54,15 +54,9 @@ export function createAuthenticatedFetchOptionsFromSession(
   session: { user: { id: string } },
   options: RequestInit = {}
 ): RequestInit {
-  return {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${session.user.id}`,
-      ...options.headers
-    },
-    signal: AbortSignal.timeout(30000)
-  };
+  // We need to get the actual session token, not just the user ID
+  // This function should be used with the session token from the request
+  throw new Error("This function requires the actual session token, not just user data. Use createAuthenticatedFetchOptions instead.");
 }
 
 /**
@@ -74,8 +68,8 @@ export async function makeAuthenticatedRequestFromSession(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const fetchOptions = createAuthenticatedFetchOptionsFromSession(session, options);
-  return fetch(url, fetchOptions);
+  // This function needs the actual session token, not just user data
+  throw new Error("This function requires the actual session token. Use makeAuthenticatedRequest instead.");
 }
 
 /**
@@ -108,7 +102,8 @@ export async function handleApiRequest(
     throw new Error("Authentication required");
   }
 
-  return makeAuthenticatedRequestFromSession(session, externalUrl, options);
+  // Use the request-based authentication instead of session-based
+  return makeAuthenticatedRequest(request, externalUrl, options);
 }
 
 /**
@@ -120,8 +115,9 @@ export async function makeAuthenticatedRequestWithEndpoint(
   endpoint: keyof typeof API_ENDPOINTS,
   options: RequestInit = {}
 ): Promise<Response> {
-  const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
-  return makeAuthenticatedRequestFromSession(session, url, options);
+  // This function needs to be updated to work with the actual session token
+  // For now, we'll throw an error to prevent incorrect usage
+  throw new Error("This function needs to be updated to work with session tokens. Use handleApiRequestWithEndpoint instead.");
 }
 
 /**
@@ -184,7 +180,8 @@ export async function handleApiRequestWithEndpoint(
     throw new Error("Authentication required");
   }
 
-  return makeAuthenticatedRequestWithEndpoint(session, endpoint, options);
+  const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  return makeAuthenticatedRequest(request, url, options);
 }
 
 /**

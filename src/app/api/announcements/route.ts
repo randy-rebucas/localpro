@@ -1,33 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
-import { makeAuthenticatedRequestWithPath } from '@/lib/api-auth-utils';
+import { makeAuthenticatedRequest, makeAuthenticatedRequestWithPath } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     // Build query parameters for external API
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
 
     // Make request to external API using new approach
-    const response = await makeAuthenticatedRequestWithPath(
-      session,
+    const response = await makeAuthenticatedRequest(
+      request,
       'announcements',
-      [],
-      queryParams,
-      { method: 'GET' }
+      { method: 'GET', headers: { 'Content-Type': 'application/json', 'Cookie': request.headers.get('cookie') || '' }, body: JSON.stringify(queryParams) }
     );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to fetch announcements from external service`,
@@ -44,10 +42,10 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching announcements:', error);
-    
+
     let errorMessage = "Internal server error";
     let statusCode = 500;
-    
+
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
         errorMessage = "Request timeout - the external service is taking too long to respond";
@@ -57,9 +55,9 @@ export async function GET(request: NextRequest) {
         statusCode = 503;
       }
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: errorMessage,
         errorMessage: error instanceof Error ? error.message : "Unknown error",
@@ -73,7 +71,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
@@ -82,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate required fields
     const requiredFields = ['title', 'message', 'type', 'priority'];
     for (const field of requiredFields) {
@@ -109,7 +107,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: errorData.error || `External service error: ${response.status}`,
           errorMessage: "Failed to create announcement in external service"
@@ -125,10 +123,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating announcement:', error);
-    
+
     let errorMessage = "Internal server error";
     let statusCode = 500;
-    
+
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
         errorMessage = "Request timeout - the external service is taking too long to respond";
@@ -138,9 +136,9 @@ export async function POST(request: NextRequest) {
         statusCode = 503;
       }
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: errorMessage,
         errorMessage: error instanceof Error ? error.message : "Unknown error"

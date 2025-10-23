@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 // GET /api/marketplace/services-simple - Simple services endpoint
 export async function GET(request: NextRequest) {
@@ -8,11 +8,12 @@ export async function GET(request: NextRequest) {
     console.log("Simple API: Fetching services...");
     const session = await getServerSession(request);
     
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session || { user: { id: 'anonymous' } },
-      'marketplaceServices',
-      { method: 'GET' }
-    );
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);

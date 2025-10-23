@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // POST /api/communication/typing - Handle typing indicators
 export async function POST(request: NextRequest) {
@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward to external API using proper authentication
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'communicationTyping',
       {
         method: 'POST',

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 import { z } from "zod";
 
 const updateProfileSchema = z.object({
@@ -24,8 +24,8 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const updateData = updateProfileSchema.parse(body);
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'authProfile',
       {
         method: "PUT",

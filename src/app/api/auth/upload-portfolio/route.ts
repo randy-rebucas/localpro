@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +12,8 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      session,
+    const response = await handleApiRequestWithEndpoint(
+      request,
       'authUploadPortfolio',
       {
         method: "POST",

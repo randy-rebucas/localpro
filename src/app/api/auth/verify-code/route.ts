@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { z } from "zod";
 import { encrypt, createSessionCookie, SessionData } from "@/lib/session";
 
@@ -13,17 +13,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { phoneNumber, code } = verifyCodeSchema.parse(body);
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
-      'authVerifyCode',
-      {
-        method: "POST",
-        body: JSON.stringify({
-          phoneNumber,
-          code,
-        })
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phoneNumber,
+        code,
+      })
+    });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
