@@ -17,7 +17,7 @@ export async function GET(
     const { id } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'announcementsById',
       [id],
       {},

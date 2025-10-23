@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     const response = await makeAuthenticatedRequestWithPath(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+      request,
       'suppliesNearby',
       [],
       queryParams,

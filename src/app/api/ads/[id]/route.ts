@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
     const response = await makeAuthenticatedRequestWithPath(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+      request,
       'adsById',
       [id],
       {},
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json(
         { error: errorData.error || "Failed to fetch ad" },
         { status: response.status }
-      );
+      );  
     }
 
     const data = await response.json();
@@ -70,7 +70,7 @@ export async function PUT(
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'adsById',
       [id],
       {},
@@ -133,7 +133,7 @@ export async function DELETE(
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'adsById',
       [id],
       {},

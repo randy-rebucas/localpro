@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'localProPlusMySubscription',
       [], // No path parameters
       queryParams, // Query parameters
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'localProPlusSubscribe',
       [], // No path parameters
       {}, // No query parameters

@@ -18,7 +18,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'academyCoursesProgress',
       [id],
       {},

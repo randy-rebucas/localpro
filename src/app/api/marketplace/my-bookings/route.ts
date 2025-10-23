@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     // Make request to external API using new approach
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceMyBookings',
       [],
       queryParams,

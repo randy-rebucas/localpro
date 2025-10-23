@@ -16,7 +16,7 @@ export async function DELETE(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'suppliesImageDelete',
       [id, imageId],
       {},

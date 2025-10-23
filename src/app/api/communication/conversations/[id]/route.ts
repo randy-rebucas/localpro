@@ -16,7 +16,7 @@ export async function GET(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsById',
       [id],
       {},
@@ -74,7 +74,7 @@ export async function DELETE(
 
     const { id } = await params;
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsById',
       [id],
       {},

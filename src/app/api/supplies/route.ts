@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'supplies',
       [],
       queryParams,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'supplies',
       [],
       {},

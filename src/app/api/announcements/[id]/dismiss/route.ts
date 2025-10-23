@@ -23,7 +23,7 @@ export async function POST(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'announcementsById',
       [announcementId, 'dismiss'],
       {},

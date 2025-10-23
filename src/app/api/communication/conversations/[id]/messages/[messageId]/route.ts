@@ -18,7 +18,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsMessagesById',
       [id, messageId],
       {},
@@ -79,7 +79,7 @@ export async function DELETE(
     const { id, messageId } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsMessagesById',
       [id, messageId],
       {},

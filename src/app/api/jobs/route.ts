@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'jobs',
       [],
       Object.fromEntries(queryParams.entries()),
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     // Make request to external API using proper authentication with API constants
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'jobs',
       [],
       {},

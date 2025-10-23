@@ -19,7 +19,7 @@ export async function GET(
     const queryParams = Object.fromEntries(searchParams.entries());
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsMessages',
       [id],
       queryParams,
@@ -78,7 +78,7 @@ export async function POST(
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationConversationsMessages',
       [id],
       {},

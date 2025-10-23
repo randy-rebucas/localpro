@@ -10,10 +10,9 @@ export async function GET(
   try {
     const { id } = await params;
     const response = await makeAuthenticatedRequestWithPath(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+      request,
       'academyCoursesById',
       [id],
-      {},
       { method: 'GET' }
     );
 
@@ -70,7 +69,7 @@ export async function PUT(
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'academyCoursesById',
       [id],
       {},
@@ -133,7 +132,7 @@ export async function DELETE(
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'academyCoursesById',
       [id],
       {},

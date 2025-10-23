@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'academyMyCourses',
       [], // No path parameters
       queryParams, // Query parameters (status, course type, etc.)
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'academyEnroll',
       [], // No path parameters
       {}, // No query parameters

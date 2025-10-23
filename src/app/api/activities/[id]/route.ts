@@ -17,7 +17,7 @@ export async function GET(
     const { id } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'activitiesById',
       [id],
       {},
@@ -76,7 +76,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'activitiesById',
       [id],
       {},
@@ -137,7 +137,7 @@ export async function DELETE(
     const { id } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'activitiesById',
       [id],
       {},

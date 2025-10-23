@@ -16,7 +16,7 @@ export async function GET(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'jobsStats',
       [id],
       {},

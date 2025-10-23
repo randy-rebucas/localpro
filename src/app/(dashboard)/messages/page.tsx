@@ -639,11 +639,15 @@ export default function MessagesPage() {
     }
   }, [activeConversation, deleteMessage]);
 
-  const filteredConversations = useMemo(() => 
-    conversations.filter(conv =>
+  const filteredConversations = useMemo(() => {
+    if (!Array.isArray(conversations)) {
+      console.warn('conversations is not an array:', conversations);
+      return [];
+    }
+    return conversations.filter(conv =>
       conv.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ), [conversations, searchQuery]
-  );
+    );
+  }, [conversations, searchQuery]);
 
   const memoizedMessages = useMemo(() => 
     activeConversation?.messages || [], 

@@ -18,7 +18,7 @@ export async function POST(
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'activitiesInteractions',
       [id],
       {},
@@ -81,7 +81,7 @@ export async function DELETE(
     const queryParams = Object.fromEntries(searchParams.entries());
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'activitiesInteractions',
       [id],
       queryParams,

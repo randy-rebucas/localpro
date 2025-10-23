@@ -17,7 +17,7 @@ export async function DELETE(
     const { id } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationNotificationsById',
       [id],
       {},

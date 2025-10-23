@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     }
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceServices',
       [],
       Object.fromEntries(queryParams.entries()),
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     const { name, description, category, price, duration } = serviceSchema.parse(body);
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceServices',
       [],
       {},

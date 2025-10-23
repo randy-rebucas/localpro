@@ -105,7 +105,7 @@ export async function GET(
     // Try to fetch from external API first, fallback to mock data
     try {
       const response = await makeAuthenticatedRequestWithPath(
-        { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+        request,
         'marketplaceServiceById',
         [id],
         {},

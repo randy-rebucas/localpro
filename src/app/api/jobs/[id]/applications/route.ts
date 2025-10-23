@@ -19,7 +19,7 @@ export async function GET(
     const queryParams = Object.fromEntries(searchParams.entries());
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'jobsApplications',
       [id],
       queryParams,

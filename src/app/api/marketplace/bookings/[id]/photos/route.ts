@@ -18,7 +18,7 @@ export async function POST(
     const formData = await request.formData();
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceBookingPhotos',
       [id],
       {},

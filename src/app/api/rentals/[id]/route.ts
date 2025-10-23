@@ -16,7 +16,7 @@ export async function GET(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'rentalsById',
       [id],
       {},
@@ -76,7 +76,7 @@ export async function PUT(
     const body = await request.json();
     
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'rentalsById',
       [id],
       {},
@@ -137,7 +137,7 @@ export async function DELETE(
     }
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'rentalsById',
       [id],
       {},

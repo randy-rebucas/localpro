@@ -17,7 +17,7 @@ export async function PUT(
     const { id } = await params;
 
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'communicationNotificationsRead',
       [id],
       {},

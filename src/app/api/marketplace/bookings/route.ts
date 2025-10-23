@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Make request to external API using proper authentication
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceBookings',
       [],
       queryParams,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     
     // Make request to external API using proper authentication
     const response = await makeAuthenticatedRequestWithPath(
-      session,
+      request,
       'marketplaceBookings',
       [],
       {},
