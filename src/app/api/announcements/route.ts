@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
-import { makeAuthenticatedRequest } from '@/lib/api-auth-utils';
+import { makeAuthenticatedRequest, makeAuthenticatedRequestWithEndpoint } from '@/lib/api-auth-utils';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
     const queryParams = Object.fromEntries(searchParams.entries());
 
     // Make request to external API using request-based authentication
-    const response = await makeAuthenticatedRequest(
+    const response = await makeAuthenticatedRequestWithEndpoint(
       request,
-      `${API_BASE_URL}${API_ENDPOINTS.announcements}`,
+      'announcements',
       { method: 'GET' }
     );
 
