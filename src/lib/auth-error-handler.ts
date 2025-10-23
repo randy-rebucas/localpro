@@ -24,7 +24,6 @@ export function handleAuthError(
 ): void {
   const {
     redirectToLogin = true,
-    showToast = false,
     fallbackAction
   } = options;
 
@@ -114,7 +113,6 @@ export function useAuthErrorHandler() {
   const handleAuthError = (error: unknown, options: AuthErrorOptions = {}) => {
     const {
       redirectToLogin = true,
-      showToast = false,
       fallbackAction
     } = options;
 

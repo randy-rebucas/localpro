@@ -1,5 +1,4 @@
 import { createAuthFetchOptions } from './auth-utils';
-import { API_CONFIG } from './env';
 
 // Communication API utility functions
 export class CommunicationAPI {

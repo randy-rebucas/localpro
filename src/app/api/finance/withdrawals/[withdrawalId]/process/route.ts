@@ -19,7 +19,7 @@ export async function PUT(
     
     const response = await makeAuthenticatedRequestWithPath(
       session,
-      'financeWithdrawals',
+      'financeWithdraw',
       [withdrawalId, 'process'],
       {},
       {

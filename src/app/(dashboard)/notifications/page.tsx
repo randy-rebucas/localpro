@@ -7,9 +7,8 @@ import {
   Bell, 
   RefreshCw
 } from "lucide-react";
-import { useSession } from "@/hooks/useAuth";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
-import { useAuthErrorHandler, authAwareFetch } from "@/lib/auth-error-handler";
+// import { useSession } from "@/hooks/useAuth";
+// import { useAuthErrorHandler } from "@/lib/auth-error-handler";
 
 type NotificationItem = {
   id: string;
@@ -110,8 +109,8 @@ export default function NotificationsPage() {
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [markAllLoading, setMarkAllLoading] = useState(false);
   
-  const { data: session, status: sessionStatus } = useSession();
-  const { handleAuthError } = useAuthErrorHandler();
+  // const { data: session } = useSession();
+  // const { handleAuthError } = useAuthErrorHandler();
 
 
   // Load notifications

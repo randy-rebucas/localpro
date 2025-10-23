@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from 'react';
-import { Send, Paperclip, Smile, Phone, Video, X } from 'lucide-react';
+import { Send, Paperclip, Smile, X } from 'lucide-react';
 import { CommunicationAPI, RealtimeCommunication, MessageUtils } from '@/lib/communication-utils';
 
 interface Message {

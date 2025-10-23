@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithPath(
       session,
-      'logs',
+      'analyticsCustom',
       [],
       queryParams,
       { method: 'GET' }

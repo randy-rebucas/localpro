@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Bell, Mail, MessageSquare, X, Check, Trash2, Settings } from 'lucide-react';
+import { Bell, Mail, MessageSquare, X, Check, Trash2 } from 'lucide-react';
 import { CommunicationAPI, NotificationUtils } from '@/lib/communication-utils';
 
 interface Notification {

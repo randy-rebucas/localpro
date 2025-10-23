@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithEndpoint(
       session,
-      'mapsTest',
+      'mapsGeocode',
       { method: 'GET' }
     );
 

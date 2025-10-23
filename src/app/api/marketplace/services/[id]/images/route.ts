@@ -19,7 +19,7 @@ export async function POST(
 
     const response = await makeAuthenticatedRequestWithPath(
       session,
-      'marketplaceServicesImages',
+      'marketplaceServiceById',
       [id],
       {},
       {

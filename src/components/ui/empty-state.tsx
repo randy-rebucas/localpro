@@ -7,11 +7,8 @@ import {
   Megaphone, 
   Package, 
   ArrowRight, 
-  RefreshCw,
-  Plus,
   Search,
-  Settings,
-  HelpCircle
+  Settings
 } from "lucide-react";
 
 interface EmptyStateProps {

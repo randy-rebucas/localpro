@@ -30,7 +30,7 @@ export function VerificationCodeInput({
       const paddedDigits = [...newDigits, ...new Array(length - newDigits.length).fill("")];
       setDigits(paddedDigits);
     }
-  }, [value, length]);
+  }, [value, length, digits]);
 
   // Focus first empty input
   useEffect(() => {
@@ -118,7 +118,7 @@ export function VerificationCodeInput({
         {digits.map((digit, index) => (
           <Input
             key={index}
-            ref={(el) => (inputRefs.current[index] = el)}
+            ref={(el) => { inputRefs.current[index] = el; }}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"

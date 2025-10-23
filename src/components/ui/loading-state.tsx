@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Shield, Activity, Megaphone, Package, User, BarChart3 } from "lucide-react";
+// import { Shield, Activity, Megaphone, Package } from "lucide-react";
 
 interface LoadingStateProps {
   type?: "dashboard" | "services" | "activity" | "announcements" | "header" | "stats";
@@ -16,11 +16,6 @@ const getLoadingContent = (type: string, size: string) => {
     lg: "h-96"
   };
 
-  const iconSize = {
-    sm: "w-4 h-4",
-    md: "w-6 h-6",
-    lg: "w-8 h-8"
-  };
 
   switch (type) {
     case "dashboard":

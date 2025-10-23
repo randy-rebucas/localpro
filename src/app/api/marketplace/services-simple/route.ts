@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     
     const response = await makeAuthenticatedRequestWithEndpoint(
       session || { user: { id: 'anonymous' } },
-      'marketplaceServicesSimple',
+      'marketplaceServices',
       { method: 'GET' }
     );
 

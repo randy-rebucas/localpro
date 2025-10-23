@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, User, MessageSquare, Phone, Video, MoreVertical } from 'lucide-react';
+import { User, MessageSquare, Phone, Video } from 'lucide-react';
+import Image from 'next/image';
 import { CommunicationAPI, MessageUtils } from '@/lib/communication-utils';
 
 interface User {
@@ -105,7 +106,7 @@ export default function ConversationWithUser({
         <div className="relative">
           <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
             {user.avatar ? (
-              <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-full object-cover" />
+              <Image src={user.avatar} alt={user.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
             ) : (
               <User className="h-6 w-6 text-gray-500" />
             )}

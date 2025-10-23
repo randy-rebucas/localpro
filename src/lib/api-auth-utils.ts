@@ -235,7 +235,7 @@ export function createErrorResponse(
  * Standardized API route wrapper with error handling
  * Provides consistent error handling and response formatting
  */
-export async function handleApiRoute<T = any>(
+export async function handleApiRoute<T = unknown>(
   handler: () => Promise<T>,
   context: string = "API request"
 ): Promise<{ data?: T; error?: string; status: number; details?: string }> {

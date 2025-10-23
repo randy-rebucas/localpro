@@ -10,7 +10,6 @@ import { Error } from "@/components/ui/error";
 // import Navigation from "@/components/navigation";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
 import {
   Menu,
   X,

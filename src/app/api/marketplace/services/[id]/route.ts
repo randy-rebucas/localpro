@@ -106,7 +106,7 @@ export async function GET(
     try {
       const response = await makeAuthenticatedRequestWithPath(
         { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
-        'marketplaceServicesById',
+        'marketplaceServiceById',
         [id],
         {},
         { method: 'GET' }

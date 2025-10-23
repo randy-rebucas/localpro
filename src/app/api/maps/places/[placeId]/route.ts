@@ -17,7 +17,7 @@ export async function GET(
 
     const response = await makeAuthenticatedRequestWithPath(
       session,
-      'mapsPlacesById',
+      'mapsPlaceById',
       [placeId],
       {},
       { method: 'GET' }

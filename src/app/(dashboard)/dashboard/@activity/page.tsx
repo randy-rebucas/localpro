@@ -43,8 +43,8 @@ interface ActivityItem {
 export default function ActivityPage() {
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("recent");
+  const [filter] = useState("all");
+  const [sortBy] = useState("recent");
   const [viewMode] = useState<"list" | "grid">("list");
   const { data: session, status } = useSession();
   const router = useRouter();

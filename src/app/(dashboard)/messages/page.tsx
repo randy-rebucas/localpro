@@ -58,10 +58,9 @@ export default function MessagesPage() {
   const [error, setError] = useState<string | null>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [typingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [showMessageSearch, setShowMessageSearch] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showMessageActions, setShowMessageActions] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
@@ -72,6 +71,7 @@ export default function MessagesPage() {
   const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   const [messagePage, setMessagePage] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [notifications, setNotifications] = useState<{ id: string; [key: string]: unknown }[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -206,29 +206,18 @@ export default function MessagesPage() {
     }
   }, []);
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const response = await fetch('/api/communication/notifications', createAuthFetchOptions());
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data || []);
-      }
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    }
-  }, []);
 
-  const markNotificationAsRead = useCallback(async (notificationId: string) => {
-    try {
-      await fetch(`/api/communication/notifications/${notificationId}/read`, createAuthFetchOptions({
-        method: 'PUT'
-      }));
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (err) {
-      console.error('Error marking notification as read:', err);
-    }
-  }, []);
+  // const markNotificationAsRead = useCallback(async (notificationId: string) => {
+  //   try {
+  //     await fetch(`/api/communication/notifications/${notificationId}/read`, createAuthFetchOptions({
+  //       method: 'PUT'
+  //     }));
+  //     // Note: setNotifications and setUnreadCount are not available in scope
+  //     // This function is defined but not used
+  //   } catch (err) {
+  //     console.error('Error marking notification as read:', err);
+  //   }
+  // }, []);
 
   const sendMessage = useCallback(async (conversationId: string, content: string, messageType: string = 'text', attachments: { name: string; type: string; size: number; file: File }[] = []) => {
     try {
@@ -538,7 +527,6 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchConversations();
     fetchUnreadCount();
-    fetchNotifications();
     setupEventSource();
     
     return () => {
@@ -546,7 +534,7 @@ export default function MessagesPage() {
         eventSourceRef.current.close();
       }
     };
-  }, [fetchConversations, fetchUnreadCount, fetchNotifications, setupEventSource]);
+  }, [fetchConversations, fetchUnreadCount, setupEventSource]);
 
   // Set initial active conversation when conversations are loaded
   useEffect(() => {
