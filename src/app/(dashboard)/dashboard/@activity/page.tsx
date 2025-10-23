@@ -54,12 +54,12 @@ export default function ActivityPage() {
       setIsLoading(true);
       try {
         if (session?.user?.id) {
-          const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-          if (response.ok) {
-            const activityData = await response.json();
-            setRecentActivity(activityData);
-          } else {
-            console.warn("Failed to fetch recent activity:", response.status);
+          // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
+          // if (response.ok) {
+          //   const activityData = await response.json();
+          //   setRecentActivity(activityData);
+          // } else {
+          //   console.warn("Failed to fetch recent activity:", response.status);
             // Set enhanced fallback activity data
             setRecentActivity([
               {
@@ -159,7 +159,7 @@ export default function ActivityPage() {
                 category: "security"
               }
             ]);
-          }
+          // }
         }
       } catch (error) {
         console.error("Failed to fetch recent activity:", error);

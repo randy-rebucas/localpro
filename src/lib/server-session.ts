@@ -21,6 +21,7 @@ export interface ServerSession {
     updatedAt?: string;
     isVerified?: boolean;
   };
+  apiToken?: string; // The actual API token from external service
 }
 
 export async function getServerSession(request: NextRequest): Promise<ServerSession | null> {
@@ -70,7 +71,8 @@ export async function getServerSession(request: NextRequest): Promise<ServerSess
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
         isVerified: session.isVerified,
-      }
+      },
+      apiToken: session.apiToken // Include the actual API token
     };
   } catch (error) {
     console.error("Failed to get server session:", error);

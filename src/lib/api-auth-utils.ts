@@ -22,16 +22,38 @@ export function getSessionTokenFromRequest(request: NextRequest): string | null 
 }
 
 /**
+ * Get the actual API token from session data
+ * This prioritizes the real API token over the session token
+ */
+export async function getApiTokenFromSession(request: NextRequest): Promise<string | null> {
+  try {
+    const session = await getServerSession(request);
+    
+    // If we have the actual API token from the external service, use it
+    if (session?.apiToken) {
+      return session.apiToken;
+    }
+    
+    // Fallback to session token extraction
+    return getSessionTokenFromRequest(request);
+  } catch (error) {
+    console.error("Error getting API token from session:", error);
+    return getSessionTokenFromRequest(request);
+  }
+}
+
+/**
  * Create authenticated fetch options for external API calls
  * This function properly extracts the session token and creates headers in the correct order
  */
-export function createAuthenticatedFetchOptions(
+export async function createAuthenticatedFetchOptions(
   request: NextRequest, 
   options: RequestInit = {}
-): RequestInit {
-  const sessionToken = getSessionTokenFromRequest(request);
+): Promise<RequestInit> {
+  // Try to get the actual API token first, fallback to session token
+  const apiToken = await getApiTokenFromSession(request);
   
-  if (!sessionToken) {
+  if (!apiToken) {
     throw new Error("No session token found");
   }
 
@@ -39,7 +61,7 @@ export function createAuthenticatedFetchOptions(
     ...options,
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${sessionToken}`,
+      "Authorization": `Bearer ${apiToken}`,
       ...options.headers
     },
     signal: AbortSignal.timeout(30000)
@@ -81,7 +103,7 @@ export async function makeAuthenticatedRequest(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const fetchOptions = createAuthenticatedFetchOptions(request, options);
+  const fetchOptions = await createAuthenticatedFetchOptions(request, options);
   return fetch(url, fetchOptions);
 }
 
@@ -111,13 +133,12 @@ export async function handleApiRequest(
  * This provides type safety and consistency with predefined endpoints
  */
 export async function makeAuthenticatedRequestWithEndpoint(
-  session: { user: { id: string } },
+  request: NextRequest,
   endpoint: keyof typeof API_ENDPOINTS,
   options: RequestInit = {}
 ): Promise<Response> {
-  // This function needs to be updated to work with the actual session token
-  // For now, we'll throw an error to prevent incorrect usage
-  throw new Error("This function needs to be updated to work with session tokens. Use handleApiRequestWithEndpoint instead.");
+  const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  return makeAuthenticatedRequest(request, url, options);
 }
 
 /**
@@ -125,7 +146,7 @@ export async function makeAuthenticatedRequestWithEndpoint(
  * Combines base endpoint with dynamic parameters
  */
 export async function makeAuthenticatedRequestWithPath(
-  session: { user: { id: string } },
+  request: NextRequest,
   baseEndpoint: keyof typeof API_ENDPOINTS,
   pathParams: string[] = [],
   queryParams: Record<string, string> = {},
@@ -144,7 +165,7 @@ export async function makeAuthenticatedRequestWithPath(
     url += `?${queryString}`;
   }
   
-  return makeAuthenticatedRequestFromSession(session, url, options);
+  return makeAuthenticatedRequest(request, url, options);
 }
 
 /**
@@ -163,6 +184,26 @@ export function buildApiUrl(endpoint: keyof typeof API_ENDPOINTS, pathParams: st
   }
   
   return url;
+}
+
+/**
+ * Make unauthenticated request to external API (for public endpoints)
+ * This is used for endpoints that don't require authentication
+ */
+export async function makePublicRequest(
+  endpoint: keyof typeof API_ENDPOINTS,
+  options: RequestInit = {}
+): Promise<Response> {
+  const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers
+    },
+    signal: AbortSignal.timeout(30000)
+  });
 }
 
 /**

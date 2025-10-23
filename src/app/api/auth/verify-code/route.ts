@@ -34,10 +34,11 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    // Extract user data from the API response
+    // Extract user data and token from the API response
     const { user, token } = data;
 
-    // Create session data from the verified user
+    // CRITICAL: Use the actual token from the external API response
+    // This ensures we're using the real session token, not creating our own
     const sessionData: SessionData = {
       userId: user.id,
       email: user.email,
@@ -46,20 +47,22 @@ export async function POST(request: NextRequest) {
       phone: user.phoneNumber,
       firstName: user.firstName,
       lastName: user.lastName,
+      // Store the actual API token in the session data
+      apiToken: token, // This is the real token from the external API
     };
 
-    // Encrypt session data
+    // Encrypt the session data (which now contains the real API token)
     const encryptedSession = await encrypt(sessionData);
     
-    // Create session cookie
+    // Create session cookie with the encrypted session data
     const sessionCookie = createSessionCookie(encryptedSession);
 
-    // Return success response with session cookie
+    // Return success response with the actual API token
     const response_data = NextResponse.json(
       { 
         success: true,
         message: "Verification successful",
-        token: token,
+        token: token, // This is the actual token from the external API
         user: {
           id: user.id,
           phoneNumber: user.phoneNumber,

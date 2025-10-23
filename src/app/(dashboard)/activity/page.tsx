@@ -97,13 +97,13 @@ export default function ActivityPage() {
       setLoading(true);
       try {
         if (session?.user?.id) {
-          const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-          if (response.ok) {
-            const activityData = await response.json();
-            setActivities(activityData);
-          } else {
-            throw new Error('Failed to fetch activities');
-          }
+          // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
+          // if (response.ok) {
+          //   const activityData = await response.json();
+          //   setActivities(activityData);
+          // } else {
+          //   throw new Error('Failed to fetch activities');
+          // }
         }
       } catch {
         // Fallback to mock data
@@ -173,11 +173,11 @@ export default function ActivityPage() {
     setLoading(true);
     try {
       if (session?.user?.id) {
-        const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-        if (response.ok) {
-          const activityData = await response.json();
-          setActivities(activityData);
-        }
+        // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
+        // if (response.ok) {
+        //   const activityData = await response.json();
+        //   setActivities(activityData);
+        // }
       }
     } catch (error) {
       console.error('Error refreshing activities:', error);

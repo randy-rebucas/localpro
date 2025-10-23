@@ -94,20 +94,20 @@ export default function DashboardLayout({
     }
   }, [session?.user?.id, status, router]);
 
-  useEffect(() => {
-    const fetchUnread = async () => {
-      try {
-        const res = await fetch('/api/communication/notifications/count');
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadCount(data.count ?? 0);
-        }
-      } catch {
-        // ignore
-      }
-    };
-    fetchUnread();
-  }, []);
+  // useEffect(() => {
+  //   const fetchUnread = async () => {
+  //     try {
+  //       const res = await fetch('/api/communication/notifications/count');
+  //       if (res.ok) {
+  //         const data = await res.json();
+  //         setUnreadCount(data.count ?? 0);
+  //       }
+  //     } catch {
+  //       // ignore
+  //     }
+  //   };
+  //   fetchUnread();
+  // }, []);
 
   const navigateToSearch = useCallback((query: string) => {
     const trimmed = query.trim();

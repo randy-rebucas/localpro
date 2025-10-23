@@ -22,6 +22,7 @@ export interface SessionData extends JWTPayload {
   createdAt?: string;
   updatedAt?: string;
   isVerified?: boolean;
+  apiToken?: string; // Store the actual API token from external service
 }
 
 export async function encrypt(payload: SessionData): Promise<string> {

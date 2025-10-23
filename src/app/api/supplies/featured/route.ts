@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { makePublicRequest } from "@/lib/api-auth-utils";
 
 // GET /api/supplies/featured - Get featured supplies
 export async function GET() {
   try {
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+    const response = await makePublicRequest(
       'suppliesFeatured',
       { method: 'GET' }
     );

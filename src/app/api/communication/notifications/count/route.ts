@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/communication/notifications/count - Get notification count
 export async function GET(request: NextRequest) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await handleApiRequestWithEndpoint(
+    const response = await makeAuthenticatedRequestWithEndpoint(
       request,
       'communicationNotificationCount',
       { method: 'GET' }
