@@ -3,8 +3,7 @@ import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
+  request: NextRequest
 ) {
   try {
     const session = await getServerSession(request);
@@ -16,12 +15,10 @@ export async function GET(
       );
     }
 
-    const { userId } = await params;
-
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'usersById',
-      [userId],
+      [session.user.id],
       { method: 'GET' }
     );
 
