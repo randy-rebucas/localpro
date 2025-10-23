@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // PUT /api/communication/notifications/read-all - Mark all notifications as read
 export async function PUT(request: NextRequest) {
@@ -11,18 +11,18 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/read-all`, {
-      method: "PUT",
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-        "Content-Type": "application/json",
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      session,
+      'communicationNotificationsReadAll',
+      {
+        method: "PUT"
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }

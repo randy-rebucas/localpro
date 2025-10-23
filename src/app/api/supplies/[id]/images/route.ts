@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
 
 // POST /api/supplies/:id/images - Upload supply images
 export async function POST(
@@ -17,14 +18,14 @@ export async function POST(
     const { id } = await params;
     const formData = await request.formData();
 
-    const response = await fetch(`${API_BASE_URL}/api/supplies/${id}/images`, {
-      method: 'POST',
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: formData,
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestFromSession(
+      session,
+      `${API_BASE_URL}/api/supplies/${id}/images`,
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
 
     if (!response.ok) {
       return NextResponse.json(

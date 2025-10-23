@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/finance/expenses - Get expenses
 export async function GET(request: NextRequest) {
@@ -13,29 +12,49 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const response = await fetch(`${API_BASE_URL}/api/finance/expenses?${queryString}`, {
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-    });
-
-    const data = await response.json();
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'financeExpenses',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: data.error || "Failed to fetch expenses" },
+        { error: errorData.error || "Failed to fetch expenses" },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching expenses:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }
@@ -51,30 +70,50 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE_URL}/api/finance/expenses`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await response.json();
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'financeExpenses',
+      [],
+      {},
+      {
+        method: "POST",
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: data.error || "Failed to add expense" },
+        { error: errorData.error || "Failed to add expense" },
         { status: response.status }
       );
     }
 
+    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Error adding expense:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

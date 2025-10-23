@@ -90,7 +90,8 @@ export default function ActivityPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: session, status } = useSession();
-
+  console.log("Activity Page - Session:", session);
+  console.log("Activity Page - Status:", status);
   useEffect(() => {
     const fetchActivities = async () => {
       setLoading(true);

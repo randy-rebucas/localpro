@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_BASE_URL } from "@/lib/api";
 import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/marketplace/services-simple - Simple services endpoint
 export async function GET(request: NextRequest) {
@@ -8,21 +8,18 @@ export async function GET(request: NextRequest) {
     console.log("Simple API: Fetching services...");
     const session = await getServerSession(request);
     
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/services-simple`, {
-      method: 'GET',
-      headers: {
-        "Authorization": `Bearer ${session?.user?.id || ''}`,
-        "Content-Type": "application/json"
-      },
-      signal: AbortSignal.timeout(30000)
-    });
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      session || { user: { id: 'anonymous' } },
+      'marketplaceServicesSimple',
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { 
-          error: `External service error: ${response.status}`,
+          error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to fetch services from external service`
         },
         { status: response.status }

@@ -1,36 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { API_BASE_URL } from '@/lib/api';
 import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    
     // Build query parameters for external API
     const { searchParams } = new URL(request.url);
-    const queryParams = new URLSearchParams();
-    
-    // Add any query parameters from the request
-    for (const [key, value] of searchParams.entries()) {
-      queryParams.append(key, value);
-    }
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/announcements?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        "Authorization": `Bearer ${session?.user?.id || ''}`,
-        "Content-Type": "application/json"
-      },
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using new approach
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'announcements',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { 
           success: false,
-          error: `External service error: ${response.status}`,
+          error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to fetch announcements from external service`,
           announcements: []
         },
@@ -95,16 +94,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/announcements`, {
-      method: 'POST',
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using new approach
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'announcements',
+      [],
+      {},
+      {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     console.log("Announcements API: External API response:", data);
 
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(data, { status: 201 });
 
   } catch (error) {
     console.error('Error creating announcement:', error);

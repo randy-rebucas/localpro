@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_BASE_URL } from "@/lib/api";
 import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 import { z } from "zod";
 
 const serviceSchema = z.object({
@@ -62,15 +62,21 @@ export async function GET(request: NextRequest) {
     if (page) queryParams.append('page', page.toString());
     if (limit) queryParams.append('limit', limit.toString());
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/services?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session?.user?.id || ''}`,
-      },
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using proper authentication with API constants
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'marketplaceServices',
+      [],
+      Object.fromEntries(queryParams.entries()),
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
@@ -129,21 +135,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, category, price, duration } = serviceSchema.parse(body);
 
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/services`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: JSON.stringify({
-        name,
-        description,
-        category,
-        price,
-        duration,
-      }),
-      signal: AbortSignal.timeout(30000)
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'marketplaceServices',
+      [],
+      {},
+      {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          description,
+          category,
+          price,
+          duration,
+        })
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));

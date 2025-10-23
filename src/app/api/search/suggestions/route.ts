@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/search/suggestions - Get search suggestions
 export async function GET(request: NextRequest) {
@@ -12,18 +12,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const response = await fetch(`${API_BASE_URL}/api/search/suggestions?${queryString}`, {
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'searchSuggestions',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }

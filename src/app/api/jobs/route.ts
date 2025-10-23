@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,15 +39,21 @@ export async function GET(request: NextRequest) {
     if (skills) queryParams.append("skills", skills);
     if (sort) queryParams.append("sort", sort);
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/jobs?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": session?.user?.id ? `Bearer ${session.user.id}` : "",
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    // Make request to external API using proper authentication with API constants
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'jobs',
+      [],
+      Object.fromEntries(queryParams.entries()),
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
@@ -109,16 +115,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("Jobs API: Creating job:", body);
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/jobs`, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000),
-    });
+    // Make request to external API using proper authentication with API constants
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'jobs',
+      [],
+      {},
+      {
+        method: 'POST',
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);

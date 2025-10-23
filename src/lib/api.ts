@@ -73,6 +73,14 @@ export const API_ENDPOINTS = {
   academyEnroll: "/api/academy/courses",
   academyProgress: "/api/academy/courses",
   academyReviews: "/api/academy/courses",
+  academyCoursesEnroll: "/api/academy/courses/[id]/enroll",
+  academyCoursesProgress: "/api/academy/courses/[id]/progress",
+  academyCoursesReviews: "/api/academy/courses/[id]/reviews",
+  academyCoursesThumbnail: "/api/academy/courses/[id]/thumbnail",
+  academyCoursesVideosById: "/api/academy/courses/[id]/videos/[videoId]",
+  academyCoursesVideos: "/api/academy/courses/[id]/videos",
+  academyCoursesById: "/api/academy/courses/[id]",
+  academyStatistics: "/api/academy/statistics",
   
   // Supplies & Equipment
   supplies: "/api/supplies",
@@ -131,6 +139,9 @@ export const API_ENDPOINTS = {
   communicationUnreadCount: "/api/communication/unread-count",
   communicationSearch: "/api/communication/search",
   communicationConversationWith: "/api/communication/conversation-with",
+  communicationEvents: "/api/communication/events",
+  communicationTyping: "/api/communication/typing",
+  communicationTest: "/api/communication/test",
   
   // Advertising & Promotions
   ads: "/api/ads",
@@ -143,6 +154,8 @@ export const API_ENDPOINTS = {
   adsImageDelete: "/api/ads",
   adsPromote: "/api/ads",
   adsAnalytics: "/api/ads",
+  adsStatistics: "/api/ads/statistics",
+  analyticsCustom: "/api/analytics/custom",
   
   // Trust & Verification
   trustVerificationVerifiedUsers: "/api/trust-verification/verified-users",
@@ -276,4 +289,5 @@ export const API_ENDPOINTS = {
   activitiesStatsMy: "/api/activities/stats/my",
   activitiesStatsGlobal: "/api/activities/stats/global",
   activitiesMetadata: "/api/activities/metadata",
+  activitiesUserById: "/api/activities/user/[userId]",
 } as const;

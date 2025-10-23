@@ -4,7 +4,7 @@ import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
-import { EmptyState } from "@/components/ui/empty-state";
+import EmptyState from "@/components/ui/empty-state";
 import { Card } from "@/components/ui/card";
 import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { 

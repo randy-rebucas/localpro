@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/communication/notifications - Get user notifications (with optional filters)
 export async function GET(request: NextRequest) {
@@ -8,29 +8,33 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(request);
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
-
+    
     const { searchParams } = new URL(request.url);
-    const queryString = searchParams.toString();
+    const queryParams = Object.fromEntries(searchParams.entries());
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications?${queryString}`, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'communicationNotifications',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
+    console.log("Notifications API - Response:", response);
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

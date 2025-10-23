@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
-
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/marketplace/my-services - Get user's services
 export async function GET(request: NextRequest) {
@@ -22,21 +21,20 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     
     // Build query parameters for external API
-    const queryParams = new URLSearchParams();
-    if (status && status !== 'all') queryParams.append('status', status);
-    if (category) queryParams.append('category', category);
-    if (page) queryParams.append('page', page.toString());
-    if (limit) queryParams.append('limit', limit.toString());
+    const queryParams: Record<string, string> = {};
+    if (status && status !== 'all') queryParams.status = status;
+    if (category) queryParams.category = category;
+    if (page) queryParams.page = page.toString();
+    if (limit) queryParams.limit = limit.toString();
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/my-services?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-        "Content-Type": "application/json"
-      },
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using new approach
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'marketplaceMyServices',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
@@ -52,9 +50,10 @@ export async function GET(request: NextRequest) {
         });
       }
       
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { 
-          error: `External service error: ${response.status}`,
+          error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to fetch user services from external service`
         },
         { status: response.status }

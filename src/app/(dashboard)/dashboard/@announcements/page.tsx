@@ -103,13 +103,13 @@ export default function AnnouncementsPage() {
         setError('Failed to load announcements');
         
         // Fallback to mock data for development
-        setAnnouncements([
+        const mockAnnouncements: Announcement[] = [
           {
             id: '1',
             title: 'Welcome to LocalPro!',
             message: 'We\'re excited to have you on board. Explore our marketplace to find local services and connect with professionals in your area.',
-            type: 'feature',
-            priority: 'high',
+            type: 'feature' as const,
+            priority: 'high' as const,
             startDate: new Date().toISOString(),
             isActive: true,
             isDismissible: true,
@@ -122,8 +122,8 @@ export default function AnnouncementsPage() {
             id: '2',
             title: 'New Features Coming Soon',
             message: 'We\'re working on exciting new features including Academy courses, Supplies marketplace, and Financial services. Stay tuned!',
-            type: 'info',
-            priority: 'medium',
+            type: 'info' as const,
+            priority: 'medium' as const,
             startDate: new Date().toISOString(),
             isActive: true,
             isDismissible: true,
@@ -134,8 +134,8 @@ export default function AnnouncementsPage() {
             id: '3',
             title: 'Profile Completion',
             message: 'Complete your profile to get better matches and increase your visibility to potential clients.',
-            type: 'warning',
-            priority: 'medium',
+            type: 'warning' as const,
+            priority: 'medium' as const,
             startDate: new Date().toISOString(),
             isActive: true,
             isDismissible: true,
@@ -148,15 +148,16 @@ export default function AnnouncementsPage() {
             id: '4',
             title: 'System Maintenance',
             message: 'Scheduled maintenance will occur tonight from 2 AM to 4 AM. Some features may be temporarily unavailable.',
-            type: 'info',
-            priority: 'low',
+            type: 'info' as const,
+            priority: 'low' as const,
             startDate: new Date().toISOString(),
             isActive: true,
             isDismissible: true,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           }
-        ]);
+        ];
+        setAnnouncements(mockAnnouncements);
       } finally {
         setLoading(false);
       }
@@ -212,6 +213,14 @@ export default function AnnouncementsPage() {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
+  // Debug logging
+  console.log('Announcements state:', { 
+    announcements: announcements.length, 
+    visibleAnnouncements: visibleAnnouncements.length,
+    loading, 
+    error 
+  });
+
   const displayAnnouncements = isCollapsed ? visibleAnnouncements.slice(0, 2) : visibleAnnouncements;
 
   if (loading) {
@@ -239,7 +248,14 @@ export default function AnnouncementsPage() {
   }
 
   if (visibleAnnouncements.length === 0) {
-    return null;
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-4 text-center">
+          <Megaphone className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500">No announcements at the moment</p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/marketplace/bookings - Get user bookings
 export async function GET(request: NextRequest) {
@@ -18,26 +18,26 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
 
     // Build query parameters for external API
-    const queryParams = new URLSearchParams();
+    const queryParams: Record<string, string> = {};
     if (status && status !== 'all') {
-      queryParams.append('status', status);
+      queryParams.status = status;
     }
 
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings?${queryParams.toString()}`, {
-      method: 'GET',
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using proper authentication
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'marketplaceBookings',
+      [],
+      queryParams,
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { 
-          error: `External service error: ${response.status}`,
+          error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to fetch bookings from external service`
         },
         { status: response.status }
@@ -90,22 +90,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("Bookings API: Creating booking:", body);
     
-    // Make request to external API
-    const response = await fetch(`${API_BASE_URL}/api/marketplace/bookings`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000)
-    });
+    // Make request to external API using proper authentication
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'marketplaceBookings',
+      [],
+      {},
+      {
+        method: "POST",
+        body: JSON.stringify(body)
+      }
+    );
 
     if (!response.ok) {
       console.error("External API error:", response.status, response.statusText);
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { 
-          error: `External service error: ${response.status}`,
+          error: errorData.error || `External service error: ${response.status}`,
           errorMessage: `Failed to create booking in external service`
         },
         { status: response.status }

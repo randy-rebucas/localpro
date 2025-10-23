@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { 
-  Shield, 
-  User, 
-  GraduationCap, 
-  Package, 
-  Car, 
+import {
+  Shield,
+  User,
+  GraduationCap,
+  Package,
+  Car,
   DollarSign,
   Activity,
   Clock,
@@ -23,7 +23,6 @@ import {
   ExternalLink,
   Star,
   TrendingUp,
-  AlertTriangle
 } from "lucide-react";
 
 interface ActivityItem {
@@ -292,8 +291,8 @@ export default function ActivityPage() {
     .sort((a, b) => {
       if (sortBy === "priority") {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
-               (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+        return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) -
+          (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
       }
       if (sortBy === "value") {
         return (b.value || 0) - (a.value || 0);
@@ -311,232 +310,126 @@ export default function ActivityPage() {
   };
 
   return (
-    <div className="space-y-6">
-      
-      {/* Two Column Layout: Announcements (Left) and Activity (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
-        {/* Left Section - Announcements */}
-        <div className="lg:col-span-1 order-2 lg:order-1">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-            {/* Announcements Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center">
-                  <Bell className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Announcements</h3>
-                  <p className="text-xs text-gray-500">Important updates and notifications</p>
-                </div>
-              </div>
-            </div>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
 
-            {/* Announcements Content */}
-            <div className="p-3 lg:p-4 space-y-3 max-h-96 overflow-y-auto">
-              {/* Mock announcement data - in real app, this would come from API */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-blue-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-blue-900">Welcome to LocalPro!</h4>
-                    <p className="text-xs text-blue-800 mt-1">We&apos;re excited to have you on board. Explore our marketplace to find local services.</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-blue-600">Just now</span>
-                      <button className="text-xs text-blue-600 hover:text-blue-800 font-medium">Learn more</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-green-50 border-l-4 border-green-500 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-green-900">Profile Verification Complete</h4>
-                    <p className="text-xs text-green-800 mt-1">Your professional profile has been verified and is now live.</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-green-600">15 minutes ago</span>
-                      <button className="text-xs text-green-600 hover:text-green-800 font-medium">View Profile</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-semibold text-yellow-900">Complete Your Profile</h4>
-                    <p className="text-xs text-yellow-800 mt-1">Add more details to get better matches and increase visibility.</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-yellow-600">1 hour ago</span>
-                      <button className="text-xs text-yellow-600 hover:text-yellow-800 font-medium">Complete Now</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center">
+            <Activity className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-800">Activity Feed</h3>
+            <p className="text-xs text-gray-500">Your recent actions and updates</p>
           </div>
         </div>
+      </div>
 
-        {/* Right Section - Activity Feed */}
-        <div className="lg:col-span-2 order-1 lg:order-2">
-          {/* Activity Section Header */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center">
-                <Activity className="w-4 h-4" />
+      {/* Activity Content */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        {isLoading ? (
+          <div className="p-6 space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-start space-x-3 animate-pulse">
+                <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">Activity Feed</h3>
-                <p className="text-xs text-gray-500">Your recent actions and updates</p>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Enhanced Controls */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-3 lg:p-4 mb-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4">
-              {/* Filter tabs */}
-              <div className="flex flex-wrap gap-2">
-                {["all", "marketplace", "academy", "profile", "finance", "notification"].map((filterType) => (
-                  <button
-                    key={filterType}
-                    onClick={() => setFilter(filterType)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                      filter === filterType
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {filterType === "all" ? "All" : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-                  </button>
-                ))}
-              </div>
-
-              {/* Sort options */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500">Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs border border-gray-200 rounded-md px-2 py-1"
-                >
-                  <option value="recent">Recent</option>
-                  <option value="priority">Priority</option>
-                  <option value="value">Value</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Content */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            {isLoading ? (
-              <div className="p-6 space-y-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-start space-x-3 animate-pulse">
-                    <div className="w-10 h-10 bg-gray-200 rounded-lg"></div>
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredActivities.length > 0 ? (
-              <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4 p-4" : "space-y-1"}>
-                {filteredActivities.slice(0, 8).map((activity) => (
-                  <div key={activity.id} className={`group hover:bg-gray-50 transition-colors ${viewMode === "list" ? "p-4 border-b border-gray-100 last:border-b-0" : "p-4 border border-gray-100 rounded-lg"}`}>
-                    <div className="flex items-start space-x-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getStatusColor(activity.status || 'info')} relative`}>
-                        {getActivityIcon(activity.type)}
-                        {activity.priority === 'high' && (
-                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
-                            <Zap className="w-2 h-2 text-white" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-medium text-gray-800 group-hover:text-green-700 transition-colors">
-                                {activity.action}
-                              </p>
-                              {activity.status && getStatusIcon(activity.status)}
-                              {activity.priority && getPriorityIcon(activity.priority)}
-                            </div>
-                            <p className="text-xs text-gray-600 mb-2">{activity.description}</p>
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs text-gray-500 flex items-center">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {activity.timestamp}
-                              </p>
-                              {activity.value && (
-                                <div className="flex items-center gap-1">
-                                  <span className="text-sm font-semibold text-green-600">
-                                    {activity.value}{activity.unit}
-                                  </span>
-                                  {activity.category === 'rating' && <Star className="w-3 h-3 text-yellow-500" />}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-gray-600">
-                            <ExternalLink className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h4 className="text-base font-medium text-gray-700 mb-2">No activity found</h4>
-                <p className="text-sm text-gray-500 mb-4">
-                  {filter === "all" ? "No recent activity to show" : `No ${filter} activity found`}
-                </p>
-                <button 
-                  onClick={refreshActivity}
-                  className="text-sm text-green-600 hover:text-green-700 font-medium"
-                >
-                  Refresh to check for updates
-                </button>
-              </div>
-            )}
-
-            {/* Enhanced Footer */}
-            {filteredActivities.length > 0 && (
-              <div className="border-t border-gray-100 p-4 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      <span>Showing {filteredActivities.slice(0, 8).length} of {filteredActivities.length} activities</span>
-                    </div>
-                    {filteredActivities.some(a => a.priority === 'high') && (
-                      <div className="flex items-center gap-1 text-red-600">
-                        <Zap className="w-3 h-3" />
-                        <span>{filteredActivities.filter(a => a.priority === 'high').length} high priority</span>
+        ) : filteredActivities.length > 0 ? (
+          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4 p-4" : "space-y-1"}>
+            {filteredActivities.slice(0, 3).map((activity) => (
+              <div key={activity.id} className={`group hover:bg-gray-50 transition-colors ${viewMode === "list" ? "p-4 border-b border-gray-100 last:border-b-0" : "p-4 border border-gray-100 rounded-lg"}`}>
+                <div className="flex items-start space-x-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getStatusColor(activity.status || 'info')} relative`}>
+                    {getActivityIcon(activity.type)}
+                    {activity.priority === 'high' && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
+                        <Zap className="w-2 h-2 text-white" />
                       </div>
                     )}
                   </div>
-                  <button 
-                    onClick={() => router.push('/activity')}
-                    className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1 transition-colors"
-                  >
-                    View all activities
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm font-medium text-gray-800 group-hover:text-green-700 transition-colors">
+                            {activity.action}
+                          </p>
+                          {activity.status && getStatusIcon(activity.status)}
+                          {activity.priority && getPriorityIcon(activity.priority)}
+                        </div>
+                        <p className="text-xs text-gray-600 mb-2">{activity.description}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-500 flex items-center">
+                            <Clock className="w-3 h-3 mr-1" />
+                            {activity.timestamp}
+                          </p>
+                          {activity.value && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-semibold text-green-600">
+                                {activity.value}{activity.unit}
+                              </span>
+                              {activity.category === 'rating' && <Star className="w-3 h-3 text-yellow-500" />}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-gray-600">
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-12">
+            <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h4 className="text-base font-medium text-gray-700 mb-2">No activity found</h4>
+            <p className="text-sm text-gray-500 mb-4">
+              {filter === "all" ? "No recent activity to show" : `No ${filter} activity found`}
+            </p>
+            <button
+              onClick={refreshActivity}
+              className="text-sm text-green-600 hover:text-green-700 font-medium"
+            >
+              Refresh to check for updates
+            </button>
+          </div>
+        )}
+
+        {/* Enhanced Footer */}
+        {filteredActivities.length > 0 && (
+          <div className="border-t border-gray-100 p-4 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" />
+                  <span>Showing {filteredActivities.slice(0, 3).length} of {filteredActivities.length} activities</span>
+                </div>
+                {filteredActivities.some(a => a.priority === 'high') && (
+                  <div className="flex items-center gap-1 text-red-600">
+                    <Zap className="w-3 h-3" />
+                    <span>{filteredActivities.filter(a => a.priority === 'high').length} high priority</span>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => router.push('/activity')}
+                className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1 transition-colors"
+              >
+                View all activities
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

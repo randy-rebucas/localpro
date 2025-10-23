@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 import { z } from "zod";
 import { encrypt, createSessionCookie, SessionData } from "@/lib/session";
 
@@ -13,25 +13,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { phoneNumber, code } = verifyCodeSchema.parse(body);
 
-    const response = await fetch(`${API_BASE_URL}/api/auth/verify-code`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phoneNumber,
-        code,
-      }),
-    });
-
-    const data = await response.json();
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+      'authVerifyCode',
+      {
+        method: "POST",
+        body: JSON.stringify({
+          phoneNumber,
+          code,
+        })
+      }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: data.error || "Failed to verify code" },
+        { error: errorData.error || "Failed to verify code" },
         { status: response.status }
       );
     }
+
+    const data = await response.json();
 
     // Extract user data from the API response
     const { user, token } = data;
@@ -86,9 +88,27 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Verify code error:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

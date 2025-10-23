@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useSession } from "@/hooks/useAuth";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { useAuthErrorHandler, authAwareFetch } from "@/lib/auth-error-handler";
 
 type NotificationItem = {
   id: string;
@@ -110,25 +111,20 @@ export default function NotificationsPage() {
   const [markAllLoading, setMarkAllLoading] = useState(false);
   
   const { data: session, status: sessionStatus } = useSession();
+  const { handleAuthError } = useAuthErrorHandler();
 
 
   // Load notifications
   const load = useCallback(async () => {
-    if (!session?.user?.id || sessionStatus === 'loading') return;
-    
+
     setLoading(true);
     try {
       const url = `/api/communication/notifications`;
       console.log("Fetching notifications from:", url);
-      const response = await fetch(url, createAuthFetchOptions());
-      
+
+      const response = await fetch(url);
+      console.log("Notifications API - Response:", response);
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Authentication failed - session may have expired");
-          // Don't throw error for 401, just show empty state
-          setItems([]);
-          return;
-        }
         throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
       
@@ -141,21 +137,23 @@ export default function NotificationsPage() {
       setItems(sortedNotifications);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      setItems([]);
+     
+      // For network errors, show empty state but don't redirect
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        console.warn("Network error - showing empty state");
+        setItems([]);
+      } else {
+        setItems([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id, sessionStatus]);
+  }, []);
 
   // Load notifications on mount and when session changes
   useEffect(() => {
-    if (sessionStatus === 'authenticated' && session?.user?.id) {
       load();
-    } else if (sessionStatus === 'unauthenticated') {
-      setLoading(false);
-      setItems([]);
-    }
-  }, [sessionStatus, session?.user?.id, load]);
+  }, [load]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
@@ -169,16 +167,12 @@ export default function NotificationsPage() {
     try {
       const url = `/api/communication/notifications/${id}/read`;
       console.log("Marking notification as read:", url);
-      const response = await fetch(url, createAuthFetchOptions({
+      
+      const response = await fetch(url, {
         method: "PUT"
-      }));
+      });
       
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Authentication failed - session may have expired");
-          // Don't revert optimistic update for 401, just log the error
-          return;
-        }
         throw new Error(`Failed to mark notification as read: ${response.status}`);
       }
     } catch (err) {
@@ -209,16 +203,12 @@ export default function NotificationsPage() {
     try {
       const url = `/api/communication/notifications/${id}`;
       console.log("Deleting notification:", url);
-      const response = await fetch(url, createAuthFetchOptions({
+      
+      const response = await fetch(url, {
         method: "DELETE"
-      }));
+      });
       
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Authentication failed - session may have expired");
-          // Don't revert optimistic update for 401, just log the error
-          return;
-        }
         throw new Error(`Failed to delete notification: ${response.status}`);
       }
     } catch (err) {
@@ -251,16 +241,12 @@ export default function NotificationsPage() {
     try {
       const url = `/api/communication/notifications/read-all`;
       console.log("Marking all notifications as read:", url);
-      const response = await fetch(url, createAuthFetchOptions({
+      
+      const response = await fetch(url, {
         method: "PUT"
-      }));
+      });
       
       if (!response.ok) {
-        if (response.status === 401) {
-          console.error("Authentication failed - session may have expired");
-          // Don't revert optimistic update for 401, just log the error
-          return;
-        }
         throw new Error(`Failed to mark all notifications as read: ${response.status}`);
       }
     } catch (err) {
@@ -276,8 +262,8 @@ export default function NotificationsPage() {
     }
   }, [items]);
 
-  // Show loading state while session is loading or notifications are loading
-  if (sessionStatus === 'loading' || loading) {
+  // Show loading state while notifications are loading
+  if (loading) {
     return (
       <div className="space-y-6">
         {/* Breadcrumbs Skeleton */}
@@ -304,26 +290,6 @@ export default function NotificationsPage() {
         {/* Notifications List Skeleton */}
         <div className="space-y-4">
           <ListSkeleton count={5} />
-        </div>
-      </div>
-    );
-  }
-
-  // Show message for unauthenticated users
-  if (sessionStatus === 'unauthenticated') {
-    return (
-      <div>
-        <Breadcrumbs
-          className="text-sm text-gray-500 mb-4"
-          items={[
-            { label: "Dashboard", href: "/dashboard" },
-            { label: "Notifications" },
-          ]}
-        />
-        <div className="text-center py-8">
-          <Bell className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-base font-medium text-gray-900 mb-1">Authentication Required</h3>
-          <p className="text-gray-500">Please log in to view your notifications.</p>
         </div>
       </div>
     );

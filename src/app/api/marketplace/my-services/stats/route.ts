@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // Mock statistics data
 const mockStats = {
@@ -22,14 +22,11 @@ export async function GET(request: NextRequest) {
     // Try to fetch from external API first (only if authenticated), fallback to mock data
     if (isAuthenticated) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/marketplace/my-services/stats`, {
-          headers: {
-            "Authorization": `Bearer ${session.user.id}`,
-            "Content-Type": "application/json"
-          },
-          // Add timeout to prevent hanging
-          signal: AbortSignal.timeout(5000)
-        });
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          session,
+          'marketplaceMyServicesStats',
+          { method: 'GET' }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -46,9 +43,27 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error("Error fetching service statistics:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
     );
   }
 }

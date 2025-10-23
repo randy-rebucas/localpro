@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
 
 // PUT /api/communication/notifications/:id/read - Mark specific notification as read
 export async function PUT(
@@ -16,13 +17,11 @@ export async function PUT(
 
     const { id } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${id}/read`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-    });
+    const response = await makeAuthenticatedRequestFromSession(
+      session,
+      `${API_BASE_URL}/api/communication/notifications/${id}/read`,
+      { method: 'PUT' }
+    );
 
     const data = await response.json();
 

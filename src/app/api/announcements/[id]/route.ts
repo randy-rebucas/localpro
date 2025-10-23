@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/announcements/:id - Get single announcement
 export async function GET(
@@ -16,22 +16,23 @@ export async function GET(
 
     const { id } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/announcements/${id}`, {
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-      signal: AbortSignal.timeout(30000),
-    });
+    const response = await makeAuthenticatedRequestWithPath(
+      session,
+      'announcementsById',
+      [id],
+      {},
+      { method: 'GET' }
+    );
 
     if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: `External service error: ${response.status}` },
+        { error: errorData.error || `External service error: ${response.status}` },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-
     return NextResponse.json(data);
   } catch (error) {
     

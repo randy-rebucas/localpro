@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL } from "@/lib/api";
+import { makeAuthenticatedRequestFromSession } from "@/lib/api-auth-utils";
 
 // DELETE /api/communication/notifications/:id - Delete a notification
 export async function DELETE(
@@ -16,12 +17,11 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const response = await fetch(`${API_BASE_URL}/api/communication/notifications/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${session.user.id}`,
-      },
-    });
+    const response = await makeAuthenticatedRequestFromSession(
+      session,
+      `${API_BASE_URL}/api/communication/notifications/${id}`,
+      { method: 'DELETE' }
+    );
 
     const data = await response.json();
 
