@@ -3,7 +3,8 @@ import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 export async function GET(
-  request: NextRequest
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getServerSession(request);
@@ -15,13 +16,40 @@ export async function GET(
       );
     }
 
+    const { userId } = await params;
+    
+    // For development, return mock data if external API is not available
+    if (process.env.NODE_ENV === 'development' && process.env.ENABLE_MOCK_DATA === 'true') {
+      console.log("Using mock data for development");
+      const mockUserData = {
+        id: userId,
+        email: session.user.email,
+        name: session.user.name,
+        firstName: session.user.firstName || "John",
+        lastName: session.user.lastName || "Doe",
+        phone: session.user.phone || "+1234567890",
+        bio: session.user.bio || "Professional service provider",
+        location: session.user.location || "New York, NY",
+        website: session.user.website || "https://example.com",
+        skills: session.user.skills || ["Web Development", "Design"],
+        experience: session.user.experience || "5+ years",
+        avatar: session.user.avatar || null,
+        portfolio: session.user.portfolio || [],
+        createdAt: session.user.createdAt || new Date().toISOString(),
+        updatedAt: session.user.updatedAt || new Date().toISOString(),
+        isVerified: session.user.isVerified || false,
+        role: session.user.role || "provider"
+      };
+      return NextResponse.json(mockUserData);
+    }
+    
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'usersById',
-      [session.user.id],
+      [userId],
       { method: 'GET' }
     );
-
+    console.log("response", response);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(

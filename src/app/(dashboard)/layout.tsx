@@ -71,7 +71,7 @@ export default function DashboardLayout({
     if (status === "authenticated" && session?.user?.id) {
       const fetchUser = async () => {
         try {
-          const response = await fetch(`/api/users`);
+          const response = await fetch(`/api/users/${session?.user?.id}`);
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);

@@ -84,10 +84,9 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     if (profile) return;
 
     try {
-      const baseOptions = createAuthFetchOptions();
       const response = await fetch(
         `/api/users/${session.user.id}`,
-        { ...baseOptions, signal }
+        createAuthFetchOptions()
       );
 
       if (response.ok) {

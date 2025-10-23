@@ -303,5 +303,5 @@ export const API_ENDPOINTS = {
   activitiesMetadata: "/api/activities/metadata",
   activitiesUserById: "/api/activities/user/[userId]",
 
-  usersById: "/api/users/[userId]",
+  usersById: "/api/users",
 } as const;
