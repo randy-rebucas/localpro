@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { z } from "zod";
-import { encrypt, createSessionCookie, SessionData } from "@/lib/session";
+import { createSession, createSessionCookie, createApiTokenCookie } from "@/lib/session";
 
 const verifyCodeSchema = z.object({
   phoneNumber: z.string().min(10, "Please enter a valid phone number"),
@@ -37,9 +37,14 @@ export async function POST(request: NextRequest) {
     // Extract user data and token from the API response
     const { user, token } = data;
 
-    // CRITICAL: Use the actual token from the external API response
-    // This ensures we're using the real session token, not creating our own
-    const sessionData: SessionData = {
+    // Get request metadata for session security
+    const userAgent = request.headers.get("user-agent") || undefined;
+    const ipAddress = request.headers.get("x-forwarded-for") || 
+                     request.headers.get("x-real-ip") || 
+                     undefined;
+
+    // Create unique session with security features
+    const { encryptedSession } = await createSession({
       userId: user.id,
       email: user.email,
       name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
@@ -49,13 +54,13 @@ export async function POST(request: NextRequest) {
       lastName: user.lastName,
       // Store the actual API token in the session data
       apiToken: token, // This is the real token from the external API
-    };
-
-    // Encrypt the session data (which now contains the real API token)
-    const encryptedSession = await encrypt(sessionData);
+    }, userAgent, ipAddress);
     
     // Create session cookie with the encrypted session data
     const sessionCookie = createSessionCookie(encryptedSession);
+    
+    // Create API token cookie for client-side access
+    const apiTokenCookie = createApiTokenCookie(token);
 
     // Return success response with the actual API token
     const response_data = NextResponse.json(
@@ -77,8 +82,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set the session cookie
+    // Set both cookies
     response_data.headers.set('Set-Cookie', sessionCookie);
+    response_data.headers.append('Set-Cookie', apiTokenCookie);
 
     return response_data;
   } catch (error) {

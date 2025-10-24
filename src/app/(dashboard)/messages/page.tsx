@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { Search, Send, Check, Edit, Trash2, MessageSquare, MoreVertical, Paperclip, Smile, Phone, Video } from "lucide-react";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { 
+  makeClientAuthenticatedRequestWithPath,
+  makeClientAuthenticatedRequestWithEndpoint,
+  handleClientApiRoute 
+} from "@/lib/client-api-utils";
 import { API_CONFIG } from "@/lib/env";
 
 interface Message {
@@ -99,13 +103,20 @@ export default function MessagesPage() {
 
   // Check if user is authenticated before making API calls
   const checkAuthentication = useCallback(async () => {
-    try {
-      const response = await fetch('/api/auth/me', createAuthFetchOptions());
-      return response.ok;
-    } catch (error) {
-      console.error('Authentication check failed:', error);
-      return false;
-    }
+    const result = await handleClientApiRoute(async () => {
+      const response = await makeClientAuthenticatedRequestWithEndpoint(
+        'authMe',
+        { method: 'GET' }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Authentication failed: ${response.status}`);
+      }
+      
+      return await response.json();
+    }, "Check authentication");
+    
+    return !result.error;
   }, []);
 
   // API Functions
@@ -127,10 +138,13 @@ export default function MessagesPage() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.apiTimeout);
         
-        const response = await fetch('/api/communication/conversations', {
-          ...createAuthFetchOptions(),
-          signal: controller.signal
-        });
+        const response = await makeClientAuthenticatedRequestWithEndpoint(
+          'communicationConversations',
+          { 
+            method: 'GET',
+            signal: controller.signal
+          }
+        );
         
         clearTimeout(timeoutId);
         
@@ -182,17 +196,27 @@ export default function MessagesPage() {
   }, [retryWithBackoff, retryCount, checkAuthentication]);
 
   const fetchConversation = useCallback(async (conversationId: string, page: number = 1) => {
-    try {
-      const response = await fetch(`/api/communication/conversations/${conversationId}?page=${page}&limit=20`, createAuthFetchOptions());
+    const result = await handleClientApiRoute(async () => {
+      const response = await makeClientAuthenticatedRequestWithPath(
+        'communicationConversationsById',
+        [conversationId],
+        { page: page.toString(), limit: '20' },
+        { method: 'GET' }
+      );
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch conversation: ${response.status} ${response.statusText}`);
       }
-      const data = await response.json();
-      return data;
-    } catch (err) {
-      console.error('Error fetching conversation:', err);
-      throw err;
+      
+      return await response.json();
+    }, "Fetch conversation");
+    
+    if (result.error) {
+      console.error('Error fetching conversation:', result.error);
+      throw new Error(result.error);
     }
+    
+    return result.data;
   }, []);
 
   const loadMoreMessages = useCallback(async () => {
@@ -225,10 +249,21 @@ export default function MessagesPage() {
   // Notification functions
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const response = await fetch('/api/communication/unread-count', createAuthFetchOptions());
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.count || 0);
+      const result = await handleClientApiRoute(async () => {
+        const response = await makeClientAuthenticatedRequestWithEndpoint(
+          'communicationUnreadCount',
+          { method: 'GET' }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch unread count: ${response.status}`);
+        }
+        
+        return await response.json();
+      }, "Fetch unread count");
+      
+      if (!result.error && result.data) {
+        setUnreadCount(result.data.count || 0);
       }
     } catch (err) {
       console.error('Error fetching unread count:', err);
@@ -251,20 +286,33 @@ export default function MessagesPage() {
   const sendMessage = useCallback(async (conversationId: string, content: string, messageType: string = 'text', attachments: { name: string; type: string; size: number; file: File }[] = []) => {
     try {
       setSendingMessage(true);
-      const response = await fetch(`/api/communication/conversations/${conversationId}/messages`, createAuthFetchOptions({
-        method: 'POST',
-        body: JSON.stringify({ 
-          content, 
-          messageType,
-          attachments 
-        }),
-      }));
+      const result = await handleClientApiRoute(async () => {
+        const response = await makeClientAuthenticatedRequestWithPath(
+          'communicationConversationsMessages',
+          [conversationId],
+          {},
+          {
+            method: 'POST',
+            body: JSON.stringify({ 
+              content, 
+              messageType,
+              attachments 
+            }),
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }, "Send message");
       
-      if (!response.ok) {
-        throw new Error(`Failed to send message: ${response.status} ${response.statusText}`);
+      if (result.error) {
+        throw new Error(result.error);
       }
       
-      const newMessage = await response.json();
+      const newMessage = result.data;
       
       // Update conversations list
       setConversations(prev => 
@@ -297,31 +345,51 @@ export default function MessagesPage() {
   }, [activeConversation]);
 
   const markAsRead = useCallback(async (conversationId: string) => {
-    try {
-      const response = await fetch(`/api/communication/conversations/${conversationId}/read`, createAuthFetchOptions({
-        method: 'PUT',
-      }));
+    const result = await handleClientApiRoute(async () => {
+      const response = await makeClientAuthenticatedRequestWithPath(
+        'communicationConversationsRead',
+        [conversationId],
+        {},
+        { method: 'PUT' }
+      );
       
       if (!response.ok) {
-        console.warn('Failed to mark conversation as read:', response.status);
+        throw new Error(`Failed to mark conversation as read: ${response.status}`);
       }
-    } catch (err) {
-      console.error('Error marking as read:', err);
+      
+      return await response.json();
+    }, "Mark conversation as read");
+    
+    if (result.error) {
+      console.warn('Failed to mark conversation as read:', result.error);
     }
   }, []);
 
   const updateMessage = useCallback(async (conversationId: string, messageId: string, content: string) => {
     try {
-      const response = await fetch(`/api/communication/conversations/${conversationId}/messages/${messageId}`, createAuthFetchOptions({
-        method: 'PUT',
-        body: JSON.stringify({ content }),
-      }));
+      const result = await handleClientApiRoute(async () => {
+        const response = await makeClientAuthenticatedRequestWithPath(
+          'communicationMessageUpdate',
+          [conversationId, messageId],
+          {},
+          {
+            method: 'PUT',
+            body: JSON.stringify({ content }),
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update message: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }, "Update message");
       
-      if (!response.ok) {
-        throw new Error(`Failed to update message: ${response.status} ${response.statusText}`);
+      if (result.error) {
+        throw new Error(result.error);
       }
-      
-      const updatedMessage = await response.json();
+        
+      const updatedMessage = result.data;
       
       // Update local state
       if (activeConversation?.id === conversationId) {
@@ -342,14 +410,25 @@ export default function MessagesPage() {
 
   const deleteMessage = useCallback(async (conversationId: string, messageId: string) => {
     try {
-      const response = await fetch(`/api/communication/conversations/${conversationId}/messages/${messageId}`, createAuthFetchOptions({
-        method: 'DELETE',
-      }));
+      const result = await handleClientApiRoute(async () => {
+        const response = await makeClientAuthenticatedRequestWithPath(
+          'communicationMessageDelete',
+          [conversationId, messageId],
+          {},
+          { method: 'DELETE' }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to delete message: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }, "Delete message");
       
-      if (!response.ok) {
-        throw new Error(`Failed to delete message: ${response.status} ${response.statusText}`);
+      if (result.error) {
+        throw new Error(result.error);
       }
-      
+        
       // Update local state
       if (activeConversation?.id === conversationId) {
         setActiveConversation(prev => 
@@ -481,20 +560,26 @@ export default function MessagesPage() {
     }
     
     // Send typing start event
-    fetch('/api/communication/typing', createAuthFetchOptions({
-      method: 'POST',
-      body: JSON.stringify({ conversationId, type: 'start' })
-    })).catch(err => console.error('Error sending typing event:', err));
+    makeClientAuthenticatedRequestWithEndpoint(
+      'communicationTyping',
+      {
+        method: 'POST',
+        body: JSON.stringify({ conversationId, type: 'start' })
+      }
+    ).catch(err => console.error('Error sending typing event:', err));
     
     setIsTyping(true);
     
     const timeout = setTimeout(() => {
       setIsTyping(false);
       // Send typing stop event
-      fetch('/api/communication/typing', createAuthFetchOptions({
-        method: 'POST',
-        body: JSON.stringify({ conversationId, type: 'stop' })
-      })).catch(err => console.error('Error sending typing stop event:', err));
+      makeClientAuthenticatedRequestWithEndpoint(
+        'communicationTyping',
+        {
+          method: 'POST',
+          body: JSON.stringify({ conversationId, type: 'stop' })
+        }
+      ).catch(err => console.error('Error sending typing stop event:', err));
     }, 2000);
     
     typingTimeoutRef.current = timeout;
@@ -523,14 +608,25 @@ export default function MessagesPage() {
       return;
     }
     
-    try {
-      const response = await fetch(`/api/communication/search?conversationId=${activeConversation.id}&query=${encodeURIComponent(query)}`, createAuthFetchOptions());
-      if (response.ok) {
-        const results = await response.json();
-        setSearchResults(results);
+    const result = await handleClientApiRoute(async () => {
+      const response = await makeClientAuthenticatedRequestWithPath(
+        'communicationSearch',
+        [],
+        { conversationId: activeConversation.id, query },
+        { method: 'GET' }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to search messages: ${response.status}`);
       }
-    } catch (err) {
-      console.error('Error searching messages:', err);
+      
+      return await response.json();
+    }, "Search messages");
+    
+    if (!result.error && result.data) {
+      setSearchResults(result.data);
+    } else {
+      console.error('Error searching messages:', result.error);
       setSearchResults([]);
     }
   }, [activeConversation]);

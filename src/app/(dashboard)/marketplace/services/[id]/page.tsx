@@ -23,36 +23,78 @@ import {
 import { Loading } from "@/components/ui/loading";
 
 interface Service {
-  id: string;
-  name: string;
+  _id: string;
+  title: string;
   description: string;
-  category: "CLEANING" | "PLUMBING" | "ELECTRICAL" | "MOVING";
-  price: number;
-  duration: number;
+  category: string;
+  subcategory: string;
+  pricing: {
+    type: string;
+    basePrice: number;
+    currency: string;
+  };
+  availability: {
+    timezone: string;
+    schedule: any[];
+  };
+  estimatedDuration: {
+    min: number;
+    max: number;
+  };
+  warranty: {
+    hasWarranty: boolean;
+    duration: number;
+    description: string;
+  };
+  insurance: {
+    covered: boolean;
+    coverageAmount: number;
+  };
+  emergencyService: {
+    available: boolean;
+    surcharge: number;
+    responseTime: string;
+  };
+  rating: {
+    average: number;
+    count: number;
+  };
   provider: {
-    id: string;
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profile: {
+      skills: string[];
+      rating: number;
+    };
+  };
+  serviceArea: string[];
+  features: string[];
+  requirements: string[];
+  serviceType: string;
+  teamSize: number;
+  equipmentProvided: boolean;
+  materialsIncluded: boolean;
+  servicePackages: Array<{
+    _id: string;
     name: string;
-    email: string;
-    phone: string;
-    rating: number;
-    reviewCount: number;
-    avatar?: string;
-    bio?: string;
-    joinedDate: string;
-    verified: boolean;
-  };
-  location: {
-    city: string;
-    state: string;
-    address?: string;
-  };
-  images?: string[];
-  rating: number;
-  reviewCount: number;
-  isAvailable: boolean;
+    description: string;
+    price: number;
+    features: string[];
+    duration: number;
+  }>;
+  addOns: Array<{
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+  }>;
+  isActive: boolean;
+  images: string[];
   createdAt: string;
-  features?: string[];
-  requirements?: string[];
+  updatedAt: string;
+  __v: number;
 }
 
 interface Review {
@@ -108,7 +150,7 @@ export default function ServiceDetailPage() {
       setService(data);
       setBookingForm(prev => ({
         ...prev,
-        duration: data.duration,
+        duration: data.estimatedDuration?.min || 2,
         contactEmail: "", // Will be filled from user session
         contactPhone: "" // Will be filled from user session
       }));
@@ -151,15 +193,15 @@ export default function ServiceDetailPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serviceId: service.id,
-          providerId: service.provider.id,
+          serviceId: service._id,
+          providerId: service.provider._id,
           date: bookingForm.date,
           time: bookingForm.time,
           duration: bookingForm.duration,
           notes: bookingForm.notes,
           contactPhone: bookingForm.contactPhone,
           contactEmail: bookingForm.contactEmail,
-          totalPrice: service.price
+          totalPrice: service.pricing.basePrice
         }),
       });
 
@@ -236,7 +278,7 @@ export default function ServiceDetailPage() {
           Marketplace
         </Link>
         <span>/</span>
-        <span className="text-gray-700">{service.name}</span>
+        <span className="text-gray-700">{service.title}</span>
       </nav>
 
       {/* Service Header */}
@@ -244,23 +286,26 @@ export default function ServiceDetailPage() {
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-2xl font-bold text-gray-700">{service.name}</h1>
-              {service.provider.verified && (
-                <CheckCircle className="w-6 h-6 text-green-500" />
-              )}
+              <h1 className="text-2xl font-bold text-gray-700">{service.title}</h1>
+              <CheckCircle className="w-6 h-6 text-green-500" />
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
-                <span>{service.location.city}, {service.location.state}</span>
+                <span>{service.serviceArea?.join(', ') || 'Service area not specified'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{formatDuration(service.duration)}</span>
+                <span>{service.estimatedDuration?.min || 0}-{service.estimatedDuration?.max || 0} hours</span>
               </div>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4" />
-                <span>{service.rating.toFixed(1)} ({service.reviewCount} reviews)</span>
+                <span>{service.rating?.average?.toFixed(1) || '0.0'} ({service.rating?.count || 0} reviews)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  {service.category || 'Service'}
+                </span>
               </div>
             </div>
           </div>
@@ -281,7 +326,7 @@ export default function ServiceDetailPage() {
             <div className="relative group overflow-hidden rounded-lg">
               <Image
                 src={service.images[selectedImageIndex]}
-                alt={service.name}
+                alt={service.title}
                 width={400}
                 height={256}
                 className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
@@ -302,7 +347,7 @@ export default function ServiceDetailPage() {
               >
                 <Image
                   src={image}
-                  alt={`${service.name} ${index + 1}`}
+                  alt={`${service.title} ${index + 1}`}
                   width={100}
                   height={100}
                   className="w-full h-full object-cover"
@@ -317,9 +362,11 @@ export default function ServiceDetailPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-3xl font-bold text-green-600">
-              {formatPrice(service.price)}
+              {formatPrice(service.pricing?.basePrice || 0)}
             </div>
-            <div className="text-sm text-gray-500">per service</div>
+            <div className="text-sm text-gray-500">
+              {service.pricing?.type === 'hourly' ? 'per hour' : 'per service'}
+            </div>
           </div>
           <button
             onClick={() => setShowBookingForm(true)}
@@ -368,6 +415,145 @@ export default function ServiceDetailPage() {
               </ul>
             </div>
           )}
+
+          {/* Service Packages */}
+          {service.servicePackages && service.servicePackages.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Packages</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {service.servicePackages.map((pkg) => (
+                  <div key={pkg._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold text-gray-700 mb-2">{pkg.name || 'Package'}</h3>
+                    <p className="text-sm text-gray-600 mb-3">{pkg.description || 'No description available'}</p>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-lg font-bold text-green-600">{formatPrice(pkg.price || 0)}</span>
+                      <span className="text-sm text-gray-500">{pkg.duration || 0} hours</span>
+                    </div>
+                    <ul className="space-y-1">
+                      {pkg.features?.map((feature, index) => (
+                        <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                          <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      )) || []}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Add-ons */}
+          {service.addOns && service.addOns.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Available Add-ons</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {service.addOns.map((addon) => (
+                  <div key={addon._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-gray-700">{addon.name || 'Add-on'}</h3>
+                      <span className="text-lg font-bold text-green-600">{formatPrice(addon.price || 0)}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{addon.description || 'No description available'}</p>
+                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      {addon.category || 'General'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Service Details */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Service Type</h3>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
+                    {service.serviceType?.replace('_', ' ').toUpperCase() || 'NOT SPECIFIED'}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Team Size</h3>
+                  <span className="text-gray-600">{service.teamSize || 1} {service.teamSize === 1 ? 'person' : 'people'}</span>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Equipment & Materials</h3>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-gray-600">
+                        Equipment {service.equipmentProvided ? 'provided' : 'not provided'}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-gray-600">
+                        Materials {service.materialsIncluded ? 'included' : 'not included'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Service Areas</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {service.serviceArea?.map((area, index) => (
+                      <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {area}
+                      </span>
+                    )) || <span className="text-sm text-gray-500">No service areas specified</span>}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-700 mb-2">Availability</h3>
+                  <span className="text-sm text-gray-600">
+                    Timezone: {service.availability?.timezone || 'Not specified'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Warranty & Protection */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Warranty & Protection</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-4 border border-gray-200 rounded-lg">
+                <Shield className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-700 mb-1">Warranty</h3>
+                <p className="text-sm text-gray-600">
+                  {service.warranty?.hasWarranty 
+                    ? `${service.warranty.duration || 0}-day ${service.warranty.description || 'warranty'}`
+                    : 'No warranty'
+                  }
+                </p>
+              </div>
+              <div className="text-center p-4 border border-gray-200 rounded-lg">
+                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-700 mb-1">Insurance</h3>
+                <p className="text-sm text-gray-600">
+                  {service.insurance?.covered 
+                    ? `Covered up to ${formatPrice(service.insurance.coverageAmount || 0)}`
+                    : 'Not covered'
+                  }
+                </p>
+              </div>
+              <div className="text-center p-4 border border-gray-200 rounded-lg">
+                <AlertCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
+                <h3 className="font-medium text-gray-700 mb-1">Emergency Service</h3>
+                <p className="text-sm text-gray-600">
+                  {service.emergencyService?.available 
+                    ? `${service.emergencyService.responseTime || 'Not specified'} (+${formatPrice(service.emergencyService.surcharge || 0)})`
+                    : 'Not available'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
 
           {/* Reviews */}
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -424,52 +610,37 @@ export default function ServiceDetailPage() {
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Provider</h3>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                {service.provider.avatar ? (
-                  <Image
-                    src={service.provider.avatar}
-                    alt={service.provider.name}
-                    width={48}
-                    height={48}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-lg font-medium text-gray-600">
-                    {service.provider.name.charAt(0)}
-                  </span>
-                )}
+                <span className="text-lg font-medium text-gray-600">
+                  {service.provider?.firstName?.charAt(0) || 'P'}{service.provider?.lastName?.charAt(0) || 'P'}
+                </span>
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-gray-700">{service.provider.name}</h4>
-                  {service.provider.verified && (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  )}
+                  <h4 className="font-medium text-gray-700">
+                    {service.provider?.firstName || 'Provider'} {service.provider?.lastName || 'Name'}
+                  </h4>
+                  <CheckCircle className="w-4 h-4 text-green-500" />
                 </div>
                 <div className="flex items-center gap-1">
-                  {renderStars(service.provider.rating)}
+                  {renderStars(service.provider?.profile?.rating || 0)}
                   <span className="text-sm text-gray-500">
-                    ({service.provider.reviewCount} reviews)
+                    ({service.provider?.profile?.rating || 0} rating)
                   </span>
                 </div>
               </div>
             </div>
-            {service.provider.bio && (
-              <p className="text-sm text-gray-600 mb-4">{service.provider.bio}</p>
+            {service.provider?.profile?.skills && service.provider.profile.skills.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Skills</h4>
+                <div className="flex flex-wrap gap-1">
+                  {service.provider.profile.skills.map((skill, index) => (
+                    <span key={index} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
             )}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="w-4 h-4" />
-                <span>{service.provider.phone}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="w-4 h-4" />
-                <span>{service.provider.email}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span>Joined {new Date(service.provider.joinedDate).toLocaleDateString()}</span>
-              </div>
-            </div>
           </div>
 
           {/* Safety Info */}
@@ -594,7 +765,7 @@ export default function ServiceDetailPage() {
                   <div className="flex justify-between items-center">
                     <span className="font-medium text-gray-700">Total</span>
                     <span className="text-xl font-bold text-green-600">
-                      {formatPrice(service.price)}
+                      {formatPrice(service.pricing?.basePrice || 0)}
                     </span>
                   </div>
                 </div>

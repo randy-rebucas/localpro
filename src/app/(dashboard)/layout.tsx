@@ -6,10 +6,15 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import ErrorBoundary from "@/components/error-boundary";
 import { Loading } from "@/components/ui/loading";
-import { Error } from "@/components/ui/error";
+import { Error as ErrorComponent } from "@/components/ui/error";
 // import Navigation from "@/components/navigation";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
+import { 
+  makeClientAuthenticatedRequestWithPath,
+  handleClientApiRoute,
+  isAuthenticated
+} from "@/lib/client-api-utils";
 import {
   Menu,
   X,
@@ -66,28 +71,45 @@ export default function DashboardLayout({
       router.replace("/auth");
       return;
     }
+  }, [status, router]);
 
-    // Only fetch user data if we have a session
-    if (status === "authenticated" && session?.user?.id) {
+  useEffect(() => {
+    // Only fetch user data if we have a session AND API token
+    if (status === "authenticated" && session?.user?.id && isAuthenticated()) {
       const fetchUser = async () => {
-        try {
-          const response = await fetch(`/api/users/${session?.user?.id}`);
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
+        const result = await handleClientApiRoute(async () => {
+          const response = await makeClientAuthenticatedRequestWithPath(
+            'usersById',
+            [session?.user?.id],
+            {},
+            { method: 'GET' }
+          );
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch user data: ${response.status}`);
           }
-        } catch (error) {
-          console.error("Failed to fetch user data:", error);
+          
+          return await response.json();
+        }, "Fetch user data");
+        
+        if (result.error) {
+          console.error("Failed to fetch user data:", result.error);
           setError("Failed to load user data. Please try refreshing the page.");
-        } finally {
-          setLoading(false);
+        } else {
+          setUser(result.data);
         }
+        
+        setLoading(false);
       };
 
       fetchUser();
     } else if (status === "loading") {
       // Keep loading state while session is being checked
       setLoading(true);
+    } else if (status === "authenticated" && !isAuthenticated()) {
+      // User has session but no API token - redirect to login to get fresh tokens
+      console.log("Session exists but no API token found, redirecting to login");
+      router.replace("/auth");
     } else {
       // If no session and not loading, stop loading
       setLoading(false);
@@ -121,7 +143,7 @@ export default function DashboardLayout({
   useEffect(() => {
     const controller = new AbortController();
     const q = searchQuery.trim();
-    if (!q || q.length < 2) {
+    if (!q || q.length < 2 || !isAuthenticated()) {
       setSuggestions([]);
       setShowSuggestions(false);
       setHighlightedIndex(-1);
@@ -130,14 +152,30 @@ export default function DashboardLayout({
     setSuggestionsLoading(true);
     const timeout = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-        if (!res.ok) throw new globalThis.Error("Failed to fetch suggestions");
-        const data = await res.json();
-        const items = Array.isArray(data) ? data : (Array.isArray(data?.suggestions) ? data.suggestions : []);
+        const result = await handleClientApiRoute(async () => {
+          const response = await makeClientAuthenticatedRequestWithPath(
+            'searchSuggestions',
+            [],
+            { q },
+            { method: 'GET', signal: controller.signal }
+          );
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch suggestions: ${response.status}`);
+          }
+          
+          return await response.json();
+        }, "Fetch search suggestions");
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        
+        const items = Array.isArray(result.data) ? result.data : (Array.isArray(result.data?.suggestions) ? result.data.suggestions : []);
         setSuggestions(items);
         setShowSuggestions(true);
       } catch (error) {
-        if (error instanceof globalThis.Error && error.name !== 'AbortError') {
+        if (error instanceof Error && error.name !== 'AbortError') {
           setSuggestions([]);
           setShowSuggestions(false);
         }
@@ -241,7 +279,7 @@ export default function DashboardLayout({
 
   if (error) {
     return (
-      <Error
+      <ErrorComponent
         title="Something went wrong"
         message={error}
         fullScreen

@@ -24,28 +24,77 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 
 interface Service {
-  id: string;
-  name: string;
+  _id: string;
+  title: string;
   description: string;
-  category: "CLEANING" | "PLUMBING" | "ELECTRICAL" | "MOVING";
-  price: number;
-  duration: number;
+  category: string;
+  subcategory?: string;
   provider: {
-    id: string;
+    _id: string;
+    firstName: string;
+    lastName: string;
+    profile: {
+      rating: number;
+    };
+  };
+  pricing: {
+    type: string;
+    basePrice: number;
+    currency: string;
+  };
+  availability: {
+    timezone: string;
+    schedule: any[];
+  };
+  serviceArea: string[];
+  features: string[];
+  requirements: string[];
+  serviceType: string;
+  estimatedDuration: {
+    min: number;
+    max: number;
+  };
+  teamSize: number;
+  equipmentProvided: boolean;
+  materialsIncluded: boolean;
+  warranty: {
+    hasWarranty: boolean;
+    duration: number;
+    description: string;
+  };
+  insurance: {
+    covered: boolean;
+    coverageAmount: number;
+  };
+  emergencyService: {
+    available: boolean;
+    surcharge: number;
+    responseTime: string;
+  };
+  servicePackages: Array<{
     name: string;
-    rating: number;
-    reviewCount: number;
-    avatar?: string;
+    description: string;
+    price: number;
+    features: string[];
+    duration: number;
+    _id: string;
+  }>;
+  addOns: Array<{
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    _id: string;
+  }>;
+  isActive: boolean;
+  rating: {
+    average: number;
+    count: number;
   };
-  location: {
-    city: string;
-    state: string;
-  };
-  images?: string[];
-  rating: number;
-  reviewCount: number;
-  isAvailable: boolean;
+  images: string[];
   createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 interface FilterOptions {
@@ -66,11 +115,18 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState("price_low");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0,
+    limit: 15,
+    count: 0
+  });
   const [filters, setFilters] = useState<FilterOptions>({
-    category: "CLEANING",
-    priceRange: [25, 100],
-    rating: 4,
-    location: "Manila",
+    category: "",
+    priceRange: [0, 1000],
+    rating: 0,
+    location: "",
     availability: true,
     coordinates: undefined,
     radius: 10000 // 10km default radius
@@ -78,10 +134,13 @@ export default function MarketplacePage() {
 
   const categories = [
     { value: "", label: "All Categories" },
-    { value: "CLEANING", label: "Cleaning" },
-    { value: "PLUMBING", label: "Plumbing" },
-    { value: "ELECTRICAL", label: "Electrical" },
-    { value: "MOVING", label: "Moving" }
+    { value: "cleaning", label: "Cleaning" },
+    { value: "plumbing", label: "Plumbing" },
+    { value: "electrical", label: "Electrical" },
+    { value: "moving", label: "Moving" },
+    { value: "landscaping", label: "Landscaping" },
+    { value: "maintenance", label: "Maintenance" },
+    { value: "repair", label: "Repair" }
   ];
 
   const sortOptions = [
@@ -190,15 +249,62 @@ export default function MarketplacePage() {
       const data = await response.json();
       console.log("Services data:", data);
       
-      // Handle different response formats
-      if (Array.isArray(data)) {
+      // Handle the API response structure with pagination
+      if (data.success && data.data) {
+        console.log("API Response - Success:", data.success);
+        console.log("API Response - Message:", data.message);
+        console.log("API Response - Pagination:", data.pagination);
+        console.log("API Response - Data count:", data.data.length);
+        
+        // Set pagination info
+        if (data.pagination) {
+          setPagination({
+            current: data.pagination.current || 1,
+            pages: data.pagination.pages || 1,
+            total: data.pagination.total || 0,
+            limit: data.pagination.limit || 15,
+            count: data.pagination.count || 0
+          });
+        }
+        
+        // Set services data
+        setServices(data.data || []);
+        
+        // Debug: Log the first service to see its structure
+        if (data.data && data.data.length > 0) {
+          console.log("First service structure:", data.data[0]);
+          console.log("First service provider:", data.data[0].provider);
+          console.log("First service pricing:", data.data[0].pricing);
+        }
+      } else if (Array.isArray(data)) {
+        // Fallback for direct array response
         setServices(data);
+        setPagination({
+          current: 1,
+          pages: 1,
+          total: data.length,
+          limit: 15,
+          count: data.length
+        });
       } else if (data.services) {
+        // Fallback for services property
         setServices(data.services);
-      } else if (data.data) {
-        setServices(data.data);
+        setPagination({
+          current: 1,
+          pages: 1,
+          total: data.services.length,
+          limit: 15,
+          count: data.services.length
+        });
       } else {
         setServices([]);
+        setPagination({
+          current: 1,
+          pages: 1,
+          total: 0,
+          limit: 15,
+          count: 0
+        });
       }
     } catch (error) {
       console.error("Error fetching services:", error);
@@ -249,17 +355,21 @@ export default function MarketplacePage() {
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
   }, []);
 
-  const renderStars = useCallback((rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < Math.floor(rating)
-            ? "text-yellow-400 fill-current"
-            : "text-gray-300"
-        }`}
-      />
-    ));
+  const renderStars = useCallback((rating: number, serviceId?: string) => {
+    return (
+      <div className="flex">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Star
+            key={`${serviceId || 'default'}-star-${i}`}
+            className={`w-4 h-4 ${
+              i < Math.floor(rating)
+                ? "text-yellow-400 fill-current"
+                : "text-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    );
   }, []);
 
   if (loading) {
@@ -508,9 +618,21 @@ export default function MarketplacePage() {
       {/* Results */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-gray-600">
-            {services.length} service{services.length !== 1 ? 's' : ''} found
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-600">
+              {pagination.total} service{pagination.total !== 1 ? 's' : ''} found
+              {pagination.pages > 1 && (
+                <span className="ml-2 text-sm text-gray-500">
+                  (Page {pagination.current} of {pagination.pages})
+                </span>
+              )}
+            </p>
+            {pagination.count > 0 && (
+              <p className="text-sm text-gray-500">
+                Showing {services.length} of {pagination.count} results
+              </p>
+            )}
+          </div>
           <button
             onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
             className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -556,22 +678,61 @@ export default function MarketplacePage() {
             />
           </Card>
         ) : (
-          <div className={`grid gap-4 ${
-            viewMode === "grid" 
-              ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-              : "grid-cols-1"
-          }`}>
-            {services.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                viewMode={viewMode}
-                formatPrice={formatPrice}
-                formatDuration={formatDuration}
-                renderStars={renderStars}
-              />
-            ))}
-          </div>
+          <>
+            <div className={`grid gap-4 ${
+              viewMode === "grid" 
+                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                : "grid-cols-1"
+            }`}>
+              {services.map((service) => (
+                <ServiceCard
+                  key={service._id}
+                  service={service}
+                  viewMode={viewMode}
+                  formatPrice={formatPrice}
+                  formatDuration={formatDuration}
+                  renderStars={renderStars}
+                />
+              ))}
+            </div>
+            
+            {/* Pagination */}
+            {pagination.pages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button
+                  onClick={() => {
+                    if (pagination.current > 1) {
+                      // Update pagination and refetch
+                      setPagination(prev => ({ ...prev, current: prev.current - 1 }));
+                      fetchServices();
+                    }
+                  }}
+                  disabled={pagination.current <= 1}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                
+                <span className="px-4 py-2 text-sm text-gray-600">
+                  Page {pagination.current} of {pagination.pages}
+                </span>
+                
+                <button
+                  onClick={() => {
+                    if (pagination.current < pagination.pages) {
+                      // Update pagination and refetch
+                      setPagination(prev => ({ ...prev, current: prev.current + 1 }));
+                      fetchServices();
+                    }
+                  }}
+                  disabled={pagination.current >= pagination.pages}
+                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -583,13 +744,31 @@ interface ServiceCardProps {
   viewMode: "grid" | "list";
   formatPrice: (price: number) => string;
   formatDuration: (minutes: number) => string;
-  renderStars: (rating: number) => React.ReactNode;
+  renderStars: (rating: number, serviceId?: string) => React.ReactElement;
 }
 
 const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatPrice, formatDuration, renderStars }: ServiceCardProps) {
+  const providerName = service.provider ? `${service.provider.firstName} ${service.provider.lastName}` : 'Unknown Provider';
+  const providerRating = service.provider?.profile?.rating || 0;
+  const serviceRating = service.rating?.average || 0;
+  const reviewCount = service.rating?.count || 0;
+  const basePrice = service.pricing?.basePrice || 0;
+  const currency = service.pricing?.currency || 'USD';
+  const duration = service.estimatedDuration ? 
+    `${service.estimatedDuration.min}-${service.estimatedDuration.max} hours` : 
+    'Duration not specified';
+  
+  // Format price with currency
+  const formatPriceWithCurrency = (price: number, curr: string) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: curr
+    }).format(price);
+  };
+
   return (
     <Link
-      href={`/marketplace/services/${service.id}`}
+      href={`/marketplace/services/${service._id}`}
       className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
         viewMode === "list" ? "flex" : ""
       }`}
@@ -601,7 +780,7 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
             {service.images && service.images.length > 0 ? (
               <Image
                 src={service.images[0]}
-                alt={service.name}
+                alt={service.title}
                 width={viewMode === "list" ? 192 : 400}
                 height={viewMode === "list" ? 128 : 192}
                 className="w-full h-full object-cover rounded-lg"
@@ -622,68 +801,108 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatP
           <div className={viewMode === "list" ? "flex-1" : ""}>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-base font-semibold text-gray-700 line-clamp-1 flex-1">
-                {service.name}
+                {service.title || 'Unnamed Service'}
               </h3>
-              <span className="text-xl font-bold text-green-600 ml-3 flex-shrink-0">
-                {formatPrice(service.price)}
-              </span>
+              <div className="text-right ml-3 flex-shrink-0">
+                <div className="text-xl font-bold text-green-600">
+                  {formatPriceWithCurrency(basePrice, currency)}
+                </div>
+                {service.pricing?.type && (
+                  <div className="text-xs text-gray-500 capitalize">
+                    per {service.pricing.type}
+                  </div>
+                )}
+              </div>
             </div>
 
             <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-              {service.description}
+              {service.description || 'No description available'}
             </p>
 
             {/* Provider Info */}
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                {service.provider.avatar ? (
-                  <Image
-                    src={service.provider.avatar}
-                    alt={service.provider.name}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-medium text-gray-600">
-                    {service.provider.name.charAt(0)}
-                  </span>
-                )}
+                <span className="text-xs font-medium text-gray-600">
+                  {providerName.charAt(0)}
+                </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700 truncate">{service.provider.name}</p>
+                <p className="text-sm font-medium text-gray-700 truncate">{providerName}</p>
                 <div className="flex items-center gap-1">
-                  {renderStars(service.provider.rating)}
+                  {renderStars(providerRating, service._id)}
                   <span className="text-xs text-gray-500">
-                    ({service.provider.reviewCount})
+                    ({reviewCount})
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Service Features */}
+            {service.features && service.features.length > 0 && (
+              <div className="mb-2">
+                <div className="flex flex-wrap gap-1">
+                  {service.features.slice(0, 3).map((feature, index) => (
+                    <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                      {feature}
+                    </span>
+                  ))}
+                  {service.features.length > 3 && (
+                    <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                      +{service.features.length - 3} more
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Service Meta */}
             <div className="flex items-center justify-between text-sm text-gray-500">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{formatDuration(service.duration)}</span>
+                  <span>{duration}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{service.location.city}, {service.location.state}</span>
-                </div>
+                {service.serviceArea && service.serviceArea.length > 0 && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    <span>{service.serviceArea[0]}</span>
+                    {service.serviceArea.length > 1 && (
+                      <span className="text-xs">+{service.serviceArea.length - 1} more</span>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4" />
-                <span>{service.rating.toFixed(1)} ({service.reviewCount})</span>
+                <span>{Number(serviceRating).toFixed(1)} ({reviewCount})</span>
               </div>
             </div>
 
-            {/* Category Badge */}
-            <div className="mt-2">
+            {/* Service Badges */}
+            <div className="mt-2 flex flex-wrap gap-1">
               <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                {service.category.toLowerCase().replace('_', ' ')}
+                {service.category?.toLowerCase() || 'service'}
               </span>
+              {service.subcategory && (
+                <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                  {service.subcategory.replace('_', ' ')}
+                </span>
+              )}
+              {service.insurance?.covered && (
+                <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                  Insured
+                </span>
+              )}
+              {service.warranty?.hasWarranty && (
+                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                  {service.warranty.duration} day warranty
+                </span>
+              )}
+              {service.emergencyService?.available && (
+                <span className="inline-block px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                  Emergency Available
+                </span>
+              )}
             </div>
           </div>
         </div>

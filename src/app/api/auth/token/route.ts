@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
 
     // Generate a new session token that can be used as Bearer token
     const tokenData = {
+      sessionId: session.sessionId, // Include session ID
       userId: session.user.id,
       email: session.user.email,
       name: session.user.name,

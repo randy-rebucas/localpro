@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
-import { clearSessionCookie } from "@/lib/session";
+import { clearSessionCookie, removeSession } from "@/lib/session";
+import { serialize } from "cookie";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,13 +27,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create response with cleared session cookie
+    // Remove session from our session store
+    if (session.sessionId) {
+      removeSession(session.sessionId);
+    }
+
+    // Create response with cleared cookies
     const logoutResponse = NextResponse.json({ 
       message: "Logged out successfully" 
     });
 
-    // Clear the session cookie
+    // Clear both session and API token cookies
     logoutResponse.headers.set('Set-Cookie', clearSessionCookie());
+    logoutResponse.headers.append('Set-Cookie', serialize('api-token', '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 0,
+      path: '/',
+      sameSite: 'lax',
+    }));
 
     return logoutResponse;
 

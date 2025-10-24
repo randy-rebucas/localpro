@@ -73,8 +73,8 @@ export async function createAuthenticatedFetchOptions(
  * This is the preferred method for API routes that have already validated the session
  */
 export function createAuthenticatedFetchOptionsFromSession(
-  session: { user: { id: string } },
-  options: RequestInit = {}
+  _session: { user: { id: string } },
+  _options: RequestInit = {}
 ): RequestInit {
   // We need to get the actual session token, not just the user ID
   // This function should be used with the session token from the request
@@ -86,9 +86,9 @@ export function createAuthenticatedFetchOptionsFromSession(
  * This is the preferred method for API routes
  */
 export async function makeAuthenticatedRequestFromSession(
-  session: { user: { id: string } },
-  url: string,
-  options: RequestInit = {}
+  _session: { user: { id: string } },
+  _url: string,
+  _options: RequestInit = {}
 ): Promise<Response> {
   // This function needs the actual session token, not just user data
   throw new Error("This function requires the actual session token. Use makeAuthenticatedRequest instead.");

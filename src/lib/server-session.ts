@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { decrypt } from "./session";
 
 export interface ServerSession {
+  sessionId: string; // Unique session identifier
   user: {
     id: string;
     email: string;
@@ -53,6 +54,7 @@ export async function getServerSession(request: NextRequest): Promise<ServerSess
     }
 
     return {
+      sessionId: session.sessionId, // Include the unique session ID
       user: {
         id: session.userId,
         email: session.email,

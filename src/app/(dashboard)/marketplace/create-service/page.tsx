@@ -19,66 +19,176 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ServiceForm {
-  name: string;
+  title: string;
   description: string;
-  category: "CLEANING" | "PLUMBING" | "ELECTRICAL" | "MOVING";
-  price: number;
-  duration: number;
+  category: string;
+  subcategory: string;
+  pricing: {
+    type: string;
+    basePrice: number;
+    currency: string;
+  };
+  serviceArea: string[];
   features: string[];
   requirements: string[];
-  location: {
-    city: string;
-    state: string;
-    address: string;
+  serviceType: string;
+  estimatedDuration: {
+    min: number;
+    max: number;
+  };
+  teamSize: number;
+  equipmentProvided: boolean;
+  materialsIncluded: boolean;
+  warranty: {
+    hasWarranty: boolean;
+    duration: number;
+    description: string;
+  };
+  insurance: {
+    covered: boolean;
+    coverageAmount: number;
+  };
+  emergencyService: {
+    available: boolean;
+    surcharge: number;
+    responseTime: string;
+  };
+  servicePackages: Array<{
+    name: string;
+    description: string;
+    price: number;
+    features: string[];
+    duration: number;
+  }>;
+  addOns: Array<{
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+  }>;
+  availability: {
+    timezone: string;
+    schedule: any[];
   };
   images: File[];
-  availability: {
-    monday: { start: string; end: string; available: boolean };
-    tuesday: { start: string; end: string; available: boolean };
-    wednesday: { start: string; end: string; available: boolean };
-    thursday: { start: string; end: string; available: boolean };
-    friday: { start: string; end: string; available: boolean };
-    saturday: { start: string; end: string; available: boolean };
-    sunday: { start: string; end: string; available: boolean };
-  };
 }
 
 export default function CreateServicePage() {
   const router = useRouter();
   const [form, setForm] = useState<ServiceForm>({
-    name: "",
+    title: "",
     description: "",
-    category: "CLEANING",
-    price: 0,
-    duration: 60,
+    category: "cleaning",
+    subcategory: "",
+    pricing: {
+      type: "hourly",
+      basePrice: 0,
+      currency: "USD"
+    },
+    serviceArea: [],
     features: [],
     requirements: [],
-    location: {
-      city: "",
-      state: "",
-      address: ""
+    serviceType: "one_time",
+    estimatedDuration: {
+      min: 1,
+      max: 8
     },
-    images: [],
+    teamSize: 1,
+    equipmentProvided: false,
+    materialsIncluded: false,
+    warranty: {
+      hasWarranty: false,
+      duration: 0,
+      description: ""
+    },
+    insurance: {
+      covered: false,
+      coverageAmount: 0
+    },
+    emergencyService: {
+      available: false,
+      surcharge: 0,
+      responseTime: ""
+    },
+    servicePackages: [],
+    addOns: [],
     availability: {
-      monday: { start: "09:00", end: "17:00", available: true },
-      tuesday: { start: "09:00", end: "17:00", available: true },
-      wednesday: { start: "09:00", end: "17:00", available: true },
-      thursday: { start: "09:00", end: "17:00", available: true },
-      friday: { start: "09:00", end: "17:00", available: true },
-      saturday: { start: "09:00", end: "17:00", available: false },
-      sunday: { start: "09:00", end: "17:00", available: false }
-    }
+      timezone: "UTC",
+      schedule: []
+    },
+    images: []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newFeature, setNewFeature] = useState("");
   const [newRequirement, setNewRequirement] = useState("");
+  const [newServiceArea, setNewServiceArea] = useState("");
+  const [newPackageFeature, setNewPackageFeature] = useState("");
+  const [newAddon, setNewAddon] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    category: ""
+  });
+  const [newPackage, setNewPackage] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    features: [] as string[],
+    duration: 0
+  });
 
   const categories = [
-    { value: "CLEANING", label: "Cleaning Services" },
-    { value: "PLUMBING", label: "Plumbing Services" },
-    { value: "ELECTRICAL", label: "Electrical Services" },
-    { value: "MOVING", label: "Moving Services" }
+    { value: "cleaning", label: "Cleaning Services" },
+    { value: "plumbing", label: "Plumbing Services" },
+    { value: "electrical", label: "Electrical Services" },
+    { value: "moving", label: "Moving Services" },
+    { value: "landscaping", label: "Landscaping Services" },
+    { value: "maintenance", label: "Maintenance Services" },
+    { value: "repair", label: "Repair Services" },
+    { value: "consultation", label: "Consultation Services" }
+  ];
+
+  const subcategories = {
+    cleaning: [
+      { value: "house_cleaning", label: "House Cleaning" },
+      { value: "office_cleaning", label: "Office Cleaning" },
+      { value: "deep_cleaning", label: "Deep Cleaning" },
+      { value: "window_cleaning", label: "Window Cleaning" },
+      { value: "carpet_cleaning", label: "Carpet Cleaning" }
+    ],
+    plumbing: [
+      { value: "repair", label: "Plumbing Repair" },
+      { value: "installation", label: "Installation" },
+      { value: "maintenance", label: "Maintenance" },
+      { value: "emergency", label: "Emergency Service" }
+    ],
+    electrical: [
+      { value: "repair", label: "Electrical Repair" },
+      { value: "installation", label: "Installation" },
+      { value: "maintenance", label: "Maintenance" },
+      { value: "inspection", label: "Inspection" }
+    ],
+    moving: [
+      { value: "local", label: "Local Moving" },
+      { value: "long_distance", label: "Long Distance" },
+      { value: "packing", label: "Packing Service" },
+      { value: "storage", label: "Storage" }
+    ]
+  };
+
+  const serviceTypes = [
+    { value: "one_time", label: "One Time" },
+    { value: "recurring", label: "Recurring" },
+    { value: "subscription", label: "Subscription" },
+    { value: "project", label: "Project Based" }
+  ];
+
+  const pricingTypes = [
+    { value: "hourly", label: "Per Hour" },
+    { value: "fixed", label: "Fixed Price" },
+    { value: "per_sqft", label: "Per Square Foot" },
+    { value: "per_room", label: "Per Room" }
   ];
 
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -88,25 +198,52 @@ export default function CreateServicePage() {
     }));
   };
 
-  const handleLocationChange = (field: string, value: string) => {
+  const handlePricingChange = (field: string, value: string | number) => {
     setForm(prev => ({
       ...prev,
-      location: {
-        ...prev.location,
+      pricing: {
+        ...prev.pricing,
         [field]: value
       }
     }));
   };
 
-  const handleAvailabilityChange = (day: string, field: string, value: string | number | boolean) => {
+  const handleDurationChange = (field: string, value: number) => {
     setForm(prev => ({
       ...prev,
-      availability: {
-        ...prev.availability,
-        [day]: {
-          ...prev.availability[day as keyof typeof prev.availability],
-          [field]: value
-        }
+      estimatedDuration: {
+        ...prev.estimatedDuration,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleWarrantyChange = (field: string, value: string | number | boolean) => {
+    setForm(prev => ({
+      ...prev,
+      warranty: {
+        ...prev.warranty,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleInsuranceChange = (field: string, value: string | number | boolean) => {
+    setForm(prev => ({
+      ...prev,
+      insurance: {
+        ...prev.insurance,
+        [field]: value
+      }
+    }));
+  };
+
+  const handleEmergencyServiceChange = (field: string, value: string | number | boolean) => {
+    setForm(prev => ({
+      ...prev,
+      emergencyService: {
+        ...prev.emergencyService,
+        [field]: value
       }
     }));
   };
@@ -145,6 +282,85 @@ export default function CreateServicePage() {
     }));
   };
 
+  const addServiceArea = () => {
+    if (newServiceArea.trim()) {
+      setForm(prev => ({
+        ...prev,
+        serviceArea: [...prev.serviceArea, newServiceArea.trim()]
+      }));
+      setNewServiceArea("");
+    }
+  };
+
+  const removeServiceArea = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      serviceArea: prev.serviceArea.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addPackageFeature = () => {
+    if (newPackageFeature.trim()) {
+      setNewPackage(prev => ({
+        ...prev,
+        features: [...prev.features, newPackageFeature.trim()]
+      }));
+      setNewPackageFeature("");
+    }
+  };
+
+  const removePackageFeature = (index: number) => {
+    setNewPackage(prev => ({
+      ...prev,
+      features: prev.features.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addPackage = () => {
+    if (newPackage.name.trim() && newPackage.description.trim()) {
+      setForm(prev => ({
+        ...prev,
+        servicePackages: [...prev.servicePackages, { ...newPackage }]
+      }));
+      setNewPackage({
+        name: "",
+        description: "",
+        price: 0,
+        features: [],
+        duration: 0
+      });
+    }
+  };
+
+  const removePackage = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      servicePackages: prev.servicePackages.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addAddon = () => {
+    if (newAddon.name.trim() && newAddon.description.trim()) {
+      setForm(prev => ({
+        ...prev,
+        addOns: [...prev.addOns, { ...newAddon }]
+      }));
+      setNewAddon({
+        name: "",
+        description: "",
+        price: 0,
+        category: ""
+      });
+    }
+  };
+
+  const removeAddon = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      addOns: prev.addOns.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     setForm(prev => ({
@@ -167,14 +383,24 @@ export default function CreateServicePage() {
 
     try {
       const formData = new FormData();
-      formData.append("name", form.name);
+      formData.append("title", form.title);
       formData.append("description", form.description);
       formData.append("category", form.category);
-      formData.append("price", form.price.toString());
-      formData.append("duration", form.duration.toString());
+      formData.append("subcategory", form.subcategory);
+      formData.append("pricing", JSON.stringify(form.pricing));
+      formData.append("serviceArea", JSON.stringify(form.serviceArea));
       formData.append("features", JSON.stringify(form.features));
       formData.append("requirements", JSON.stringify(form.requirements));
-      formData.append("location", JSON.stringify(form.location));
+      formData.append("serviceType", form.serviceType);
+      formData.append("estimatedDuration", JSON.stringify(form.estimatedDuration));
+      formData.append("teamSize", form.teamSize.toString());
+      formData.append("equipmentProvided", form.equipmentProvided.toString());
+      formData.append("materialsIncluded", form.materialsIncluded.toString());
+      formData.append("warranty", JSON.stringify(form.warranty));
+      formData.append("insurance", JSON.stringify(form.insurance));
+      formData.append("emergencyService", JSON.stringify(form.emergencyService));
+      formData.append("servicePackages", JSON.stringify(form.servicePackages));
+      formData.append("addOns", JSON.stringify(form.addOns));
       formData.append("availability", JSON.stringify(form.availability));
 
       form.images.forEach((image, index) => {
@@ -191,7 +417,7 @@ export default function CreateServicePage() {
       }
 
       const service = await response.json();
-      router.push(`/marketplace/services/${service.id}`);
+      router.push(`/marketplace/services/${service._id}`);
     } catch (error) {
       console.error("Error creating service:", error);
       setError("Failed to create service. Please try again.");
@@ -224,11 +450,11 @@ export default function CreateServicePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Input
-                    label="Service Name *"
+                    label="Service Title *"
                     type="text"
                     required
-                    value={form.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    value={form.title}
+                    onChange={(e) => handleInputChange("title", e.target.value)}
                     placeholder="e.g., Professional House Cleaning"
                   />
                 </div>
@@ -243,30 +469,32 @@ export default function CreateServicePage() {
                 </div>
 
                 <div>
-                  <Input
-                    label="Price (USD) *"
-                    type="number"
-                    required
-                    min="0"
-                    step="0.01"
-                    value={form.price}
-                    onChange={(e) => handleInputChange("price", Number(e.target.value))}
-                    placeholder="0.00"
-                    leftIcon={<DollarSign />}
+                  <Select
+                    label="Subcategory *"
+                    value={form.subcategory}
+                    onValueChange={(value) => handleInputChange("subcategory", value)}
+                    options={subcategories[form.category as keyof typeof subcategories] || []}
+                  />
+                </div>
+
+                <div>
+                  <Select
+                    label="Service Type *"
+                    value={form.serviceType}
+                    onValueChange={(value) => handleInputChange("serviceType", value)}
+                    options={serviceTypes}
                   />
                 </div>
 
                 <div>
                   <Input
-                    label="Duration (minutes) *"
+                    label="Team Size *"
                     type="number"
                     required
-                    min="15"
-                    step="15"
-                    value={form.duration}
-                    onChange={(e) => handleInputChange("duration", Number(e.target.value))}
-                    placeholder="60"
-                    leftIcon={<Clock />}
+                    min="1"
+                    value={form.teamSize}
+                    onChange={(e) => handleInputChange("teamSize", Number(e.target.value))}
+                    placeholder="1"
                   />
                 </div>
 
@@ -283,38 +511,150 @@ export default function CreateServicePage() {
               </div>
             </div>
 
-            {/* Location */}
+            {/* Pricing */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Location</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Pricing</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <Input
-                    label="City *"
-                    type="text"
-                    required
-                    value={form.location.city}
-                    onChange={(e) => handleLocationChange("city", e.target.value)}
-                    placeholder="New York"
+                  <Select
+                    label="Pricing Type *"
+                    value={form.pricing.type}
+                    onValueChange={(value) => handlePricingChange("type", value)}
+                    options={pricingTypes}
                   />
                 </div>
+
                 <div>
                   <Input
-                    label="State *"
-                    type="text"
+                    label="Base Price (USD) *"
+                    type="number"
                     required
-                    value={form.location.state}
-                    onChange={(e) => handleLocationChange("state", e.target.value)}
-                    placeholder="NY"
+                    min="0"
+                    step="0.01"
+                    value={form.pricing.basePrice}
+                    onChange={(e) => handlePricingChange("basePrice", Number(e.target.value))}
+                    placeholder="0.00"
+                    leftIcon={<DollarSign />}
                   />
                 </div>
-                <div className="md:col-span-3">
+
+                <div>
                   <Input
-                    label="Address"
+                    label="Currency"
                     type="text"
-                    value={form.location.address}
-                    onChange={(e) => handleLocationChange("address", e.target.value)}
-                    placeholder="123 Main St, New York, NY 10001"
+                    value={form.pricing.currency}
+                    onChange={(e) => handlePricingChange("currency", e.target.value)}
+                    placeholder="USD"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Estimated Duration</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Input
+                    label="Minimum Duration (hours) *"
+                    type="number"
+                    required
+                    min="0.5"
+                    step="0.5"
+                    value={form.estimatedDuration.min}
+                    onChange={(e) => handleDurationChange("min", Number(e.target.value))}
+                    placeholder="1"
+                    leftIcon={<Clock />}
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    label="Maximum Duration (hours) *"
+                    type="number"
+                    required
+                    min="0.5"
+                    step="0.5"
+                    value={form.estimatedDuration.max}
+                    onChange={(e) => handleDurationChange("max", Number(e.target.value))}
+                    placeholder="8"
+                    leftIcon={<Clock />}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Service Areas */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Areas</h2>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      value={newServiceArea}
+                      onChange={(e) => setNewServiceArea(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addServiceArea();
+                        }
+                      }}
+                      placeholder="Enter postal code or area (e.g., 10001)"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addServiceArea}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {form.serviceArea.map((area, index) => (
+                    <div key={index} className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                      <span>{area}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeServiceArea(index)}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Equipment & Materials */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Equipment & Materials</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="equipmentProvided"
+                    checked={form.equipmentProvided}
+                    onChange={(e) => handleInputChange("equipmentProvided", e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="equipmentProvided" className="text-sm font-medium text-gray-700">
+                    Equipment provided
+                  </label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="materialsIncluded"
+                    checked={form.materialsIncluded}
+                    onChange={(e) => handleInputChange("materialsIncluded", e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="materialsIncluded" className="text-sm font-medium text-gray-700">
+                    Materials included
+                  </label>
                 </div>
               </div>
             </div>
@@ -407,6 +747,342 @@ export default function CreateServicePage() {
               </div>
             </div>
 
+            {/* Warranty */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Warranty</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="hasWarranty"
+                    checked={form.warranty.hasWarranty}
+                    onChange={(e) => handleWarrantyChange("hasWarranty", e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="hasWarranty" className="text-sm font-medium text-gray-700">
+                    Offer warranty
+                  </label>
+                </div>
+                {form.warranty.hasWarranty && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Input
+                        label="Warranty Duration (days)"
+                        type="number"
+                        min="0"
+                        value={form.warranty.duration}
+                        onChange={(e) => handleWarrantyChange("duration", Number(e.target.value))}
+                        placeholder="30"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Warranty Description"
+                        type="text"
+                        value={form.warranty.description}
+                        onChange={(e) => handleWarrantyChange("description", e.target.value)}
+                        placeholder="e.g., 30-day satisfaction guarantee"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Insurance */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Insurance</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="insuranceCovered"
+                    checked={form.insurance.covered}
+                    onChange={(e) => handleInsuranceChange("covered", e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="insuranceCovered" className="text-sm font-medium text-gray-700">
+                    Service is insured
+                  </label>
+                </div>
+                {form.insurance.covered && (
+                  <div>
+                    <Input
+                      label="Coverage Amount (USD)"
+                      type="number"
+                      min="0"
+                      value={form.insurance.coverageAmount}
+                      onChange={(e) => handleInsuranceChange("coverageAmount", Number(e.target.value))}
+                      placeholder="1000000"
+                      leftIcon={<DollarSign />}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Emergency Service */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Emergency Service</h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="emergencyAvailable"
+                    checked={form.emergencyService.available}
+                    onChange={(e) => handleEmergencyServiceChange("available", e.target.checked)}
+                    className="rounded"
+                  />
+                  <label htmlFor="emergencyAvailable" className="text-sm font-medium text-gray-700">
+                    Emergency service available
+                  </label>
+                </div>
+                {form.emergencyService.available && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Input
+                        label="Response Time"
+                        type="text"
+                        value={form.emergencyService.responseTime}
+                        onChange={(e) => handleEmergencyServiceChange("responseTime", e.target.value)}
+                        placeholder="e.g., within 2 hours"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Emergency Surcharge (USD)"
+                        type="number"
+                        min="0"
+                        value={form.emergencyService.surcharge}
+                        onChange={(e) => handleEmergencyServiceChange("surcharge", Number(e.target.value))}
+                        placeholder="50"
+                        leftIcon={<DollarSign />}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Service Packages */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Packages</h2>
+              <div className="space-y-6">
+                {/* Add New Package */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">Add New Package</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        label="Package Name"
+                        type="text"
+                        value={newPackage.name}
+                        onChange={(e) => setNewPackage(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Basic Cleaning"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Price (USD)"
+                        type="number"
+                        min="0"
+                        value={newPackage.price}
+                        onChange={(e) => setNewPackage(prev => ({ ...prev, price: Number(e.target.value) }))}
+                        placeholder="75"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Duration (hours)"
+                        type="number"
+                        min="0"
+                        value={newPackage.duration}
+                        onChange={(e) => setNewPackage(prev => ({ ...prev, duration: Number(e.target.value) }))}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div>
+                      <Textarea
+                        label="Description"
+                        rows={2}
+                        value={newPackage.description}
+                        onChange={(e) => setNewPackage(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Package description..."
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Package Features</label>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Input
+                              type="text"
+                              value={newPackageFeature}
+                              onChange={(e) => setNewPackageFeature(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addPackageFeature();
+                                }
+                              }}
+                              placeholder="Add a feature..."
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={addPackageFeature}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {newPackage.features.map((feature, index) => (
+                            <div key={index} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded text-sm">
+                              <span>{feature}</span>
+                              <button
+                                type="button"
+                                onClick={() => removePackageFeature(index)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={addPackage}
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Add Package
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Existing Packages */}
+                {form.servicePackages.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">Added Packages</h3>
+                    {form.servicePackages.map((pkg, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-medium text-gray-700">{pkg.name}</h4>
+                            <p className="text-sm text-gray-600">{pkg.description}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removePackage(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>${pkg.price} • {pkg.duration}h</span>
+                          <span>{pkg.features.length} features</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Add-ons */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Add-ons</h2>
+              <div className="space-y-6">
+                {/* Add New Add-on */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-gray-700 mb-4">Add New Add-on</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Input
+                        label="Add-on Name"
+                        type="text"
+                        value={newAddon.name}
+                        onChange={(e) => setNewAddon(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="e.g., Window Cleaning"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Price (USD)"
+                        type="number"
+                        min="0"
+                        value={newAddon.price}
+                        onChange={(e) => setNewAddon(prev => ({ ...prev, price: Number(e.target.value) }))}
+                        placeholder="25"
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        label="Category"
+                        type="text"
+                        value={newAddon.category}
+                        onChange={(e) => setNewAddon(prev => ({ ...prev, category: e.target.value }))}
+                        placeholder="e.g., cleaning"
+                      />
+                    </div>
+                    <div>
+                      <Textarea
+                        label="Description"
+                        rows={2}
+                        value={newAddon.description}
+                        onChange={(e) => setNewAddon(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Add-on description..."
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <button
+                        type="button"
+                        onClick={addAddon}
+                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Add Add-on
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Existing Add-ons */}
+                {form.addOns.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-gray-700">Added Add-ons</h3>
+                    {form.addOns.map((addon, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-medium text-gray-700">{addon.name}</h4>
+                            <p className="text-sm text-gray-600">{addon.description}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeAddon(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>${addon.price}</span>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                            {addon.category}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Images */}
             <div>
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Images</h2>
@@ -457,39 +1133,27 @@ export default function CreateServicePage() {
             {/* Availability */}
             <div>
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Availability</h2>
-              <div className="space-y-4">
-                {Object.entries(form.availability).map(([day, schedule]) => (
-                  <div key={day} className="flex items-center gap-4">
-                    <div className="w-24">
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={schedule.available}
-                          onChange={(e) => handleAvailabilityChange(day, "available", e.target.checked)}
-                          className="rounded"
-                        />
-                        <span className="text-sm font-medium capitalize">{day}</span>
-                      </label>
-                    </div>
-                    {schedule.available && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="time"
-                          value={schedule.start}
-                          onChange={(e) => handleAvailabilityChange(day, "start", e.target.value)}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                        />
-                        <span className="text-gray-500">to</span>
-                        <input
-                          type="time"
-                          value={schedule.end}
-                          onChange={(e) => handleAvailabilityChange(day, "end", e.target.value)}
-                          className="px-2 py-1 border border-gray-300 rounded text-sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Input
+                    label="Timezone"
+                    type="text"
+                    value={form.availability.timezone}
+                    onChange={(e) => setForm(prev => ({
+                      ...prev,
+                      availability: {
+                        ...prev.availability,
+                        timezone: e.target.value
+                      }
+                    }))}
+                    placeholder="UTC"
+                  />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">
+                    Schedule management will be available in the service dashboard after creation.
+                  </p>
+                </div>
               </div>
             </div>
 
