@@ -38,10 +38,9 @@ const categories = [
 ];
 
 const adTypes = [
-  { value: "banner", label: "Banner Ad", description: "Display banner on relevant pages" },
-  { value: "sponsored", label: "Sponsored Content", description: "Promoted in search results" },
-  { value: "featured", label: "Featured Listing", description: "Featured placement in listings" },
-  { value: "promoted", label: "Promoted Post", description: "Boosted visibility in feeds" }
+  { value: "featured-listing", label: "Featured Listing (Provider)", description: "₱300/week - Shown on homepage or category top" },
+  { value: "sponsored-product", label: "Sponsored Product (Supplier)", description: "₱2,000/month - Highlighted placement in catalog" },
+  { value: "training-school", label: "Training School Ads", description: "₱1,500/month - Promoted under LocalPro Academy" }
 ];
 
 const targetAudiences = [

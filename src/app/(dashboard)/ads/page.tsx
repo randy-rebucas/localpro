@@ -38,7 +38,7 @@ export interface Ad {
   title: string;
   description: string;
   category: string;
-  type: 'banner' | 'sponsored' | 'featured' | 'promoted';
+  type: 'featured-listing' | 'sponsored-product' | 'training-school';
   status: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'rejected';
   budget: number;
   spent: number;
@@ -84,10 +84,9 @@ const categories = [
 
 const adTypes = [
   "All Types",
-  "Banner",
-  "Sponsored",
-  "Featured",
-  "Promoted"
+  "Featured Listing (Provider)",
+  "Sponsored Product (Supplier)",
+  "Training School Ads"
 ];
 
 const statuses = [
@@ -157,7 +156,7 @@ export default function AdsPage() {
             title: 'Premium Hardware Store - Downtown',
             description: 'Your one-stop shop for all hardware needs. Quality tools, materials, and expert advice.',
             category: 'Hardware Stores',
-            type: 'featured',
+            type: 'featured-listing',
             status: 'active',
             budget: 5000,
             spent: 1250,
@@ -191,7 +190,7 @@ export default function AdsPage() {
             title: 'Professional Cleaning Services',
             description: 'Reliable and thorough cleaning services for offices and homes.',
             category: 'Cleaning Services',
-            type: 'sponsored',
+            type: 'sponsored-product',
             status: 'active',
             budget: 3000,
             spent: 850,
@@ -225,7 +224,7 @@ export default function AdsPage() {
             title: 'Electrical Training Academy',
             description: 'Certified electrical training programs for professionals.',
             category: 'Training Schools',
-            type: 'banner',
+            type: 'training-school',
             status: 'pending',
             budget: 2000,
             spent: 0,
