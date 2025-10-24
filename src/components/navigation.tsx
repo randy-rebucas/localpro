@@ -11,7 +11,8 @@ import {
   Bell, 
   HelpCircle,
   Plus,
-  Megaphone
+  Megaphone,
+  Truck
 } from "lucide-react";
 
 interface NavigationItem {
@@ -27,6 +28,7 @@ export default function Navigation() {
   const navigation: NavigationItem[] = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Marketplace", href: "/marketplace", icon: Store },
+    { name: "Rentals", href: "/rentals", icon: Truck },
     { name: "Ads", href: "/ads", icon: Megaphone },
     { name: "My Bookings", href: "/marketplace/bookings", icon: Calendar },
     { name: "Profile", href: "/profile", icon: User },
@@ -68,7 +70,14 @@ export default function Navigation() {
             </div>
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/rentals/create"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            >
+              <Truck className="w-4 h-4 mr-1" />
+              List Rental
+            </Link>
             <Link
               href="/marketplace/create-service"
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
