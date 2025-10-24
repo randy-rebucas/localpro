@@ -17,6 +17,9 @@ import {
   Star,
   Store
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Booking {
   id: string;
@@ -96,10 +99,37 @@ export default function BookingsPage() {
 
       const data = await response.json();
       console.log("Bookings API Response:", data);
-      setBookings(Array.isArray(data) ? data : data.bookings || []);
+      console.log("Response type:", typeof data);
+      console.log("Is array:", Array.isArray(data));
+      console.log("Has bookings property:", data && 'bookings' in data);
+      console.log("Has data property:", data && 'data' in data);
+      
+      // Ensure bookings is always an array
+      let bookingsData = [];
+      if (Array.isArray(data)) {
+        bookingsData = data;
+        console.log("Using direct array data");
+      } else if (data && Array.isArray(data.bookings)) {
+        bookingsData = data.bookings;
+        console.log("Using data.bookings array");
+      } else if (data && Array.isArray(data.data)) {
+        bookingsData = data.data;
+        console.log("Using data.data array");
+      } else {
+        console.warn("Unexpected API response structure:", data);
+        console.warn("Available properties:", data ? Object.keys(data) : 'null/undefined');
+        bookingsData = [];
+      }
+      
+      console.log("Final bookings data:", bookingsData);
+      console.log("Bookings count:", bookingsData.length);
+      
+      setBookings(bookingsData);
     } catch (error) {
       console.error("Error fetching bookings:", error);
       setError("Failed to load bookings. Please try again.");
+      // Ensure bookings is always an array even on error
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -208,14 +238,30 @@ export default function BookingsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 mb-4">{error}</div>
-        <button
-          onClick={() => fetchBookings()}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-        >
-          Try Again
-        </button>
+      <div className="p-6">
+        <Card interactive={false}>
+          <EmptyState
+            icon={AlertCircle}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+            title="Failed to Load Bookings"
+            description={error}
+            actions={[
+              {
+                type: "button",
+                onClick: () => fetchBookings(),
+                label: "Try Again",
+                variant: "primary"
+              },
+              {
+                type: "link",
+                href: "/marketplace",
+                label: "Browse Services",
+                variant: "secondary"
+              }
+            ]}
+          />
+        </Card>
       </div>
     );
   }
@@ -223,21 +269,19 @@ export default function BookingsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-700">My Bookings</h1>
-          <p className="text-gray-600">Manage your service bookings</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Link
-            href="/marketplace"
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <Store className="w-4 h-4 mr-2" />
-            Browse Services
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="My Bookings"
+        subtitle="Manage your service bookings"
+        actions={[
+          {
+            type: "link",
+            href: "/marketplace",
+            label: "Browse Services",
+            icon: Store,
+            variant: "primary"
+          }
+        ]}
+      />
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-6">
@@ -302,27 +346,38 @@ export default function BookingsPage() {
 
       {/* Bookings List */}
       <div className="space-y-4">
-        {bookings.length === 0 ? (
-          <div className="text-center py-12">
-            <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">No bookings found</h3>
-            <p className="text-gray-500 mb-6">
-              {statusFilter === "all" 
-                ? "You haven't made any bookings yet." 
-                : `No bookings with status "${statusFilter.toLowerCase()}".`
+        {!Array.isArray(bookings) || bookings.length === 0 ? (
+          <Card interactive={false}>
+            <EmptyState
+              icon={Calendar}
+              iconColor="text-blue-600"
+              iconBgColor="bg-blue-100"
+              title="No Bookings Found"
+              description={
+                statusFilter === "all" 
+                  ? "You haven't made any bookings yet. Start exploring services and book your first appointment!" 
+                  : `No bookings with status "${statusFilter.toLowerCase()}". Try changing the filter or browse available services.`
               }
-            </p>
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Store className="w-4 h-4 mr-2" />
-              Browse Services
-            </Link>
-          </div>
+              actions={[
+                {
+                  type: "link",
+                  href: "/marketplace",
+                  label: "Browse Services",
+                  icon: Store,
+                  variant: "primary"
+                },
+                ...(statusFilter !== "all" ? [{
+                  type: "button" as const,
+                  onClick: () => setStatusFilter("all"),
+                  label: "Show All Bookings",
+                  variant: "secondary" as const
+                }] : [])
+              ]}
+            />
+          </Card>
         ) : (
           <div className="grid gap-4">
-            {bookings.map((booking) => (
+            {Array.isArray(bookings) && bookings.map((booking) => (
               <div key={booking.id} className="bg-white rounded-lg shadow-sm p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">

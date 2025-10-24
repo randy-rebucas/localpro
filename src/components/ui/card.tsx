@@ -16,7 +16,7 @@ export function Card({ className, padding = "md", interactive = true, ...props }
 	return (
 		<div
 			className={cn(
-				"bg-white dark:bg-gray-800 rounded-xl shadow-sm",
+				"bg-white rounded-xl shadow-sm",
 				interactive && "hover:shadow-md transition-shadow",
 				paddingMap[padding],
 				className

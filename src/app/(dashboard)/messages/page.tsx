@@ -97,11 +97,30 @@ export default function MessagesPage() {
     }
   }, []);
 
+  // Check if user is authenticated before making API calls
+  const checkAuthentication = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/me', createAuthFetchOptions());
+      return response.ok;
+    } catch (error) {
+      console.error('Authentication check failed:', error);
+      return false;
+    }
+  }, []);
+
   // API Functions
   const fetchConversations = useCallback(async () => {
     setLoading(true);
     setError(null);
     setIsRetrying(false);
+    
+    // Check authentication first
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+      setError('No session found. Please log in again.');
+      setLoading(false);
+      return;
+    }
     
     try {
       await retryWithBackoff(async () => {
@@ -117,7 +136,17 @@ export default function MessagesPage() {
         
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Authentication required. Please log in again.');
+            // Check if we have a session token
+            const sessionToken = document.cookie
+              .split(';')
+              .find(c => c.trim().startsWith('session='))
+              ?.split('=')[1];
+            
+            if (!sessionToken) {
+              throw new Error('No session found. Please log in again.');
+            } else {
+              throw new Error('Session expired. Please log in again.');
+            }
           }
           if (response.status === 403) {
             throw new Error('Access denied. You do not have permission to view conversations.');
@@ -666,6 +695,16 @@ export default function MessagesPage() {
   }
 
   if (error) {
+    // Check if it's an authentication error
+    const isAuthError = error.includes('session') || error.includes('Authentication') || error.includes('log in');
+    
+    if (isAuthError) {
+      // Redirect to auth page after a short delay
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 2000);
+    }
+    
     return (
       <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
         <div className="text-center">
@@ -675,7 +714,15 @@ export default function MessagesPage() {
           <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load conversations</h3>
           <p className="text-red-500 mb-4">{error}</p>
           
-          {isRetrying && (
+          {isAuthError && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                Redirecting to login page...
+              </p>
+            </div>
+          )}
+          
+          {isRetrying && !isAuthError && (
             <div className="mb-4">
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
@@ -685,14 +732,24 @@ export default function MessagesPage() {
           )}
           
           <div className="flex space-x-2">
-            <button 
-              onClick={fetchConversations}
-              disabled={isRetrying}
-              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isRetrying ? 'Retrying...' : 'Try Again'}
-            </button>
-            {retryCount > 0 && (
+            {!isAuthError && (
+              <button 
+                onClick={fetchConversations}
+                disabled={isRetrying}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isRetrying ? 'Retrying...' : 'Try Again'}
+              </button>
+            )}
+            {isAuthError && (
+              <button 
+                onClick={() => window.location.href = '/auth'}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Go to Login
+              </button>
+            )}
+            {retryCount > 0 && !isAuthError && (
               <button 
                 onClick={() => {
                   setRetryCount(0);

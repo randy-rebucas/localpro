@@ -7,8 +7,12 @@ import {
   Edit,
   Trash2,
   Eye,
-  Star
+  Star,
+  AlertCircle
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Service {
   id: string;
@@ -240,31 +244,29 @@ export default function MyServicesPage() {
         </div>
 
         {/* Error State */}
-        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Services</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            {error}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={fetchServices}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Try Again
-            </button>
-            <Link
-              href="/marketplace/create-service"
-              className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Create New Service
-            </Link>
-          </div>
-        </div>
+        <Card interactive={false}>
+          <EmptyState
+            icon={AlertCircle}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+            title="Failed to Load Services"
+            description={error}
+            actions={[
+              {
+                type: "button",
+                onClick: fetchServices,
+                label: "Try Again",
+                variant: "primary"
+              },
+              {
+                type: "link",
+                href: "/marketplace/create-service",
+                label: "Create New Service",
+                variant: "secondary"
+              }
+            ]}
+          />
+        </Card>
       </div>
     );
   }
@@ -272,21 +274,19 @@ export default function MyServicesPage() {
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-700">My Services</h1>
-          <p className="text-gray-600">Manage your service listings</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <Link
-            href="/marketplace/create-service"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create New Service
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="My Services"
+        subtitle="Manage your service listings"
+        actions={[
+          {
+            type: "link",
+            href: "/marketplace/create-service",
+            label: "Create New Service",
+            icon: Plus,
+            variant: "primary"
+          }
+        ]}
+      />
 
 
       {/* Filters */}
@@ -313,39 +313,37 @@ export default function MyServicesPage() {
       {/* Services List */}
       <div className="space-y-3">
         {services.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Plus className="w-8 h-8 text-green-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {statusFilter === "all" 
-                ? "No Services Yet" 
-                : `No ${statusFilter.toLowerCase()} services`
+          <Card interactive={false}>
+            <EmptyState
+              icon={Plus}
+              iconColor="text-green-600"
+              iconBgColor="bg-green-100"
+              title={
+                statusFilter === "all" 
+                  ? "No Services Yet" 
+                  : `No ${statusFilter.toLowerCase()} services`
               }
-            </h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              {statusFilter === "all" 
-                ? "Start building your service business by creating your first service listing. Share your skills and start earning!" 
-                : `You don't have any services with status "${statusFilter.toLowerCase()}". Try changing the filter or create a new service.`
+              description={
+                statusFilter === "all" 
+                  ? "Start building your service business by creating your first service listing. Share your skills and start earning!" 
+                  : `You don't have any services with status "${statusFilter.toLowerCase()}". Try changing the filter or create a new service.`
               }
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href="/marketplace/create-service"
-                className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Create Your First Service
-              </Link>
-              {statusFilter !== "all" && (
-                <button
-                  onClick={() => setStatusFilter("all")}
-                  className="bg-gray-100 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Show All Services
-                </button>
-              )}
-            </div>
-          </div>
+              actions={[
+                {
+                  type: "link",
+                  href: "/marketplace/create-service",
+                  label: "Create Your First Service",
+                  variant: "primary"
+                },
+                ...(statusFilter !== "all" ? [{
+                  type: "button" as const,
+                  onClick: () => setStatusFilter("all"),
+                  label: "Show All Services",
+                  variant: "secondary" as const
+                }] : [])
+              ]}
+            />
+          </Card>
         ) : (
           <div className="grid gap-4">
             {services.map((service) => (

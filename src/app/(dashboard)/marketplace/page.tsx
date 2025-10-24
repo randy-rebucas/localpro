@@ -19,6 +19,9 @@ import {
   Store,
   RefreshCw
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Service {
   id: string;
@@ -295,49 +298,43 @@ export default function MarketplacePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Search className="w-8 h-8 text-red-600" />
-          </div>
-          
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Unable to load services
-          </h2>
-          
-          <p className="text-gray-600 mb-6">
-            {error}
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={fetchServices}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Try Again
-            </button>
-            
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setFilters({
-                  category: "",
-                  priceRange: [0, 1000],
-                  rating: 0,
-                  location: "",
-                  availability: true,
-                  coordinates: undefined,
-                  radius: 10000
-                });
-                fetchServices();
-              }}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              Reset Filters
-            </button>
-          </div>
-        </div>
+      <div className="p-4">
+        <Card interactive={false}>
+          <EmptyState
+            icon={Search}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+            title="Unable to Load Services"
+            description={error}
+            actions={[
+              {
+                type: "button",
+                onClick: fetchServices,
+                label: "Try Again",
+                icon: RefreshCw,
+                variant: "primary"
+              },
+              {
+                type: "button",
+                onClick: () => {
+                  setSearchQuery("");
+                  setFilters({
+                    category: "",
+                    priceRange: [0, 1000],
+                    rating: 0,
+                    location: "",
+                    availability: true,
+                    coordinates: undefined,
+                    radius: 10000
+                  });
+                  fetchServices();
+                },
+                label: "Reset Filters",
+                variant: "secondary"
+              }
+            ]}
+          />
+        </Card>
       </div>
     );
   }
@@ -345,28 +342,27 @@ export default function MarketplacePage() {
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-gray-700">Browse Services</h1>
-          <p className="text-gray-600">Find and book services from local providers</p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex gap-3">
-          <button
-            onClick={getCurrentLocation}
-            className="px-4 py-2 text-sm bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"
-          >
-            <MapPin className="w-4 h-4" />
-            Use Current Location
-          </button>
-          <Link
-            href="/marketplace/create-service"
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            List Your Service
-          </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Browse Services"
+        subtitle="Find and book services from local providers"
+        actions={[
+          {
+            type: "button",
+            onClick: getCurrentLocation,
+            label: "Use Current Location",
+            icon: MapPin,
+            variant: "outline",
+            className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+          },
+          {
+            type: "link",
+            href: "/marketplace/create-service",
+            label: "List Your Service",
+            icon: Plus,
+            variant: "primary"
+          }
+        ]}
+      />
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4">
@@ -525,40 +521,40 @@ export default function MarketplacePage() {
         </div>
 
         {services.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-10 h-10 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-700 mb-1">No services found</h3>
-            <p className="text-gray-500 mb-4 max-w-md mx-auto">
-              We couldn&apos;t find any services matching your criteria. Try adjusting your search terms or filters.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  setFilters({
-                    category: "",
-                    priceRange: [0, 1000],
-                    rating: 0,
-                    location: "",
-                    availability: true,
-                    coordinates: undefined,
-                    radius: 10000
-                  });
-                }}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Clear All Filters
-              </button>
-              <button
-                onClick={() => setSearchQuery("")}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Clear Search
-              </button>
-            </div>
-          </div>
+          <Card interactive={false}>
+            <EmptyState
+              icon={Search}
+              iconColor="text-purple-600"
+              iconBgColor="bg-purple-100"
+              title="No Services Found"
+              description="We couldn't find any services matching your criteria. Try adjusting your search terms or filters."
+              actions={[
+                {
+                  type: "button",
+                  onClick: () => {
+                    setSearchQuery("");
+                    setFilters({
+                      category: "",
+                      priceRange: [0, 1000],
+                      rating: 0,
+                      location: "",
+                      availability: true,
+                      coordinates: undefined,
+                      radius: 10000
+                    });
+                  },
+                  label: "Clear All Filters",
+                  variant: "primary"
+                },
+                {
+                  type: "button",
+                  onClick: () => setSearchQuery(""),
+                  label: "Clear Search",
+                  variant: "secondary"
+                }
+              ]}
+            />
+          </Card>
         ) : (
           <div className={`grid gap-4 ${
             viewMode === "grid" 

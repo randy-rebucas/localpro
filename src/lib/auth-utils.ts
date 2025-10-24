@@ -11,7 +11,18 @@ export function getSessionToken(): string | null {
     cookie.trim().startsWith('session=')
   );
   
-  return sessionCookie ? sessionCookie.split('=')[1] : null;
+  const token = sessionCookie ? sessionCookie.split('=')[1] : null;
+  
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Session token check:', {
+      hasToken: !!token,
+      cookieCount: cookies.length,
+      sessionCookie: sessionCookie ? 'found' : 'not found'
+    });
+  }
+  
+  return token;
 }
 
 /**

@@ -16,6 +16,9 @@ import {
   ChevronDown,
   X
 } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface Job {
   id: string;
@@ -266,19 +269,19 @@ export default function BrowseJobsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-700">Browse Jobs</h1>
-          <p className="text-gray-600 mt-1">Find and apply to jobs from clients</p>
-        </div>
-        <Link
-          href="/marketplace/create-job"
-          className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Briefcase className="w-4 h-4 mr-2" />
-          Post a Service
-        </Link>
-      </div>
+      <PageHeader
+        title="Browse Jobs"
+        subtitle="Find and apply to jobs from clients"
+        actions={[
+          {
+            type: "link",
+            href: "/marketplace/create-job",
+            label: "Post a Service",
+            icon: Briefcase,
+            variant: "primary"
+          }
+        ]}
+      />
 
       {/* Search and Filters */}
       <div className="space-y-4">
@@ -450,48 +453,57 @@ export default function BrowseJobsPage() {
 
       {/* Results */}
       {error ? (
-        <div className="text-center py-12">
-          <div className="text-red-600 mb-4">
-            <div className="flex items-center justify-center mb-2">
-              <X className="w-6 h-6 mr-2" />
-              <span className="font-medium">Error loading jobs</span>
-            </div>
-            <p className="text-sm text-gray-600">{error}</p>
-          </div>
-          <button
-            onClick={fetchJobs}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
+        <Card interactive={false}>
+          <EmptyState
+            icon={X}
+            iconColor="text-red-600"
+            iconBgColor="bg-red-100"
+            title="Error Loading Jobs"
+            description={error}
+            actions={[
+              {
+                type: "button",
+                onClick: fetchJobs,
+                label: "Try Again",
+                variant: "primary"
+              },
+              {
+                type: "link",
+                href: "/marketplace/create-job",
+                label: "Post a Job",
+                variant: "secondary"
+              }
+            ]}
+          />
+        </Card>
       ) : !Array.isArray(jobs) || jobs.length === 0 ? (
-        <div className="text-center py-12">
-          <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No jobs found</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
-            {searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))
-              ? "We couldn't find any jobs matching your search criteria. Try adjusting your filters or search terms."
-              : "There are no jobs available at the moment. Check back later or create a job posting to get started."
+        <Card interactive={false}>
+          <EmptyState
+            icon={Briefcase}
+            iconColor="text-orange-600"
+            iconBgColor="bg-orange-100"
+            title="No Jobs Found"
+            description={
+              searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))
+                ? "We couldn't find any jobs matching your search criteria. Try adjusting your filters or search terms."
+                : "There are no jobs available at the moment. Check back later or create a job posting to get started."
             }
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {(searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true))) && (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                Clear Search & Filters
-              </button>
-            )}
-            <Link
-              href="/marketplace/create-job"
-              className="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors"
-            >
-              Post a Job
-            </Link>
-          </div>
-        </div>
+            actions={[
+              ...(searchQuery || Object.values(filters).some(v => v !== "" && v !== false && (Array.isArray(v) ? v.length > 0 : true)) ? [{
+                type: "button" as const,
+                onClick: clearFilters,
+                label: "Clear Search & Filters",
+                variant: "primary" as const
+              }] : []),
+              {
+                type: "link",
+                href: "/marketplace/create-job",
+                label: "Post a Job",
+                variant: "secondary"
+              }
+            ]}
+          />
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.isArray(jobs) && jobs.map((job) => (

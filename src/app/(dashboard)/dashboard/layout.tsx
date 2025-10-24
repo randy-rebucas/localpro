@@ -1,11 +1,12 @@
 import { Suspense } from "react";
-import { DashboardEmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { 
   HeaderLoadingState, 
   ServicesLoadingState, 
   ActivityLoadingState, 
   AnnouncementsLoadingState 
 } from "@/components/ui/loading-state";
+import { LayoutDashboardIcon } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -27,7 +28,11 @@ export default function DashboardLayout({
   if (!hasContent) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <DashboardEmptyState />
+        <EmptyState
+          icon={LayoutDashboardIcon}
+          title="No content available"
+          description="There is no content available for this dashboard."
+        />
       </div>
     );
   }

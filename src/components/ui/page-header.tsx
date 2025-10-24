@@ -2,37 +2,37 @@ import React from "react";
 import Link from "next/link";
 import { LucideIcon } from "lucide-react";
 
-interface EmptyStateAction {
-  type: "link" | "button";
-  href?: string;
-  onClick?: () => void;
-  label: string;
-  icon?: LucideIcon;
-  variant?: "primary" | "secondary" | "outline";
-  className?: string;
-}
-
-interface EmptyStateProps {
-  icon: LucideIcon;
-  iconColor?: string;
-  iconBgColor?: string;
+interface PageHeaderProps {
   title: string;
-  description: string;
-  actions?: EmptyStateAction[];
+  subtitle: string;
+  titleSize?: "sm" | "md" | "lg";
+  actions?: {
+    type: "link" | "button";
+    href?: string;
+    onClick?: () => void;
+    label: string;
+    icon?: LucideIcon;
+    variant?: "primary" | "secondary" | "outline";
+    className?: string;
+  }[];
   className?: string;
 }
 
-export function EmptyState({
-  icon: Icon,
-  iconColor = "text-gray-600",
-  iconBgColor = "bg-gray-100",
-  title,
-  description,
+export function PageHeader({ 
+  title, 
+  subtitle, 
+  titleSize = "md",
   actions = [],
   className = ""
-}: EmptyStateProps) {
+}: PageHeaderProps) {
+  const titleSizes = {
+    sm: "text-xl",
+    md: "text-2xl", 
+    lg: "text-3xl"
+  };
+
   const getButtonStyles = (variant: "primary" | "secondary" | "outline" = "primary") => {
-    const baseStyles = "px-6 py-2 rounded-lg transition-colors inline-flex items-center justify-center gap-2";
+    const baseStyles = "px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-2";
     
     switch (variant) {
       case "primary":
@@ -47,20 +47,21 @@ export function EmptyState({
   };
 
   return (
-    <div className={`p-8 text-center ${className}`}>
-      <div className={`w-16 h-16 ${iconBgColor} rounded-full flex items-center justify-center mx-auto mb-4`}>
-        <Icon className={`w-8 h-8 ${iconColor}`} />
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between ${className}`}>
+      <div>
+        <h1 className={`${titleSizes[titleSize]} font-bold text-gray-700`}>
+          {title}
+        </h1>
+        <p className="text-gray-600 mt-1">{subtitle}</p>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">{description}</p>
       
       {actions.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
           {actions.map((action, index) => {
-            const ActionIcon = action.icon;
+            const Icon = action.icon;
             const content = (
               <>
-                {ActionIcon && <ActionIcon className="w-4 h-4" />}
+                {Icon && <Icon className="w-4 h-4" />}
                 {action.label}
               </>
             );
@@ -89,21 +90,6 @@ export function EmptyState({
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-// Wrapper component for Card integration
-interface EmptyStateCardProps extends EmptyStateProps {
-  interactive?: boolean;
-}
-
-export function EmptyStateCard(props: EmptyStateCardProps) {
-  const { interactive = false, ...emptyStateProps } = props;
-  
-  return (
-    <div className="bg-white rounded-lg shadow-sm" style={{ padding: 0 }}>
-      <EmptyState {...emptyStateProps} />
     </div>
   );
 }
