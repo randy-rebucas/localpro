@@ -2,17 +2,18 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown } from 'lucide-react';
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
   label?: string;
   error?: string;
   helperText?: string;
   variant?: 'default' | 'error' | 'success';
   options?: Array<{ value: string; label: string; disabled?: boolean }>;
   placeholder?: string;
+  onValueChange?: (value: string) => void;
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, helperText, variant = 'default', options, placeholder, children, ...props }, ref) => {
+  ({ className, label, error, helperText, variant = 'default', options, placeholder, children, onValueChange, ...props }, ref) => {
     const baseClasses = "w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none bg-no-repeat bg-right bg-[length:16px]";
     
     const variantClasses = {
@@ -27,6 +28,12 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       className
     );
 
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      if (onValueChange) {
+        onValueChange(e.target.value);
+      }
+    };
+
     return (
       <div className="space-y-1">
         {label && (
@@ -38,6 +45,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           <select
             className={selectClasses}
             ref={ref}
+            onChange={handleChange}
             {...props}
           >
             {placeholder && (

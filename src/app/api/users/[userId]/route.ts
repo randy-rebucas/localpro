@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(request);
-
+    console.log("session", session);
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },

@@ -1,12 +1,21 @@
-import { NextResponse } from "next/server";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/ads/featured - Get featured ads
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
-      'adsFeatured',
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'ads',
+      ['featured'],
+      {},
       { method: 'GET' }
     );
 

@@ -10,7 +10,8 @@ import {
   Settings, 
   Bell, 
   HelpCircle,
-  Plus
+  Plus,
+  Megaphone
 } from "lucide-react";
 
 interface NavigationItem {
@@ -26,6 +27,7 @@ export default function Navigation() {
   const navigation: NavigationItem[] = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Marketplace", href: "/marketplace", icon: Store },
+    { name: "Ads", href: "/ads", icon: Megaphone },
     { name: "My Bookings", href: "/marketplace/bookings", icon: Calendar },
     { name: "Profile", href: "/profile", icon: User },
     { name: "Notifications", href: "/notifications", icon: Bell },
