@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesFavorites',
-      [],
+      'supplies',
+      ['favorites'],
       queryParams,
       { method: 'GET' }
     );
@@ -79,8 +79,8 @@ export async function POST(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesFavorites',
-      [],
+      'supplies',
+      ['favorites'],
       {},
       {
         method: 'POST',
@@ -146,8 +146,8 @@ export async function DELETE(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesFavorites',
-      [],
+      'supplies',
+      ['favorites'],
       { supplyId },
       { method: 'DELETE' }
     );

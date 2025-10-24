@@ -254,7 +254,8 @@ export default function FinanceAdmin() {
                   <EmptyState
                     title="No transactions"
                     description="Transactions will appear here when available."
-                    icon={<CreditCard className="w-7 h-7 text-gray-400" />}
+                    icon={CreditCard}
+                    iconColor="text-gray-400"
                   />
                 </TableEmptyRow>
               ) : (

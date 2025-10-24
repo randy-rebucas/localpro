@@ -213,7 +213,8 @@ export default function SuppliesAdmin() {
                   <EmptyState
                     title="No supplies found"
                     description="Try adjusting your search or filters."
-                    icon={<Package className="w-7 h-7 text-gray-400" />}
+                    icon={Package}
+                    iconColor="text-gray-400"
                   />
                 </TableEmptyRow>
               ) : (

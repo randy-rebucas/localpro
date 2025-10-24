@@ -351,7 +351,7 @@ export default function EditServicePage() {
                   <Select
                     label="Category *"
                     value={form.category}
-                    onChange={(e) => handleInputChange("category", e.target.value)}
+                    onValueChange={(value) => handleInputChange("category", value)}
                     options={categories}
                   />
                 </div>

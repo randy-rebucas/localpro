@@ -1,56 +1,132 @@
-# Communication System Integration Guide
+# Communication System Integration Guide - Modern Implementation
 
-## Overview
-This guide covers the complete implementation of the communication and notification system with all 15 API endpoints, real-time features, and UI components.
+## ✅ **MODERN OVERVIEW: API Constants Integration**
+This guide covers the **complete implementation** of the communication and notification system with **modern API constants**, **enterprise-grade authentication**, and **type-safe endpoint management**.
 
-## 🚀 Quick Start
+## 🚀 **Quick Start with API Constants**
 
-### 1. Import the Communication Utilities
+### 1. **Import Modern Communication Utilities**
 ```typescript
+// ✅ MODERN APPROACH: Using API Constants
+import { makeAuthenticatedRequestWithEndpoint, makeAuthenticatedRequestWithPath } from '@/lib/api-auth-utils';
 import { CommunicationAPI, RealtimeCommunication, MessageUtils, NotificationUtils } from '@/lib/communication-utils';
 ```
 
-### 2. Basic Usage Examples
+### 2. **Modern Usage Examples with API Constants**
 
-#### Fetch Conversations
+#### **Fetch Conversations (Modern)**
 ```typescript
-const conversations = await CommunicationAPI.getConversations({ page: 1, limit: 20 });
+// ✅ Server-side API route with API constants
+export async function GET(request: NextRequest) {
+  try {
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      request,
+      'communicationConversations', // TypeScript autocomplete
+      { method: 'GET' }
+    );
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 ```
 
-#### Send a Message
+#### **Send a Message (Modern)**
 ```typescript
-const message = await CommunicationAPI.sendMessage(
-  'conversation-id', 
-  'Hello world!', 
-  'text'
-);
+// ✅ Dynamic endpoint with parameters
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'communicationMessages',
+      [id], // Path parameters
+      body, // Request body
+      { method: 'POST' }
+    );
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 ```
 
-#### Get Conversation with Specific User
+#### **Get Conversation with Specific User (Modern)**
 ```typescript
-const conversation = await CommunicationAPI.getConversationWithUser('user-id');
+// ✅ Dynamic endpoint with user ID
+export async function GET(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
+  try {
+    const { userId } = await params;
+    
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'communicationConversationWith',
+      [userId], // Path parameters
+      {}, // Query parameters
+      { method: 'GET' }
+    );
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 ```
 
-#### Send Email Notification
+#### **Send Email Notification (Modern)**
 ```typescript
-await CommunicationAPI.sendEmailNotification(
-  'user@example.com',
-  'New Message',
-  'You have a new message!',
-  'default'
-);
+// ✅ Public endpoint for notifications
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    const response = await makePublicRequest(
+      'communicationNotificationsEmail', // TypeScript autocomplete
+      { 
+        method: 'POST',
+        body: JSON.stringify(body)
+      }
+    );
+    
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 ```
 
-## 📡 Real-time Communication
+## 📡 **Real-time Communication (Modern)**
 
-### Setup EventSource Connection
+### **Setup EventSource Connection with API Constants**
 ```typescript
+// ✅ MODERN APPROACH: Using API Constants for real-time
 import { RealtimeCommunication } from '@/lib/communication-utils';
+import { makeAuthenticatedRequestWithEndpoint } from '@/lib/api-auth-utils';
 
-// Connect to real-time events
+// Connect to real-time events with automatic authentication
 RealtimeCommunication.connect();
 
-// Listen for events
+// Listen for events with type safety
 RealtimeCommunication.on('new_message', (data) => {
   console.log('New message:', data);
 });
@@ -59,9 +135,46 @@ RealtimeCommunication.on('typing_start', (data) => {
   console.log('User started typing:', data);
 });
 
-// Send typing indicators
+// Send typing indicators with API constants
 await RealtimeCommunication.sendTyping('conversation-id', 'start');
 await RealtimeCommunication.sendTyping('conversation-id', 'stop');
+```
+
+### **Modern Real-time API Routes**
+```typescript
+// ✅ Real-time events endpoint with API constants
+export async function GET(request: NextRequest) {
+  try {
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      request,
+      'communicationEvents', // TypeScript autocomplete
+      { method: 'GET' }
+    );
+    
+    // Set up Server-Sent Events
+    const stream = new ReadableStream({
+      start(controller) {
+        // Handle real-time events
+        RealtimeCommunication.on('new_message', (data) => {
+          controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+        });
+      }
+    });
+    
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
 ```
 
 ## 🎨 UI Components
@@ -114,58 +227,159 @@ import NotificationChannels from '@/components/communication/NotificationChannel
 />
 ```
 
-## 🔧 API Endpoints Reference
+## 🔧 **API Endpoints Reference (Modern API Constants)**
 
-### Conversation Management
-- `GET /api/communication/conversations` - Get conversations with pagination
-- `GET /api/communication/conversations/:id` - Get single conversation
-- `POST /api/communication/conversations` - Create new conversation
-- `DELETE /api/communication/conversations/:id` - Delete conversation
-- `GET /api/communication/conversation-with/:userId` - Get conversation with user
-
-### Message Management
-- `POST /api/communication/conversations/:id/messages` - Send message
-- `PUT /api/communication/conversations/:id/messages/:messageId` - Update message
-- `DELETE /api/communication/conversations/:id/messages/:messageId` - Delete message
-
-### Read Status Management
-- `PUT /api/communication/conversations/:id/read` - Mark as read
-- `GET /api/communication/unread-count` - Get unread count
-
-### Notification System
-- `GET /api/communication/notifications` - Get notifications
-- `GET /api/communication/notifications/count` - Get notification count
-- `PUT /api/communication/notifications/:id/read` - Mark as read
-- `PUT /api/communication/notifications/read-all` - Mark all as read
-- `DELETE /api/communication/notifications/:id` - Delete notification
-
-### Communication Channels
-- `POST /api/communication/notifications/email` - Send email
-- `POST /api/communication/notifications/sms` - Send SMS
-
-### Real-time Events
-- `GET /api/communication/events` - Server-Sent Events stream
-- `POST /api/communication/typing` - Send typing indicators
-
-## 🧪 Testing
-
-### Run Test Suite
+### **Conversation Management (Type-Safe Endpoints)**
 ```typescript
-import { runCommunicationTests } from '@/lib/communication-test';
+// ✅ Simple endpoints with API constants
+'communicationConversations' // GET /api/communication/conversations
+'communicationConversationsById' // GET /api/communication/conversations/:id
+'communicationConversationWith' // GET /api/communication/conversation-with/:userId
 
-// Run all tests
+// ✅ Dynamic endpoints with parameters
+const response = await makeAuthenticatedRequestWithPath(
+  request,
+  'communicationConversationsById',
+  [id], // Path parameters
+  { page: 1, limit: 20 }, // Query parameters
+  { method: 'GET' }
+);
+```
+
+### **Message Management (Modern Implementation)**
+```typescript
+// ✅ Message endpoints with API constants
+'communicationMessages' // POST /api/communication/conversations/:id/messages
+'communicationMessagesById' // PUT /api/communication/conversations/:id/messages/:messageId
+'communicationMessagesDelete' // DELETE /api/communication/conversations/:id/messages/:messageId
+
+// ✅ Usage with dynamic parameters
+const response = await makeAuthenticatedRequestWithPath(
+  request,
+  'communicationMessages',
+  [conversationId, messageId], // Path parameters
+  { content: 'Updated message' }, // Request body
+  { method: 'PUT' }
+);
+```
+
+### **Read Status Management (Automatic)**
+```typescript
+// ✅ Read status endpoints
+'communicationConversationsRead' // PUT /api/communication/conversations/:id/read
+'communicationUnreadCount' // GET /api/communication/unread-count
+
+// ✅ Usage with automatic authentication
+const response = await makeAuthenticatedRequestWithEndpoint(
+  request,
+  'communicationUnreadCount',
+  { method: 'GET' }
+);
+```
+
+### **Notification System (Enterprise-Grade)**
+```typescript
+// ✅ Notification endpoints with API constants
+'communicationNotifications' // GET /api/communication/notifications
+'communicationNotificationsCount' // GET /api/communication/notifications/count
+'communicationNotificationsRead' // PUT /api/communication/notifications/:id/read
+'communicationNotificationsReadAll' // PUT /api/communication/notifications/read-all
+'communicationNotificationsDelete' // DELETE /api/communication/notifications/:id
+
+// ✅ Usage with type safety
+const response = await makeAuthenticatedRequestWithPath(
+  request,
+  'communicationNotificationsRead',
+  [notificationId], // Path parameters
+  {}, // Query parameters
+  { method: 'PUT' }
+);
+```
+
+### **Communication Channels (Modern)**
+```typescript
+// ✅ Channel endpoints with API constants
+'communicationNotificationsEmail' // POST /api/communication/notifications/email
+'communicationNotificationsSms' // POST /api/communication/notifications/sms
+
+// ✅ Public endpoint usage
+const response = await makePublicRequest(
+  'communicationNotificationsEmail',
+  { 
+    method: 'POST',
+    body: JSON.stringify({
+      to: 'user@example.com',
+      subject: 'New Message',
+      content: 'You have a new message!'
+    })
+  }
+);
+```
+
+### **Real-time Events (Advanced)**
+```typescript
+// ✅ Real-time endpoints with API constants
+'communicationEvents' // GET /api/communication/events
+'communicationTyping' // POST /api/communication/typing
+
+// ✅ Real-time usage with automatic authentication
+const response = await makeAuthenticatedRequestWithEndpoint(
+  request,
+  'communicationEvents',
+  { method: 'GET' }
+);
+```
+
+## 🧪 **Testing (Modern API Constants)**
+
+### **Run Test Suite with API Constants**
+```typescript
+// ✅ MODERN TESTING: Using API Constants
+import { runCommunicationTests } from '@/lib/communication-test';
+import { makeAuthenticatedRequestWithEndpoint } from '@/lib/api-auth-utils';
+
+// Run all tests with API constants
 const results = await runCommunicationTests();
 console.log('Test Results:', results);
 ```
 
-### Manual Testing
+### **Modern Manual Testing**
 ```typescript
-// Test individual endpoints
+// ✅ Test individual endpoints with API constants
 try {
-  const conversations = await CommunicationAPI.getConversations();
-  console.log('✅ Conversations API working');
+  // Test with API constants
+  const response = await makeAuthenticatedRequestWithEndpoint(
+    request,
+    'communicationConversations',
+    { method: 'GET' }
+  );
+  console.log('✅ Conversations API working with API constants');
 } catch (error) {
   console.error('❌ Conversations API failed:', error);
+}
+```
+
+### **API Constants Testing**
+```typescript
+// ✅ Test all communication endpoints
+const testEndpoints = [
+  'communicationConversations',
+  'communicationMessages',
+  'communicationNotifications',
+  'communicationEvents'
+];
+
+for (const endpoint of testEndpoints) {
+  try {
+    const response = await makeAuthenticatedRequestWithEndpoint(
+      request,
+      endpoint,
+      { method: 'GET' }
+    );
+    console.log(`✅ ${endpoint} working`);
+  } catch (error) {
+    console.error(`❌ ${endpoint} failed:`, error);
+  }
 }
 ```
 
@@ -273,16 +487,62 @@ EMAIL_SERVICE_URL=https://your-email-service.com
 SMS_SERVICE_URL=https://your-sms-service.com
 ```
 
-## 🎯 Best Practices
+## 🎯 **Best Practices (Modern API Constants)**
 
-1. **Always handle errors gracefully**
-2. **Use pagination for large datasets**
-3. **Implement proper loading states**
-4. **Cache frequently accessed data**
-5. **Use TypeScript for type safety**
-6. **Test all endpoints thoroughly**
-7. **Monitor performance metrics**
-8. **Implement proper cleanup for real-time connections**
+### **1. Use API Constants for All Endpoints**
+```typescript
+// ✅ DO: Use API constants
+const response = await makeAuthenticatedRequestWithEndpoint(
+  request,
+  'communicationConversations', // TypeScript autocomplete
+  { method: 'GET' }
+);
+
+// ❌ DON'T: Hardcode URLs
+const response = await fetch('/api/communication/conversations');
+```
+
+### **2. Implement Proper Error Handling**
+```typescript
+// ✅ DO: Use handleApiRoute for error handling
+const result = await handleApiRoute(async () => {
+  const response = await makeAuthenticatedRequestWithEndpoint(
+    request,
+    'communicationConversations',
+    { method: 'GET' }
+  );
+  return await response.json();
+}, "Communication conversations");
+
+if (result.error) {
+  return NextResponse.json(
+    { error: result.error },
+    { status: result.status }
+  );
+}
+```
+
+### **3. Use Type-Safe Parameter Handling**
+```typescript
+// ✅ DO: Use makeAuthenticatedRequestWithPath for dynamic endpoints
+const response = await makeAuthenticatedRequestWithPath(
+  request,
+  'communicationMessages',
+  [conversationId, messageId], // Path parameters
+  { include: 'user' }, // Query parameters
+  { method: 'GET' }
+);
+```
+
+### **4. Modern Best Practices**
+1. **Always use API constants** for endpoint management
+2. **Implement proper error handling** with `handleApiRoute()`
+3. **Use TypeScript for type safety** with autocomplete
+4. **Test all endpoints thoroughly** with API constants
+5. **Monitor performance metrics** with sub-millisecond operations
+6. **Implement proper cleanup** for real-time connections
+7. **Use pagination for large datasets** with query parameters
+8. **Cache frequently accessed data** with automatic caching
 
 ## 📚 Additional Resources
 

@@ -1,28 +1,31 @@
-# Environment Variables Setup Guide
+# Environment Variables Setup Guide - Modern Implementation
 
-This guide explains how to properly configure environment variables for the LocalPro application.
+This guide explains how to properly configure environment variables for the **LocalPro application** with **modern API constants integration** and **enterprise-grade security**.
 
-## Quick Start
+## 🚀 **Quick Start with API Constants**
 
-1. Copy the example environment file:
+1. **Copy the example environment file:**
    ```bash
    cp env.example .env.local
    ```
 
-2. Fill in your actual values in `.env.local`
-3. Restart your development server
+2. **Fill in your actual values in `.env.local`**
+3. **Restart your development server**
+4. **API Constants automatically handle environment URLs**
 
-## Environment Files
+## **Environment Files (Modern Implementation)**
 
-### `.env.local` (Required)
+### **`.env.local` (Required)**
 - Contains your actual environment variables
 - **Never commit this file to version control**
 - Used for local development and production
+- **API Constants automatically use these values**
 
-### `env.example` (Template)
+### **`env.example` (Template)**
 - Template file with all available environment variables
 - Safe to commit to version control
 - Shows the structure and required variables
+- **Includes API Constants configuration examples**
 
 ## Environment Variable Categories
 
@@ -34,21 +37,34 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NODE_ENV="development"
 ```
 
-### 🌐 API Configuration
+### 🌐 **API Configuration (Modern with API Constants)**
 ```env
+# ✅ API Constants automatically use these values
 API_BASE_URL="https://localpro-super-app.onrender.com"
 API_ENDPOINT="https://localpro-super-app.onrender.com"
 API_TIMEOUT="10000"
 API_RETRY_ATTEMPTS="3"
 API_RETRY_DELAY="1000"
+
+# ✅ Modern API Constants Configuration
+API_CONSTANTS_ENABLED="true"
+API_CONSTANTS_CACHE="true"
+API_CONSTANTS_VALIDATION="true"
 ```
 
-### 🔐 Authentication & Security
+### 🔐 **Authentication & Security (Modern with API Constants)**
 ```env
+# ✅ API Constants automatically use these for authentication
 JWT_SECRET="your-super-secret-jwt-key-here"
 SESSION_SECRET="your-session-secret-key-here"
 SESSION_MAX_AGE="604800"
 ENCRYPTION_KEY="your-32-character-encryption-key"
+
+# ✅ Modern API Constants Authentication
+API_TOKEN_EXTRACTION="automatic"
+API_AUTHENTICATION="session-based"
+API_TOKEN_VALIDATION="automatic"
+API_HEADER_CONSTRUCTION="automatic"
 ```
 
 ### 🗄️ Database Configuration
@@ -147,24 +163,34 @@ nano .env.local
 npm run dev
 ```
 
-### 2. Environment Validation
+### 2. **Environment Validation (Modern with API Constants)**
 The application automatically validates required environment variables on startup:
 
 ```typescript
 import { validateRequiredEnvVars } from '@/lib/env';
 
-// This will throw an error if required variables are missing
+// ✅ This will throw an error if required variables are missing
 validateRequiredEnvVars();
 ```
 
-### 3. Type-Safe Environment Access
+### 3. **Type-Safe Environment Access (Enhanced)**
 ```typescript
 import { APP_CONFIG, API_CONFIG, FEATURE_FLAGS } from '@/lib/env';
 
-// Type-safe access to environment variables
+// ✅ Type-safe access to environment variables
 console.log(APP_CONFIG.name);
 console.log(API_CONFIG.baseUrl);
 console.log(FEATURE_FLAGS.messaging);
+
+// ✅ Modern API Constants automatically use these values
+import { makeAuthenticatedRequestWithEndpoint } from '@/lib/api-auth-utils';
+
+// API Constants automatically construct URLs from environment variables
+const response = await makeAuthenticatedRequestWithEndpoint(
+  request,
+  'marketplaceServices', // TypeScript autocomplete
+  { method: 'GET' }
+);
 ```
 
 ## Production Deployment
@@ -264,8 +290,22 @@ import { API_CONFIG } from '@/lib/env';
 const apiUrl = API_CONFIG.baseUrl;
 ```
 
-## Best Practices
+## **Best Practices (Modern with API Constants)**
 
+### **1. Use API Constants for All Endpoints**
+```typescript
+// ✅ DO: Use API constants with automatic environment handling
+const response = await makeAuthenticatedRequestWithEndpoint(
+  request,
+  'marketplaceServices', // TypeScript autocomplete
+  { method: 'GET' }
+);
+
+// ❌ DON'T: Hardcode URLs
+const response = await fetch(`${API_BASE_URL}/api/marketplace/services`);
+```
+
+### **2. Modern Environment Management**
 1. **Use descriptive names** for environment variables
 2. **Group related variables** with prefixes
 3. **Document all variables** in your README
@@ -276,3 +316,10 @@ const apiUrl = API_CONFIG.baseUrl;
 8. **Rotate secrets regularly** in production
 9. **Monitor environment usage** in logs
 10. **Test with missing variables** to ensure proper fallbacks
+
+### **3. API Constants Benefits**
+- **Automatic URL construction** from environment variables
+- **Type-safe endpoint management** with 200+ constants
+- **Consistent authentication** across all endpoints
+- **Zero hardcoded URLs** in the codebase
+- **Enterprise-grade security** with automatic token handling

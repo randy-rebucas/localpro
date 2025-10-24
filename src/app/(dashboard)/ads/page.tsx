@@ -2,32 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Megaphone,
   Search,
-  Filter,
   Plus,
   Eye,
   TrendingUp,
   Star,
   MapPin,
-  Calendar,
   DollarSign,
-  Users,
-  Target,
-  BarChart3,
-  Settings,
   Edit,
-  Trash2,
-  Image as ImageIcon,
-  ExternalLink,
   Clock,
   CheckCircle,
   AlertCircle,
   X
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { Skeleton, ListSkeleton } from "@/components/ui/loading";
+import { ListSkeleton } from "@/components/ui/loading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,7 +122,6 @@ export default function AdsPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
@@ -490,9 +481,11 @@ export default function AdsPage() {
               <div className="relative">
                 {ad.images.length > 0 && (
                   <div className="aspect-video bg-gray-100">
-                    <img
+                    <Image
                       src={ad.images[0]}
                       alt={ad.title}
+                      width={400}
+                      height={225}
                       className="w-full h-full object-cover"
                     />
                   </div>

@@ -2,28 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Edit,
   Trash2,
   Star,
-  TrendingUp,
-  Eye,
-  MousePointer,
-  Users,
-  DollarSign,
-  Calendar,
   MapPin,
-  Tag,
   BarChart3,
-  Settings,
-  Target,
   AlertCircle,
   CheckCircle,
   Clock,
   X,
-  ExternalLink,
-  Image as ImageIcon,
   Share2,
   Download
 } from "lucide-react";
@@ -230,7 +220,7 @@ export default function AdDetailPage() {
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">Ad not found</h3>
-        <p className="text-gray-600 mb-4">The ad you're looking for doesn't exist or has been removed.</p>
+        <p className="text-gray-600 mb-4">The ad you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Button onClick={() => router.push('/ads')}>
           Back to Ads
         </Button>
@@ -312,9 +302,11 @@ export default function AdDetailPage() {
           {ad.images.length > 0 && (
             <Card className="overflow-hidden">
               <div className="relative">
-                <img
+                <Image
                   src={ad.images[selectedImageIndex]}
                   alt={ad.title}
+                  width={800}
+                  height={256}
                   className="w-full h-64 object-cover"
                 />
                 {ad.images.length > 1 && (
@@ -342,9 +334,11 @@ export default function AdDetailPage() {
                           index === selectedImageIndex ? 'ring-2 ring-blue-500' : ''
                         }`}
                       >
-                        <img
+                        <Image
                           src={image}
                           alt={`${ad.title} ${index + 1}`}
+                          width={64}
+                          height={64}
                           className="w-full h-full object-cover"
                         />
                       </button>

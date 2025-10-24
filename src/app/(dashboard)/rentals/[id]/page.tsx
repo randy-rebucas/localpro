@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Edit,
@@ -10,21 +11,15 @@ import {
   Heart,
   Share2,
   MapPin,
-  Calendar,
-  Clock,
-  DollarSign,
-  Users,
-  Eye,
   Phone,
   Mail,
   CheckCircle,
   AlertCircle,
   X,
-  ExternalLink,
-  Image as ImageIcon,
   Download,
   MessageCircle,
-  BookOpen
+  BookOpen,
+  Calendar
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
@@ -268,7 +263,7 @@ export default function RentalDetailPage() {
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">Rental not found</h3>
-        <p className="text-gray-600 mb-4">The rental you're looking for doesn't exist or has been removed.</p>
+        <p className="text-gray-600 mb-4">The rental you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Button onClick={() => router.push('/rentals')}>
           Back to Rentals
         </Button>
@@ -356,9 +351,11 @@ export default function RentalDetailPage() {
           {rental.images.length > 0 && (
             <Card className="overflow-hidden">
               <div className="relative">
-                <img
+                <Image
                   src={rental.images[selectedImageIndex]}
                   alt={rental.name}
+                  width={800}
+                  height={256}
                   className="w-full h-64 object-cover"
                 />
                 {rental.images.length > 1 && (
@@ -386,9 +383,11 @@ export default function RentalDetailPage() {
                           index === selectedImageIndex ? 'ring-2 ring-blue-500' : ''
                         }`}
                       >
-                        <img
+                        <Image
                           src={image}
                           alt={`${rental.name} ${index + 1}`}
+                          width={64}
+                          height={64}
                           className="w-full h-full object-cover"
                         />
                       </button>

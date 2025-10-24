@@ -2,26 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Search,
   Filter,
   Package,
   Clock,
   DollarSign,
-  Eye,
   Star,
   MapPin,
   Truck,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Calendar,
-  User,
   Phone,
   Mail
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { Skeleton, ListSkeleton } from "@/components/ui/loading";
+import { ListSkeleton } from "@/components/ui/loading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -503,9 +501,11 @@ export default function MyOrdersPage() {
                       <div className="flex items-start gap-4">
                         {order.supply.images.length > 0 && (
                           <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
+                            <Image
                               src={order.supply.images[0]}
                               alt={order.supply.name}
+                              width={64}
+                              height={64}
                               className="w-full h-full object-cover"
                             />
                           </div>

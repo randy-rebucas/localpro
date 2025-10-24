@@ -9,6 +9,7 @@ import EmptyState, {
   SearchEmptyState, 
   SettingsEmptyState 
 } from "@/components/ui/empty-state";
+import { BarChart3, Settings } from "lucide-react";
 import { 
   DashboardLoadingState, 
   ServicesLoadingState, 
@@ -109,35 +110,41 @@ export default function EmptyStateDemo() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Custom Empty States</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Custom with Icon</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Custom Empty State</h3>
               <EmptyState
                 title="Custom Empty State"
                 description="This is a custom empty state with a custom icon and actions."
-                icon={<div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center"><span className="text-blue-600">📊</span></div>}
-                action={{
-                  label: "Get Started",
-                  onClick: () => console.log("Get started clicked"),
-                  variant: "primary"
-                }}
-                secondaryAction={{
-                  label: "Learn More",
-                  onClick: () => console.log("Learn more clicked"),
-                  variant: "outline"
-                }}
+                icon={BarChart3}
+                actions={[
+                  {
+                    type: "button",
+                    label: "Get Started",
+                    onClick: () => console.log("Get started clicked"),
+                    variant: "primary"
+                  },
+                  {
+                    type: "button",
+                    label: "Learn More",
+                    onClick: () => console.log("Learn more clicked"),
+                    variant: "outline"
+                  }
+                ]}
               />
             </div>
             <div className="bg-white rounded-2xl shadow-sm p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Large Size</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Empty State</h3>
               <EmptyState
-                title="Large Empty State"
-                description="This is a large empty state component with more prominent styling."
-                illustration="dashboard"
-                size="lg"
-                action={{
-                  label: "Explore Now",
-                  onClick: () => console.log("Explore clicked"),
-                  variant: "primary"
-                }}
+                title="Basic Empty State"
+                description="This is a basic empty state component with simple styling."
+                icon={Settings}
+                actions={[
+                  {
+                    type: "button",
+                    label: "Explore Now",
+                    onClick: () => console.log("Explore clicked"),
+                    variant: "primary"
+                  }
+                ]}
               />
             </div>
           </div>

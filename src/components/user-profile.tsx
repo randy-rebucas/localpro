@@ -78,7 +78,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   }, [router]);
 
   // Fetch user profile with abort to avoid setting state on unmounted component
-  const fetchProfile = useCallback(async (signal?: AbortSignal) => {
+  const fetchProfile = useCallback(async () => {
     if (!session?.user?.id) return;
     // Avoid refetch if we already have profile data
     if (profile) return;
@@ -116,7 +116,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     if (!session?.user?.id) return;
     if (profile) return;
     const controller = new AbortController();
-    fetchProfile(controller.signal);
+    fetchProfile();
     return () => controller.abort();
   }, [session?.user?.id, fetchProfile, profile]);
 

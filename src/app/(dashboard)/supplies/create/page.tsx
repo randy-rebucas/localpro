@@ -2,19 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Save,
   Eye,
-  Upload,
   X,
   Plus,
   MapPin,
   DollarSign,
   Calendar,
-  Tag,
-  Image as ImageIcon,
-  AlertCircle,
   CheckCircle,
   Star,
   Settings,
@@ -126,7 +123,7 @@ export default function CreateSupplyPage() {
   const [newTag, setNewTag] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -161,7 +158,7 @@ export default function CreateSupplyPage() {
     }));
   };
 
-  const handleDeliveryChange = (field: string, value: any) => {
+  const handleDeliveryChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       delivery: {
@@ -252,7 +249,7 @@ export default function CreateSupplyPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async (status: 'draft' | 'active') => {
+  const handleSave = async () => {
     if (!validateForm()) {
       return;
     }
@@ -330,7 +327,7 @@ export default function CreateSupplyPage() {
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
           <Button
-            onClick={() => handleSave('draft')}
+            onClick={() => handleSave()}
             disabled={loading}
             variant="outline"
             className="flex items-center gap-2"
@@ -339,7 +336,7 @@ export default function CreateSupplyPage() {
             Save Draft
           </Button>
           <Button
-            onClick={() => handleSave('active')}
+            onClick={() => handleSave()}
             disabled={loading}
             className="flex items-center gap-2"
           >
@@ -819,9 +816,11 @@ export default function CreateSupplyPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img
+                      <Image
                         src={image}
                         alt={`Supply image ${index + 1}`}
+                        width={400}
+                        height={128}
                         className="w-full h-32 object-cover rounded-lg"
                       />
                       <button
@@ -845,9 +844,11 @@ export default function CreateSupplyPage() {
             <div className="border rounded-lg p-4 bg-gray-50">
               {formData.images.length > 0 && (
                 <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                  <img
+                  <Image
                     src={formData.images[0]}
                     alt="Supply preview"
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover"
                   />
                 </div>

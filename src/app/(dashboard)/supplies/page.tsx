@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Search,
   Filter,
@@ -10,14 +11,10 @@ import {
   Star,
   Package,
   Clock,
-  DollarSign,
-  Users,
   Eye,
   Edit,
-  Trash2,
   Heart,
   Share2,
-  ChevronDown,
   Grid3X3,
   List,
   SortAsc,
@@ -28,7 +25,7 @@ import {
   Zap
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { Skeleton, ListSkeleton } from "@/components/ui/loading";
+import { ListSkeleton } from "@/components/ui/loading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,15 +118,15 @@ const statuses = [
   "Pre-order"
 ];
 
-const units = [
-  "All Units",
-  "Piece",
-  "Pack",
-  "Box",
-  "Kg",
-  "Liter",
-  "Set"
-];
+// const units = [
+//   "All Units",
+//   "Piece",
+//   "Pack",
+//   "Box",
+//   "Kg",
+//   "Liter",
+//   "Set"
+// ];
 
 const getStatusColor = (status: Supply['status']) => {
   switch (status) {
@@ -666,9 +663,11 @@ export default function SuppliesPage() {
                   <div className="relative">
                     {supply.images.length > 0 && (
                       <div className="aspect-video bg-gray-100">
-                        <img
+                        <Image
                           src={supply.images[0]}
                           alt={supply.name}
+                          width={400}
+                          height={225}
                           className="w-full h-full object-cover"
                         />
                       </div>

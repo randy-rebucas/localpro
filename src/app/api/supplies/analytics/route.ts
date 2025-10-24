@@ -22,13 +22,13 @@ export async function GET(request: NextRequest) {
       category: queryParams.category || '',
       type: queryParams.type || '',
       groupBy: queryParams.groupBy || 'day', // day, week, month
-      metrics: queryParams.metrics ? queryParams.metrics.split(',') : ['revenue', 'orders', 'views', 'clicks']
+      metrics: queryParams.metrics || 'revenue,orders,views,clicks'
     };
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesAnalytics',
-      [],
+      'supplies',
+      ['analytics'],
       analyticsQuery,
       { method: 'GET' }
     );

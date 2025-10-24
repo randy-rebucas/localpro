@@ -12,8 +12,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Build query parameters for external API
-    const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    // const { searchParams } = new URL(request.url);
+    // const queryParams = Object.fromEntries(searchParams.entries());
 
     // Make request to external API using request-based authentication
     const response = await makeAuthenticatedRequestWithEndpoint(

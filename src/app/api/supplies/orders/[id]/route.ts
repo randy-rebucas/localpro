@@ -17,8 +17,8 @@ export async function GET(
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesOrdersById',
-      [id],
+      'supplies',
+      ['orders', id],
       {},
       { method: 'GET' }
     );
@@ -77,8 +77,8 @@ export async function PUT(
     
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesOrdersById',
-      [id],
+      'supplies',
+      ['orders', id],
       {},
       {
         method: 'PUT',
@@ -138,8 +138,8 @@ export async function DELETE(
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesOrdersById',
-      [id],
+      'supplies',
+      ['orders', id],
       {},
       { method: 'DELETE' }
     );

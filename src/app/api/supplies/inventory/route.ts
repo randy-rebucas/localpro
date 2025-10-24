@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
     
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesInventory',
-      [],
+      'supplies',
+      ['inventory'],
       queryParams,
       { method: 'GET' }
     );
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesInventory',
-      [],
+      'supplies',
+      ['inventory'],
       {},
       {
         method: 'POST',

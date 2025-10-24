@@ -95,14 +95,14 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       code: 'REQUIRED'
     });
   } else if (data.name) {
-    if (data.name.length < SUPPLY_VALIDATION_RULES.name.minLength) {
+    if ((data.name as string).length < SUPPLY_VALIDATION_RULES.name.minLength) {
       errors.push({
         field: 'name',
         message: `Name must be at least ${SUPPLY_VALIDATION_RULES.name.minLength} characters long`,
         code: 'MIN_LENGTH'
       });
     }
-    if (data.name.length > SUPPLY_VALIDATION_RULES.name.maxLength) {
+    if ((data.name as string).length > SUPPLY_VALIDATION_RULES.name.maxLength) {
       errors.push({
         field: 'name',
         message: `Name must be no more than ${SUPPLY_VALIDATION_RULES.name.maxLength} characters long`,
@@ -119,14 +119,14 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       code: 'REQUIRED'
     });
   } else if (data.description) {
-    if (data.description.length < SUPPLY_VALIDATION_RULES.description.minLength) {
+    if ((data.description as string).length < SUPPLY_VALIDATION_RULES.description.minLength) {
       errors.push({
         field: 'description',
         message: `Description must be at least ${SUPPLY_VALIDATION_RULES.description.minLength} characters long`,
         code: 'MIN_LENGTH'
       });
     }
-    if (data.description.length > SUPPLY_VALIDATION_RULES.description.maxLength) {
+    if ((data.description as string).length > SUPPLY_VALIDATION_RULES.description.maxLength) {
       errors.push({
         field: 'description',
         message: `Description must be no more than ${SUPPLY_VALIDATION_RULES.description.maxLength} characters long`,
@@ -143,7 +143,7 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       code: 'REQUIRED'
     });
   } else if (data.price !== undefined && data.price !== null) {
-    const price = parseFloat(data.price);
+    const price = parseFloat(data.price as string);
     if (isNaN(price)) {
       errors.push({
         field: 'price',
@@ -173,7 +173,7 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       code: 'REQUIRED'
     });
   } else if (data.stock !== undefined && data.stock !== null) {
-    const stock = parseInt(data.stock);
+    const stock = parseInt(data.stock as string);
     if (isNaN(stock)) {
       errors.push({
         field: 'stock',
@@ -202,7 +202,7 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       message: 'Category is required',
       code: 'REQUIRED'
     });
-  } else if (data.category && !SUPPLY_VALIDATION_RULES.category.allowedValues.includes(data.category)) {
+  } else if (data.category && !SUPPLY_VALIDATION_RULES.category.allowedValues.includes(data.category as string)) {
     errors.push({
       field: 'category',
       message: `Category must be one of: ${SUPPLY_VALIDATION_RULES.category.allowedValues.join(', ')}`,
@@ -217,7 +217,7 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       message: 'Type is required',
       code: 'REQUIRED'
     });
-  } else if (data.type && !SUPPLY_VALIDATION_RULES.type.allowedValues.includes(data.type)) {
+  } else if (data.type && !SUPPLY_VALIDATION_RULES.type.allowedValues.includes(data.type as string)) {
     errors.push({
       field: 'type',
       message: `Type must be one of: ${SUPPLY_VALIDATION_RULES.type.allowedValues.join(', ')}`,
@@ -232,7 +232,7 @@ export function validateSupplyData(data: Record<string, unknown>): ValidationErr
       message: 'Status is required',
       code: 'REQUIRED'
     });
-  } else if (data.status && !SUPPLY_VALIDATION_RULES.status.allowedValues.includes(data.status)) {
+  } else if (data.status && !SUPPLY_VALIDATION_RULES.status.allowedValues.includes(data.status as string)) {
     errors.push({
       field: 'status',
       message: `Status must be one of: ${SUPPLY_VALIDATION_RULES.status.allowedValues.join(', ')}`,
@@ -269,7 +269,7 @@ export function validateOrderData(data: Record<string, unknown>): ValidationErro
       code: 'REQUIRED'
     });
   } else if (data.shippingAddress) {
-    const address = data.shippingAddress;
+    const address = data.shippingAddress as Record<string, unknown>;
     if (!address.name || !address.address || !address.city || !address.state) {
       errors.push({
         field: 'shippingAddress',

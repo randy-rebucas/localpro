@@ -20,25 +20,25 @@ export async function GET(request: NextRequest) {
       category: queryParams.category || '',
       type: queryParams.type || '',
       status: queryParams.status || 'available',
-      minPrice: queryParams.minPrice ? parseFloat(queryParams.minPrice) : undefined,
-      maxPrice: queryParams.maxPrice ? parseFloat(queryParams.maxPrice) : undefined,
+      minPrice: queryParams.minPrice || '',
+      maxPrice: queryParams.maxPrice || '',
       location: queryParams.location || '',
-      radius: queryParams.radius ? parseFloat(queryParams.radius) : 50, // km
+      radius: queryParams.radius || '50', // km
       sortBy: queryParams.sortBy || 'createdAt',
       sortOrder: queryParams.sortOrder || 'desc',
-      page: queryParams.page ? parseInt(queryParams.page) : 1,
-      limit: queryParams.limit ? parseInt(queryParams.limit) : 20,
-      features: queryParams.features ? queryParams.features.split(',') : [],
-      tags: queryParams.tags ? queryParams.tags.split(',') : [],
+      page: queryParams.page || '1',
+      limit: queryParams.limit || '20',
+      features: queryParams.features || '',
+      tags: queryParams.tags || '',
       supplierId: queryParams.supplierId || '',
-      verified: queryParams.verified === 'true',
-      inStock: queryParams.inStock === 'true'
+      verified: queryParams.verified || 'false',
+      inStock: queryParams.inStock || 'false'
     };
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesSearch',
-      [],
+      'supplies',
+      ['search'],
       searchQuery,
       { method: 'GET' }
     );

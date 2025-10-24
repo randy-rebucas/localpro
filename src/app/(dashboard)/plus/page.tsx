@@ -1,11 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, Check, Crown, Zap, Shield, Users, TrendingUp, Clock, Phone, Mail, ArrowRight, Sparkles } from 'lucide-react';
+import { Star, Check, Crown, Zap, Shield, Users, TrendingUp, Clock, Phone, ArrowRight, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
-import { EmptyState } from '@/components/ui/empty-state';
-import { formatCurrency, getCurrencySymbol } from '@/lib/currency-utils';
+import { formatCurrency } from '@/lib/currency-utils';
 import { UserSettings } from '@/types/user-settings';
 
 interface SubscriptionPlan {
@@ -151,7 +150,7 @@ export default function PlusPage() {
   const [stats, setStats] = useState<PlusStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [, setUserSettings] = useState<UserSettings | null>(null);
   const [currency, setCurrency] = useState<string>('PHP');
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 

@@ -214,7 +214,8 @@ export default function AcademyAdmin() {
                   <EmptyState
                     title="No courses found"
                     description="Try adjusting your search or filters."
-                    icon={<BookOpen className="w-7 h-7 text-gray-400" />}
+                    icon={BookOpen}
+                    iconColor="text-gray-400"
                   />
                 </TableEmptyRow>
               ) : (

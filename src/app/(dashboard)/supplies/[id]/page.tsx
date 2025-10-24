@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Edit,
@@ -12,13 +13,8 @@ import {
   Star,
   MapPin,
   Package,
-  Shield,
-  Zap,
-  Clock,
   DollarSign,
-  Users,
   Eye,
-  Tag,
   CheckCircle,
   AlertCircle,
   Plus,
@@ -98,16 +94,16 @@ const getStatusColor = (status: Supply['status']) => {
   }
 };
 
-const getTypeIcon = (type: Supply['type']) => {
-  switch (type) {
-    case 'cleaning': return <Shield className="w-4 h-4" />;
-    case 'tools': return <Zap className="w-4 h-4" />;
-    case 'materials': return <Package className="w-4 h-4" />;
-    case 'equipment': return <Truck className="w-4 h-4" />;
-    case 'subscription': return <Clock className="w-4 h-4" />;
-    default: return <Package className="w-4 h-4" />;
-  }
-};
+// const getTypeIcon = (type: Supply['type']) => {
+//   switch (type) {
+//     case 'cleaning': return <Shield className="w-4 h-4" />;
+//     case 'tools': return <Zap className="w-4 h-4" />;
+//     case 'materials': return <Package className="w-4 h-4" />;
+//     case 'equipment': return <Truck className="w-4 h-4" />;
+//     case 'subscription': return <Clock className="w-4 h-4" />;
+//     default: return <Package className="w-4 h-4" />;
+//   }
+// };
 
 export default function SupplyDetailPage() {
   const params = useParams();
@@ -233,7 +229,7 @@ export default function SupplyDetailPage() {
       <div className="text-center py-12">
         <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">Supply not found</h3>
-        <p className="text-gray-600 mb-4">The supply you're looking for doesn't exist or has been removed.</p>
+        <p className="text-gray-600 mb-4">The supply you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Button onClick={() => router.push('/supplies')}>
           Browse Supplies
         </Button>
@@ -299,9 +295,11 @@ export default function SupplyDetailPage() {
         <div className="space-y-4">
           <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
             {supply.images.length > 0 ? (
-              <img
+              <Image
                 src={supply.images[selectedImage]}
                 alt={supply.name}
+                width={800}
+                height={400}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -320,9 +318,11 @@ export default function SupplyDetailPage() {
                     selectedImage === index ? 'border-blue-500' : 'border-gray-200'
                   }`}
                 >
-                  <img
+                  <Image
                     src={image}
                     alt={`${supply.name} ${index + 1}`}
+                    width={100}
+                    height={100}
                     className="w-full h-full object-cover"
                   />
                 </button>

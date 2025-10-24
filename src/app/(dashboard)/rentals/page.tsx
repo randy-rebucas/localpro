@@ -2,29 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Search,
-  Filter,
   Plus,
   MapPin,
   Star,
-  Calendar,
-  Clock,
-  DollarSign,
-  Users,
   Eye,
   Edit,
-  Trash2,
   Heart,
   Share2,
-  ChevronDown,
   Grid3X3,
   List,
   SortAsc,
-  SortDesc
+  SortDesc,
+  Calendar,
+  Clock,
+  Filter
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { Skeleton, ListSkeleton } from "@/components/ui/loading";
+import { ListSkeleton } from "@/components/ui/loading";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,13 +106,13 @@ const statuses = [
   "Unavailable"
 ];
 
-const priceUnits = [
-  "All Units",
-  "Per Hour",
-  "Per Day",
-  "Per Week",
-  "Per Month"
-];
+// const priceUnits = [
+//   "All Units",
+//   "Per Hour",
+//   "Per Day",
+//   "Per Week",
+//   "Per Month"
+// ];
 
 const getStatusColor = (status: Rental['status']) => {
   switch (status) {
@@ -620,9 +617,11 @@ export default function RentalsPage() {
                   <div className="relative">
                     {rental.images.length > 0 && (
                       <div className="aspect-video bg-gray-100">
-                        <img
+                        <Image
                           src={rental.images[0]}
                           alt={rental.name}
+                          width={400}
+                          height={225}
                           className="w-full h-full object-cover"
                         />
                       </div>

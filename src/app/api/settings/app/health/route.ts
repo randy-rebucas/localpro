@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { NextResponse, NextRequest } from "next/server";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/settings/app/health - Get app health
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const response = await makeAuthenticatedRequestWithEndpoint(
-      { user: { id: 'anonymous' } }, // Public endpoint, no authentication required
+      request,
       'settingsAppHealth',
       { method: 'GET' }
     );

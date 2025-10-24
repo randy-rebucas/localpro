@@ -2,26 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Save,
   Eye,
-  Upload,
   X,
   Plus,
-  MapPin,
   DollarSign,
   Calendar,
-  Tag,
-  Image as ImageIcon,
-  AlertCircle,
-  CheckCircle,
-  Star,
-  Settings,
   Package,
   Truck,
   Shield,
-  Zap
+  Zap,
+  Star,
+  MapPin,
+  Settings
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
@@ -201,7 +197,7 @@ export default function EditSupplyPage() {
     }
   }, [params.id]);
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -236,7 +232,7 @@ export default function EditSupplyPage() {
     }));
   };
 
-  const handleDeliveryChange = (field: string, value: any) => {
+  const handleDeliveryChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       delivery: {
@@ -896,9 +892,11 @@ export default function EditSupplyPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img
+                      <Image
                         src={image}
                         alt={`Supply image ${index + 1}`}
+                        width={400}
+                        height={128}
                         className="w-full h-32 object-cover rounded-lg"
                       />
                       <button
@@ -922,9 +920,11 @@ export default function EditSupplyPage() {
             <div className="border rounded-lg p-4 bg-gray-50">
               {formData.images.length > 0 && (
                 <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                  <img
+                  <Image
                     src={formData.images[0]}
                     alt="Supply preview"
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover"
                   />
                 </div>

@@ -2,21 +2,17 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   ArrowLeft,
   Save,
   Eye,
-  Upload,
   X,
   Plus,
-  MapPin,
   DollarSign,
-  Calendar,
-  Tag,
-  Image as ImageIcon,
-  AlertCircle,
   CheckCircle,
   Star,
+  MapPin,
   Settings
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -110,7 +106,7 @@ export default function CreateRentalPage() {
   const [newImage, setNewImage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -643,9 +639,11 @@ export default function CreateRentalPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative group">
-                      <img
+                      <Image
                         src={image}
                         alt={`Rental image ${index + 1}`}
+                        width={400}
+                        height={128}
                         className="w-full h-32 object-cover rounded-lg"
                       />
                       <button
@@ -669,9 +667,11 @@ export default function CreateRentalPage() {
             <div className="border rounded-lg p-4 bg-gray-50">
               {formData.images.length > 0 && (
                 <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                  <img
+                  <Image
                     src={formData.images[0]}
                     alt="Rental preview"
+                    width={400}
+                    height={225}
                     className="w-full h-full object-cover"
                   />
                 </div>

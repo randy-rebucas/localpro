@@ -229,7 +229,7 @@ export default function SettingsPage() {
               <Select
                 label="Profile visibility"
                 value={settings.privacy.profileVisibility}
-                onChange={onInput("privacy.profileVisibility", (v) => v)}
+                onValueChange={(value) => onInput("privacy.profileVisibility", (v) => v)({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "public", label: "Public" },
                   { value: "private", label: "Private" },
@@ -298,7 +298,7 @@ export default function SettingsPage() {
               <Select
                 label="Preferred language"
                 value={settings.communication.preferredLanguage}
-                onChange={onInput("communication.preferredLanguage")}
+                onValueChange={(value) => onInput("communication.preferredLanguage")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "en", label: "English" },
                   { value: "fil", label: "Filipino" }
@@ -316,7 +316,7 @@ export default function SettingsPage() {
               <Select
                 label="Date format"
                 value={settings.communication.dateFormat}
-                onChange={onInput("communication.dateFormat")}
+                onValueChange={(value) => onInput("communication.dateFormat")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
                   { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
@@ -328,7 +328,7 @@ export default function SettingsPage() {
               <Select
                 label="Time format"
                 value={settings.communication.timeFormat}
-                onChange={onInput("communication.timeFormat")}
+                onValueChange={(value) => onInput("communication.timeFormat")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "12h", label: "12-hour" },
                   { value: "24h", label: "24-hour" }
@@ -413,7 +413,7 @@ export default function SettingsPage() {
               <Select
                 label="Preferred method"
                 value={settings.payment.preferredPaymentMethod}
-                onChange={onInput("payment.preferredPaymentMethod")}
+                onValueChange={(value) => onInput("payment.preferredPaymentMethod")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "paypal", label: "PayPal" },
                   { value: "paymaya", label: "PayMaya" },
@@ -431,7 +431,7 @@ export default function SettingsPage() {
                   <Select
                     label="Auto-withdraw frequency"
                     value={settings.payment.autoWithdraw.frequency}
-                    onChange={onInput("payment.autoWithdraw.frequency")}
+                    onValueChange={(value) => onInput("payment.autoWithdraw.frequency")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                     options={[
                       { value: "daily", label: "Daily" },
                       { value: "weekly", label: "Weekly" },
@@ -497,7 +497,7 @@ export default function SettingsPage() {
               <Select
                 label="2FA method"
                 value={settings.security.twoFactorAuth.method}
-                onChange={onInput("security.twoFactorAuth.method")}
+                onValueChange={(value) => onInput("security.twoFactorAuth.method")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "sms", label: "SMS" },
                   { value: "email", label: "Email" },
@@ -521,7 +521,7 @@ export default function SettingsPage() {
               <Select
                 label="Theme"
                 value={settings.app.theme}
-                onChange={onInput("app.theme")}
+                onValueChange={(value) => onInput("app.theme")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "auto", label: "Auto" },
                   { value: "light", label: "Light" },
@@ -533,7 +533,7 @@ export default function SettingsPage() {
               <Select
                 label="Font size"
                 value={settings.app.fontSize}
-                onChange={onInput("app.fontSize")}
+                onValueChange={(value) => onInput("app.fontSize")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "small", label: "Small" },
                   { value: "medium", label: "Medium" },
@@ -554,7 +554,7 @@ export default function SettingsPage() {
               <Select
                 label="Image quality"
                 value={settings.app.dataUsage.imageQuality}
-                onChange={onInput("app.dataUsage.imageQuality")}
+                onValueChange={(value) => onInput("app.dataUsage.imageQuality")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "low", label: "Low" },
                   { value: "medium", label: "Medium" },
@@ -566,7 +566,7 @@ export default function SettingsPage() {
               <Select
                 label="Video quality"
                 value={settings.app.dataUsage.videoQuality}
-                onChange={onInput("app.dataUsage.videoQuality")}
+                onValueChange={(value) => onInput("app.dataUsage.videoQuality")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "low", label: "Low" },
                   { value: "medium", label: "Medium" },

@@ -179,7 +179,7 @@ export default function MessagesPage() {
     } finally {
       setLoading(false);
     }
-  }, [retryWithBackoff, retryCount]);
+  }, [retryWithBackoff, retryCount, checkAuthentication]);
 
   const fetchConversation = useCallback(async (conversationId: string, page: number = 1) => {
     try {

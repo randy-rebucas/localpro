@@ -214,7 +214,8 @@ export default function RentalsAdmin() {
                   <EmptyState
                     title="No rentals found"
                     description="Try adjusting your search or filters."
-                    icon={<Home className="w-7 h-7 text-gray-400" />}
+                    icon={Home}
+                    iconColor="text-gray-400"
                   />
                 </TableEmptyRow>
               ) : (

@@ -261,7 +261,7 @@ export default function CreateJobPage() {
                   <Select
                     label="Category *"
                     value={form.category}
-                    onChange={(e) => handleInputChange("category", e.target.value)}
+                    onValueChange={(value) => handleInputChange("category", value)}
                     options={categories}
                   />
                 </div>
@@ -270,7 +270,7 @@ export default function CreateJobPage() {
                   <Select
                     label="Experience Level *"
                     value={form.experienceLevel}
-                    onChange={(e) => handleInputChange("experienceLevel", e.target.value)}
+                    onValueChange={(value) => handleInputChange("experienceLevel", value)}
                     options={experienceLevels}
                   />
                 </div>
@@ -279,7 +279,7 @@ export default function CreateJobPage() {
                   <Select
                     label="Project Type *"
                     value={form.projectType}
-                    onChange={(e) => handleInputChange("projectType", e.target.value)}
+                    onValueChange={(value) => handleInputChange("projectType", value)}
                     options={projectTypes}
                   />
                 </div>
@@ -327,7 +327,7 @@ export default function CreateJobPage() {
                   <Select
                     label="Timezone"
                     value={form.timezone}
-                    onChange={(e) => handleInputChange("timezone", e.target.value)}
+                    onValueChange={(value) => handleInputChange("timezone", value)}
                     options={timezones.map(tz => ({ value: tz, label: tz }))}
                   />
                 </div>

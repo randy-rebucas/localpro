@@ -89,7 +89,7 @@ export function formatCurrency(
     }
     
     return formatted;
-  } catch (error) {
+  } catch {
     // Fallback to simple formatting if Intl.NumberFormat fails
     const symbol = showSymbol ? config.symbol : '';
     const code = showCode ? ` ${config.code}` : '';

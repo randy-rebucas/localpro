@@ -1,12 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
+import { NextResponse } from "next/server";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 // GET /api/marketplace/services-simple - Simple services endpoint
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log("Simple API: Fetching services...");
-    const session = await getServerSession(request);
+    // const session = await getServerSession(request);
     
     const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}`, {
         method: 'GET',

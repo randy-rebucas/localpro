@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, BarChart3, Wrench, Activity, Megaphone, Search, Settings, RefreshCw } from "lucide-react";
 
 interface EmptyStateAction {
   type: "link" | "button";
@@ -99,7 +99,7 @@ interface EmptyStateCardProps extends EmptyStateProps {
 }
 
 export function EmptyStateCard(props: EmptyStateCardProps) {
-  const { interactive = false, ...emptyStateProps } = props;
+  const { ...emptyStateProps } = props;
   
   return (
     <div className="bg-white rounded-lg shadow-sm" style={{ padding: 0 }}>
@@ -107,3 +107,151 @@ export function EmptyStateCard(props: EmptyStateCardProps) {
     </div>
   );
 }
+
+// Specialized Empty State Components
+interface SpecializedEmptyStateProps {
+  onRefresh?: () => void;
+  query?: string;
+  onClearSearch?: () => void;
+}
+
+export function DashboardEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
+  return (
+    <EmptyState
+      icon={BarChart3}
+      title="No Dashboard Data"
+      description="Your dashboard is empty. Start by creating your first project or connecting your accounts."
+      actions={[
+        {
+          type: "button" as const,
+          label: "Get Started",
+          onClick: () => console.log("Get started clicked"),
+          variant: "primary" as const,
+          icon: BarChart3
+        },
+        ...(onRefresh ? [{
+          type: "button" as const,
+          label: "Refresh",
+          onClick: onRefresh,
+          variant: "outline" as const,
+          icon: RefreshCw
+        }] : [])
+      ]}
+    />
+  );
+}
+
+export function ServicesEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
+  return (
+    <EmptyState
+      icon={Wrench}
+      title="No Services Available"
+      description="There are no services available at the moment. Check back later or create your own service."
+      actions={[
+        {
+          type: "link",
+          href: "/marketplace/create-service",
+          label: "Create Service",
+          variant: "primary" as const,
+          icon: Wrench
+        },
+        ...(onRefresh ? [{
+          type: "button" as const,
+          label: "Refresh",
+          onClick: onRefresh,
+          variant: "outline" as const,
+          icon: RefreshCw
+        }] : [])
+      ]}
+    />
+  );
+}
+
+export function ActivityEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
+  return (
+    <EmptyState
+      icon={Activity}
+      title="No Recent Activity"
+      description="You haven't had any recent activity. Start using the platform to see your activity here."
+      actions={[
+        {
+          type: "link",
+          href: "/dashboard",
+          label: "Go to Dashboard",
+          variant: "primary" as const,
+          icon: Activity
+        },
+        ...(onRefresh ? [{
+          type: "button" as const,
+          label: "Refresh",
+          onClick: onRefresh,
+          variant: "outline" as const,
+          icon: RefreshCw
+        }] : [])
+      ]}
+    />
+  );
+}
+
+export function AnnouncementsEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
+  return (
+    <EmptyState
+      icon={Megaphone}
+      title="No Announcements"
+      description="There are no announcements at the moment. Check back later for updates."
+      actions={[
+        ...(onRefresh ? [{
+          type: "button" as const,
+          label: "Refresh",
+          onClick: onRefresh,
+          variant: "outline" as const,
+          icon: RefreshCw
+        }] : [])
+      ]}
+    />
+  );
+}
+
+export function SearchEmptyState({ query, onClearSearch }: SpecializedEmptyStateProps) {
+  return (
+    <EmptyState
+      icon={Search}
+      title={query ? `No results for "${query}"` : "No Search Results"}
+      description={query 
+        ? "Try adjusting your search terms or filters to find what you're looking for."
+        : "Enter a search term to find what you're looking for."
+      }
+      actions={[
+        ...(onClearSearch ? [{
+          type: "button" as const,
+          label: "Clear Search",
+          onClick: onClearSearch,
+          variant: "outline" as const,
+          icon: Search
+        }] : [])
+      ]}
+    />
+  );
+}
+
+export function SettingsEmptyState() {
+  return (
+    <EmptyState
+      icon={Settings}
+      title="Settings Coming Soon"
+      description="Settings and preferences will be available in a future update."
+      actions={[
+        {
+          type: "link",
+          href: "/dashboard",
+          label: "Back to Dashboard",
+          variant: "primary" as const,
+          icon: Settings
+        }
+      ]}
+    />
+  );
+}
+
+// Default export for backward compatibility
+export default EmptyState;

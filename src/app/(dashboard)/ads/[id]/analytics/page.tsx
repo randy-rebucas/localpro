@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -11,14 +11,7 @@ import {
   Eye,
   MousePointer,
   DollarSign,
-  Users,
-  Calendar,
-  BarChart3,
-  PieChart,
-  Activity,
   Target,
-  Clock,
-  CheckCircle,
   AlertCircle
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -89,11 +82,7 @@ export default function AdAnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState("30d");
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, [params.id, selectedPeriod]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/ads/${params.id}/analytics?period=${selectedPeriod}`);
@@ -155,7 +144,11 @@ export default function AdAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id, selectedPeriod]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

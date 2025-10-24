@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
 
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesBulk',
-      [],
+      'supplies',
+      ['bulk'],
       {},
       {
         method: 'POST',
