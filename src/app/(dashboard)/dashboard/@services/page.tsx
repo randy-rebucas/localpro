@@ -60,9 +60,9 @@ const serviceModules: ServiceModule[] = [
     services: ["Cleaning supplies", "Tools", "Subscription kits"],
     route: "/supplies",
     category: "Resources",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
+    status: "active",
+    users: 2,
+    lastUpdated: "2 hours ago", 
     featured: false
   },
   {
@@ -88,10 +88,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Tool and vehicle rentals"],
     route: "/rentals",
     category: "Resources",
-    status: "beta",
+    status: "active",
     users: 450,
     lastUpdated: "5 hours ago",
-    featured: false
+    featured: true
   },
   {
     id: "plus",

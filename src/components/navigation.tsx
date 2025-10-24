@@ -12,7 +12,8 @@ import {
   HelpCircle,
   Plus,
   Megaphone,
-  Truck
+  Truck,
+  Package
 } from "lucide-react";
 
 interface NavigationItem {
@@ -28,6 +29,7 @@ export default function Navigation() {
   const navigation: NavigationItem[] = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "Marketplace", href: "/marketplace", icon: Store },
+    { name: "Supplies", href: "/supplies", icon: Package },
     { name: "Rentals", href: "/rentals", icon: Truck },
     { name: "Ads", href: "/ads", icon: Megaphone },
     { name: "My Bookings", href: "/marketplace/bookings", icon: Calendar },
@@ -71,6 +73,13 @@ export default function Navigation() {
           </div>
           
           <div className="flex items-center gap-2">
+            <Link
+              href="/supplies/create"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-amber-600 hover:bg-amber-700 transition-colors"
+            >
+              <Package className="w-4 h-4 mr-1" />
+              List Supply
+            </Link>
             <Link
               href="/rentals/create"
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
