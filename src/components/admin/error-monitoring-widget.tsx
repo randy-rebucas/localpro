@@ -7,8 +7,6 @@ import {
   XCircle, 
   AlertCircle, 
   CheckCircle,
-  TrendingUp,
-  TrendingDown,
   Activity
 } from "lucide-react";
 

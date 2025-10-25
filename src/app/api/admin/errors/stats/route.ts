@@ -111,8 +111,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || 'week'; // day, week, month, year
+    // Note: period parameter could be used for filtering data in the future
+    // const { searchParams } = new URL(request.url);
+    // const period = searchParams.get('period') || 'week'; // day, week, month, year
 
     // Calculate basic stats
     const total = mockErrors.length;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { 
   Users, 
   Search, 
@@ -59,7 +60,7 @@ export default function UsersPage() {
               name: 'John Doe',
               email: 'john@example.com',
               role: 'provider',
-              status: 'active',
+              status: 'active' as const,
               createdAt: '2024-01-01T00:00:00Z',
               lastLogin: '2024-01-15T00:00:00Z',
               location: 'New York',
@@ -70,9 +71,9 @@ export default function UsersPage() {
               name: 'Jane Smith',
               email: 'jane@example.com',
               role: 'client',
-              status: 'pending',
+              status: 'pending' as const,
               createdAt: '2024-01-02T00:00:00Z',
-              lastLogin: null,
+              lastLogin: '2024-01-02T00:00:00Z',
               location: 'Los Angeles',
               phone: '+1987654321'
             },
@@ -81,7 +82,7 @@ export default function UsersPage() {
               name: 'Mike Johnson',
               email: 'mike@example.com',
               role: 'supplier',
-              status: 'active',
+              status: 'active' as const,
               createdAt: '2024-01-03T00:00:00Z',
               lastLogin: '2024-01-14T00:00:00Z',
               location: 'Chicago',
@@ -322,7 +323,13 @@ export default function UsersPage() {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         {user.avatar ? (
-                          <img className="h-10 w-10 rounded-full" src={user.avatar} alt={user.name} />
+                          <Image 
+                            className="h-10 w-10 rounded-full" 
+                            src={user.avatar} 
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                          />
                         ) : (
                           <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
                             <Users className="w-5 h-5 text-gray-600" />

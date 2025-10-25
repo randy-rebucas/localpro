@@ -30,7 +30,6 @@ import {
 import { Loading } from "@/components/ui/loading";
 import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
-import { ErrorMonitoringWidget } from "@/components/admin/error-monitoring-widget";
 
 interface DashboardStats {
   totalUsers: number;
@@ -270,14 +269,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-600';
-      case 'medium': return 'text-yellow-600';
-      case 'low': return 'text-green-600';
-      default: return 'text-gray-600';
-    }
-  };
 
   const getAlertIcon = (type: string) => {
     switch (type) {

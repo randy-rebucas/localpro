@@ -137,18 +137,6 @@ export default function ErrorMonitoringPage() {
     setFilteredErrors(filtered);
   }, [errors, searchTerm, selectedLevel, selectedStatus, selectedEnvironment]);
 
-  const getLevelIcon = (level: string) => {
-    switch (level) {
-      case 'critical':
-        return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'error':
-        return <AlertTriangle className="w-4 h-4 text-red-500" />;
-      case 'warning':
-        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      default:
-        return <CheckCircle className="w-4 h-4 text-blue-500" />;
-    }
-  };
 
   const getLevelColor = (level: string) => {
     switch (level) {

@@ -121,7 +121,8 @@ export async function PATCH(
 
     const { errorId } = await params;
     const body = await request.json();
-    const { action, notes } = body;
+    const { action } = body;
+    // Note: notes parameter could be used for storing resolution notes in the future
 
     const errorIndex = mockErrors.findIndex(e => e.id === errorId);
     if (errorIndex === -1) {

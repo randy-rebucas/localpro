@@ -69,32 +69,6 @@ export async function createAuthenticatedFetchOptions(
 }
 
 /**
- * Create authenticated fetch options using session data directly
- * This is the preferred method for API routes that have already validated the session
- */
-export function createAuthenticatedFetchOptionsFromSession(
-  _session: { user: { id: string } },
-  _options: RequestInit = {}
-): RequestInit {
-  // We need to get the actual session token, not just the user ID
-  // This function should be used with the session token from the request
-  throw new Error("This function requires the actual session token, not just user data. Use createAuthenticatedFetchOptions instead.");
-}
-
-/**
- * Make authenticated request to external API using session data
- * This is the preferred method for API routes
- */
-export async function makeAuthenticatedRequestFromSession(
-  _session: { user: { id: string } },
-  _url: string,
-  _options: RequestInit = {}
-): Promise<Response> {
-  // This function needs the actual session token, not just user data
-  throw new Error("This function requires the actual session token. Use makeAuthenticatedRequest instead.");
-}
-
-/**
  * Make authenticated request to external API using request object
  * This method extracts the session token from the request
  */

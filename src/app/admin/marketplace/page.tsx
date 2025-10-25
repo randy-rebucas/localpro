@@ -76,7 +76,7 @@ export default function MarketplacePage() {
                 name: 'John Doe',
                 id: 'provider-1'
               },
-              status: 'active',
+              status: 'active' as const,
               createdAt: '2024-01-01T00:00:00Z',
               updatedAt: '2024-01-15T00:00:00Z',
               bookings: 50,
@@ -94,7 +94,7 @@ export default function MarketplacePage() {
                 name: 'Jane Smith',
                 id: 'provider-2'
               },
-              status: 'pending',
+              status: 'pending' as const,
               createdAt: '2024-01-02T00:00:00Z',
               updatedAt: '2024-01-16T00:00:00Z',
               bookings: 20,
