@@ -1,91 +1,91 @@
 # LocalPro Super App - Complete API Endpoints
 
 ## 🔐 Authentication (`/api/auth`)
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/send-code`</span> - Send verification code
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/verify-code`</span> - Verify code
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/complete-onboarding`</span> - Complete user onboarding
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/auth/profile-completeness`</span> - Get profile completeness
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/auth/me`</span> - Get current user profile
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/auth/profile`</span> - Update user profile
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/upload-avatar`</span> - Upload user avatar
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/upload-portfolio`</span> - Upload portfolio images
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/auth/logout`</span> - User logout
+- **POST** `/api/auth/send-code` - Send verification code
+- **POST** `/api/auth/verify-code` - Verify code
+- **POST** `/api/auth/complete-onboarding` - Complete user onboarding
+- **GET** `/api/auth/profile-completeness` - Get profile completeness
+- **GET** `/api/auth/me` - Get current user profile
+- **PUT** `/api/auth/profile` - Update user profile
+- **POST** `/api/auth/upload-avatar` - Upload user avatar
+- **POST** `/api/auth/upload-portfolio` - Upload portfolio images
+- **POST** `/api/auth/logout` - User logout
 
 ## 🏢 Agencies (`/api/agencies`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #22c55e;">`/api/agencies`</span> - Get all agencies <span style="color: #22c55e; font-weight: bold;">(public)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #22c55e;">`/api/agencies/:id`</span> - Get single agency <span style="color: #22c55e; font-weight: bold;">(public)</span>
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies`</span> - Create agency
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/agencies/:id`</span> - Update agency
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/agencies/:id`</span> - Delete agency
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies/:id/logo`</span> - Upload agency logo
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies/:id/providers`</span> - Add provider to agency
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/agencies/:id/providers/:providerId`</span> - Remove provider from agency
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/agencies/:id/providers/:providerId/status`</span> - Update provider status
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies/:id/admins`</span> - Add admin to agency
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/agencies/:id/admins/:adminId`</span> - Remove admin from agency
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/agencies/:id/analytics`</span> - Get agency analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/agencies/my/agencies`</span> - Get my agencies
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies/join`</span> - Join agency
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/agencies/leave`</span> - Leave agency
+- **GET** `/api/agencies` - Get all agencies *(public)*
+- **GET** `/api/agencies/:id` - Get single agency *(public)*
+- **POST** `/api/agencies` - Create agency
+- **PUT** `/api/agencies/:id` - Update agency
+- **DELETE** `/api/agencies/:id` - Delete agency
+- **POST** `/api/agencies/:id/logo` - Upload agency logo
+- **POST** `/api/agencies/:id/providers` - Add provider to agency
+- **DELETE** `/api/agencies/:id/providers/:providerId` - Remove provider from agency
+- **PUT** `/api/agencies/:id/providers/:providerId/status` - Update provider status
+- **POST** `/api/agencies/:id/admins` - Add admin to agency
+- **DELETE** `/api/agencies/:id/admins/:adminId` - Remove admin from agency
+- **GET** `/api/agencies/:id/analytics` - Get agency analytics
+- **GET** `/api/agencies/my/agencies` - Get my agencies
+- **POST** `/api/agencies/join` - Join agency
+- **POST** `/api/agencies/leave` - Leave agency
 
 ## 📊 Analytics (`/api/analytics`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/overview`</span> - Get analytics overview
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/user`</span> - Get user analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/marketplace`</span> - Get marketplace analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/jobs`</span> - Get job analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/referrals`</span> - Get referral analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/agencies`</span> - Get agency analytics
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/analytics/custom`</span> - Get custom analytics <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/analytics/track`</span> - Track event
+- **GET** `/api/analytics/overview` - Get analytics overview
+- **GET** `/api/analytics/user` - Get user analytics
+- **GET** `/api/analytics/marketplace` - Get marketplace analytics
+- **GET** `/api/analytics/jobs` - Get job analytics
+- **GET** `/api/analytics/referrals` - Get referral analytics
+- **GET** `/api/analytics/agencies` - Get agency analytics
+- **GET** `/api/analytics/custom` - Get custom analytics *(Admin only)*
+- **POST** `/api/analytics/track` - Track event
 
 ## 📢 Announcements (`/api/announcements`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #22c55e;">`/api/announcements`</span> - Get all announcements <span style="color: #22c55e; font-weight: bold;">(public)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #22c55e;">`/api/announcements/:id`</span> - Get single announcement <span style="color: #22c55e; font-weight: bold;">(public)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/announcements/my/list`</span> - Get personalized announcements
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/announcements`</span> - Create announcement <span style="color: #ef4444; font-weight: bold;">(Admin/Agency only)</span>
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/announcements/:id`</span> - Update announcement
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/announcements/:id`</span> - Delete announcement
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/announcements/:id/acknowledge`</span> - Acknowledge announcement
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/announcements/:id/comments`</span> - Add comment to announcement
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/announcements/admin/statistics`</span> - Get announcement statistics <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
+- **GET** `/api/announcements` - Get all announcements *(public)*
+- **GET** `/api/announcements/:id` - Get single announcement *(public)*
+- **GET** `/api/announcements/my/list` - Get personalized announcements
+- **POST** `/api/announcements` - Create announcement *(Admin/Agency only)*
+- **PUT** `/api/announcements/:id` - Update announcement
+- **DELETE** `/api/announcements/:id` - Delete announcement
+- **POST** `/api/announcements/:id/acknowledge` - Acknowledge announcement
+- **POST** `/api/announcements/:id/comments` - Add comment to announcement
+- **GET** `/api/announcements/admin/statistics` - Get announcement statistics *(Admin only)*
 
 ## 🔍 Audit Logs (`/api/audit-logs`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs`</span> - Get audit logs <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/stats`</span> - Get audit statistics <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/user/:userId/activity`</span> - Get user activity summary
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/:auditId`</span> - Get audit log details <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/export/data`</span> - Export audit logs <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/dashboard/summary`</span> - Get audit dashboard summary <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/audit-logs/cleanup`</span> - Clean up expired audit logs <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/audit-logs/metadata/categories`</span> - Get audit metadata <span style="color: #ef4444; font-weight: bold;">(Admin only)</span>
+- **GET** `/api/audit-logs` - Get audit logs *(Admin only)*
+- **GET** `/api/audit-logs/stats` - Get audit statistics *(Admin only)*
+- **GET** `/api/audit-logs/user/:userId/activity` - Get user activity summary
+- **GET** `/api/audit-logs/:auditId` - Get audit log details *(Admin only)*
+- **GET** `/api/audit-logs/export/data` - Export audit logs *(Admin only)*
+- **GET** `/api/audit-logs/dashboard/summary` - Get audit dashboard summary *(Admin only)*
+- **POST** `/api/audit-logs/cleanup` - Clean up expired audit logs *(Admin only)*
+- **GET** `/api/audit-logs/metadata/categories` - Get audit metadata *(Admin only)*
 
 ## 💬 Communication (`/api/communication`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/conversations`</span> - Get conversations
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id`</span> - Get single conversation
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/communication/conversations`</span> - Create conversation
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id`</span> - Delete conversation
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id/messages`</span> - Send message
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id/messages/:messageId`</span> - Update message
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id/messages/:messageId`</span> - Delete message
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/communication/conversations/:id/read`</span> - Mark conversation as read
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/notifications`</span> - Get user notifications
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/notifications/count`</span> - Get notification count
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/communication/notifications/:notificationId/read`</span> - Mark notification as read
-- <span style="color: #eab308; font-weight: bold;">**PUT**</span> <span style="color: #3b82f6;">`/api/communication/notifications/read-all`</span> - Mark all notifications as read
-- <span style="color: #ef4444; font-weight: bold;">**DELETE**</span> <span style="color: #3b82f6;">`/api/communication/notifications/:notificationId`</span> - Delete notification
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/communication/notifications/email`</span> - Send email notification
-- <span style="color: #22c55e; font-weight: bold;">**POST**</span> <span style="color: #3b82f6;">`/api/communication/notifications/sms`</span> - Send SMS notification
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/unread-count`</span> - Get unread count
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/search`</span> - Search conversations
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/communication/conversation-with/:userId`</span> - Get conversation with specific user
+- **GET** `/api/communication/conversations` - Get conversations
+- **GET** `/api/communication/conversations/:id` - Get single conversation
+- **POST** `/api/communication/conversations` - Create conversation
+- **DELETE** `/api/communication/conversations/:id` - Delete conversation
+- **POST** `/api/communication/conversations/:id/messages` - Send message
+- **PUT** `/api/communication/conversations/:id/messages/:messageId` - Update message
+- **DELETE** `/api/communication/conversations/:id/messages/:messageId` - Delete message
+- **PUT** `/api/communication/conversations/:id/read` - Mark conversation as read
+- **GET** `/api/communication/notifications` - Get user notifications
+- **GET** `/api/communication/notifications/count` - Get notification count
+- **PUT** `/api/communication/notifications/:notificationId/read` - Mark notification as read
+- **PUT** `/api/communication/notifications/read-all` - Mark all notifications as read
+- **DELETE** `/api/communication/notifications/:notificationId` - Delete notification
+- **POST** `/api/communication/notifications/email` - Send email notification
+- **POST** `/api/communication/notifications/sms` - Send SMS notification
+- **GET** `/api/communication/unread-count` - Get unread count
+- **GET** `/api/communication/search` - Search conversations
+- **GET** `/api/communication/conversation-with/:userId` - Get conversation with specific user
 
 ## 🚨 Error Monitoring (`/api/error-monitoring`)
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/error-monitoring`</span> - Get error monitoring info <span style="color: #22c55e; font-weight: bold;">public</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/error-monitoring/stats`</span> - Get error statistics <span style="color: #ef4444; font-weight: bold;">Admin only</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/error-monitoring/unresolved`</span> - Get unresolved errors <span style="color: #ef4444; font-weight: bold;">Admin only</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/error-monitoring/:errorId`</span> - Get error details <span style="color: #ef4444; font-weight: bold;">Admin only</span>
-- <span style="color: #f97316; font-weight: bold;">**PATCH**</span> <span style="color: #3b82f6;">`/api/error-monitoring/:errorId/resolve`</span> - Resolve error <span style="color: #ef4444; font-weight: bold;">Admin only</span>
-- <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/error-monitoring/dashboard/summary`</span> - Get error monitoring dashboard <span style="color: #ef4444; font-weight: bold;">Admin only</span>
+- **GET** `/api/error-monitoring` - Get error monitoring info *(public)*
+- **GET** `/api/error-monitoring/stats` - Get error statistics *(Admin only)*
+- **GET** `/api/error-monitoring/unresolved` - Get unresolved errors *(Admin only)*
+- **GET** `/api/error-monitoring/:errorId` - Get error details *(Admin only)*
+- **PATCH** `/api/error-monitoring/:errorId/resolve` - Resolve error *(Admin only)*
+- **GET** `/api/error-monitoring/dashboard/summary` - Get error monitoring dashboard *(Admin only)*
 ## 🏥 Facility Care (`/api/facility-care`)
 - <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/facility-care`</span> - Get facility care services <span style="color: #22c55e; font-weight: bold;">public</span>
 - <span style="color: #3b82f6; font-weight: bold;">**GET**</span> <span style="color: #3b82f6;">`/api/facility-care/nearby`</span> - Get nearby facility care services <span style="color: #22c55e; font-weight: bold;">public</span>
