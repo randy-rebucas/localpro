@@ -18,6 +18,13 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+interface ScheduleItem {
+  day: string;
+  startTime: string;
+  endTime: string;
+  available: boolean;
+}
+
 interface ServiceForm {
   title: string;
   description: string;
@@ -68,7 +75,7 @@ interface ServiceForm {
   }>;
   availability: {
     timezone: string;
-    schedule: any[];
+    schedule: ScheduleItem[];
   };
   images: File[];
 }

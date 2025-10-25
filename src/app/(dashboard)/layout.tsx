@@ -25,8 +25,17 @@ import {
   HelpCircle,
   User,
   ChevronDown,
-  MessageSquare
+  MessageSquare,
+  Store,
+  Package,
+  GraduationCap,
+  Car,
+  Briefcase,
+  BarChart3,
+  CreditCard,
+  Shield
 } from "lucide-react";
+import { useRoleAccess } from "@/components/role-guard";
 
 export default function DashboardLayout({
   children,
@@ -34,6 +43,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isServiceProvider, isSupplier, isInstructor, isAgencyOwner, isAgencyAdmin, isAdmin } = useRoleAccess();
   const [user, setUser] = useState<{
     name?: string;
     role?: string;
@@ -353,7 +363,125 @@ export default function DashboardLayout({
               </div>
 
               <div className="flex items-center space-x-1 sm:space-x-2">
-                {/* Navigation Icons */}
+                {/* Role-based Navigation Items */}
+                <div className="flex items-center space-x-1">
+                  {/* Marketplace - Service Providers */}
+                  {isServiceProvider && (
+                    <Link
+                      href="/marketplace"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/marketplace")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Marketplace"
+                    >
+                      <Store className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Supplies - Suppliers */}
+                  {isSupplier && (
+                    <Link
+                      href="/supplies"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/supplies")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Supplies"
+                    >
+                      <Package className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Academy - Instructors */}
+                  {isInstructor && (
+                    <Link
+                      href="/academy"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/academy")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Academy"
+                    >
+                      <GraduationCap className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Rentals - Service Providers */}
+                  {isServiceProvider && (
+                    <Link
+                      href="/rentals"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/rentals")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Rentals"
+                    >
+                      <Car className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Jobs - Service Providers */}
+                  {isServiceProvider && (
+                    <Link
+                      href="/marketplace/jobs"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/marketplace/jobs")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Jobs"
+                    >
+                      <Briefcase className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Analytics - Business Roles */}
+                  {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
+                    <Link
+                      href="/analytics"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/analytics")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Analytics"
+                    >
+                      <BarChart3 className="w-5 h-5" />
+                    </Link>
+                  )}
+
+                  {/* Finance - Business Roles */}
+                  {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
+                    <Link
+                      href="/finance"
+                      className={
+                        `p-2 rounded-lg transition-colors ` +
+                        (pathname?.startsWith("/finance")
+                          ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                          : "text-gray-400 hover:text-gray-600 hover:bg-gray-100")
+                      }
+                      title="Finance"
+                    >
+                      <CreditCard className="w-5 h-5" />
+                    </Link>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="hidden sm:block h-6 w-px bg-gray-300 mx-2"></div>
+
+                {/* Standard Navigation Icons */}
                 <div className="flex items-center space-x-1">
                   <Link
                     href="/notifications"
@@ -440,6 +568,22 @@ export default function DashboardLayout({
                           <HelpCircle className="w-4 h-4" />
                           <span>Help</span>
                         </Link>
+                        
+                        {/* Admin Dashboard Link */}
+                        {isAdmin && (
+                          <>
+                            <div className="border-t border-gray-100 my-1"></div>
+                            <Link
+                              href="/admin"
+                              className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                              onClick={() => setProfileDropdownOpen(false)}
+                            >
+                              <Shield className="w-4 h-4" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                          </>
+                        )}
+                        
                         <div className="border-t border-gray-100 my-1"></div>
                         <button
                           onClick={() => {
@@ -500,8 +644,10 @@ export default function DashboardLayout({
         </div>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
+        <main>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {children}
+          </div>
         </main>
       </div>
     </ErrorBoundary>

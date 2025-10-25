@@ -166,6 +166,57 @@ function hasBearerToken(request: NextRequest): boolean {
   return authHeader !== null && authHeader.startsWith("Bearer ");
 }
 
+// Helper function to check if user role has access to a specific route
+function hasRouteAccess(userRole: string, pathname: string): boolean {
+  // Admin routes - only admin role
+  if (pathname.startsWith("/admin")) {
+    return userRole === "admin";
+  }
+
+  // Service creation routes - service providers only
+  if (pathname.includes("/create-service") || pathname.includes("/my-services")) {
+    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Job creation routes - service providers only
+  if (pathname.includes("/create-job") || pathname.includes("/my-jobs")) {
+    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Supply creation routes - suppliers only
+  if (pathname.includes("/create-supply") || pathname.includes("/my-supplies")) {
+    return ["supplier", "admin"].includes(userRole);
+  }
+
+  // Course creation routes - instructors only
+  if (pathname.includes("/create-course") || pathname.includes("/my-created-courses")) {
+    return ["instructor", "admin"].includes(userRole);
+  }
+
+  // Rental creation routes - service providers only
+  if (pathname.includes("/create-rental") || pathname.includes("/my-rentals")) {
+    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Analytics routes - business roles only
+  if (pathname.includes("/analytics")) {
+    return ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Finance routes - business roles only
+  if (pathname.includes("/finance")) {
+    return ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Agency management routes - agency roles only
+  if (pathname.includes("/agency")) {
+    return ["agency_owner", "agency_admin", "admin"].includes(userRole);
+  }
+
+  // Default: allow access
+  return true;
+}
+
 // Helper function to check if path is a static file or Next.js internal route
 function isStaticOrInternal(pathname: string): boolean {
   return (
@@ -268,6 +319,11 @@ export async function middleware(request: NextRequest) {
     
     // Check admin access
     if (isAdminRoute && userRole !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    
+    // Check role-based route access
+    if (userRole && !hasRouteAccess(userRole, pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     

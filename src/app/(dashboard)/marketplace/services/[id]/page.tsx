@@ -9,10 +9,7 @@ import {
   MapPin, 
   Clock, 
   // DollarSign,
-  Calendar,
   // User,
-  Phone,
-  Mail,
   // ChevronLeft,
   Share2,
   Heart,
@@ -35,7 +32,12 @@ interface Service {
   };
   availability: {
     timezone: string;
-    schedule: any[];
+    schedule: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+      available: boolean;
+    }>;
   };
   estimatedDuration: {
     min: number;
@@ -226,12 +228,6 @@ export default function ServiceDetailPage() {
     }).format(price);
   };
 
-  const formatDuration = (minutes: number) => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (

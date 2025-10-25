@@ -44,7 +44,12 @@ interface Service {
   };
   availability: {
     timezone: string;
-    schedule: any[];
+    schedule: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+      available: boolean;
+    }>;
   };
   serviceArea: string[];
   features: string[];
@@ -341,19 +346,6 @@ export default function MarketplacePage() {
     });
   };
 
-  const formatPrice = useCallback((price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
-  }, []);
-
-  const formatDuration = useCallback((minutes: number) => {
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  }, []);
 
   const renderStars = useCallback((rating: number, serviceId?: string) => {
     return (
@@ -689,8 +681,6 @@ export default function MarketplacePage() {
                   key={service._id}
                   service={service}
                   viewMode={viewMode}
-                  formatPrice={formatPrice}
-                  formatDuration={formatDuration}
                   renderStars={renderStars}
                 />
               ))}
@@ -742,12 +732,10 @@ export default function MarketplacePage() {
 interface ServiceCardProps {
   service: Service;
   viewMode: "grid" | "list";
-  formatPrice: (price: number) => string;
-  formatDuration: (minutes: number) => string;
   renderStars: (rating: number, serviceId?: string) => React.ReactElement;
 }
 
-const ServiceCard = React.memo(function ServiceCard({ service, viewMode, formatPrice, formatDuration, renderStars }: ServiceCardProps) {
+const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderStars }: ServiceCardProps) {
   const providerName = service.provider ? `${service.provider.firstName} ${service.provider.lastName}` : 'Unknown Provider';
   const providerRating = service.provider?.profile?.rating || 0;
   const serviceRating = service.rating?.average || 0;
