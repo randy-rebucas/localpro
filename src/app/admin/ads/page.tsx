@@ -4,22 +4,18 @@ import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
+import Image from "next/image";
+import { isValidImageUrl, getPlaceholderImageUrl } from '@/lib/image-utils';
 import {
   Megaphone,
   Search,
   Filter,
   Eye,
   Edit,
-  Trash2,
   CheckCircle,
   Clock,
-  AlertCircle,
   X,
-  Star,
-  TrendingUp,
   DollarSign,
-  Users,
-  MapPin,
   RefreshCw,
   MoreHorizontal,
   Ban,
@@ -34,10 +30,76 @@ interface Advertiser {
   lastName: string;
   email: string;
   profile?: {
-    bio: string;
+    bio?: string;
     company?: string;
   };
   isVerified: boolean;
+}
+
+interface TargetAudience {
+  demographics: {
+    ageRange: [number, number];
+    gender: string[];
+    location: string[];
+    interests: string[];
+  };
+  behavior: {
+    userTypes: string[];
+    activityLevel: string;
+  };
+}
+
+interface Content {
+  callToAction: {
+    text: string;
+    url: string;
+  };
+  logo: {
+    url: string;
+    publicId: string;
+    thumbnail: string;
+  };
+  headline: string;
+  body: string;
+  images: Array<{
+    url: string;
+    publicId: string;
+    thumbnail: string;
+    _id: string;
+  }>;
+}
+
+interface Budget {
+  total: number;
+  daily: number;
+  currency: string;
+}
+
+interface Bidding {
+  strategy: string;
+}
+
+interface TimeSlot {
+  day: string;
+  startTime: string;
+  endTime: string;
+  _id: string;
+}
+
+interface Schedule {
+  startDate: string;
+  endDate: string;
+  timeSlots: TimeSlot[];
+}
+
+interface Performance {
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  spend: number;
+  ctr: number;
+  cpc: number;
+  cpm: number;
 }
 
 interface Ad {
@@ -45,40 +107,19 @@ interface Ad {
   title: string;
   description: string;
   category: string;
-  type: 'featured-listing' | 'sponsored-product' | 'training-school';
+  type: 'banner' | 'featured-listing' | 'sponsored-product' | 'training-school';
   status: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'rejected';
-  budget: number;
-  spent: number;
-  targetAudience: string[];
-  startDate: string;
-  endDate: string;
-  images: string[];
-  clickCount: number;
-  impressionCount: number;
-  ctr: number;
-  cpc: number;
-  cpm: number;
-  advertiser: Advertiser;
+  isActive: boolean;
+  targetAudience: TargetAudience;
+  content: Content;
+  budget: Budget;
+  bidding: Bidding;
+  schedule: Schedule;
+  performance: Performance;
+  advertiser: Advertiser | null;
   createdAt: string;
   updatedAt: string;
-  isPromoted: boolean;
-  priority: 'low' | 'medium' | 'high';
-  tags: string[];
-  location?: {
-    city: string;
-    state: string;
-    country: string;
-  };
-  rejectionReason?: string;
-}
-
-interface ApiResponse {
-  success: boolean;
-  count: number;
-  total: number;
-  page: number;
-  pages: number;
-  data: Ad[];
+  __v: number;
 }
 
 export default function AdminAdsPage() {
@@ -117,6 +158,7 @@ export default function AdminAdsPage() {
       const result = await response.json();
 
       if (result.success) {
+        // Use actual API data
         setAds(result.data);
         setPagination({
           count: result.count || 0,
@@ -126,128 +168,9 @@ export default function AdminAdsPage() {
         });
         setError(null);
       } else {
-        // Fallback to mock data for development
-        setAds([
-          {
-            _id: '1',
-            title: 'Premium Hardware Store - Downtown',
-            description: 'Your one-stop shop for all hardware needs. Quality tools, materials, and expert advice.',
-            category: 'Hardware Stores',
-            type: 'featured-listing',
-            status: 'active',
-            budget: 5000,
-            spent: 1250,
-            targetAudience: ['contractors', 'homeowners', 'professionals'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 245,
-            impressionCount: 12500,
-            ctr: 1.96,
-            cpc: 2.50,
-            cpm: 15.00,
-            advertiser: {
-              _id: '1',
-              firstName: 'John',
-              lastName: 'Smith',
-              email: 'john@downtownhardware.com',
-              isVerified: true,
-              profile: {
-                company: 'Downtown Hardware'
-              }
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: true,
-            priority: 'high',
-            tags: ['hardware', 'tools', 'materials'],
-            location: {
-              city: 'New York',
-              state: 'NY',
-              country: 'USA'
-            }
-          },
-          {
-            _id: '2',
-            title: 'Professional Cleaning Services',
-            description: 'Reliable and thorough cleaning services for offices and homes.',
-            category: 'Cleaning Services',
-            type: 'sponsored-product',
-            status: 'pending',
-            budget: 3000,
-            spent: 0,
-            targetAudience: ['businesses', 'homeowners'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 0,
-            impressionCount: 0,
-            ctr: 0,
-            cpc: 0,
-            cpm: 0,
-            advertiser: {
-              _id: '2',
-              firstName: 'Sarah',
-              lastName: 'Johnson',
-              email: 'sarah@cleanpro.com',
-              isVerified: false,
-              profile: {
-                company: 'CleanPro Services'
-              }
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: false,
-            priority: 'medium',
-            tags: ['cleaning', 'professional', 'reliable'],
-            location: {
-              city: 'Los Angeles',
-              state: 'CA',
-              country: 'USA'
-            }
-          },
-          {
-            _id: '3',
-            title: 'Electrical Training Academy',
-            description: 'Certified electrical training programs for professionals.',
-            category: 'Training Schools',
-            type: 'training-school',
-            status: 'rejected',
-            budget: 2000,
-            spent: 0,
-            targetAudience: ['electricians', 'students', 'professionals'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 0,
-            impressionCount: 0,
-            ctr: 0,
-            cpc: 0,
-            cpm: 0,
-            advertiser: {
-              _id: '3',
-              firstName: 'Mike',
-              lastName: 'Wilson',
-              email: 'mike@electrotech.com',
-              isVerified: false,
-              profile: {
-                company: 'ElectroTech Academy'
-              }
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: false,
-            priority: 'low',
-            tags: ['training', 'electrical', 'certification'],
-            location: {
-              city: 'Chicago',
-              state: 'IL',
-              country: 'USA'
-            },
-            rejectionReason: 'Incomplete documentation'
-          }
-        ]);
-        setError("Using mock data - API not available");
+        // Handle API errors
+        setAds([]);
+        setError(result.message || "Failed to fetch ads data");
       }
     } catch (error) {
       console.error("Error fetching ads:", error);
@@ -259,16 +182,39 @@ export default function AdminAdsPage() {
   };
 
   if (status === "loading" || loading) {
-    return <Loading text="Loading ads management" fullScreen />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="xl" text="Loading ads management..." />
+      </div>
+    );
   }
 
   if (!session) {
     return null;
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600">{error}</p>
+          <button 
+            onClick={() => fetchAds()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const filteredAds = ads.filter(ad => {
     const matchesSearch = ad.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ad.content?.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ad.content?.body?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.advertiser?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ad.advertiser?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "all" || ad.category === filterCategory;
@@ -281,18 +227,17 @@ export default function AdminAdsPage() {
   const totalAds = ads.length;
   const activeAds = ads.filter(ad => ad.status === 'active').length;
   const pendingAds = ads.filter(ad => ad.status === 'pending').length;
-  const totalBudget = ads.reduce((sum, ad) => sum + ad.budget, 0);
-  const totalSpent = ads.reduce((sum, ad) => sum + ad.spent, 0);
+  const totalBudget = ads.reduce((sum, ad) => sum + (ad.budget?.total || 0), 0);
 
   const getStatusColor = (status: Ad['status']) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'paused': return 'bg-gray-100 text-gray-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'draft': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'text-green-600 bg-green-100';
+      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'paused': return 'text-gray-600 bg-gray-100';
+      case 'expired': return 'text-red-600 bg-red-100';
+      case 'rejected': return 'text-red-600 bg-red-100';
+      case 'draft': return 'text-blue-600 bg-blue-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -319,10 +264,17 @@ export default function AdminAdsPage() {
       });
 
       if (response.ok) {
-        // Update local state
-        setAds(ads.map(ad =>
-          ad._id === adId ? { ...ad, status: newStatus } : ad
-        ));
+        const result = await response.json();
+        if (result.success) {
+          // Update local state with the updated ad data
+          setAds(ads.map(ad =>
+            ad._id === adId ? { ...ad, ...result.data } : ad
+          ));
+        } else {
+          console.error('Failed to update ad status:', result.message);
+        }
+      } else {
+        console.error('Failed to update ad status:', response.statusText);
       }
     } catch (error) {
       console.error('Error updating ad status:', error);
@@ -334,6 +286,10 @@ export default function AdminAdsPage() {
     setFilterCategory("all");
     setFilterStatus("all");
     setFilterType("all");
+  };
+
+  const refreshData = () => {
+    fetchAds(pagination.page);
   };
 
   const hasActiveFilters = () => {
@@ -355,7 +311,7 @@ export default function AdminAdsPage() {
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           <button
-            onClick={() => fetchAds(pagination.page)}
+            onClick={refreshData}
             className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 hover:shadow-md"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -412,17 +368,10 @@ export default function AdminAdsPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
-              {hasActiveFilters() && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {filteredAds.length} result{filteredAds.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
             <div className="flex items-center space-x-2">
               {hasActiveFilters() && (
                 <button
@@ -435,13 +384,10 @@ export default function AdminAdsPage() {
               )}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${showFilters
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <Filter className="w-3 h-3 mr-1" />
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
+                {showFilters ? 'Hide' : 'Show'} Filters
               </button>
             </div>
           </div>
@@ -461,7 +407,7 @@ export default function AdminAdsPage() {
                       placeholder="Search by title, description, or advertiser..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
                     {searchTerm && (
                       <button
@@ -478,7 +424,7 @@ export default function AdminAdsPage() {
                   <select
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="all">All Categories</option>
                     <option value="Hardware Stores">Hardware Stores</option>
@@ -497,7 +443,7 @@ export default function AdminAdsPage() {
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="all">All Status</option>
                     <option value="draft">Draft</option>
@@ -513,7 +459,7 @@ export default function AdminAdsPage() {
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="all">All Types</option>
                     <option value="featured-listing">Featured Listing</option>
@@ -534,7 +480,7 @@ export default function AdminAdsPage() {
             <h3 className="text-sm font-medium text-gray-900">All Ads</h3>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => fetchAds(pagination.page)}
+                onClick={refreshData}
                 className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
@@ -551,6 +497,9 @@ export default function AdminAdsPage() {
                   Ad Details
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Target Audience
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Advertiser
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -558,6 +507,9 @@ export default function AdminAdsPage() {
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Performance
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Schedule
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -570,11 +522,18 @@ export default function AdminAdsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredAds.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center">
+                  <td colSpan={8} className="px-3 py-8 text-center">
                     <div className="text-center">
                       <Megaphone className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">No ads found</h3>
-                      <p className="text-xs text-gray-500">Try adjusting your search or filters.</p>
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">
+                        {ads.length === 0 ? 'No ads available' : 'No ads found'}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        {ads.length === 0 
+                          ? 'No advertising campaigns have been created yet.' 
+                          : 'Try adjusting your search or filters.'
+                        }
+                      </p>
                     </div>
                   </td>
                 </tr>
@@ -584,24 +543,46 @@ export default function AdminAdsPage() {
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex items-center">
                         <div className="h-8 w-8 flex-shrink-0">
-                          <div className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center">
-                            <Megaphone className="w-4 h-4 text-gray-500" />
-                          </div>
+                          {ad.content?.logo?.thumbnail && isValidImageUrl(ad.content.logo.thumbnail) ? (
+                            <Image 
+                              src={ad.content.logo.thumbnail} 
+                              alt="Ad logo" 
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 rounded object-cover"
+                            />
+                          ) : (
+                            <Image 
+                              src={getPlaceholderImageUrl(32, 32, 'Ad')} 
+                              alt="Ad logo placeholder" 
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 rounded object-cover"
+                            />
+                          )}
                         </div>
                         <div className="ml-3">
                           <div className="text-xs font-medium text-gray-900">
                             {ad.title}
                           </div>
                           <div className="text-xs text-gray-500 max-w-xs truncate">
-                            {ad.description}
+                            {ad.content?.headline || ad.description}
                           </div>
-                          <div className="flex items-center mt-1">
+                          <div className="text-xs text-gray-500 max-w-xs truncate">
+                            {ad.content?.body}
+                          </div>
+                          <div className="flex items-center mt-1 flex-wrap gap-1">
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-purple-600 bg-purple-100">
                               {ad.category}
                             </span>
-                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
                               {ad.type}
                             </span>
+                            {ad.content?.callToAction && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-100">
+                                CTA: {ad.content.callToAction.text}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -609,49 +590,103 @@ export default function AdminAdsPage() {
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div>
                         <div className="text-xs font-medium text-gray-900">
-                          {ad.advertiser?.firstName} {ad.advertiser?.lastName}
+                          Age: {ad.targetAudience?.demographics?.ageRange?.[0]}-{ad.targetAudience?.demographics?.ageRange?.[1]}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {ad.advertiser?.email}
+                          Gender: {ad.targetAudience?.demographics?.gender?.join(', ')}
                         </div>
-                        <div className="flex items-center mt-1">
-                          {ad.advertiser?.isVerified ? (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-100">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100">
-                              Unverified
-                            </span>
-                          )}
+                        <div className="text-xs text-gray-500">
+                          Location: {ad.targetAudience?.demographics?.location?.join(', ')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Interests: {ad.targetAudience?.demographics?.interests?.join(', ')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          User Types: {ad.targetAudience?.behavior?.userTypes?.join(', ')}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Activity: {ad.targetAudience?.behavior?.activityLevel}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        {ad.advertiser ? (
+                          <>
+                            <div className="text-xs font-medium text-gray-900">
+                              {ad.advertiser.firstName} {ad.advertiser.lastName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {ad.advertiser.email}
+                            </div>
+                            <div className="flex items-center mt-1">
+                              {ad.advertiser.isVerified ? (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-100">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Verified
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-gray-600 bg-gray-100">
+                                  Unverified
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-xs text-gray-500 italic">
+                            No advertiser assigned
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <div className="text-xs font-medium text-gray-900">
+                          ${ad.budget?.total?.toLocaleString() || '0'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Daily: ${ad.budget?.daily?.toLocaleString() || '0'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Currency: {ad.budget?.currency || 'USD'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Spent: ${ad.performance?.spend?.toLocaleString() || '0'}
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div>
                         <div className="text-xs font-medium text-gray-900">
-                          ${ad.budget.toLocaleString()}
+                          {ad.performance?.clicks?.toLocaleString() || '0'} clicks
                         </div>
                         <div className="text-xs text-gray-500">
-                          Spent: ${ad.spent.toLocaleString()}
+                          {ad.performance?.impressions?.toLocaleString() || '0'} impressions
                         </div>
                         <div className="text-xs text-gray-500">
-                          Remaining: ${(ad.budget - ad.spent).toLocaleString()}
+                          CTR: {ad.performance?.ctr?.toFixed(2) || '0.00'}%
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Conversions: {ad.performance?.conversions?.toLocaleString() || '0'}
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div>
                         <div className="text-xs font-medium text-gray-900">
-                          {ad.clickCount.toLocaleString()} clicks
+                          Start: {new Date(ad.schedule?.startDate || '').toLocaleDateString()}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {ad.impressionCount.toLocaleString()} impressions
+                          End: {new Date(ad.schedule?.endDate || '').toLocaleDateString()}
                         </div>
                         <div className="text-xs text-gray-500">
-                          CTR: {ad.ctr.toFixed(2)}%
+                          Time Slots: {ad.schedule?.timeSlots?.length || 0}
                         </div>
+                        {ad.schedule?.timeSlots?.slice(0, 2).map((slot, index) => (
+                          <div key={index} className="text-xs text-gray-500">
+                            {slot.day}: {slot.startTime}-{slot.endTime}
+                          </div>
+                        ))}
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
@@ -660,15 +695,15 @@ export default function AdminAdsPage() {
                           {getStatusIcon(ad.status)}
                           <span className="ml-1 capitalize">{ad.status}</span>
                         </span>
-                        {ad.isPromoted && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-yellow-600 bg-yellow-100">
-                            <Star className="w-3 h-3 mr-1" />
-                            Promoted
+                        {ad.isActive && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-100">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Active
                           </span>
                         )}
-                        {ad.rejectionReason && (
+                        {ad.status === 'rejected' && (
                           <span className="text-xs text-red-600">
-                            {ad.rejectionReason}
+                            Rejected - Review required
                           </span>
                         )}
                       </div>

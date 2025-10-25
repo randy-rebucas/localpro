@@ -1,60 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { 
+  makeAuthenticatedRequestWithPath, 
+  handleApiRoute, 
+  createErrorResponse 
+} from '@/lib/api-auth-utils';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
+  const result = await handleApiRoute(async () => {
     const { id } = params;
     const body = await request.json();
     const { status, rejectionReason } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: 'Ad ID is required' },
-        { status: 400 }
-      );
+      throw new Error('Ad ID is required');
     }
 
     if (!status) {
-      return NextResponse.json(
-        { success: false, error: 'Status is required' },
-        { status: 400 }
-      );
+      throw new Error('Status is required');
     }
 
     const validStatuses = ['draft', 'pending', 'active', 'paused', 'expired', 'rejected'];
     if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid status' },
-        { status: 400 }
-      );
+      throw new Error('Invalid status');
     }
 
-    // TODO: Implement actual database update
-    // For now, return success response
-    console.log(`Updating ad ${id} status to ${status}`, { rejectionReason });
-
-    return NextResponse.json({
-      success: true,
-      message: `Ad status updated to ${status}`,
-      data: {
-        id,
-        status,
-        rejectionReason,
-        updatedAt: new Date().toISOString()
+    // Make authenticated request to update ad status
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'adsById',
+      [id, 'status'], // Path parameters: ad ID and status endpoint
+      {},
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status, rejectionReason }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
 
-  } catch (error) {
-    console.error('Error updating ad status:', error);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  }, "Ad status update");
+
+  if (result.error) {
     return NextResponse.json(
       { 
         success: false, 
-        error: 'Failed to update ad status',
-        message: 'An error occurred while updating the advertisement status'
+        error: result.error, 
+        details: result.details 
       },
-      { status: 500 }
+      { status: result.status }
     );
   }
+
+  return NextResponse.json(result.data);
 }

@@ -203,6 +203,10 @@ const getStatusColor = (status: string) => {
 - [ ] Mobile responsiveness
 - [ ] Color consistency
 - [ ] Accessibility features
+- [ ] **Linting**: No ESLint errors or warnings
+- [ ] **TypeScript**: No type errors
+- [ ] **Testing**: Component renders without errors
+- [ ] **Performance**: No console errors or warnings
 
 ### 🚀 REQUIRED IMPORTS
 ```tsx
@@ -296,6 +300,143 @@ export default function AdminFeaturePage() {
 - Don't use `rounded-lg` - use `rounded` for consistency
 - Don't use `shadow-lg` - use `shadow` for subtlety
 
+### 🔧 LINTING & CODE QUALITY
+
+**Required Linting Checks:**
+```bash
+# Run ESLint to check for errors
+npm run lint
+
+# Run TypeScript compiler to check for type errors
+npx tsc --noEmit
+
+# Check for unused imports and variables
+npx eslint --ext .ts,.tsx src/ --fix
+```
+
+**Common Linting Issues to Fix:**
+- Remove unused imports and variables
+- Fix TypeScript type errors
+- Ensure proper prop types for components
+- Fix missing dependencies in useEffect hooks
+- Remove console.log statements
+- Fix accessibility issues (missing alt text, aria labels)
+
+**Linting Rules to Follow:**
+```tsx
+// ✅ Good: Proper TypeScript interfaces
+interface ComponentProps {
+  data: DataType[];
+  loading: boolean;
+  onAction: (id: string) => void;
+}
+
+// ✅ Good: Proper error handling
+try {
+  const result = await fetchData();
+  setData(result);
+} catch (error) {
+  console.error('Error:', error);
+  setError('Failed to load data');
+}
+
+// ❌ Bad: Any types and console.logs
+const handleClick = (data: any) => {
+  console.log(data);
+  // Missing error handling
+};
+```
+
+### 🧪 TESTING REQUIREMENTS
+
+**Component Testing Checklist:**
+- [ ] Component renders without errors
+- [ ] Loading state displays correctly
+- [ ] Error state displays correctly
+- [ ] Empty state displays correctly
+- [ ] Data displays correctly when loaded
+- [ ] Interactive elements work (buttons, forms, filters)
+- [ ] Responsive design works on mobile and desktop
+
+**Manual Testing Steps:**
+```tsx
+// 1. Test component rendering
+import { render, screen } from '@testing-library/react';
+import AdminFeaturePage from './page';
+
+test('renders without crashing', () => {
+  render(<AdminFeaturePage />);
+  expect(screen.getByText('Feature Title')).toBeInTheDocument();
+});
+
+// 2. Test loading state
+test('shows loading state', () => {
+  render(<AdminFeaturePage loading={true} />);
+  expect(screen.getByText('Loading...')).toBeInTheDocument();
+});
+
+// 3. Test error state
+test('shows error state', () => {
+  render(<AdminFeaturePage error="Test error" />);
+  expect(screen.getByText('Test error')).toBeInTheDocument();
+});
+```
+
+**Performance Testing:**
+- [ ] No memory leaks in useEffect hooks
+- [ ] Proper cleanup of event listeners
+- [ ] No unnecessary re-renders
+- [ ] Images load properly
+- [ ] No console errors or warnings
+
+**Accessibility Testing:**
+- [ ] All interactive elements are keyboard accessible
+- [ ] Proper ARIA labels and roles
+- [ ] Color contrast meets WCAG standards
+- [ ] Screen reader compatibility
+
+### 🚀 DEVELOPMENT WORKFLOW
+
+**Before Committing:**
+1. **Lint Check**: `npm run lint`
+2. **Type Check**: `npx tsc --noEmit`
+3. **Test Run**: `npm test` (if tests exist)
+4. **Manual Testing**: Test all user interactions
+5. **Performance Check**: Check browser console for errors
+6. **Accessibility Check**: Test with keyboard navigation
+
+**Code Quality Standards:**
+```tsx
+// ✅ Good: Clean, readable code
+const handleStatusChange = async (id: string, status: string) => {
+  try {
+    setLoading(true);
+    const response = await updateStatus(id, status);
+    if (response.success) {
+      setData(prev => prev.map(item => 
+        item.id === id ? { ...item, status } : item
+      ));
+    }
+  } catch (error) {
+    setError('Failed to update status');
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ❌ Bad: Messy, hard to read code
+const handleStatusChange = async (id, status) => {
+  setLoading(true);
+  try {
+    const response = await updateStatus(id, status);
+    setData(data.map(item => item.id === id ? {...item, status} : item));
+  } catch (error) {
+    console.log(error);
+  }
+  setLoading(false);
+};
+```
+
 Remember: The audit page (`src/app/admin/audit/page.tsx`) is the gold standard. Match its styling patterns exactly for consistency across all admin pages.
 ```
 
@@ -308,6 +449,49 @@ Remember: The audit page (`src/app/admin/audit/page.tsx`) is the gold standard. 
 3. **Follow the patterns exactly as specified**
 4. **Use the checklist to ensure nothing is missed**
 5. **Reference the audit page for visual confirmation**
+6. **Run linting checks before committing**
+7. **Test all functionality manually**
+
+## 🧪 Testing the Current Implementation
+
+**Test the Ads Page (`src/app/admin/ads/page.tsx`):**
+
+```bash
+# 1. Check for linting errors
+npm run lint src/app/admin/ads/page.tsx
+
+# 2. Check TypeScript types
+npx tsc --noEmit src/app/admin/ads/page.tsx
+
+# 3. Test component rendering
+npm run dev
+# Navigate to /admin/ads and verify:
+# - Page loads without errors
+# - Stats cards display correctly
+# - Filter section works
+# - Data table renders properly
+# - All buttons are clickable
+# - Responsive design works on mobile
+```
+
+**Manual Testing Checklist for Ads Page:**
+- [ ] Page header displays with gradient text
+- [ ] Stats cards show correct data with border-left accents
+- [ ] Filter section toggles show/hide properly
+- [ ] Search functionality works
+- [ ] Category, status, and type filters work
+- [ ] Data table displays all columns correctly
+- [ ] Target audience data shows properly
+- [ ] Budget information displays correctly
+- [ ] Performance metrics show correctly
+- [ ] Schedule information displays properly
+- [ ] Status badges have correct colors
+- [ ] Action buttons work (view, approve, reject, pause, resume)
+- [ ] Loading state displays correctly
+- [ ] Error state displays correctly
+- [ ] Empty state displays when no data
+- [ ] Mobile responsive design works
+- [ ] All interactive elements are keyboard accessible
 
 ## 📚 Additional Resources
 
@@ -316,4 +500,4 @@ Remember: The audit page (`src/app/admin/audit/page.tsx`) is the gold standard. 
 - **Implementation Guide**: `ADMIN_IMPLEMENTATION_GUIDE.md`
 - **Reference Page**: `src/app/admin/audit/page.tsx`
 
-This prompt ensures that every new admin feature will have consistent, professional styling that matches the established audit page patterns.
+This prompt ensures that every new admin feature will have consistent, professional styling that matches the established audit page patterns, with proper linting, testing, and code quality standards.
