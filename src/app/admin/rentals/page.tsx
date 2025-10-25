@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
 import EmptyState from "@/components/ui/empty-state";
-import { Card } from "@/components/ui/card";
-import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { 
   Home, 
   Plus, 
@@ -22,15 +20,117 @@ import {
   Users
 } from "lucide-react";
 
-interface Rental {
-  id: string;
-  name?: string;
-  description?: string;
-  category?: string;
-  dailyRate?: string;
-  location?: string;
-  rating?: string;
+interface Pricing {
+  hourly: number;
+  daily: number;
+  weekly: number;
+  monthly: number;
+  currency: string;
 }
+
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface Location {
+  address: Address;
+  pickupRequired: boolean;
+  deliveryAvailable: boolean;
+  deliveryFee: number;
+}
+
+interface Dimensions {
+  unit: string;
+}
+
+interface Weight {
+  unit: string;
+}
+
+interface Specifications {
+  dimensions: Dimensions;
+  weight: Weight;
+  brand: string;
+  model: string;
+  condition: string;
+  features: string[];
+}
+
+interface Requirements {
+  minAge: number;
+  licenseRequired: boolean;
+  deposit: number;
+  insuranceRequired: boolean;
+}
+
+interface Maintenance {
+  serviceHistory: any[];
+}
+
+interface Rating {
+  average: number;
+  count: number;
+}
+
+interface Owner {
+  profile: {
+    rating: number;
+  };
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface Availability {
+  isAvailable: boolean;
+  schedule: any[];
+}
+
+interface Rental {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  pricing: Pricing;
+  availability: Availability;
+  location: Location;
+  specifications: Specifications;
+  requirements: Requirements;
+  maintenance: Maintenance;
+  rating: Rating;
+  owner: Owner;
+  isActive: boolean;
+  images: any[];
+  documents: any[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+interface ApiResponse {
+  success: boolean;
+  count: number;
+  total: number;
+  page: number;
+  pages: number;
+  data: Rental[];
+}
+
+// Status badge color function
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'success': return 'text-green-600 bg-green-100';
+    case 'warning': return 'text-yellow-600 bg-yellow-100';
+    case 'error': return 'text-red-600 bg-red-100';
+    case 'info': return 'text-blue-600 bg-blue-100';
+    default: return 'text-gray-600 bg-gray-100';
+  }
+};
 
 export default function RentalsAdmin() {
   const { data: session, status } = useSession();
@@ -55,10 +155,17 @@ export default function RentalsAdmin() {
     try {
       setLoading(true);
       const response = await fetch("/api/rentals");
-      const data = await response.json();
-      setRentals(data);
+      const apiResponse: ApiResponse = await response.json();
+      
+      if (apiResponse.success && apiResponse.data) {
+        setRentals(apiResponse.data);
+      } else {
+        console.error("Failed to fetch rentals:", apiResponse);
+        setRentals([]);
+      }
     } catch (error) {
       console.error("Error fetching rentals:", error);
+      setRentals([]);
     } finally {
       setLoading(false);
     }
@@ -74,211 +181,309 @@ export default function RentalsAdmin() {
 
   const filteredRentals = rentals.filter(rental => {
     const matchesSearch = rental.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         rental.description?.toLowerCase().includes(searchTerm.toLowerCase());
+                         rental.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         rental.specifications.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         rental.specifications.model?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "all" || rental.category === filterCategory;
     return matchesSearch && matchesCategory;
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
-              <a href="/admin" className="text-gray-500 hover:text-gray-700">
-                ← Back to Admin
-              </a>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-700 flex items-center">
-                  <Home className="w-8 h-8 mr-3 text-orange-600" />
-                  Rentals Management
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Manage rental items, bookings, and availability
-                </p>
-              </div>
-            </div>
-            <button className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Rental
-            </button>
-          </div>
+    <div className="space-y-4">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            Rentals Management
+          </h1>
+          <p className="text-gray-600 text-sm">Manage rental items, bookings, and availability</p>
         </div>
-      </header>
+        <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+          <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 hover:shadow-md">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Rental
+          </button>
+        </div>
+      </div>
 
       {/* Stats Overview */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Home className="w-6 h-6 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Rentals</p>
-                <p className="text-2xl font-bold text-gray-700">{rentals.length}</p>
-              </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500">Total Rentals</p>
+              <p className="text-lg font-bold text-gray-900">{rentals.length}</p>
+              <p className="text-xs text-gray-500">All items</p>
             </div>
+            <Home className="w-5 h-5 text-blue-600" />
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Bookings</p>
-                <p className="text-2xl font-bold text-gray-700">89</p>
-              </div>
+        </div>
+        
+        <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500">Available Items</p>
+              <p className="text-lg font-bold text-gray-900">
+                {rentals.filter(rental => rental.availability.isAvailable).length}
+              </p>
+              <p className="text-xs text-gray-500">Ready to rent</p>
             </div>
+            <Calendar className="w-5 h-5 text-green-600" />
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Revenue</p>
-                <p className="text-2xl font-bold text-gray-700">$8,945</p>
-              </div>
+        </div>
+        
+        <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500">Avg Daily Rate</p>
+              <p className="text-lg font-bold text-gray-900">
+                ${rentals.length > 0 ? (rentals.reduce((sum, rental) => sum + rental.pricing.daily, 0) / rentals.length).toFixed(0) : "0"}
+              </p>
+              <p className="text-xs text-gray-500">Per day</p>
             </div>
+            <DollarSign className="w-5 h-5 text-purple-600" />
           </div>
-          
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Providers</p>
-                <p className="text-2xl font-bold text-gray-700">23</p>
-              </div>
+        </div>
+        
+        <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-gray-500">Providers</p>
+              <p className="text-lg font-bold text-gray-900">
+                {new Set(rentals.map(rental => rental.owner._id)).size}
+              </p>
+              <p className="text-xs text-gray-500">Active owners</p>
+            </div>
+            <Users className="w-5 h-5 text-yellow-600" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters and Search */}
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+            <div className="flex items-center space-x-2">
+              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <Filter className="w-3 h-3 mr-1" />
+                Show Filters
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Filters and Search */}
-        <Card className="mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
                 <input
                   type="text"
                   placeholder="Search rentals..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
-            <div className="flex gap-4">
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-              >
-                <option value="all">All Categories</option>
-                <option value="equipment">Equipment</option>
-                <option value="tools">Tools</option>
-                <option value="vehicles">Vehicles</option>
-                <option value="machinery">Machinery</option>
-              </select>
-              <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center">
-                <Filter className="w-4 h-4 mr-2" />
-                Filters
+            <div className="flex gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="tools">Tools</option>
+                  <option value="equipment">Equipment</option>
+                  <option value="vehicles">Vehicles</option>
+                  <option value="machinery">Machinery</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="furniture">Furniture</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rentals Table */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Rental Items</h3>
+            <div className="flex items-center space-x-2">
+              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <Filter className="w-3 h-3 mr-1" />
+                Sort
               </button>
             </div>
           </div>
-        </Card>
-
-        {/* Rentals Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Table>
-            <THead>
-              <Tr>
-                <Th>Rental Item</Th>
-                <Th>Category</Th>
-                <Th>Daily Rate</Th>
-                <Th>Location</Th>
-                <Th>Rating</Th>
-                <Th>Status</Th>
-                <Th>Actions</Th>
-              </Tr>
-            </THead>
-            <TBody>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rental Item
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Pricing
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Location
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Specifications
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Availability
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rating
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Owner
+                </th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
               {filteredRentals.length === 0 ? (
-                <TableEmptyRow colSpan={7}>
-                  <EmptyState
-                    title="No rentals found"
-                    description="Try adjusting your search or filters."
-                    icon={Home}
-                    iconColor="text-gray-400"
-                  />
-                </TableEmptyRow>
+                <tr>
+                  <td colSpan={9} className="px-3 py-8 text-center">
+                    <div className="text-center">
+                      <Home className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">No rentals found</h3>
+                      <p className="text-xs text-gray-500">Try adjusting your search or filters.</p>
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 filteredRentals.map((rental, index) => (
-                  <Tr key={index}>
-                    <Td>
+                  <tr key={rental._id || index} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex items-center">
-                        <div className="h-10 w-10 flex-shrink-0">
-                          <div className="h-10 w-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                            <Home className="w-5 h-5 text-gray-500" />
+                        <div className="h-8 w-8 flex-shrink-0">
+                          <div className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center">
+                            <Home className="w-4 h-4 text-gray-500" />
                           </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-700">
-                            {rental.name || "Sample Rental"}
+                        <div className="ml-3">
+                          <div className="text-xs font-medium text-gray-900">
+                            {rental.name}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {rental.description || "Rental description"}
+                          <div className="text-xs text-gray-500">
+                            {rental.description}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {rental.subcategory}
                           </div>
                         </div>
                       </div>
-                    </Td>
-                    <Td>
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                        {rental.category || "Equipment"}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {rental.category}
                       </span>
-                    </Td>
-                    <Td>${rental.dailyRate || "45.00"}/day</Td>
-                    <Td>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <div className="font-medium">${rental.pricing.daily}/{rental.pricing.currency}</div>
+                        <div className="text-xs text-gray-500">
+                          ${rental.pricing.hourly}/hr • ${rental.pricing.weekly}/wk
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          ${rental.pricing.monthly}/mo
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <div className="flex items-center">
+                          <MapPin className="w-3 h-3 text-gray-400 mr-1" />
+                          <span className="font-medium">{rental.location.address.city}, {rental.location.address.state}</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {rental.location.address.street}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {rental.location.pickupRequired ? "Pickup required" : "Delivery available"}
+                          {rental.location.deliveryAvailable && rental.location.deliveryFee > 0 && 
+                            ` • $${rental.location.deliveryFee} delivery fee`}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <div className="font-medium">{rental.specifications.brand} {rental.specifications.model}</div>
+                        <div className="text-xs text-gray-500">
+                          Condition: {rental.specifications.condition}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {rental.specifications.features.slice(0, 2).join(", ")}
+                          {rental.specifications.features.length > 2 && "..."}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                          rental.availability.isAvailable 
+                            ? "text-green-600 bg-green-100" 
+                            : "text-red-600 bg-red-100"
+                        }`}>
+                          {rental.availability.isAvailable ? "Available" : "Unavailable"}
+                        </span>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {rental.availability.schedule.length > 0 ? "Scheduled" : "Open"}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex items-center">
-                        <MapPin className="w-4 h-4 text-gray-400 mr-1" />
-                        {rental.location || "Manila, PH"}
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="ml-1 text-xs text-gray-700">
+                          {rental.rating.average > 0 ? rental.rating.average.toFixed(1) : "No rating"}
+                        </span>
+                        <span className="text-xs text-gray-500 ml-1">
+                          ({rental.rating.count})
+                        </span>
                       </div>
-                    </Td>
-                    <Td>
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-700">{rental.rating || "4.7"}</span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div>
+                        <div className="font-medium">{rental.owner.firstName} {rental.owner.lastName}</div>
+                        <div className="text-xs text-gray-500">
+                          Rating: {rental.owner.profile.rating > 0 ? rental.owner.profile.rating.toFixed(1) : "New"}
+                        </div>
                       </div>
-                    </Td>
-                    <Td>
-                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Available
-                      </span>
-                    </Td>
-                    <Td>
-                      <div className="flex space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900">
-                          <Eye className="w-4 h-4" />
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      <div className="flex space-x-1">
+                        <button className="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500" title="View Details">
+                          <Eye className="w-3 h-3" />
                         </button>
-                        <button className="text-green-600 hover:text-green-900">
-                          <Edit className="w-4 h-4" />
+                        <button className="text-green-600 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500" title="Edit Rental">
+                          <Edit className="w-3 h-3" />
                         </button>
-                        <button className="text-red-600 hover:text-red-900">
-                          <Trash2 className="w-4 h-4" />
+                        <button className="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500" title="Delete Rental">
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
-                    </Td>
-                  </Tr>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TBody>
-          </Table>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
