@@ -241,7 +241,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               }
             }}
           >
-            <item.icon className="w-5 h-5 mr-3" />
+            <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
             <span>{item.name}</span>
             {item.badge && (
               <span className="ml-auto bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
@@ -253,12 +253,12 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {hasChildren && (
             <button
               onClick={() => toggleExpanded(item.name)}
-              className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
+              className="p-2 hover:bg-gray-100 rounded transition-colors duration-200 ml-2"
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-5 h-5 text-gray-600 hover:text-gray-800" />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-5 h-5 text-gray-600 hover:text-gray-800" />
               )}
             </button>
           )}
@@ -296,15 +296,15 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 <span className="text-white font-bold text-sm">N</span>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-800">Admin Panel</h2>
-                <p className="text-sm text-gray-500">LocalPro Management</p>
+                <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
+                <p className="text-sm font-medium text-gray-600">LocalPro Management</p>
               </div>
             </div>
             <button
               onClick={onClose}
               className="lg:hidden p-1 hover:bg-gray-100 rounded transition-colors duration-200"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
           </div>
           
@@ -315,7 +315,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           
           {/* Footer */}
           <div className="p-3">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs font-medium text-gray-600">
               <p>LocalPro Admin v1.0</p>
               <p>© 2024 LocalPro</p>
             </div>

@@ -244,13 +244,13 @@ export default function UsersPage() {
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
                 <input
                   type="text"
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -260,7 +260,7 @@ export default function UsersPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-3 text-sm font-medium text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Roles</option>
                 <option value="client">Client</option>
@@ -278,7 +278,7 @@ export default function UsersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-3 text-sm font-medium text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -330,8 +330,8 @@ export default function UsersPage() {
                         )}
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-sm font-medium text-gray-600">{user.email}</div>
                       </div>
                     </div>
                   </td>
@@ -345,35 +345,35 @@ export default function UsersPage() {
                       {user.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                     <div className="space-y-1">
                       {user.phone && (
                         <div className="flex items-center">
-                          <Phone className="w-3 h-3 mr-1" />
+                          <Phone className="w-4 h-4 mr-2 text-gray-500" />
                           <span>{user.phone}</span>
                         </div>
                       )}
                       {user.location && (
                         <div className="flex items-center">
-                          <MapPin className="w-3 h-3 mr-1" />
+                          <MapPin className="w-4 h-4 mr-2 text-gray-500" />
                           <span>{user.location}</span>
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                     {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
-                      <button className="text-blue-600 hover:text-blue-900">
-                        <Edit className="w-4 h-4" />
+                      <button className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50">
+                        <Edit className="w-5 h-5" />
                       </button>
-                      <button className="text-green-600 hover:text-green-900">
-                        <Shield className="w-4 h-4" />
+                      <button className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50">
+                        <Shield className="w-5 h-5" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        <Trash2 className="w-4 h-4" />
+                      <button className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50">
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
                   </td>

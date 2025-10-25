@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       }, { method: 'GET' }),
       
       // Logs statistics
-      makeAuthenticatedRequestWithPath(request, 'logs', ['stats'], {}, { method: 'GET' })
+      makeAuthenticatedRequestWithPath(request, 'logsStats', [], {}, { method: 'GET' })
     ]);
 
     // Process analytics overview
@@ -148,9 +148,9 @@ export async function GET(request: NextRequest) {
     try {
       const activityResponse = await makeAuthenticatedRequestWithPath(
         request, 
-        'logs', 
-        ['user', session.user.id, 'activity'], 
-        { limit: 10 }, 
+        'logsUserActivity', 
+        [session.user.id], 
+        { limit: '10' }, 
         { method: 'GET' }
       );
       

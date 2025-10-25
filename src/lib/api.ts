@@ -303,5 +303,15 @@ export const API_ENDPOINTS = {
   activitiesMetadata: "/api/activities/metadata",
   activitiesUserById: "/api/activities/user/[userId]",
 
+  // Logs & System Monitoring
+  logs: "/api/logs",
+  logsStats: "/api/logs/stats",
+  logsUser: "/api/logs/user",
+  logsUserActivity: "/api/logs/user/[userId]/activity",
+  logsDashboardSummary: "/api/logs/dashboard/summary",
+  logsAnalyticsPerformance: "/api/logs/analytics/performance",
+  logsAnalyticsErrorTrends: "/api/logs/analytics/error-trends",
+  logsSearchGlobal: "/api/logs/search/global",
+
   usersById: "/api/users",
 } as const;

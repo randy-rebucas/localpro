@@ -104,6 +104,8 @@ export async function makeAuthenticatedRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   const fetchOptions = await createAuthenticatedFetchOptions(request, options);
+  console.log('fetchOptions', fetchOptions);
+  console.log('url', url);
   return fetch(url, fetchOptions);
 }
 
