@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { useRoleAccess } from "@/components/role-guard";
+import { useSession } from "@/hooks/useAuth";
 
 interface DashboardStats {
   totalUsers: number;
@@ -74,6 +75,7 @@ export default function AdminDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [showDevTools, setShowDevTools] = useState(false);
   const roleAccess = useRoleAccess();
+  const { data: session } = useSession();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -81,120 +83,31 @@ export default function AdminDashboard() {
         setLoading(true);
         setError(null);
 
-        // Use mock data for now since API endpoints may not exist
-        // In production, replace with actual API calls
-        const mockStatsData = {
-          totalUsers: 1234,
-          activeServices: 567,
-          totalRevenue: 45678,
-          growthRate: 12.5,
-          pendingApprovals: 23,
-          systemHealth: 'Good',
-          newUsersToday: 45,
-          activeBookings: 234,
-          conversionRate: 3.2,
-          avgResponseTime: 1.2,
-          serverUptime: 99.9,
-          errorRate: 0.1
-        };
-
-        const mockActivityData = {
-          recentActivity: [
-            {
-              id: '1',
-              type: 'user_registration',
-              description: 'New user registered',
-              timestamp: new Date().toISOString(),
-              user: 'System',
-              status: 'success' as const,
-              priority: 'low' as const
-            },
-            {
-              id: '2',
-              type: 'service_created',
-              description: 'New service created',
-              timestamp: new Date(Date.now() - 300000).toISOString(),
-              user: 'Provider',
-              status: 'info' as const,
-              priority: 'medium' as const
-            },
-            {
-              id: '3',
-              type: 'booking_completed',
-              description: 'Service booking completed',
-              timestamp: new Date(Date.now() - 600000).toISOString(),
-              user: 'Client',
-              status: 'success' as const,
-              priority: 'low' as const
-            },
-            {
-              id: '4',
-              type: 'payment_failed',
-              description: 'Payment processing failed',
-              timestamp: new Date(Date.now() - 900000).toISOString(),
-              user: 'System',
-              status: 'error' as const,
-              priority: 'high' as const
-            },
-            {
-              id: '5',
-              type: 'system_alert',
-              description: 'High server load detected',
-              timestamp: new Date(Date.now() - 1200000).toISOString(),
-              user: 'System',
-              status: 'warning' as const,
-              priority: 'high' as const
-            }
-          ]
-        };
-
-        const mockAlertsData = [
-          {
-            id: '1',
-            type: 'warning' as const,
-            title: 'High Server Load',
-            message: 'Server CPU usage is above 80%',
-            timestamp: new Date(Date.now() - 300000).toISOString(),
-            resolved: false
+        // Fetch real data from admin dashboard API
+        const response = await fetch('/api/admin/dashboard', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          {
-            id: '2',
-            type: 'error' as const,
-            title: 'Database Connection',
-            message: 'Failed to connect to primary database',
-            timestamp: new Date(Date.now() - 600000).toISOString(),
-            resolved: true
-          },
-          {
-            id: '3',
-            type: 'info' as const,
-            title: 'Scheduled Maintenance',
-            message: 'System maintenance scheduled for tonight',
-            timestamp: new Date(Date.now() - 900000).toISOString(),
-            resolved: false
-          }
-        ];
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        setStats({
-          totalUsers: mockStatsData.totalUsers,
-          activeServices: mockStatsData.activeServices,
-          totalRevenue: mockStatsData.totalRevenue,
-          growthRate: mockStatsData.growthRate,
-          pendingApprovals: mockStatsData.pendingApprovals,
-          systemHealth: mockStatsData.systemHealth,
-          newUsersToday: mockStatsData.newUsersToday,
-          activeBookings: mockStatsData.activeBookings,
-          conversionRate: mockStatsData.conversionRate,
-          avgResponseTime: mockStatsData.avgResponseTime,
-          serverUptime: mockStatsData.serverUptime,
-          errorRate: mockStatsData.errorRate
+          credentials: 'include'
         });
 
-        setRecentActivity(mockActivityData.recentActivity);
-        setSystemAlerts(mockAlertsData);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch dashboard data`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load dashboard data');
+        }
+
+        const { stats: apiStats, recentActivity: apiActivity, systemAlerts: apiAlerts } = result.data;
+
+        setStats(apiStats);
+        setRecentActivity(apiActivity);
+        setSystemAlerts(apiAlerts);
         setLastUpdated(new Date());
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -210,12 +123,35 @@ export default function AdminDashboard() {
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      // Simulate refresh delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // In production, call actual API here
+      // Fetch fresh data from admin dashboard API
+      const response = await fetch('/api/admin/dashboard', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to refresh dashboard data`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to refresh dashboard data');
+      }
+
+      const { stats: apiStats, recentActivity: apiActivity, systemAlerts: apiAlerts } = result.data;
+
+      setStats(apiStats);
+      setRecentActivity(apiActivity);
+      setSystemAlerts(apiAlerts);
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Error refreshing data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to refresh dashboard data');
     } finally {
       setRefreshing(false);
     }
@@ -402,7 +338,7 @@ export default function AdminDashboard() {
             <div className="bg-white p-4 rounded-lg border border-yellow-200">
               <h4 className="font-medium text-gray-900 mb-2">Current User Info</h4>
               <div className="text-sm text-gray-600 space-y-1">
-                <p><strong>Role:</strong> {typeof window !== 'undefined' ? localStorage.getItem('userRole') || 'Not set' : 'Loading...'}</p>
+                <p><strong>Role:</strong> {session?.user?.role || 'Not set'}</p>
                 <p><strong>Environment:</strong> {process.env.NODE_ENV}</p>
                 <p><strong>Admin Access:</strong> {roleAccess?.isAdmin ? 'Yes' : 'No'}</p>
               </div>
