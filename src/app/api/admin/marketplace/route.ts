@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/admin/users - Fetch users with pagination, filtering, and sorting
+// GET /api/admin/marketplace - Fetch marketplace services with pagination, filtering, and sorting
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const page = searchParams.get('page') || '1';
     const limit = searchParams.get('limit') || '50';
     const search = searchParams.get('search');
-    const role = searchParams.get('role');
+    const category = searchParams.get('category');
     const status = searchParams.get('status');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') || 'desc';
@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
     };
 
     if (search) queryParams.search = search;
-    if (role && role !== 'all') queryParams.role = role;
+    if (category && category !== 'all') queryParams.category = category;
     if (status && status !== 'all') queryParams.status = status;
 
     // Make authenticated request to the backend API
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'usersById', // Using the users endpoint from API_ENDPOINTS
+      'marketplaceServices', // Using the marketplace services endpoint from API_ENDPOINTS
       [],
       queryParams,
       { method: 'GET' }
@@ -49,38 +49,16 @@ export async function GET(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || 'Failed to fetch users from backend' },
+        { error: errorData.error || 'Failed to fetch marketplace services from backend' },
         { status: response.status }
       );
     }
 
     const data = await response.json();
-    
-    // Transform the data to ensure it matches the expected frontend format
-    if (data.success && data.data && data.data.users) {
-      // The response already has the correct structure
-      return NextResponse.json(data);
-    } else if (data.data && Array.isArray(data.data)) {
-      // Transform array response to the expected format
-      return NextResponse.json({
-        success: true,
-        data: {
-          users: data.data,
-          pagination: {
-            current: parseInt(page),
-            pages: Math.ceil((data.total || data.data.length) / parseInt(limit)),
-            total: data.total || data.data.length,
-            limit: parseInt(limit)
-          }
-        }
-      });
-    } else {
-      // Fallback for other response formats
-      return NextResponse.json(data);
-    }
+    return NextResponse.json(data);
 
   } catch (error) {
-    console.error('Error fetching users:', error);
+    console.error('Error fetching marketplace services:', error);
     
     let errorMessage = 'Internal server error';
     let statusCode = 500;
@@ -106,7 +84,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/admin/users - Create a new user
+// POST /api/admin/marketplace - Create a new marketplace service
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(request);
@@ -120,20 +98,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, email, role, status = 'pending', location, phone } = body;
+    const { name, description, category, price, providerId, status = 'pending' } = body;
 
     // Validate required fields
-    if (!name || !email || !role) {
+    if (!name || !description || !category || !price || !providerId) {
       return NextResponse.json(
-        { error: 'Name, email, and role are required' },
+        { error: 'Name, description, category, price, and provider ID are required' },
         { status: 400 }
       );
     }
 
-    // Make authenticated request to the backend API to create user
+    // Make authenticated request to the backend API to create marketplace service
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'usersById', // Using the users endpoint from API_ENDPOINTS
+      'marketplaceServices', // Using the marketplace services endpoint from API_ENDPOINTS
       [],
       {},
       { 
@@ -148,7 +126,7 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || 'Failed to create user in backend' },
+        { error: errorData.error || 'Failed to create marketplace service in backend' },
         { status: response.status }
       );
     }
@@ -157,7 +135,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Error creating marketplace service:', error);
     
     let errorMessage = 'Internal server error';
     let statusCode = 500;

@@ -23,10 +23,119 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import * as apiUsers from "@/lib/api-users";
-import type { User, UserStats } from "@/lib/api-users";
+// Define types locally
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  role: 'client' | 'provider' | 'admin' | 'supplier' | 'instructor' | 'agency_owner' | 'agency_admin';
+  status: 'active' | 'inactive' | 'suspended' | 'pending_verification' | 'banned';
+  isActive: boolean;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastLogin?: string;
+  profileCompleteness?: number;
+  verificationStatus?: 'verified' | 'pending' | 'rejected';
+  // Additional fields from API response
+  profile?: {
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    bio?: string;
+    businessName?: string;
+    businessType?: string;
+    serviceAreas?: string[];
+    specialties?: string[];
+    rating?: number;
+    totalReviews?: number;
+  };
+  verification?: {
+    phoneVerified?: boolean;
+    emailVerified?: boolean;
+    identityVerified?: boolean;
+    businessVerified?: boolean;
+    addressVerified?: boolean;
+    bankAccountVerified?: boolean;
+    verifiedAt?: string;
+  };
+  subscription?: {
+    type?: string;
+    isActive?: boolean;
+    startDate?: string;
+    endDate?: string;
+  };
+  trustScore?: number;
+  badges?: Array<{
+    type: string;
+    description: string;
+    earnedAt: string;
+  }>;
+  completionRate?: number;
+  cancellationRate?: number;
+  loginCount?: number;
+  tags?: string[];
+  notes?: string[];
+}
 
-// Types are now imported from api-users.ts
+// Helper function to transform API user data to frontend format
+const transformUserData = (apiUser: any): User => {
+  return {
+    _id: apiUser._id,
+    firstName: apiUser.firstName || '',
+    lastName: apiUser.lastName || '',
+    email: apiUser.email || '',
+    phoneNumber: apiUser.phoneNumber,
+    role: apiUser.role || 'client',
+    status: apiUser.status || 'pending_verification',
+    isActive: apiUser.isActive || false,
+    isVerified: apiUser.isVerified || false,
+    createdAt: apiUser.createdAt || new Date().toISOString(),
+    updatedAt: apiUser.updatedAt || new Date().toISOString(),
+    lastLogin: apiUser.lastLogin,
+    profileCompleteness: apiUser.profileCompleteness || 0,
+    verificationStatus: apiUser.verification?.phoneVerified && 
+                       apiUser.verification?.emailVerified ? 'verified' : 'pending',
+    profile: apiUser.profile,
+    verification: apiUser.verification,
+    subscription: apiUser.subscription,
+    trustScore: apiUser.trustScore,
+    badges: apiUser.badges,
+    completionRate: apiUser.completionRate,
+    cancellationRate: apiUser.cancellationRate,
+    loginCount: apiUser.loginCount,
+    tags: apiUser.tags,
+    notes: apiUser.notes
+  };
+};
+
+interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  pendingUsers: number;
+  suspendedUsers: number;
+  newUsersToday: number;
+  newUsersWeek: number;
+  newUsersMonth: number;
+  trends: {
+    daily: Array<{ date: string; count: number }>;
+    weekly: Array<{ week: string; count: number }>;
+    monthly: Array<{ month: string; count: number }>;
+  };
+  topRoles: Array<{ role: string; count: number }>;
+  statusStats: Array<{ status: string; count: number }>;
+  performanceMetrics: {
+    averageRegistrationTime: number;
+    medianRegistrationTime: number;
+    p95RegistrationTime: number;
+  };
+}
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -40,6 +149,7 @@ export default function UsersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(50);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -49,47 +159,112 @@ export default function UsersPage() {
       setLoading(true);
       setError(null);
 
+      // Build query parameters for users data
+      const queryParams = new URLSearchParams();
+      queryParams.set('page', currentPage.toString());
+      queryParams.set('limit', itemsPerPage.toString());
+      if (searchTerm) queryParams.set('search', searchTerm);
+      if (roleFilter !== 'all') queryParams.set('role', roleFilter);
+      if (statusFilter !== 'all') queryParams.set('status', statusFilter);
+      queryParams.set('sortBy', sortBy);
+      queryParams.set('sortOrder', sortOrder);
+
       const [dataResponse, statsResponse] = await Promise.all([
-        apiUsers.fetchUsersData({
-          page: currentPage,
-          limit: itemsPerPage,
-          search: searchTerm || undefined,
-          role: roleFilter !== 'all' ? roleFilter : undefined,
-          status: statusFilter !== 'all' ? statusFilter : undefined,
-          sortBy,
-          sortOrder
+        fetch(`/api/admin/users?${queryParams}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         }),
-        apiUsers.fetchUsersStats({ period: 'week' }).catch(err => {
+        fetch('/api/admin/users/stats?period=week', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        }).catch(err => {
           console.warn('Failed to fetch stats, using fallback:', err);
           return {
-            totalUsers: 0,
-            activeUsers: 0,
-            pendingUsers: 0,
-            suspendedUsers: 0,
-            newUsersToday: 0,
-            newUsersWeek: 0,
-            newUsersMonth: 0,
-            trends: { daily: [], weekly: [], monthly: [] },
-            topRoles: [],
-            statusStats: [],
-            performanceMetrics: {
-              averageRegistrationTime: 0,
-              medianRegistrationTime: 0,
-              p95RegistrationTime: 0
-            }
-          } as UserStats;
+            ok: true,
+            json: () => Promise.resolve({
+              totalUsers: 0,
+              activeUsers: 0,
+              pendingUsers: 0,
+              suspendedUsers: 0,
+              newUsersToday: 0,
+              newUsersWeek: 0,
+              newUsersMonth: 0,
+              trends: { daily: [], weekly: [], monthly: [] },
+              topRoles: [],
+              statusStats: [],
+              performanceMetrics: {
+                averageRegistrationTime: 0,
+                medianRegistrationTime: 0,
+                p95RegistrationTime: 0
+              }
+            })
+          };
         })
       ]);
 
-      // Ensure users is an array
-      const usersData = Array.isArray(dataResponse.data) ? dataResponse.data : [];
+      if (!dataResponse.ok) {
+        const errorData = await dataResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch users data');
+      }
+
+      if (!statsResponse.ok) {
+        const errorData = await statsResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch users statistics');
+      }
+
+      const dataResult = await dataResponse.json();
+      const statsResult = await statsResponse.json();
+
+      // Transform the API response data to match frontend expectations
+      let usersData: User[] = [];
+      let totalCount = 0;
+
+      if (dataResult.success && dataResult.data) {
+        // Handle the new API response structure
+        if (dataResult.data.users && Array.isArray(dataResult.data.users)) {
+          usersData = dataResult.data.users.map(transformUserData);
+          totalCount = dataResult.data.pagination?.total || dataResult.data.users.length;
+        } else if (Array.isArray(dataResult.data)) {
+          // Fallback for old structure
+          usersData = dataResult.data.map(transformUserData);
+          totalCount = dataResult.total || dataResult.data.length;
+        }
+      } else if (Array.isArray(dataResult.data)) {
+        // Fallback for direct array response
+        usersData = dataResult.data.map(transformUserData);
+        totalCount = dataResult.total || dataResult.data.length;
+      }
+
       setUsers(usersData);
-      setStats(statsResponse);
-      setLastUpdated(new Date());
+      setTotalCount(totalCount);
       
-      // Debug: Log the actual data structures
-      console.log('Users data from backend:', dataResponse);
-      console.log('Stats data from backend:', statsResponse);
+      // Handle stats response - it should be an object, not an array
+      const statsData = statsResult.data || statsResult;
+      if (Array.isArray(statsData)) {
+        // If it's an array, create a default stats object
+        setStats({
+          totalUsers: 0,
+          activeUsers: 0,
+          pendingUsers: 0,
+          suspendedUsers: 0,
+          newUsersToday: 0,
+          newUsersWeek: 0,
+          newUsersMonth: 0,
+          trends: { daily: [], weekly: [], monthly: [] },
+          topRoles: [],
+          statusStats: [],
+          performanceMetrics: {
+            averageRegistrationTime: 0,
+            medianRegistrationTime: 0,
+            p95RegistrationTime: 0
+          }
+        });
+      } else {
+        setStats(statsData);
+      }
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Error fetching users data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load users data');
@@ -136,7 +311,17 @@ export default function UsersPage() {
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await apiUsers.deleteUser(userId);
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to delete user');
+        }
+
         await fetchData(); // Refresh the data
       } catch (err) {
         console.error('Error deleting user:', err);
@@ -147,7 +332,17 @@ export default function UsersPage() {
 
   const handleSuspendUser = async (userId: string) => {
     try {
-      await apiUsers.suspendUser(userId);
+      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to suspend user');
+      }
+
       await fetchData(); // Refresh the data
     } catch (err) {
       console.error('Error suspending user:', err);
@@ -157,7 +352,17 @@ export default function UsersPage() {
 
   const handleActivateUser = async (userId: string) => {
     try {
-      await apiUsers.activateUser(userId);
+      const response = await fetch(`/api/admin/users/${userId}/activate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to activate user');
+      }
+
       await fetchData(); // Refresh the data
     } catch (err) {
       console.error('Error activating user:', err);
@@ -169,8 +374,11 @@ export default function UsersPage() {
     switch (status) {
       case 'active': return 'text-green-600 bg-green-100';
       case 'inactive': return 'text-gray-600 bg-gray-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'pending': 
+      case 'pending_verification': 
+        return 'text-yellow-600 bg-yellow-100';
       case 'suspended': return 'text-red-600 bg-red-100';
+      case 'banned': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -386,7 +594,9 @@ export default function UsersPage() {
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                   <option value="pending">Pending</option>
+                  <option value="pending_verification">Pending Verification</option>
                   <option value="suspended">Suspended</option>
+                  <option value="banned">Banned</option>
                 </select>
               </div>
             </div>
@@ -479,26 +689,18 @@ export default function UsersPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user._id} className="hover:bg-gray-50">
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8">
-                        {user.avatar ? (
-                          <Image 
-                            className="h-8 w-8 rounded-full" 
-                            src={user.avatar} 
-                            alt={user.name}
-                            width={32}
-                            height={32}
-                          />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                            <Users className="w-4 h-4 text-gray-600" />
-                          </div>
-                        )}
+                        <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                          <Users className="w-4 h-4 text-gray-600" />
+                        </div>
                       </div>
                       <div className="ml-3">
-                        <div className="text-xs font-semibold text-gray-900">{user.name}</div>
+                        <div className="text-xs font-semibold text-gray-900">
+                          {user.firstName} {user.lastName}
+                        </div>
                         <div className="text-xs text-gray-600">{user.email}</div>
                       </div>
                     </div>
@@ -515,16 +717,18 @@ export default function UsersPage() {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
                     <div className="space-y-1">
-                      {user.phone && (
+                      {user.phoneNumber && (
                         <div className="flex items-center">
                           <Phone className="w-3 h-3 mr-1 text-gray-500" />
-                          <span>{user.phone}</span>
+                          <span>{user.phoneNumber}</span>
                         </div>
                       )}
-                      {user.location && (
+                      {user.profile?.address && (
                         <div className="flex items-center">
                           <MapPin className="w-3 h-3 mr-1 text-gray-500" />
-                          <span>{user.location}</span>
+                          <span>
+                            {user.profile.address.city}, {user.profile.address.state}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -535,14 +739,14 @@ export default function UsersPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        onClick={() => handleViewUser(user.id)}
+                        onClick={() => handleViewUser(user._id)}
                         className="text-blue-600 hover:text-blue-900"
                         title="View user details"
                       >
                         <Eye className="w-3 h-3" />
                       </button>
                       <button 
-                        onClick={() => handleEditUser(user.id)}
+                        onClick={() => handleEditUser(user._id)}
                         className="text-green-600 hover:text-green-900"
                         title="Edit user"
                       >
@@ -550,7 +754,7 @@ export default function UsersPage() {
                       </button>
                       {user.status === 'active' ? (
                         <button 
-                          onClick={() => handleSuspendUser(user.id)}
+                          onClick={() => handleSuspendUser(user._id)}
                           className="text-yellow-600 hover:text-yellow-900"
                           title="Suspend user"
                         >
@@ -558,7 +762,7 @@ export default function UsersPage() {
                         </button>
                       ) : (
                         <button 
-                          onClick={() => handleActivateUser(user.id)}
+                          onClick={() => handleActivateUser(user._id)}
                           className="text-green-600 hover:text-green-900"
                           title="Activate user"
                         >
@@ -566,7 +770,7 @@ export default function UsersPage() {
                         </button>
                       )}
                       <button 
-                        onClick={() => handleDeleteUser(user.id)}
+                        onClick={() => handleDeleteUser(user._id)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete user"
                       >
