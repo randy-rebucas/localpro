@@ -1,134 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/admin/audit - Get audit logs for admin
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user has admin access
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const action = searchParams.get('action');
+    const userId = searchParams.get('userId');
 
-    // Add admin-specific parameters
-    const adminQueryParams = {
-      ...queryParams,
-      admin: 'true',
-      includeUserDetails: 'true',
-      includeSystemLogs: 'true'
-    };
+    // Fetch real audit data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'logs') {
+        // Fetch audit logs with query parameters
+        const queryParams: Record<string, string> = {};
+        if (action) queryParams.action = action;
+        if (userId) queryParams.userId = userId;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
 
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'analyticsCustom',
-      [],
-      adminQueryParams,
-      { method: 'GET' }
-    );
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'auditLogs',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(`Failed to fetch audit logs: ${response.status}`);
+        }
+
+        const logsData = await response.json();
+        return {
+          data: logsData.data || logsData,
+          pagination: logsData.pagination || {
+            page,
+            limit,
+            total: logsData.total || 0,
+            pages: Math.ceil((logsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch audit overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'auditLogsStats',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch audit statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Audit data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch audit logs" },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const { data, pagination } = result.data;
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
   } catch (error) {
-    console.error("Error fetching audit logs:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Audit admin API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-// POST /api/admin/audit - Create audit log entry (for system events)
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user has admin access
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'analyticsCustom',
-      [],
-      body,
-      { method: 'POST' }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to create audit log" },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error creating audit log:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch audit data' },
+      { status: 500 }
     );
   }
 }

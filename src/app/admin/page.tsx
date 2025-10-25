@@ -25,7 +25,8 @@ import {
   Download,
   Bell,
   Shield,
-  Zap
+  Zap,
+  Crown
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -230,6 +231,14 @@ export default function AdminDashboard() {
       href: "/admin/analytics",
       color: "bg-violet-500",
       stats: "Real-time data"
+    },
+    {
+      name: "Plus",
+      description: "Manage subscription plans and revenue",
+      icon: Crown,
+      href: "/admin/plus",
+      color: "bg-yellow-500",
+      stats: stats ? `${stats.totalRevenue.toLocaleString()} revenue` : "Loading..."
     },
     {
       name: "System",

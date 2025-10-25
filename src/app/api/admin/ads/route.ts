@@ -1,58 +1,94 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  makeAuthenticatedRequestWithPath, 
-  handleApiRoute, 
-  createErrorResponse 
-} from '@/lib/api-auth-utils';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
-  const result = await handleApiRoute(async () => {
-    const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '10';
-    const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || '';
-    const status = searchParams.get('status') || '';
-    const type = searchParams.get('type') || '';
-
-    // Build query parameters for the API request
-    const queryParams: Record<string, string> = {
-      page,
-      limit
-    };
-
-    if (search) queryParams.search = search;
-    if (category && category !== 'all') queryParams.category = category;
-    if (status && status !== 'all') queryParams.status = status;
-    if (type && type !== 'all') queryParams.type = type;
-
-    // Make authenticated request to the ads API endpoint
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'ads',
-      [], // No path parameters
-      queryParams,
-      { method: 'GET' }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `API request failed with status ${response.status}`);
+  try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    return await response.json();
-  }, "Admin ads fetch");
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
-  if (result.error) {
+    // Fetch real ads data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'ads') {
+        // Fetch ads with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'ads',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ads: ${response.status}`);
+        }
+
+        const adsData = await response.json();
+        return {
+          data: adsData.data || adsData,
+          pagination: adsData.pagination || {
+            page,
+            limit,
+            total: adsData.total || 0,
+            pages: Math.ceil((adsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch ads overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'adsAnalytics',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ads statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Ads data");
+
+    if (result.error) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    const { data, pagination } = result.data;
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
+  } catch (error) {
+    console.error('Ads admin API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: result.error, 
-        details: result.details 
-      },
-      { status: result.status }
+      { error: 'Failed to fetch ads data' },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(result.data);
 }

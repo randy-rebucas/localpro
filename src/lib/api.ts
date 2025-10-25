@@ -61,6 +61,8 @@ export const API_ENDPOINTS = {
   jobsStats: "/api/jobs",
   jobsApplications: "/api/jobs",
   jobsApplicationStatus: "/api/jobs",
+  jobsLogo: "/api/jobs",
+  jobsApplicationsById: "/api/jobs",
   
   // Academy & Learning
   academyCourses: "/api/academy/courses",
@@ -83,6 +85,10 @@ export const API_ENDPOINTS = {
   academyCoursesVideos: "/api/academy/courses/[id]/videos",
   academyCoursesById: "/api/academy/courses/[id]",
   academyStatistics: "/api/academy/statistics",
+  academyCourseCreate: "/api/academy/courses",
+  academyCourseUpdate: "/api/academy/courses",
+  academyCourseDelete: "/api/academy/courses",
+  academyCourseVideo: "/api/academy/courses",
   
   // Supplies & Equipment
   supplies: "/api/supplies",
@@ -97,6 +103,12 @@ export const API_ENDPOINTS = {
   suppliesOrder: "/api/supplies",
   suppliesOrderStatus: "/api/supplies",
   suppliesReviews: "/api/supplies",
+  suppliesProducts: "/api/supplies/products",
+  suppliesProductsById: "/api/supplies/products",
+  suppliesCreate: "/api/supplies",
+  suppliesUpdate: "/api/supplies",
+  suppliesDelete: "/api/supplies",
+  suppliesStatistics: "/api/supplies/statistics",
   
   // Equipment Rentals
   rentals: "/api/rentals",
@@ -112,6 +124,11 @@ export const API_ENDPOINTS = {
   rentalsBookingStatus: "/api/rentals",
   rentalsReviews: "/api/rentals",
   rentalsStatistics: "/api/rentals/statistics",
+  rentalsItems: "/api/rentals/items",
+  rentalsItemsById: "/api/rentals/items",
+  rentalsCreate: "/api/rentals",
+  rentalsUpdate: "/api/rentals",
+  rentalsDelete: "/api/rentals",
   
   // Facility Care Services
   facilityCare: "/api/facility-care",
@@ -124,6 +141,10 @@ export const API_ENDPOINTS = {
   facilityCareBook: "/api/facility-care",
   facilityCareBookingStatus: "/api/facility-care",
   facilityCareReviews: "/api/facility-care",
+  facilityCareCreate: "/api/facility-care",
+  facilityCareUpdate: "/api/facility-care",
+  facilityCareDelete: "/api/facility-care",
+  facilityCareStatistics: "/api/facility-care/statistics",
   
   // Communication & Messaging
   communicationConversations: "/api/communication/conversations",
@@ -165,6 +186,10 @@ export const API_ENDPOINTS = {
   adsPromote: "/api/ads",
   adsAnalytics: "/api/ads",
   adsStatistics: "/api/ads/statistics",
+  adsEnumValues: "/api/ads/enum-values",
+  adsCreate: "/api/ads",
+  adsUpdate: "/api/ads",
+  adsDelete: "/api/ads",
   analyticsCustom: "/api/analytics/custom",
   
   // Trust & Verification
@@ -174,6 +199,11 @@ export const API_ENDPOINTS = {
   trustVerificationRequestDocuments: "/api/trust-verification/requests",
   trustVerificationDocumentDelete: "/api/trust-verification/requests",
   trustVerificationMyRequests: "/api/trust-verification/my-requests",
+  trustVerificationCreate: "/api/trust-verification/requests",
+  trustVerificationUpdate: "/api/trust-verification/requests",
+  trustVerificationDelete: "/api/trust-verification/requests",
+  trustVerificationReview: "/api/trust-verification/requests",
+  trustVerificationStatistics: "/api/trust-verification/statistics",
   
   // Referral System
   referralsValidate: "/api/referrals/validate",
@@ -185,6 +215,8 @@ export const API_ENDPOINTS = {
   referralsRewards: "/api/referrals/rewards",
   referralsInvite: "/api/referrals/invite",
   referralsPreferences: "/api/referrals/preferences",
+  referralsProcess: "/api/referrals/process",
+  referralsAnalytics: "/api/referrals/analytics",
   
   // Financial Management
   financeOverview: "/api/finance/overview",
@@ -196,8 +228,10 @@ export const API_ENDPOINTS = {
   financeWithdraw: "/api/finance/withdraw",
   financeTaxDocuments: "/api/finance/tax-documents",
   financeWalletSettings: "/api/finance/wallet/settings",
+  financeWithdrawalsProcess: "/api/finance/withdrawals",
   
   // Google Maps Integration
+  maps: "/api/maps",
   mapsGeocode: "/api/maps/geocode",
   mapsReverseGeocode: "/api/maps/reverse-geocode",
   mapsPlacesSearch: "/api/maps/places/search",
@@ -206,9 +240,11 @@ export const API_ENDPOINTS = {
   mapsNearby: "/api/maps/nearby",
   mapsValidateServiceArea: "/api/maps/validate-service-area",
   mapsAnalyzeCoverage: "/api/maps/analyze-coverage",
+  mapsTest: "/api/maps/test",
   
   // PayPal Integration
   paypalWebhook: "/api/paypal/webhook",
+  paypalWebhookEvents: "/api/paypal/webhook/events",
   
   // PayMaya Integration
   paymayaWebhook: "/api/paymaya/webhook",
@@ -218,6 +254,8 @@ export const API_ENDPOINTS = {
   paymayaPaymentById: "/api/paymaya/payment",
   paymayaInvoice: "/api/paymaya/invoice",
   paymayaInvoiceById: "/api/paymaya/invoice",
+  paymayaConfigValidate: "/api/paymaya/config/validate",
+  paymayaWebhookEvents: "/api/paymaya/webhook/events",
   
   // Provider Management
   providers: "/api/providers",
@@ -230,6 +268,8 @@ export const API_ENDPOINTS = {
   providersAnalytics: "/api/providers/analytics/performance",
   providersDashboardOverview: "/api/providers/dashboard/overview",
   providersAnalyticsPerformance: "/api/providers/analytics/performance",
+  providersAdminAll: "/api/providers/admin/all",
+  providersAdminStatus: "/api/providers/admin",
   
   // Agency Management
   agencies: "/api/agencies",
@@ -255,8 +295,10 @@ export const API_ENDPOINTS = {
   localProPlusMySubscription: "/api/localpro-plus/my-subscription",
   localProPlusSettings: "/api/localpro-plus/settings",
   localProPlusUsage: "/api/localpro-plus/usage",
+  localProPlusAnalytics: "/api/localpro-plus/analytics",
   
   // Settings Management
+  settings: "/api/settings",
   settingsUser: "/api/settings/user",
   settingsUserCategory: "/api/settings/user",
   settingsUserReset: "/api/settings/user/reset",
@@ -266,6 +308,7 @@ export const API_ENDPOINTS = {
   settingsAppFeaturesToggle: "/api/settings/app/features/toggle",
   settingsAppPublic: "/api/settings/app/public",
   settingsAppHealth: "/api/settings/app/health",
+  settingsAppUpdate: "/api/settings/app",
   
   // Analytics & Insights
   analyticsOverview: "/api/analytics/overview",
@@ -290,6 +333,10 @@ export const API_ENDPOINTS = {
   // Announcements
   announcements: "/api/announcements",
   announcementsById: "/api/announcements",
+  announcementsMyList: "/api/announcements/my/list",
+  announcementsAcknowledge: "/api/announcements",
+  announcementsComments: "/api/announcements",
+  announcementsAdminStatistics: "/api/announcements/admin/statistics",
   
   // Activities & Discovery
   activitiesFeed: "/api/activities/feed",
@@ -302,6 +349,8 @@ export const API_ENDPOINTS = {
   activitiesStatsGlobal: "/api/activities/stats/global",
   activitiesMetadata: "/api/activities/metadata",
   activitiesUserById: "/api/activities/user/[userId]",
+  activitiesStats: "/api/activities/stats",
+  activitiesGlobalStats: "/api/activities/global/stats",
 
   // Logs & System Monitoring
   logs: "/api/logs",
@@ -312,6 +361,38 @@ export const API_ENDPOINTS = {
   logsAnalyticsPerformance: "/api/logs/analytics/performance",
   logsAnalyticsErrorTrends: "/api/logs/analytics/error-trends",
   logsSearchGlobal: "/api/logs/search/global",
+  logsById: "/api/logs",
+  logsExportData: "/api/logs/export/data",
+  logsCleanup: "/api/logs/cleanup",
+  logsFlush: "/api/logs/flush",
+  
+  // Audit Logs
+  auditLogs: "/api/audit-logs",
+  auditLogsStats: "/api/audit-logs/stats",
+  auditLogsUserActivity: "/api/audit-logs/user/[userId]/activity",
+  auditLogsById: "/api/audit-logs",
+  auditLogsExportData: "/api/audit-logs/export/data",
+  auditLogsDashboardSummary: "/api/audit-logs/dashboard/summary",
+  auditLogsCleanup: "/api/audit-logs/cleanup",
+  auditLogsMetadataCategories: "/api/audit-logs/metadata/categories",
+  
+  // Error Monitoring
+  errorMonitoring: "/api/error-monitoring",
+  errorMonitoringStats: "/api/error-monitoring/stats",
+  errorMonitoringUnresolved: "/api/error-monitoring/unresolved",
+  errorMonitoringById: "/api/error-monitoring",
+  errorMonitoringResolve: "/api/error-monitoring",
+  errorMonitoringDashboardSummary: "/api/error-monitoring/dashboard/summary",
 
+  // User Management
+  users: "/api/users",
+  usersStats: "/api/users/stats",
   usersById: "/api/users",
+  usersCreate: "/api/users",
+  usersUpdate: "/api/users",
+  usersStatus: "/api/users",
+  usersVerification: "/api/users",
+  usersBadges: "/api/users",
+  usersBulk: "/api/users/bulk",
+  usersDelete: "/api/users",
 } as const;

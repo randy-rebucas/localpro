@@ -1,59 +1,73 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/search - Basic and filtered search
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const type = searchParams.get('type') || 'overview';
+    const period = searchParams.get('period') || '30d';
 
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'search',
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
+    // Fetch real search data from external API
+    const result = await handleApiRoute(async () => {
+      const queryParams: Record<string, string> = {};
+      if (period) queryParams.period = period;
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let endpoint: string;
+      switch (type) {
+        case 'analytics':
+          endpoint = 'searchAnalytics';
+          break;
+        case 'popular':
+          endpoint = 'searchPopular';
+          break;
+        default:
+          endpoint = 'searchAnalytics';
+      }
+
+      const response = await makeAuthenticatedRequestWithEndpoint(
+        request,
+        endpoint as any,
+        { 
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch search ${type}: ${response.status}`);
+      }
+
+      const searchData = await response.json();
+      return searchData.data || searchData;
+    }, "Search data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || `External service error: ${response.status}` },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      period
+    });
+
   } catch (error) {
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Search API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch search data' },
+      { status: 500 }
     );
   }
 }

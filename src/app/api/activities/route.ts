@@ -1,117 +1,114 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/activities - Get all activities (with filtering)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const userId = searchParams.get('userId');
 
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'activities',
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
+    // Fetch real activities data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'activities') {
+        // Fetch activities with query parameters
+        const queryParams: Record<string, string> = {};
+        if (userId) queryParams.userId = userId;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'activities',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch activities: ${response.status}`);
+        }
+
+        const activitiesData = await response.json();
+        return {
+          data: activitiesData.data || activitiesData,
+          pagination: activitiesData.pagination || {
+            page,
+            limit,
+            total: activitiesData.total || 0,
+            pages: Math.ceil((activitiesData.total || 0) / limit)
+          }
+        };
+      } else if (type === 'stats') {
+        // Fetch activity statistics
+        const queryParams: Record<string, string> = {};
+        if (userId) queryParams.userId = userId;
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'activitiesStatsMy',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch activity statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      } else {
+        // Fetch activities overview/feed
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'activitiesFeed',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch activities overview: ${response.status}`);
+        }
+
+        const overviewData = await response.json();
+        return {
+          data: overviewData.data || overviewData,
+          pagination: undefined
+        };
+      }
+    }, "Activities data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || `External service error: ${response.status}` },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const { data, pagination } = result.data || { data: null, pagination: null };
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
   } catch (error) {
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Activities API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-// POST /api/activities - Create new activity
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'activities',
-      [],
-      {},
-      {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || `External service error: ${response.status}` },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch activities data' },
+      { status: 500 }
     );
   }
 }

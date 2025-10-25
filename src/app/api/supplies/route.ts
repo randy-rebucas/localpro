@@ -1,119 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/supplies - Get all supplies
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'supplies',
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    // Fetch real supplies data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'supplies') {
+        // Fetch supplies with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'supplies',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch supplies: ${response.status}`);
+        }
+
+        const suppliesData = await response.json();
+        return {
+          data: suppliesData.data || suppliesData,
+          pagination: suppliesData.pagination || {
+            page,
+            limit,
+            total: suppliesData.total || 0,
+            pages: Math.ceil((suppliesData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch supplies overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'suppliesStatistics',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch supplies statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Supplies data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch supplies" },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const { data, pagination } = result.data || { data: null, pagination: null };
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
   } catch (error) {
-    console.error("Error fetching supplies:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Supplies API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-// POST /api/supplies - Create supply (Supplier/Admin)
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'supplies',
-      [],
-      {},
-      {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Request failed" },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    console.error(`Error in ${request.method} /api/supplies:`, error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch supplies data' },
+      { status: 500 }
     );
   }
 }

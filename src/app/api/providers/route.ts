@@ -1,53 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/providers - Get all providers
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const session = await getServerSession(request);
     
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'providers',
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
+
+    // Fetch real providers data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'providers') {
+        // Fetch providers with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'providersAdminAll',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch providers: ${response.status}`);
+        }
+
+        const providersData = await response.json();
+        return {
+          data: providersData.data || providersData,
+          pagination: providersData.pagination || {
+            page,
+            limit,
+            total: providersData.total || 0,
+            pages: Math.ceil((providersData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch providers overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'providersAnalyticsPerformance',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch providers statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Providers data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch providers" },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const { data, pagination } = result.data || { data: null, pagination: null };
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
   } catch (error) {
-    console.error("Error fetching providers:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Providers API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch providers data' },
+      { status: 500 }
     );
   }
 }

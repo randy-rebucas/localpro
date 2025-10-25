@@ -1,213 +1,142 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
-import { makeAuthenticatedRequest, makeAuthenticatedRequestWithEndpoint } from '@/lib/api-auth-utils';
-import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Build query parameters for external API
-    // const { searchParams } = new URL(request.url);
-    // const queryParams = Object.fromEntries(searchParams.entries());
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const type = searchParams.get('type');
 
-    // Make request to external API using request-based authentication
-    const response = await makeAuthenticatedRequestWithEndpoint(
-      request,
-      'announcements',
-      { method: 'GET' }
-    );
+    // Fetch real announcements data from external API
+    const result = await handleApiRoute(async () => {
+      const queryParams: Record<string, string> = {};
+      if (status) queryParams.status = status;
+      if (type) queryParams.type = type;
+      queryParams.page = page.toString();
+      queryParams.limit = limit.toString();
 
-    if (!response.ok) {
-      console.error("External API error:", response.status, response.statusText);
-      
-      // Return mock data when external API is not available
-      const mockAnnouncements = [
-        {
-          id: '1',
-          title: 'Welcome to LocalPro!',
-          message: 'We\'re excited to have you on board. Explore our marketplace to find local services and connect with professionals in your area.',
-          type: 'feature',
-          priority: 'high',
-          startDate: new Date().toISOString(),
-          isActive: true,
-          isDismissible: true,
-          actionUrl: '/marketplace',
-          actionText: 'Explore Marketplace',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '2',
-          title: 'New Features Coming Soon',
-          message: 'We\'re working on exciting new features including Academy courses, Supplies marketplace, and Financial services. Stay tuned!',
-          type: 'info',
-          priority: 'medium',
-          startDate: new Date().toISOString(),
-          isActive: true,
-          isDismissible: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        {
-          id: '3',
-          title: 'Profile Completion',
-          message: 'Complete your profile to get better matches and increase your visibility to potential clients.',
-          type: 'warning',
-          priority: 'medium',
-          startDate: new Date().toISOString(),
-          isActive: true,
-          isDismissible: true,
-          actionUrl: '/profile/edit',
-          actionText: 'Complete Profile',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      ];
-      
-      return NextResponse.json({
-        success: true,
-        announcements: mockAnnouncements
-      });
-    }
+      const response = await makeAuthenticatedRequestWithPath(
+        request,
+        'announcements',
+        [],
+        queryParams,
+        { method: 'GET' }
+      );
 
-    const data = await response.json();
-    console.log("Announcements API: External API response:", data);
-
-    return NextResponse.json(data);
-
-  } catch (error) {
-    console.error('Error fetching announcements:', error);
-
-    // Return mock data when there's an error (e.g., external API not available)
-    const mockAnnouncements = [
-      {
-        id: '1',
-        title: 'Welcome to LocalPro!',
-        message: 'We\'re excited to have you on board. Explore our marketplace to find local services and connect with professionals in your area.',
-        type: 'feature',
-        priority: 'high',
-        startDate: new Date().toISOString(),
-        isActive: true,
-        isDismissible: true,
-        actionUrl: '/marketplace',
-        actionText: 'Explore Marketplace',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        title: 'New Features Coming Soon',
-        message: 'We\'re working on exciting new features including Academy courses, Supplies marketplace, and Financial services. Stay tuned!',
-        type: 'info',
-        priority: 'medium',
-        startDate: new Date().toISOString(),
-        isActive: true,
-        isDismissible: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: '3',
-        title: 'Profile Completion',
-        message: 'Complete your profile to get better matches and increase your visibility to potential clients.',
-        type: 'warning',
-        priority: 'medium',
-        startDate: new Date().toISOString(),
-        isActive: true,
-        isDismissible: true,
-        actionUrl: '/profile/edit',
-        actionText: 'Complete Profile',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      if (!response.ok) {
+        throw new Error(`Failed to fetch announcements: ${response.status}`);
       }
-    ];
+
+      const announcementsData = await response.json();
+      return {
+        data: announcementsData.data || announcementsData,
+        pagination: announcementsData.pagination || {
+          page,
+          limit,
+          total: announcementsData.total || 0,
+          pages: Math.ceil((announcementsData.total || 0) / limit)
+        }
+      };
+    }, "Announcements data");
+
+    if (result.error) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    const { data, pagination } = result.data || { data: null, pagination: null };
 
     return NextResponse.json({
       success: true,
-      announcements: mockAnnouncements
+      data,
+      pagination
     });
+
+  } catch (error) {
+    console.error('Announcements API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch announcements' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+    
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+    const { title, content, type, priority, targetAudience, scheduledFor } = body;
 
     // Validate required fields
-    const requiredFields = ['title', 'message', 'type', 'priority'];
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, error: `Missing required field: ${field}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Make request to external API using request-based authentication
-    const response = await makeAuthenticatedRequest(
-      request,
-      `${API_BASE_URL}${API_ENDPOINTS.announcements}`,
-      {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    if (!title || !content || !type) {
       return NextResponse.json(
-        {
-          success: false,
-          error: errorData.error || `External service error: ${response.status}`,
-          errorMessage: "Failed to create announcement in external service"
-        },
-        { status: response.status }
+        { error: 'Title, content, and type are required' },
+        { status: 400 }
       );
     }
 
-    const data = await response.json();
-    console.log("Announcements API: External API response:", data);
+    // Create new announcement using real API
+    const result = await handleApiRoute(async () => {
+      const response = await makeAuthenticatedRequestWithEndpoint(
+        request,
+        'announcements',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            title,
+            content,
+            type,
+            priority: priority || 'medium',
+            targetAudience: targetAudience || 'all',
+            scheduledFor: scheduledFor || null
+          })
+        }
+      );
 
-    return NextResponse.json(data, { status: 201 });
-
-  } catch (error) {
-    console.error('Error creating announcement:', error);
-
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
+      if (!response.ok) {
+        throw new Error(`Failed to create announcement: ${response.status}`);
       }
+
+      return await response.json();
+    }, "Create announcement");
+
+    if (result.error) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
     }
 
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      message: 'Announcement created successfully'
+    });
+
+  } catch (error) {
+    console.error('Create announcement error:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        errorMessage: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: statusCode }
+      { error: 'Failed to create announcement' },
+      { status: 500 }
     );
   }
 }

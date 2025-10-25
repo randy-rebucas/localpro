@@ -1,119 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/ads - Get all ads
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'ads',
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+    // Fetch real ads data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'ads') {
+        // Fetch ads with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'ads',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ads: ${response.status}`);
+        }
+
+        const adsData = await response.json();
+        return {
+          data: adsData.data || adsData,
+          pagination: adsData.pagination || {
+            page,
+            limit,
+            total: adsData.total || 0,
+            pages: Math.ceil((adsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch ads overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'adsAnalytics',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ads statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Ads data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch ads" },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    const { data, pagination } = result.data || { data: null, pagination: null };
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
+
   } catch (error) {
-    console.error("Error fetching ads:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Ads API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-// POST /api/ads - Create ad (Advertiser/Admin)
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'ads',
-      [],
-      {},
-      {
-        method: 'POST',
-        body: JSON.stringify(body)
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Request failed" },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    console.error(`Error in ${request.method} /api/ads:`, error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch ads data' },
+      { status: 500 }
     );
   }
 }

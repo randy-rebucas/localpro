@@ -1,258 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
-
-interface ErrorLog {
-  id: string;
-  timestamp: string;
-  level: 'error' | 'warning' | 'info' | 'critical';
-  message: string;
-  stack?: string;
-  userId?: string;
-  userEmail?: string;
-  endpoint?: string;
-  method?: string;
-  statusCode?: number;
-  userAgent?: string;
-  ip?: string;
-  resolved: boolean;
-  resolvedAt?: string;
-  resolvedBy?: string;
-  tags: string[];
-  environment: 'development' | 'staging' | 'production';
-}
-
-interface ErrorStats {
-  total: number;
-  critical: number;
-  errors: number;
-  warnings: number;
-  resolved: number;
-  unresolved: number;
-  todayCount: number;
-  weekCount: number;
-}
-
-// Mock data - in production, this would come from a database
-const mockErrors: ErrorLog[] = [
-  {
-    id: "1",
-    timestamp: "2024-01-15T10:30:00Z",
-    level: "critical",
-    message: "Database connection failed",
-    stack: "Error: Connection timeout\n    at Database.connect (/app/lib/db.js:45:12)\n    at async UserService.getUser (/app/services/user.js:23:8)",
-    userId: "user123",
-    userEmail: "user@example.com",
-    endpoint: "/api/users",
-    method: "GET",
-    statusCode: 500,
-    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    ip: "192.168.1.1",
-    resolved: false,
-    tags: ["database", "connection"],
-    environment: "production"
-  },
-  {
-    id: "2",
-    timestamp: "2024-01-15T09:15:00Z",
-    level: "error",
-    message: "Invalid authentication token",
-    stack: "Error: Invalid token\n    at AuthService.verifyToken (/app/lib/auth.js:67:15)\n    at async AuthMiddleware.authenticate (/app/middleware/auth.js:12:8)",
-    userId: "user456",
-    userEmail: "user2@example.com",
-    endpoint: "/api/auth/verify",
-    method: "POST",
-    statusCode: 401,
-    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    ip: "192.168.1.2",
-    resolved: true,
-    resolvedAt: "2024-01-15T09:20:00Z",
-    resolvedBy: "admin@localpro.com",
-    tags: ["auth", "security"],
-    environment: "production"
-  },
-  {
-    id: "3",
-    timestamp: "2024-01-15T08:45:00Z",
-    level: "warning",
-    message: "High memory usage detected",
-    stack: "Warning: Memory usage at 85%\n    at SystemMonitor.check (/app/monitor.js:23:8)\n    at async HealthCheck.run (/app/health.js:45:12)",
-    resolved: false,
-    tags: ["performance", "memory"],
-    environment: "production"
-  },
-  {
-    id: "4",
-    timestamp: "2024-01-15T07:30:00Z",
-    level: "error",
-    message: "Payment processing failed",
-    stack: "Error: Payment gateway timeout\n    at PaymentService.processPayment (/app/services/payment.js:89:12)\n    at async PaymentController.create (/app/controllers/payment.js:34:8)",
-    userId: "user789",
-    userEmail: "user3@example.com",
-    endpoint: "/api/payments",
-    method: "POST",
-    statusCode: 500,
-    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15",
-    ip: "192.168.1.3",
-    resolved: false,
-    tags: ["payment", "gateway"],
-    environment: "production"
-  },
-  {
-    id: "5",
-    timestamp: "2024-01-15T06:15:00Z",
-    level: "info",
-    message: "User session expired",
-    userId: "user101",
-    userEmail: "user4@example.com",
-    endpoint: "/api/auth/refresh",
-    method: "POST",
-    statusCode: 401,
-    resolved: true,
-    resolvedAt: "2024-01-15T06:16:00Z",
-    resolvedBy: "system",
-    tags: ["auth", "session"],
-    environment: "production"
-  }
-];
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user) {
+    if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user has admin role
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'overview';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const level = searchParams.get('level');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const severity = searchParams.get('severity');
     const status = searchParams.get('status');
-    const environment = searchParams.get('environment');
-    const search = searchParams.get('search');
 
-    let filteredErrors = [...mockErrors];
+    // Fetch real error monitoring data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'errors') {
+        // Fetch errors with query parameters
+        const queryParams: Record<string, string> = {};
+        if (severity) queryParams.severity = severity;
+        if (status) queryParams.status = status;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
 
-    // Apply filters
-    if (level && level !== 'all') {
-      filteredErrors = filteredErrors.filter(error => error.level === level);
-    }
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'errorMonitoringErrors',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
 
-    if (status && status !== 'all') {
-      filteredErrors = filteredErrors.filter(error => 
-        status === 'resolved' ? error.resolved : !error.resolved
+        if (!response.ok) {
+          throw new Error(`Failed to fetch errors: ${response.status}`);
+        }
+
+        const errorsData = await response.json();
+        return {
+          data: errorsData.data || errorsData,
+          pagination: errorsData.pagination || {
+            page,
+            limit,
+            total: errorsData.total || 0,
+            pages: Math.ceil((errorsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch error monitoring overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'errorMonitoringStats',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch error monitoring statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Error monitoring data");
+
+    if (result.error) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    if (environment && environment !== 'all') {
-      filteredErrors = filteredErrors.filter(error => error.environment === environment);
-    }
-
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredErrors = filteredErrors.filter(error => 
-        error.message.toLowerCase().includes(searchLower) ||
-        error.userEmail?.toLowerCase().includes(searchLower) ||
-        error.endpoint?.toLowerCase().includes(searchLower) ||
-        error.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      );
-    }
-
-    // Calculate pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedErrors = filteredErrors.slice(startIndex, endIndex);
-
-    // Calculate stats
-    const stats: ErrorStats = {
-      total: mockErrors.length,
-      critical: mockErrors.filter(e => e.level === 'critical').length,
-      errors: mockErrors.filter(e => e.level === 'error').length,
-      warnings: mockErrors.filter(e => e.level === 'warning').length,
-      resolved: mockErrors.filter(e => e.resolved).length,
-      unresolved: mockErrors.filter(e => !e.resolved).length,
-      todayCount: mockErrors.filter(e => {
-        const today = new Date();
-        const errorDate = new Date(e.timestamp);
-        return errorDate.toDateString() === today.toDateString();
-      }).length,
-      weekCount: mockErrors.filter(e => {
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        return new Date(e.timestamp) >= weekAgo;
-      }).length
-    };
+    const { data, pagination } = result.data;
 
     return NextResponse.json({
-      errors: paginatedErrors,
-      stats,
-      pagination: {
-        page,
-        limit,
-        total: filteredErrors.length,
-        totalPages: Math.ceil(filteredErrors.length / limit)
-      }
+      success: true,
+      data,
+      pagination
     });
 
   } catch (error) {
-    console.error('Error fetching error logs:', error);
+    console.error('Error monitoring admin API error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { action, errorId } = body;
-
-    if (action === 'resolve' && errorId) {
-      // In production, this would update the database
-      const errorIndex = mockErrors.findIndex(e => e.id === errorId);
-      if (errorIndex !== -1) {
-        mockErrors[errorIndex].resolved = true;
-        mockErrors[errorIndex].resolvedAt = new Date().toISOString();
-        mockErrors[errorIndex].resolvedBy = session.user.email || 'admin';
-      }
-
-      return NextResponse.json({ success: true });
-    }
-
-    if (action === 'unresolve' && errorId) {
-      // In production, this would update the database
-      const errorIndex = mockErrors.findIndex(e => e.id === errorId);
-      if (errorIndex !== -1) {
-        mockErrors[errorIndex].resolved = false;
-        mockErrors[errorIndex].resolvedAt = undefined;
-        mockErrors[errorIndex].resolvedBy = undefined;
-      }
-
-      return NextResponse.json({ success: true });
-    }
-
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-
-  } catch (error) {
-    console.error('Error processing error log action:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch error monitoring data' },
       { status: 500 }
     );
   }

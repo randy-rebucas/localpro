@@ -1,162 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
-// GET /api/admin/marketplace - Fetch marketplace services with pagination, filtering, and sorting
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
     
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Check if user has admin access
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const limit = searchParams.get('limit') || '50';
-    const search = searchParams.get('search');
-    const category = searchParams.get('category');
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status');
-    const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const category = searchParams.get('category');
 
-    // Build query parameters for the backend API
-    const queryParams: Record<string, string> = {
-      page,
-      limit,
-      sortBy,
-      sortOrder
-    };
+    // Fetch real marketplace data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'listings') {
+        // Fetch marketplace listings with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
 
-    if (search) queryParams.search = search;
-    if (category && category !== 'all') queryParams.category = category;
-    if (status && status !== 'all') queryParams.status = status;
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'marketplaceListings',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
 
-    // Make authenticated request to the backend API
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'marketplaceServices', // Using the marketplace services endpoint from API_ENDPOINTS
-      [],
-      queryParams,
-      { method: 'GET' }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || 'Failed to fetch marketplace services from backend' },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-
-  } catch (error) {
-    console.error('Error fetching marketplace services:', error);
-    
-    let errorMessage = 'Internal server error';
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = 'Request timeout - the external service is taking too long to respond';
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = 'Unable to connect to external service - please try again later';
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-// POST /api/admin/marketplace - Create a new marketplace service
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (session.user.role !== 'admin') {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { name, description, category, price, providerId, status = 'pending' } = body;
-
-    // Validate required fields
-    if (!name || !description || !category || !price || !providerId) {
-      return NextResponse.json(
-        { error: 'Name, description, category, price, and provider ID are required' },
-        { status: 400 }
-      );
-    }
-
-    // Make authenticated request to the backend API to create marketplace service
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'marketplaceServices', // Using the marketplace services endpoint from API_ENDPOINTS
-      [],
-      {},
-      { 
-        method: 'POST',
-        body: JSON.stringify(body),
-        headers: {
-          'Content-Type': 'application/json'
+        if (!response.ok) {
+          throw new Error(`Failed to fetch marketplace listings: ${response.status}`);
         }
-      }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+        const listingsData = await response.json();
+        return {
+          data: listingsData.data || listingsData,
+          pagination: listingsData.pagination || {
+            page,
+            limit,
+            total: listingsData.total || 0,
+            pages: Math.ceil((listingsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch marketplace overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'analyticsMarketplace',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch marketplace statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
+      }
+    }, "Marketplace data");
+
+    if (result.error) {
       return NextResponse.json(
-        { error: errorData.error || 'Failed to create marketplace service in backend' },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
+    const { data, pagination } = result.data;
+
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
 
   } catch (error) {
-    console.error('Error creating marketplace service:', error);
-    
-    let errorMessage = 'Internal server error';
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = 'Request timeout - the external service is taking too long to respond';
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = 'Unable to connect to external service - please try again later';
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Marketplace admin API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch marketplace data' },
+      { status: 500 }
     );
   }
 }

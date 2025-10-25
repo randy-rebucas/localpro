@@ -1,170 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
-    console.log("Jobs API: Session:", session?.user?.email);
-
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get("search") || "";
-    const category = searchParams.get("category") || "";
-    const location = searchParams.get("location") || "";
-    const available = searchParams.get("available");
-    const minBudget = searchParams.get("minBudget");
-    const maxBudget = searchParams.get("maxBudget");
-    const skills = searchParams.get("skills");
-    const sort = searchParams.get("sort") || "relevance";
-
-    console.log("Jobs API: Query params:", {
-      search,
-      category,
-      location,
-      available,
-      minBudget,
-      maxBudget,
-      skills,
-      sort
-    });
-
-    // Build query parameters for external API
-    const queryParams = new URLSearchParams();
-    if (search) queryParams.append("search", search);
-    if (category) queryParams.append("category", category);
-    if (location) queryParams.append("location", location);
-    if (available) queryParams.append("available", available);
-    if (minBudget) queryParams.append("minBudget", minBudget);
-    if (maxBudget) queryParams.append("maxBudget", maxBudget);
-    if (skills) queryParams.append("skills", skills);
-    if (sort) queryParams.append("sort", sort);
-
-    // Make request to external API using proper authentication with API constants
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'jobs',
-      [],
-      Object.fromEntries(queryParams.entries()),
-      { method: 'GET' }
-    );
-
-    if (!response.ok) {
-      console.error("External API error:", response.status, response.statusText);
-      return NextResponse.json(
-        { 
-          error: `External service error: ${response.status}`,
-          errorMessage: `Failed to fetch jobs from external service`
-        },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    console.log("Jobs API: External API response:", data);
-
-    // Return the data from external API
-    return NextResponse.json({
-      jobs: data.jobs || data || [],
-      total: data.total || (Array.isArray(data) ? data.length : 0),
-      page: data.page || 1,
-      limit: data.limit || 20
-    });
-
-  } catch (error) {
-    console.error("Jobs API: Error fetching jobs:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
-    return NextResponse.json(
-      { 
-        error: errorMessage,
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-        errorStack: error instanceof Error ? error.stack : undefined
-      },
-      { status: statusCode }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(request);
     
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    console.log("Jobs API: Creating job:", body);
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type') || 'overview';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
 
-    // Make request to external API using proper authentication with API constants
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'jobs',
-      [],
-      {},
-      {
-        method: 'POST',
-        body: JSON.stringify(body)
+    // Fetch real jobs data from external API
+    const result = await handleApiRoute(async () => {
+      if (type === 'jobs') {
+        // Fetch jobs with query parameters
+        const queryParams: Record<string, string> = {};
+        if (status) queryParams.status = status;
+        if (category) queryParams.category = category;
+        queryParams.page = page.toString();
+        queryParams.limit = limit.toString();
+
+        const response = await makeAuthenticatedRequestWithPath(
+          request,
+          'jobs',
+          [],
+          queryParams,
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch jobs: ${response.status}`);
+        }
+
+        const jobsData = await response.json();
+        return {
+          data: jobsData.data || jobsData,
+          pagination: jobsData.pagination || {
+            page,
+            limit,
+            total: jobsData.total || 0,
+            pages: Math.ceil((jobsData.total || 0) / limit)
+          }
+        };
+      } else {
+        // Fetch jobs overview/statistics
+        const response = await makeAuthenticatedRequestWithEndpoint(
+          request,
+          'jobsStats',
+          { method: 'GET' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch jobs statistics: ${response.status}`);
+        }
+
+        const statsData = await response.json();
+        return {
+          data: statsData.data || statsData,
+          pagination: undefined
+        };
       }
-    );
+    }, "Jobs data");
 
-    if (!response.ok) {
-      console.error("External API error:", response.status, response.statusText);
+    if (result.error) {
       return NextResponse.json(
-        { 
-          error: `External service error: ${response.status}`,
-          errorMessage: `Failed to create job in external service`
-        },
-        { status: response.status }
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    const data = await response.json();
-    console.log("Jobs API: External API response:", data);
+    const { data, pagination } = result.data || { data: null, pagination: null };
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      data,
+      pagination
+    });
 
   } catch (error) {
-    console.error("Jobs API: Error creating job:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    console.error('Jobs API error:', error);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        errorMessage: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: statusCode }
+      { error: 'Failed to fetch jobs data' },
+      { status: 500 }
     );
   }
 }
