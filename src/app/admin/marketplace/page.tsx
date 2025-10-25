@@ -14,6 +14,7 @@ import {
   TrendingDown
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { AdminErrorState } from "@/components/admin/admin-error-state";
 
 interface Service {
   id: string;
@@ -162,20 +163,22 @@ export default function MarketplacePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading size="xl" text="Loading marketplace data..." />
-      </div>
+      <Loading 
+        size="xl" 
+        text="Loading marketplace data..." 
+        fullScreen={true}
+        variant="default"
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
+      <AdminErrorState 
+        error={error}
+        onRetry={() => window.location.reload()}
+        retryText="Try Again"
+      />
     );
   }
 

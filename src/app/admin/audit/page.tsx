@@ -25,6 +25,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { AdminErrorState } from "@/components/admin/admin-error-state";
 
 interface AuditLog {
   id: string;
@@ -407,26 +408,22 @@ export default function AdminAuditPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loading size="xl" text="Loading audit logs..." />
-      </div>
+      <Loading 
+        size="xl" 
+        text="Loading audit logs..." 
+        fullScreen={true}
+        variant="default"
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={fetchAuditData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <AdminErrorState 
+        error={error}
+        onRetry={fetchAuditData}
+        retryText="Try Again"
+      />
     );
   }
 

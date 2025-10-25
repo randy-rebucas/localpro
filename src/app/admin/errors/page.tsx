@@ -13,6 +13,8 @@ import {
   XCircle,
   AlertCircle
 } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
+import { AdminErrorState } from "@/components/admin/admin-error-state";
 
 interface ErrorLog {
   id: string;
@@ -237,29 +239,22 @@ export default function ErrorMonitoringPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
-          <p className="text-gray-600">Loading error logs...</p>
-        </div>
-      </div>
+      <Loading 
+        size="xl" 
+        text="Loading error logs..." 
+        fullScreen={true}
+        variant="default"
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={fetchErrorData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <AdminErrorState 
+        error={error}
+        onRetry={fetchErrorData}
+        retryText="Try Again"
+      />
     );
   }
 

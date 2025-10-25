@@ -15,6 +15,7 @@ import {
   MapPin
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { AdminErrorState } from "@/components/admin/admin-error-state";
 
 interface User {
   id: string;
@@ -156,12 +157,11 @@ export default function UsersPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
-      </div>
+      <AdminErrorState 
+        error={error}
+        onRetry={() => window.location.reload()}
+        retryText="Try Again"
+      />
     );
   }
 
