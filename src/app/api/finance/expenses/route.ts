@@ -1,19 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath, handleApiRoute } from "@/lib/api-auth-utils";
 
 // GET /api/finance/expenses - Get expenses
 export async function GET(request: NextRequest) {
-  try {
+  const result = await handleApiRoute(async () => {
     const session = await getServerSession(request);
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new Error("Authentication required");
+    }
+
+    // Check if user has admin access
+    if (session.user.role !== 'admin') {
+      throw new Error("Admin access required");
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const page = searchParams.get('page') || '1';
+    const limit = searchParams.get('limit') || '50';
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const category = searchParams.get('category');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
+    // Build query parameters
+    const queryParams: Record<string, string> = {
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    };
+
+    if (startDate) queryParams.startDate = startDate;
+    if (endDate) queryParams.endDate = endDate;
+    if (category && category !== 'all') queryParams.category = category;
+
+    // Make authenticated request to the finance expenses endpoint
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'financeExpenses',
@@ -24,96 +48,77 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to fetch expenses" },
-        { status: response.status }
-      );
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error fetching expenses:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    return await response.json();
+  }, "Finance expenses fetch");
+
+  if (result.error) {
     return NextResponse.json(
       { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
+        success: false, 
+        error: result.error, 
+        details: result.details 
       },
-      { status: statusCode }
+      { status: result.status }
     );
   }
+
+  return NextResponse.json(result.data);
 }
 
 // POST /api/finance/expenses - Add expense
 export async function POST(request: NextRequest) {
-  try {
+  const result = await handleApiRoute(async () => {
     const session = await getServerSession(request);
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new Error("Authentication required");
+    }
+
+    // Check if user has admin access
+    if (session.user.role !== 'admin') {
+      throw new Error("Admin access required");
     }
 
     const body = await request.json();
-    
+
+    // Validate required fields
+    if (!body.amount || !body.description || !body.category) {
+      throw new Error("Missing required fields: amount, description, category");
+    }
+
+    // Make authenticated request to add expense
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'financeExpenses',
+      'financeExpenseAdd',
       [],
       {},
-      {
-        method: "POST",
+      { 
+        method: 'POST',
         body: JSON.stringify(body)
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to add expense" },
-        { status: response.status }
-      );
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error adding expense:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    return await response.json();
+  }, "Finance expense creation");
+
+  if (result.error) {
     return NextResponse.json(
       { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
+        success: false, 
+        error: result.error, 
+        details: result.details 
       },
-      { status: statusCode }
+      { status: result.status }
     );
   }
+
+  return NextResponse.json(result.data);
 }

@@ -1,19 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath, handleApiRoute } from "@/lib/api-auth-utils";
 
 // GET /api/finance/transactions - Get transactions
 export async function GET(request: NextRequest) {
-  try {
+  const result = await handleApiRoute(async () => {
     const session = await getServerSession(request);
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new Error("Authentication required");
+    }
+
+    // Check if user has admin access
+    if (session.user.role !== 'admin') {
+      throw new Error("Admin access required");
     }
 
     const { searchParams } = new URL(request.url);
-    const queryParams = Object.fromEntries(searchParams.entries());
+    const page = searchParams.get('page') || '1';
+    const limit = searchParams.get('limit') || '50';
+    const type = searchParams.get('type');
+    const status = searchParams.get('status');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
 
+    // Build query parameters
+    const queryParams: Record<string, string> = {
+      page,
+      limit,
+      sortBy,
+      sortOrder
+    };
+
+    if (type && type !== 'all') queryParams.type = type;
+    if (status && status !== 'all') queryParams.status = status;
+    if (startDate) queryParams.startDate = startDate;
+    if (endDate) queryParams.endDate = endDate;
+    if (search) queryParams.search = search;
+
+    // Make authenticated request to the finance transactions endpoint
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'financeTransactions',
@@ -24,37 +52,22 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to fetch transactions" },
-        { status: response.status }
-      );
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error fetching transactions:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    return await response.json();
+  }, "Finance transactions fetch");
+
+  if (result.error) {
     return NextResponse.json(
       { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
+        success: false, 
+        error: result.error, 
+        details: result.details 
       },
-      { status: statusCode }
+      { status: result.status }
     );
   }
+
+  return NextResponse.json(result.data);
 }

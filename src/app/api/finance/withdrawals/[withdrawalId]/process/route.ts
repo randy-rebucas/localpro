@@ -1,28 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath, handleApiRoute } from "@/lib/api-auth-utils";
 
-// PUT /api/finance/withdrawals/[withdrawalId]/process - Process withdrawal (Admin)
+// PUT /api/finance/withdrawals/:withdrawalId/process - Process withdrawal (Admin)
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ withdrawalId: string }> }
 ) {
-  try {
+  const result = await handleApiRoute(async () => {
     const session = await getServerSession(request);
-    const { withdrawalId } = await params;
     
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new Error("Authentication required");
     }
 
+    // Check if user has admin access
+    if (session.user.role !== 'admin') {
+      throw new Error("Admin access required");
+    }
+
+    const { withdrawalId } = await params;
     const body = await request.json();
-    
+
+    // Validate required fields
+    if (!body.status || !['approved', 'rejected'].includes(body.status)) {
+      throw new Error("Missing or invalid status. Must be 'approved' or 'rejected'");
+    }
+
+    // Make authenticated request to process withdrawal
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'financeWithdraw',
       [withdrawalId, 'process'],
       {},
-      {
+      { 
         method: 'PUT',
         body: JSON.stringify(body)
       }
@@ -30,37 +41,22 @@ export async function PUT(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to process withdrawal" },
-        { status: response.status }
-      );
+      throw new Error(errorData.message || `API request failed with status ${response.status}`);
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error processing withdrawal:", error);
-    
-    let errorMessage = "Internal server error";
-    let statusCode = 500;
-    
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        errorMessage = "Request timeout - the external service is taking too long to respond";
-        statusCode = 504;
-      } else if (error.message.includes('fetch failed')) {
-        errorMessage = "Unable to connect to external service - please try again later";
-        statusCode = 503;
-      }
-    }
-    
+    return await response.json();
+  }, "Finance withdrawal processing");
+
+  if (result.error) {
     return NextResponse.json(
       { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? 
-          (error instanceof Error ? error.message : String(error)) : undefined
+        success: false, 
+        error: result.error, 
+        details: result.details 
       },
-      { status: statusCode }
+      { status: result.status }
     );
   }
+
+  return NextResponse.json(result.data);
 }
