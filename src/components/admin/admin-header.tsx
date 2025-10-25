@@ -25,19 +25,19 @@ export function AdminHeader({ onMenuClick, user }: AdminHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="flex items-center justify-between px-4 py-4">
+    <header className="bg-white shadow-sm sticky top-0 z-40 backdrop-blur-sm bg-white/95">
+      <div className="flex items-center justify-between px-4 py-3">
         {/* Left side */}
         <div className="flex items-center space-x-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-gray-100 rounded-md"
+            className="lg:hidden p-2 hover:bg-gray-100 rounded-md transition-colors duration-200"
           >
             <Menu className="w-5 h-5" />
           </button>
           
           <div className="hidden lg:block">
-            <h1 className="text-xl font-semibold text-gray-800">
+            <h1 className="text-xl font-semibold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               LocalPro Admin
             </h1>
           </div>
@@ -49,8 +49,8 @@ export function AdminHeader({ onMenuClick, user }: AdminHeaderProps) {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search admin panel..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Q Search admin panel..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
             />
           </div>
         </div>
@@ -61,16 +61,16 @@ export function AdminHeader({ onMenuClick, user }: AdminHeaderProps) {
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 hover:bg-gray-100 rounded-lg relative"
+              className="p-2 hover:bg-gray-100 rounded-lg relative transition-all duration-200 hover:scale-105"
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium animate-pulse">
                 3
               </span>
             </button>
             
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border z-50">
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border z-50 animate-in slide-in-from-top-2 duration-200">
                 <div className="p-4 border-b">
                   <h3 className="font-semibold text-gray-800">Notifications</h3>
                 </div>
@@ -101,20 +101,20 @@ export function AdminHeader({ onMenuClick, user }: AdminHeaderProps) {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg"
+              className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-105"
             >
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
-              <div className="hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-800">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.role}</p>
+              <div className="hidden md:block text-left min-w-0">
+                <p className="text-sm font-medium text-gray-800 truncate max-w-24">{user.name}</p>
+                <p className="text-xs text-gray-500 truncate max-w-24">{user.role}</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
             </button>
             
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border z-50 animate-in slide-in-from-top-2 duration-200">
                 <div className="p-2">
                   <div className="px-3 py-2 border-b">
                     <p className="text-sm font-medium text-gray-800">{user.name}</p>

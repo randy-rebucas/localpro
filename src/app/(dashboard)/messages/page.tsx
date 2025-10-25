@@ -7,7 +7,7 @@ import {
   makeClientAuthenticatedRequestWithEndpoint,
   handleClientApiRoute 
 } from "@/lib/client-api-utils";
-import { API_CONFIG } from "@/lib/env";
+import { CLIENT_CONFIG } from "@/lib/env";
 
 interface Message {
   id: string;
@@ -136,7 +136,7 @@ export default function MessagesPage() {
     try {
       await retryWithBackoff(async () => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.apiTimeout);
+        const timeoutId = setTimeout(() => controller.abort(), CLIENT_CONFIG.apiTimeout);
         
         const response = await makeClientAuthenticatedRequestWithEndpoint(
           'communicationConversations',

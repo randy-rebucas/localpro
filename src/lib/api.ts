@@ -1,7 +1,7 @@
-import { API_CONFIG } from './env';
+import { CLIENT_CONFIG } from './env';
 
 // API configuration
-export const API_BASE_URL = API_CONFIG.apiBaseUrl;
+export const API_BASE_URL = CLIENT_CONFIG.apiBaseUrl;
 
 import { createAuthFetchOptions } from './auth-utils';
 

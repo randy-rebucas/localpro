@@ -53,7 +53,7 @@ function getApiBaseUrl(): string {
 // Helper to get server-only environment variables
 function getServerEnvVar(key: string, defaultValue?: string): string | undefined {
   if (isClient) {
-    console.warn(`Attempting to access server-only environment variable ${key} on client side`);
+    // Silently return default value on client side to avoid warnings
     return defaultValue;
   }
   return getOptionalEnvVar(key, defaultValue);
@@ -72,6 +72,9 @@ export const CLIENT_CONFIG = {
   
   // Public API endpoints (safe to expose)
   apiBaseUrl: getOptionalEnvVar('NEXT_PUBLIC_API_BASE_URL', getApiBaseUrl()),
+  
+  // Client-side API configuration
+  apiTimeout: getNumberEnvVar('NEXT_PUBLIC_API_TIMEOUT', 10000),
   
   // External services (public keys only)
   googleMapsApiKey: getOptionalEnvVar('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY'),

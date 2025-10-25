@@ -230,10 +230,10 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="flex items-center">
           <Link
             href={item.href}
-            className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors flex-1 ${
+            className={`flex items-center px-2 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex-1 ${
               isActive
-                ? 'bg-blue-100 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-l-4 border-blue-500 shadow-sm'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
             }`}
             onClick={() => {
               if (!hasChildren) {
@@ -253,7 +253,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {hasChildren && (
             <button
               onClick={() => toggleExpanded(item.name)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 rounded transition-colors duration-200"
             >
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4" />
@@ -285,31 +285,36 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:flex-shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-gray-200
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">Admin Panel</h2>
-              <p className="text-sm text-gray-500">LocalPro Management</p>
+          <div className="flex items-center justify-between p-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-sm">N</span>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">Admin Panel</h2>
+                <p className="text-sm text-gray-500">LocalPro Management</p>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="lg:hidden p-1 hover:bg-gray-100 rounded"
+              className="lg:hidden p-1 hover:bg-gray-100 rounded transition-colors duration-200"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
           
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {sidebarItems.map(item => renderSidebarItem(item))}
           </nav>
           
           {/* Footer */}
-          <div className="p-4 border-t">
+          <div className="p-3">
             <div className="text-xs text-gray-500">
               <p>LocalPro Admin v1.0</p>
               <p>© 2024 LocalPro</p>
