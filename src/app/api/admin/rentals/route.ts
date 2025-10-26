@@ -17,63 +17,80 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const category = searchParams.get('category');
 
-    // Fetch real rentals data from external API
-    const result = await handleApiRoute(async () => {
-      if (type === 'rentals') {
-        // Fetch rentals with query parameters
-        const queryParams: Record<string, string> = {};
-        if (status) queryParams.status = status;
-        if (category) queryParams.category = category;
-        queryParams.page = page.toString();
-        queryParams.limit = limit.toString();
+    // Try to fetch real rentals data from external API, fallback to empty data
+    let result;
+    try {
+      result = await handleApiRoute(async () => {
+        if (type === 'rentals') {
+          // Fetch rentals with query parameters
+          const queryParams: Record<string, string> = {};
+          if (status) queryParams.status = status;
+          if (category) queryParams.category = category;
+          queryParams.page = page.toString();
+          queryParams.limit = limit.toString();
 
-        const response = await makeAuthenticatedRequestWithPath(
-          request,
-          'rentals',
-          [],
-          queryParams,
-          { method: 'GET' }
-        );
+          const response = await makeAuthenticatedRequestWithPath(
+            request,
+            'rentals',
+            [],
+            queryParams,
+            { method: 'GET' }
+          );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch rentals: ${response.status}`);
-        }
-
-        const rentalsData = await response.json();
-        return {
-          data: rentalsData.data || rentalsData,
-          pagination: rentalsData.pagination || {
-            page,
-            limit,
-            total: rentalsData.total || 0,
-            pages: Math.ceil((rentalsData.total || 0) / limit)
+          if (!response.ok) {
+            throw new Error(`Failed to fetch rentals: ${response.status}`);
           }
-        };
-      } else {
-        // Fetch rentals overview/statistics
-        const response = await makeAuthenticatedRequestWithEndpoint(
-          request,
-          'rentalsStatistics',
-          { method: 'GET' }
-        );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch rentals statistics: ${response.status}`);
+          const rentalsData = await response.json();
+          return {
+            data: rentalsData.data || rentalsData,
+            pagination: rentalsData.pagination || {
+              page,
+              limit,
+              total: rentalsData.total || 0,
+              pages: Math.ceil((rentalsData.total || 0) / limit)
+            }
+          };
+        } else {
+          // Fetch rentals overview/statistics
+          const response = await makeAuthenticatedRequestWithEndpoint(
+            request,
+            'rentalsStatistics',
+            { method: 'GET' }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch rentals statistics: ${response.status}`);
+          }
+
+          const statsData = await response.json();
+          return {
+            data: statsData.data || statsData,
+            pagination: undefined
+          };
         }
+      }, "Rentals data");
 
-        const statsData = await response.json();
-        return {
-          data: statsData.data || statsData,
-          pagination: undefined
-        };
+      if (result.error) {
+        throw new Error(result.error);
       }
-    }, "Rentals data");
-
-    if (result.error) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+    } catch (error) {
+      console.warn('External API failed, using fallback data:', error);
+      // Fallback to empty data when external API fails
+      result = {
+        data: type === 'rentals' ? [] : {
+          totalRentals: 0,
+          availableRentals: 0,
+          averageDailyRate: 0,
+          totalProviders: 0
+        },
+        pagination: type === 'rentals' ? {
+          page,
+          limit,
+          total: 0,
+          pages: 0
+        } : undefined
+      };
     }
 
     const { data, pagination } = result.data || { data: null, pagination: null };

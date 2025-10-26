@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, pagination } = result.data;
+    const { data, pagination } = result.data || { data: null, pagination: null };
 
     return NextResponse.json({
       success: true,

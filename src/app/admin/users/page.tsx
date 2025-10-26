@@ -144,6 +144,7 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [slowRequest, setSlowRequest] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'role' | 'status' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -154,10 +155,39 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Helper function to add timeout to fetch requests
+  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out. Please try again.');
+      }
+      throw error;
+    }
+  };
+
   const fetchData = useCallback(async () => {
+    let slowRequestTimer: NodeJS.Timeout | null = null;
+    
     try {
       setLoading(true);
       setError(null);
+      setSlowRequest(false);
+
+      // Set a timer to show slow request warning
+      slowRequestTimer = setTimeout(() => {
+        setSlowRequest(true);
+      }, 10000); // Show warning after 10 seconds
 
       // Build query parameters for users data
       const queryParams = new URLSearchParams();
@@ -170,16 +200,16 @@ export default function UsersPage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetch(`/api/admin/users?${queryParams}`, {
+        fetchWithTimeout(`/api/admin/users?${queryParams}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
-        }),
-        fetch('/api/admin/users/stats?period=week', {
+        }, 20000), // 20 second timeout for users data
+        fetchWithTimeout('/api/admin/users/stats?period=week', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include'
-        }).catch(err => {
+        }, 10000).catch(err => { // 10 second timeout for stats
           console.warn('Failed to fetch stats, using fallback:', err);
           return {
             ok: true,
@@ -267,9 +297,25 @@ export default function UsersPage() {
       setLastUpdated(new Date());
     } catch (err) {
       console.error('Error fetching users data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load users data');
+      let errorMessage = 'Failed to load users data';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('timed out')) {
+          errorMessage = 'Request timed out. The server may be slow. Please try again.';
+        } else if (err.message.includes('aborted')) {
+          errorMessage = 'Request was cancelled. Please try again.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
+      if (slowRequestTimer) {
+        clearTimeout(slowRequestTimer);
+      }
       setLoading(false);
+      setSlowRequest(false);
     }
   }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter, sortBy, sortOrder]);
 
@@ -283,7 +329,19 @@ export default function UsersPage() {
       await fetchData();
     } catch (err) {
       console.error('Error refreshing data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to refresh users data');
+      let errorMessage = 'Failed to refresh users data';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('timed out')) {
+          errorMessage = 'Refresh timed out. The server may be slow. Please try again.';
+        } else if (err.message.includes('aborted')) {
+          errorMessage = 'Refresh was cancelled. Please try again.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setRefreshing(false);
     }
@@ -398,7 +456,17 @@ export default function UsersPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loading size="xl" text="Loading users data..." />
+        <div className="text-center">
+          <Loading size="xl" text="Loading users data..." />
+          {slowRequest && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm">
+                <strong>Slow Response:</strong> The request is taking longer than usual. 
+                This might be due to a large dataset or slow external API. Please wait...
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

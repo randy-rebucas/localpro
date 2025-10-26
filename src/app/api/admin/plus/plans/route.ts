@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       }
       
       // Transform the API response to match our interface
-      const plans = plansData.map((plan: any) => ({
+      const plans = plansData.map((plan: Record<string, unknown>) => ({
         id: plan.id,
         name: plan.name,
         monthlyPrice: plan.monthlyPrice,

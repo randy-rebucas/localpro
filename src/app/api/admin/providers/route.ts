@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
+import { SERVER_CONFIG } from '@/lib/env';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
         queryParams.page = page.toString();
         queryParams.limit = limit.toString();
 
+        // Use the API auth utilities for proper authentication
         const response = await makeAuthenticatedRequestWithPath(
           request,
           'providersAdminAll',
@@ -50,10 +52,12 @@ export async function GET(request: NextRequest) {
           }
         };
       } else {
-        // Fetch providers overview/statistics
-        const response = await makeAuthenticatedRequestWithEndpoint(
+        // Fetch providers overview/statistics using the same endpoint with stats parameter
+        const response = await makeAuthenticatedRequestWithPath(
           request,
-          'providersAnalyticsPerformance',
+          'providersAdminAll',
+          [],
+          { type: 'stats' },
           { method: 'GET' }
         );
 
@@ -76,7 +80,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, pagination } = result.data;
+    const { data, pagination } = result.data || { data: null, pagination: null };
 
     return NextResponse.json({
       success: true,

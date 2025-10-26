@@ -210,6 +210,7 @@ export default function MarketplacePage() {
 
       // Build query parameters for marketplace data
       const queryParams = new URLSearchParams();
+      queryParams.set('type', 'listings'); // This is crucial - we need listings, not overview
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
       if (searchTerm) queryParams.set('search', searchTerm);
@@ -246,9 +247,16 @@ export default function MarketplacePage() {
 
       // Handle the API response structure
       if (dataResult.success && dataResult.data) {
-        const mappedServices = dataResult.data.map(mapServiceData);
-        setServices(mappedServices);
-        setTotalCount(dataResult.pagination?.total || dataResult.data.length);
+        // Ensure data is an array before mapping
+        if (Array.isArray(dataResult.data)) {
+          const mappedServices = dataResult.data.map(mapServiceData);
+          setServices(mappedServices);
+          setTotalCount(dataResult.pagination?.total || dataResult.data.length);
+        } else {
+          console.warn('Expected array data but received:', typeof dataResult.data, dataResult.data);
+          setServices([]);
+          setTotalCount(0);
+        }
       } else {
         setServices([]);
         setTotalCount(0);

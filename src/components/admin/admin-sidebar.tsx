@@ -27,7 +27,24 @@ import {
   DollarSign,
   Users2,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Database,
+  Search,
+  Globe,
+  Zap,
+  Eye,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  Download,
+  Filter,
+  Clock,
+  Target,
+  Award,
+  Lock,
+  Key,
+  Server,
+  Monitor
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -57,139 +74,61 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "User Management",
       href: "/admin/users",
       icon: Users,
-      children: [
-        { name: "All Users", href: "/admin/users", icon: Users },
-        { name: "Providers", href: "/admin/users/providers", icon: Users },
-        { name: "Suppliers", href: "/admin/users/suppliers", icon: Package },
-        { name: "Instructors", href: "/admin/users/instructors", icon: GraduationCap },
-        { name: "Agencies", href: "/admin/users/agencies", icon: Building },
-      ],
     },
     {
       name: "Marketplace",
       href: "/admin/marketplace",
       icon: Store,
-      children: [
-        { name: "Services", href: "/admin/marketplace/services", icon: Store },
-        { name: "Bookings", href: "/admin/marketplace/bookings", icon: Store },
-        { name: "Reviews", href: "/admin/marketplace/reviews", icon: Store },
-        { name: "Categories", href: "/admin/marketplace/categories", icon: Store },
-      ],
     },
     {
       name: "Supplies",
       href: "/admin/supplies",
       icon: Package,
-      children: [
-        { name: "Products", href: "/admin/supplies/products", icon: Package },
-        { name: "Orders", href: "/admin/supplies/orders", icon: Package },
-        { name: "Categories", href: "/admin/supplies/categories", icon: Package },
-        { name: "Inventory", href: "/admin/supplies/inventory", icon: Package },
-      ],
     },
     {
       name: "Academy",
       href: "/admin/academy",
       icon: GraduationCap,
-      children: [
-        { name: "Courses", href: "/admin/academy/courses", icon: GraduationCap },
-        { name: "Enrollments", href: "/admin/academy/enrollments", icon: GraduationCap },
-        { name: "Instructors", href: "/admin/academy/instructors", icon: Users },
-        { name: "Categories", href: "/admin/academy/categories", icon: GraduationCap },
-      ],
     },
     {
       name: "Rentals",
       href: "/admin/rentals",
       icon: Car,
-      children: [
-        { name: "Items", href: "/admin/rentals/items", icon: Car },
-        { name: "Bookings", href: "/admin/rentals/bookings", icon: Car },
-        { name: "Categories", href: "/admin/rentals/categories", icon: Car },
-      ],
     },
     {
       name: "Ads",
       href: "/admin/ads",
       icon: Megaphone,
-      children: [
-        { name: "All Ads", href: "/admin/ads", icon: Megaphone },
-        { name: "Categories", href: "/admin/ads/categories", icon: Megaphone },
-        { name: "Analytics", href: "/admin/ads/analytics", icon: BarChart3 },
-      ],
     },
     {
       name: "Finance",
       href: "/admin/finance",
       icon: CreditCard,
-      children: [
-        { name: "Overview", href: "/admin/finance", icon: CreditCard },
-        { name: "Transactions", href: "/admin/finance/transactions", icon: CreditCard },
-        { name: "Withdrawals", href: "/admin/finance/withdrawals", icon: CreditCard },
-        { name: "Reports", href: "/admin/finance/reports", icon: FileText },
-      ],
     },
     {
       name: "Communication",
       href: "/admin/communication",
       icon: MessageSquare,
-      children: [
-        { name: "Messages", href: "/admin/communication/messages", icon: MessageSquare },
-        { name: "Notifications", href: "/admin/communication/notifications", icon: MessageSquare },
-        { name: "Announcements", href: "/admin/communication/announcements", icon: Megaphone },
-      ],
     },
     {
       name: "Analytics",
       href: "/admin/analytics",
       icon: BarChart3,
-      children: [
-        { name: "Overview", href: "/admin/analytics", icon: BarChart3 },
-        { name: "Users", href: "/admin/analytics/users", icon: Users },
-        { name: "Revenue", href: "/admin/analytics/revenue", icon: DollarSign },
-        { name: "Performance", href: "/admin/analytics/performance", icon: TrendingUp },
-      ],
-    },
-    {
-      name: "System",
-      href: "/admin/system",
-      icon: Settings,
-      children: [
-        { name: "Settings", href: "/admin/settings", icon: Settings },
-        { name: "Logs", href: "/admin/logs", icon: Activity },
-        { name: "Health", href: "/admin/health", icon: Shield },
-        { name: "Maps", href: "/admin/maps", icon: MapPin },
-      ],
     },
     {
       name: "Plus Management",
       href: "/admin/plus",
       icon: TrendingUp,
-      children: [
-        { name: "Plans", href: "/admin/plus/plans", icon: TrendingUp },
-        { name: "Subscriptions", href: "/admin/plus/subscriptions", icon: Users },
-        { name: "Usage", href: "/admin/plus/usage", icon: BarChart3 },
-      ],
     },
     {
       name: "Jobs",
       href: "/admin/jobs",
       icon: Briefcase,
-      children: [
-        { name: "All Jobs", href: "/admin/jobs", icon: Briefcase },
-        { name: "Applications", href: "/admin/jobs/applications", icon: Briefcase },
-        { name: "Categories", href: "/admin/jobs/categories", icon: Briefcase },
-      ],
     },
     {
       name: "Providers",
       href: "/admin/providers",
       icon: Users2,
-      children: [
-        { name: "All Providers", href: "/admin/providers", icon: Users2 },
-        { name: "Verification", href: "/admin/providers/verification", icon: Shield },
-        { name: "Performance", href: "/admin/providers/performance", icon: BarChart3 },
-      ],
     },
     {
       name: "Error Monitoring",
@@ -201,6 +140,36 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Audit Logs",
       href: "/admin/audit",
       icon: FileText,
+    },
+    {
+      name: "System Logs",
+      href: "/admin/logs",
+      icon: Database
+    },
+    {
+      name: "Trust Verification",
+      href: "/admin/trust-verification",
+      icon: Shield,
+    },
+    {
+      name: "Referrals",
+      href: "/admin/referrals",
+      icon: Target,
+    },
+    {
+      name: "Payment Systems",
+      href: "/admin/payments",
+      icon: CreditCard,
+    },
+    {
+      name: "App Settings",
+      href: "/admin/settings",
+      icon: Settings,
+    },
+    {
+      name: "System Health",
+      href: "/admin/health",
+      icon: Monitor,
     },
   ];
 

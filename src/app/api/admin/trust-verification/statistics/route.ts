@@ -11,34 +11,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get('period') || '30d';
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const _period = searchParams.get('period') || '30d';
+    const _type = searchParams.get('type') || 'overview';
 
-    // Fetch real trust verification statistics from external API
     const result = await handleApiRoute(async () => {
-      const queryParams: Record<string, string> = {};
-      if (period) queryParams.period = period;
-      if (startDate) queryParams.startDate = startDate;
-      if (endDate) queryParams.endDate = endDate;
-
+      // Fetch trust verification statistics
       const response = await makeAuthenticatedRequestWithEndpoint(
         request,
         'trustVerificationStatistics',
-        { 
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+        { method: 'GET' }
       );
 
       if (!response.ok) {
         throw new Error(`Failed to fetch trust verification statistics: ${response.status}`);
       }
 
-      const statisticsData = await response.json();
-      return statisticsData.data || statisticsData;
+      const statsData = await response.json();
+      return statsData.data || statsData;
     }, "Trust verification statistics");
 
     if (result.error) {
@@ -50,13 +39,11 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: result.data,
-      period,
-      generatedAt: new Date().toISOString()
+      data: result.data
     });
 
   } catch (error) {
-    console.error('Trust verification statistics error:', error);
+    console.error('Trust verification statistics API error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch trust verification statistics' },
       { status: 500 }

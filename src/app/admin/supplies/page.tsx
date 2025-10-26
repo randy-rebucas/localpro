@@ -16,7 +16,8 @@ import {
   DollarSign,
   Users,
   Star,
-  RefreshCw
+  RefreshCw,
+  XCircle
 } from "lucide-react";
 
 interface Supply {
@@ -62,11 +63,13 @@ interface Supply {
 
 interface SuppliesResponse {
   success: boolean;
-  count: number;
-  total: number;
-  page: number;
-  pages: number;
   data: Supply[];
+  pagination?: {
+    page: number;
+    pages: number;
+    total: number;
+    count: number;
+  };
 }
 
 export default function SuppliesAdmin() {
@@ -83,6 +86,12 @@ export default function SuppliesAdmin() {
     count: 0
   });
   const [paginationLoading, setPaginationLoading] = useState(false);
+  const [selectedSupply, setSelectedSupply] = useState<Supply | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<'view' | 'edit' | 'delete'>('view');
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -95,6 +104,50 @@ export default function SuppliesAdmin() {
     fetchSupplies();
   }, []);
 
+  // Refetch when filter changes
+  useEffect(() => {
+    fetchSupplies(1);
+  }, [filterCategory]);
+
+  const handleAction = (supply: Supply, action: 'view' | 'edit' | 'delete') => {
+    setSelectedSupply(supply);
+    setModalType(action);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedSupply(null);
+  };
+
+  const handleDeleteSupply = async (supplyId: string) => {
+    try {
+      setActionLoading(true);
+      setError(null);
+      
+      const response = await fetch(`/api/admin/supplies/${supplyId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        // Refresh the supplies list
+        await fetchSupplies(pagination.page);
+        setSuccessMessage('Supply deleted successfully');
+        handleCloseModal();
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete supply');
+      }
+    } catch (error) {
+      console.error('Error deleting supply:', error);
+      setError('An error occurred while deleting the supply');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const fetchSupplies = async (page = 1) => {
     try {
       if (page === 1) {
@@ -102,24 +155,28 @@ export default function SuppliesAdmin() {
       } else {
         setPaginationLoading(true);
       }
+      setError(null);
       
-      const response = await fetch(`/api/supplies?page=${page}&limit=10`);
+      // Use admin API endpoint for proper admin access
+      const response = await fetch(`/api/admin/supplies?type=supplies&page=${page}&limit=10&category=${filterCategory !== 'all' ? filterCategory : ''}`);
       const data: SuppliesResponse = await response.json();
       
       if (data.success) {
-        setSupplies(data.data);
+        setSupplies(data.data || []);
         setPagination({
-          page: data.page,
-          pages: data.pages,
-          total: data.total,
-          count: data.count
+          page: data.pagination?.page || page,
+          pages: data.pagination?.pages || 1,
+          total: data.pagination?.total || 0,
+          count: data.pagination?.total || 0
         });
       } else {
         console.error("Failed to fetch supplies:", data);
+        setError("Failed to fetch supplies. Please try again.");
         setSupplies([]);
       }
     } catch (error) {
       console.error("Error fetching supplies:", error);
+      setError("An error occurred while fetching supplies. Please try again.");
       setSupplies([]);
     } finally {
       setLoading(false);
@@ -213,6 +270,50 @@ export default function SuppliesAdmin() {
           </div>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <XCircle className="h-4 w-4 text-red-400" />
+              </div>
+              <div className="ml-2">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+              <div className="ml-auto pl-3">
+                <button
+                  onClick={() => setError(null)}
+                  className="text-red-400 hover:text-red-600"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Success Display */}
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-3">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <Star className="h-4 w-4 text-green-400" />
+              </div>
+              <div className="ml-2">
+                <p className="text-sm text-green-700">{successMessage}</p>
+              </div>
+              <div className="ml-auto pl-3">
+                <button
+                  onClick={() => setSuccessMessage(null)}
+                  className="text-green-400 hover:text-green-600"
+                >
+                  <XCircle className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filters and Search */}
         <div className="bg-white rounded shadow">
           <div className="px-4 py-3 border-b border-gray-200">
@@ -266,9 +367,13 @@ export default function SuppliesAdmin() {
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-gray-900">Supplies</h3>
               <div className="flex items-center space-x-2">
-                <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Refresh
+                <button 
+                  onClick={() => fetchSupplies(pagination.page)}
+                  className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  disabled={paginationLoading}
+                >
+                  <RefreshCw className={`w-3 h-3 mr-1 ${paginationLoading ? 'animate-spin' : ''}`} />
+                  {paginationLoading ? 'Refreshing...' : 'Refresh'}
                 </button>
               </div>
             </div>
@@ -380,13 +485,25 @@ export default function SuppliesAdmin() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex space-x-1">
-                        <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button 
+                          onClick={() => handleAction(supply, 'view')}
+                          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="View details"
+                        >
                           <Eye className="w-3 h-3" />
                         </button>
-                        <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button 
+                          onClick={() => handleAction(supply, 'edit')}
+                          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          title="Edit supply"
+                        >
                           <Edit className="w-3 h-3" />
                         </button>
-                        <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button 
+                          onClick={() => handleAction(supply, 'delete')}
+                          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          title="Delete supply"
+                        >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -471,6 +588,101 @@ export default function SuppliesAdmin() {
             </div>
           </div>
         )}
+
+      {/* Modal */}
+      {showModal && selectedSupply && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-4 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded bg-white">
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-900">
+                  {modalType === 'view' && 'Supply Details'}
+                  {modalType === 'edit' && 'Edit Supply'}
+                  {modalType === 'delete' && 'Delete Supply'}
+                </h3>
+                <button 
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+              
+              {modalType === 'view' && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+                      <p className="text-sm text-gray-900">{selectedSupply.name}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Brand</label>
+                      <p className="text-sm text-gray-900">{selectedSupply.brand}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">SKU</label>
+                      <p className="text-sm text-gray-900">{selectedSupply.sku}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                      <p className="text-sm text-gray-900">{selectedSupply.category}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Retail Price</label>
+                      <p className="text-sm text-gray-900">${selectedSupply.pricing.retailPrice.toFixed(2)} {selectedSupply.pricing.currency}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Wholesale Price</label>
+                      <p className="text-sm text-gray-900">${selectedSupply.pricing.wholesalePrice.toFixed(2)} {selectedSupply.pricing.currency}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Quantity</label>
+                      <p className="text-sm text-gray-900">{selectedSupply.inventory.quantity} units</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                        selectedSupply.isActive 
+                          ? 'text-green-600 bg-green-100' 
+                          : 'text-red-600 bg-red-100'
+                      }`}>
+                        {selectedSupply.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                    <p className="text-sm text-gray-900">{selectedSupply.description}</p>
+                  </div>
+                </div>
+              )}
+              
+              {modalType === 'delete' && (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Are you sure you want to delete "{selectedSupply.name}"? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={handleCloseModal}
+                      className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSupply(selectedSupply._id)}
+                      disabled={actionLoading}
+                      className="px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {actionLoading ? 'Deleting...' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

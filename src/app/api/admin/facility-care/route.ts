@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
+import { API_ENDPOINTS } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
         // Fetch facility care overview/statistics
         const response = await makeAuthenticatedRequestWithEndpoint(
           request,
-          'facilityCare' as any,
+          'facilityCare' as keyof typeof API_ENDPOINTS,
           { method: 'GET' }
         );
 

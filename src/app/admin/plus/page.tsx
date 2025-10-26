@@ -2,28 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Crown, 
   Users, 
   DollarSign, 
   TrendingUp, 
-  Star, 
   CheckCircle, 
   XCircle, 
   AlertTriangle,
   Plus,
   Search,
-  Filter,
-  Download,
   RefreshCw,
   Eye,
   Edit,
   Trash2,
-  Calendar,
-  CreditCard,
-  Zap,
-  Shield,
-  Phone,
-  Sparkles,
   Clock
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
@@ -95,14 +85,16 @@ export default function PlusAdmin() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPlan, setFilterPlan] = useState("all");
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
-  const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
+  const [showEditPlanModal, setShowEditPlanModal] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  // const [selectedSubscription] = useState<Subscription | null>(null);
 
   const loadData = async () => {
     try {
       setError(null);
       
-      // Load stats
-      const statsResponse = await fetch('/api/admin/plus/stats', {
+      // Load stats from the new analytics endpoint
+      const statsResponse = await fetch('/api/localpro-plus/analytics', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -114,8 +106,8 @@ export default function PlusAdmin() {
         }
       }
 
-      // Load plans
-      const plansResponse = await fetch('/api/admin/plus/plans', {
+      // Load plans from the new localpro-plus endpoint
+      const plansResponse = await fetch('/api/localpro-plus/plans', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -159,7 +151,7 @@ export default function PlusAdmin() {
 
   const createPlan = async (planData: Partial<SubscriptionPlan>) => {
     try {
-      const response = await fetch('/api/admin/plus/plans', {
+      const response = await fetch('/api/localpro-plus/plans', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +180,7 @@ export default function PlusAdmin() {
 
   const updatePlan = async (planId: string, planData: Partial<SubscriptionPlan>) => {
     try {
-      const response = await fetch(`/api/admin/plus/plans/${planId}`, {
+      const response = await fetch(`/api/localpro-plus/plans/${planId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -220,7 +212,7 @@ export default function PlusAdmin() {
     }
 
     try {
-      const response = await fetch(`/api/admin/plus/plans/${planId}`, {
+      const response = await fetch(`/api/localpro-plus/plans/${planId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -434,8 +426,8 @@ export default function PlusAdmin() {
                 <div className="flex space-x-1">
                   <button 
                     onClick={() => {
-                      // TODO: Implement edit plan modal
-                      console.log('Edit plan:', plan.id);
+                      setEditingPlan(plan);
+                      setShowEditPlanModal(true);
                     }}
                     className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
                   >
@@ -550,7 +542,7 @@ export default function PlusAdmin() {
                   <td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-1">
                       <button 
-                        onClick={() => setSelectedSubscription(subscription)}
+                        onClick={() => console.log('View subscription:', subscription.id)}
                         className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
                       >
                         <Eye className="w-3 h-3" />
@@ -681,6 +673,144 @@ export default function PlusAdmin() {
                   className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
                 >
                   Create Plan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Plan Modal */}
+      {showEditPlanModal && editingPlan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded shadow p-4 w-full max-w-md mx-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Edit Plan</h3>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const planData = {
+                name: formData.get('name') as string,
+                description: formData.get('description') as string,
+                monthlyPrice: parseFloat(formData.get('monthlyPrice') as string),
+                annualPrice: parseFloat(formData.get('annualPrice') as string),
+                features: (formData.get('features') as string).split('\n').filter(f => f.trim()),
+                isActive: formData.get('isActive') === 'true',
+                color: formData.get('color') as string,
+                targetAudience: formData.get('targetAudience') as string,
+              };
+              updatePlan(editingPlan.id, planData);
+            }}>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Plan Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    defaultValue={editingPlan.name}
+                    required
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    name="description"
+                    defaultValue={editingPlan.description}
+                    required
+                    rows={2}
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Monthly Price</label>
+                    <input
+                      type="number"
+                      name="monthlyPrice"
+                      defaultValue={editingPlan.monthlyPrice}
+                      required
+                      step="0.01"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Annual Price</label>
+                    <input
+                      type="number"
+                      name="annualPrice"
+                      defaultValue={editingPlan.annualPrice}
+                      required
+                      step="0.01"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Features (one per line)</label>
+                  <textarea
+                    name="features"
+                    defaultValue={editingPlan.features.join('\n')}
+                    required
+                    rows={3}
+                    placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Color</label>
+                  <select
+                    name="color"
+                    defaultValue={editingPlan.color}
+                    required
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="bg-blue-100 text-blue-700">Blue</option>
+                    <option value="bg-green-100 text-green-700">Green</option>
+                    <option value="bg-yellow-100 text-yellow-700">Yellow</option>
+                    <option value="bg-purple-100 text-purple-700">Purple</option>
+                    <option value="bg-red-100 text-red-700">Red</option>
+                    <option value="bg-indigo-100 text-indigo-700">Indigo</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Target Audience (optional)</label>
+                  <input
+                    type="text"
+                    name="targetAudience"
+                    defaultValue={editingPlan.targetAudience || ''}
+                    placeholder="e.g., For hotels, developers, agencies"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      value="true"
+                      defaultChecked={editingPlan.isActive}
+                      className="mr-2"
+                    />
+                    <span className="text-xs font-medium text-gray-700">Active Plan</span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditPlanModal(false);
+                    setEditingPlan(null);
+                  }}
+                  className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                >
+                  Update Plan
                 </button>
               </div>
             </form>

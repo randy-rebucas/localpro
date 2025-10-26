@@ -4,7 +4,6 @@ import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
-import EmptyState from "@/components/ui/empty-state";
 import { 
   Home, 
   Plus, 
@@ -68,7 +67,7 @@ interface Requirements {
 }
 
 interface Maintenance {
-  serviceHistory: any[];
+  serviceHistory: unknown[];
 }
 
 interface Rating {
@@ -87,7 +86,7 @@ interface Owner {
 
 interface Availability {
   isAvailable: boolean;
-  schedule: any[];
+  schedule: unknown[];
 }
 
 interface Rental {
@@ -105,8 +104,8 @@ interface Rental {
   rating: Rating;
   owner: Owner;
   isActive: boolean;
-  images: any[];
-  documents: any[];
+  images: unknown[];
+  documents: unknown[];
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -119,18 +118,14 @@ interface ApiResponse {
   page: number;
   pages: number;
   data: Rental[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 
-// Status badge color function
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'success': return 'text-green-600 bg-green-100';
-    case 'warning': return 'text-yellow-600 bg-yellow-100';
-    case 'error': return 'text-red-600 bg-red-100';
-    case 'info': return 'text-blue-600 bg-blue-100';
-    default: return 'text-gray-600 bg-gray-100';
-  }
-};
 
 export default function RentalsAdmin() {
   const { data: session, status } = useSession();
@@ -139,6 +134,16 @@ export default function RentalsAdmin() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRentals, setTotalRentals] = useState(0);
+  const [stats, setStats] = useState({
+    totalRentals: 0,
+    availableRentals: 0,
+    averageDailyRate: 0,
+    totalProviders: 0
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -149,16 +154,35 @@ export default function RentalsAdmin() {
 
   useEffect(() => {
     fetchRentals();
-  }, []);
+    fetchStats();
+  }, [currentPage, filterCategory, filterStatus, searchTerm]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchRentals = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/rentals");
+      const params = new URLSearchParams({
+        type: 'rentals',
+        page: currentPage.toString(),
+        limit: '20',
+        ...(filterCategory !== 'all' && { category: filterCategory }),
+        ...(filterStatus !== 'all' && { status: filterStatus }),
+        ...(searchTerm && { search: searchTerm })
+      });
+      
+      const response = await fetch(`/api/admin/rentals?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const apiResponse: ApiResponse = await response.json();
       
       if (apiResponse.success && apiResponse.data) {
         setRentals(apiResponse.data);
+        if (apiResponse.pagination) {
+          setTotalPages(apiResponse.pagination.pages);
+          setTotalRentals(apiResponse.pagination.total);
+        }
       } else {
         console.error("Failed to fetch rentals:", apiResponse);
         setRentals([]);
@@ -168,6 +192,46 @@ export default function RentalsAdmin() {
       setRentals([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/admin/rentals/statistics");
+      
+      if (!response.ok) {
+        console.warn(`Stats API returned ${response.status}, using fallback data`);
+        // Set fallback stats instead of throwing error
+        setStats({
+          totalRentals: 0,
+          availableRentals: 0,
+          averageDailyRate: 0,
+          totalProviders: 0
+        });
+        return;
+      }
+      
+      const apiResponse = await response.json();
+      
+      if (apiResponse.success && apiResponse.data) {
+        setStats(apiResponse.data);
+      } else {
+        console.warn("Stats API returned unsuccessful response, using fallback data");
+        setStats({
+          totalRentals: 0,
+          availableRentals: 0,
+          averageDailyRate: 0,
+          totalProviders: 0
+        });
+      }
+    } catch (error) {
+      console.warn("Error fetching stats, using fallback data:", error);
+      setStats({
+        totalRentals: 0,
+        availableRentals: 0,
+        averageDailyRate: 0,
+        totalProviders: 0
+      });
     }
   };
 
@@ -203,6 +267,10 @@ export default function RentalsAdmin() {
             <Plus className="w-4 h-4 mr-2" />
             Add Rental
           </button>
+          <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 hover:shadow-md">
+            <Filter className="w-4 h-4 mr-2" />
+            Export Data
+          </button>
         </div>
       </div>
 
@@ -212,7 +280,7 @@ export default function RentalsAdmin() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Total Rentals</p>
-              <p className="text-lg font-bold text-gray-900">{rentals.length}</p>
+              <p className="text-lg font-bold text-gray-900">{stats.totalRentals || totalRentals}</p>
               <p className="text-xs text-gray-500">All items</p>
             </div>
             <Home className="w-5 h-5 text-blue-600" />
@@ -224,7 +292,7 @@ export default function RentalsAdmin() {
             <div>
               <p className="text-xs font-medium text-gray-500">Available Items</p>
               <p className="text-lg font-bold text-gray-900">
-                {rentals.filter(rental => rental.availability.isAvailable).length}
+                {stats.availableRentals || rentals.filter(rental => rental.availability.isAvailable).length}
               </p>
               <p className="text-xs text-gray-500">Ready to rent</p>
             </div>
@@ -237,7 +305,7 @@ export default function RentalsAdmin() {
             <div>
               <p className="text-xs font-medium text-gray-500">Avg Daily Rate</p>
               <p className="text-lg font-bold text-gray-900">
-                ${rentals.length > 0 ? (rentals.reduce((sum, rental) => sum + rental.pricing.daily, 0) / rentals.length).toFixed(0) : "0"}
+                ${stats.averageDailyRate || (rentals.length > 0 ? (rentals.reduce((sum, rental) => sum + rental.pricing.daily, 0) / rentals.length).toFixed(0) : "0")}
               </p>
               <p className="text-xs text-gray-500">Per day</p>
             </div>
@@ -250,7 +318,7 @@ export default function RentalsAdmin() {
             <div>
               <p className="text-xs font-medium text-gray-500">Providers</p>
               <p className="text-lg font-bold text-gray-900">
-                {new Set(rentals.map(rental => rental.owner._id)).size}
+                {stats.totalProviders || new Set(rentals.map(rental => rental.owner._id)).size}
               </p>
               <p className="text-xs text-gray-500">Active owners</p>
             </div>
@@ -302,6 +370,19 @@ export default function RentalsAdmin() {
                   <option value="machinery">Machinery</option>
                   <option value="electronics">Electronics</option>
                   <option value="furniture">Furniture</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">All Status</option>
+                  <option value="available">Available</option>
+                  <option value="unavailable">Unavailable</option>
+                  <option value="maintenance">Maintenance</option>
                 </select>
               </div>
             </div>
@@ -468,13 +549,32 @@ export default function RentalsAdmin() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex space-x-1">
-                        <button className="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500" title="View Details">
+                        <button 
+                          className="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 p-1 rounded hover:bg-blue-50" 
+                          title="View Details"
+                        >
                           <Eye className="w-3 h-3" />
                         </button>
-                        <button className="text-green-600 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500" title="Edit Rental">
+                        <button 
+                          className="text-green-600 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500 p-1 rounded hover:bg-green-50" 
+                          title="Edit Rental"
+                        >
                           <Edit className="w-3 h-3" />
                         </button>
-                        <button className="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500" title="Delete Rental">
+                        <button 
+                          className={`p-1 rounded focus:outline-none focus:ring-2 ${
+                            rental.availability.isAvailable 
+                              ? "text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 focus:ring-yellow-500" 
+                              : "text-green-600 hover:text-green-900 hover:bg-green-50 focus:ring-green-500"
+                          }`}
+                          title={rental.availability.isAvailable ? "Mark Unavailable" : "Mark Available"}
+                        >
+                          <Calendar className="w-3 h-3" />
+                        </button>
+                        <button 
+                          className="text-red-600 hover:text-red-900 focus:outline-none focus:ring-2 focus:ring-red-500 p-1 rounded hover:bg-red-50" 
+                          title="Delete Rental"
+                        >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -485,6 +585,36 @@ export default function RentalsAdmin() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-gray-700">
+                Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalRentals)} of {totalRentals} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <span className="text-xs text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

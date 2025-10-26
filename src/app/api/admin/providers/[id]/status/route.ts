@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
+import { makeAuthenticatedRequestWithPath } from '@/lib/api-auth-utils';
 
 export async function PATCH(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { status, reason } = body;
 
@@ -25,21 +26,31 @@ export async function PATCH(
       );
     }
 
-    // Update provider status
-    const updatedProvider = {
-      id,
-      status,
-      reason: reason || null,
-      updatedAt: new Date().toISOString(),
-      updatedBy: session.user.id
-    };
+    // Use the API auth utilities for proper authentication
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'providersAdminStatus',
+      [id],
+      {},
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          status,
+          reason: reason || null,
+          updatedBy: session.user.id
+        })
+      }
+    );
 
-    // Save to database (mock implementation)
-    console.log('Updating provider status:', updatedProvider);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to update provider status: ${response.status}`);
+    }
 
+    const result = await response.json();
     return NextResponse.json({
       success: true,
-      data: updatedProvider,
+      data: result.data || result,
       message: `Provider status updated to ${status}`
     });
 

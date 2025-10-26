@@ -2,6 +2,58 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithPath, makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
 
+// Cache for frequently accessed data
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30000; // 30 seconds cache
+
+// Helper function to add timeout to external API calls
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('External API request timed out');
+    }
+    throw error;
+  }
+}
+
+// Helper function to get cached data or fetch fresh data
+async function getCachedOrFetch<T>(
+  cacheKey: string, 
+  fetchFn: () => Promise<T>,
+  cacheDuration: number = CACHE_DURATION
+): Promise<T> {
+  const cached = cache.get(cacheKey);
+  const now = Date.now();
+  
+  if (cached && (now - cached.timestamp) < cacheDuration) {
+    return cached.data;
+  }
+  
+  try {
+    const data = await fetchFn();
+    cache.set(cacheKey, { data, timestamp: now });
+    return data;
+  } catch (error) {
+    // If fetch fails but we have cached data, return it even if expired
+    if (cached) {
+      console.warn('API request failed, returning stale cache:', error);
+      return cached.data;
+    }
+    throw error;
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
@@ -17,56 +69,61 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const role = searchParams.get('role');
 
-    // Fetch real users data from external API
+    // Create cache key based on request parameters
+    const cacheKey = `users-${type}-${page}-${limit}-${status || 'all'}-${role || 'all'}`;
+    
+    // Fetch real users data from external API with caching and timeout
     const result = await handleApiRoute(async () => {
-      if (type === 'users') {
-        // Fetch users with query parameters
-        const queryParams: Record<string, string> = {};
-        if (status) queryParams.status = status;
-        if (role) queryParams.role = role;
-        queryParams.page = page.toString();
-        queryParams.limit = limit.toString();
+      return await getCachedOrFetch(cacheKey, async () => {
+        if (type === 'users') {
+          // Fetch users with query parameters
+          const queryParams: Record<string, string> = {};
+          if (status) queryParams.status = status;
+          if (role) queryParams.role = role;
+          queryParams.page = page.toString();
+          queryParams.limit = limit.toString();
 
-        const response = await makeAuthenticatedRequestWithPath(
-          request,
-          'users',
-          [],
-          queryParams,
-          { method: 'GET' }
-        );
+          const response = await makeAuthenticatedRequestWithPath(
+            request,
+            'users',
+            [],
+            queryParams,
+            { method: 'GET' }
+          );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch users: ${response.status}`);
-        }
-
-        const usersData = await response.json();
-        return {
-          data: usersData.data || usersData,
-          pagination: usersData.pagination || {
-            page,
-            limit,
-            total: usersData.total || 0,
-            pages: Math.ceil((usersData.total || 0) / limit)
+          if (!response.ok) {
+            throw new Error(`Failed to fetch users: ${response.status}`);
           }
-        };
-      } else {
-        // Fetch users overview/statistics
-        const response = await makeAuthenticatedRequestWithEndpoint(
-          request,
-          'analyticsUser',
-          { method: 'GET' }
-        );
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch users statistics: ${response.status}`);
+          const usersData = await response.json();
+          return {
+            data: usersData.data || usersData,
+            pagination: usersData.pagination || {
+              page,
+              limit,
+              total: usersData.total || 0,
+              pages: Math.ceil((usersData.total || 0) / limit)
+            }
+          };
+        } else {
+          // Fetch users overview/statistics
+          const response = await makeAuthenticatedRequestWithEndpoint(
+            request,
+            'analyticsUser',
+            { method: 'GET' }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch users statistics: ${response.status}`);
+          }
+
+          const statsData = await response.json();
+          return {
+            data: statsData.data || statsData,
+            pagination: undefined
+          };
         }
-
-        const statsData = await response.json();
-        return {
-          data: statsData.data || statsData,
-          pagination: undefined
-        };
-      }
+      }, type === 'users' ? 15000 : 30000); // Longer cache for stats
     }, "Users data");
 
     if (result.error) {
@@ -76,7 +133,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data, pagination } = result.data;
+    const { data, pagination } = result.data || { data: null, pagination: null };
 
     return NextResponse.json({
       success: true,
@@ -86,9 +143,25 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Users admin API error:', error);
+    
+    let errorMessage = 'Failed to fetch users data';
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.message.includes('timed out')) {
+        errorMessage = 'Request timed out. The external API is slow. Please try again.';
+        statusCode = 504; // Gateway Timeout
+      } else if (error.message.includes('External API request timed out')) {
+        errorMessage = 'External API request timed out. Please try again.';
+        statusCode = 504;
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch users data' },
-      { status: 500 }
+      { error: errorMessage },
+      { status: statusCode }
     );
   }
 }

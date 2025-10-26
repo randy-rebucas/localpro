@@ -1,0 +1,81 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
+
+// GET /api/audit-logs/user/[userId]/activity - Get user activity summary (USER/ADMIN)
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { userId } = await params;
+    
+    // Check if user has access: admin can access any user, users can only access their own
+    if (session.user.role !== 'admin' && session.user.id !== userId) {
+      return NextResponse.json({ error: "Access denied - you can only view your own activity" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
+
+    // Add user activity specific parameters
+    const userActivityParams = {
+      ...queryParams,
+      type: 'audit',
+      userId,
+      includeUserDetails: 'true',
+      includeActivitySummary: 'true',
+      includeSecurityEvents: session.user.role === 'admin' ? 'true' : 'false', // Only admins see security events
+      includeDataChanges: 'true'
+    };
+
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'analyticsCustom',
+      [userId],
+      userActivityParams,
+      { method: 'GET' }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errorData.error || `Failed to fetch user activity for user: ${userId}` },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error fetching user audit activity:", error);
+    
+    let errorMessage = "Internal server error";
+    let statusCode = 500;
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout - the external service is taking too long to respond";
+        statusCode = 504;
+      } else if (error.message.includes('fetch failed')) {
+        errorMessage = "Unable to connect to external service - please try again later";
+        statusCode = 503;
+      }
+    }
+    
+    return NextResponse.json(
+      { 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? 
+          (error instanceof Error ? error.message : String(error)) : undefined
+      },
+      { status: statusCode }
+    );
+  }
+}

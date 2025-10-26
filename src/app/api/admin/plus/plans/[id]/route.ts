@@ -3,11 +3,11 @@ import { handleApiRoute, makeAuthenticatedRequestWithPath } from "@/lib/api-auth
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const result = await handleApiRoute(async () => {
     const body = await request.json();
-    const planId = params.id;
+    const { id: planId } = await params;
 
     // Validate required fields
     if (!body.name || !body.description || !body.monthlyPrice || !body.annualPrice) {
@@ -58,10 +58,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const result = await handleApiRoute(async () => {
-    const planId = params.id;
+    const { id: planId } = await params;
 
     // Delete plan via external API
     const response = await makeAuthenticatedRequestWithPath(

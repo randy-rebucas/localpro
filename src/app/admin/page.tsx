@@ -568,10 +568,10 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Active Alerts</p>
               <p className="text-lg font-bold text-gray-900">
-                {systemAlerts.filter(alert => !alert.resolved).length}
+                {systemAlerts?.filter(alert => !alert.resolved).length || 0}
               </p>
               <p className="text-xs text-gray-500">
-                {systemAlerts.filter(alert => !alert.resolved).length === 0 ? 'All Clear' : 'Attention'}
+                {(systemAlerts?.filter(alert => !alert.resolved).length || 0) === 0 ? 'All Clear' : 'Attention'}
               </p>
             </div>
             <div className="p-2 bg-indigo-100 rounded-lg">
@@ -588,9 +588,9 @@ export default function AdminDashboard() {
             <h3 className="text-base font-medium text-gray-900">Recent Activity</h3>
           </div>
           <div className="p-4">
-            {recentActivity.length > 0 ? (
+            {recentActivity && recentActivity.length > 0 ? (
               <div className="space-y-2">
-                {recentActivity.slice(0, 4).map((activity) => (
+                {recentActivity?.slice(0, 4).map((activity) => (
                   <div key={activity.id} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
                     <div className="flex-shrink-0">
                       <div className={`w-2 h-2 rounded-full mt-2 ${getStatusColor(activity.status).split(' ')[1]}`}></div>
@@ -673,19 +673,19 @@ export default function AdminDashboard() {
       </div>
 
       {/* System Alerts */}
-      {systemAlerts.length > 0 && (
+      {systemAlerts && systemAlerts.length > 0 && (
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-medium text-gray-900">System Alerts</h3>
               <span className="text-xs text-gray-500">
-                {systemAlerts.filter(alert => !alert.resolved).length} active
+                {systemAlerts?.filter(alert => !alert.resolved).length || 0} active
               </span>
             </div>
           </div>
           <div className="p-4">
             <div className="space-y-2">
-              {systemAlerts.slice(0, 3).map((alert) => (
+              {systemAlerts?.slice(0, 3).map((alert) => (
                 <div key={alert.id} className={`p-3 rounded border-l-4 ${
                   alert.type === 'error' ? 'border-red-500 bg-red-50' :
                   alert.type === 'warning' ? 'border-yellow-500 bg-yellow-50' :

@@ -246,6 +246,42 @@ export function createErrorResponse(
 }
 
 /**
+ * Check if the external API is available and responsive
+ * This helps avoid unnecessary error logs when the API is down
+ */
+export async function checkApiHealth(): Promise<boolean> {
+  try {
+    const healthUrl = `${API_BASE_URL}/health`;
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000) // 5 second timeout for health check
+    });
+    return response.ok;
+  } catch (error) {
+    console.log('API health check failed:', error instanceof Error ? error.message : 'Unknown error');
+    return false;
+  }
+}
+
+/**
+ * Make authenticated request with health check
+ * Checks API availability before making the actual request
+ */
+export async function makeAuthenticatedRequestWithHealthCheck(
+  request: NextRequest,
+  endpoint: keyof typeof API_ENDPOINTS,
+  options: RequestInit = {}
+): Promise<Response> {
+  // Check if API is healthy first
+  const isHealthy = await checkApiHealth();
+  if (!isHealthy) {
+    throw new Error('External API is not available');
+  }
+  
+  return makeAuthenticatedRequestWithEndpoint(request, endpoint, options);
+}
+
+/**
  * Standardized API route wrapper with error handling
  * Provides consistent error handling and response formatting
  */

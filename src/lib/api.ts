@@ -50,6 +50,7 @@ export const API_ENDPOINTS = {
   marketplaceBookingReview: "/api/marketplace/bookings",
   marketplacePayPalApprove: "/api/marketplace/bookings/paypal/approve",
   marketplacePayPalOrder: "/api/marketplace/bookings/paypal/order",
+  marketplaceListings: "/api/marketplace/services",
   
   // Job Board
   jobs: "/api/jobs",
@@ -376,13 +377,23 @@ export const API_ENDPOINTS = {
   auditLogsCleanup: "/api/audit-logs/cleanup",
   auditLogsMetadataCategories: "/api/audit-logs/metadata/categories",
   
+  // Admin Audit Logs
+  adminAuditLogs: "/api/admin/audit-logs",
+  adminAuditLogsStats: "/api/admin/audit-logs/stats",
+  adminAuditLogsUserActivity: "/api/admin/audit-logs/user/[userId]/activity",
+  adminAuditLogsById: "/api/admin/audit-logs",
+  adminAuditLogsExportData: "/api/admin/audit-logs/export/data",
+  adminAuditLogsDashboardSummary: "/api/admin/audit-logs/dashboard/summary",
+  adminAuditLogsCleanup: "/api/admin/audit-logs/cleanup",
+  adminAuditLogsMetadataCategories: "/api/admin/audit-logs/metadata/categories",
+  
   // Error Monitoring
-  errorMonitoring: "/api/error-monitoring",
-  errorMonitoringStats: "/api/error-monitoring/stats",
-  errorMonitoringUnresolved: "/api/error-monitoring/unresolved",
-  errorMonitoringById: "/api/error-monitoring",
-  errorMonitoringResolve: "/api/error-monitoring",
-  errorMonitoringDashboardSummary: "/api/error-monitoring/dashboard/summary",
+  errorMonitoring: "/api/admin/error-monitoring",
+  errorMonitoringStats: "/api/admin/error-monitoring/stats",
+  errorMonitoringUnresolved: "/api/admin/error-monitoring/unresolved",
+  errorMonitoringById: "/api/admin/error-monitoring",
+  errorMonitoringResolve: "/api/admin/error-monitoring",
+  errorMonitoringDashboardSummary: "/api/admin/error-monitoring/dashboard/summary",
 
   // User Management
   users: "/api/users",
