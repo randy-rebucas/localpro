@@ -285,7 +285,7 @@ export default function AdminReferralsPage() {
               </h3>
               <div className="mt-2 text-sm text-yellow-700">
                 <p>
-                  The referrals analytics API returned empty data. You're viewing demo data to demonstrate the referrals management interface.
+                  The referrals analytics API returned empty data. You&apos;re viewing demo data to demonstrate the referrals management interface.
                 </p>
               </div>
             </div>

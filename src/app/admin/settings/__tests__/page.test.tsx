@@ -21,14 +21,14 @@ jest.mock('@/hooks/useAuth', () => ({
 
 // Mock the Loading component
 jest.mock('@/components/ui/loading', () => ({
-  Loading: ({ size, text }: { size: string; text: string }) => (
+  Loading: ({ text }: { text: string }) => (
     <div data-testid="loading">{text}</div>
   )
 }));
 
 // Mock the AdminErrorState component
 jest.mock('@/components/admin/admin-error-state', () => ({
-  AdminErrorState: ({ error, onRetry, retryText }: any) => (
+  AdminErrorState: ({ error, onRetry, retryText }: { error: string; onRetry: () => void; retryText: string }) => (
     <div data-testid="error-state">
       <p>{error}</p>
       <button onClick={onRetry}>{retryText}</button>

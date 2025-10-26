@@ -92,7 +92,16 @@ interface Course {
   certification: Certification;
   enrollment: Enrollment;
   schedule: {
-    sessions: any[];
+    sessions: {
+      id: string;
+      title: string;
+      startTime: string;
+      endTime: string;
+      instructor: string;
+      location: string;
+      maxParticipants: number;
+      enrolledCount: number;
+    }[];
   };
   rating: Rating;
   isActive: boolean;
@@ -102,14 +111,6 @@ interface Course {
   __v: number;
 }
 
-interface ApiResponse {
-  success: boolean;
-  count: number;
-  total: number;
-  page: number;
-  pages: number;
-  data: Course[];
-}
 
 export default function AcademyAdmin() {
   const { data: session, status } = useSession();
@@ -126,7 +127,7 @@ export default function AcademyAdmin() {
     page: 1,
     pages: 1
   });
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -619,7 +620,7 @@ export default function AcademyAdmin() {
                           </div>
                           
                           <div className="space-y-2">
-                            {module.lessons.map((lesson, lessonIndex) => (
+                            {module.lessons.map((lesson) => (
                               <div key={lesson._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                                 <div className="flex items-center">
                                   {lesson.type === 'video' ? (

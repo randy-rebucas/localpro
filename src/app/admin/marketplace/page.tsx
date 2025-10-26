@@ -82,7 +82,12 @@ interface MarketplaceService {
   serviceArea: string[];
   availability: {
     timezone: string;
-    schedule: any[];
+    schedule: {
+      day: string;
+      startTime: string;
+      endTime: string;
+      isAvailable: boolean;
+    }[];
   };
   isActive: boolean;
   rating: {
@@ -113,7 +118,7 @@ interface MarketplaceStats {
     weekly: Array<{ week: string; count: number }>;
     monthly: Array<{ month: string; count: number }>;
   };
-  topServices: Array<{ id: string; name: string; bookings: number }>;
+  topServices: Array<{ id: string; name: string; bookings: number; revenue: number; rating: number }>;
   categoryStats: Array<{ category: string; count: number }>;
   performanceMetrics: {
     averageBookings: number;
@@ -123,7 +128,89 @@ interface MarketplaceStats {
 }
 
 // Data mapping function to transform API response
-const mapServiceData = (apiService: any): MarketplaceService => {
+const mapServiceData = (apiService: {
+  _id?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  subcategory?: string;
+  price?: number;
+  provider?: {
+    _id?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    profile?: {
+      rating?: number;
+    };
+  };
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  bookings?: number;
+  revenue?: number;
+  rating?: {
+    average?: number;
+    count?: number;
+  };
+  features?: string[];
+  requirements?: string[];
+  serviceArea?: string[];
+  availability?: {
+    timezone?: string;
+    schedule?: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+      isAvailable: boolean;
+    }>;
+  };
+  isActive?: boolean;
+  images?: string[];
+  pricing?: {
+    type?: string;
+    basePrice?: number;
+    currency?: string;
+  };
+  serviceType?: string;
+  estimatedDuration?: {
+    min?: number;
+    max?: number;
+  };
+  teamSize?: number;
+  equipmentProvided?: boolean;
+  materialsIncluded?: boolean;
+  warranty?: {
+    hasWarranty?: boolean;
+    duration?: number;
+    description?: string;
+  };
+  insurance?: {
+    covered?: boolean;
+    coverageAmount?: number;
+  };
+  emergencyService?: {
+    available?: boolean;
+    surcharge?: number;
+    responseTime?: string;
+  };
+  servicePackages?: Array<{
+    _id?: string;
+    name?: string;
+    description?: string;
+    price?: number;
+    features?: string[];
+    duration?: number;
+  }>;
+  addOns?: Array<{
+    _id?: string;
+    name?: string;
+    description?: string;
+    price?: number;
+    category?: string;
+  }>;
+  __v?: number;
+}): MarketplaceService => {
   return {
     _id: apiService._id || '',
     title: apiService.title || '',
@@ -139,11 +226,11 @@ const mapServiceData = (apiService: any): MarketplaceService => {
       }
     },
     pricing: {
-      type: apiService.pricing?.type || 'fixed',
+      type: (apiService.pricing?.type as 'fixed' | 'hourly' | 'package') || 'fixed',
       basePrice: apiService.pricing?.basePrice || 0,
       currency: apiService.pricing?.currency || 'USD'
     },
-    serviceType: apiService.serviceType || 'one_time',
+    serviceType: (apiService.serviceType as 'subscription' | 'one_time' | 'recurring') || 'one_time',
     estimatedDuration: {
       min: apiService.estimatedDuration?.min || 0,
       max: apiService.estimatedDuration?.max || 0
@@ -165,8 +252,21 @@ const mapServiceData = (apiService: any): MarketplaceService => {
       surcharge: apiService.emergencyService?.surcharge || 0,
       responseTime: apiService.emergencyService?.responseTime || ''
     },
-    servicePackages: apiService.servicePackages || [],
-    addOns: apiService.addOns || [],
+    servicePackages: (apiService.servicePackages as Array<{
+      _id: string;
+      name: string;
+      description: string;
+      price: number;
+      features: string[];
+      duration: number;
+    }>) || [],
+    addOns: (apiService.addOns as Array<{
+      _id: string;
+      name: string;
+      description: string;
+      price: number;
+      category: string;
+    }>) || [],
     features: apiService.features || [],
     requirements: apiService.requirements || [],
     serviceArea: apiService.serviceArea || [],
@@ -182,7 +282,7 @@ const mapServiceData = (apiService: any): MarketplaceService => {
     images: apiService.images || [],
     createdAt: apiService.createdAt || '',
     updatedAt: apiService.updatedAt || '',
-    __v: apiService.__v || 0
+    __v: apiService.__v || 0,
   };
 };
 
@@ -197,7 +297,7 @@ export default function MarketplacePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'title' | 'status' | 'createdAt' | 'price' | 'rating' | 'bookings'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1);
   const [itemsPerPage] = useState(50);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');

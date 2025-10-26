@@ -10,9 +10,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const _period = searchParams.get('period') || '30d';
-    const _type = searchParams.get('type') || 'overview';
+    // const { searchParams } = new URL(request.url);
+    // const period = searchParams.get('period') || '30d';
+    // const type = searchParams.get('type') || 'overview';
 
     const result = await handleApiRoute(async () => {
       // Fetch trust verification statistics

@@ -2,7 +2,7 @@
 
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loading } from "@/components/ui/loading";
 import { 
   Package, 
@@ -100,14 +100,50 @@ export default function SuppliesAdmin() {
     }
   }, [session, status, router]);
 
+  const fetchSupplies = useCallback(async (page = 1) => {
+    try {
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setPaginationLoading(true);
+      }
+      setError(null);
+      
+      // Use admin API endpoint for proper admin access
+      const response = await fetch(`/api/admin/supplies?type=supplies&page=${page}&limit=10&category=${filterCategory !== 'all' ? filterCategory : ''}`);
+      const data: SuppliesResponse = await response.json();
+      
+      if (data.success) {
+        setSupplies(data.data || []);
+        setPagination({
+          page: data.pagination?.page || page,
+          pages: data.pagination?.pages || 1,
+          total: data.pagination?.total || 0,
+          count: data.pagination?.total || 0
+        });
+      } else {
+        console.error("Failed to fetch supplies:", data);
+        setError("Failed to fetch supplies. Please try again.");
+        setSupplies([]);
+      }
+    } catch (error) {
+      console.error("Error fetching supplies:", error);
+      setError("An error occurred while fetching supplies. Please try again.");
+      setSupplies([]);
+    } finally {
+      setLoading(false);
+      setPaginationLoading(false);
+    }
+  }, [filterCategory]);
+
   useEffect(() => {
     fetchSupplies();
-  }, []);
+  }, [fetchSupplies]);
 
   // Refetch when filter changes
   useEffect(() => {
     fetchSupplies(1);
-  }, [filterCategory]);
+  }, [fetchSupplies]);
 
   const handleAction = (supply: Supply, action: 'view' | 'edit' | 'delete') => {
     setSelectedSupply(supply);
@@ -145,42 +181,6 @@ export default function SuppliesAdmin() {
       setError('An error occurred while deleting the supply');
     } finally {
       setActionLoading(false);
-    }
-  };
-
-  const fetchSupplies = async (page = 1) => {
-    try {
-      if (page === 1) {
-        setLoading(true);
-      } else {
-        setPaginationLoading(true);
-      }
-      setError(null);
-      
-      // Use admin API endpoint for proper admin access
-      const response = await fetch(`/api/admin/supplies?type=supplies&page=${page}&limit=10&category=${filterCategory !== 'all' ? filterCategory : ''}`);
-      const data: SuppliesResponse = await response.json();
-      
-      if (data.success) {
-        setSupplies(data.data || []);
-        setPagination({
-          page: data.pagination?.page || page,
-          pages: data.pagination?.pages || 1,
-          total: data.pagination?.total || 0,
-          count: data.pagination?.total || 0
-        });
-      } else {
-        console.error("Failed to fetch supplies:", data);
-        setError("Failed to fetch supplies. Please try again.");
-        setSupplies([]);
-      }
-    } catch (error) {
-      console.error("Error fetching supplies:", error);
-      setError("An error occurred while fetching supplies. Please try again.");
-      setSupplies([]);
-    } finally {
-      setLoading(false);
-      setPaginationLoading(false);
     }
   };
 
@@ -417,7 +417,7 @@ export default function SuppliesAdmin() {
                   </td>
                 </tr>
               ) : (
-                filteredSupplies.map((supply, index) => (
+                filteredSupplies.map((supply) => (
                   <tr key={supply._id} className="hover:bg-gray-50">
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       <div className="flex items-center">
@@ -660,7 +660,7 @@ export default function SuppliesAdmin() {
               {modalType === 'delete' && (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
-                    Are you sure you want to delete "{selectedSupply.name}"? This action cannot be undone.
+                    Are you sure you want to delete &quot;{selectedSupply.name}&quot;? This action cannot be undone.
                   </p>
                   <div className="flex justify-end space-x-2">
                     <button

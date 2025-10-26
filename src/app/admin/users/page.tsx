@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import { 
   Users, 
   Search, 
   Edit, 
   Trash2, 
-  Shield, 
   UserCheck,
   UserX,
   Phone,
@@ -22,7 +20,6 @@ import {
   ChevronUp
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { AdminErrorState } from "@/components/admin/admin-error-state";
 // Define types locally
 interface User {
   _id: string;
@@ -85,15 +82,64 @@ interface User {
 }
 
 // Helper function to transform API user data to frontend format
-const transformUserData = (apiUser: any): User => {
+const transformUserData = (apiUser: {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  role?: string;
+  status?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  profilePicture?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  preferences?: {
+    notifications?: boolean;
+    marketing?: boolean;
+    language?: string;
+    timezone?: string;
+  };
+  joinedAt?: string;
+  lastActive?: string;
+  totalSpent?: number;
+  orderCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLogin?: string;
+  profileCompleteness?: number;
+  verification?: {
+    phoneVerified?: boolean;
+    emailVerified?: boolean;
+  };
+  profile?: Record<string, unknown>;
+  subscription?: Record<string, unknown>;
+  trustScore?: number;
+  badges?: Array<{
+    type: string;
+    description: string;
+    earnedAt: string;
+  }>;
+  completionRate?: number;
+  cancellationRate?: number;
+  loginCount?: number;
+  tags?: string[];
+  notes?: string[];
+}): User => {
   return {
     _id: apiUser._id,
     firstName: apiUser.firstName || '',
     lastName: apiUser.lastName || '',
     email: apiUser.email || '',
     phoneNumber: apiUser.phoneNumber,
-    role: apiUser.role || 'client',
-    status: apiUser.status || 'pending_verification',
+    role: (apiUser.role as 'client' | 'admin' | 'provider' | 'agency_owner' | 'agency_admin' | 'supplier' | 'instructor') || 'client',
+    status: (apiUser.status as 'active' | 'suspended' | 'inactive' | 'pending_verification' | 'banned') || 'pending_verification',
     isActive: apiUser.isActive || false,
     isVerified: apiUser.isVerified || false,
     createdAt: apiUser.createdAt || new Date().toISOString(),
@@ -106,7 +152,11 @@ const transformUserData = (apiUser: any): User => {
     verification: apiUser.verification,
     subscription: apiUser.subscription,
     trustScore: apiUser.trustScore,
-    badges: apiUser.badges,
+    badges: apiUser.badges ? apiUser.badges.map(badge => ({
+      type: typeof badge === 'string' ? badge : badge.type || 'unknown',
+      description: typeof badge === 'string' ? `${badge} badge` : badge.description || 'No description',
+      earnedAt: typeof badge === 'string' ? new Date().toISOString() : badge.earnedAt || new Date().toISOString()
+    })) : undefined,
     completionRate: apiUser.completionRate,
     cancellationRate: apiUser.cancellationRate,
     loginCount: apiUser.loginCount,
@@ -148,7 +198,7 @@ export default function UsersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'role' | 'status' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1);
   const [itemsPerPage] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
@@ -681,7 +731,7 @@ export default function UsersPage() {
                 Clear all filters
               </button>
               <div className="text-xs text-gray-500">
-                {users.length} users found
+                {totalCount > 0 ? `${totalCount} users found` : `${users.length} users found`}
               </div>
             </div>
           </div>

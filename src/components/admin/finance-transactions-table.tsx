@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Table, THead, TBody, Tr, Th, Td, TableEmptyRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -41,7 +40,6 @@ export function FinanceTransactionsTable({
   onDownloadReceipt,
   className = ""
 }: FinanceTransactionsTableProps) {
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

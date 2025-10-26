@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 
       const response = await makeAuthenticatedRequestWithEndpoint(
         request,
-        endpoint as any,
+        endpoint as keyof typeof API_ENDPOINTS,
         { 
           method: 'GET',
           headers: {

@@ -5,7 +5,7 @@ import { FinanceFilters } from '../finance-filters';
 import { AddExpenseModal } from '../add-expense-modal';
 import { WithdrawalRequestModal } from '../withdrawal-request-modal';
 import { FinanceWalletSettings } from '../finance-wallet-settings';
-import { TrendingUp, DollarSign } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 describe('FinanceStatsCard', () => {
   it('renders stats card with correct data', () => {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
-import { API_ENDPOINTS } from '@/lib/api';
 
 // Health API now uses API constants approach for better type safety and consistency
 
@@ -35,7 +34,7 @@ export async function GET(request: NextRequest) {
           { method: 'GET' }
         );
         return await response.json();
-      } catch (error) {
+      } catch {
         // Fallback to local health data if external API is not available
         console.log('External health API not available, using local data');
         return {

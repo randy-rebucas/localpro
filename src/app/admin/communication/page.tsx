@@ -97,10 +97,6 @@ export default function AdminCommunication() {
   const [itemsPerPage] = useState(10);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    fetchCommunicationData();
-  }, [activeTab, currentPage, filterType, filterStatus, fetchCommunicationData]);
-
   const fetchCommunicationData = useCallback(async () => {
     try {
       setLoading(true);
@@ -140,11 +136,13 @@ export default function AdminCommunication() {
       }
 
       if (activeTab === 'overview') {
-        setOverview(result.data);
+        setOverview(result.data || {});
       } else if (activeTab === 'conversations') {
-        setConversations(result.data || []);
+        const conversationsData = result.data || [];
+        setConversations(Array.isArray(conversationsData) ? conversationsData : []);
       } else if (activeTab === 'notifications') {
-        setNotifications(result.data || []);
+        const notificationsData = result.data || [];
+        setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
       }
 
       setLastUpdated(new Date());
@@ -155,6 +153,10 @@ export default function AdminCommunication() {
       setLoading(false);
     }
   }, [activeTab, currentPage, filterType, filterStatus, searchQuery, itemsPerPage]);
+
+  useEffect(() => {
+    fetchCommunicationData();
+  }, [fetchCommunicationData]);
 
   const refreshData = async () => {
     setRefreshing(true);
