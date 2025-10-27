@@ -222,10 +222,11 @@ describe('FinanceAdmin', () => {
 
   it('displays loading state', () => {
     // Mock loading state
-    jest.spyOn(require('@/hooks/useAuth'), 'useSession').mockReturnValue({
+    const mockUseSession = jest.fn().mockReturnValue({
       data: null,
       status: 'loading'
     });
+    jest.doMock('@/hooks/useAuth', () => ({ useSession: mockUseSession }));
 
     render(<FinanceAdmin />);
     
@@ -234,14 +235,16 @@ describe('FinanceAdmin', () => {
 
   it('redirects unauthenticated users', () => {
     const mockPush = jest.fn();
-    jest.spyOn(require('next/navigation'), 'useRouter').mockReturnValue({
+    const mockUseRouter = jest.fn().mockReturnValue({
       push: mockPush
     });
-
-    jest.spyOn(require('@/hooks/useAuth'), 'useSession').mockReturnValue({
+    const mockUseSession = jest.fn().mockReturnValue({
       data: null,
       status: 'unauthenticated'
     });
+    
+    jest.doMock('next/navigation', () => ({ useRouter: mockUseRouter }));
+    jest.doMock('@/hooks/useAuth', () => ({ useSession: mockUseSession }));
 
     render(<FinanceAdmin />);
     

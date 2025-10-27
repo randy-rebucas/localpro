@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
-import { API_ENDPOINTS } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
   try {

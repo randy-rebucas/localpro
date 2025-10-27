@@ -68,7 +68,7 @@ export function FinanceWalletSettings({ onSave, className = "" }: FinanceWalletS
     }
   };
 
-  const handleSettingChange = (key: keyof WalletSettings, value: any) => {
+  const handleSettingChange = (key: keyof WalletSettings, value: string | number | boolean) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 

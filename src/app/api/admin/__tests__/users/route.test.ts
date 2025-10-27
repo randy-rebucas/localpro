@@ -6,8 +6,8 @@ jest.mock('@/lib/server-session');
 jest.mock('@/lib/api-auth-utils');
 
 describe('/api/admin/users', () => {
-  const mockGetServerSession = require('@/lib/server-session').getServerSession;
-  const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+  const mockGetServerSession = jest.mocked((await import('@/lib/server-session')).getServerSession);
+  const mockMakeAuthenticatedRequestWithPath = jest.mocked((await import('@/lib/api-auth-utils')).makeAuthenticatedRequestWithPath);
 
   beforeEach(() => {
     jest.clearAllMocks();

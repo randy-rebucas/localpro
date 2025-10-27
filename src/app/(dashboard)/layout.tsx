@@ -13,7 +13,8 @@ import { useSession, signOut } from "@/hooks/useAuth";
 import { 
   makeClientAuthenticatedRequestWithPath,
   handleClientApiRoute,
-  isAuthenticated
+  isAuthenticated,
+  clearApiToken
 } from "@/lib/client-api-utils";
 import {
   Menu,
@@ -104,6 +105,15 @@ export default function DashboardLayout({
         
         if (result.error) {
           console.error("Failed to fetch user data:", result.error);
+          
+          // Handle 401 errors specifically - redirect to login
+          if (result.status === 401) {
+            console.log("API token expired or invalid, clearing token and redirecting to login");
+            clearApiToken();
+            router.replace("/auth");
+            return;
+          }
+          
           setError("Failed to load user data. Please try refreshing the page.");
         } else {
           setUser(result.data);
@@ -319,7 +329,7 @@ export default function DashboardLayout({
                   {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
                 <div className="flex items-center">
-                  <Logo />
+                  <Logo/>
                 </div>
               </div>
 
@@ -364,7 +374,7 @@ export default function DashboardLayout({
 
               <div className="flex items-center space-x-1 sm:space-x-2">
                 {/* Role-based Navigation Items */}
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-1 hidden">
                   {/* Marketplace - Service Providers */}
                   {isServiceProvider && (
                     <Link
@@ -477,9 +487,6 @@ export default function DashboardLayout({
                     </Link>
                   )}
                 </div>
-
-                {/* Divider */}
-                <div className="hidden sm:block h-6 w-px bg-gray-300 mx-2"></div>
 
                 {/* Standard Navigation Icons */}
                 <div className="flex items-center space-x-1">

@@ -226,7 +226,7 @@ interface SettingsCategory {
     label: string;
     description: string;
     type: 'text' | 'number' | 'boolean' | 'select' | 'textarea' | 'password';
-    value: any;
+    value: string | number | boolean;
     options?: { value: string; label: string }[];
     min?: number;
     max?: number;
@@ -281,7 +281,7 @@ export default function AdminSettings() {
     fetchSettings();
   }, []);
 
-  const saveSettings = async (category: string, updatedSettings: any) => {
+  const saveSettings = async (category: string, updatedSettings: Record<string, string | number | boolean>) => {
     try {
       setSaving(true);
       setError(null);
@@ -633,17 +633,52 @@ export default function AdminSettings() {
                 <button
                   onClick={async () => {
                     const formData = new FormData(document.getElementById('settings-form') as HTMLFormElement);
-                    const settingsData: any = {};
+                    const settingsData: Record<string, string | number | boolean | Record<string, string | number | boolean>> = {};
                     formData.forEach((value, key) => {
+                      // Convert FormDataEntryValue to string, number, or boolean
+                      let processedValue: string | number | boolean;
+                      if (typeof value === 'string') {
+                        // Try to parse as number or boolean
+                        if (value === 'true') {
+                          processedValue = true;
+                        } else if (value === 'false') {
+                          processedValue = false;
+                        } else if (!isNaN(Number(value)) && value !== '') {
+                          processedValue = Number(value);
+                        } else {
+                          processedValue = value;
+                        }
+                      } else {
+                        // Skip file entries
+                        return;
+                      }
+
                       if (key.includes('.')) {
                         const [parent, child] = key.split('.');
-                        if (!settingsData[parent]) settingsData[parent] = {};
-                        settingsData[parent][child] = value;
+                        if (!settingsData[parent]) {
+                          settingsData[parent] = {} as Record<string, string | number | boolean>;
+                        }
+                        (settingsData[parent] as Record<string, string | number | boolean>)[child] = processedValue;
                       } else {
-                        settingsData[key] = value;
+                        settingsData[key] = processedValue;
                       }
                     });
-                    await saveSettings(activeCategory, settingsData);
+                    
+                    // Flatten nested objects for saveSettings
+                    const flattenedSettings: Record<string, string | number | boolean> = {};
+                    Object.keys(settingsData).forEach(key => {
+                      const value = settingsData[key];
+                      if (typeof value === 'object' && value !== null) {
+                        // Flatten nested object
+                        Object.keys(value as Record<string, string | number | boolean>).forEach(nestedKey => {
+                          flattenedSettings[`${key}.${nestedKey}`] = (value as Record<string, string | number | boolean>)[nestedKey];
+                        });
+                      } else {
+                        flattenedSettings[key] = value as string | number | boolean;
+                      }
+                    });
+                    
+                    await saveSettings(activeCategory, flattenedSettings);
                   }}
                   disabled={saving}
                   className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
@@ -674,7 +709,7 @@ export default function AdminSettings() {
                     <input
                       type="checkbox"
                       name={setting.key}
-                      checked={setting.value}
+                      checked={Boolean(setting.value)}
                       onChange={(e) => {
                         const newValue = e.target.checked;
                         setSettings(prev => prev ? {
@@ -694,7 +729,7 @@ export default function AdminSettings() {
                 ) : setting.type === 'select' ? (
                   <select
                     name={setting.key}
-                    value={setting.value}
+                    value={String(setting.value)}
                     onChange={(e) => {
                       const newValue = e.target.value;
                       setSettings(prev => prev ? {
@@ -716,7 +751,7 @@ export default function AdminSettings() {
                 ) : setting.type === 'textarea' ? (
                   <textarea
                     name={setting.key}
-                    value={setting.value}
+                    value={String(setting.value)}
                     onChange={(e) => {
                       const newValue = e.target.value;
                       setSettings(prev => prev ? {
@@ -734,7 +769,7 @@ export default function AdminSettings() {
                   <input
                     type={setting.type === 'password' ? 'password' : setting.type}
                     name={setting.key}
-                    value={setting.value}
+                    value={String(setting.value)}
                     onChange={(e) => {
                       const newValue = setting.type === 'number' ? Number(e.target.value) : e.target.value;
                       setSettings(prev => prev ? {

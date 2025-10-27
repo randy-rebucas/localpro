@@ -319,6 +319,12 @@ export const API_ENDPOINTS = {
   analyticsReferrals: "/api/analytics/referrals",
   analyticsAgencies: "/api/analytics/agencies",
   analyticsTrack: "/api/analytics/track",
+  analyticsRealTime: "/api/analytics/real-time",
+  analyticsPerformance: "/api/analytics/performance",
+  analyticsUserBehavior: "/api/analytics/user-behavior",
+  analyticsRevenue: "/api/analytics/revenue",
+  analyticsConversion: "/api/analytics/conversion",
+  analyticsDashboard: "/api/analytics/dashboard",
   
   // Global Search
   search: "/api/search",

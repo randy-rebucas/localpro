@@ -15,19 +15,14 @@ import {
   Eye,
   FileText,
   Users,
-  Settings,
   Lock,
-  Unlock,
-  Edit,
   Trash2,
-  Plus,
   ChevronDown,
   ChevronUp,
   Zap,
   Server,
   Monitor,
   TrendingUp,
-  TrendingDown,
   CheckCircle,
   Info
 } from "lucide-react";
@@ -54,7 +49,7 @@ interface SystemLog {
   memoryUsage?: number;
   cpuUsage?: number;
   stackTrace?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 interface LogStats {
@@ -208,7 +203,6 @@ export default function AdminLogsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeTab, setActiveTab] = useState<'logs' | 'analytics' | 'performance' | 'dashboard'>('logs');
   const [sortBy, setSortBy] = useState<'timestamp' | 'level' | 'category' | 'source'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -490,7 +484,8 @@ export default function AdminLogsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to cleanup logs');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to cleanup logs: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -502,7 +497,18 @@ export default function AdminLogsPage() {
       }
     } catch (err) {
       console.error('Error cleaning up logs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to cleanup logs');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to cleanup logs';
+      
+      // Show user-friendly error message
+      if (errorMessage.includes('404')) {
+        setError('Logs cleanup feature is not available on the external API. This is normal in development mode.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
+        setError('You do not have permission to cleanup logs. Please contact an administrator.');
+      } else if (errorMessage.includes('500')) {
+        setError('Server error occurred while cleaning up logs. Please try again later.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -523,7 +529,8 @@ export default function AdminLogsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to flush logs');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to flush logs: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -535,7 +542,18 @@ export default function AdminLogsPage() {
       }
     } catch (err) {
       console.error('Error flushing logs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to flush logs');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to flush logs';
+      
+      // Show user-friendly error message
+      if (errorMessage.includes('404')) {
+        setError('Logs flush feature is not available on the external API. This is normal in development mode.');
+      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
+        setError('You do not have permission to flush logs. Please contact an administrator.');
+      } else if (errorMessage.includes('500')) {
+        setError('Server error occurred while flushing logs. Please try again later.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
@@ -663,7 +681,7 @@ export default function AdminLogsPage() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as 'logs' | 'analytics' | 'performance' | 'dashboard')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'

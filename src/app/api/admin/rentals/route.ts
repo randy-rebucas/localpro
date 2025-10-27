@@ -93,7 +93,10 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const { data, pagination } = result.data || { data: null, pagination: null };
+    const { data, pagination } = (result.data as { 
+      data: unknown[]; 
+      pagination: { page: number; limit: number; total: number; pages: number } | undefined 
+    }) || { data: null, pagination: null };
 
     return NextResponse.json({
       success: true,

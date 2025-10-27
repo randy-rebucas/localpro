@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
-  Monitor, 
   Server, 
   Database, 
   Globe, 
@@ -12,10 +11,7 @@ import {
   RefreshCw,
   Activity,
   Zap,
-  Shield,
   Clock,
-  TrendingUp,
-  TrendingDown,
   Cpu,
   HardDrive,
   Wifi,
@@ -74,12 +70,12 @@ export default function AdminHealthPage() {
     const alerts: HealthAlert[] = [];
     
     // Check database status
-    if (healthData.database.status !== 'healthy') {
+    if (healthData.database?.status && healthData.database.status !== 'healthy') {
       alerts.push({
         id: 'db-1',
         type: 'critical',
         title: 'Database Connection Issue',
-        message: `Database is ${healthData.database.status} - ${healthData.database.state}`,
+        message: `Database is ${healthData.database.status} - ${healthData.database.state || 'Unknown state'}`,
         timestamp: healthData.timestamp,
         component: 'Database',
         resolved: false,
@@ -87,42 +83,42 @@ export default function AdminHealthPage() {
     }
     
     // Check external APIs
-    Object.entries(healthData.external_apis).forEach(([apiName, apiData]) => {
-      if (apiData.status === 'unknown' || apiData.status === 'error') {
+    if (healthData.external_apis) {
+      Object.entries(healthData.external_apis).forEach(([apiName, apiData]) => {
+        if (apiData.status === 'unknown' || apiData.status === 'error') {
+          alerts.push({
+            id: `api-${apiName}`,
+            type: apiData.status === 'error' ? 'critical' : 'warning',
+            title: `${apiName} API Issue`,
+            message: `${apiName} API is ${apiData.status}`,
+            timestamp: healthData.timestamp,
+            component: 'External APIs',
+            resolved: false,
+          });
+        }
+      });
+    }
+    
+    // Check memory usage
+    if (healthData.memory?.heapUsed && healthData.memory?.heapTotal) {
+      const memoryUsagePercent = (healthData.memory.heapUsed / healthData.memory.heapTotal) * 100;
+      if (memoryUsagePercent > 85) {
         alerts.push({
-          id: `api-${apiName}`,
-          type: apiData.status === 'error' ? 'critical' : 'warning',
-          title: `${apiName} API Issue`,
-          message: `${apiName} API is ${apiData.status}`,
+          id: 'memory-1',
+          type: 'warning',
+          title: 'High Memory Usage',
+          message: `Memory usage is at ${memoryUsagePercent.toFixed(1)}% (${Math.round(healthData.memory.heapUsed / 1024 / 1024)}MB / ${Math.round(healthData.memory.heapTotal / 1024 / 1024)}MB)`,
           timestamp: healthData.timestamp,
-          component: 'External APIs',
+          component: 'Server',
           resolved: false,
         });
       }
-    });
-    
-    // Check memory usage
-    const memoryUsagePercent = (healthData.memory.heapUsed / healthData.memory.heapTotal) * 100;
-    if (memoryUsagePercent > 85) {
-      alerts.push({
-        id: 'memory-1',
-        type: 'warning',
-        title: 'High Memory Usage',
-        message: `Memory usage is at ${memoryUsagePercent.toFixed(1)}% (${Math.round(healthData.memory.heapUsed / 1024 / 1024)}MB / ${Math.round(healthData.memory.heapTotal / 1024 / 1024)}MB)`,
-        timestamp: healthData.timestamp,
-        component: 'Server',
-        resolved: false,
-      });
     }
     
     return alerts;
   };
 
-  useEffect(() => {
-    fetchHealthData();
-  }, []);
-
-  const fetchHealthData = async () => {
+  const fetchHealthData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -160,7 +156,11 @@ export default function AdminHealthPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchHealthData();
+  }, [fetchHealthData]);
 
   const refreshData = async () => {
     setRefreshing(true);
@@ -401,9 +401,9 @@ export default function AdminHealthPage() {
               <h3 className="text-sm font-medium text-gray-900">Database Health</h3>
             </div>
             <div className="flex items-center space-x-2">
-              {getStatusIcon(healthData?.database.status || 'unknown')}
-              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(healthData?.database.status || 'unknown')}`}>
-                {healthData?.database.status || 'Unknown'}
+              {getStatusIcon(healthData?.database?.status || 'unknown')}
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(healthData?.database?.status || 'unknown')}`}>
+                {healthData?.database?.status || 'Unknown'}
               </span>
             </div>
           </div>
@@ -415,7 +415,7 @@ export default function AdminHealthPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Database Status</p>
-                  <p className="text-lg font-bold text-gray-900">{healthData?.database.status || 'Unknown'}</p>
+                  <p className="text-lg font-bold text-gray-900">{healthData?.database?.status || 'Unknown'}</p>
                   <p className="text-xs text-gray-500">Connection state</p>
                 </div>
                 <Database className="w-5 h-5 text-green-600" />
@@ -426,7 +426,7 @@ export default function AdminHealthPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Database Host</p>
-                  <p className="text-lg font-bold text-gray-900">{healthData?.database.host || 'Unknown'}</p>
+                  <p className="text-lg font-bold text-gray-900">{healthData?.database?.host || 'Unknown'}</p>
                   <p className="text-xs text-gray-500">MongoDB host</p>
                 </div>
                 <Clock className="w-5 h-5 text-blue-600" />
@@ -437,7 +437,7 @@ export default function AdminHealthPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Database Name</p>
-                  <p className="text-lg font-bold text-gray-900">{healthData?.database.name || 'Unknown'}</p>
+                  <p className="text-lg font-bold text-gray-900">{healthData?.database?.name || 'Unknown'}</p>
                   <p className="text-xs text-gray-500">Database name</p>
                 </div>
                 <HardDrive className="w-5 h-5 text-purple-600" />
@@ -448,7 +448,7 @@ export default function AdminHealthPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Port</p>
-                  <p className="text-lg font-bold text-gray-900">{healthData?.database.port || 0}</p>
+                  <p className="text-lg font-bold text-gray-900">{healthData?.database?.port || 0}</p>
                   <p className="text-xs text-gray-500">Database port</p>
                 </div>
                 <Activity className="w-5 h-5 text-orange-600" />

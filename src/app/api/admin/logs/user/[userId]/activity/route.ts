@@ -4,12 +4,13 @@ import { makeAuthenticatedRequestWithPath, handleApiRoute } from '@/lib/api-auth
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const session = await getServerSession(request);
     
-    if (!session?.user || (session.user.role !== 'admin' && session.user.id !== params.userId)) {
+    if (!session?.user || (session.user.role !== 'admin' && session.user.id !== userId)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -31,7 +32,7 @@ export async function GET(
       const response = await makeAuthenticatedRequestWithPath(
         request,
         'logsUserActivity',
-        [params.userId],
+        [userId],
         queryParams,
         { method: 'GET' }
       );

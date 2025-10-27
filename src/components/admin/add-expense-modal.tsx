@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { X, Plus } from "lucide-react";
+import { X } from "lucide-react";
 
 interface AddExpenseModalProps {
   isOpen: boolean;

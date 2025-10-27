@@ -60,9 +60,9 @@ const serviceModules: ServiceModule[] = [
     services: ["Cleaning supplies", "Tools", "Subscription kits"],
     route: "/supplies",
     category: "Resources",
-    status: "active",
-    users: 2,
-    lastUpdated: "2 hours ago", 
+    status: "coming-soon",
+    users: 0,
+    lastUpdated: "Coming soon", 
     featured: false
   },
   {
@@ -88,10 +88,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Tool and vehicle rentals"],
     route: "/rentals",
     category: "Resources",
-    status: "active",
-    users: 450,
-    lastUpdated: "5 hours ago",
-    featured: true
+    status: "coming-soon",
+    users: 0,
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "plus",
@@ -130,9 +130,9 @@ const serviceModules: ServiceModule[] = [
     services: ["Advertising for hardware stores", "Suppliers", "Training schools"],
     route: "/ads",
     category: "Marketing",
-    status: "active",
-    users: 680,
-    lastUpdated: "4 hours ago",
+    status: "coming-soon",
+    users: 0,
+    lastUpdated: "Coming soon",
     featured: false
   },
   {

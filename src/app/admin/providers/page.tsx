@@ -6,11 +6,9 @@ import {
   Search, 
   Edit, 
   Trash2, 
-  Shield, 
   UserCheck,
   UserX,
   Phone,
-  Calendar,
   MapPin,
   RefreshCw,
   Filter,
@@ -21,11 +19,7 @@ import {
   ChevronUp,
   Star,
   TrendingUp,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Award,
-  BarChart3
+  Clock
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -96,14 +90,97 @@ interface Provider {
 }
 
 // Helper function to transform API provider data to frontend format
-const transformProviderData = (apiProvider: any): Provider => {
+const transformProviderData = (apiProvider: {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  phoneNumber?: string;
+  role?: string;
+  status?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  profilePicture?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLogin?: string;
+  profileCompleteness?: number;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  businessInfo?: {
+    businessName?: string;
+    businessType?: string;
+    licenseNumber?: string;
+    taxId?: string;
+  };
+  services?: string[];
+  rating?: {
+    average?: number;
+    count?: number;
+  };
+  joinedAt?: string;
+  lastActive?: string;
+  notes?: string[];
+  profile?: {
+    businessName?: string;
+    businessType?: string;
+    serviceAreas?: string[];
+    specialties?: string[];
+    rating?: number;
+    totalReviews?: number;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
+    bio?: string;
+  };
+  verification?: {
+    phoneVerified?: boolean;
+    emailVerified?: boolean;
+    identityVerified?: boolean;
+    businessVerified?: boolean;
+    addressVerified?: boolean;
+    bankAccountVerified?: boolean;
+    verifiedAt?: string;
+  };
+  performance?: {
+    completionRate?: number;
+    cancellationRate?: number;
+    averageRating?: number;
+    totalBookings?: number;
+    totalEarnings?: number;
+    responseTime?: number;
+  };
+  subscription?: {
+    type?: string;
+    isActive?: boolean;
+    startDate?: string;
+    endDate?: string;
+  };
+  trustScore?: number;
+  badges?: Array<{
+    type: string;
+    description: string;
+    earnedAt: string;
+  }>;
+  tags?: string[];
+}): Provider => {
   return {
     _id: apiProvider._id,
     firstName: apiProvider.firstName || '',
     lastName: apiProvider.lastName || '',
     email: apiProvider.email || '',
-    phoneNumber: apiProvider.phoneNumber,
-    status: apiProvider.status || 'pending',
+    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
+    status: (apiProvider.status as 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected') || 'pending',
     isActive: apiProvider.isActive || false,
     isVerified: apiProvider.isVerified || false,
     createdAt: apiProvider.createdAt || new Date().toISOString(),
@@ -158,9 +235,8 @@ export default function ProvidersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'status' | 'rating' | 'createdAt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1);
   const [itemsPerPage] = useState(50);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -262,26 +338,21 @@ export default function ProvidersPage() {
 
       // Transform the API response data to match frontend expectations
       let providersData: Provider[] = [];
-      let totalCount = 0;
 
       if (dataResult.success && dataResult.data) {
         // Handle the new API response structure
         if (dataResult.data.providers && Array.isArray(dataResult.data.providers)) {
           providersData = dataResult.data.providers.map(transformProviderData);
-          totalCount = dataResult.data.pagination?.total || dataResult.data.providers.length;
         } else if (Array.isArray(dataResult.data)) {
           // Fallback for old structure
           providersData = dataResult.data.map(transformProviderData);
-          totalCount = dataResult.total || dataResult.data.length;
         }
       } else if (Array.isArray(dataResult.data)) {
         // Fallback for direct array response
         providersData = dataResult.data.map(transformProviderData);
-        totalCount = dataResult.total || dataResult.data.length;
       }
 
       setProviders(providersData);
-      setTotalCount(totalCount);
       
       // Handle stats response - it should be an object, not an array
       const statsData = statsResult.data || statsResult;

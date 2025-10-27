@@ -1,12 +1,16 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { BarChart3, PieChart, TrendingUp, TrendingDown } from "lucide-react";
+import { BarChart3, PieChart, TrendingUp } from "lucide-react";
 
 interface FinanceChartProps {
   title: string;
   type: 'bar' | 'pie' | 'line';
-  data: any[];
+  data: Array<{
+    name: string;
+    value: number;
+    color?: string;
+  }>;
   className?: string;
   height?: string;
 }

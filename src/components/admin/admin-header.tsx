@@ -10,8 +10,8 @@ import {
   LogOut,
   ChevronDown,
   X,
-  Filter
 } from "lucide-react";
+import Image from 'next/image';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -254,9 +254,11 @@ export function AdminHeader({
             >
               <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
                 {user.avatar ? (
-                  <img 
+                  <Image 
                     src={user.avatar} 
                     alt={user.name}
+                    width={28}
+                    height={28}
                     className="w-full h-full object-cover"
                   />
                 ) : (

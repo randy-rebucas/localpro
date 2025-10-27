@@ -14,7 +14,7 @@ const steps = [
     title: "Personal Info",
     description: "Basic information about yourself",
     icon: User,
-    fields: ["name", "phone", "bio"]
+    fields: ["firstName", "lastName", "email", "name", "phone", "bio"]
   },
   {
     id: 2,

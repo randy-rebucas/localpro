@@ -144,43 +144,47 @@ function convertToCSV(data: Record<string, unknown>, type: string): string {
     case 'marketplace':
       headers.push('Metric', 'Value', 'Timestamp');
       if (data.marketplaceStats) {
-        rows.push(['Total Listings', data.marketplaceStats.totalListings || 0, new Date().toISOString()]);
-        rows.push(['Active Listings', data.marketplaceStats.activeListings || 0, new Date().toISOString()]);
-        rows.push(['Completed Bookings', data.marketplaceStats.completedBookings || 0, new Date().toISOString()]);
-        rows.push(['Pending Bookings', data.marketplaceStats.pendingBookings || 0, new Date().toISOString()]);
-        rows.push(['Total Earnings', data.marketplaceStats.totalEarnings || 0, new Date().toISOString()]);
-        rows.push(['Average Booking Value', data.marketplaceStats.averageBookingValue || 0, new Date().toISOString()]);
+        const marketplaceStats = data.marketplaceStats as Record<string, unknown>;
+        rows.push(['Total Listings', marketplaceStats.totalListings || 0, new Date().toISOString()]);
+        rows.push(['Active Listings', marketplaceStats.activeListings || 0, new Date().toISOString()]);
+        rows.push(['Completed Bookings', marketplaceStats.completedBookings || 0, new Date().toISOString()]);
+        rows.push(['Pending Bookings', marketplaceStats.pendingBookings || 0, new Date().toISOString()]);
+        rows.push(['Total Earnings', marketplaceStats.totalEarnings || 0, new Date().toISOString()]);
+        rows.push(['Average Booking Value', marketplaceStats.averageBookingValue || 0, new Date().toISOString()]);
       }
       break;
 
     case 'jobs':
       headers.push('Metric', 'Value', 'Timestamp');
       if (data.jobStats) {
-        rows.push(['Total Jobs', data.jobStats.totalJobs || 0, new Date().toISOString()]);
-        rows.push(['Active Jobs', data.jobStats.activeJobs || 0, new Date().toISOString()]);
-        rows.push(['Completed Jobs', data.jobStats.completedJobs || 0, new Date().toISOString()]);
-        rows.push(['Total Applications', data.jobStats.totalApplications || 0, new Date().toISOString()]);
-        rows.push(['Average Application Rate', data.jobStats.averageApplicationRate || 0, new Date().toISOString()]);
+        const jobStats = data.jobStats as Record<string, unknown>;
+        rows.push(['Total Jobs', jobStats.totalJobs || 0, new Date().toISOString()]);
+        rows.push(['Active Jobs', jobStats.activeJobs || 0, new Date().toISOString()]);
+        rows.push(['Completed Jobs', jobStats.completedJobs || 0, new Date().toISOString()]);
+        rows.push(['Total Applications', jobStats.totalApplications || 0, new Date().toISOString()]);
+        rows.push(['Average Application Rate', jobStats.averageApplicationRate || 0, new Date().toISOString()]);
       }
       break;
 
     case 'referrals':
       headers.push('Metric', 'Value', 'Timestamp');
       if (data.referralStats) {
-        rows.push(['Total Referrals', data.referralStats.totalReferrals || 0, new Date().toISOString()]);
-        rows.push(['Successful Referrals', data.referralStats.successfulReferrals || 0, new Date().toISOString()]);
-        rows.push(['Total Rewards', data.referralStats.totalRewards || 0, new Date().toISOString()]);
-        rows.push(['Conversion Rate', data.referralStats.conversionRate || 0, new Date().toISOString()]);
+        const referralStats = data.referralStats as Record<string, unknown>;
+        rows.push(['Total Referrals', referralStats.totalReferrals || 0, new Date().toISOString()]);
+        rows.push(['Successful Referrals', referralStats.successfulReferrals || 0, new Date().toISOString()]);
+        rows.push(['Total Rewards', referralStats.totalRewards || 0, new Date().toISOString()]);
+        rows.push(['Conversion Rate', referralStats.conversionRate || 0, new Date().toISOString()]);
       }
       break;
 
     case 'agencies':
       headers.push('Metric', 'Value', 'Timestamp');
       if (data.agencyStats) {
-        rows.push(['Total Agencies', data.agencyStats.totalAgencies || 0, new Date().toISOString()]);
-        rows.push(['Active Agencies', data.agencyStats.activeAgencies || 0, new Date().toISOString()]);
-        rows.push(['Total Providers', data.agencyStats.totalProviders || 0, new Date().toISOString()]);
-        rows.push(['Agency Revenue', data.agencyStats.totalRevenue || 0, new Date().toISOString()]);
+        const agencyStats = data.agencyStats as Record<string, unknown>;
+        rows.push(['Total Agencies', agencyStats.totalAgencies || 0, new Date().toISOString()]);
+        rows.push(['Active Agencies', agencyStats.activeAgencies || 0, new Date().toISOString()]);
+        rows.push(['Total Providers', agencyStats.totalProviders || 0, new Date().toISOString()]);
+        rows.push(['Agency Revenue', agencyStats.totalRevenue || 0, new Date().toISOString()]);
       }
       break;
 

@@ -5,7 +5,7 @@ import { GET } from '../../users/stats/route';
 jest.mock('@/lib/server-session');
 
 describe('/api/admin/users/stats', () => {
-  const mockGetServerSession = require('@/lib/server-session').getServerSession;
+  const mockGetServerSession = jest.mocked((await import('@/lib/server-session')).getServerSession);
 
   beforeEach(() => {
     jest.clearAllMocks();

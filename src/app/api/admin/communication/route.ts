@@ -47,15 +47,15 @@ export async function GET(request: NextRequest) {
           id: conv.id,
           participants: conv.participants || [],
           lastMessage: conv.lastMessage ? {
-            content: conv.lastMessage.content || '',
-            timestamp: conv.lastMessage.timestamp || conv.lastMessage.createdAt,
-            senderId: conv.lastMessage.senderId || conv.lastMessage.userId,
-            senderName: conv.lastMessage.senderName || conv.lastMessage.userName || 'Unknown'
+            content: (conv.lastMessage as Record<string, unknown>).content || '',
+            timestamp: (conv.lastMessage as Record<string, unknown>).timestamp || (conv.lastMessage as Record<string, unknown>).createdAt,
+            senderId: (conv.lastMessage as Record<string, unknown>).senderId || (conv.lastMessage as Record<string, unknown>).userId,
+            senderName: (conv.lastMessage as Record<string, unknown>).senderName || (conv.lastMessage as Record<string, unknown>).userName || 'Unknown'
           } : undefined,
           unreadCount: conv.unreadCount || 0,
           status: conv.status || 'active',
           createdAt: conv.createdAt || conv.created_at,
-          updatedAt: conv.updatedAt || conv.updated_at || conv.lastMessage?.timestamp,
+          updatedAt: conv.updatedAt || conv.updated_at || (conv.lastMessage as Record<string, unknown>)?.timestamp,
           messageCount: conv.messageCount || conv.message_count || 0
         }));
 
@@ -141,8 +141,10 @@ export async function GET(request: NextRequest) {
         ]);
 
         // Calculate real statistics from actual data
-        const conversations = conversationsData.data || conversationsData || [];
-        const notifications = notificationsData.data || notificationsData || [];
+        const conversations = Array.isArray(conversationsData.data) ? conversationsData.data : 
+                            Array.isArray(conversationsData) ? conversationsData : [];
+        const notifications = Array.isArray(notificationsData.data) ? notificationsData.data : 
+                            Array.isArray(notificationsData) ? notificationsData : [];
         
         // Debug logging for development
         if (process.env.NODE_ENV === 'development') {
@@ -152,51 +154,61 @@ export async function GET(request: NextRequest) {
         }
         
         // Calculate total messages from conversations
-        const totalMessages = conversations.reduce((sum: number, conv: Record<string, unknown>) => sum + (Number(conv.messageCount) || 0), 0);
+        const totalMessages = Array.isArray(conversations) ? 
+          conversations.reduce((sum: number, conv: Record<string, unknown>) => sum + (Number(conv.messageCount) || 0), 0) : 0;
         
         // Calculate active users (unique participants in recent conversations)
         const activeUserIds = new Set();
-        conversations.forEach((conv: Record<string, unknown>) => {
-          if (conv.participants && Array.isArray(conv.participants)) {
-            conv.participants.forEach((participant: Record<string, unknown>) => {
-              if (participant.id) {
-                activeUserIds.add(String(participant.id));
-              }
-            });
-          }
-        });
+        if (Array.isArray(conversations)) {
+          conversations.forEach((conv: Record<string, unknown>) => {
+            if (conv.participants && Array.isArray(conv.participants)) {
+              conv.participants.forEach((participant: Record<string, unknown>) => {
+                if (participant.id) {
+                  activeUserIds.add(String(participant.id));
+                }
+              });
+            }
+          });
+        }
 
         // Use users data if available for more accurate active user count
         let activeUsersCount = activeUserIds.size;
-        if (usersData && usersData.data) {
+        if (usersData && usersData.data && Array.isArray(usersData.data)) {
           const users = usersData.data;
           // Count users who have been active in the last 24 hours
           const now = new Date();
           const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
           
-          activeUsersCount = users.filter((user: Record<string, unknown>) => {
-            const lastActive = new Date(String(user.lastActive || user.lastSeen || user.updatedAt || user.createdAt));
-            return lastActive > oneDayAgo;
-          }).length;
+          try {
+            activeUsersCount = users.filter((user: Record<string, unknown>) => {
+              const lastActive = new Date(String(user.lastActive || user.lastSeen || user.updatedAt || user.createdAt));
+              return lastActive > oneDayAgo;
+            }).length;
+          } catch (error) {
+            console.warn('Error processing users data for active count:', error);
+            // Keep the existing activeUserIds.size as fallback
+          }
         }
         
         // Calculate response time from last messages
-        const responseTimes = conversations
-          .filter((conv: Record<string, unknown>) => conv.lastMessage && (conv.lastMessage as Record<string, unknown>).timestamp)
-          .map((conv: Record<string, unknown>) => {
-            const lastMessage = conv.lastMessage as Record<string, unknown>;
-            const lastMessageTime = new Date(String(lastMessage.timestamp)).getTime();
-            const conversationTime = new Date(String(conv.createdAt || conv.updatedAt)).getTime();
-            return lastMessageTime - conversationTime;
-          });
+        const responseTimes = Array.isArray(conversations) ? 
+          conversations
+            .filter((conv: Record<string, unknown>) => conv.lastMessage && (conv.lastMessage as Record<string, unknown>).timestamp)
+            .map((conv: Record<string, unknown>) => {
+              const lastMessage = conv.lastMessage as Record<string, unknown>;
+              const lastMessageTime = new Date(String(lastMessage.timestamp)).getTime();
+              const conversationTime = new Date(String(conv.createdAt || conv.updatedAt)).getTime();
+              return lastMessageTime - conversationTime;
+            }) : [];
         
         const avgResponseTime = responseTimes.length > 0 
           ? Math.round(responseTimes.reduce((sum: number, time: number) => sum + time, 0) / responseTimes.length / (1000 * 60)) // Convert to minutes
           : 0;
 
         // Calculate satisfaction rate from conversation statuses
-        const activeConversations = conversations.filter((conv: Record<string, unknown>) => conv.status === 'active').length;
-        const totalConversations = conversations.length;
+        const activeConversations = Array.isArray(conversations) ? 
+          conversations.filter((conv: Record<string, unknown>) => conv.status === 'active').length : 0;
+        const totalConversations = Array.isArray(conversations) ? conversations.length : 0;
         const satisfactionRate = totalConversations > 0 ? Math.round((activeConversations / totalConversations) * 100) : 0;
 
         // Calculate growth rates using analytics data if available
@@ -261,15 +273,15 @@ export async function GET(request: NextRequest) {
           id: conv.id,
           participants: conv.participants || [],
           lastMessage: conv.lastMessage ? {
-            content: conv.lastMessage.content || '',
-            timestamp: conv.lastMessage.timestamp || conv.lastMessage.createdAt,
-            senderId: conv.lastMessage.senderId || conv.lastMessage.userId,
-            senderName: conv.lastMessage.senderName || conv.lastMessage.userName || 'Unknown'
+            content: (conv.lastMessage as Record<string, unknown>).content || '',
+            timestamp: (conv.lastMessage as Record<string, unknown>).timestamp || (conv.lastMessage as Record<string, unknown>).createdAt,
+            senderId: (conv.lastMessage as Record<string, unknown>).senderId || (conv.lastMessage as Record<string, unknown>).userId,
+            senderName: (conv.lastMessage as Record<string, unknown>).senderName || (conv.lastMessage as Record<string, unknown>).userName || 'Unknown'
           } : undefined,
           unreadCount: conv.unreadCount || 0,
           status: conv.status || 'active',
           createdAt: conv.createdAt || conv.created_at,
-          updatedAt: conv.updatedAt || conv.updated_at || conv.lastMessage?.timestamp,
+          updatedAt: conv.updatedAt || conv.updated_at || (conv.lastMessage as Record<string, unknown>)?.timestamp,
           messageCount: conv.messageCount || conv.message_count || 0
         }));
 

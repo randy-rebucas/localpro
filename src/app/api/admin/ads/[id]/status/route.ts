@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   makeAuthenticatedRequestWithPath, 
-  handleApiRoute, 
-  createErrorResponse 
+  handleApiRoute
 } from '@/lib/api-auth-utils';
 
 export async function PATCH(

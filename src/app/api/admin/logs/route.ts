@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, logId, data: logData } = body;
+    const { action, data: logData } = body;
 
     // Handle different log management actions
     const result = await handleApiRoute(async () => {

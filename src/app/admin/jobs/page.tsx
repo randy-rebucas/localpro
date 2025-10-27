@@ -20,15 +20,9 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  Building,
-  User,
-  Phone,
-  Mail,
-  ExternalLink
+  Building
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { AdminErrorState } from "@/components/admin/admin-error-state";
 
 // Define types locally
 interface Job {
@@ -127,9 +121,8 @@ export default function JobsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<'title' | 'company' | 'status' | 'createdAt' | 'applicationsCount'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1);
   const [itemsPerPage] = useState(50);
-  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -240,26 +233,21 @@ export default function JobsPage() {
 
       // Transform the API response data to match frontend expectations
       let jobsData: Job[] = [];
-      let totalCount = 0;
 
       if (dataResult.success && dataResult.data) {
         // Handle the new API response structure
         if (dataResult.data.jobs && Array.isArray(dataResult.data.jobs)) {
           jobsData = dataResult.data.jobs;
-          totalCount = dataResult.data.pagination?.total || dataResult.data.jobs.length;
         } else if (Array.isArray(dataResult.data)) {
           // Fallback for old structure
           jobsData = dataResult.data;
-          totalCount = dataResult.total || dataResult.data.length;
         }
       } else if (Array.isArray(dataResult.data)) {
         // Fallback for direct array response
         jobsData = dataResult.data;
-        totalCount = dataResult.total || dataResult.data.length;
       }
 
       setJobs(jobsData);
-      setTotalCount(totalCount);
       
       // Handle stats response - it should be an object, not an array
       const statsData = statsResult.data || statsResult;

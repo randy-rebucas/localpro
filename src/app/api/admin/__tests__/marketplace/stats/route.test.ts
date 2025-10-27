@@ -17,7 +17,8 @@ describe('/api/admin/marketplace/stats', () => {
 
   it('should return 403 for non-admin users', async () => {
     // Mock session with non-admin user
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'client' }
     });
@@ -32,13 +33,15 @@ describe('/api/admin/marketplace/stats', () => {
 
   it('should return marketplace statistics for admin users', async () => {
     // Mock session with admin user
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'admin' }
     });
 
     // Mock API response with real data structure
-    const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+    const { makeAuthenticatedRequestWithPath } = await import('@/lib/api-auth-utils');
+    const mockMakeAuthenticatedRequestWithPath = jest.mocked(makeAuthenticatedRequestWithPath);
     mockMakeAuthenticatedRequestWithPath.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ 
@@ -84,12 +87,14 @@ describe('/api/admin/marketplace/stats', () => {
   });
 
   it('should handle external API errors', async () => {
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'admin' }
     });
 
-    const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+    const { makeAuthenticatedRequestWithPath } = await import('@/lib/api-auth-utils');
+    const mockMakeAuthenticatedRequestWithPath = jest.mocked(makeAuthenticatedRequestWithPath);
     mockMakeAuthenticatedRequestWithPath.mockResolvedValue({
       ok: false,
       status: 500,
@@ -105,12 +110,14 @@ describe('/api/admin/marketplace/stats', () => {
   });
 
   it('should handle timeout errors', async () => {
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'admin' }
     });
 
-    const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+    const { makeAuthenticatedRequestWithPath } = await import('@/lib/api-auth-utils');
+    const mockMakeAuthenticatedRequestWithPath = jest.mocked(makeAuthenticatedRequestWithPath);
     mockMakeAuthenticatedRequestWithPath.mockRejectedValue(new Error('AbortError'));
 
     const request = new NextRequest('http://localhost:3000/api/admin/marketplace/stats');
@@ -122,12 +129,14 @@ describe('/api/admin/marketplace/stats', () => {
   });
 
   it('should handle connection errors', async () => {
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'admin' }
     });
 
-    const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+    const { makeAuthenticatedRequestWithPath } = await import('@/lib/api-auth-utils');
+    const mockMakeAuthenticatedRequestWithPath = jest.mocked(makeAuthenticatedRequestWithPath);
     mockMakeAuthenticatedRequestWithPath.mockRejectedValue(new Error('fetch failed'));
 
     const request = new NextRequest('http://localhost:3000/api/admin/marketplace/stats');
@@ -139,12 +148,14 @@ describe('/api/admin/marketplace/stats', () => {
   });
 
   it('should include period parameter in request', async () => {
-    const mockGetServerSession = require('@/lib/server-session').getServerSession;
+    const { getServerSession } = await import('@/lib/server-session');
+    const mockGetServerSession = jest.mocked(getServerSession);
     mockGetServerSession.mockResolvedValue({
       user: { id: '1', role: 'admin' }
     });
 
-    const mockMakeAuthenticatedRequestWithPath = require('@/lib/api-auth-utils').makeAuthenticatedRequestWithPath;
+    const { makeAuthenticatedRequestWithPath } = await import('@/lib/api-auth-utils');
+    const mockMakeAuthenticatedRequestWithPath = jest.mocked(makeAuthenticatedRequestWithPath);
     mockMakeAuthenticatedRequestWithPath.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ success: true, data: {} })

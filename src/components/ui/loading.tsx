@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import { Logo } from "./logo";
 
 interface LoadingProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -24,14 +25,14 @@ export function Loading({
     xl: "w-16 h-16"
   };
 
-  // Dashboard variant with the custom P logo design
+  // Dashboard variant with the LocalPro logo
   if (variant === "dashboard") {
     const content = (
       <div className={`flex flex-col items-center justify-center gap-3 ${className}`}>
         <div className="relative">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
-          <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-lg flex items-center justify-center shadow-lg mx-auto absolute top-0 left-1/2 transform -translate-x-1/2">
-            <span className="text-white font-bold text-xl">P</span>
+          <div className="animate-spin rounded-full h-20 w-20 border-4 border-gray-200 border-t-green-600 mx-auto mb-4"></div>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2">
+            <Logo size={64} className="pointer-events-none" />
           </div>
         </div>
         <h2 className="text-xl font-semibold text-gray-700 mb-2">{text}</h2>
