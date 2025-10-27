@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
           unreadCount: conv.unreadCount || 0,
           status: conv.status || 'active',
           createdAt: conv.createdAt || conv.created_at,
-          updatedAt: conv.updatedAt || conv.updated_at || conv.lastMessage?.timestamp,
+          updatedAt: conv.updatedAt || conv.updated_at || (conv.lastMessage as Record<string, unknown>)?.timestamp,
           messageCount: conv.messageCount || conv.message_count || 0
         }));
 
@@ -281,7 +281,7 @@ export async function GET(request: NextRequest) {
           unreadCount: conv.unreadCount || 0,
           status: conv.status || 'active',
           createdAt: conv.createdAt || conv.created_at,
-          updatedAt: conv.updatedAt || conv.updated_at || conv.lastMessage?.timestamp,
+          updatedAt: conv.updatedAt || conv.updated_at || (conv.lastMessage as Record<string, unknown>)?.timestamp,
           messageCount: conv.messageCount || conv.message_count || 0
         }));
 
