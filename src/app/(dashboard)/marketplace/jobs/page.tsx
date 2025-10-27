@@ -506,9 +506,9 @@ export default function BrowseJobsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.isArray(jobs) && jobs.map((job) => (
+          {Array.isArray(jobs) && jobs.map((job, index) => (
             <div
-              key={job.id}
+              key={job.id || job.title || `job-${index}`}
               className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"
             >
               <div className="p-6">
@@ -538,7 +538,7 @@ export default function BrowseJobsPage() {
 
                   {/* Skills */}
                   <div className="flex flex-wrap gap-1">
-                    {job.skills.slice(0, 3).map(skill => (
+                    {job.skills && Array.isArray(job.skills) && job.skills.slice(0, 3).map(skill => (
                       <span
                         key={skill}
                         className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
@@ -546,7 +546,7 @@ export default function BrowseJobsPage() {
                         {skill}
                       </span>
                     ))}
-                    {job.skills.length > 3 && (
+                    {job.skills && Array.isArray(job.skills) && job.skills.length > 3 && (
                       <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
                         +{job.skills.length - 3} more
                       </span>
@@ -554,36 +554,38 @@ export default function BrowseJobsPage() {
                   </div>
 
                   {/* Client Info */}
-                  <div className="flex items-center space-x-3 pt-3 border-t border-gray-100">
-                    <Image
-                      src={job.client.avatar}
-                      alt={job.client.name}
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-700 truncate">
-                        {job.client.name}
-                      </p>
-                      <div className="flex items-center space-x-1">
-                        <div className="flex">{renderStars(job.client.rating)}</div>
-                        <span className="text-xs text-gray-500">
-                          ({job.client.reviewCount})
-                        </span>
+                  {job.client && (
+                    <div className="flex items-center space-x-3 pt-3 border-t border-gray-100">
+                      <Image
+                        src={job.client.avatar || "/default-avatar.png"}
+                        alt={job.client.name || "Client"}
+                        width={32}
+                        height={32}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-700 truncate">
+                          {job.client.name || "Unknown Client"}
+                        </p>
+                        <div className="flex items-center space-x-1">
+                          <div className="flex">{renderStars(job.client.rating || 0)}</div>
+                          <span className="text-xs text-gray-500">
+                            ({job.client.reviewCount || 0})
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Location and Deadline */}
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <div className="flex items-center">
                       <MapPin className="w-3 h-3 mr-1" />
-                      {job.location.city}, {job.location.state}
+                      {job.location ? `${job.location.city || "Unknown"}, ${job.location.state || "Unknown"}` : "Location not specified"}
                     </div>
                     <div className="flex items-center">
                       <Calendar className="w-3 h-3 mr-1" />
-                      Due {new Date(job.deadline).toLocaleDateString()}
+                      Due {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
                     </div>
                   </div>
                 </div>

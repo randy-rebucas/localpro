@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSession } from "@/hooks/useAuth";
+import { useEffect, useCallback, useMemo } from "react";
+import { useSession, User } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
-  User, 
+  User as UserIcon, 
   Phone, 
   MapPin, 
   Globe, 
@@ -50,7 +50,27 @@ interface UserProfileData {
 export function UserProfile({ initialProfile }: { initialProfile?: UserProfileData }) {
   const { data: session } = useSession();
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfileData | null>(initialProfile ?? null);
+  
+  // Convert session user data to UserProfileData format
+  const profile: UserProfileData | null = session?.user ? {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+    firstName: session.user.firstName,
+    lastName: session.user.lastName,
+    phone: session.user.phone,
+    bio: session.user.bio,
+    location: session.user.location,
+    website: session.user.website,
+    skills: session.user.skills,
+    experience: session.user.experience,
+    avatar: session.user.avatar,
+    portfolio: session.user.portfolio as string[],
+    role: session.user.role,
+    createdAt: session.user.createdAt || new Date().toISOString(),
+    updatedAt: session.user.updatedAt || new Date().toISOString(),
+    isVerified: session.user.isVerified,
+  } : initialProfile ?? null;
   
   // Get user role for conditional rendering
   const userRole = session?.user?.role;
@@ -76,49 +96,6 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   useEffect(() => {
     router.prefetch('/profile/edit');
   }, [router]);
-
-  // Fetch user profile with abort to avoid setting state on unmounted component
-  const fetchProfile = useCallback(async () => {
-    if (!session?.user?.id) return;
-    // Avoid refetch if we already have profile data
-    if (profile) return;
-
-    try {
-      const response = await fetch(
-        `/api/users/${session.user.id}`,
-        createAuthFetchOptions()
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setProfile(data);
-      } else {
-        // Try to parse error body; fall back to generic
-        let message = "Failed to fetch profile";
-        try {
-          const error = await response.json();
-          message = error.error || message;
-        } catch {}
-        toast.error(message);
-      }
-    } catch (error: unknown) {
-      // AbortError is expected on unmount
-      if (typeof error === 'object' && error && 'name' in error && (error as { name: string }).name === 'AbortError') {
-        return;
-      }
-      console.error("Error fetching profile:", error);
-      toast.error("Failed to fetch profile");
-    }
-  }, [session?.user?.id, profile]);
-
-  // Fetch user profile
-  useEffect(() => {
-    if (!session?.user?.id) return;
-    if (profile) return;
-    const controller = new AbortController();
-    fetchProfile();
-    return () => controller.abort();
-  }, [session?.user?.id, fetchProfile, profile]);
 
   const handleEditProfile = useCallback(() => {
     router.push('/profile/edit');
@@ -192,7 +169,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <p className="text-sm font-medium text-gray-700">{formattedUpdatedAt}</p>
               </div>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+                <UserIcon className="w-6 h-6 text-white" />
               </div>
             </div>
           </div>
@@ -241,7 +218,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   {/* Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <User className="w-4 h-4 inline mr-2" />
+                      <UserIcon className="w-4 h-4 inline mr-2" />
                       Full Name
                     </label>
                     <p className="text-gray-700 py-2">{profile.name}</p>

@@ -18,51 +18,94 @@ export async function GET(
 
     const { userId } = await params;
     
-    // For development, return mock data if external API is not available
-    if (process.env.NODE_ENV === 'development' && process.env.ENABLE_MOCK_DATA === 'true') {
-      console.log("Using mock data for development");
-      const mockUserData = {
+    // Always try external API first, but provide session data as fallback
+    try {
+      const response = await makeAuthenticatedRequestWithPath(
+        request,
+        'usersById',
+        [userId],
+        { method: 'GET' }
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        return NextResponse.json(data);
+      } else {
+        console.warn("External API failed, returning session data as fallback");
+        // Return actual session data instead of mock data
+        const sessionUserData = {
+          id: userId,
+          email: session.user.email,
+          name: session.user.name,
+          firstName: session.user.firstName,
+          lastName: session.user.lastName,
+          phone: session.user.phone,
+          bio: session.user.bio,
+          location: session.user.location,
+          website: session.user.website,
+          skills: session.user.skills,
+          experience: session.user.experience,
+          avatar: session.user.avatar,
+          portfolio: session.user.portfolio,
+          createdAt: session.user.createdAt || new Date().toISOString(),
+          updatedAt: session.user.updatedAt || new Date().toISOString(),
+          isVerified: session.user.isVerified,
+          role: session.user.role
+        };
+        return NextResponse.json(sessionUserData);
+      }
+    } catch (apiError) {
+      console.warn("External API unavailable, returning session data as fallback:", apiError);
+      // Return actual session data instead of mock data
+      const sessionUserData = {
         id: userId,
         email: session.user.email,
         name: session.user.name,
-        firstName: session.user.firstName || "John",
-        lastName: session.user.lastName || "Doe",
-        phone: session.user.phone || "+1234567890",
-        bio: session.user.bio || "Professional service provider",
-        location: session.user.location || "New York, NY",
-        website: session.user.website || "https://example.com",
-        skills: session.user.skills || ["Web Development", "Design"],
-        experience: session.user.experience || "5+ years",
-        avatar: session.user.avatar || null,
-        portfolio: session.user.portfolio || [],
+        firstName: session.user.firstName,
+        lastName: session.user.lastName,
+        phone: session.user.phone,
+        bio: session.user.bio,
+        location: session.user.location,
+        website: session.user.website,
+        skills: session.user.skills,
+        experience: session.user.experience,
+        avatar: session.user.avatar,
+        portfolio: session.user.portfolio,
         createdAt: session.user.createdAt || new Date().toISOString(),
         updatedAt: session.user.updatedAt || new Date().toISOString(),
-        isVerified: session.user.isVerified || false,
-        role: session.user.role || "provider"
+        isVerified: session.user.isVerified,
+        role: session.user.role
       };
-      return NextResponse.json(mockUserData);
+      return NextResponse.json(sessionUserData);
     }
-    
-    const response = await makeAuthenticatedRequestWithPath(
-      request,
-      'usersById',
-      [userId],
-      { method: 'GET' }
-    );
-    console.log("response", response);
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errorData.error || "Failed to fetch user data" },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
 
   } catch (error) {
     console.error("Error fetching user data:", error);
+
+    // If we have session data, return it as fallback instead of error
+    if (session?.user) {
+      console.warn("Returning session data as fallback due to error");
+      const sessionUserData = {
+        id: userId,
+        email: session.user.email,
+        name: session.user.name,
+        firstName: session.user.firstName,
+        lastName: session.user.lastName,
+        phone: session.user.phone,
+        bio: session.user.bio,
+        location: session.user.location,
+        website: session.user.website,
+        skills: session.user.skills,
+        experience: session.user.experience,
+        avatar: session.user.avatar,
+        portfolio: session.user.portfolio,
+        createdAt: session.user.createdAt || new Date().toISOString(),
+        updatedAt: session.user.updatedAt || new Date().toISOString(),
+        isVerified: session.user.isVerified,
+        role: session.user.role
+      };
+      return NextResponse.json(sessionUserData);
+    }
 
     let errorMessage = "Internal server error";
     let statusCode = 500;

@@ -11,6 +11,16 @@ export interface User {
   phone: string;
   firstName?: string;
   lastName?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  skills?: string[];
+  experience?: string;
+  avatar?: string;
+  portfolio?: unknown[];
+  createdAt?: string;
+  updatedAt?: string;
+  isVerified?: boolean;
 }
 
 export interface Session {

@@ -371,7 +371,7 @@ export function EditProfileForm() {
     if (!session?.user?.id) return;
     
     try {
-      const response = await fetch(`/api/users/${session.user.id}`, 
+      const response = await fetch('/api/auth/me', 
         createAuthFetchOptions()
       );
       
@@ -509,6 +509,11 @@ export function EditProfileForm() {
         const data = await response.json();
         setProfile(prev => prev ? { ...prev, avatar: data.avatar } : null);
         setAvatarFile(null);
+        
+        // Refresh session data to get updated user info
+        // The session cookie was updated by the server, so we need to refetch
+        window.location.reload();
+        
         toast.success("Avatar uploaded successfully!");
       } else {
         const error = await response.json();

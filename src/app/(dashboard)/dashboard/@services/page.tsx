@@ -102,10 +102,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Premium subscriptions", "Providers", "Clients"],
     route: "/plus",
     category: "Premium",
-    status: "active",
-    users: 320,
-    lastUpdated: "1 hour ago",
-    featured: true
+    status: "coming-soon",
+    users: 0,
+    lastUpdated: "Coming soon", 
+    featured: false
   },
   {
     id: "facility",

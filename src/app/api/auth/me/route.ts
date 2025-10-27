@@ -53,6 +53,16 @@ export async function GET(request: NextRequest) {
       phone: session.phone,
       firstName: session.firstName,
       lastName: session.lastName,
+      bio: session.bio,
+      location: session.location,
+      website: session.website,
+      skills: session.skills,
+      experience: session.experience,
+      avatar: session.avatar,
+      portfolio: session.portfolio,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+      isVerified: session.isVerified,
     };
     
     // Cache the result

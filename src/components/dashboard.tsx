@@ -148,7 +148,7 @@ export function Dashboard() {
     const fetchUser = async () => {
       try {
         if (session?.user?.id) {
-          const response = await fetch(`/api/users/${session.user.id}`);
+          const response = await fetch('/api/auth/me');
           if (response.ok) {
             const userData = await response.json();
             console.log("=== USER DATA FROM API ===");

@@ -14,7 +14,7 @@ export function generateMetadata(config: MetadataConfig): Metadata {
     description,
     keywords = [],
     image = '/og-image.png',
-    url = 'https://localpro-super-app.vercel.app',
+    url = 'https://localpro.asia',
   } = config;
 
   const fullTitle = title.includes('LocalPro') ? title : `${title} | LocalPro Super App`;
