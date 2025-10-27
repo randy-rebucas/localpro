@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useMemo } from "react";
-import { useSession, User } from "@/hooks/useAuth";
+import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -15,9 +15,7 @@ import {
   AlertCircle,
   Edit
 } from "lucide-react";
-import toast from "react-hot-toast";
 import { ProfileCompleteness } from "./profile-completeness";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { Loading } from "@/components/ui/loading";
 
 interface UserProfileData {

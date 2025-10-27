@@ -14,7 +14,7 @@
     "clean": "rm -rf .next out",
     "analyze": "ANALYZE=true next build",
     "test": "jest",
-    "prepare": "husky install || true"
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -53,6 +53,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.5",
+    "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "prettier": "^3.0.0",

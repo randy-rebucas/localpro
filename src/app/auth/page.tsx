@@ -42,7 +42,6 @@ function SignInForm() {
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
-  const [isNewUser, setIsNewUser] = useState(false);
   const [redirectTo, setRedirectTo] = useState("/dashboard");
   // const [showPassword, setShowPassword] = useState(false);
   const [countdown, setCountdown] = useState(0);
@@ -128,7 +127,6 @@ function SignInForm() {
 
       if (response.ok) {
         setPhoneNumber(phone);
-        setIsNewUser(result.isNewUser || false);
         setStep("code");
         setCountdown(60); // 60 second countdown
         toast.success("Verification code sent to your phone!");
