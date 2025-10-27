@@ -114,6 +114,13 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (!result.data) {
+      return NextResponse.json(
+        { error: 'No data returned from bulk operation' },
+        { status: 500 }
+      );
+    }
+
     const { results, errors, totalProcessed, successful, failed } = result.data;
 
     return NextResponse.json({

@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
 
         const response = await makeAuthenticatedRequestWithPath(
           request,
-          'errorMonitoringErrors',
+          'errorMonitoring',
           [],
           queryParams,
           { method: 'GET' }

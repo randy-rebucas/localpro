@@ -6,17 +6,17 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
+  const session = await getServerSession(request);
+  console.log("session", session);
+  const { userId } = await params;
+  
   try {
-    const session = await getServerSession(request);
-    console.log("session", session);
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    const { userId } = await params;
     
     // Always try external API first, but provide session data as fallback
     try {

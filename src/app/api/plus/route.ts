@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
         const response = await makeAuthenticatedRequestWithPath(
           request,
-          'plusMySubscription',
+          'localProPlusMySubscription',
           [],
           queryParams,
           { method: 'GET' }
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         // Fetch plus plans
         const response = await makeAuthenticatedRequestWithEndpoint(
           request,
-          'plusPlans',
+          'localProPlusPlans',
           { method: 'GET' }
         );
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         // Fetch plus overview/statistics
         const response = await makeAuthenticatedRequestWithEndpoint(
           request,
-          'plusUsage',
+          'localProPlusUsage',
           { method: 'GET' }
         );
 

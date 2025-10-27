@@ -39,7 +39,7 @@ async function getCachedOrFetch<T>(
   const now = Date.now();
   
   if (cached && (now - cached.timestamp) < cacheDuration) {
-    return cached.data;
+    return cached.data as T;
   }
   
   try {
@@ -50,7 +50,7 @@ async function getCachedOrFetch<T>(
     // If fetch fails but we have cached data, return it even if expired
     if (cached) {
       console.warn('API request failed, returning stale cache:', error);
-      return cached.data;
+      return cached.data as T;
     }
     throw error;
   }

@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
         const response = await makeAuthenticatedRequestWithPath(
           request,
-          'financeWithdrawals',
+          'financeWithdrawalsProcess',
           [],
           queryParams,
           { method: 'GET' }

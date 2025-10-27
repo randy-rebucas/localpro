@@ -183,10 +183,10 @@ export function TransactionDetailsModal({
                     <span className="text-sm text-gray-900">{formatDate(transaction.date)}</span>
                   </div>
                   
-                  {transaction.fees && (
+                  {transaction.fee && (
                     <div className="flex items-center justify-between py-2 border-b border-gray-200">
                       <span className="text-sm font-medium text-gray-500">Processing Fees</span>
-                      <span className="text-sm text-gray-900">{formatAmount(transaction.fees)}</span>
+                      <span className="text-sm text-gray-900">{formatAmount(transaction.fee)}</span>
                     </div>
                   )}
                 </div>
@@ -208,26 +208,24 @@ export function TransactionDetailsModal({
                   
                   <div className="flex items-center justify-between py-2 border-b border-gray-200">
                     <span className="text-sm font-medium text-gray-500">Email</span>
-                    <span className="text-sm text-gray-900">{transaction.email || 'N/A'}</span>
+                    <span className="text-sm text-gray-900">{transaction.customer || 'N/A'}</span>
                   </div>
                   
                   <div className="flex items-center justify-between py-2 border-b border-gray-200">
                     <span className="text-sm font-medium text-gray-500">Phone</span>
-                    <span className="text-sm text-gray-900">{transaction.phone || 'N/A'}</span>
+                    <span className="text-sm text-gray-900">N/A</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Additional Information */}
-            {transaction.notes && (
-              <div className="space-y-2">
-                <h4 className="text-lg font-medium text-gray-900">Notes</h4>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-700">{transaction.notes}</p>
-                </div>
+            <div className="space-y-2">
+              <h4 className="text-lg font-medium text-gray-900">Notes</h4>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-700">No additional notes available for this transaction.</p>
               </div>
-            )}
+            </div>
 
             {/* Actions */}
             <div className="flex items-center justify-between pt-6 border-t border-gray-200">

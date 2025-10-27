@@ -41,6 +41,11 @@ export async function GET(request: NextRequest) {
         maxUsers?: number;
         maxStorage?: number;
         supportLevel?: string;
+        isActive?: boolean;
+        color?: string;
+        targetAudience?: string;
+        createdAt?: string;
+        updatedAt?: string;
       }) => ({
         id: plan.id,
         name: plan.name,
