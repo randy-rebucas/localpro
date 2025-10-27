@@ -13,7 +13,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
 
   const getCompletenessScore = () => {
     const fields = [
-      'name', 'phone', 'bio', 'location', 'website', 
+      'firstName', 'lastName', 'email', 'name', 'phone', 'bio', 'location', 'website', 
       'skills', 'experience', 'avatar', 'portfolio'
     ];
     
@@ -33,6 +33,36 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
 
   const getAIRecommendations = () => {
     const recommendations = [];
+
+    if (!profileData?.firstName) {
+      recommendations.push({
+        field: 'firstName',
+        title: 'Add your first name',
+        description: 'Your first name helps clients identify you',
+        priority: 'high',
+        suggestion: 'Enter your first name to personalize your profile.'
+      });
+    }
+
+    if (!profileData?.lastName) {
+      recommendations.push({
+        field: 'lastName',
+        title: 'Add your last name',
+        description: 'Your last name completes your identity',
+        priority: 'high',
+        suggestion: 'Enter your last name to complete your profile.'
+      });
+    }
+
+    if (!profileData?.email) {
+      recommendations.push({
+        field: 'email',
+        title: 'Add your email address',
+        description: 'Email helps with important notifications',
+        priority: 'medium',
+        suggestion: 'Add your email to receive important updates and notifications.'
+      });
+    }
 
     if (!profileData?.bio) {
       recommendations.push({

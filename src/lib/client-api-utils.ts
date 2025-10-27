@@ -14,7 +14,14 @@ export function isAuthenticated(): boolean {
     .find(c => c.trim().startsWith('api-token='))
     ?.split('=')[1];
   
-  return !!apiToken;
+  return !!apiToken && apiToken.trim() !== '';
+}
+
+/**
+ * Clear the API token cookie (useful when token is invalid)
+ */
+export function clearApiToken(): void {
+  document.cookie = 'api-token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 }
 
 /**

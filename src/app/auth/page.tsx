@@ -10,9 +10,7 @@ import {
   ArrowRight, 
   Shield, 
   CheckCircle, 
-  Loader2,
-  Mail,
-  User
+  Loader2
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
@@ -33,23 +31,7 @@ const verificationSchema = z.object({
     .regex(/^\d{6}$/, "Verification code must contain exactly 6 numbers"),
 });
 
-const newUserSchema = z.object({
-  firstName: z
-    .string()
-    .min(2, "First name must be at least 2 characters")
-    .max(50, "First name is too long")
-    .regex(/^[a-zA-Z\s]+$/, "First name can only contain letters"),
-  lastName: z
-    .string()
-    .min(2, "Last name must be at least 2 characters")
-    .max(50, "Last name is too long")
-    .regex(/^[a-zA-Z\s]+$/, "Last name can only contain letters"),
-  email: z
-    .string()
-    .email("Please enter a valid email address")
-    .optional()
-    .or(z.literal("")),
-});
+// Removed newUserSchema - firstName, lastName, and email will be handled in profile completion
 
 type SignInForm = z.infer<typeof signInSchema>;
 // type VerificationForm = z.infer<typeof verificationSchema>;
@@ -60,9 +42,6 @@ function SignInForm() {
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
   const [redirectTo, setRedirectTo] = useState("/dashboard");
   // const [showPassword, setShowPassword] = useState(false);
@@ -189,25 +168,6 @@ function SignInForm() {
       return;
     }
 
-    // Validate new user fields if needed
-    if (isNewUser) {
-      const newUserValidation = newUserSchema.safeParse({
-        firstName,
-        lastName,
-        email,
-      });
-      if (!newUserValidation.success) {
-        const fieldErrors: Record<string, string> = {};
-        newUserValidation.error.errors.forEach((error) => {
-          if (error.path[0]) {
-            fieldErrors[error.path[0] as string] = error.message;
-          }
-        });
-        setErrors(fieldErrors);
-        return;
-      }
-    }
-
     setIsLoading(true);
     setErrors({});
     setIsAnimating(true);
@@ -225,9 +185,6 @@ function SignInForm() {
         body: JSON.stringify({
           phoneNumber,
           code: verificationCode,
-          firstName: isNewUser ? firstName : undefined,
-          lastName: isNewUser ? lastName : undefined,
-          email: isNewUser && email ? email : undefined,
         }),
         signal: controller.signal,
       });
@@ -363,7 +320,7 @@ function SignInForm() {
                     }}
                     onComplete={(code) => {
                       // Auto-submit when code is complete
-                      if (code.length === 6 && !isNewUser) {
+                      if (code.length === 6) {
                         verifyAndSignIn();
                       }
                     }}
@@ -377,69 +334,6 @@ function SignInForm() {
                 </div>
               </div>
 
-              {/* New user registration form */}
-              {isNewUser && (
-                <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                  <div className="flex items-center mb-4">
-                    <User className="w-5 h-5 text-blue-600 mr-2" />
-                    <h3 className="text-lg font-semibold text-blue-800">Complete Your Profile</h3>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Input
-                          label="First Name"
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => {
-                            setFirstName(e.target.value);
-                            setErrors({ ...errors, firstName: "" });
-                          }}
-                          placeholder="John"
-                          error={errors.firstName}
-                          leftIcon={<User className="w-4 h-4 text-gray-400" />}
-                          autoComplete="given-name"
-                        />
-                      </div>
-                      <div>
-                        <Input
-                          label="Last Name"
-                          type="text"
-                          value={lastName}
-                          onChange={(e) => {
-                            setLastName(e.target.value);
-                            setErrors({ ...errors, lastName: "" });
-                          }}
-                          placeholder="Doe"
-                          error={errors.lastName}
-                          leftIcon={<User className="w-4 h-4 text-gray-400" />}
-                          autoComplete="family-name"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <Input
-                        label="Email (Optional)"
-                        type="email"
-                        value={email}
-                        onChange={(e) => {
-                          setEmail(e.target.value);
-                          setErrors({ ...errors, email: "" });
-                        }}
-                        placeholder="john@example.com"
-                        error={errors.email}
-                        leftIcon={<Mail className="w-4 h-4 text-gray-400" />}
-                        autoComplete="email"
-                      />
-                      <p className="mt-1 text-xs text-gray-500">
-                        We&apos;ll use this to send you important updates
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             
               {/* Action buttons */}
               <div className="flex space-x-3">
@@ -457,7 +351,7 @@ function SignInForm() {
                 <button
                   type="button"
                   onClick={verifyAndSignIn}
-                  disabled={isLoading || verificationCode.length !== 6 || (isNewUser && (!firstName || !lastName))}
+                  disabled={isLoading || verificationCode.length !== 6}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isLoading ? (
