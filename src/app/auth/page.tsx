@@ -15,6 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { VerificationCodeInput } from "@/components/ui/verification-code-input";
+import Image from "next/image";
 
 const signInSchema = z.object({
   phone: z
@@ -232,9 +233,15 @@ function SignInForm() {
         {/* Header with enhanced design */}
         <div className={`transition-all duration-500 ${isAnimating ? 'scale-105' : 'scale-100'}`}>
           <div className="flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl flex items-center justify-center shadow-lg">
-              <Shield className="text-white w-10 h-10" />
-            </div>
+          <Image
+				src="/logo-only.svg"
+				alt="LocalPro logo"
+				width={80}
+				height={80}
+				priority
+				className="rounded-md object-contain"
+				unoptimized
+			/>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
             Welcome to LocalPro

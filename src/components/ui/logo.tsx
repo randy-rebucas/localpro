@@ -12,7 +12,7 @@ export function Logo({ withText = false, size = 40, className }: LogoProps) {
 	return (
 		<Link href="/dashboard" className={cn("flex items-center", className)}>
 			<Image
-				src="/logo-4000.svg"
+				src="/logo-only.svg"
 				alt="LocalPro logo"
 				width={size}
 				height={size}

@@ -152,10 +152,12 @@ export function handleClientApiError(error: unknown, context: string = "API requ
   error: string;
   status: number;
   details?: string;
+  isAuthError?: boolean;
 } {
   let errorMessage = "Internal server error";
   let statusCode = 500;
   let details: string | undefined;
+  let isAuthError = false;
 
   if (error instanceof Error) {
     if (error.name === 'AbortError') {
@@ -167,6 +169,11 @@ export function handleClientApiError(error: unknown, context: string = "API requ
     } else if (error.message.includes("No authentication token found")) {
       errorMessage = "Authentication required";
       statusCode = 401;
+      isAuthError = true;
+    } else if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+      errorMessage = "Authentication expired - please log in again";
+      statusCode = 401;
+      isAuthError = true;
     } else {
       errorMessage = error.message;
     }
@@ -182,7 +189,8 @@ export function handleClientApiError(error: unknown, context: string = "API requ
   return {
     error: errorMessage,
     status: statusCode,
-    details
+    details,
+    isAuthError
   };
 }
 
@@ -192,7 +200,7 @@ export function handleClientApiError(error: unknown, context: string = "API requ
 export async function handleClientApiRoute<T = unknown>(
   handler: () => Promise<T>,
   context: string = "API request"
-): Promise<{ data?: T; error?: string; status: number; details?: string }> {
+): Promise<{ data?: T; error?: string; status: number; details?: string; isAuthError?: boolean }> {
   try {
     const data = await handler();
     return { data, status: 200 };
@@ -201,7 +209,154 @@ export async function handleClientApiRoute<T = unknown>(
     return {
       error: errorResponse.error,
       status: errorResponse.status,
-      details: errorResponse.details
+      details: errorResponse.details,
+      isAuthError: errorResponse.isAuthError
     };
+  }
+}
+
+/**
+ * Reliable redirect function that works in all contexts
+ */
+export function redirectToLogin(): void {
+  console.log("🔄 redirectToLogin() called");
+  console.log("🔄 Current URL:", typeof window !== 'undefined' ? window.location.href : 'N/A');
+  console.log("🔄 Current pathname:", typeof window !== 'undefined' ? window.location.pathname : 'N/A');
+  
+  if (typeof window !== 'undefined') {
+    // Check if we're already on the auth page to prevent loops
+    if (window.location.pathname === '/auth') {
+      console.log("🔄 Already on auth page, skipping redirect");
+      return;
+    }
+    
+    console.log("🔄 Using window.location.href redirect");
+    
+    // Add a small delay to prevent rapid redirects
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+        window.location.href = '/auth';
+      }
+    }, 100);
+  } else {
+    console.log("🔄 Window not available, cannot redirect");
+  }
+}
+
+/**
+ * Comprehensive function to clear all authentication and session data
+ */
+export function clearAllAuthData(): void {
+  console.log("🧹 Clearing all authentication and session data");
+  
+  if (typeof window !== 'undefined') {
+    // Clear API token first
+    clearApiToken();
+    
+    // Clear localStorage auth data
+    const authKeys = [
+      'session',
+      'auth-token', 
+      'api-token',
+      'user',
+      'lastAuthError',
+      'auth-session',
+      'user-session',
+      'token',
+      'access-token',
+      'refresh-token'
+    ];
+    
+    authKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Clear sessionStorage completely
+    sessionStorage.clear();
+    
+    // Clear all cookies
+    document.cookie.split(";").forEach(function(cookie) { 
+      const eqPos = cookie.indexOf("=");
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
+    });
+    
+    console.log("✅ All auth data cleared from localStorage, sessionStorage, and cookies");
+  }
+}
+
+/**
+ * Handle expired token by clearing auth data and redirecting to login
+ */
+export function handleExpiredToken(): void {
+  console.warn("Token expired - clearing auth data and redirecting to login");
+  
+  // Clear all authentication data
+  clearAllAuthData();
+  
+  // Redirect to login page
+  redirectToLogin();
+}
+
+/**
+ * Check if a response indicates an expired token
+ */
+export function isExpiredTokenResponse(response: Response): boolean {
+  return response.status === 401;
+}
+
+/**
+ * Enhanced authenticated request with automatic token expiry handling
+ */
+export async function makeClientAuthenticatedRequestWithEndpointSafe(
+  endpoint: keyof typeof API_ENDPOINTS,
+  options: RequestInit = {}
+): Promise<Response> {
+  try {
+    const response = await makeClientAuthenticatedRequestWithEndpoint(endpoint, options);
+    
+    // Check if token is expired
+    if (isExpiredTokenResponse(response)) {
+      handleExpiredToken();
+      throw new Error("Authentication expired - please log in again");
+    }
+    
+    return response;
+  } catch (error) {
+    // If it's an auth error, handle it
+    if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized"))) {
+      handleExpiredToken();
+    }
+    throw error;
+  }
+}
+
+/**
+ * Enhanced authenticated request with path and automatic token expiry handling
+ */
+export async function makeClientAuthenticatedRequestWithPathSafe(
+  baseEndpoint: keyof typeof API_ENDPOINTS,
+  pathParams: string[] = [],
+  queryParams: Record<string, string> = {},
+  options: RequestInit = {}
+): Promise<Response> {
+  try {
+    const response = await makeClientAuthenticatedRequestWithPath(baseEndpoint, pathParams, queryParams, options);
+    
+    // Check if token is expired
+    if (isExpiredTokenResponse(response)) {
+      handleExpiredToken();
+      throw new Error("Authentication expired - please log in again");
+    }
+    
+    return response;
+  } catch (error) {
+    // If it's an auth error, handle it
+    if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized"))) {
+      handleExpiredToken();
+    }
+    throw error;
   }
 }

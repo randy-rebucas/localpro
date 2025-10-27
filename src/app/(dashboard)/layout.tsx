@@ -11,10 +11,10 @@ import { Error as ErrorComponent } from "@/components/ui/error";
 // import MarketplaceNav from "@/components/marketplace-nav";
 import { useSession, signOut } from "@/hooks/useAuth";
 import { 
-  makeClientAuthenticatedRequestWithPath,
+  makeClientAuthenticatedRequestWithPathSafe,
   handleClientApiRoute,
   isAuthenticated,
-  clearApiToken
+  handleExpiredToken
 } from "@/lib/client-api-utils";
 import {
   Menu,
@@ -36,6 +36,7 @@ import {
   CreditCard,
   Shield
 } from "lucide-react";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useRoleAccess } from "@/components/role-guard";
 
 export default function DashboardLayout({
@@ -75,21 +76,29 @@ export default function DashboardLayout({
   const profileDropdownRef = useRef<HTMLDivElement | null>(null);
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  
+  // Use the auth redirect hook
+  const { redirectToLogin } = useAuthRedirect();
 
   useEffect(() => {
+    console.log("🔍 Dashboard Layout useEffect - Status:", status);
+    console.log("🔍 Dashboard Layout useEffect - Session:", !!session);
+    console.log("🔍 Dashboard Layout useEffect - IsAuthenticated:", isAuthenticated());
+    
     // Only redirect if we're sure the session is not loading and user is not authenticated
     if (status === "unauthenticated") {
-      router.replace("/auth");
+      console.log("🔴 Redirecting: status === unauthenticated");
+      redirectToLogin();
       return;
     }
-  }, [status, router]);
+  }, [status, router, redirectToLogin, session]);
 
   useEffect(() => {
     // Only fetch user data if we have a session AND API token
     if (status === "authenticated" && session?.user?.id && isAuthenticated()) {
       const fetchUser = async () => {
         const result = await handleClientApiRoute(async () => {
-          const response = await makeClientAuthenticatedRequestWithPath(
+          const response = await makeClientAuthenticatedRequestWithPathSafe(
             'usersById',
             [session?.user?.id],
             {},
@@ -106,11 +115,10 @@ export default function DashboardLayout({
         if (result.error) {
           console.error("Failed to fetch user data:", result.error);
           
-          // Handle 401 errors specifically - redirect to login
-          if (result.status === 401) {
-            console.log("API token expired or invalid, clearing token and redirecting to login");
-            clearApiToken();
-            router.replace("/auth");
+          // Handle authentication errors specifically
+          if (result.isAuthError || result.status === 401) {
+            console.log("Authentication error detected, handling token expiry");
+            handleExpiredToken();
             return;
           }
           
@@ -128,13 +136,15 @@ export default function DashboardLayout({
       setLoading(true);
     } else if (status === "authenticated" && !isAuthenticated()) {
       // User has session but no API token - redirect to login to get fresh tokens
-      console.log("Session exists but no API token found, redirecting to login");
-      router.replace("/auth");
+      console.log("🔴 Redirecting: Session exists but no API token found");
+      console.log("🔴 Session:", !!session);
+      console.log("🔴 IsAuthenticated:", isAuthenticated());
+      redirectToLogin();
     } else {
       // If no session and not loading, stop loading
       setLoading(false);
     }
-  }, [session?.user?.id, status, router]);
+  }, [session?.user?.id, status, router, redirectToLogin, session]);
 
   // useEffect(() => {
   //   const fetchUnread = async () => {
@@ -173,7 +183,7 @@ export default function DashboardLayout({
     const timeout = setTimeout(async () => {
       try {
         const result = await handleClientApiRoute(async () => {
-          const response = await makeClientAuthenticatedRequestWithPath(
+          const response = await makeClientAuthenticatedRequestWithPathSafe(
             'searchSuggestions',
             [],
             { q },

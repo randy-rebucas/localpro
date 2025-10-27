@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { storeAuthError } from "./token-validation";
 
 /**
  * Authentication Error Handler
@@ -31,6 +32,9 @@ export function handleAuthError(
   if ((error && typeof error === 'object' && 'status' in error && error.status === 401) || 
       (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response && error.response.status === 401)) {
     console.warn("Authentication failed - session may have expired");
+    
+    // Store the auth error for token validation
+    storeAuthError("401 Authentication failed");
     
     if (redirectToLogin) {
       // Clear any stored session data
