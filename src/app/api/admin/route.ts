@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from '@/lib/server-session';
 import { makeAuthenticatedRequestWithEndpoint, handleApiRoute } from '@/lib/api-auth-utils';
+import { API_ENDPOINTS } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
       const queryParams: Record<string, string> = {};
       if (period) queryParams.period = period;
 
-      let endpoint: string;
+      let endpoint: keyof typeof API_ENDPOINTS;
       switch (type) {
         case 'analytics':
           endpoint = 'analyticsOverview';
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
           endpoint = 'activitiesFeed';
           break;
         case 'plus':
-          endpoint = 'plusUsage';
+          endpoint = 'localProPlusUsage';
           break;
         case 'ads':
           endpoint = 'adsAnalytics';
@@ -76,13 +77,13 @@ export async function GET(request: NextRequest) {
           endpoint = 'auditLogsStats';
           break;
         case 'maps':
-          endpoint = 'mapsAnalytics';
+          endpoint = 'maps';
           break;
         case 'paymaya':
-          endpoint = 'paymayaAnalytics';
+          endpoint = 'paymayaWebhook';
           break;
         case 'paypal':
-          endpoint = 'paypalAnalytics';
+          endpoint = 'paypalWebhook';
           break;
         default:
           endpoint = 'analyticsOverview';
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
 
       const response = await makeAuthenticatedRequestWithEndpoint(
         request,
-        endpoint as keyof typeof API_ENDPOINTS,
+        endpoint,
         { 
           method: 'GET',
           headers: {
