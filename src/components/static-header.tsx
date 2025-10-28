@@ -1,32 +1,154 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
+import { useState } from "react";
+import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 
 interface HeaderProps {
   className?: string;
 }
 
 export function StaticHeader({ className = "" }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleServices = () => setIsServicesOpen(!isServicesOpen);
+
   return (
     <header className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg ${className}`}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-3 z-50">
             <Logo size={30} withText={true} />
           </Link>
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center space-x-8">
+            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
               Home
+              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/marketplace" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
-              Marketplace
+            
+            {/* Services Dropdown */}
+            <div className="relative group">
+              <button className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+                <span>Services</span>
+                <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
+              </button>
+              <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
+                <div className="p-4 space-y-3">
+                  <Link href="/marketplace" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <div className="font-medium text-slate-900 dark:text-white">Marketplace</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">Connect with customers</div>
+                  </Link>
+                  <Link href="/academy" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <div className="font-medium text-slate-900 dark:text-white">Academy</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">Learn & certify</div>
+                  </Link>
+                  <Link href="/supplies" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <div className="font-medium text-slate-900 dark:text-white">Supplies</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">Source equipment</div>
+                  </Link>
+                  <Link href="/rentals" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                    <div className="font-medium text-slate-900 dark:text-white">Rentals</div>
+                    <div className="text-sm text-slate-600 dark:text-slate-300">Rent tools & equipment</div>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+              About
+              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/academy" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
-              Academy
+            <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+              Blog
+              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
               Contact
+              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
           </nav>
+
+          {/* CTA Buttons */}
+          <div className="hidden lg:flex items-center space-x-4">
+            <Link href="/auth" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+              Sign In
+            </Link>
+            <Link href="/auth" className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 flex items-center group">
+              Get Started
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleMenu}
+            className="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors z-50"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        <div className={`lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-slate-900 z-40 transform transition-all duration-300 ease-in-out ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
+          <div className="px-4 py-6 space-y-4 border-t border-slate-200 dark:border-slate-700 shadow-xl">
+            <Link href="/" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+              Home
+            </Link>
+            
+            {/* Mobile Services */}
+            <div>
+              <button
+                onClick={toggleServices}
+                className="flex items-center justify-between w-full py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3"
+              >
+                <span>Services</span>
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isServicesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="pl-4 space-y-2 mt-2">
+                  <Link href="/marketplace" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                    Marketplace
+                  </Link>
+                  <Link href="/academy" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                    Academy
+                  </Link>
+                  <Link href="/supplies" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                    Supplies
+                  </Link>
+                  <Link href="/rentals" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                    Rentals
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <Link href="/about" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+              About
+            </Link>
+            <Link href="/blog" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+              Blog
+            </Link>
+            <Link href="/contact" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+              Contact
+            </Link>
+
+            {/* Mobile CTA Buttons */}
+            <div className="pt-6 space-y-3 border-t border-slate-200 dark:border-slate-700">
+              <Link href="/auth" className="block w-full text-center py-3 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800" onClick={toggleMenu}>
+                Sign In
+              </Link>
+              <Link href="/auth" className="block w-full text-center bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5" onClick={toggleMenu}>
+                Get Started
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </header>

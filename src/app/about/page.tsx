@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
@@ -12,7 +14,7 @@ import {
   ArrowRight,
   Briefcase,
   Handshake,
-  Rocket
+  Rocket,
 } from "lucide-react";
 
 export default function About() {

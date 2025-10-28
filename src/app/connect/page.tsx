@@ -1,3 +1,4 @@
+import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
 import { 
   Globe, 
@@ -156,7 +157,7 @@ export default function Connect() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <StaticPageLayout>
       {/* Hero Section */}
       <HeroSection 
         title="Connect with LocalPro"
@@ -382,6 +383,6 @@ export default function Connect() {
           </div>
         </div>
       </section>
-    </div>
+    </StaticPageLayout>
   );
 }
