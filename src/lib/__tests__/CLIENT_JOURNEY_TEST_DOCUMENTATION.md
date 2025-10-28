@@ -365,6 +365,39 @@ The tests use the existing Jest configuration in `jest.config.js` with the follo
 3. **Coverage Gaps**: Identify untested code paths and add tests
 4. **Flaky Tests**: Investigate timing issues and async operations
 
+### Custom Test Runner
+
+A custom Node.js test runner (`test-runner.mjs`) is provided for easy execution of different test scenarios:
+
+```bash
+# Run all client journey tests
+node src/lib/__tests__/test-runner.mjs all
+
+# Run specific phase (1-18)
+node src/lib/__tests__/test-runner.mjs phase 1
+
+# Run E2E integration tests
+node src/lib/__tests__/test-runner.mjs e2e
+
+# Run performance tests
+node src/lib/__tests__/test-runner.mjs performance
+
+# Run security tests
+node src/lib/__tests__/test-runner.mjs security
+
+# Run with coverage report
+node src/lib/__tests__/test-runner.mjs coverage
+
+# Run specific test by name
+node src/lib/__tests__/test-runner.mjs test "registration"
+
+# Run in watch mode
+node src/lib/__tests__/test-runner.mjs watch
+
+# Show help
+node src/lib/__tests__/test-runner.mjs help
+```
+
 ### Debug Mode
 ```bash
 # Run tests with debug output
