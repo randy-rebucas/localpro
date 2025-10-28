@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Particle {
   x: number;
@@ -133,24 +133,54 @@ interface FloatingElementsProps {
   className?: string;
 }
 
+interface FloatingElement {
+  left: number;
+  top: number;
+  animationDelay: number;
+  animationDuration: number;
+  scale: number;
+}
+
 export function FloatingElements({ count = 8, className = "" }: FloatingElementsProps) {
+  const [elements, setElements] = useState<FloatingElement[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // Only run on client side to prevent hydration mismatch
+    setIsClient(true);
+    setElements(
+      Array.from({ length: count }).map(() => ({
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        animationDelay: Math.random() * 5,
+        animationDuration: 3 + Math.random() * 4,
+        scale: 0.5 + Math.random() * 1.5
+      }))
+    );
+  }, [count]);
+
+  // Render empty container on server side to prevent hydration mismatch
+  if (!isClient) {
+    return <div className={`absolute inset-0 pointer-events-none ${className}`} />;
+  }
+
   return (
     <div className={`absolute inset-0 pointer-events-none ${className}`}>
-      {Array.from({ length: count }).map((_, i) => (
+      {elements.map((element, i) => (
         <div
           key={i}
           className="absolute animate-float"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${3 + Math.random() * 4}s`
+            left: `${element.left}%`,
+            top: `${element.top}%`,
+            animationDelay: `${element.animationDelay}s`,
+            animationDuration: `${element.animationDuration}s`
           }}
         >
           <div
             className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-emerald-400 opacity-60"
             style={{
-              transform: `scale(${0.5 + Math.random() * 1.5})`
+              transform: `scale(${element.scale})`
             }}
           />
         </div>

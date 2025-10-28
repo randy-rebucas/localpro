@@ -384,7 +384,7 @@ export default function DashboardLayout({
 
               <div className="flex items-center space-x-1 sm:space-x-2">
                 {/* Role-based Navigation Items */}
-                <div className="flex items-center space-x-1 hidden">
+                <div className="flex items-center space-x-1">
                   {/* Marketplace - Service Providers */}
                   {isServiceProvider && (
                     <Link

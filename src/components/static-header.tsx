@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, ChevronDown, ArrowRight } from "lucide-react";
 
 interface HeaderProps {
@@ -12,13 +12,31 @@ interface HeaderProps {
 export function StaticHeader({ className = "" }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const servicesDropdownRef = useRef<HTMLDivElement>(null);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const toggleServices = () => setIsServicesOpen(!isServicesOpen);
 
+  // Close services dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (servicesDropdownRef.current && !servicesDropdownRef.current.contains(event.target as Node)) {
+        setIsServicesOpen(false);
+      }
+    }
+
+    if (isServicesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isServicesOpen]);
+
   return (
     <header className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg ${className}`}>
-      <div className="container mx-auto px-4 py-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3 z-50">
@@ -33,31 +51,36 @@ export function StaticHeader({ className = "" }: HeaderProps) {
             </Link>
             
             {/* Services Dropdown */}
-            <div className="relative group">
-              <button className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+            <div className="relative" ref={servicesDropdownRef}>
+              <button 
+                onClick={toggleServices}
+                className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium"
+              >
                 <span>Services</span>
-                <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
+                <ChevronDown className={`w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
               </button>
-              <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                <div className="p-4 space-y-3">
-                  <Link href="/marketplace" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <div className="font-medium text-slate-900 dark:text-white">Marketplace</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">Connect with customers</div>
-                  </Link>
-                  <Link href="/academy" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <div className="font-medium text-slate-900 dark:text-white">Academy</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">Learn & certify</div>
-                  </Link>
-                  <Link href="/supplies" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <div className="font-medium text-slate-900 dark:text-white">Supplies</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">Source equipment</div>
-                  </Link>
-                  <Link href="/rentals" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
-                    <div className="font-medium text-slate-900 dark:text-white">Rentals</div>
-                    <div className="text-sm text-slate-600 dark:text-slate-300">Rent tools & equipment</div>
-                  </Link>
+              {isServicesOpen && (
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
+                  <div className="p-4 space-y-3">
+                    <Link href="/marketplace" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" onClick={() => setIsServicesOpen(false)}>
+                      <div className="font-medium text-slate-900 dark:text-white">Marketplace</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-300">Connect with customers</div>
+                    </Link>
+                    <Link href="/academy" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" onClick={() => setIsServicesOpen(false)}>
+                      <div className="font-medium text-slate-900 dark:text-white">Academy</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-300">Learn & certify</div>
+                    </Link>
+                    <Link href="/supplies" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" onClick={() => setIsServicesOpen(false)}>
+                      <div className="font-medium text-slate-900 dark:text-white">Supplies</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-300">Source equipment</div>
+                    </Link>
+                    <Link href="/rentals" className="block p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" onClick={() => setIsServicesOpen(false)}>
+                      <div className="font-medium text-slate-900 dark:text-white">Rentals</div>
+                      <div className="text-sm text-slate-600 dark:text-slate-300">Rent tools & equipment</div>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">

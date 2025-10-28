@@ -140,7 +140,7 @@ export default function Home() {
           <ParticleAnimation particleCount={30} />
           <FloatingElements count={12} />
         
-        <div className="container mx-auto px-4 py-20 lg:py-32 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left Column - Enhanced Content */}
             <div className={`text-center lg:text-left space-y-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
@@ -315,7 +315,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <SlideUp>
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
@@ -498,7 +498,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <SlideUp>
               <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
@@ -580,7 +580,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Trusted by{" "}
@@ -648,7 +648,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
               What Our{" "}
@@ -739,7 +739,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
               Frequently Asked{" "}
@@ -795,7 +795,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Stay{" "}
@@ -856,7 +856,7 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
               Ready to Transform Your{" "}
