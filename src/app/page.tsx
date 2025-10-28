@@ -781,7 +781,7 @@ export default function Home() {
               <h3 className="text-lg font-semibold mb-6 text-white">Support</h3>
               <ul className="space-y-4 text-slate-300">
                 <li>
-                  <Link href="/help" className="hover:text-emerald-400 transition-colors font-medium flex items-center group">
+                  <Link href="/help-center" className="hover:text-emerald-400 transition-colors font-medium flex items-center group">
                     <ChevronRight className="w-4 h-4 mr-2 group-hover:translate-x-1 transition-transform" />
                     Help Center
                   </Link>
