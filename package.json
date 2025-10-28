@@ -14,6 +14,12 @@
     "clean": "rm -rf .next out",
     "analyze": "ANALYZE=true next build",
     "test": "jest",
+    "test:client-journey": "node test-client-journey.js",
+    "test:client-journey:coverage": "node test-client-journey.js --phase all --coverage",
+    "test:client-journey:watch": "node test-client-journey.js --phase all --watch",
+    "test:client-journey:e2e": "node test-client-journey.js --phase e2e",
+    "test:client-journey:performance": "node test-client-journey.js --performance",
+    "test:client-journey:security": "node test-client-journey.js --security",
     "prepare": "husky"
   },
   "dependencies": {

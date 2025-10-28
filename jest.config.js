@@ -11,6 +11,7 @@ module.exports = {
       tsconfig: {
         jsx: 'react-jsx',
       },
+      useESM: true,
     }],
   },
   moduleNameMapper: {
@@ -32,9 +33,4 @@ module.exports = {
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
-  },
 };
