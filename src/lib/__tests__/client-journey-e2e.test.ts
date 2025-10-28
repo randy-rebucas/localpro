@@ -23,7 +23,7 @@ const mockClientSession = {
 };
 
 // API Response helpers
-const createApiResponse = (data: any, success = true) => ({
+const createApiResponse = (data: unknown, success = true) => ({
   success,
   data,
   message: success ? 'Success' : 'Error',

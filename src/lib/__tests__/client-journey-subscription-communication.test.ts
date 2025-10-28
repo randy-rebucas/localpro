@@ -11,16 +11,16 @@ import { jest } from '@jest/globals';
 // Mock fetch globally
 global.fetch = jest.fn();
 
-// Mock session data
-const mockClientSession = {
-  userId: 'client-123',
-  email: 'client@example.com',
-  name: 'John Client',
-  role: 'client',
-  phone: '+1234567890',
-  sessionId: 'session-123',
-  isAuthenticated: true
-};
+// Mock session data (used in tests)
+// const mockClientSession = {
+//   userId: 'client-123',
+//   email: 'client@example.com',
+//   name: 'John Client',
+//   role: 'client',
+//   phone: '+1234567890',
+//   sessionId: 'session-123',
+//   isAuthenticated: true
+// };
 
 // Test data factories
 const createMockSubscriptionPlan = (id: string, overrides = {}) => ({
@@ -95,7 +95,7 @@ const createMockVerificationRequest = (id: string, overrides = {}) => ({
 });
 
 // API Response helpers
-const createApiResponse = (data: any, success = true) => ({
+const createApiResponse = (data: unknown, success = true) => ({
   success,
   data,
   message: success ? 'Success' : 'Error',

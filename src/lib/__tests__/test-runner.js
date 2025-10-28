@@ -7,9 +7,10 @@
  * It includes options for running specific phases, performance testing, and reporting.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 
 // Test configuration
 const TEST_CONFIG = {
@@ -79,9 +80,9 @@ function logError(message) {
   log(`❌ ${message}`, 'red');
 }
 
-function logWarning(message) {
-  log(`⚠️  ${message}`, 'yellow');
-}
+// function logWarning(message) {
+//   log(`⚠️  ${message}`, 'yellow');
+// }
 
 function logInfo(message) {
   log(`ℹ️  ${message}`, 'cyan');
@@ -273,7 +274,7 @@ function runWatchMode() {
       stdio: 'inherit',
       cwd: process.cwd()
     });
-  } catch (error) {
+  } catch {
     logError('Watch mode exited');
   }
 }
@@ -321,7 +322,7 @@ function validateEnvironment() {
   try {
     execSync('npx jest --version', { stdio: 'pipe' });
     logSuccess('Jest is available');
-  } catch (error) {
+  } catch {
     logError('Jest is not available. Please install dependencies with: npm install');
     return false;
   }

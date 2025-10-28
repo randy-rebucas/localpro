@@ -7,9 +7,10 @@
  * Usage: node test-client-journey.js [options]
  */
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 
 // Color codes for console output
 const colors = {
@@ -101,7 +102,7 @@ function checkDependencies() {
   try {
     execSync('npx jest --version', { stdio: 'pipe' });
     return true;
-  } catch (error) {
+  } catch {
     log('❌ Jest not found. Please install dependencies with: npm install', 'red');
     return false;
   }
@@ -163,7 +164,7 @@ function runTests(options) {
       log('  HTML: coverage/client-journey/index.html', 'magenta');
       log('  LCOV: coverage/client-journey/lcov.info', 'magenta');
     }
-  } catch (error) {
+  } catch {
     log('\n❌ Tests failed!', 'red');
     process.exit(1);
   }

@@ -26,7 +26,7 @@ const mockClientSession = {
   isAuthenticated: true
 };
 
-const mockUnauthenticatedSession = null;
+// const mockUnauthenticatedSession = null;
 
 // Test data factories
 const createMockService = (id: string, overrides = {}) => ({
@@ -85,7 +85,7 @@ const createMockCourse = (id: string, overrides = {}) => ({
 });
 
 // API Response helpers
-const createApiResponse = (data: any, success = true) => ({
+const createApiResponse = (data: unknown, success = true) => ({
   success,
   data,
   message: success ? 'Success' : 'Error',

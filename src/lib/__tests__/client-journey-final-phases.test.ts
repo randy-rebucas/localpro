@@ -110,7 +110,7 @@ const createMockLocation = (overrides = {}) => ({
 });
 
 // API Response helpers
-const createApiResponse = (data: any, success = true) => ({
+const createApiResponse = (data: unknown, success = true) => ({
   success,
   data,
   message: success ? 'Success' : 'Error',
@@ -1745,11 +1745,10 @@ describe('Client Journey - Phases 13-18', () => {
 
     describe('Analyze Service Coverage', () => {
       it('should analyze service coverage', async () => {
-        const analysisData = {
-          serviceType: 'cleaning',
-          location: { lat: 40.7128, lng: -74.0060 },
-          radius: 10
-        };
+        // Service coverage analysis data (used in mock response)
+        // const serviceType = 'cleaning';
+        // const location = { lat: 40.7128, lng: -74.0060 };
+        // const radius = 10;
         const mockAnalysis = {
           coverage: {
             totalProviders: 25,
