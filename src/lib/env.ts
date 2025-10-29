@@ -41,13 +41,13 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
 const isClient = typeof window !== 'undefined';
 
 // Helper to get environment-appropriate API URL
-// Development: http://localhost:5000
+// Development: Use relative paths (same domain as frontend)
 // Production: https://localpro-super-app.onrender.com
 function getApiBaseUrl(): string {
   const nodeEnv = process.env.NODE_ENV;
   return nodeEnv === 'production' 
     ? 'https://localpro-super-app.onrender.com' 
-    : 'http://localhost:5000';
+    : ''; // Empty string for relative paths in development
 }
 
 // Helper to get server-only environment variables

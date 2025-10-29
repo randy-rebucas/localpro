@@ -101,6 +101,13 @@ export async function makeClientAuthenticatedRequestWithPath(
     throw new Error("No authentication token found - please log in");
   }
   
+  // Debug logging for development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🌐 Making authenticated request to:', url);
+    console.log('🔑 Auth headers:', authHeaders);
+    console.log('📡 API_BASE_URL:', API_BASE_URL);
+  }
+  
   return fetch(url, {
     ...options,
     headers: {
@@ -168,8 +175,8 @@ export function handleClientApiError(error: unknown, context: string = "API requ
     if (error.name === 'AbortError') {
       errorMessage = "Request timeout - the service is taking too long to respond";
       statusCode = 504;
-    } else if (error.message.includes('fetch failed')) {
-      errorMessage = "Unable to connect to service - please try again later";
+    } else if (error.message.includes('fetch failed') || error.message.includes('Failed to fetch')) {
+      errorMessage = "Unable to connect to service - please check your internet connection and try again";
       statusCode = 503;
     } else if (error.message.includes("No authentication token found")) {
       errorMessage = "Authentication required";

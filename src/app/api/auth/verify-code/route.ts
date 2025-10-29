@@ -12,8 +12,79 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { phoneNumber, code } = verifyCodeSchema.parse(body);
+    console.log("phoneNumber", phoneNumber);
+    console.log("code", code);
+    // Check if we're in development mode and API is not available
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isApiAvailable = API_BASE_URL && API_BASE_URL !== '' && API_BASE_URL !== 'undefined';
 
-    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, {
+    console.log("Environment check:", { isDevelopment, isApiAvailable, API_BASE_URL });
+
+    // For development, if no API base URL is set, use mock response
+    if (isDevelopment && !isApiAvailable) {
+      console.log("Development mode: Using mock response for verify-code");
+      
+      // Mock verification - accept any 6-digit code
+      if (code.length === 6 && /^\d{6}$/.test(code)) {
+        // Create a mock user session
+        const mockUser = {
+          id: 'mock-user-123',
+          email: 'user@example.com',
+          firstName: 'Test',
+          lastName: 'User',
+          phoneNumber: phoneNumber,
+          role: 'user'
+        };
+        
+        const mockToken = 'mock-jwt-token-123';
+        
+        // Get request metadata for session security
+        const userAgent = request.headers.get("user-agent") || undefined;
+        const ipAddress = request.headers.get("x-forwarded-for") || 
+                         request.headers.get("x-real-ip") || 
+                         undefined;
+
+        // Create unique session with security features
+        const { encryptedSession } = await createSession({
+          userId: mockUser.id,
+          email: mockUser.email,
+          name: `${mockUser.firstName} ${mockUser.lastName}`,
+          role: mockUser.role,
+          phone: mockUser.phoneNumber,
+          firstName: mockUser.firstName,
+          lastName: mockUser.lastName,
+          apiToken: mockToken,
+        }, userAgent, ipAddress);
+        
+        // Create session cookie with the encrypted session data
+        const sessionCookie = createSessionCookie(encryptedSession);
+        
+        return NextResponse.json(
+          { 
+            success: true, 
+            message: "Verification successful (mock)",
+            user: mockUser,
+            token: mockToken
+          },
+          { 
+            status: 200,
+            headers: {
+              'Set-Cookie': sessionCookie
+            }
+          }
+        );
+      } else {
+        return NextResponse.json(
+          { error: "Invalid verification code (mock)" },
+          { status: 400 }
+        );
+      }
+    }
+
+    const apiUrl = `${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`;
+    console.log("Attempting to call API:", apiUrl);
+    
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

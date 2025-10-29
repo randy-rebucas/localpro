@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
-  ArrowRight, 
-  Shield, 
-  CheckCircle, 
+import {
+  ArrowRight,
+  Shield,
+  CheckCircle,
   Loader2
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -20,15 +20,16 @@ const signInSchema = z.object({
   phone: z
     .string()
     .min(1, "Phone number is required")
+    .transform((val) => val.trim()) // Remove leading/trailing whitespace
     .refine((phone) => {
       // Remove all non-digit characters for validation
       const digits = phone.replace(/\D/g, '');
       return digits.length >= 7 && digits.length <= 15;
     }, "Phone number must be between 7 and 15 digits")
     .refine((phone) => {
-      // Must start with + for international format
-      return phone.startsWith('+');
-    }, "Please enter a valid international phone number starting with +"),
+      // Must start with + for international format, or be a valid number that can be formatted
+      return phone.startsWith('+') || (phone.replace(/\D/g, '').length >= 7);
+    }, "Please enter a valid phone number"),
 });
 
 const verificationSchema = z.object({
@@ -87,6 +88,7 @@ function SignInForm() {
     handleSubmit,
     formState: { errors: phoneErrors },
     clearErrors,
+    setValue,
   } = useForm<SignInForm>({
     resolver: zodResolver(signInSchema),
   });
@@ -111,7 +113,7 @@ function SignInForm() {
     setIsLoading(true);
     setErrors({});
     setIsAnimating(true);
-    
+    console.log("Sending verification code for phone:", phone.trim());
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
@@ -122,15 +124,13 @@ function SignInForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          phoneNumber: phone,
-        }),
+        body: JSON.stringify({ phoneNumber: phone.trim() }),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
       const result = await response.json();
-
+      console.log("Send code response:", result);
       if (response.ok) {
         setPhoneNumber(phone);
         setStep("code");
@@ -142,11 +142,13 @@ function SignInForm() {
         if (response.status === 408) {
           toast.error("Request timed out. Please check your connection and try again.");
         } else if (response.status === 503) {
-          toast.error("Service temporarily unavailable. Please try again in a few moments.");
+          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          toast.error(errorMsg || "Service temporarily unavailable. Please try again in a few moments.");
         } else if (response.status === 429) {
           toast.error("Too many requests. Please wait before trying again.");
         } else {
-          toast.error(result.error || "Failed to send verification code");
+          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          toast.error(errorMsg || "Failed to send verification code");
         }
         setErrors({ phone: result.error || "Failed to send verification code" });
       }
@@ -228,10 +230,12 @@ function SignInForm() {
     }
   };
 
-  const onSubmit = async () => {
-    // Use the phoneNumber state which is already formatted
-    if (phoneNumber) {
-      await sendVerificationCode(phoneNumber);
+  const onSubmit = async (data: SignInForm) => {
+    console.log("On submit data:", data);
+    // Use the form data which is already validated and trimmed by Zod
+    if (data.phone) {
+      console.log("Trimmed phone:", data.phone);
+      await sendVerificationCode(data.phone);
     } else {
       setErrors({ phone: "Please enter a valid phone number" });
     }
@@ -243,27 +247,27 @@ function SignInForm() {
         {/* Header with enhanced design */}
         <div className={`transition-all duration-500 ${isAnimating ? 'scale-105' : 'scale-100'}`}>
           <div className="flex justify-center">
-          <Image
-				src="/logo-only.svg"
-				alt="LocalPro logo"
-				width={80}
-				height={80}
-				priority
-				className="rounded-md object-contain"
-				unoptimized
-			/>
+            <Image
+              src="/logo-only.svg"
+              alt="LocalPro logo"
+              width={80}
+              height={80}
+              priority
+              className="rounded-md object-contain"
+              unoptimized
+            />
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
             Welcome to LocalPro
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {step === "phone" 
+            {step === "phone"
               ? "Enter your phone number to get started"
               : "Enter the verification code sent to your phone"
             }
           </p>
         </div>
-        
+
         {step === "phone" ? (
           <div className={`transition-all duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
             <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -273,6 +277,7 @@ function SignInForm() {
                     value={phoneNumber}
                     onChange={(value) => {
                       setPhoneNumber(value);
+                      setValue('phone', value);
                       // Clear errors when user starts typing
                       if (errors.phone) {
                         setErrors({ ...errors, phone: "" });
@@ -353,7 +358,7 @@ function SignInForm() {
                 </div>
               </div>
 
-            
+
               {/* Action buttons */}
               <div className="flex space-x-3">
                 <button

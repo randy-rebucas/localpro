@@ -11,6 +11,11 @@ import {
   Car,
   Megaphone,
   ArrowRight,
+  Home as HomeIcon,
+  Calendar,
+  BookOpen,
+  Wallet,
+  User,
 } from "lucide-react";
 
 export default function Home() {
@@ -271,24 +276,43 @@ export default function Home() {
                     {/* Bottom Navigation */}
                     <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3">
                       <div className="flex justify-around">
+                        {/* Home Tab - Active */}
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 bg-[#34A853] rounded mb-1"></div>
+                          <div className="w-6 h-6 bg-[#34A853] rounded flex items-center justify-center mb-1">
+                            <HomeIcon className="w-4 h-4 text-white" />
+                          </div>
                           <span className="text-[#34A853] text-xs font-medium">Home</span>
                         </div>
+                        
+                        {/* Schedule Tab - Inactive */}
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 bg-gray-400 rounded mb-1"></div>
+                          <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
+                            <Calendar className="w-4 h-4 text-gray-600" />
+                          </div>
                           <span className="text-gray-500 text-xs">Schedule</span>
                         </div>
+                        
+                        {/* Booking Tab - Inactive */}
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 bg-gray-400 rounded mb-1"></div>
+                          <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
+                            <BookOpen className="w-4 h-4 text-gray-600" />
+                          </div>
                           <span className="text-gray-500 text-xs">Booking</span>
                         </div>
+                        
+                        {/* Wallet Tab - Inactive */}
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 bg-gray-400 rounded mb-1"></div>
+                          <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
+                            <Wallet className="w-4 h-4 text-gray-600" />
+                          </div>
                           <span className="text-gray-500 text-xs">Wallet</span>
                         </div>
+                        
+                        {/* Profile Tab - Inactive */}
                         <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 bg-gray-400 rounded mb-1"></div>
+                          <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
+                            <User className="w-4 h-4 text-gray-600" />
+                          </div>
                           <span className="text-gray-500 text-xs">Profile</span>
                         </div>
                       </div>

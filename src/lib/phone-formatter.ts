@@ -212,6 +212,11 @@ export class PhoneFormatter {
       return `${this.detectedCountry.dialCode}${digits}`;
     }
 
+    // If we have digits but no country detected, try to add +1 as fallback
+    if (digits.length >= 7) {
+      return `+1${digits}`;
+    }
+
     // Return original if we can't determine format
     return input;
   }
