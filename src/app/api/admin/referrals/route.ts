@@ -171,56 +171,8 @@ export async function GET(request: NextRequest) {
           error: null
         };
       } else {
-        // Generate mock referrals data
-        const generateMockReferrals = () => {
-          const referrals = [];
-          const statuses = ['pending', 'completed', 'cancelled'];
-          const rewardStatuses = ['pending', 'paid', 'cancelled'];
-          const sources = ['Social Media', 'Email Campaign', 'Website', 'Mobile App', 'Partner'];
-          const campaigns = ['Summer 2024', 'New User Bonus', 'Holiday Special', 'Referral Program', 'Beta Test'];
-          
-          const names = [
-            'John Smith', 'Sarah Johnson', 'Mike Chen', 'Emily Rodriguez', 'David Kim',
-            'Lisa Wang', 'Alex Thompson', 'Maria Garcia', 'James Wilson', 'Anna Lee',
-            'Robert Brown', 'Jennifer Davis', 'Michael Miller', 'Jessica Taylor', 'Christopher Anderson'
-          ];
-
-          for (let i = 1; i <= 50; i++) {
-            const referrerIndex = Math.floor(Math.random() * names.length);
-            const referredIndex = Math.floor(Math.random() * names.length);
-            const status = statuses[Math.floor(Math.random() * statuses.length)];
-            const rewardStatus = rewardStatuses[Math.floor(Math.random() * rewardStatuses.length)];
-            const source = sources[Math.floor(Math.random() * sources.length)];
-            const campaign = campaigns[Math.floor(Math.random() * campaigns.length)];
-            
-            const createdAt = new Date();
-            createdAt.setDate(createdAt.getDate() - Math.floor(Math.random() * 90));
-            
-            referrals.push({
-              id: `ref_${i}`,
-              referrerId: `user_${referrerIndex + 1}`,
-              referrerName: names[referrerIndex],
-              referrerEmail: `${names[referrerIndex].toLowerCase().replace(' ', '.')}@email.com`,
-              referredUserId: `user_${referredIndex + 100}`,
-              referredUserName: names[referredIndex],
-              referredUserEmail: `${names[referredIndex].toLowerCase().replace(' ', '.')}@email.com`,
-              referredUserPhone: `+1-555-${Math.floor(Math.random() * 9000) + 1000}`,
-              referredUserLocation: ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'][Math.floor(Math.random() * 5)],
-              status,
-              rewardAmount: Math.floor(Math.random() * 500) + 50,
-              rewardStatus,
-              createdAt: createdAt.toISOString(),
-              completedAt: status === 'completed' ? new Date(createdAt.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString() : undefined,
-              notes: Math.random() > 0.7 ? 'High-value customer' : undefined,
-              source,
-              campaign: Math.random() > 0.5 ? campaign : undefined
-            });
-          }
-
-          return referrals;
-        };
-
-        const allReferrals = generateMockReferrals();
+        // Return empty data - external API integration needed
+        const allReferrals: any[] = [];
         
         // Apply filters
         let filteredReferrals = allReferrals;

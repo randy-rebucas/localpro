@@ -338,12 +338,12 @@ export default function MarketplaceSuppliesPage() {
          }, 300); // 300ms debounce
 
          return () => clearTimeout(timeoutId);
-     }, [fetchSupplies]);
+     }, [searchQuery, filters, sortBy, pagination]);
 
      // Trigger fetch when pagination changes
      useEffect(() => {
          fetchSupplies();
-     }, [fetchSupplies]);
+     }, [searchQuery, filters, sortBy, pagination]);
 
     const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
         setFilters(prev => ({ ...prev, [key]: value }));

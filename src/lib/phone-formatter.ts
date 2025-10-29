@@ -191,12 +191,12 @@ export class PhoneFormatter {
   public formatPhoneNumber(input: string): string {
     if (!input) return '';
 
-    // Remove all non-digit characters
-    const digits = input.replace(/\D/g, '');
+    // Remove all non-digit characters and spaces
+    const digits = input.replace(/[\D\s]/g, '');
     
-    // If already starts with country code, return as is
+    // If already starts with country code, return as is (but clean it)
     if (input.startsWith('+')) {
-      return input;
+      return `+${digits}`;
     }
 
     // If starts with 0, remove it and add country code
@@ -227,12 +227,14 @@ export class PhoneFormatter {
   public getFormattedDisplay(phoneNumber: string): string {
     if (!phoneNumber) return '';
 
+    // Clean the phone number first
+    const cleanPhone = phoneNumber.replace(/[\D\s]/g, '');
+    
     const country = this.getCountryFromPhoneNumber(phoneNumber);
     if (!country) return phoneNumber;
 
-    const digits = phoneNumber.replace(/\D/g, '');
     const countryCode = country.dialCode.replace('+', '');
-    const localNumber = digits.replace(countryCode, '');
+    const localNumber = cleanPhone.replace(countryCode, '');
 
     // Apply country-specific formatting
     return this.applyFormatting(country, localNumber);
@@ -242,7 +244,7 @@ export class PhoneFormatter {
    * Get country info from phone number
    */
   private getCountryFromPhoneNumber(phoneNumber: string): CountryInfo | null {
-    const digits = phoneNumber.replace(/\D/g, '');
+    const digits = phoneNumber.replace(/[\D\s]/g, '');
     
     for (const country of Object.values(COUNTRY_CODES)) {
       const countryCode = country.dialCode.replace('+', '');
@@ -315,7 +317,12 @@ export class PhoneFormatter {
       return { isValid: false, error: 'Phone number is required' };
     }
 
-    const digits = phoneNumber.replace(/\D/g, '');
+    // Check for spaces in the phone number
+    if (phoneNumber.includes(' ')) {
+      return { isValid: false, error: 'Phone number should not contain spaces' };
+    }
+
+    const digits = phoneNumber.replace(/[\D\s]/g, '');
     
     if (digits.length < 7) {
       return { isValid: false, error: 'Phone number is too short' };

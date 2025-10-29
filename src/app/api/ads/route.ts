@@ -17,111 +17,6 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const category = searchParams.get('category');
 
-    // Mock data for development when external API is not available
-    const mockAds = [
-      {
-        id: '1',
-        title: 'Premium Hardware Store - Downtown',
-        description: 'Your one-stop shop for all hardware needs. Quality tools, materials, and expert advice.',
-        category: 'Hardware Stores',
-        type: 'featured-listing',
-        status: 'active',
-        budget: 5000,
-        spent: 1250,
-        targetAudience: ['contractors', 'homeowners', 'professionals'],
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['/api/placeholder/400/300'],
-        clickCount: 245,
-        impressionCount: 12500,
-        ctr: 1.96,
-        cpc: 2.50,
-        cpm: 15.00,
-        advertiser: {
-          id: '1',
-          name: 'Downtown Hardware',
-          verified: true
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isPromoted: true,
-        priority: 'high',
-        tags: ['hardware', 'tools', 'materials'],
-        location: {
-          city: 'New York',
-          state: 'NY',
-          country: 'USA'
-        }
-      },
-      {
-        id: '2',
-        title: 'Professional Cleaning Services',
-        description: 'Reliable and thorough cleaning services for offices and homes.',
-        category: 'Cleaning Services',
-        type: 'sponsored-product',
-        status: 'active',
-        budget: 3000,
-        spent: 850,
-        targetAudience: ['businesses', 'homeowners'],
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['/api/placeholder/400/300'],
-        clickCount: 180,
-        impressionCount: 8500,
-        ctr: 2.12,
-        cpc: 1.80,
-        cpm: 12.00,
-        advertiser: {
-          id: '2',
-          name: 'CleanPro Services',
-          verified: true
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isPromoted: false,
-        priority: 'medium',
-        tags: ['cleaning', 'professional', 'reliable'],
-        location: {
-          city: 'Los Angeles',
-          state: 'CA',
-          country: 'USA'
-        }
-      },
-      {
-        id: '3',
-        title: 'Electrical Training Academy',
-        description: 'Certified electrical training programs for professionals.',
-        category: 'Training Schools',
-        type: 'training-school',
-        status: 'pending',
-        budget: 2000,
-        spent: 0,
-        targetAudience: ['electricians', 'students', 'professionals'],
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-        images: ['/api/placeholder/400/300'],
-        clickCount: 0,
-        impressionCount: 0,
-        ctr: 0,
-        cpc: 0,
-        cpm: 0,
-        advertiser: {
-          id: '3',
-          name: 'ElectroTech Academy',
-          verified: false
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isPromoted: false,
-        priority: 'low',
-        tags: ['training', 'electrical', 'certification'],
-        location: {
-          city: 'Chicago',
-          state: 'IL',
-          country: 'USA'
-        }
-      }
-    ];
 
     // Try to fetch real ads data from external API first
     try {
@@ -188,34 +83,11 @@ export async function GET(request: NextRequest) {
         pagination
       });
     } catch (apiError) {
-      console.log('External API not available, using mock data:', apiError);
-      
-      // Filter mock data based on query parameters
-      let filteredAds = [...mockAds];
-      
-      if (status && status !== 'All Status') {
-        filteredAds = filteredAds.filter(ad => ad.status === status.toLowerCase());
-      }
-      
-      if (category && category !== 'All Categories') {
-        filteredAds = filteredAds.filter(ad => ad.category === category);
-      }
-
-      // Apply pagination
-      const startIndex = (page - 1) * limit;
-      const endIndex = startIndex + limit;
-      const paginatedAds = filteredAds.slice(startIndex, endIndex);
-
-      return NextResponse.json({
-        success: true,
-        data: paginatedAds,
-        pagination: {
-          page,
-          limit,
-          total: filteredAds.length,
-          pages: Math.ceil(filteredAds.length / limit)
-        }
-      });
+      console.error('External API not available:', apiError);
+      return NextResponse.json(
+        { error: 'External API not available' },
+        { status: 503 }
+      );
     }
 
   } catch (error) {

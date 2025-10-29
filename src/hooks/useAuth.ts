@@ -34,26 +34,64 @@ export function useSession() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        const response = await fetch('/api/auth/me', 
-          createAuthFetchOptions()
-        );
+        console.log('🔍 useSession: Fetching session...');
+        console.log('🔍 useSession: Current cookies:', document.cookie);
+        console.log('🔍 useSession: Window location:', window.location.href);
+        
+        // Add timeout to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          console.log('⚠️ useSession: Request timeout after 10 seconds');
+          controller.abort();
+        }, 10000); // 10 second timeout
+        
+        const authOptions = createAuthFetchOptions({
+          signal: controller.signal
+        });
+        console.log('🔍 useSession: Auth options:', authOptions);
+        
+        const response = await fetch('/api/auth/me', authOptions);
+        
+        clearTimeout(timeoutId);
+        
+        console.log('🔍 useSession: Response status:', response.status);
+        console.log('🔍 useSession: Response headers:', Object.fromEntries(response.headers.entries()));
         
         if (response.ok) {
           const userData = await response.json();
+          console.log('🔍 useSession: User data received:', userData);
           setSession({ user: userData });
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.log('🔍 useSession: Response not ok, error data:', errorData);
           setSession(null);
         }
       } catch (error) {
-        console.error('Failed to fetch session:', error);
+        console.error('🔍 useSession: Failed to fetch session:', error);
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('⚠️ useSession: Request was aborted due to timeout');
+        }
         setSession(null);
       } finally {
+        console.log('🔍 useSession: Setting loading to false');
         setLoading(false);
       }
     };
 
     fetchSession();
   }, []);
+
+  // Add a fallback timeout to prevent infinite loading
+  useEffect(() => {
+    const fallbackTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('⚠️ useSession: Fallback timeout - forcing loading to false');
+        setLoading(false);
+      }
+    }, 15000); // 15 second fallback timeout
+
+    return () => clearTimeout(fallbackTimeout);
+  }, [loading]);
 
   return { data: session, status: loading ? 'loading' : session ? 'authenticated' : 'unauthenticated' };
 }

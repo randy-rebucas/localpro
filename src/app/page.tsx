@@ -143,8 +143,42 @@ export default function Home() {
                   })}
                 </div>
                 
-                <div className="mt-4 text-center">
-                  <DynamicHomeInteractive variant="hero" />
+                {/* Launch Date Card */}
+                <div className="mt-6">
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl">
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1A5276] rounded-full flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <h3 className="text-xl font-bold text-white mb-2 drop-shadow-sm">
+                        Launch Schedule
+                      </h3>
+                      <p className="text-white/90 mb-4 text-sm leading-relaxed">
+                        We're working hard to bring you the best professional services platform
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-center space-x-2 text-sm">
+                          <div className="w-2 h-2 bg-[#34A853] rounded-full"></div>
+                          <span className="text-white/85">Beta Testing: November 2025, second week</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2 text-sm">
+                          <div className="w-2 h-2 bg-[#1A5276] rounded-full"></div>
+                          <span className="text-white/85">Public Launch: December 2025, first week</span>
+                        </div>
+                        <div className="flex items-center justify-center space-x-2 text-sm">
+                          <div className="w-2 h-2 bg-white/60 rounded-full"></div>
+                          <span className="text-white/85">Mobile App: January 2026, first week</span>
+                        </div>
+                      </div>
+                      <div className="mt-4 pt-4 border-t border-white/20">
+                        <p className="text-xs text-white/70">
+                          Stay updated with our latest announcements
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       console.warn('External plans API not available, using fallback data:', error);
       
-      // Fallback to mock data when external API is not available
+      // Return empty data - external API integration needed
       const mockPlans = [
         {
           id: "starter",
@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
         }
       ];
 
-      return mockPlans;
+      return [];
     }
   }, "Plus subscription plans");
 

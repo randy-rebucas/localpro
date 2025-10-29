@@ -10,6 +10,13 @@ const verifyCodeSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🔍 Verify-code API called");
+    console.log("🔍 Environment variables:", {
+      NODE_ENV: process.env.NODE_ENV,
+      API_BASE_URL: process.env.API_BASE_URL,
+      NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL
+    });
+    
     const body = await request.json();
     const { phoneNumber, code } = verifyCodeSchema.parse(body);
     console.log("phoneNumber", phoneNumber);
@@ -59,20 +66,24 @@ export async function POST(request: NextRequest) {
         // Create session cookie with the encrypted session data
         const sessionCookie = createSessionCookie(encryptedSession);
         
-        return NextResponse.json(
+        // Create API token cookie for client-side access
+        const apiTokenCookie = createApiTokenCookie(mockToken);
+        
+        const response_data = NextResponse.json(
           { 
             success: true, 
             message: "Verification successful (mock)",
             user: mockUser,
             token: mockToken
           },
-          { 
-            status: 200,
-            headers: {
-              'Set-Cookie': sessionCookie
-            }
-          }
+          { status: 200 }
         );
+
+        // Set both cookies
+        response_data.headers.set('Set-Cookie', sessionCookie);
+        response_data.headers.append('Set-Cookie', apiTokenCookie);
+
+        return response_data;
       } else {
         return NextResponse.json(
           { error: "Invalid verification code (mock)" },

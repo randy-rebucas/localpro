@@ -72,11 +72,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Allow user to type freely
-    setDisplayValue(inputValue);
+    // Remove spaces and invalid characters in real-time
+    const sanitizedValue = inputValue.replace(/[\s\-\(\)]/g, '');
     
-    // Format the phone number
-    const formatted = phoneFormatter.formatPhoneNumber(inputValue);
+    // Allow user to type freely but sanitize the display
+    setDisplayValue(sanitizedValue);
+    
+    // Format the phone number (this will ensure no spaces in stored value)
+    const formatted = phoneFormatter.formatPhoneNumber(sanitizedValue);
     onChange(formatted);
   };
 
@@ -86,16 +89,22 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       return;
     }
     
-    // Allow digits, +, -, (, ), and space
-    if (!/[\d\+\-\(\)\s]/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+    // Prevent spaces from being entered
+    if (e.key === ' ') {
+      e.preventDefault();
+      return;
+    }
+    
+    // Allow digits, +, -, (, ) but not spaces
+    if (!/[\d\+\-\(\)]/.test(e.key) && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
     }
   };
 
   const handleFocus = () => {
-    // If input is empty, show placeholder with country code
+    // If input is empty, show placeholder with country code (no space)
     if (!displayValue && detectedCountry) {
-      setDisplayValue(detectedCountry.dialCode + ' ');
+      setDisplayValue(detectedCountry.dialCode);
     }
   };
 
@@ -205,8 +214,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       {/* Helper text */}
       <p className="text-xs text-gray-500">
         {detectedCountry 
-          ? `We'll automatically format your number for ${detectedCountry.name}`
-          : "We'll automatically detect your country and format your number"
+          ? `Enter your number without spaces - we'll format it for ${detectedCountry.name}`
+          : "Enter your number without spaces - we'll automatically detect your country and format it"
         }
       </p>
     </div>

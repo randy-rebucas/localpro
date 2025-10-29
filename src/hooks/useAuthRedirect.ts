@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { isAuthenticated, clearAllAuthData } from "@/lib/client-api-utils";
 
 /**
@@ -10,8 +11,16 @@ import { isAuthenticated, clearAllAuthData } from "@/lib/client-api-utils";
 export function useAuthRedirect() {
   const redirectAttempted = useRef(false);
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
 
   const redirectToLogin = () => {
+    console.log("🔄 redirectToLogin called");
+    console.log("🔄 Current state:", {
+      redirectAttempted: redirectAttempted.current,
+      currentPath: typeof window !== 'undefined' ? window.location.pathname : 'N/A',
+      currentURL: typeof window !== 'undefined' ? window.location.href : 'N/A'
+    });
+
     // Prevent multiple redirect attempts
     if (redirectAttempted.current) {
       console.log("🟡 Redirect already attempted, skipping");
@@ -38,11 +47,16 @@ export function useAuthRedirect() {
       clearTimeout(redirectTimeoutRef.current);
     }
 
-    // Use a timeout to ensure the redirect happens after any pending state updates
+    // Use Next.js router for client-side navigation instead of window.location.href
     redirectTimeoutRef.current = setTimeout(() => {
       if (typeof window !== 'undefined') {
-        console.log("🔄 Executing redirect to /auth");
-        window.location.href = '/auth';
+        console.log("🔄 Executing redirect to /auth using Next.js router");
+        try {
+          router.push('/auth');
+        } catch (error) {
+          console.error("🔄 Router push failed, falling back to window.location:", error);
+          window.location.href = '/auth';
+        }
       }
     }, 50);
   };

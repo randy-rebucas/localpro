@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useRoleAccess } from "@/components/role-guard";
+import { AuthDebug } from "@/components/auth-debug";
 
 export default function DashboardLayout({
   children,
@@ -83,7 +84,10 @@ export default function DashboardLayout({
   useEffect(() => {
     console.log("🔍 Dashboard Layout useEffect - Status:", status);
     console.log("🔍 Dashboard Layout useEffect - Session:", !!session);
+    console.log("🔍 Dashboard Layout useEffect - Session data:", session);
     console.log("🔍 Dashboard Layout useEffect - IsAuthenticated:", isAuthenticated());
+    console.log("🔍 Dashboard Layout useEffect - Current cookies:", typeof document !== 'undefined' ? document.cookie : 'N/A');
+    console.log("🔍 Dashboard Layout useEffect - Current URL:", typeof window !== 'undefined' ? window.location.href : 'N/A');
     
     // Only redirect if we're sure the session is not loading and user is not authenticated
     if (status === "unauthenticated") {
@@ -91,47 +95,78 @@ export default function DashboardLayout({
       redirectToLogin();
       return;
     }
-  }, [status, router, redirectToLogin, session]);
+    
+    // If we have a session but no API token, redirect to get fresh tokens
+    if (status === "authenticated" && session && !isAuthenticated()) {
+      console.log("🔴 Redirecting: Session exists but no API token found");
+      console.log("🔴 Session details:", session);
+      console.log("🔴 API token check:", isAuthenticated());
+      redirectToLogin();
+      return;
+    }
+  }, [status, session, redirectToLogin]);
+
+  // Add a fallback timeout to prevent infinite loading
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (status === "loading") {
+        console.log("⚠️ Session loading timeout - forcing unauthenticated state");
+        setLoading(false);
+      }
+    }, 15000); // 15 second timeout
+
+    return () => clearTimeout(timeoutId);
+  }, [status]);
 
   useEffect(() => {
+    console.log("🔍 Main auth effect - Status:", status, "Session:", !!session, "IsAuthenticated:", isAuthenticated());
+    
     // Only fetch user data if we have a session AND API token
     if (status === "authenticated" && session?.user?.id && isAuthenticated()) {
+      console.log("✅ Fetching user data - all conditions met");
       const fetchUser = async () => {
-        const result = await handleClientApiRoute(async () => {
-          const response = await makeClientAuthenticatedRequestWithPathSafe(
-            'usersById',
-            [session?.user?.id],
-            {},
-            { method: 'GET' }
-          );
+        try {
+          const result = await handleClientApiRoute(async () => {
+            const response = await makeClientAuthenticatedRequestWithPathSafe(
+              'usersById',
+              [session?.user?.id],
+              {},
+              { method: 'GET' }
+            );
+            
+            if (!response.ok) {
+              throw new Error(`Failed to fetch user data: ${response.status}`);
+            }
+            
+            return await response.json();
+          }, "Fetch user data");
           
-          if (!response.ok) {
-            throw new Error(`Failed to fetch user data: ${response.status}`);
+          if (result.error) {
+            console.error("Failed to fetch user data:", result.error);
+            
+            // Handle authentication errors specifically
+            if (result.isAuthError || result.status === 401) {
+              console.log("Authentication error detected, handling token expiry");
+              handleExpiredToken();
+              return;
+            }
+            
+            setError("Failed to load user data. Please try refreshing the page.");
+          } else {
+            console.log("✅ User data fetched successfully");
+            setUser(result.data);
           }
-          
-          return await response.json();
-        }, "Fetch user data");
-        
-        if (result.error) {
-          console.error("Failed to fetch user data:", result.error);
-          
-          // Handle authentication errors specifically
-          if (result.isAuthError || result.status === 401) {
-            console.log("Authentication error detected, handling token expiry");
-            handleExpiredToken();
-            return;
-          }
-          
+        } catch (error) {
+          console.error("Error in fetchUser:", error);
           setError("Failed to load user data. Please try refreshing the page.");
-        } else {
-          setUser(result.data);
+        } finally {
+          setLoading(false);
         }
-        
-        setLoading(false);
       };
 
       fetchUser();
     } else if (status === "loading") {
+      console.log("🟡 Session is loading, keeping loading state");
       // Keep loading state while session is being checked
       setLoading(true);
     } else if (status === "authenticated" && !isAuthenticated()) {
@@ -140,11 +175,15 @@ export default function DashboardLayout({
       console.log("🔴 Session:", !!session);
       console.log("🔴 IsAuthenticated:", isAuthenticated());
       redirectToLogin();
+    } else if (status === "unauthenticated") {
+      console.log("🔴 User is unauthenticated, stopping loading");
+      setLoading(false);
     } else {
+      console.log("🟡 Unknown status, stopping loading");
       // If no session and not loading, stop loading
       setLoading(false);
     }
-  }, [session?.user?.id, status, router, redirectToLogin, session]);
+  }, [status, session?.user?.id, redirectToLogin]);
 
   // useEffect(() => {
   //   const fetchUnread = async () => {
@@ -325,6 +364,7 @@ export default function DashboardLayout({
 
   return (
     <ErrorBoundary>
+      <AuthDebug />
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm sticky top-0 z-50">

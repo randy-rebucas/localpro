@@ -161,75 +161,32 @@ export default function PaymentProcessingPage() {
     } catch (error) {
       console.error("Error fetching payment data:", error);
       
-      // Set mock data for development
+      // Return empty data - external API integration needed
       setOverview({
-        totalTransactions: 1247,
-        totalRevenue: 125430.50,
-        pendingPayments: 23,
-        failedPayments: 12,
-        successRate: 94.2,
-        averageTransactionValue: 100.65,
-        paymentMethods: [
-          { method: 'paypal', count: 456, amount: 45600.00, percentage: 36.4 },
-          { method: 'stripe', count: 389, amount: 38900.00, percentage: 31.0 },
-          { method: 'bank_transfer', count: 234, amount: 23400.00, percentage: 18.7 },
-          { method: 'paymaya', count: 168, amount: 17530.50, percentage: 14.0 }
-        ],
-        recentTransactions: [
-          {
-            id: 'txn_001',
-            amount: 150.00,
-            method: 'paypal',
-            status: 'completed',
-            customer: 'John Doe',
-            date: new Date().toISOString(),
-            reference: 'REF-001234'
-          },
-          {
-            id: 'txn_002',
-            amount: 75.50,
-            method: 'stripe',
-            status: 'pending',
-            customer: 'Jane Smith',
-            date: new Date(Date.now() - 3600000).toISOString(),
-            reference: 'REF-001235'
-          }
-        ],
+        totalTransactions: 0,
+        totalRevenue: 0,
+        pendingPayments: 0,
+        failedPayments: 0,
+        successRate: 0,
+        averageTransactionValue: 0,
+        paymentMethods: [],
+        recentTransactions: [],
         dailyStats: [],
         monthlyStats: [],
         topPaymentMethods: [],
         paymentStatusBreakdown: {
-          completed: 1175,
-          pending: 23,
-          failed: 12,
-          refunded: 37
+          completed: 0,
+          pending: 0,
+          failed: 0,
+          refunded: 0
         },
-        refunds: 1850.00,
-        chargebacks: 320.00,
-        processingFees: 3762.92,
+        refunds: 0,
+        chargebacks: 0,
+        processingFees: 0,
         netRevenue: 120497.58
       });
       
-      setTransactions([
-        {
-          id: 'txn_001',
-          amount: 150.00,
-          method: 'paypal',
-          status: 'completed',
-          customer: 'John Doe',
-          date: new Date().toISOString(),
-          reference: 'REF-001234'
-        },
-        {
-          id: 'txn_002',
-          amount: 75.50,
-          method: 'stripe',
-          status: 'pending',
-          customer: 'Jane Smith',
-          date: new Date(Date.now() - 3600000).toISOString(),
-          reference: 'REF-001235'
-        }
-      ]);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }

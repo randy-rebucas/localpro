@@ -449,10 +449,6 @@ export default function SuppliesPage() {
     }
   }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder]);
 
-  useEffect(() => {
-    fetchSupplies();
-  }, [fetchSupplies]);
-
   // Main useEffect to load initial data
   useEffect(() => {
     fetchCategories();
@@ -468,7 +464,7 @@ export default function SuppliesPage() {
     } else if (activeTab === 'nearby') {
       fetchNearbySupplies();
     }
-  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder, activeTab, fetchSupplies, fetchNearbySupplies]);
+  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder, activeTab]);
 
   // Handle tab changes
   const handleTabChange = (tab: 'all' | 'featured' | 'nearby') => {

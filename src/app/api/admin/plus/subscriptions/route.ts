@@ -65,8 +65,7 @@ export async function GET(request: NextRequest) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.log(`External subscription API unavailable (${errorMessage}), using fallback data`);
       
-      // Fallback to mock data when external API is not available
-      // This is expected behavior in development when the external API server is not running
+      // Return empty data - external API integration needed
       const mockSubscriptions = [
         {
           id: "sub_001",
@@ -142,8 +141,8 @@ export async function GET(request: NextRequest) {
         }
       ];
 
-      console.log(`Using fallback subscription data (${mockSubscriptions.length} subscriptions)`);
-      return mockSubscriptions;
+      console.log('External API unavailable, returning empty data');
+      return [];
     }
   }, "Plus subscriptions");
 

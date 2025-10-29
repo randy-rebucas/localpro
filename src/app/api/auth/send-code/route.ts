@@ -56,29 +56,36 @@ async function makeApiRequestWithRetry(
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🔍 Send-code API called");
+    console.log("🔍 Environment variables:", {
+      NODE_ENV: process.env.NODE_ENV,
+      API_BASE_URL: process.env.API_BASE_URL,
+      NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL
+    });
+    
     const body = await request.json();
     console.log("Body:", body);
     const { phoneNumber } = sendCodeSchema.parse(body);
     console.log("Phone number:", phoneNumber.trim());
 
-    // // Check if we're in development mode and API is not available
-    // const isDevelopment = process.env.NODE_ENV === 'development';
-    // const isApiAvailable = API_BASE_URL && API_BASE_URL !== '' && API_BASE_URL !== 'undefined';
+    // Check if we're in development mode and API is not available
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isApiAvailable = API_BASE_URL && API_BASE_URL !== '' && API_BASE_URL !== 'undefined';
 
-    // console.log("Environment check:", { isDevelopment, isApiAvailable, API_BASE_URL });
+    console.log("Environment check:", { isDevelopment, isApiAvailable, API_BASE_URL });
 
-    // // For development, if no API base URL is set, use mock response
-    // if (isDevelopment && !isApiAvailable) {
-    //   console.log("Development mode: Using mock response for send-code");
-    //   return NextResponse.json(
-    //     { 
-    //       success: true, 
-    //       message: "Verification code sent (mock)",
-    //       phoneNumber: phoneNumber
-    //     }, 
-    //     { status: 200 }
-    //   );
-    // }
+    // For development, if no API base URL is set, use mock response
+    if (isDevelopment && !isApiAvailable) {
+      console.log("Development mode: Using mock response for send-code");
+      return NextResponse.json(
+        { 
+          success: true, 
+          message: "Verification code sent (mock)",
+          phoneNumber: phoneNumber
+        }, 
+        { status: 200 }
+      );
+    }
 
     try {
       const apiUrl = `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`;

@@ -75,56 +75,6 @@ interface FilterOptions {
   search: string;
 }
 
-// Mock data generation functions
-const generateMockAuditLogs = (): AuditLog[] => {
-  const actions = ['Login', 'Logout', 'Create User', 'Update Profile', 'Delete Item', 'View Data', 'Export Data', 'System Restart'];
-  const categories = ['authentication', 'authorization', 'data_access', 'data_modification', 'system', 'security'];
-  const severities = ['low', 'medium', 'high', 'critical'];
-  const statuses = ['success', 'warning', 'error', 'info'];
-  const users = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', role: 'admin' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'provider' },
-    { id: '3', name: 'Bob Johnson', email: 'bob@example.com', role: 'client' },
-    { id: '4', name: 'Alice Brown', email: 'alice@example.com', role: 'supplier' }
-  ];
-
-  return Array.from({ length: 50 }, (_, i) => {
-    const user = users[Math.floor(Math.random() * users.length)];
-    const action = actions[Math.floor(Math.random() * actions.length)];
-    const category = categories[Math.floor(Math.random() * categories.length)];
-    const severity = severities[Math.floor(Math.random() * severities.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const timestamp = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    return {
-      id: `log-${i + 1}`,
-      timestamp,
-      user,
-      action,
-      resource: `${category.replace('_', ' ')} resource`,
-      details: `${action} performed on ${category.replace('_', ' ')} resource`,
-      ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      status: status as 'success' | 'warning' | 'error' | 'info',
-      severity: severity as 'low' | 'medium' | 'high' | 'critical',
-      category: category as 'authentication' | 'authorization' | 'data_access' | 'data_modification' | 'system' | 'security',
-      sessionId: `session-${Math.random().toString(36).substr(2, 9)}`,
-      changes: Math.random() > 0.7 ? [
-        {
-          field: 'status',
-          oldValue: 'inactive',
-          newValue: 'active'
-        }
-      ] : []
-    };
-  });
-};
-
-const generateMockStats = (): AuditStats => {
-  return {
-    totalLogs: 1250,
-    todayLogs: 45,
-    criticalAlerts: 3,
     uniqueUsers: 25,
     topActions: [
       { action: 'Login', count: 120 },
@@ -215,36 +165,47 @@ export default function AdminAuditPage() {
 
         // Handle logs response
         if (!logsResponse.ok) {
-          console.warn('Logs API not available, using mock data');
-          // Generate mock audit logs
-          const mockLogs = generateMockAuditLogs();
-          logsData = { logs: mockLogs };
+          console.warn('Logs API not available');
+          logsData = { logs: [] };
         } else {
           logsData = await logsResponse.json();
         }
 
         // Handle stats response
         if (!statsResponse.ok) {
-          console.warn('Stats API not available, using mock data');
-          // Generate mock stats
-          const mockStats = generateMockStats();
-          statsData = mockStats;
-        } else {
-          statsData = await statsResponse.json();
-        }
+          console.warn('Stats API not available');
+          statsData = {
+            totalLogs: 0,
+            todayLogs: 0,
+            criticalAlerts: 0,
+            userActivity: [],
+            actionBreakdown: [],
+            categoryBreakdown: [],
+            severityBreakdown: [],
+            statusBreakdown: [],
+            recentActivity: [],
+            systemHealth: 'Unknown',
+            complianceScore: 0,
+            lastUpdated: new Date().toISOString()
+          };
       } catch (apiError) {
-        console.warn('API calls failed, using mock data:', apiError);
-        // Use mock data when API is not available
-        const mockLogs = generateMockAuditLogs();
-        const mockStats = generateMockStats();
-        logsData = { logs: mockLogs };
-        statsData = mockStats;
-        
-        // Show a notification that mock data is being used
-        if (typeof window !== 'undefined') {
-          console.info('Using mock audit data for demonstration purposes');
-        }
-      }
+        console.error('API calls failed:', apiError);
+        // Return empty data - external API integration needed
+        logsData = { logs: [] };
+        statsData = {
+          totalLogs: 0,
+          todayLogs: 0,
+          criticalAlerts: 0,
+          userActivity: [],
+          actionBreakdown: [],
+          categoryBreakdown: [],
+          severityBreakdown: [],
+          statusBreakdown: [],
+          recentActivity: [],
+          systemHealth: 'Unknown',
+          complianceScore: 0,
+          lastUpdated: new Date().toISOString()
+        };
 
       // Transform the data to match our interface
       const transformedLogs = (logsData.logs || []).map((log: Record<string, unknown>) => ({

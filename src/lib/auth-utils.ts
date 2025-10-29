@@ -44,6 +44,13 @@ export function createAuthHeaders(additionalHeaders: Record<string, string> = {}
 export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
   const sessionToken = getSessionToken();
   
+  // Debug logging
+  console.log('🔍 createAuthFetchOptions:', {
+    hasSessionToken: !!sessionToken,
+    tokenLength: sessionToken?.length || 0,
+    allCookies: typeof document !== 'undefined' ? document.cookie : 'N/A'
+  });
+  
   return {
     ...options,
     headers: {

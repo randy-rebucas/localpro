@@ -148,115 +148,12 @@ export default function MarketplaceAdsPage() {
           }));
         }
       } else {
-        // Fallback to mock data for development
-        setAds([
-          {
-            id: '1',
-            title: 'Premium Hardware Store - Downtown',
-            description: 'Your one-stop shop for all hardware needs. Quality tools, materials, and expert advice.',
-            category: 'Hardware Stores',
-            type: 'featured-listing',
-            status: 'active',
-            budget: 5000,
-            spent: 1250,
-            targetAudience: ['contractors', 'homeowners', 'professionals'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 245,
-            impressionCount: 12500,
-            ctr: 1.96,
-            cpc: 2.50,
-            cpm: 15.00,
-            advertiser: {
-              id: '1',
-              name: 'Downtown Hardware',
-              verified: true
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: true,
-            priority: 'high',
-            tags: ['hardware', 'tools', 'materials'],
-            location: {
-              city: 'New York',
-              state: 'NY',
-              country: 'USA'
-            }
-          },
-          {
-            id: '2',
-            title: 'Professional Cleaning Services',
-            description: 'Reliable and thorough cleaning services for offices and homes.',
-            category: 'Cleaning Services',
-            type: 'sponsored-product',
-            status: 'active',
-            budget: 3000,
-            spent: 850,
-            targetAudience: ['businesses', 'homeowners'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 180,
-            impressionCount: 8500,
-            ctr: 2.12,
-            cpc: 1.80,
-            cpm: 12.00,
-            advertiser: {
-              id: '2',
-              name: 'CleanPro Services',
-              verified: true
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: false,
-            priority: 'medium',
-            tags: ['cleaning', 'professional', 'reliable'],
-            location: {
-              city: 'Los Angeles',
-              state: 'CA',
-              country: 'USA'
-            }
-          },
-          {
-            id: '3',
-            title: 'Electrical Training Academy',
-            description: 'Certified electrical training programs for professionals.',
-            category: 'Training Schools',
-            type: 'training-school',
-            status: 'pending',
-            budget: 2000,
-            spent: 0,
-            targetAudience: ['electricians', 'students', 'professionals'],
-            startDate: new Date().toISOString(),
-            endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
-            images: ['/api/placeholder/400/300'],
-            clickCount: 0,
-            impressionCount: 0,
-            ctr: 0,
-            cpc: 0,
-            cpm: 0,
-            advertiser: {
-              id: '3',
-              name: 'ElectroTech Academy',
-              verified: false
-            },
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isPromoted: false,
-            priority: 'low',
-            tags: ['training', 'electrical', 'certification'],
-            location: {
-              city: 'Chicago',
-              state: 'IL',
-              country: 'USA'
-            }
-          }
-        ]);
+        // Return empty data - external API integration needed
+        setAds([]);
         setPagination(prev => ({
           ...prev,
-          total: 3,
-          count: 3,
+          total: 0,
+          count: 0,
           pages: 1
         }));
       }
@@ -270,7 +167,7 @@ export default function MarketplaceAdsPage() {
 
   useEffect(() => {
     fetchAds();
-  }, [fetchAds]);
+  }, [searchQuery, selectedCategory, sortBy, pagination]);
 
   const filteredAds = ads.filter(ad => {
     const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

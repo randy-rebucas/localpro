@@ -117,79 +117,6 @@ interface FilterOptions {
 }
 
 // Mock data generation functions
-const generateMockSystemLogs = (): SystemLog[] => {
-  const levels = ['debug', 'info', 'warn', 'error', 'fatal'];
-  const categories = ['system', 'database', 'api', 'auth', 'security', 'performance', 'user_activity'];
-  const sources = ['server', 'database', 'api-gateway', 'auth-service', 'notification-service', 'payment-service'];
-  const users = [
-    { id: '1', name: 'John Doe', email: 'john@example.com', role: 'admin' },
-    { id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'provider' },
-    { id: '3', name: 'Bob Johnson', email: 'bob@example.com', role: 'client' },
-    { id: '4', name: 'Alice Brown', email: 'alice@example.com', role: 'supplier' }
-  ];
-
-  return Array.from({ length: 100 }, (_, i) => {
-    const user = users[Math.floor(Math.random() * users.length)];
-    const level = levels[Math.floor(Math.random() * levels.length)];
-    const category = categories[Math.floor(Math.random() * categories.length)];
-    const source = sources[Math.floor(Math.random() * sources.length)];
-    const timestamp = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    return {
-      id: `log-${i + 1}`,
-      timestamp,
-      level: level as 'debug' | 'info' | 'warn' | 'error' | 'fatal',
-      category: category as 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity',
-      message: `${level.toUpperCase()}: ${category} operation completed`,
-      details: `Detailed information about ${category} operation with level ${level}`,
-      source,
-      userId: user.id,
-      userName: user.name,
-      userEmail: user.email,
-      userRole: user.role,
-      ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      sessionId: `session-${Math.random().toString(36).substr(2, 9)}`,
-      requestId: `req-${Math.random().toString(36).substr(2, 9)}`,
-      duration: Math.floor(Math.random() * 1000),
-      memoryUsage: Math.floor(Math.random() * 100),
-      cpuUsage: Math.floor(Math.random() * 100),
-      stackTrace: level === 'error' || level === 'fatal' ? `Error stack trace for ${category} operation` : undefined,
-      metadata: {
-        version: '1.0.0',
-        environment: 'production',
-        region: 'us-east-1'
-      }
-    };
-  });
-};
-
-const generateMockStats = (): LogStats => {
-  return {
-    totalLogs: 15420,
-    todayLogs: 234,
-    errorCount: 12,
-    warningCount: 45,
-    uniqueUsers: 89,
-    topCategories: [
-      { category: 'api', count: 450 },
-      { category: 'database', count: 320 },
-      { category: 'user_activity', count: 280 },
-      { category: 'system', count: 200 }
-    ],
-    levelBreakdown: [
-      { level: 'info', count: 8000 },
-      { level: 'debug', count: 5000 },
-      { level: 'warn', count: 2000 },
-      { level: 'error', count: 400 },
-      { level: 'fatal', count: 20 }
-    ],
-    recentErrors: [],
-    systemHealth: 'Good',
-    avgResponseTime: 245,
-    errorRate: 2.8
-  };
-};
 
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState<SystemLog[]>([]);
@@ -280,18 +207,28 @@ export default function AdminLogsPage() {
 
         // Handle logs response
         if (!logsResponse.ok) {
-          console.warn('Logs API not available, using mock data');
-          const mockLogs = generateMockSystemLogs();
-          logsData = { logs: mockLogs };
+          console.warn('Logs API not available');
+          logsData = { logs: [] };
         } else {
           logsData = await logsResponse.json();
         }
 
         // Handle stats response
         if (!statsResponse.ok) {
-          console.warn('Stats API not available, using mock data');
-          const mockStats = generateMockStats();
-          statsData = mockStats;
+          console.warn('Stats API not available');
+          statsData = {
+            totalLogs: 0,
+            todayLogs: 0,
+            errorCount: 0,
+            warningCount: 0,
+            uniqueUsers: 0,
+            topCategories: [],
+            levelBreakdown: [],
+            recentErrors: [],
+            systemHealth: 'Unknown',
+            avgResponseTime: 0,
+            errorRate: 0
+          };
         } else {
           statsData = await statsResponse.json();
         }
@@ -343,37 +280,44 @@ export default function AdminLogsPage() {
           dashboardData = await dashboardResponse.json();
         }
       } catch (apiError) {
-        console.warn('API calls failed, using mock data:', apiError);
-        const mockLogs = generateMockSystemLogs();
-        const mockStats = generateMockStats();
-        logsData = { logs: mockLogs };
-        statsData = mockStats;
+        console.error('API calls failed:', apiError);
+        // Return empty data - external API integration needed
+        logsData = { logs: [] };
+        statsData = {
+          totalLogs: 0,
+          todayLogs: 0,
+          errorCount: 0,
+          warningCount: 0,
+          uniqueUsers: 0,
+          topCategories: [],
+          levelBreakdown: [],
+          recentErrors: [],
+          systemHealth: 'Unknown',
+          avgResponseTime: 0,
+          errorRate: 0
+        };
         errorTrendsData = { period: '7d', trends: [], topErrors: [] };
         performanceData = {
-          avgResponseTime: 245,
-          maxResponseTime: 1000,
-          minResponseTime: 50,
-          throughput: 150,
-          errorRate: 2.8,
-          memoryUsage: 65,
-          cpuUsage: 45,
-          activeConnections: 25,
-          requestsPerSecond: 12
+          avgResponseTime: 0,
+          maxResponseTime: 0,
+          minResponseTime: 0,
+          throughput: 0,
+          errorRate: 0,
+          memoryUsage: 0,
+          cpuUsage: 0,
+          activeConnections: 0,
+          requestsPerSecond: 0
         };
         dashboardData = {
-          totalLogs: 15420,
-          errorCount: 12,
-          warningCount: 45,
-          systemHealth: 'Good',
-          uptime: 99.9,
+          totalLogs: 0,
+          errorCount: 0,
+          warningCount: 0,
+          systemHealth: 'Unknown',
+          uptime: 0,
           lastUpdated: new Date().toISOString(),
           criticalIssues: 0,
-          performanceScore: 85
+          performanceScore: 0
         };
-        
-        if (typeof window !== 'undefined') {
-          console.info('Using mock system logs data for demonstration purposes');
-        }
       }
 
       // Transform the data to match our interface

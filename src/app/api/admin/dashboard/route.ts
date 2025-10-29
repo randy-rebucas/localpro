@@ -76,62 +76,25 @@ export async function GET(request: NextRequest) {
         const dashboardData = await response.json();
         return dashboardData.data || dashboardData;
       } catch (error) {
-        console.warn('External API unavailable, using mock data:', error);
-        // Return mock data when external API is not available
+        console.error('External API unavailable:', error);
+        // Return empty data - external API integration needed
         return {
           stats: {
-            totalUsers: 1247,
-            activeServices: 89,
-            totalRevenue: 125430.50,
-            growthRate: 12.5,
-            pendingApprovals: 23,
-            systemHealth: 'healthy',
-            newUsersToday: 15,
-            activeBookings: 234,
-            conversionRate: 8.2,
-            avgResponseTime: 1.2,
-            serverUptime: 99.9,
-            errorRate: 0.1
+            totalUsers: 0,
+            activeServices: 0,
+            totalRevenue: 0,
+            growthRate: 0,
+            pendingApprovals: 0,
+            systemHealth: 'unknown',
+            newUsersToday: 0,
+            activeBookings: 0,
+            conversionRate: 0,
+            avgResponseTime: 0,
+            serverUptime: 0,
+            errorRate: 0
           },
-          recentActivity: [
-            {
-              id: 'act_001',
-              type: 'user_registration',
-              description: 'New user registered',
-              timestamp: new Date().toISOString(),
-              user: 'John Doe',
-              status: 'success',
-              priority: 'low'
-            },
-            {
-              id: 'act_002',
-              type: 'service_booking',
-              description: 'Service booking completed',
-              timestamp: new Date(Date.now() - 3600000).toISOString(),
-              user: 'Jane Smith',
-              status: 'success',
-              priority: 'medium'
-            },
-            {
-              id: 'act_003',
-              type: 'payment_processed',
-              description: 'Payment processed successfully',
-              timestamp: new Date(Date.now() - 7200000).toISOString(),
-              user: 'Mike Johnson',
-              status: 'success',
-              priority: 'high'
-            }
-          ],
-          systemAlerts: [
-            {
-              id: 'alert_001',
-              type: 'info',
-              title: 'System Maintenance',
-              message: 'Scheduled maintenance completed successfully',
-              timestamp: new Date(Date.now() - 86400000).toISOString(),
-              resolved: true
-            }
-          ]
+          recentActivity: [],
+          systemAlerts: []
         };
       }
     }, "Dashboard data");

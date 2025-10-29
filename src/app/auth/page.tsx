@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import Image from "next/image";
+import { phoneFormatter } from "@/lib/phone-formatter";
 
 const signInSchema = z.object({
   phone: z
@@ -22,13 +23,17 @@ const signInSchema = z.object({
     .min(1, "Phone number is required")
     .transform((val) => val.trim()) // Remove leading/trailing whitespace
     .refine((phone) => {
+      // Check for spaces in the phone number
+      return !phone.includes(' ');
+    }, "Phone number should not contain spaces")
+    .refine((phone) => {
       // Remove all non-digit characters for validation
-      const digits = phone.replace(/\D/g, '');
+      const digits = phone.replace(/[\D\s]/g, '');
       return digits.length >= 7 && digits.length <= 15;
     }, "Phone number must be between 7 and 15 digits")
     .refine((phone) => {
       // Must start with + for international format, or be a valid number that can be formatted
-      return phone.startsWith('+') || (phone.replace(/\D/g, '').length >= 7);
+      return phone.startsWith('+') || (phone.replace(/[\D\s]/g, '').length >= 7);
     }, "Please enter a valid phone number"),
 });
 
@@ -234,8 +239,18 @@ function SignInForm() {
     console.log("On submit data:", data);
     // Use the form data which is already validated and trimmed by Zod
     if (data.phone) {
-      console.log("Trimmed phone:", data.phone);
-      await sendVerificationCode(data.phone);
+      // Ensure the phone number is properly formatted with no spaces
+      const formattedPhone = phoneFormatter.formatPhoneNumber(data.phone);
+      console.log("Formatted phone:", formattedPhone);
+      
+      // Validate the formatted phone number
+      const validation = phoneFormatter.validatePhoneNumber(formattedPhone);
+      if (!validation.isValid) {
+        setErrors({ phone: validation.error || "Invalid phone number" });
+        return;
+      }
+      
+      await sendVerificationCode(formattedPhone);
     } else {
       setErrors({ phone: "Please enter a valid phone number" });
     }
