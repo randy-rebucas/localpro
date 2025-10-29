@@ -172,7 +172,20 @@ export async function GET(request: NextRequest) {
         };
       } else {
         // Return empty data - external API integration needed
-        const allReferrals: any[] = [];
+        const allReferrals: Array<{
+          id: string;
+          referrerId: string;
+          refereeId: string;
+          status: string;
+          rewardStatus: string;
+          createdAt: string;
+          completedAt?: string;
+          rewardAmount?: number;
+          referrerName?: string;
+          refereeName?: string;
+          referrerEmail?: string;
+          refereeEmail?: string;
+        }> = [];
         
         // Apply filters
         let filteredReferrals = allReferrals;

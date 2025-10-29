@@ -435,14 +435,14 @@ export default function MarketplaceCoursesPage() {
             fetchCourses();
         }, 300);
         return () => clearTimeout(timeoutId);
-    }, [searchQuery, filters, sortBy, pagination]);
+    }, [fetchCourses]);
 
     // Fetch data on mount
     useEffect(() => {
         fetchCourses();
         fetchFeaturedCourses();
         fetchCategories();
-    }, []);
+    }, [fetchCourses, fetchFeaturedCourses, fetchCategories]);
 
     const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
         setFilters(prev => ({ ...prev, [key]: value }));

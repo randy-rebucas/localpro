@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from '@sentry/nextjs';
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
+import withBundleAnalyzer from '@next/bundle-analyzer';
+
+const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
@@ -104,4 +106,4 @@ const sentryWebpackPluginOptions = {
   // https://github.com/getsentry/sentry-webpack-plugin#options
 };
 
-export default withSentryConfig(withBundleAnalyzer(nextConfig), sentryWebpackPluginOptions);
+export default withSentryConfig(bundleAnalyzer(nextConfig), sentryWebpackPluginOptions);

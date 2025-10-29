@@ -1,6 +1,5 @@
 "use client";
 
-import { DynamicHomeInteractive } from "@/components/dynamic-home-interactive";
 import { ScrollProgress, ScrollToTop } from "@/components/scroll-progress";
 import { 
   CheckCircle, 
@@ -26,7 +25,7 @@ export default function Home() {
       icon: Store,
       title: "Marketplace",
       description: "Connect with customers and grow your business through our comprehensive marketplace platform.",
-      features: ["Service listings & bookings", "Payment processing", "Customer reviews"]
+      features: ["Service listings &amp; bookings", "Payment processing", "Customer reviews"]
     },
     {
       icon: GraduationCap,
@@ -50,7 +49,7 @@ export default function Home() {
       icon: Megaphone,
       title: "Advertising",
       description: "Promote your services and reach more customers with targeted advertising.",
-      features: ["Targeted campaigns", "Analytics & insights", "Budget control"]
+      features: ["Targeted campaigns", "Analytics &amp; insights", "Budget control"]
     },
     {
       icon: CreditCard,
@@ -156,7 +155,7 @@ export default function Home() {
                         Launch Schedule
                       </h3>
                       <p className="text-white/90 mb-4 text-sm leading-relaxed">
-                        We're working hard to bring you the best professional services platform
+                        We&apos;re working hard to bring you the best professional services platform
                       </p>
                       <div className="space-y-2">
                         <div className="flex items-center justify-center space-x-2 text-sm">
@@ -257,7 +256,7 @@ export default function Home() {
                             <Store className="w-6 h-6 text-white" />
                           </div>
                           <h4 className="font-bold text-black text-sm mb-1">Marketplace</h4>
-                          <p className="text-gray-500 text-xs">Buy & sell locally</p>
+                          <p className="text-gray-500 text-xs">Buy &amp; sell locally</p>
                         </div>
                         
                         {/* Supplies */}
@@ -266,7 +265,7 @@ export default function Home() {
                             <Package className="w-6 h-6 text-white" />
                           </div>
                           <h4 className="font-bold text-black text-sm mb-1">Supplies</h4>
-                          <p className="text-gray-500 text-xs">Equipment & tools</p>
+                          <p className="text-gray-500 text-xs">Equipment &amp; tools</p>
                         </div>
                         
                         {/* Academy */}
@@ -275,7 +274,7 @@ export default function Home() {
                             <GraduationCap className="w-6 h-6 text-white" />
                           </div>
                           <h4 className="font-bold text-black text-sm mb-1">Academy</h4>
-                          <p className="text-gray-500 text-xs">Learn & grow</p>
+                          <p className="text-gray-500 text-xs">Learn &amp; grow</p>
                         </div>
                         
                         {/* Finance */}

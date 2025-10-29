@@ -331,19 +331,19 @@ export default function MarketplaceSuppliesPage() {
         }
     }, [searchQuery, filters, sortBy, pagination]);
 
-     // Debounced search to improve performance
-     useEffect(() => {
-         const timeoutId = setTimeout(() => {
-             fetchSupplies();
-         }, 300); // 300ms debounce
+    // Debounced search to improve performance
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchSupplies();
+        }, 300); // 300ms debounce
 
-         return () => clearTimeout(timeoutId);
-     }, [searchQuery, filters, sortBy, pagination]);
+        return () => clearTimeout(timeoutId);
+    }, [fetchSupplies]);
 
-     // Trigger fetch when pagination changes
-     useEffect(() => {
-         fetchSupplies();
-     }, [searchQuery, filters, sortBy, pagination]);
+    // Trigger fetch when pagination changes
+    useEffect(() => {
+        fetchSupplies();
+    }, [fetchSupplies]);
 
     const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
         setFilters(prev => ({ ...prev, [key]: value }));

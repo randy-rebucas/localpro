@@ -167,7 +167,7 @@ export default function MarketplaceAdsPage() {
 
   useEffect(() => {
     fetchAds();
-  }, [searchQuery, selectedCategory, sortBy, pagination]);
+  }, [fetchAds]);
 
   const filteredAds = ads.filter(ad => {
     const matchesSearch = ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

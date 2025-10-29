@@ -1,6 +1,7 @@
 "use client";
 
 import React, { Suspense, lazy, ComponentType } from 'react';
+import Image from 'next/image';
 import { Skeleton } from '@/components/skeleton';
 
 // Generic lazy loading wrapper
@@ -129,7 +130,7 @@ export function LazyImage({
       {!isLoaded && (
         <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
           {placeholder ? (
-            <img src={placeholder} alt="" className="w-full h-full object-cover opacity-50" />
+            <Image src={placeholder} alt="" fill className="object-cover opacity-50" />
           ) : (
             <div className="w-8 h-8 bg-gray-300 rounded" />
           )}
@@ -137,10 +138,11 @@ export function LazyImage({
       )}
       
       {isInView && (
-        <img
+        <Image
           ref={imgRef}
           src={src}
           alt={alt}
+          fill
           onLoad={handleLoad}
           onError={handleError}
           className={`transition-opacity duration-300 ${

@@ -25,7 +25,20 @@ export async function GET(request: NextRequest) {
     });
 
     // Return empty data - external API integration needed
-    const filteredSupplies: any[] = [];
+    const filteredSupplies: Array<{
+      id: string;
+      name: string;
+      description: string;
+      category: string;
+      type: string;
+      status: string;
+      price: number;
+      location: string;
+      rating: number;
+      tags: string[];
+      createdAt: string;
+      updatedAt: string;
+    }> = [];
 
     if (search) {
       const searchLower = search.toLowerCase();

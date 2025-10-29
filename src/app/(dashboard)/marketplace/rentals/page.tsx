@@ -293,7 +293,7 @@ export default function MarketplaceRentalsPage() {
 
   useEffect(() => {
     fetchRentals();
-  }, [searchQuery, selectedCategory, selectedType, selectedStatus, sortBy, sortOrder, pagination]);
+  }, [fetchRentals]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

@@ -237,7 +237,7 @@ export default function SuppliesPage() {
   }, []);
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/supplies/categories');
       
@@ -259,10 +259,10 @@ export default function SuppliesPage() {
       setError('Failed to fetch categories');
       setCategories([]);
     }
-  };
+  }, []);
 
   // Fetch types
-  const fetchTypes = async () => {
+  const fetchTypes = useCallback(async () => {
     try {
       const response = await fetch('/api/supplies/types');
       
@@ -284,10 +284,10 @@ export default function SuppliesPage() {
       setError('Failed to fetch types');
       setTypes([]);
     }
-  };
+  }, []);
 
   // Fetch statuses
-  const fetchStatuses = async () => {
+  const fetchStatuses = useCallback(async () => {
     try {
       const response = await fetch('/api/supplies/statuses');
       
@@ -309,10 +309,10 @@ export default function SuppliesPage() {
       setError('Failed to fetch statuses');
       setStatuses([]);
     }
-  };
+  }, []);
 
   // Fetch featured supplies
-  const fetchFeaturedSupplies = async () => {
+  const fetchFeaturedSupplies = useCallback(async () => {
     try {
       const response = await fetch('/api/supplies/featured');
       
@@ -336,7 +336,7 @@ export default function SuppliesPage() {
       console.error('Error fetching featured supplies:', error);
       setFeaturedSupplies([]);
     }
-  };
+  }, []);
 
   // Fetch nearby supplies
   const fetchNearbySupplies = useCallback(async () => {
@@ -455,7 +455,7 @@ export default function SuppliesPage() {
     fetchTypes();
     fetchStatuses();
     fetchFeaturedSupplies();
-  }, []);
+  }, [fetchCategories, fetchTypes, fetchStatuses, fetchFeaturedSupplies]);
 
   // Refetch supplies when filters change
   useEffect(() => {
@@ -464,7 +464,7 @@ export default function SuppliesPage() {
     } else if (activeTab === 'nearby') {
       fetchNearbySupplies();
     }
-  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder, activeTab]);
+  }, [activeTab, fetchSupplies, fetchNearbySupplies]);
 
   // Handle tab changes
   const handleTabChange = (tab: 'all' | 'featured' | 'nearby') => {

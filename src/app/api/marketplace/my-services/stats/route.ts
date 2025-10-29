@@ -2,14 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
 
-// Mock statistics data
-const mockStats = {
-  totalServices: 3,
-  activeServices: 2,
-  totalBookings: 77,
-  totalEarnings: 13150,
-  averageRating: 4.85
-};
+// External API integration needed
 
 // GET /api/marketplace/my-services/stats - Get user's service statistics
 export async function GET(request: NextRequest) {
@@ -37,9 +30,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Return mock data
-    console.log("API: Returning mock service statistics");
-    return NextResponse.json(mockStats);
+    // Return empty data - external API integration needed
+    console.log("API: External API unavailable, returning empty data");
+    return NextResponse.json({
+      totalServices: 0,
+      activeServices: 0,
+      totalBookings: 0,
+      totalEarnings: 0,
+      averageRating: 0
+    });
 
   } catch (error) {
     console.error("Error fetching service statistics:", error);

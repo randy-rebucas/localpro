@@ -75,26 +75,27 @@ interface FilterOptions {
   search: string;
 }
 
-    uniqueUsers: 25,
-    topActions: [
-      { action: 'Login', count: 120 },
-      { action: 'View Data', count: 85 },
-      { action: 'Update Profile', count: 60 },
-      { action: 'Create User', count: 25 }
-    ],
-    categoryBreakdown: [
-      { category: 'authentication', count: 300 },
-      { category: 'data_access', count: 250 },
-      { category: 'system', count: 200 },
-      { category: 'data_modification', count: 150 }
-    ],
-    severityBreakdown: [
-      { severity: 'low', count: 800 },
-      { severity: 'medium', count: 300 },
-      { severity: 'high', count: 100 },
-      { severity: 'critical', count: 50 }
-    ]
-  };
+// Mock data for development - remove when API is integrated
+const mockAnalytics = {
+  uniqueUsers: 25,
+  topActions: [
+    { action: 'Login', count: 120 },
+    { action: 'View Data', count: 85 },
+    { action: 'Update Profile', count: 60 },
+    { action: 'Create User', count: 25 }
+  ],
+  categoryBreakdown: [
+    { category: 'authentication', count: 300 },
+    { category: 'data_access', count: 250 },
+    { category: 'system', count: 200 },
+    { category: 'data_modification', count: 150 }
+  ],
+  severityBreakdown: [
+    { severity: 'low', count: 800 },
+    { severity: 'medium', count: 300 },
+    { severity: 'high', count: 100 },
+    { severity: 'critical', count: 50 }
+  ]
 };
 
 export default function AdminAuditPage() {
@@ -188,6 +189,9 @@ export default function AdminAuditPage() {
             complianceScore: 0,
             lastUpdated: new Date().toISOString()
           };
+        } else {
+          statsData = await statsResponse.json();
+        }
       } catch (apiError) {
         console.error('API calls failed:', apiError);
         // Return empty data - external API integration needed
@@ -206,32 +210,40 @@ export default function AdminAuditPage() {
           complianceScore: 0,
           lastUpdated: new Date().toISOString()
         };
+      }
 
-      // Transform the data to match our interface
-      const transformedLogs = (logsData.logs || []).map((log: Record<string, unknown>) => ({
-        id: log.id || Math.random().toString(36).substr(2, 9),
-        timestamp: log.timestamp || new Date().toISOString(),
-        user: {
-          id: log.userId || 'unknown',
-          name: log.userName || 'Unknown User',
-          email: log.userEmail || 'unknown@example.com',
-          role: log.userRole || 'unknown'
-        },
-        action: log.action || 'Unknown Action',
-        resource: log.resource || 'Unknown Resource',
-        details: log.details || 'No details available',
-        ipAddress: log.ipAddress || 'Unknown',
-        userAgent: log.userAgent || 'Unknown',
-        status: log.status || 'info',
-        severity: log.severity || 'low',
-        category: log.category || 'system',
-        sessionId: log.sessionId || 'unknown',
-        changes: log.changes || []
-      }));
+      try {
+        // Transform the data to match our interface
+        const transformedLogs = (logsData.logs || []).map((log: Record<string, unknown>) => ({
+          id: log.id || Math.random().toString(36).substr(2, 9),
+          timestamp: log.timestamp || new Date().toISOString(),
+          user: {
+            id: log.userId || 'unknown',
+            name: log.userName || 'Unknown User',
+            email: log.userEmail || 'unknown@example.com',
+            role: log.userRole || 'unknown'
+          },
+          action: log.action || 'Unknown Action',
+          resource: log.resource || 'Unknown Resource',
+          details: log.details || 'No details available',
+          ipAddress: log.ipAddress || 'Unknown',
+          userAgent: log.userAgent || 'Unknown',
+          status: log.status || 'info',
+          severity: log.severity || 'low',
+          category: log.category || 'system',
+          sessionId: log.sessionId || 'unknown',
+          changes: log.changes || []
+        }));
 
-      setAuditLogs(transformedLogs);
-      setStats(statsData);
-      setLastUpdated(new Date());
+        setAuditLogs(transformedLogs);
+        setStats(statsData);
+        setLastUpdated(new Date());
+      } catch (err) {
+        console.error('Error fetching audit data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load audit data');
+      } finally {
+        setLoading(false);
+      }
     } catch (err) {
       console.error('Error fetching audit data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load audit data');

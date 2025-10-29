@@ -1,4 +1,3 @@
-const CACHE_NAME = 'localpro-v1';
 const STATIC_CACHE = 'localpro-static-v1';
 const DYNAMIC_CACHE = 'localpro-dynamic-v1';
 
@@ -9,14 +8,6 @@ const STATIC_ASSETS = [
   '/static/css/main.css',
   '/manifest.json',
   '/offline.html'
-];
-
-// API routes to cache
-const API_CACHE_PATTERNS = [
-  '/api/auth/me',
-  '/api/dashboard',
-  '/api/marketplace/services',
-  '/api/supplies'
 ];
 
 // Install event - cache static assets
@@ -121,8 +112,8 @@ async function handleStaticAsset(request) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
-  } catch (error) {
-    console.error('Service Worker: Failed to fetch static asset', error);
+  } catch (err) {
+    console.error('Service Worker: Failed to fetch static asset', err);
     return new Response('Asset not available offline', { status: 503 });
   }
 }
@@ -136,7 +127,7 @@ async function handlePageRequest(request) {
       cache.put(request, networkResponse.clone());
     }
     return networkResponse;
-  } catch (error) {
+  } catch {
     console.log('Service Worker: Network failed, trying cache');
     const cache = await caches.open(DYNAMIC_CACHE);
     const cachedResponse = await cache.match(request);

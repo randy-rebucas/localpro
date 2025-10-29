@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -151,147 +151,148 @@ export default function MyOrdersPage() {
         setOrders(data.orders || []);
       } catch (error) {
         console.error('Error fetching my orders:', error);
-        // Fallback to mock data
-        setOrders([
-          {
-            id: '1',
-            supplyId: '1',
-            supply: {
-              id: '1',
-              name: 'Professional Cleaning Kit - Complete Set',
-              description: 'Complete cleaning kit with all essential tools and supplies for professional cleaning services.',
-              category: 'Cleaning Supplies',
-              type: 'cleaning',
-              price: 89.99,
-              unit: 'set',
-              images: ['/api/placeholder/400/300'],
-              supplier: {
-                id: '1',
-                name: 'Professional Supply Co.',
-                rating: 4.8,
-                reviewCount: 156,
-                verified: true,
-                location: 'New York, NY'
-              }
-            },
-            quantity: 2,
-            totalPrice: 179.98,
-            status: 'shipped',
-            paymentStatus: 'paid',
-            shippingAddress: {
-              name: 'John Doe',
-              address: '123 Main Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-              phone: '+1-555-0123',
-              email: 'john@example.com'
-            },
-            delivery: {
-              estimatedDays: 2,
-              cost: 9.99,
-              trackingNumber: 'TRK123456789',
-              carrier: 'FedEx'
-            },
-            notes: 'Please deliver during business hours',
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: '2',
-            supplyId: '2',
-            supply: {
-              id: '2',
-              name: 'Heavy Duty Drill Set - 20 Piece',
-              description: 'Professional grade drill set with various bits and accessories.',
-              category: 'Tools & Equipment',
-              type: 'tools',
-              price: 149.99,
-              unit: 'set',
-              images: ['/api/placeholder/400/300'],
-              supplier: {
-                id: '2',
-                name: 'Tool Supply Depot',
-                rating: 4.6,
-                reviewCount: 89,
-                verified: true,
-                location: 'Los Angeles, CA'
-              }
-            },
-            quantity: 1,
-            totalPrice: 149.99,
-            status: 'delivered',
-            paymentStatus: 'paid',
-            shippingAddress: {
-              name: 'John Doe',
-              address: '123 Main Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-              phone: '+1-555-0123',
-              email: 'john@example.com'
-            },
-            delivery: {
-              estimatedDays: 3,
-              cost: 15.99,
-              trackingNumber: 'TRK987654321',
-              carrier: 'UPS'
-            },
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            deliveredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: '3',
-            supplyId: '3',
-            supply: {
-              id: '3',
-              name: 'Monthly Cleaning Subscription Box',
-              description: 'Monthly subscription box with curated cleaning supplies delivered to your door.',
-              category: 'Maintenance Kits',
-              type: 'subscription',
-              price: 29.99,
-              unit: 'box',
-              images: ['/api/placeholder/400/300'],
-              supplier: {
-                id: '3',
-                name: 'Subscription Supply Co.',
-                rating: 4.9,
-                reviewCount: 234,
-                verified: true,
-                location: 'Chicago, IL'
-              }
-            },
-            quantity: 1,
-            totalPrice: 29.99,
-            status: 'processing',
-            paymentStatus: 'paid',
-            shippingAddress: {
-              name: 'John Doe',
-              address: '123 Main Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001',
-              phone: '+1-555-0123',
-              email: 'john@example.com'
-            },
-            delivery: {
-              estimatedDays: 1,
-              cost: 0,
-              trackingNumber: 'TRK456789123',
-              carrier: 'USPS'
-            },
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ]);
-      } finally {
-        setLoading(false);
+        // Use mock data when API is unavailable
+        setOrders(mockOrders);
       }
     };
 
     fetchMyOrders();
-  }, []);
+  }, [mockOrders]);
+
+  // Mock data for development - remove when API is integrated
+  const mockOrders = useMemo(() => [
+    {
+      id: '1',
+      supplyId: '1',
+      supply: {
+        id: '1',
+        name: 'Professional Cleaning Kit - Complete Set',
+        description: 'Complete cleaning kit with all essential tools and supplies for professional cleaning services.',
+        category: 'Cleaning Supplies',
+        type: 'cleaning',
+        price: 89.99,
+        unit: 'set',
+        images: ['/api/placeholder/400/300'],
+        supplier: {
+          id: '1',
+          name: 'Professional Supply Co.',
+          rating: 4.8,
+          reviewCount: 156,
+          verified: true,
+          location: 'New York, NY'
+        }
+      },
+      quantity: 2,
+      totalPrice: 179.98,
+      status: 'shipped',
+      paymentStatus: 'paid',
+      shippingAddress: {
+        name: 'John Doe',
+        address: '123 Main Street',
+        city: 'New York',
+        state: 'NY',
+        zipCode: '10001',
+        phone: '+1-555-0123',
+        email: 'john@example.com'
+      },
+      delivery: {
+        estimatedDays: 2,
+        cost: 9.99,
+        trackingNumber: 'TRK123456789',
+        carrier: 'FedEx'
+      },
+      notes: 'Please deliver during business hours',
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: '2',
+      supplyId: '2',
+      supply: {
+        id: '2',
+        name: 'Heavy Duty Drill Set - 20 Piece',
+        description: 'Professional grade drill set with various bits and accessories.',
+        category: 'Tools & Equipment',
+        type: 'tools',
+        price: 149.99,
+        unit: 'set',
+        images: ['/api/placeholder/400/300'],
+        supplier: {
+          id: '2',
+          name: 'Tool Supply Depot',
+          rating: 4.6,
+          reviewCount: 89,
+          verified: true,
+          location: 'Los Angeles, CA'
+        }
+      },
+      quantity: 1,
+      totalPrice: 149.99,
+      status: 'delivered',
+      paymentStatus: 'paid',
+      shippingAddress: {
+        name: 'John Doe',
+        address: '123 Main Street',
+        city: 'New York',
+        state: 'NY',
+        zipCode: '10001',
+        phone: '+1-555-0123',
+        email: 'john@example.com'
+      },
+      delivery: {
+        estimatedDays: 3,
+        cost: 15.99,
+        trackingNumber: 'TRK987654321',
+        carrier: 'UPS'
+      },
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      deliveredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      id: '3',
+      supplyId: '3',
+      supply: {
+        id: '3',
+        name: 'Monthly Cleaning Subscription Box',
+        description: 'Monthly subscription box with curated cleaning supplies delivered to your door.',
+        category: 'Maintenance Kits',
+        type: 'subscription',
+        price: 29.99,
+        unit: 'box',
+        images: ['/api/placeholder/400/300'],
+        supplier: {
+          id: '3',
+          name: 'Subscription Supply Co.',
+          rating: 4.9,
+          reviewCount: 234,
+          verified: true,
+          location: 'Chicago, IL'
+        }
+      },
+      quantity: 1,
+      totalPrice: 29.99,
+      status: 'processing',
+      paymentStatus: 'paid',
+      shippingAddress: {
+        name: 'John Doe',
+        address: '123 Main Street',
+        city: 'New York',
+        state: 'NY',
+        zipCode: '10001',
+        phone: '+1-555-0123',
+        email: 'john@example.com'
+      },
+      delivery: {
+        estimatedDays: 1,
+        cost: 0,
+        trackingNumber: 'TRK456789123',
+        carrier: 'USPS'
+      },
+      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+    }
+  ], []);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
