@@ -75,28 +75,7 @@ interface FilterOptions {
   search: string;
 }
 
-// Mock data for development - remove when API is integrated
-const mockAnalytics = {
-  uniqueUsers: 25,
-  topActions: [
-    { action: 'Login', count: 120 },
-    { action: 'View Data', count: 85 },
-    { action: 'Update Profile', count: 60 },
-    { action: 'Create User', count: 25 }
-  ],
-  categoryBreakdown: [
-    { category: 'authentication', count: 300 },
-    { category: 'data_access', count: 250 },
-    { category: 'system', count: 200 },
-    { category: 'data_modification', count: 150 }
-  ],
-  severityBreakdown: [
-    { severity: 'low', count: 800 },
-    { severity: 'medium', count: 300 },
-    { severity: 'high', count: 100 },
-    { severity: 'critical', count: 50 }
-  ]
-};
+
 
 export default function AdminAuditPage() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
