@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/supplies/products - Alias for getting all supplies
+// GET /api/supplies/items - Alias for getting all supplies
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);

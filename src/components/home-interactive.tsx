@@ -10,42 +10,42 @@ interface HomeInteractiveProps {
 export function HomeInteractive({ variant = "hero" }: HomeInteractiveProps) {
   if (variant === "hero") {
     return (
-      <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
         <Link
           href="/auth"
-          className="group bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800"
+          className="group bg-gradient-to-r from-[#1A5276] to-[#34A853] hover:from-[#1A5276]/90 hover:to-[#34A853]/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/50 drop-shadow-sm"
           aria-label="Start your professional journey with LocalPro"
         >
           Start Your Journey
-          <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
         <Link
           href="/dashboard"
-          className="group border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-blue-600 dark:hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-lg flex items-center focus:outline-none focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+          className="group border border-white/30 text-white hover:border-[#34A853] hover:text-[#34A853] font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg flex items-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/50 drop-shadow-sm"
           aria-label="Explore the LocalPro dashboard"
         >
           Explore Dashboard
-          <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
+    <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
       <Link
         href="/auth"
-        className="group bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center"
+        className="group bg-gradient-to-r from-[#1A5276] to-[#34A853] hover:from-[#1A5276]/90 hover:to-[#34A853]/90 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg hover:scale-105 flex items-center drop-shadow-sm"
       >
         Start Free Trial
-        <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </Link>
       <Link
         href="/dashboard"
-        className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold flex items-center"
+        className="text-[#34A853] hover:text-[#1A5276] font-medium flex items-center drop-shadow-sm"
       >
         View Demo
-        <ArrowRight className="ml-2 w-5 h-5" />
+        <ArrowRight className="ml-1.5 w-4 h-4" />
       </Link>
     </div>
   );

@@ -93,6 +93,9 @@ export const API_ENDPOINTS = {
   
   // Supplies & Equipment
   supplies: "/api/supplies",
+  suppliesItems: "/api/supplies/items",
+  suppliesProducts: "/api/supplies/products",
+  suppliesProductsById: "/api/supplies/products",
   suppliesCategories: "/api/supplies/categories",
   suppliesFeatured: "/api/supplies/featured",
   suppliesNearby: "/api/supplies/nearby",
@@ -104,8 +107,6 @@ export const API_ENDPOINTS = {
   suppliesOrder: "/api/supplies",
   suppliesOrderStatus: "/api/supplies",
   suppliesReviews: "/api/supplies",
-  suppliesProducts: "/api/supplies/products",
-  suppliesProductsById: "/api/supplies/products",
   suppliesCreate: "/api/supplies",
   suppliesUpdate: "/api/supplies",
   suppliesDelete: "/api/supplies",

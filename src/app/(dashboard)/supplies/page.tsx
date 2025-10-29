@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -90,7 +90,8 @@ export interface Supply {
   updatedAt: string;
 }
 
-const categories = [
+// Categories will be fetched from API, fallback to default
+const defaultCategories = [
   "All Categories",
   "Cleaning Supplies",
   "Tools & Equipment",
@@ -151,198 +152,183 @@ const getTypeIcon = (type: Supply['type']) => {
 
 export default function SuppliesPage() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [featuredSupplies, setFeaturedSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [location, setLocation] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<'all' | 'featured' | 'nearby'>('all');
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pages: 1,
+    total: 0,
+    count: 0
+  });
   const router = useRouter();
 
+  // Get user location for nearby search
   useEffect(() => {
-    const fetchSupplies = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/supplies');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch supplies');
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.warn('Could not get user location:', error);
         }
-
-        const data = await response.json();
-        setSupplies(data.supplies || []);
-      } catch (error) {
-        console.error('Error fetching supplies:', error);
-        // Fallback to mock data
-        setSupplies([
-          {
-            id: '1',
-            name: 'Professional Cleaning Kit - Complete Set',
-            description: 'Complete cleaning kit with all essential tools and supplies for professional cleaning services. Includes premium quality products.',
-            category: 'Cleaning Supplies',
-            type: 'cleaning',
-            status: 'available',
-            price: 89.99,
-            originalPrice: 119.99,
-            unit: 'set',
-            stock: 45,
-            minOrder: 1,
-            maxOrder: 10,
-            location: {
-              address: '123 Supply Street',
-              city: 'New York',
-              state: 'NY',
-              zipCode: '10001'
-            },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
-            features: ['Professional Grade', 'Eco-Friendly', 'Long Lasting', 'Easy to Use'],
-            specifications: {
-              brand: 'CleanPro',
-              weight: '5.2 kg',
-              dimensions: '40cm x 30cm x 15cm',
-              material: 'Premium Plastic',
-              color: 'Blue',
-              warranty: '1 year'
-            },
-            supplier: {
-              id: '1',
-              name: 'Professional Supply Co.',
-              rating: 4.8,
-              reviewCount: 156,
-              verified: true,
-              location: 'New York, NY'
-            },
-            delivery: {
-              available: true,
-              estimatedDays: 2,
-              cost: 9.99,
-              freeShippingThreshold: 100
-            },
-            rating: 4.8,
-            reviewCount: 24,
-            viewsCount: 342,
-            isFeatured: true,
-            isFavorited: false,
-            tags: ['cleaning', 'professional', 'kit', 'eco-friendly'],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            name: 'Heavy Duty Drill Set - 20 Piece',
-            description: 'Professional grade drill set with various bits and accessories. Perfect for construction and maintenance work.',
-            category: 'Tools & Equipment',
-            type: 'tools',
-            status: 'available',
-            price: 149.99,
-            unit: 'set',
-            stock: 12,
-            minOrder: 1,
-            maxOrder: 5,
-            location: {
-              address: '456 Tool Avenue',
-              city: 'Los Angeles',
-              state: 'CA',
-              zipCode: '90210'
-            },
-            images: ['/api/placeholder/400/300'],
-            features: ['Heavy Duty', 'Professional Grade', 'Durable', 'Versatile'],
-            specifications: {
-              brand: 'ToolMaster',
-              model: 'HD-20',
-              weight: '3.5 kg',
-              dimensions: '35cm x 25cm x 10cm',
-              material: 'Steel',
-              color: 'Black',
-              warranty: '2 years'
-            },
-            supplier: {
-              id: '2',
-              name: 'Tool Supply Depot',
-              rating: 4.6,
-              reviewCount: 89,
-              verified: true,
-              location: 'Los Angeles, CA'
-            },
-            delivery: {
-              available: true,
-              estimatedDays: 3,
-              cost: 15.99,
-              freeShippingThreshold: 200
-            },
-            rating: 4.6,
-            reviewCount: 18,
-            viewsCount: 198,
-            isFeatured: false,
-            isFavorited: true,
-            tags: ['tools', 'drill', 'construction', 'professional'],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '3',
-            name: 'Monthly Cleaning Subscription Box',
-            description: 'Monthly subscription box with curated cleaning supplies delivered to your door. Perfect for regular maintenance.',
-            category: 'Maintenance Kits',
-            type: 'subscription',
-            status: 'available',
-            price: 29.99,
-            unit: 'box',
-            stock: 999,
-            minOrder: 1,
-            maxOrder: 12,
-            location: {
-              address: '789 Subscription Lane',
-              city: 'Chicago',
-              state: 'IL',
-              zipCode: '60601'
-            },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300', '/api/placeholder/400/300'],
-            features: ['Monthly Delivery', 'Curated Selection', 'Eco-Friendly', 'Flexible'],
-            specifications: {
-              brand: 'CleanBox',
-              weight: '2.1 kg',
-              dimensions: '30cm x 20cm x 15cm',
-              material: 'Mixed',
-              color: 'Various',
-              warranty: 'Monthly'
-            },
-            supplier: {
-              id: '3',
-              name: 'Subscription Supply Co.',
-              rating: 4.9,
-              reviewCount: 234,
-              verified: true,
-              location: 'Chicago, IL'
-            },
-            delivery: {
-              available: true,
-              estimatedDays: 1,
-              cost: 0,
-              freeShippingThreshold: 0
-            },
-            rating: 4.9,
-            reviewCount: 45,
-            viewsCount: 567,
-            isFeatured: true,
-            isFavorited: false,
-            tags: ['subscription', 'monthly', 'cleaning', 'convenient'],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSupplies();
+      );
+    }
   }, []);
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/supplies/categories');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+
+      const data = await response.json();
+      setCategories(data.categories || data.data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setError('Failed to fetch categories');
+      setCategories([]);
+    }
+  };
+
+  // Fetch featured supplies
+  const fetchFeaturedSupplies = async () => {
+    try {
+      const response = await fetch('/api/supplies/featured');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch featured supplies');
+      }
+
+      const data = await response.json();
+      setFeaturedSupplies(data.supplies || data.data || []);
+    } catch (error) {
+      console.error('Error fetching featured supplies:', error);
+      setFeaturedSupplies([]);
+    }
+  };
+
+  // Fetch nearby supplies
+  const fetchNearbySupplies = useCallback(async () => {
+    if (!userLocation) {
+      setError('Location is required for nearby search');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({
+        lat: userLocation.lat.toString(),
+        lng: userLocation.lng.toString(),
+        radius: '10000' // 10km radius
+      });
+
+      const response = await fetch(`/api/supplies/nearby?${params}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch nearby supplies');
+      }
+
+      const data = await response.json();
+      setSupplies(data.supplies || data.data || []);
+      setPagination(data.pagination || { page: 1, pages: 1, total: 0, count: 0 });
+    } catch (error) {
+      console.error('Error fetching nearby supplies:', error);
+      setError('Failed to fetch nearby supplies');
+    } finally {
+      setLoading(false);
+    }
+  }, [userLocation]);
+
+  // Fetch all supplies with filters
+  const fetchSupplies = useCallback(async (page = 1) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '12'
+      });
+
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory !== 'All Categories') params.append('category', selectedCategory);
+      if (selectedType !== 'All Types') params.append('type', selectedType);
+      if (selectedStatus !== 'All Status') params.append('status', selectedStatus);
+      if (priceRange.min) params.append('minPrice', priceRange.min);
+      if (priceRange.max) params.append('maxPrice', priceRange.max);
+      if (location) params.append('location', location);
+      if (sortBy) params.append('sortBy', sortBy);
+      if (sortOrder) params.append('sortOrder', sortOrder);
+
+      const response = await fetch(`/api/supplies?${params}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch supplies');
+      }
+
+      const data = await response.json();
+      setSupplies(data.supplies || data.data || []);
+      setPagination(data.pagination || { page: 1, pages: 1, total: 0, count: 0 });
+    } catch (error) {
+      console.error('Error fetching supplies:', error);
+      setError('Failed to fetch supplies. Please try again later.');
+      setSupplies([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder]);
+
+  useEffect(() => {
+    fetchSupplies();
+  }, [fetchSupplies]);
+
+  // Main useEffect to load initial data
+  useEffect(() => {
+    fetchCategories();
+    fetchFeaturedSupplies();
+  }, []);
+
+  // Refetch supplies when filters change
+  useEffect(() => {
+    if (activeTab === 'all') {
+      fetchSupplies();
+    } else if (activeTab === 'nearby') {
+      fetchNearbySupplies();
+    }
+  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder, activeTab, fetchSupplies, fetchNearbySupplies]);
+
+  // Handle tab changes
+  const handleTabChange = (tab: 'all' | 'featured' | 'nearby') => {
+    setActiveTab(tab);
+    if (tab === 'featured') {
+      setSupplies(featuredSupplies);
+    } else if (tab === 'nearby') {
+      fetchNearbySupplies();
+    } else {
+      fetchSupplies();
+    }
+  };
 
   const filteredSupplies = supplies.filter(supply => {
     const matchesSearch = supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -429,6 +415,49 @@ export default function SuppliesPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Supplies & Materials</h1>
+            <p className="text-gray-600">Find tools, materials, and supplies for your projects</p>
+          </div>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading supplies</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    setError(null);
+                    if (activeTab === 'nearby') {
+                      fetchNearbySupplies();
+                    } else {
+                      fetchSupplies();
+                    }
+                  }}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs
@@ -448,6 +477,40 @@ export default function SuppliesPage() {
           <Plus className="w-4 h-4" />
           List Supply
         </Button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <button
+          onClick={() => handleTabChange('all')}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'all'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          All Supplies
+        </button>
+        <button
+          onClick={() => handleTabChange('featured')}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'featured'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Featured
+        </button>
+        <button
+          onClick={() => handleTabChange('nearby')}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            activeTab === 'nearby'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          Nearby
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -564,7 +627,10 @@ export default function SuppliesPage() {
                   <Select
                     value={selectedCategory}
                     onValueChange={(value) => setSelectedCategory(value)}
-                    options={categories.map(cat => ({ value: cat, label: cat }))}
+                    options={categories.length > 0 
+                      ? [...defaultCategories, ...categories.filter(cat => !defaultCategories.includes(cat))].map(cat => ({ value: cat, label: cat }))
+                      : defaultCategories.map(cat => ({ value: cat, label: cat }))
+                    }
                   />
                 </div>
 
@@ -643,15 +709,53 @@ export default function SuppliesPage() {
           {sortedSupplies.length === 0 ? (
             <Card className="p-8 text-center">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No supplies found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {error ? 'Failed to load supplies' : 'No supplies found'}
+              </h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
-                  ? "Try adjusting your filters to see more results."
-                  : "Get started by listing your first supply item."}
+                {error 
+                  ? 'There was an error loading supplies. Please try again.' 
+                  : searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
+                    ? "Try adjusting your filters to see more results."
+                    : "Get started by listing your first supply item."
+                }
               </p>
-              <Button onClick={handleCreateSupply}>
-                List Your First Supply
-              </Button>
+              <div className="flex gap-2 justify-center">
+                {!error && (
+                  <Button onClick={handleCreateSupply}>
+                    List Your First Supply
+                  </Button>
+                )}
+                {error && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setError(null);
+                      if (activeTab === 'nearby') {
+                        fetchNearbySupplies();
+                      } else {
+                        fetchSupplies();
+                      }
+                    }}
+                  >
+                    Retry
+                  </Button>
+                )}
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCategory("All Categories");
+                    setSelectedType("All Types");
+                    setSelectedStatus("All Status");
+                    setPriceRange({ min: "", max: "" });
+                    setLocation("");
+                    setError(null);
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </div>
             </Card>
           ) : (
             <div className={viewMode === 'grid' 
@@ -813,6 +917,69 @@ export default function SuppliesPage() {
                   </div>
                 </Card>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <div className="mt-8 flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {((pagination.page - 1) * 12) + 1} to {Math.min(pagination.page * 12, pagination.total)} of {pagination.total} results
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (activeTab === 'nearby') {
+                      fetchNearbySupplies();
+                    } else {
+                      fetchSupplies(pagination.page - 1);
+                    }
+                  }}
+                  disabled={pagination.page <= 1}
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pagination.page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          if (activeTab === 'nearby') {
+                            fetchNearbySupplies();
+                          } else {
+                            fetchSupplies(pageNum);
+                          }
+                        }}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (activeTab === 'nearby') {
+                      fetchNearbySupplies();
+                    } else {
+                      fetchSupplies(pagination.page + 1);
+                    }
+                  }}
+                  disabled={pagination.page >= pagination.pages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </div>

@@ -128,8 +128,8 @@ export default function PrivacyPolicy() {
         title="Privacy Policy"
         subtitle="Your privacy is important to us. Learn how we collect, use, and protect your information."
         highlightText="Privacy"
-        gradientFrom="from-slate-600"
-        gradientTo="to-gray-600"
+        gradientFrom="from-[#1A5276]"
+        gradientTo="to-[#34A853]"
       >
         <div className="flex items-center justify-center space-x-4 text-slate-200">
           <Calendar className="w-5 h-5" />
@@ -138,17 +138,17 @@ export default function PrivacyPolicy() {
       </HeroSection>
 
       {/* Introduction */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-8 mb-8">
-              <div className="flex items-start space-x-4">
-                <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400 mt-1" />
+            <div className="bg-gradient-to-br from-[#1A5276]/10 to-[#34A853]/10 rounded-lg p-6 mb-6">
+              <div className="flex items-start space-x-3">
+                <Shield className="w-6 h-6 text-[#1A5276] mt-1" />
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
                     Our Commitment to Privacy
                   </h2>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
                     At LocalPro, we are committed to protecting your privacy and ensuring the security of your personal information. 
                     This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our 
                     platform and services. We believe in transparency and giving you control over your data.
@@ -168,25 +168,25 @@ export default function PrivacyPolicy() {
       </section>
 
       {/* Main Content */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="space-y-12">
+            <div className="space-y-8">
               {sections.map((section, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div key={index} className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center text-white">
                       {section.icon}
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                       {section.title}
                     </h2>
                   </div>
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {section.content.map((item, itemIndex) => (
                       <li key={itemIndex} className="flex items-start space-x-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-300">{item}</span>
+                        <CheckCircle className="w-4 h-4 text-[#34A853] mt-1 flex-shrink-0" />
+                        <span className="text-slate-600 dark:text-slate-300 text-sm">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -198,14 +198,14 @@ export default function PrivacyPolicy() {
       </section>
 
       {/* Data Types Table */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Data We Collect
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Detailed breakdown of the information we collect and why
               </p>
             </div>
@@ -250,34 +250,34 @@ export default function PrivacyPolicy() {
       </section>
 
       {/* Your Rights */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Your Privacy Rights
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 You have control over your personal information
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
                   Access & Control
                 </h3>
-                <ul className="space-y-2 text-slate-600 dark:text-slate-300">
+                <ul className="space-y-1 text-slate-600 dark:text-slate-300 text-sm">
                   <li>• View and download your data</li>
                   <li>• Update your profile information</li>
                   <li>• Change your privacy settings</li>
                   <li>• Manage your communication preferences</li>
                 </ul>
               </div>
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
                   Data Portability
                 </h3>
-                <ul className="space-y-2 text-slate-600 dark:text-slate-300">
+                <ul className="space-y-1 text-slate-600 dark:text-slate-300 text-sm">
                   <li>• Export your data in common formats</li>
                   <li>• Transfer your data to other services</li>
                   <li>• Request data deletion</li>
@@ -290,43 +290,43 @@ export default function PrivacyPolicy() {
       </section>
 
       {/* Contact Information */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Questions About Privacy?
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Contact our privacy team for any questions or concerns
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                  <Mail className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Email Us
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     privacy@localpro.com
                   </p>
                 </div>
                 <div className="text-center">
-                  <Phone className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-4" />
+                  <Phone className="w-6 h-6 text-[#34A853] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Call Us
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     +1 (555) 123-4567
                   </p>
                 </div>
                 <div className="text-center">
-                  <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
+                  <FileText className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Data Request
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     Submit a data request form
                   </p>
                 </div>

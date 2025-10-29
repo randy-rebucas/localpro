@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/supplies/:id - Get single supply item
+// GET /api/supplies/products/:id - Get single supply product
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,7 +18,7 @@ export async function GET(
     
     if (!id) {
       return NextResponse.json(
-        { error: "Supply ID is required" },
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -26,7 +26,7 @@ export async function GET(
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'supplies',
-      [id], // Supply ID as path parameter
+      [id], // Product ID as path parameter
       {}, // No query parameters for single item
       { method: 'GET' }
     );
@@ -34,7 +34,7 @@ export async function GET(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch supply item" },
+        { error: errorData.error || "Failed to fetch supply product" },
         { status: response.status }
       );
     }
@@ -43,7 +43,7 @@ export async function GET(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error("Error fetching supply item:", error);
+    console.error("Error fetching supply product:", error);
     
     let errorMessage = "Internal server error";
     let statusCode = 500;
@@ -69,7 +69,7 @@ export async function GET(
   }
 }
 
-// PUT /api/supplies/:id - Update supply item
+// PUT /api/supplies/products/:id - Update supply product
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -85,7 +85,7 @@ export async function PUT(
     
     if (!id) {
       return NextResponse.json(
-        { error: "Supply ID is required" },
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -95,7 +95,7 @@ export async function PUT(
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'supplies',
-      [id], // Supply ID as path parameter
+      [id], // Product ID as path parameter
       {}, // No query parameters
       { 
         method: 'PUT',
@@ -109,7 +109,7 @@ export async function PUT(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || "Failed to update supply item" },
+        { error: errorData.error || "Failed to update supply product" },
         { status: response.status }
       );
     }
@@ -118,7 +118,7 @@ export async function PUT(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error("Error updating supply item:", error);
+    console.error("Error updating supply product:", error);
     
     let errorMessage = "Internal server error";
     let statusCode = 500;
@@ -144,7 +144,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/supplies/:id - Delete supply item
+// DELETE /api/supplies/products/:id - Delete supply product
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -160,7 +160,7 @@ export async function DELETE(
     
     if (!id) {
       return NextResponse.json(
-        { error: "Supply ID is required" },
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -168,7 +168,7 @@ export async function DELETE(
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'supplies',
-      [id], // Supply ID as path parameter
+      [id], // Product ID as path parameter
       {}, // No query parameters
       { method: 'DELETE' }
     );
@@ -176,7 +176,7 @@ export async function DELETE(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || "Failed to delete supply item" },
+        { error: errorData.error || "Failed to delete supply product" },
         { status: response.status }
       );
     }
@@ -185,7 +185,7 @@ export async function DELETE(
     return NextResponse.json(data);
 
   } catch (error) {
-    console.error("Error deleting supply item:", error);
+    console.error("Error deleting supply product:", error);
     
     let errorMessage = "Internal server error";
     let statusCode = 500;

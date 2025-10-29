@@ -1,11 +1,24 @@
-import { NextResponse } from "next/server";
-import { makePublicRequest } from "@/lib/api-auth-utils";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "@/lib/server-session";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/supplies/categories - Get supply categories
-export async function GET() {
+// GET /api/supplies/categories - Get all supply categories
+export async function GET(request: NextRequest) {
   try {
-    const response = await makePublicRequest(
-      'suppliesCategories',
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
+    
+    const response = await makeAuthenticatedRequestWithPath(
+      request,
+      'supplies',
+      ['categories'], // Path parameter for categories
+      queryParams,
       { method: 'GET' }
     );
 
@@ -19,6 +32,7 @@ export async function GET() {
 
     const data = await response.json();
     return NextResponse.json(data);
+
   } catch (error) {
     console.error("Error fetching supply categories:", error);
     

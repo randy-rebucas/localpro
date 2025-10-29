@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
 // GET /api/supplies/nearby - Get nearby supplies
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
     
+    // Validate required location parameters
+    if (!queryParams.lat || !queryParams.lng) {
+      return NextResponse.json(
+        { error: "Latitude and longitude are required for nearby search" },
+        { status: 400 }
+      );
+    }
+    
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesNearby',
-      [],
+      'supplies',
+      ['nearby'], // Path parameter for nearby
       queryParams,
       { method: 'GET' }
     );
@@ -25,6 +40,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
+
   } catch (error) {
     console.error("Error fetching nearby supplies:", error);
     

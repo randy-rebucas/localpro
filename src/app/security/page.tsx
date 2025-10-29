@@ -23,7 +23,7 @@ export default function Security() {
   const securityFeatures = [
     {
       title: "Data Encryption",
-      icon: <Lock className="w-8 h-8 text-blue-500" />,
+      icon: <Lock className="w-6 h-6 text-[#1A5276]" />,
       description: "All data is encrypted in transit and at rest using industry-standard AES-256 encryption",
       details: [
         "End-to-end encryption for sensitive communications",
@@ -34,7 +34,7 @@ export default function Security() {
     },
     {
       title: "Access Controls",
-      icon: <Users className="w-8 h-8 text-green-500" />,
+      icon: <Users className="w-6 h-6 text-[#34A853]" />,
       description: "Multi-layered access controls ensure only authorized personnel can access your data",
       details: [
         "Role-based access control (RBAC)",
@@ -45,7 +45,7 @@ export default function Security() {
     },
     {
       title: "Infrastructure Security",
-      icon: <Database className="w-8 h-8 text-purple-500" />,
+      icon: <Database className="w-6 h-6 text-[#1A5276]" />,
       description: "Our infrastructure is built with security-first principles and best practices",
       details: [
         "Secure cloud infrastructure (AWS/Azure)",
@@ -56,7 +56,7 @@ export default function Security() {
     },
     {
       title: "Compliance & Certifications",
-      icon: <Award className="w-8 h-8 text-yellow-500" />,
+      icon: <Award className="w-6 h-6 text-[#34A853]" />,
       description: "We maintain industry certifications and comply with relevant regulations",
       details: [
         "SOC 2 Type II certified",
@@ -177,27 +177,27 @@ export default function Security() {
         title="Security & Trust"
         subtitle="Your security is our top priority. Learn about our comprehensive security measures and best practices."
         highlightText="Security"
-        gradientFrom="from-red-600"
-        gradientTo="to-pink-600"
+        gradientFrom="from-[#1A5276]"
+        gradientTo="to-[#34A853]"
       >
-        <div className="flex items-center justify-center space-x-4 text-red-200">
+        <div className="flex items-center justify-center space-x-4 text-white/90">
           <Calendar className="w-5 h-5" />
           <span>Last updated: {lastUpdated}</span>
         </div>
       </HeroSection>
 
       {/* Security Overview */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-8 mb-8">
-              <div className="flex items-start space-x-4">
-                <Shield className="w-8 h-8 text-blue-600 dark:text-blue-400 mt-1" />
+            <div className="bg-gradient-to-br from-[#1A5276]/10 to-[#34A853]/10 rounded-lg p-6 mb-6">
+              <div className="flex items-start space-x-3">
+                <Shield className="w-6 h-6 text-[#1A5276] mt-1" />
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
                     Our Security Commitment
                   </h2>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
                     At LocalPro, we take security seriously. We implement industry-leading security measures 
                     to protect your data and ensure the integrity of our platform. Our security program is 
                     designed to meet the highest standards and protect against evolving threats.
@@ -218,37 +218,37 @@ export default function Security() {
       </section>
 
       {/* Security Features */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Security Features
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Comprehensive security measures to protect your data
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {securityFeatures.map((feature, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg">
-                  <div className="flex items-center space-x-4 mb-6">
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                <div key={index} className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center text-white">
                       {feature.icon}
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {feature.title}
                       </h3>
                     </div>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 mb-6">
+                  <p className="text-slate-600 dark:text-slate-300 mb-3 text-sm">
                     {feature.description}
                   </p>
-                  <ul className="space-y-2">
+                  <ul className="space-y-1">
                     {feature.details.map((detail, detailIndex) => (
-                      <li key={detailIndex} className="flex items-start space-x-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" />
+                      <li key={detailIndex} className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-[#34A853] mt-1 flex-shrink-0" />
                         <span className="text-slate-600 dark:text-slate-300 text-sm">{detail}</span>
                       </li>
                     ))}
@@ -261,27 +261,27 @@ export default function Security() {
       </section>
 
       {/* Security Measures */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Security Measures
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Detailed breakdown of our security controls
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {securityMeasures.map((category, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
+                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
                     {category.category}
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-1">
                     {category.measures.map((measure, measureIndex) => (
-                      <li key={measureIndex} className="flex items-start space-x-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 mt-1 flex-shrink-0" />
+                      <li key={measureIndex} className="flex items-start space-x-2">
+                        <CheckCircle className="w-4 h-4 text-[#34A853] mt-1 flex-shrink-0" />
                         <span className="text-slate-600 dark:text-slate-300 text-sm">{measure}</span>
                       </li>
                     ))}
@@ -294,21 +294,21 @@ export default function Security() {
       </section>
 
       {/* Compliance */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Compliance & Certifications
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 We maintain industry certifications and regulatory compliance
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {complianceStandards.map((standard, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 text-center shadow-lg">
-                  <div className="flex justify-center mb-4">
+                <div key={index} className="bg-white dark:bg-slate-800 rounded-lg p-4 text-center shadow-lg">
+                  <div className="flex justify-center mb-3">
                     {standard.icon}
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
@@ -332,22 +332,22 @@ export default function Security() {
       </section>
 
       {/* Security Tips */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Security Best Practices
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Help us keep your account secure with these tips
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {securityTips.map((tip, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center text-white">
                       {tip.icon}
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -365,22 +365,22 @@ export default function Security() {
       </section>
 
       {/* Incident Response */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Incident Response
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 How we handle security incidents and breaches
               </p>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Zap className="w-8 h-8 text-red-600 dark:text-red-400" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center mx-auto mb-3 text-white">
+                    <Zap className="w-6 h-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Detection
@@ -390,8 +390,8 @@ export default function Security() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1A5276] rounded-lg flex items-center justify-center mx-auto mb-3 text-white">
+                    <AlertTriangle className="w-6 h-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Response
@@ -401,8 +401,8 @@ export default function Security() {
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center mx-auto mb-3 text-white">
+                    <CheckCircle className="w-6 h-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Recovery
@@ -418,43 +418,43 @@ export default function Security() {
       </section>
 
       {/* Contact Security Team */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-white dark:bg-slate-800">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Report Security Issues
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Help us maintain security by reporting vulnerabilities
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center">
-                  <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+                  <Mail className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Security Email
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     security@localpro.com
                   </p>
                 </div>
                 <div className="text-center">
-                  <Phone className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-4" />
+                  <Phone className="w-6 h-6 text-[#34A853] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Security Hotline
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     +1 (555) 123-4567
                   </p>
                 </div>
                 <div className="text-center">
-                  <FileText className="w-8 h-8 text-purple-600 dark:text-purple-400 mx-auto mb-4" />
+                  <FileText className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     Bug Bounty
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300">
+                  <p className="text-slate-600 dark:text-slate-300 text-sm">
                     Submit vulnerability reports
                   </p>
                 </div>

@@ -27,37 +27,37 @@ export default function HelpCenter() {
   const categories = [
     {
       name: "Getting Started",
-      icon: <Zap className="w-6 h-6" />,
+      icon: <Zap className="w-5 h-5" />,
       articles: 12,
       color: "blue"
     },
     {
       name: "Account & Profile",
-      icon: <Users className="w-6 h-6" />,
+      icon: <Users className="w-5 h-5" />,
       articles: 8,
       color: "green"
     },
     {
       name: "Marketplace",
-      icon: <Globe className="w-6 h-6" />,
+      icon: <Globe className="w-5 h-5" />,
       articles: 15,
       color: "purple"
     },
     {
       name: "Payments & Billing",
-      icon: <CreditCard className="w-6 h-6" />,
+      icon: <CreditCard className="w-5 h-5" />,
       articles: 10,
       color: "yellow"
     },
     {
       name: "Mobile App",
-      icon: <Smartphone className="w-6 h-6" />,
+      icon: <Smartphone className="w-5 h-5" />,
       articles: 6,
       color: "pink"
     },
     {
       name: "Security & Privacy",
-      icon: <Shield className="w-6 h-6" />,
+      icon: <Shield className="w-5 h-5" />,
       articles: 9,
       color: "red"
     }
@@ -165,8 +165,8 @@ export default function HelpCenter() {
         title="Help Center"
         subtitle="Find answers, get support, and learn how to make the most of LocalPro"
         highlightText="Help"
-        gradientFrom="from-blue-600"
-        gradientTo="to-emerald-600"
+        gradientFrom="from-[#1A5276]"
+        gradientTo="to-[#34A853]"
       >
         <div className="relative max-w-2xl mx-auto">
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -179,26 +179,26 @@ export default function HelpCenter() {
       </HeroSection>
 
       {/* Quick Help Categories */}
-      <section className="py-16 bg-white dark:bg-slate-800">
+      <section className="py-8 bg-white dark:bg-slate-800">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Browse by Category
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Find help organized by topic
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map((category, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer group">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <div className={`w-12 h-12 bg-${category.color}-100 dark:bg-${category.color}-900 rounded-lg flex items-center justify-center text-${category.color}-600 dark:text-${category.color}-400`}>
+                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer group">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center text-white">
                       {category.icon}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-[#34A853] transition-colors">
                         {category.name}
                       </h3>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -206,7 +206,7 @@ export default function HelpCenter() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center text-blue-600 dark:text-emerald-400 font-medium group-hover:text-blue-700 dark:group-hover:text-emerald-300 transition-colors">
+                  <div className="flex items-center text-[#34A853] font-medium group-hover:text-[#1A5276] transition-colors">
                     Browse articles
                     <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                   </div>
@@ -218,14 +218,14 @@ export default function HelpCenter() {
       </section>
 
       {/* Popular Articles */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Popular Articles
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Most viewed and helpful articles
               </p>
             </div>
@@ -267,8 +267,16 @@ export default function HelpCenter() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-white dark:bg-slate-800">
-        <div className="container mx-auto px-4">
+      <section className="py-12 bg-white dark:bg-slate-800 relative overflow-hidden">
+        <div 
+          className="absolute top-0 right-0 w-96 h-96 opacity-5"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+        <div className="w-full px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
@@ -307,40 +315,40 @@ export default function HelpCenter() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-16 bg-slate-50 dark:bg-slate-900">
+      <section className="py-8 bg-slate-50 dark:bg-slate-900">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                 Still Need Help?
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
+              <p className="text-lg text-slate-600 dark:text-slate-300">
                 Our support team is here to help you succeed
               </p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {contactMethods.map((method, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 dark:text-blue-400">
+                <div key={index} className="bg-white dark:bg-slate-800 rounded-lg p-4 text-center hover:shadow-lg transition-shadow">
+                  <div className="w-12 h-12 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center mx-auto mb-3 text-white">
                     {method.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
                     {method.title}
                   </h3>
-                  <p className="text-slate-600 dark:text-slate-300 mb-4">
+                  <p className="text-slate-600 dark:text-slate-300 mb-3 text-sm">
                     {method.description}
                   </p>
-                  <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                  <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
                     <div className="flex items-center justify-center">
-                      <Clock className="w-4 h-4 mr-2" />
+                      <Clock className="w-3 h-3 mr-1" />
                       {method.availability}
                     </div>
                     <div className="flex items-center justify-center">
-                      <Zap className="w-4 h-4 mr-2" />
+                      <Zap className="w-3 h-3 mr-1" />
                       {method.responseTime}
                     </div>
                   </div>
-                  <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                  <button className="mt-3 w-full bg-gradient-to-r from-[#1A5276] to-[#34A853] hover:from-[#1A5276]/90 hover:to-[#34A853]/90 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
                     Get Help
                   </button>
                 </div>

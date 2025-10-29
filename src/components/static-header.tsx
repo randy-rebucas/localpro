@@ -35,29 +35,30 @@ export function StaticHeader({ className = "" }: HeaderProps) {
   }, [isServicesOpen]);
 
   return (
-    <header className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50 shadow-lg ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <header className={`bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50 ${className}`}>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 z-50">
-            <Logo size={30} withText={true} />
+          <Link href="/" className="flex items-center space-x-2 z-50 group">
+            <Logo size={28} withText={true} className="group-hover:opacity-80 transition-opacity" />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
-            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+          <nav className="hidden lg:flex items-center space-x-6">
+            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Home
-              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
             
             {/* Services Dropdown */}
             <div className="relative" ref={servicesDropdownRef}>
               <button 
                 onClick={toggleServices}
-                className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium"
+                className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group"
               >
                 <span>Services</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
               </button>
               {isServicesOpen && (
                 <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
@@ -83,28 +84,28 @@ export function StaticHeader({ className = "" }: HeaderProps) {
               )}
             </div>
 
-            <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+            <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               About
-              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+            <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Blog
-              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium group">
+            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Contact
-              <div className="h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
           </nav>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <Link href="/auth" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium">
+          <div className="hidden lg:flex items-center space-x-3">
+            <Link href="/auth" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
               Sign In
             </Link>
-            <Link href="/auth" className="bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-semibold py-2.5 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 flex items-center group">
+            <Link href="/auth" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-all duration-200 flex items-center group">
               Get Started
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
 
