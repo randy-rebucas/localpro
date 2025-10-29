@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { handleApiRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
 // GET /api/supplies/my-orders - Get my supply orders
 export async function GET(request: NextRequest) {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await handleApiRequestWithEndpoint(
+    const response = await makeAuthenticatedRequestWithEndpoint(
       request,
       'suppliesMyOrders',
       { method: 'GET' }

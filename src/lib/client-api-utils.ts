@@ -27,7 +27,7 @@ export function clearApiToken(): void {
 /**
  * Get authentication headers for client-side requests
  */
-function getAuthHeaders(): HeadersInit {
+function getAuthHeaders(): HeadersInit | null {
   // Debug: Log all cookies in development
   if (process.env.NODE_ENV === 'development') {
     console.log('All cookies:', document.cookie);
@@ -40,11 +40,8 @@ function getAuthHeaders(): HeadersInit {
     ?.split('=')[1];
 
   if (!apiToken) {
-    // Enhanced error message with debugging info
-    const errorMessage = process.env.NODE_ENV === 'development' 
-      ? `No API token found. Available cookies: ${document.cookie || 'none'}`
-      : 'No authentication token found';
-    throw new Error(errorMessage);
+    // Return null instead of throwing error to allow graceful handling
+    return null;
   }
 
   return {
@@ -62,6 +59,10 @@ export async function makeClientAuthenticatedRequestWithEndpoint(
 ): Promise<Response> {
   const url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
   const authHeaders = getAuthHeaders();
+  
+  if (!authHeaders) {
+    throw new Error("No authentication token found - please log in");
+  }
   
   return fetch(url, {
     ...options,
@@ -95,6 +96,10 @@ export async function makeClientAuthenticatedRequestWithPath(
   }
   
   const authHeaders = getAuthHeaders();
+  
+  if (!authHeaders) {
+    throw new Error("No authentication token found - please log in");
+  }
   
   return fetch(url, {
     ...options,
@@ -342,6 +347,12 @@ export async function makeClientAuthenticatedRequestWithPathSafe(
   queryParams: Record<string, string> = {},
   options: RequestInit = {}
 ): Promise<Response> {
+  // Check if we have authentication headers before making the request
+  const authHeaders = getAuthHeaders();
+  if (!authHeaders) {
+    throw new Error("No authentication token found - please log in");
+  }
+
   try {
     const response = await makeClientAuthenticatedRequestWithPath(baseEndpoint, pathParams, queryParams, options);
     
@@ -354,7 +365,7 @@ export async function makeClientAuthenticatedRequestWithPathSafe(
     return response;
   } catch (error) {
     // If it's an auth error, handle it
-    if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized"))) {
+    if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("No authentication token"))) {
       handleExpiredToken();
     }
     throw error;

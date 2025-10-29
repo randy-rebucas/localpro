@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
-
-// GET /api/supplies/:id - Get single supply item
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -82,14 +80,6 @@ export async function PUT(
     }
 
     const { id } = await params;
-    
-    if (!id) {
-      return NextResponse.json(
-        { error: "Supply ID is required" },
-        { status: 400 }
-      );
-    }
-
     const body = await request.json();
 
     const response = await makeAuthenticatedRequestWithPath(

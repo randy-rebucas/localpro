@@ -17,14 +17,32 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
 
+    // Validate required fields
+    if (!body.quantity || body.quantity <= 0) {
+      return NextResponse.json(
+        { error: "Quantity is required and must be greater than 0" },
+        { status: 400 }
+      );
+    }
+
+    if (!body.shippingAddress) {
+      return NextResponse.json(
+        { error: "Shipping address is required" },
+        { status: 400 }
+      );
+    }
+
     const response = await makeAuthenticatedRequestWithPath(
       request,
-      'suppliesOrder',
-      [id],
+      'supplies',
+      [id, 'order'],
       {},
       {
         method: 'POST',
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
 

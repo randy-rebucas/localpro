@@ -1,9 +1,16 @@
 import { NextResponse, NextRequest } from "next/server";
+import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
 
-// GET /api/academy/featured - Get featured courses
+// GET /api/academy/featured - Get featured courses (All authenticated users)
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const response = await makeAuthenticatedRequestWithEndpoint(
       request,
       'academyFeatured',

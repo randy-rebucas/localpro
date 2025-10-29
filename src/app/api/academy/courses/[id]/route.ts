@@ -8,11 +8,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(request);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { id } = await params;
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'academyCoursesById',
       [id],
+      {},
       { method: 'GET' }
     );
 
@@ -62,6 +69,15 @@ export async function PUT(
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user has permission to update courses (Instructor/Admin only)
+  const allowedRoles = ['instructor', 'admin'];
+  if (!session.user.role || !allowedRoles.includes(session.user.role)) {
+    return NextResponse.json(
+      { error: "Insufficient permissions. Only instructors and admins can update courses." }, 
+      { status: 403 }
+    );
   }
 
   const { id } = await params;
@@ -125,6 +141,15 @@ export async function DELETE(
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check if user has permission to delete courses (Instructor/Admin only)
+  const allowedRoles = ['instructor', 'admin'];
+  if (!session.user.role || !allowedRoles.includes(session.user.role)) {
+    return NextResponse.json(
+      { error: "Insufficient permissions. Only instructors and admins can delete courses." }, 
+      { status: 403 }
+    );
   }
 
   const { id } = await params;

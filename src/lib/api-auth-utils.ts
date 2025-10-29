@@ -141,6 +141,12 @@ export async function makeAuthenticatedRequestWithPath(
     url += `?${queryString}`;
   }
   
+  // Debug logging (can be enabled for troubleshooting)
+  // console.log("makeAuthenticatedRequestWithPath - Final URL:", url);
+  // console.log("makeAuthenticatedRequestWithPath - API_BASE_URL:", API_BASE_URL);
+  // console.log("makeAuthenticatedRequestWithPath - Endpoint:", API_ENDPOINTS[baseEndpoint]);
+  // console.log("makeAuthenticatedRequestWithPath - Query params:", queryParams);
+  
   return makeAuthenticatedRequest(request, url, options);
 }
 

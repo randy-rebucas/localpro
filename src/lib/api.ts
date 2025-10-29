@@ -97,6 +97,8 @@ export const API_ENDPOINTS = {
   suppliesProducts: "/api/supplies/products",
   suppliesProductsById: "/api/supplies/products",
   suppliesCategories: "/api/supplies/categories",
+  suppliesTypes: "/api/supplies/types",
+  suppliesStatuses: "/api/supplies/statuses",
   suppliesFeatured: "/api/supplies/featured",
   suppliesNearby: "/api/supplies/nearby",
   suppliesById: "/api/supplies",

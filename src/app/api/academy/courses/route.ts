@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/academy/courses - Get all courses
+// GET /api/academy/courses - Get all courses (All authenticated users)
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
@@ -14,6 +14,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const queryParams = Object.fromEntries(searchParams.entries());
     
+    // Debug logging (can be enabled for troubleshooting)
+    // console.log("API Route - Query params received:", queryParams);
+    // console.log("API Route - Making request to external service with params:", queryParams);
+    
     const response = await makeAuthenticatedRequestWithPath(
       request,
       'academyCourses',
@@ -21,6 +25,8 @@ export async function GET(request: NextRequest) {
       queryParams,
       { method: 'GET' }
     );
+    
+    // console.log("API Route - External service response status:", response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -66,6 +72,15 @@ export async function POST(request: NextRequest) {
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user has permission to create courses (Instructor/Admin only)
+    const allowedRoles = ['instructor', 'admin'];
+    if (!session.user.role || !allowedRoles.includes(session.user.role)) {
+      return NextResponse.json(
+        { error: "Insufficient permissions. Only instructors and admins can create courses." }, 
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

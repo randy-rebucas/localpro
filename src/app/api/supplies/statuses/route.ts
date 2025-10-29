@@ -1,8 +1,8 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "@/lib/server-session";
-import { makeAuthenticatedRequestWithEndpoint } from "@/lib/api-auth-utils";
+import { makeAuthenticatedRequestWithPath } from "@/lib/api-auth-utils";
 
-// GET /api/academy/categories - Get course categories (All authenticated users)
+// GET /api/supplies/statuses - Get all supply statuses
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(request);
@@ -11,24 +11,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await makeAuthenticatedRequestWithEndpoint(
+    const { searchParams } = new URL(request.url);
+    const queryParams = Object.fromEntries(searchParams.entries());
+    
+    const response = await makeAuthenticatedRequestWithPath(
       request,
-      'academyCategories',
+      'supplies',
+      ['statuses'], // Path parameter for statuses
+      queryParams,
       { method: 'GET' }
     );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || "Failed to fetch course categories" },
+        { error: errorData.error || "Failed to fetch supply statuses" },
         { status: response.status }
       );
     }
 
     const data = await response.json();
     return NextResponse.json(data);
+
   } catch (error) {
-    console.error("Error fetching course categories:", error);
+    console.error("Error fetching supply statuses:", error);
     
     let errorMessage = "Internal server error";
     let statusCode = 500;

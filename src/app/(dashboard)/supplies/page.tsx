@@ -11,18 +11,18 @@ import {
   Star,
   Package,
   Clock,
-  Eye,
-  Edit,
-  Heart,
-  Share2,
   Grid3X3,
   List,
   SortAsc,
   SortDesc,
-  ShoppingCart,
   Truck,
   Shield,
-  Zap
+  Zap,
+  Heart,
+  Share2,
+  Eye,
+  Edit,
+  ShoppingCart
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { ListSkeleton } from "@/components/ui/loading";
@@ -30,6 +30,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useRoleAccess } from "@/components/role-guard";
 
 export interface Supply {
   id: string;
@@ -90,34 +91,9 @@ export interface Supply {
   updatedAt: string;
 }
 
-// Categories will be fetched from API, fallback to default
-const defaultCategories = [
-  "All Categories",
-  "Cleaning Supplies",
-  "Tools & Equipment",
-  "Building Materials",
-  "Safety Equipment",
-  "Office Supplies",
-  "Maintenance Kits",
-  "Other"
-];
+// Categories will be fetched from API
 
-const types = [
-  "All Types",
-  "Cleaning",
-  "Tools",
-  "Materials",
-  "Equipment",
-  "Subscription"
-];
-
-const statuses = [
-  "All Status",
-  "Available",
-  "Out of Stock",
-  "Discontinued",
-  "Pre-order"
-];
+// Types and statuses will be fetched from API
 
 // const units = [
 //   "All Units",
@@ -150,9 +126,75 @@ const getTypeIcon = (type: Supply['type']) => {
   }
 };
 
+// Helper function to get placeholder image URL
+const getPlaceholderImage = (width: number = 400, height: number = 300, text?: string) => {
+  const baseUrl = 'https://placehold.co';
+  const size = `${width}x${height}`;
+  const textParam = text ? `?text=${encodeURIComponent(text)}` : '';
+  return `${baseUrl}/${size}${textParam}`;
+};
+
+// Helper function to validate and normalize supply data from API
+const validateSupplyData = (supply: unknown): Supply | null => {
+  if (!supply || typeof supply !== 'object') return null;
+  
+  const supplyObj = supply as Record<string, unknown>;
+  
+  // Ensure required fields exist with defaults
+  return {
+    id: (supplyObj.id as string) || '',
+    name: (supplyObj.name as string) || 'Unnamed Supply',
+    description: (supplyObj.description as string) || '',
+    category: (supplyObj.category as string) || 'Other',
+    type: (supplyObj.type as 'cleaning' | 'tools' | 'materials' | 'equipment' | 'subscription') || 'equipment',
+    status: (supplyObj.status as 'available' | 'out-of-stock' | 'discontinued' | 'pre-order') || 'available',
+    price: typeof supplyObj.price === 'number' ? supplyObj.price : 0,
+    originalPrice: supplyObj.originalPrice as number,
+    unit: (supplyObj.unit as 'piece' | 'pack' | 'box' | 'kg' | 'liter' | 'set') || 'piece',
+    stock: typeof supplyObj.stock === 'number' ? supplyObj.stock : 0,
+    minOrder: (supplyObj.minOrder as number) || 1,
+    maxOrder: supplyObj.maxOrder as number,
+    location: {
+      address: (supplyObj.location as { address?: string })?.address || '',
+      city: (supplyObj.location as { city?: string })?.city || '',
+      state: (supplyObj.location as { state?: string })?.state || '',
+      zipCode: (supplyObj.location as { zipCode?: string })?.zipCode || '',
+      coordinates: (supplyObj.location as { coordinates?: { lat: number; lng: number } })?.coordinates
+    },
+    images: Array.isArray(supplyObj.images) ? supplyObj.images : [],
+    features: Array.isArray(supplyObj.features) ? supplyObj.features : [],
+    specifications: supplyObj.specifications || {},
+    supplier: {
+      id: (supplyObj.supplier as { id?: string })?.id || '',
+      name: (supplyObj.supplier as { name?: string })?.name || 'Unknown Supplier',
+      avatar: (supplyObj.supplier as { avatar?: string })?.avatar,
+      rating: (supplyObj.supplier as { rating?: number })?.rating ?? 0,
+      reviewCount: (supplyObj.supplier as { reviewCount?: number })?.reviewCount || 0,
+      verified: Boolean((supplyObj.supplier as { verified?: boolean })?.verified),
+      location: (supplyObj.supplier as { location?: string })?.location || ''
+    },
+    delivery: {
+      available: Boolean((supplyObj.delivery as { available?: boolean })?.available),
+      estimatedDays: (supplyObj.delivery as { estimatedDays?: number })?.estimatedDays || 0,
+      cost: (supplyObj.delivery as { cost?: number })?.cost || 0,
+      freeShippingThreshold: (supplyObj.delivery as { freeShippingThreshold?: number })?.freeShippingThreshold
+    },
+    rating: typeof supplyObj.rating === 'number' ? supplyObj.rating : 0,
+    reviewCount: (supplyObj.reviewCount as number) || 0,
+    viewsCount: (supplyObj.viewsCount as number) || 0,
+    isFeatured: Boolean(supplyObj.isFeatured),
+    isFavorited: Boolean(supplyObj.isFavorited),
+    tags: Array.isArray(supplyObj.tags) ? supplyObj.tags : [],
+    createdAt: (supplyObj.createdAt as string) || new Date().toISOString(),
+    updatedAt: (supplyObj.updatedAt as string) || new Date().toISOString()
+  };
+};
+
 export default function SuppliesPage() {
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [featuredSupplies, setFeaturedSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -175,6 +217,7 @@ export default function SuppliesPage() {
     count: 0
   });
   const router = useRouter();
+  const { canCreateSupplies } = useRoleAccess();
 
   // Get user location for nearby search
   useEffect(() => {
@@ -203,11 +246,68 @@ export default function SuppliesPage() {
       }
 
       const data = await response.json();
-      setCategories(data.categories || data.data || []);
+      
+      // Handle different API response structures
+      const categoriesData = data.categories || data.data || data.items || data.results || [];
+      
+      // Ensure categories is an array
+      const categories = Array.isArray(categoriesData) ? categoriesData : [];
+      
+      setCategories(categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       setError('Failed to fetch categories');
       setCategories([]);
+    }
+  };
+
+  // Fetch types
+  const fetchTypes = async () => {
+    try {
+      const response = await fetch('/api/supplies/types');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch types');
+      }
+
+      const data = await response.json();
+      
+      // Handle different API response structures
+      const typesData = data.types || data.data || data.items || data.results || [];
+      
+      // Ensure types is an array
+      const types = Array.isArray(typesData) ? typesData : [];
+      
+      setTypes(types);
+    } catch (error) {
+      console.error('Error fetching types:', error);
+      setError('Failed to fetch types');
+      setTypes([]);
+    }
+  };
+
+  // Fetch statuses
+  const fetchStatuses = async () => {
+    try {
+      const response = await fetch('/api/supplies/statuses');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch statuses');
+      }
+
+      const data = await response.json();
+      
+      // Handle different API response structures
+      const statusesData = data.statuses || data.data || data.items || data.results || [];
+      
+      // Ensure statuses is an array
+      const statuses = Array.isArray(statusesData) ? statusesData : [];
+      
+      setStatuses(statuses);
+    } catch (error) {
+      console.error('Error fetching statuses:', error);
+      setError('Failed to fetch statuses');
+      setStatuses([]);
     }
   };
 
@@ -221,7 +321,17 @@ export default function SuppliesPage() {
       }
 
       const data = await response.json();
-      setFeaturedSupplies(data.supplies || data.data || []);
+      
+      // Handle different API response structures
+      const featuredData = data.supplies || data.data || data.items || data.results || [];
+      
+      // Ensure featured supplies is an array and validate each item
+      const rawFeaturedSupplies = Array.isArray(featuredData) ? featuredData : [];
+      const featuredSupplies = rawFeaturedSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
+      
+      console.log('Processed featured supplies:', featuredSupplies.length, 'items (validated from', rawFeaturedSupplies.length, 'raw items)');
+      
+      setFeaturedSupplies(featuredSupplies);
     } catch (error) {
       console.error('Error fetching featured supplies:', error);
       setFeaturedSupplies([]);
@@ -250,8 +360,24 @@ export default function SuppliesPage() {
       }
 
       const data = await response.json();
-      setSupplies(data.supplies || data.data || []);
-      setPagination(data.pagination || { page: 1, pages: 1, total: 0, count: 0 });
+      
+      // Handle different API response structures
+      const suppliesData = data.supplies || data.data || data.items || data.results || [];
+      const paginationData = data.pagination || data.meta || {};
+      
+      // Ensure supplies is an array and validate each item
+      const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
+      const supplies = rawSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
+      
+      console.log('Processed nearby supplies:', supplies.length, 'items (validated from', rawSupplies.length, 'raw items)');
+      
+      setSupplies(supplies);
+      setPagination({
+        page: paginationData.page || 1,
+        pages: paginationData.pages || paginationData.totalPages || 1,
+        total: paginationData.total || paginationData.count || supplies.length,
+        count: paginationData.count || supplies.length
+      });
     } catch (error) {
       console.error('Error fetching nearby supplies:', error);
       setError('Failed to fetch nearby supplies');
@@ -288,8 +414,32 @@ export default function SuppliesPage() {
       }
 
       const data = await response.json();
-      setSupplies(data.supplies || data.data || []);
-      setPagination(data.pagination || { page: 1, pages: 1, total: 0, count: 0 });
+      
+      // Log API response for debugging
+      console.log('Supplies API Response:', data);
+      
+      // Handle different API response structures
+      const suppliesData = data.supplies || data.data || data.items || data.results || [];
+      const paginationData = data.pagination || data.meta || {};
+      
+      // Ensure supplies is an array and validate each item
+      const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
+      const supplies = rawSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
+      
+      console.log('Processed supplies:', supplies.length, 'items (validated from', rawSupplies.length, 'raw items)');
+      
+      // Check if we have actual data
+      if (supplies.length === 0 && !data.error) {
+        console.log('No supplies found in API response');
+      }
+      
+      setSupplies(supplies);
+      setPagination({
+        page: paginationData.page || 1,
+        pages: paginationData.pages || paginationData.totalPages || 1,
+        total: paginationData.total || paginationData.count || supplies.length,
+        count: paginationData.count || supplies.length
+      });
     } catch (error) {
       console.error('Error fetching supplies:', error);
       setError('Failed to fetch supplies. Please try again later.');
@@ -306,6 +456,8 @@ export default function SuppliesPage() {
   // Main useEffect to load initial data
   useEffect(() => {
     fetchCategories();
+    fetchTypes();
+    fetchStatuses();
     fetchFeaturedSupplies();
   }, []);
 
@@ -473,10 +625,12 @@ export default function SuppliesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Supplies & Materials</h1>
           <p className="text-gray-600">Find tools, materials, and supplies for your projects</p>
         </div>
-        <Button onClick={handleCreateSupply} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          List Supply
-        </Button>
+        {canCreateSupplies && (
+          <Button onClick={handleCreateSupply} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            List Supply
+          </Button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -627,10 +781,10 @@ export default function SuppliesPage() {
                   <Select
                     value={selectedCategory}
                     onValueChange={(value) => setSelectedCategory(value)}
-                    options={categories.length > 0 
-                      ? [...defaultCategories, ...categories.filter(cat => !defaultCategories.includes(cat))].map(cat => ({ value: cat, label: cat }))
-                      : defaultCategories.map(cat => ({ value: cat, label: cat }))
-                    }
+                    options={[
+                      { value: "All Categories", label: "All Categories" },
+                      ...categories.map(cat => ({ value: cat, label: cat }))
+                    ]}
                   />
                 </div>
 
@@ -640,7 +794,10 @@ export default function SuppliesPage() {
                   <Select
                     value={selectedType}
                     onValueChange={(value) => setSelectedType(value)}
-                    options={types.map(type => ({ value: type, label: type }))}
+                    options={[
+                      { value: "All Types", label: "All Types" },
+                      ...types.map(type => ({ value: type, label: type }))
+                    ]}
                   />
                 </div>
 
@@ -650,7 +807,10 @@ export default function SuppliesPage() {
                   <Select
                     value={selectedStatus}
                     onValueChange={(value) => setSelectedStatus(value)}
-                    options={statuses.map(status => ({ value: status, label: status }))}
+                    options={[
+                      { value: "All Status", label: "All Status" },
+                      ...statuses.map(status => ({ value: status, label: status }))
+                    ]}
                   />
                 </div>
 
@@ -721,7 +881,7 @@ export default function SuppliesPage() {
                 }
               </p>
               <div className="flex gap-2 justify-center">
-                {!error && (
+                {!error && canCreateSupplies && (
                   <Button onClick={handleCreateSupply}>
                     List Your First Supply
                   </Button>
@@ -765,17 +925,19 @@ export default function SuppliesPage() {
               {sortedSupplies.map((supply) => (
                 <Card key={supply.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="relative">
-                    {supply.images.length > 0 && (
-                      <div className="aspect-video bg-gray-100">
-                        <Image
-                          src={supply.images[0]}
-                          alt={supply.name}
-                          width={400}
-                          height={225}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
+                    <div className="aspect-video bg-gray-100">
+                      <Image
+                        src={supply.images && supply.images.length > 0 ? supply.images[0] : getPlaceholderImage(400, 225, supply.name)}
+                        alt={supply.name}
+                        width={400}
+                        height={225}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = getPlaceholderImage(400, 225, supply.name);
+                        }}
+                      />
+                    </div>
                     <div className="absolute top-2 right-2 flex gap-1">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(supply.status)}`}>
                         {supply.status}
@@ -817,13 +979,15 @@ export default function SuppliesPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditSupply(supply.id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        {canCreateSupplies && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditSupply(supply.id)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                     
