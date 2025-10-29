@@ -6,23 +6,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
-  Phone, 
   ArrowRight, 
   Shield, 
   CheckCircle, 
   Loader2
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import Image from "next/image";
 
 const signInSchema = z.object({
   phone: z
     .string()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number is too long")
-    .regex(/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"),
+    .min(1, "Phone number is required")
+    .refine((phone) => {
+      // Remove all non-digit characters for validation
+      const digits = phone.replace(/\D/g, '');
+      return digits.length >= 7 && digits.length <= 15;
+    }, "Phone number must be between 7 and 15 digits")
+    .refine((phone) => {
+      // Must start with + for international format
+      return phone.startsWith('+');
+    }, "Please enter a valid international phone number starting with +"),
 });
 
 const verificationSchema = z.object({
@@ -78,7 +84,6 @@ function SignInForm() {
   }, [step]);
 
   const {
-    register,
     handleSubmit,
     formState: { errors: phoneErrors },
     clearErrors,
@@ -223,8 +228,13 @@ function SignInForm() {
     }
   };
 
-  const onSubmit = async (data: SignInForm) => {
-    await sendVerificationCode(data.phone);
+  const onSubmit = async () => {
+    // Use the phoneNumber state which is already formatted
+    if (phoneNumber) {
+      await sendVerificationCode(phoneNumber);
+    } else {
+      setErrors({ phone: "Please enter a valid phone number" });
+    }
   };
 
   return (
@@ -259,12 +269,16 @@ function SignInForm() {
             <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
                 <div>
-                  <Input
-                    label="Phone Number"
-                    {...register("phone")}
-                    type="tel"
-                    leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
-                    placeholder="+1 (555) 123-4567"
+                  <PhoneInput
+                    value={phoneNumber}
+                    onChange={(value) => {
+                      setPhoneNumber(value);
+                      // Clear errors when user starts typing
+                      if (errors.phone) {
+                        setErrors({ ...errors, phone: "" });
+                      }
+                      clearErrors();
+                    }}
                     error={phoneErrors.phone?.message || errors.phone}
                     className="text-lg"
                     autoComplete="tel"
