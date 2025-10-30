@@ -1,15 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import dynamic from "next/dynamic";
-const ScrollProgressClient = dynamic(
-  () => import("@/components/scroll-progress").then(m => m.ScrollProgress),
-  { ssr: false }
-);
-const ScrollToTopClient = dynamic(
-  () => import("@/components/scroll-progress").then(m => m.ScrollToTop),
-  { ssr: false }
-);
+import { StaticPageLayout } from "@/components/static-page-layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
 import {
   CheckCircle,
   Store,
@@ -19,18 +14,26 @@ import {
   Car,
   Megaphone,
   ArrowRight,
-  Home as HomeIcon,
   Calendar,
-  BookOpen,
-  Wallet,
+  Users,
+  TrendingUp,
+  Shield,
+  Zap,
+  Star,
+  Phone,
   User,
-  ChevronDown,
+  Sparkles,
+  Rocket,
+  Heart,
+  Award,
+  Globe,
+  Clock,
 } from "lucide-react";
 
 export default function Home() {
-
-
   const [expandedByIndex, setExpandedByIndex] = useState<Record<number, boolean>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
   const toggleFeature = (index: number) => {
     setExpandedByIndex(prev => ({ ...prev, [index]: !prev[index] }));
@@ -41,420 +44,632 @@ export default function Home() {
       icon: Store,
       title: "Marketplace",
       description: "Connect with customers and grow your business through our comprehensive marketplace platform.",
-      features: ["Service listings & bookings", "Payment processing", "Customer reviews"]
+      features: ["Service listings & bookings", "Payment processing", "Customer reviews"],
+      color: "from-blue-500 to-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
       icon: GraduationCap,
       title: "Academy",
       description: "Enhance your skills with our comprehensive training programs and certifications.",
-      features: ["Professional courses", "Industry certifications", "Expert instructors"]
+      features: ["Professional courses", "Industry certifications", "Expert instructors"],
+      color: "from-purple-500 to-purple-600",
+      bgColor: "bg-purple-50",
     },
     {
       icon: Package,
       title: "Supplies",
       description: "Source quality supplies and equipment for your business needs.",
-      features: ["Quality suppliers", "Bulk discounts", "Fast delivery"]
+      features: ["Quality suppliers", "Bulk discounts", "Fast delivery"],
+      color: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-50",
     },
     {
       icon: Car,
       title: "Rentals",
       description: "Rent equipment and tools for your projects without the upfront costs.",
-      features: ["Equipment rental", "Flexible terms", "Insurance coverage"]
+      features: ["Equipment rental", "Flexible terms", "Insurance coverage"],
+      color: "from-red-500 to-red-600",
+      bgColor: "bg-red-50",
     },
     {
       icon: Megaphone,
       title: "Advertising",
       description: "Promote your services and reach more customers with targeted advertising.",
-      features: ["Targeted campaigns", "Analytics & insights", "Budget control"]
+      features: ["Targeted campaigns", "Analytics & insights", "Budget control"],
+      color: "from-cyan-500 to-cyan-600",
+      bgColor: "bg-cyan-50",
     },
     {
       icon: CreditCard,
       title: "Finance",
       description: "Manage your finances with our integrated financial tools and services.",
-      features: ["Payment processing", "Financial tracking", "Tax management"]
+      features: ["Payment processing", "Financial tracking", "Tax management"],
+      color: "from-emerald-500 to-emerald-600",
+      bgColor: "bg-emerald-50",
     }
   ];
 
-
-  const staticLinks = [
-    { name: "About Us", href: "/about" },
-    { name: "Contact", href: "/contact" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-    { name: "Help Center", href: "/help-center" },
-    { name: "Security", href: "/security" },
-    { name: "Careers", href: "/careers" },
-    { name: "Partners", href: "/partners" },
-    { name: "Community", href: "/community" },
-    { name: "Blog", href: "/blog" }
+  const valuePropositions = [
+    {
+      icon: Zap,
+      title: "All-in-One Platform",
+      description: "Everything you need to run your business in one integrated ecosystem",
+      color: "text-yellow-600",
+    },
+    {
+      icon: Users,
+      title: "Growing Community",
+      description: "Join thousands of professionals building their businesses",
+      color: "text-blue-600",
+    },
+    {
+      icon: Shield,
+      title: "Secure & Trusted",
+      description: "Enterprise-grade security protecting your data and transactions",
+      color: "text-green-600",
+    },
+    {
+      icon: TrendingUp,
+      title: "Scale Your Business",
+      description: "Tools and insights to grow your revenue and customer base",
+      color: "text-purple-600",
+    },
   ];
 
+  const stats = [
+    { label: "Active Users", value: "10K+", icon: Users },
+    { label: "Services Listed", value: "50K+", icon: Store },
+    { label: "Success Rate", value: "98%", icon: Star },
+    { label: "Service Providers", value: "5K+", icon: Users },
+  ];
+
+  const popularServices = [
+    { name: "Cleaning Services", icon: "🧹", color: "bg-blue-100 text-blue-700" },
+    { name: "Plumbing", icon: "🔧", color: "bg-orange-100 text-orange-700" },
+    { name: "Electrical", icon: "⚡", color: "bg-yellow-100 text-yellow-700" },
+    { name: "Moving Services", icon: "📦", color: "bg-purple-100 text-purple-700" },
+    { name: "Home Repair", icon: "🛠️", color: "bg-green-100 text-green-700" },
+    { name: "Landscaping", icon: "🌿", color: "bg-emerald-100 text-emerald-700" },
+  ];
+
+  const timelineEvents = [
+    {
+      date: "November 2025",
+      title: "Beta Testing Launch",
+      description: "Second week - Early access for select users",
+      status: "upcoming",
+      dotColor: "bg-emerald-500",
+    },
+    {
+      date: "December 2025",
+      title: "Public Launch",
+      description: "First week - Open to everyone worldwide",
+      status: "upcoming",
+      dotColor: "bg-blue-500",
+    },
+    {
+      date: "January 2026",
+      title: "Mobile App Release",
+      description: "First week - Native iOS and Android apps",
+      status: "upcoming",
+      dotColor: "bg-purple-500",
+    },
+  ];
+
+
+  const handleEarlyAccess = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('Early joiner', {
+      phone: data.get('phone'),
+      firstName: data.get('firstName'),
+      lastName: data.get('lastName'),
+    });
+    
+    form.reset();
+    setIsSubmitting(false);
+    alert('Thank you! We\'ll be in touch soon.');
+  };
+
   return (
-    <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')"
-        }}
-      />
+    <StaticPageLayout className="bg-white">
+      {/* Hero Section */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+        </div>
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1A5276]/85 via-[#1A5276]/75 to-[#34A853]/80"></div>
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
 
-      {/* Content */}
-      <div className="relative z-10 min-h-screen flex items-center">
-        <ScrollProgressClient />
-        <ScrollToTopClient />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
+          <div className="text-center max-w-5xl mx-auto">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full mb-8 border border-white/30 shadow-lg hover:bg-white/30 transition-all">
+              <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" />
+              <span className="text-sm font-semibold text-white">Coming Soon to the Philippines</span>
+              <Rocket className="w-5 h-5 text-yellow-300" />
+            </div>
+            
+            {/* Main Heading */}
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-8 leading-tight tracking-tight">
+              <span className="block text-white mb-2">Your All-in-One</span>
+              <span className="block bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent animate-gradient">
+                Professional Platform
+              </span>
+            </h1>
+            
+            {/* Subheading */}
+            <p className="text-xl md:text-2xl lg:text-3xl text-purple-100 mb-12 leading-relaxed max-w-3xl mx-auto font-light">
+              Connect, grow, and succeed with LocalPro—the complete ecosystem for services, supplies, training, finance, and more.
+            </p>
 
-        <main className="w-full">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16">
+              <Button
+                size="lg"
+                className="group bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white hover:from-yellow-500 hover:via-pink-600 hover:to-purple-600 text-lg px-10 py-7 rounded-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 border-0"
+                onClick={() => document.getElementById('early-access')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Join Early Access
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white/50 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 text-lg px-10 py-7 rounded-2xl font-bold shadow-lg transition-all transform hover:scale-105"
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Explore Features
+              </Button>
+            </div>
 
-              {/* Left Section - Main Content */}
-              <div className="lg:col-span-2 space-y-4">
-
-                {/* App Name Section */}
-                <div className="text-center lg:text-left">
-                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-                    <span className="text-[#1A5276] drop-shadow-lg">Local</span><span className="text-[#34A853] drop-shadow-lg">Pro</span>
-                  </h1>
-                  <p className="text-lg text-white max-w-xl leading-relaxed font-medium">
-                    Your Trusted Local Pros - The ultimate Super App ecosystem for professionals worldwide
-                  </p>
-                </div>
-
-                {/* Key Features */}
-                <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {keyFeatures.map((feature, index) => {
-                      const IconComponent = feature.icon;
-                      const isOpen = !!expandedByIndex[index];
-                      return (
-                        <div key={index} className="group">
-                          <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-[#F5F5F5]/10 transition-all duration-300 backdrop-blur-sm">
-                            <div className="flex-shrink-0">
-                              <div className="w-9 h-9 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
-                                <IconComponent className="w-4 h-4 text-white" />
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0 relative">
-                              <h3 className="text-sm font-semibold text-white mb-1.5 drop-shadow-sm">
-                                {feature.title}
-                              </h3>
-
-                              <button
-                                type="button"
-                                onClick={() => toggleFeature(index)}
-                                aria-expanded={isOpen}
-                                aria-controls={`feature-list-${index}`}
-                                className="absolute top-0 right-0 inline-flex items-center justify-center rounded-md border border-white/20 text-white/90 hover:text-white hover:border-white/40 transition-colors p-1"
-                              >
-                                <ChevronDown
-                                  className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}
-                                />
-                              </button>
-                              <div className={`${isOpen ? "mt-1 space-y-0.5" : "hidden"}`}>
-                                <p className="text-xs text-white/90 mb-1.5 leading-relaxed">
-                                  {feature.description}
-                                </p>
-                                <ul
-                                  id={`feature-list-${index}`}>
-                                  {feature.features.map((item, idx) => (
-                                    <li key={idx} className="flex items-center text-xs text-white/85">
-                                      <CheckCircle className="w-2.5 h-2.5 text-[#34A853] mr-1.5 flex-shrink-0" />
-                                      {item}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Launch Date Card */}
-                  <div className="mt-6">
-                    <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl">
-                      <div className="flex items-center justify-center mb-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-[#34A853] to-[#1A5276] rounded-full flex items-center justify-center">
-                          <Calendar className="w-6 h-6 text-white" />
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <h3 className="text-xl font-bold text-white mb-2 drop-shadow-sm">
-                          Launch Schedule
-                        </h3>
-                        <p className="text-white/90 mb-4 text-sm leading-relaxed">
-                          We&apos;re working hard to bring you the best professional services platform
-                        </p>
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-center space-x-2 text-sm">
-                            <div className="w-2 h-2 bg-[#34A853] rounded-full"></div>
-                            <span className="text-white/85">Beta Testing: November 2025, second week</span>
-                          </div>
-                          <div className="flex items-center justify-center space-x-2 text-sm">
-                            <div className="w-2 h-2 bg-[#1A5276] rounded-full"></div>
-                            <span className="text-white/85">Public Launch: December 2025, first week</span>
-                          </div>
-                          <div className="flex items-center justify-center space-x-2 text-sm">
-                            <div className="w-2 h-2 bg-white/60 rounded-full"></div>
-                            <span className="text-white/85">Mobile App: January 2026, first week</span>
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-white/20">
-                          <p className="text-xs text-white/70">
-                            Stay updated with our latest announcements
-                          </p>
-                        </div>
-                      </div>
-                      {/* Early Joiners Card (below Launch Schedule) */}
-                      <div className="mt-4">
-                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-xl">
-                          <h4 className="text-base font-semibold text-white mb-3 drop-shadow-sm">Early Joiners</h4>
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              const form = e.currentTarget as HTMLFormElement;
-                              const data = new FormData(form);
-                              console.log('Early joiner', {
-                                phone: data.get('phone'),
-                                firstName: data.get('firstName'),
-                                lastName: data.get('lastName'),
-                              });
-                              form.reset();
-                            }}
-                            className="space-y-3"
-                          >
-                            <div>
-                              <label className="block text-xs font-medium text-gray-800 mb-1">Phone Number</label>
-                              <input
-                                name="phone"
-                                type="tel"
-                                required
-                                placeholder="+1 555 123 4567"
-                                className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                              <div>
-                                <label className="block text-xs font-medium text-gray-800 mb-1">First Name</label>
-                                <input
-                                  name="firstName"
-                                  type="text"
-                                  required
-                                  placeholder="John"
-                                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-xs font-medium text-gray-800 mb-1">Last Name</label>
-                                <input
-                                  name="lastName"
-                                  type="text"
-                                  required
-                                  placeholder="Doe"
-                                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white text-gray-900 placeholder-gray-500 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                                />
-                              </div>
-                            </div>
-                            <button
-                              type="submit"
-                              className="w-full mt-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-gradient-to-br from-[#34A853] to-[#1A5276] rounded-lg hover:from-emerald-600 hover:to-sky-700 transition-colors shadow-md"
-                            >
-                              Join Early Access
-                            </button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Static Page Links */}
-                <div className="text-left">
-                  {staticLinks.map((link, index) => (
-                    <span key={index}>
-                      <a
-                        href={link.href}
-                        className="text-white hover:text-white/80 underline text-sm font-medium transition-colors drop-shadow-sm"
-                      >
-                        {link.name}
-                      </a>
-                      {index < staticLinks.length - 1 && (
-                        <span className="text-white/70 mx-2">|</span>
-                      )}
-                    </span>
-                  ))}
-                </div>
+            {/* Trust Indicators */}
+            <div className="flex flex-wrap justify-center gap-8 text-purple-200">
+              <div className="flex items-center gap-2">
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-medium">Secure & Trusted</span>
               </div>
-
-              {/* Right Section - iPhone Pro Max Preview */}
-              <div className="lg:col-span-1 flex justify-center lg:justify-end">
-                <div className="relative">
-                  {/* iPhone Pro Max Frame (sticky) */}
-                  <div className="lg:sticky lg:top-20 w-80 h-[640px] bg-black rounded-[3.5rem] p-3 shadow-2xl border-4 border-gray-800">
-                    <div className="w-full h-full bg-white rounded-[3rem] overflow-hidden relative">
-                      {/* Status Bar */}
-                      <div className="flex justify-between items-center px-6 pt-3 pb-2 text-black text-sm font-medium">
-                        <span>9:58</span>
-                        <div className="flex items-center space-x-1">
-                          <div className="flex space-x-1">
-                            <div className="w-1 h-1 bg-black rounded-full"></div>
-                            <div className="w-1 h-1 bg-black rounded-full"></div>
-                            <div className="w-1 h-1 bg-black rounded-full"></div>
-                          </div>
-                          <div className="w-6 h-3 border border-black rounded-sm">
-                            <div className="w-4 h-2 bg-green-500 rounded-sm m-0.5"></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Welcome Banner */}
-                      <div className="bg-[#34A853] text-white text-center py-3 px-4">
-                        <h2 className="text-lg font-semibold">Welcome, User</h2>
-                      </div>
-
-                      {/* App Header */}
-                      <div className="bg-white px-6 py-4 flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-[#34A853] rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-lg">P</span>
-                          </div>
-                          <div>
-                            <h1 className="text-xl font-bold text-black">LocalPro</h1>
-                            <p className="text-sm text-gray-500">Super App</p>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-                          <ArrowRight className="w-4 h-4 text-gray-600" />
-                        </div>
-                      </div>
-
-                      {/* Welcome Message */}
-                      <div className="px-6 py-4">
-                        <h3 className="text-2xl font-bold text-black mb-2">Welcome back, User!</h3>
-                        <p className="text-gray-600 text-sm">Access all your services from one central hub</p>
-                      </div>
-
-                      {/* Service Grid */}
-                      <div className="px-6 pb-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          {/* Marketplace */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mb-3">
-                              <Store className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Marketplace</h4>
-                            <p className="text-gray-500 text-xs">Buy & sell locally</p>
-                          </div>
-
-                          {/* Supplies */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mb-3">
-                              <Package className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Supplies</h4>
-                            <p className="text-gray-500 text-xs">Equipment & tools</p>
-                          </div>
-
-                          {/* Academy */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-3">
-                              <GraduationCap className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Academy</h4>
-                            <p className="text-gray-500 text-xs">Learn & grow</p>
-                          </div>
-
-                          {/* Finance */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mb-3">
-                              <CreditCard className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Finance</h4>
-                            <p className="text-gray-500 text-xs">Manage money</p>
-                          </div>
-
-                          {/* Rentals */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-3">
-                              <Car className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Rentals</h4>
-                            <p className="text-gray-500 text-xs">Rent equipment</p>
-                          </div>
-
-                          {/* Ads */}
-                          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                            <div className="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center mb-3">
-                              <Megaphone className="w-6 h-6 text-white" />
-                            </div>
-                            <h4 className="font-bold text-black text-sm mb-1">Ads</h4>
-                            <p className="text-gray-500 text-xs">Promote business</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom Navigation */}
-                      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3">
-                        <div className="flex justify-around">
-                          {/* Home Tab - Active */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-6 h-6 bg-[#34A853] rounded flex items-center justify-center mb-1">
-                              <HomeIcon className="w-4 h-4 text-white" />
-                            </div>
-                            <span className="text-[#34A853] text-xs font-medium">Home</span>
-                          </div>
-
-                          {/* Schedule Tab - Inactive */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
-                              <Calendar className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <span className="text-gray-500 text-xs">Schedule</span>
-                          </div>
-
-                          {/* Booking Tab - Inactive */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
-                              <BookOpen className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <span className="text-gray-500 text-xs">Booking</span>
-                          </div>
-
-                          {/* Wallet Tab - Inactive */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
-                              <Wallet className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <span className="text-gray-500 text-xs">Wallet</span>
-                          </div>
-
-                          {/* Profile Tab - Inactive */}
-                          <div className="flex flex-col items-center">
-                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center mb-1">
-                              <User className="w-4 h-4 text-gray-600" />
-                            </div>
-                            <span className="text-gray-500 text-xs">Profile</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Floating Elements */}
-                  <div className="absolute -top-3 -right-3 w-6 h-6 bg-[#34A853] rounded-full animate-bounce shadow-lg"></div>
-                  <div className="absolute -bottom-3 -left-3 w-4 h-4 bg-[#1A5276] rounded-full animate-pulse shadow-lg"></div>
-                  <div className="absolute top-1/2 -left-2 w-3 h-3 bg-[#34A853] rounded-full animate-ping"></div>
-                </div>
+              <div className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                <span className="text-sm font-medium">Made for Philippines</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                <span className="text-sm font-medium">Industry Leading</span>
               </div>
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+        </div>
+
+        {/* Curved Bottom */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg className="w-full h-20 fill-white" viewBox="0 0 1440 120" preserveAspectRatio="none">
+            <path d="M0,0 C360,120 720,0 1080,60 C1260,90 1380,30 1440,60 L1440,120 L0,120 Z"></path>
+          </svg>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-gradient-to-b from-white via-gray-50 to-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-20">
+            {stats.map((stat, index) => {
+              const IconComponent = stat.icon;
+              const gradients = [
+                "from-purple-500 to-pink-500",
+                "from-blue-500 to-cyan-500",
+                "from-yellow-400 to-orange-500",
+                "from-green-500 to-emerald-500",
+              ];
+              return (
+                <Card 
+                  key={index} 
+                  className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+                  <CardContent className="pt-8 pb-6 text-center relative z-10">
+                    <div className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br ${gradients[index]} rounded-3xl mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                      <IconComponent className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-gray-600 font-semibold uppercase tracking-wide">{stat.label}</div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Popular Services */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-4">
+              <Heart className="w-4 h-4" />
+              <span className="text-sm font-semibold">Most Popular</span>
+            </div>
+            <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Popular Services
+            </h3>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Discover the most trusted professional services in the Philippines
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {popularServices.map((service, index) => (
+              <Card 
+                key={index} 
+                className="text-center hover:shadow-xl transition-all cursor-pointer border-2 border-gray-100 hover:border-purple-300 group overflow-hidden relative"
+                onMouseEnter={() => {}}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <CardContent className="pt-8 pb-6 relative z-10">
+                  <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform">{service.icon}</div>
+                  <p className="text-sm font-bold text-gray-800 group-hover:text-purple-600 transition-colors">{service.name}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50 relative overflow-hidden">
+        {/* Decorative Background */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform -translate-x-1/2 translate-y-1/2"></div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full mb-6">
+              <Zap className="w-4 h-4" />
+              <span className="text-sm font-semibold">Powerful Features</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+              Everything You Need
+              <span className="block bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">to Succeed</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              A comprehensive suite of tools and services designed to help professionals thrive. From finding services to managing your business—we&apos;ve got you covered.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {keyFeatures.map((feature, index) => {
+              const IconComponent = feature.icon;
+              const isOpen = !!expandedByIndex[index];
+              const colorVariants = [
+                { gradient: "from-blue-500 to-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+                { gradient: "from-purple-500 to-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
+                { gradient: "from-orange-500 to-orange-600", bg: "bg-orange-50", border: "border-orange-200" },
+                { gradient: "from-red-500 to-red-600", bg: "bg-red-50", border: "border-red-200" },
+                { gradient: "from-cyan-500 to-cyan-600", bg: "bg-cyan-50", border: "border-cyan-200" },
+                { gradient: "from-emerald-500 to-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200" },
+              ];
+              const colors = colorVariants[index % colorVariants.length];
+              return (
+                <Card
+                  key={index}
+                  className={`relative overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 ${colors.border} shadow-lg group transform hover:-translate-y-2 ${isOpen ? 'ring-2 ring-purple-300' : ''}`}
+                  onMouseEnter={() => setHoveredFeature(index)}
+                  onMouseLeave={() => setHoveredFeature(null)}
+                >
+                  {/* Animated Top Border */}
+                  <div className={`h-1 bg-gradient-to-r ${feature.color} relative overflow-hidden`}>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} transform ${hoveredFeature === index ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-1000`}></div>
+                  </div>
+                  
+                  <CardHeader className="pb-4">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+                        <IconComponent className="w-8 h-8 text-white" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleFeature(index)}
+                        className={`p-2 rounded-xl transition-all ${isOpen ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400 hover:bg-purple-100 hover:text-purple-600'}`}
+                        aria-expanded={isOpen}
+                      >
+                        <ArrowRight
+                          className={`w-5 h-5 transition-all duration-300 ${isOpen ? "rotate-90" : ""}`}
+                        />
+                      </button>
+                    </div>
+                    <CardTitle className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 mb-6 leading-relaxed text-base">{feature.description}</p>
+                    <div className={`space-y-3 transition-all duration-500 overflow-hidden ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+                      {feature.features.map((item, idx) => (
+                        <div key={idx} className="flex items-center text-sm text-gray-700 bg-white rounded-lg p-2 border border-gray-100">
+                          <CheckCircle className="w-5 h-5 text-emerald-600 mr-3 flex-shrink-0" />
+                          <span className="font-medium">{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {!isOpen && (
+                      <div className="mt-4 pt-4 border-t border-gray-100">
+                        <button
+                          onClick={() => toggleFeature(index)}
+                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group"
+                        >
+                          Learn more
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                      </div>
+                    )}
+                  </CardContent>
+                  
+                  {/* Hover Glow Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Value Propositions Section */}
+      <section className="py-24 bg-gradient-to-br from-purple-50 via-white to-pink-50 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`,
+          backgroundSize: '50px 50px'
+        }}></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-4 py-2 rounded-full mb-6">
+              <Star className="w-4 h-4" />
+              <span className="text-sm font-semibold">Why Choose Us</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+              Built for Filipino
+              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Professionals</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              More than just a platform—connect, grow, and succeed with tools designed for your business
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {valuePropositions.map((prop, index) => {
+              const IconComponent = prop.icon;
+              const iconGradients = [
+                "from-yellow-400 to-orange-500",
+                "from-blue-400 to-cyan-500",
+                "from-green-400 to-emerald-500",
+                "from-purple-400 to-pink-500",
+              ];
+              const iconGradient = iconGradients[index % iconGradients.length];
+              return (
+                <Card 
+                  key={index} 
+                  className="relative overflow-hidden text-center hover:shadow-2xl transition-all duration-500 border-0 shadow-xl group transform hover:-translate-y-3"
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${iconGradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}></div>
+                  <CardContent className="pt-10 pb-8 px-6">
+                    <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br ${iconGradient} mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
+                      <IconComponent className="w-10 h-10 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">{prop.title}</h3>
+                    <p className="text-gray-600 text-base leading-relaxed">{prop.description}</p>
+                  </CardContent>
+                  <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Launch Timeline Section */}
+      <section className="py-24 bg-gradient-to-b from-white via-indigo-50/30 to-white relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-4 py-2 rounded-full mb-6">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-semibold">Roadmap</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+              Our Launch
+              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Timeline</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              We&apos;re working hard to bring you the best professional services platform in the Philippines
+            </p>
+          </div>
+
+          <div className="relative max-w-4xl mx-auto">
+            {/* Timeline Line */}
+            <div className="absolute left-12 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-blue-400 to-purple-400 hidden md:block transform md:-translate-x-1/2 rounded-full"></div>
+
+            <div className="space-y-16">
+              {timelineEvents.map((event, index) => {
+                const dotColors = [
+                  "bg-emerald-500 shadow-emerald-500/50",
+                  "bg-blue-500 shadow-blue-500/50",
+                  "bg-purple-500 shadow-purple-500/50",
+                ];
+                const dotColor = dotColors[index % dotColors.length];
+                const isLeft = index % 2 === 0;
+                return (
+                  <div key={index} className={`relative flex flex-col md:flex-row items-start md:items-center gap-6 ${isLeft ? 'md:flex-row-reverse' : ''}`}>
+                    {/* Timeline Dot */}
+                    <div className={`relative z-10 flex-shrink-0 w-24 h-24 ${dotColor} rounded-full flex items-center justify-center shadow-2xl transform hover:scale-110 transition-all`}>
+                      <div className="w-4 h-4 bg-white rounded-full"></div>
+                      <div className={`absolute inset-0 ${dotColor} rounded-full animate-ping opacity-20`}></div>
+                    </div>
+
+                    {/* Content Card */}
+                    <div className={`flex-1 ${isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'} md:w-1/2`}>
+                      <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-0 group transform hover:-translate-y-1">
+                        <div className={`h-1 bg-gradient-to-r ${isLeft ? 'from-emerald-500 to-blue-500' : 'from-blue-500 to-purple-500'}`}></div>
+                        <CardContent className="pt-6 pb-6 px-6">
+                          <div className={`flex items-center gap-3 mb-3 ${isLeft ? 'md:justify-end' : ''}`}>
+                            <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200">
+                              {event.date}
+                            </span>
+                            <span className="text-xs text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">Upcoming</span>
+                          </div>
+                          <h3 className="text-2xl font-bold text-gray-900 mb-3">{event.title}</h3>
+                          <p className="text-gray-600 leading-relaxed">{event.description}</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Spacer for alternating layout */}
+                    <div className="hidden md:block w-1/2"></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Early Access Section */}
+      <section id="early-access" className="py-24 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute bottom-20 right-10 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        </div>
+
+        {/* Grid Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full mb-6 border border-white/30">
+              <Rocket className="w-5 h-5 text-yellow-300" />
+              <span className="text-sm font-semibold">Get Early Access</span>
+            </div>
+            <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6">
+              Be Among the
+              <span className="block bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
+                First
+              </span>
+            </h2>
+            <p className="text-xl md:text-2xl text-purple-100 max-w-3xl mx-auto leading-relaxed">
+              Join thousands of professionals ready to transform how services work in the Philippines. Get exclusive beta access and help shape the future.
+            </p>
+          </div>
+
+          <Card className="bg-white/10 backdrop-blur-xl border-white/30 shadow-2xl border-2 relative overflow-hidden">
+            {/* Glowing Border Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-pink-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            
+            <CardContent className="pt-10 pb-8 px-8 md:px-12 relative z-10">
+              <form onSubmit={handleEarlyAccess} className="space-y-6">
+                <div>
+                  <label htmlFor="phone" className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                    <Phone className="w-5 h-5" />
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    required
+                    placeholder="+63 912 345 6789"
+                    className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="firstName" className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
+                      <User className="w-5 h-5" />
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      required
+                      placeholder="Juan"
+                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-semibold text-white mb-3">
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      required
+                      placeholder="Dela Cruz"
+                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white hover:from-yellow-500 hover:via-pink-600 hover:to-purple-600 text-xl py-7 rounded-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none border-0"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Clock className="mr-2 w-5 h-5 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Join Early Access
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-sm text-white/60 text-center pt-2">
+                  By submitting, you agree to receive updates about LocalPro. We respect your privacy and will never share your information.
+                </p>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Trust Indicators */}
+          <div className="mt-12 flex flex-wrap justify-center gap-8 text-purple-200">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              <span className="text-sm font-medium">100% Secure</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              <span className="text-sm font-medium">10K+ Early Joiners</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5" />
+              <span className="text-sm font-medium">Instant Updates</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </StaticPageLayout>
   );
 }

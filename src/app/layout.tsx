@@ -4,7 +4,6 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { Toaster } from "react-hot-toast";
 import { MonitoringProviders } from "@/components/monitoring";
-import { ServiceWorkerRegistration } from "@/components/service-worker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +40,6 @@ export default function RootLayout({
           {children}
           <Toaster position="top-right" />
           <MonitoringProviders />
-          <ServiceWorkerRegistration />
         </Providers>
       </body>
     </html>
