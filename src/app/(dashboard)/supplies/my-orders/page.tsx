@@ -137,30 +137,8 @@ export default function MyOrdersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchMyOrders = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/supplies/my-orders');
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch my orders');
-        }
-
-        const data = await response.json();
-        setOrders(data.orders || []);
-      } catch (error) {
-        console.error('Error fetching my orders:', error);
-        // Use mock data when API is unavailable
-        setOrders(mockOrders);
-      }
-    };
-
-    fetchMyOrders();
-  }, [mockOrders]);
-
   // Mock data for development - remove when API is integrated
-  const mockOrders = useMemo(() => [
+  const mockOrders = useMemo((): SupplyOrder[] => [
     {
       id: '1',
       supplyId: '1',
@@ -293,6 +271,28 @@ export default function MyOrdersPage() {
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
     }
   ], []);
+
+  useEffect(() => {
+    const fetchMyOrders = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/supplies/my-orders');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch my orders');
+        }
+
+        const data = await response.json();
+        setOrders(data.orders || []);
+      } catch (error) {
+        console.error('Error fetching my orders:', error);
+        // Use mock data when API is unavailable
+        setOrders(mockOrders);
+      }
+    };
+
+    fetchMyOrders();
+  }, [mockOrders]);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

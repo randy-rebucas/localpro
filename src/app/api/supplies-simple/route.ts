@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Return empty data - external API integration needed
-    const filteredSupplies: Array<{
+    let filteredSupplies: Array<{
       id: string;
       name: string;
       description: string;
@@ -71,8 +71,7 @@ export async function GET(request: NextRequest) {
     if (location) {
       const locationLower = location.toLowerCase();
       filteredSupplies = filteredSupplies.filter(supply => 
-        supply.location.city.toLowerCase().includes(locationLower) ||
-        supply.location.state.toLowerCase().includes(locationLower)
+        supply.location.toLowerCase().includes(locationLower)
       );
     }
 
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
     if (rating) {
       const minRating = parseFloat(rating);
       filteredSupplies = filteredSupplies.filter(supply => 
-        supply.rating.average >= minRating
+        supply.rating >= minRating
       );
     }
 
@@ -103,9 +102,10 @@ export async function GET(request: NextRequest) {
             aValue = a.price;
             bValue = b.price;
             break;
+          case 'rating':
           case 'rating.average':
-            aValue = a.rating.average;
-            bValue = b.rating.average;
+            aValue = a.rating;
+            bValue = b.rating;
             break;
           case 'name':
             aValue = a.name;

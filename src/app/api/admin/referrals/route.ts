@@ -201,10 +201,10 @@ export async function GET(request: NextRequest) {
         if (search) {
           const searchLower = search.toLowerCase();
           filteredReferrals = filteredReferrals.filter(r => 
-            r.referrerName.toLowerCase().includes(searchLower) ||
-            r.referredUserName.toLowerCase().includes(searchLower) ||
-            r.referrerEmail.toLowerCase().includes(searchLower) ||
-            r.referredUserEmail.toLowerCase().includes(searchLower)
+            ((r.referrerName ?? '').toLowerCase().includes(searchLower)) ||
+            ((r.refereeName ?? '').toLowerCase().includes(searchLower)) ||
+            ((r.referrerEmail ?? '').toLowerCase().includes(searchLower)) ||
+            ((r.refereeEmail ?? '').toLowerCase().includes(searchLower))
           );
         }
         
