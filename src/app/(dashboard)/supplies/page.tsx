@@ -361,11 +361,6 @@ export default function SuppliesPage() {
 
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        lat: userLocation.lat.toString(),
-        lng: userLocation.lng.toString(),
-        radius: '10000' // 10km radius
-      });
 
       const response = await makeClientAuthenticatedRequestWithEndpointSafe(
         'suppliesNearby' as keyof typeof API_ENDPOINTS,

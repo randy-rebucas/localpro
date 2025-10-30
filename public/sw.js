@@ -121,19 +121,7 @@ async function handlePageRequest(request) {
   }
 }
 
-// Fetch and cache helper
-async function fetchAndCache(request, cache) {
-  try {
-    const networkResponse = await fetch(request);
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  } catch (error) {
-    console.error('Service Worker: Network request failed', error);
-    throw error;
-  }
-}
+//
 
 // Check if request is for static asset
 function isStaticAsset(request) {
