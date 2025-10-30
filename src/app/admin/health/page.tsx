@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface HealthMetrics {
   status: string;
@@ -123,13 +125,10 @@ export default function AdminHealthPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'settingsAppHealth' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

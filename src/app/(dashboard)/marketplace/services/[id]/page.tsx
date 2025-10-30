@@ -18,6 +18,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithPathSafe, makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface Service {
   _id: string;
@@ -142,7 +144,10 @@ export default function ServiceDetailPage() {
   const fetchService = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/marketplace/services/${params.id}`);
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'marketplaceServiceById' as keyof typeof API_ENDPOINTS,
+        [String(params.id)]
+      );
       
       if (!response.ok) {
         throw new Error("Service not found");
@@ -166,7 +171,10 @@ export default function ServiceDetailPage() {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const response = await fetch(`/api/marketplace/services/${params.id}/reviews`);
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'marketplaceBookingReview' as keyof typeof API_ENDPOINTS,
+        [String(params.id), 'reviews']
+      );
       if (response.ok) {
         const data = await response.json();
         setReviews(Array.isArray(data) ? data : data.reviews || []);
@@ -189,23 +197,24 @@ export default function ServiceDetailPage() {
 
     try {
       setBookingLoading(true);
-      const response = await fetch('/api/marketplace/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          serviceId: service._id,
-          providerId: service.provider._id,
-          date: bookingForm.date,
-          time: bookingForm.time,
-          duration: bookingForm.duration,
-          notes: bookingForm.notes,
-          contactPhone: bookingForm.contactPhone,
-          contactEmail: bookingForm.contactEmail,
-          totalPrice: service.pricing.basePrice
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'marketplaceBookings' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceId: service._id,
+            providerId: service.provider._id,
+            date: bookingForm.date,
+            time: bookingForm.time,
+            duration: bookingForm.duration,
+            notes: bookingForm.notes,
+            contactPhone: bookingForm.contactPhone,
+            contactEmail: bookingForm.contactEmail,
+            totalPrice: service.pricing.basePrice
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create booking");

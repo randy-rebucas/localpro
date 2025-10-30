@@ -23,6 +23,23 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { apiRequest, API_ENDPOINTS } from "@/lib/api";
+
+type SuppliesPagination = {
+    current?: number;
+    pages?: number;
+    total?: number;
+    limit?: number;
+    count?: number;
+};
+
+type SuppliesApiResponse = {
+    success?: boolean;
+    message?: string;
+    data?: Supply[];
+    supplies?: Supply[];
+    pagination?: SuppliesPagination;
+} | Supply[];
 
 interface Supply {
     _id: string;
@@ -237,31 +254,21 @@ export default function MarketplaceSuppliesPage() {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-             let response;
-             try {
-                 response = await fetch(`/api/supplies?${params.toString()}`, {
-                     signal: controller.signal
-                 });
-             } catch (fetchError) {
-                 console.log("Primary API failed, trying fallback API:", fetchError);
-                 // Try the products API as fallback
-                 response = await fetch(`/api/supplies/products?${params.toString()}`, {
-                     signal: controller.signal
-                 });
-             }
-
-            clearTimeout(timeoutId);
-
-            console.log("Response status:", response.status);
-            console.log("Response ok:", response.ok);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("API Error:", errorData);
-                throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch supplies`);
+            // Prefer primary endpoint; fall back to products on failure
+            let data: SuppliesApiResponse;
+            try {
+                data = await apiRequest<SuppliesApiResponse>(`${API_ENDPOINTS.supplies}?${params.toString()}`, {
+                    signal: controller.signal
+                });
+            } catch (fetchError) {
+                console.log("Primary API failed, trying fallback API:", fetchError);
+                data = await apiRequest<SuppliesApiResponse>(`${API_ENDPOINTS.suppliesProducts}?${params.toString()}`, {
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeoutId);
             }
 
-            const data = await response.json();
             console.log("Supplies data:", data);
 
             // Handle the API response structure with pagination

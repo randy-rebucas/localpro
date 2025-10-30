@@ -24,7 +24,7 @@ export default function Blog() {
       date: "2024-01-15",
       readTime: "5 min read",
       category: "Industry Insights",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: true,
       likes: 124,
       comments: 23
@@ -37,7 +37,7 @@ export default function Blog() {
       date: "2024-01-12",
       readTime: "7 min read",
       category: "Education",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: false,
       likes: 89,
       comments: 15
@@ -50,7 +50,7 @@ export default function Blog() {
       date: "2024-01-10",
       readTime: "6 min read",
       category: "Finance",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: false,
       likes: 156,
       comments: 31
@@ -63,7 +63,7 @@ export default function Blog() {
       date: "2024-01-08",
       readTime: "4 min read",
       category: "Security",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: false,
       likes: 203,
       comments: 42
@@ -76,7 +76,7 @@ export default function Blog() {
       date: "2024-01-05",
       readTime: "8 min read",
       category: "Success Stories",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: false,
       likes: 178,
       comments: 28
@@ -89,7 +89,7 @@ export default function Blog() {
       date: "2024-01-03",
       readTime: "5 min read",
       category: "Marketing",
-      image: "/api/placeholder/600/400",
+      image: "https://via.placeholder.com/600x400",
       featured: false,
       likes: 95,
       comments: 19

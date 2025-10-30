@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface MarketplaceService {
   _id: string;
@@ -320,16 +322,14 @@ export default function MarketplacePage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetch(`/api/admin/marketplace?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }),
-        fetch('/api/admin/marketplace/stats?period=week', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        })
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'marketplaceServices' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: Object.fromEntries(queryParams) }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'analyticsMarketplace' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { period: 'week' } }
+        )
       ]);
 
       if (!dataResponse.ok) {

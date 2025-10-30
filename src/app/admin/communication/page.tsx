@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface CommunicationStats {
   totalConversations: number;
@@ -111,13 +113,10 @@ export default function AdminCommunication() {
         ...(searchQuery && { search: searchQuery })
       });
 
-      const response = await fetch(`/api/admin/communication?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'communicationSearch' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(params) }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

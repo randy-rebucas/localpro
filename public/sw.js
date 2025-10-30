@@ -56,18 +56,13 @@ self.addEventListener('activate', (event) => {
 // Fetch event - serve from cache or network
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
   
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
   
-  // Handle API requests
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(handleApiRequest(request));
-    return;
-  }
+  // Note: Client API calls now go directly to external backend; no SW interception for /api/*
   
   // Handle static assets
   if (isStaticAsset(request)) {
@@ -81,21 +76,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 });
-
-// Handle API requests with cache-first strategy
-async function handleApiRequest(request) {
-  const cache = await caches.open(DYNAMIC_CACHE);
-  const cachedResponse = await cache.match(request);
-  
-  if (cachedResponse) {
-    // Return cached response and update in background
-    fetchAndCache(request, cache);
-    return cachedResponse;
-  }
-  
-  // Fetch from network and cache
-  return fetchAndCache(request, cache);
-}
 
 // Handle static assets with cache-first strategy
 async function handleStaticAsset(request) {

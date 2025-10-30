@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/currency-utils';
 import { UserSettings } from '@/types/user-settings';
+import { makeClientAuthenticatedRequestWithEndpointSafe } from '@/lib/client-api-utils';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface SubscriptionPlan {
   id: string;
@@ -158,7 +160,10 @@ export default function PlusPage() {
     const loadData = async () => {
       try {
         // Load user settings to get currency preference
-        const settingsResponse = await fetch('/api/settings/user');
+        const settingsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'settingsUser' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
           setUserSettings(settingsData);
@@ -166,7 +171,10 @@ export default function PlusPage() {
         }
 
         // Try to fetch real stats from API, fallback to default values
-        const response = await fetch('/api/plus/usage');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'localProPlusUsage' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
         if (response.ok) {
           const data = await response.json();
           setStats(data.stats || {
@@ -205,17 +213,18 @@ export default function PlusPage() {
     setSelectedPlan(planId);
     
     try {
-      const response = await fetch('/api/plus/subscriptions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId,
-          billingPeriod,
-          paymentMethod: 'card', // In a real implementation, this would be selected by user
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'localProPlusSubscribe' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            planId,
+            billingPeriod,
+            paymentMethod: 'card',
+          }),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

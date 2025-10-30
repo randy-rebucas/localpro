@@ -20,6 +20,8 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface ReferralData {
   id: string;
@@ -102,7 +104,10 @@ export default function AdminReferralsPage() {
         sortOrder
       });
 
-      const response = await fetch(`/api/admin/referrals?${queryParams}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsAnalytics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to fetch referrals: ${response.status}`);
@@ -135,9 +140,12 @@ export default function AdminReferralsPage() {
   }, [currentPage, filters, sortBy, sortOrder]);
 
   // Fetch stats data
-  const fetchStats = async () => {
+    const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/referrals?type=overview');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsAnalytics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { type: 'overview' } }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to fetch stats: ${response.status}`);

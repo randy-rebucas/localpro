@@ -28,6 +28,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface SystemLog {
   id: string;
@@ -178,31 +180,26 @@ export default function AdminLogsPage() {
           performanceResponse, 
           dashboardResponse
         ] = await Promise.all([
-          fetch(`/api/admin/logs?${queryParams}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/stats', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/analytics/error-trends', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/analytics/performance', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/dashboard/summary', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          })
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logs' as keyof typeof API_ENDPOINTS,
+            { method: 'GET', query: Object.fromEntries(queryParams) }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsStats' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsAnalyticsErrorTrends' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsAnalyticsPerformance' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsDashboardSummary' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          )
         ]);
 
         // Handle logs response
@@ -388,11 +385,10 @@ export default function AdminLogsPage() {
       if (filters.source) queryParams.set('source', filters.source);
       if (filters.search) queryParams.set('search', filters.search);
 
-      const response = await fetch(`/api/admin/logs/export/data?${queryParams}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsExportData' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');
@@ -415,17 +411,19 @@ export default function AdminLogsPage() {
 
   const cleanupLogs = async () => {
     try {
-      const response = await fetch('/api/admin/logs/cleanup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          olderThanDays: 30,
-          level: 'debug',
-          category: 'system',
-          dryRun: false
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsCleanup' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            olderThanDays: 30,
+            level: 'debug',
+            category: 'system',
+            dryRun: false
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -462,15 +460,17 @@ export default function AdminLogsPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/logs/flush', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          confirm: true,
-          backup: true
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsFlush' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            confirm: true,
+            backup: true
+          })
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

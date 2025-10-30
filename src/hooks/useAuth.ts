@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { createAuthFetchOptions } from '@/lib/auth-utils';
+import { makeClientAuthenticatedRequestWithEndpointSafe } from '@/lib/client-api-utils';
+import { API_ENDPOINTS } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -45,12 +46,10 @@ export function useSession() {
           controller.abort();
         }, 10000); // 10 second timeout
         
-        const authOptions = createAuthFetchOptions({
-          signal: controller.signal
-        });
-        console.log('🔍 useSession: Auth options:', authOptions);
-        
-        const response = await fetch('/api/auth/me', authOptions);
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'authMe' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', signal: controller.signal }
+        );
         
         clearTimeout(timeoutId);
         
@@ -98,10 +97,9 @@ export function useSession() {
 
 export async function signOut() {
   try {
-    await fetch('/api/auth/logout', 
-      createAuthFetchOptions({
-        method: 'POST'
-      })
+    await makeClientAuthenticatedRequestWithEndpointSafe(
+      'authLogout' as keyof typeof API_ENDPOINTS,
+      { method: 'POST' }
     );
     window.location.href = '/auth';
   } catch (error) {

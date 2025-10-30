@@ -26,6 +26,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface Rental {
   id: string;
@@ -153,7 +155,10 @@ export default function RentalsPage() {
     const fetchRentals = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/rentals');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'rentals' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch rentals');
@@ -180,7 +185,7 @@ export default function RentalsPage() {
               state: 'NY',
               zipCode: '10001'
             },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300'],
             features: ['Air Conditioning', 'GPS Tracking', 'Safety Equipment', 'Fuel Efficient'],
             specifications: {
               brand: 'Caterpillar',
@@ -226,7 +231,7 @@ export default function RentalsPage() {
               state: 'CA',
               zipCode: '90210'
             },
-            images: ['/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300'],
             features: ['4WD', 'Air Conditioning', 'Bluetooth', 'Backup Camera'],
             specifications: {
               brand: 'Ford',
@@ -272,7 +277,7 @@ export default function RentalsPage() {
               state: 'IL',
               zipCode: '60601'
             },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300', '/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300'],
             features: ['WiFi', 'Parking', 'Kitchen', 'Meeting Rooms', 'Air Conditioning'],
             specifications: {
               condition: 'excellent',

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useAuth";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { 
   TrendingUp,
   Zap,
@@ -45,7 +47,10 @@ export default function HeaderPage() {
     const fetchUser = async () => {
       try {
         if (session?.user?.id) {
-          const response = await fetch(`/api/auth/me`);
+          const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+            "authMe" as keyof typeof API_ENDPOINTS,
+            { method: "GET" }
+          );
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);

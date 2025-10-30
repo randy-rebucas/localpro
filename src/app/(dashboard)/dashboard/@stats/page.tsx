@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useAuth";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { 
   Shield, 
   User, 
@@ -43,7 +45,10 @@ export default function StatsPage() {
       try {
         if (session?.user?.id) {
           // Fetch user profile
-          const userResponse = await fetch(`/api/auth/me`);
+          const userResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+            "authMe" as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          );
           if (userResponse.ok) {
             const userData = await userResponse.json();
             setUser(userData);
@@ -54,7 +59,10 @@ export default function StatsPage() {
           }
 
           // Fetch analytics data
-          const analyticsResponse = await fetch(`/api/analytics/overview`);
+          const analyticsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+            "analyticsOverview" as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          );
           if (analyticsResponse.ok) {
             const analyticsData = await analyticsResponse.json();
             setStats(prev => ({

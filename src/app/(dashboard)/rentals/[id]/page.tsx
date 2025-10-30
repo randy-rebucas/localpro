@@ -147,7 +147,7 @@ export default function RentalDetailPage() {
             state: 'NY',
             zipCode: '10001'
           },
-          images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
+          images: ['https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600'],
           features: ['Air Conditioning', 'GPS Tracking', 'Safety Equipment', 'Fuel Efficient', '4WD', 'Bluetooth'],
           specifications: {
             brand: 'Caterpillar',

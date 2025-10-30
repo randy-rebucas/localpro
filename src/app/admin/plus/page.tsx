@@ -21,6 +21,8 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
 import { formatCurrency } from "@/lib/currency-utils";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface SubscriptionPlan {
   id: string;
@@ -94,11 +96,10 @@ export default function PlusAdmin() {
       setError(null);
       
       // Load stats from the new analytics endpoint
-      const statsResponse = await fetch('/api/localpro-plus/analytics', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const statsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'localProPlusAnalytics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         if (statsData.success) {
@@ -107,11 +108,10 @@ export default function PlusAdmin() {
       }
 
       // Load plans from the new localpro-plus endpoint
-      const plansResponse = await fetch('/api/localpro-plus/plans', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const plansResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'localProPlusPlans' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (plansResponse.ok) {
         const plansData = await plansResponse.json();
         if (plansData.success) {
@@ -120,11 +120,10 @@ export default function PlusAdmin() {
       }
 
       // Load subscriptions
-      const subscriptionsResponse = await fetch('/api/admin/plus/subscriptions', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const subscriptionsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'localProPlusMySubscription' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (subscriptionsResponse.ok) {
         const subscriptionsData = await subscriptionsResponse.json();
         if (subscriptionsData.success) {
@@ -151,14 +150,10 @@ export default function PlusAdmin() {
 
   const createPlan = async (planData: Partial<SubscriptionPlan>) => {
     try {
-      const response = await fetch('/api/localpro-plus/plans', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(planData),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'localProPlusPlans' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(planData) }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -180,14 +175,12 @@ export default function PlusAdmin() {
 
   const updatePlan = async (planId: string, planData: Partial<SubscriptionPlan>) => {
     try {
-      const response = await fetch(`/api/localpro-plus/plans/${planId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify(planData),
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'localProPlusPlans' as keyof typeof API_ENDPOINTS,
+        [planId],
+        {},
+        { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(planData) }
+      );
 
       if (response.ok) {
         const result = await response.json();
@@ -212,11 +205,12 @@ export default function PlusAdmin() {
     }
 
     try {
-      const response = await fetch(`/api/localpro-plus/plans/${planId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'localProPlusPlans' as keyof typeof API_ENDPOINTS,
+        [planId],
+        {},
+        { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (response.ok) {
         const result = await response.json();

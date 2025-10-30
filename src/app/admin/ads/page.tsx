@@ -3,6 +3,8 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { Loading } from "@/components/ui/loading";
 import Image from "next/image";
 import { isValidImageUrl, getPlaceholderImageUrl } from '@/lib/image-utils';
@@ -154,7 +156,10 @@ export default function AdminAdsPage() {
   const fetchAds = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/ads?page=${page}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'ads' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { page: String(page) } }
+      );
       const result = await response.json();
 
       if (result.success) {
@@ -255,13 +260,12 @@ export default function AdminAdsPage() {
 
   const handleStatusChange = async (adId: string, newStatus: Ad['status']) => {
     try {
-      const response = await fetch(`/api/admin/ads/${adId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'adsUpdate' as keyof typeof API_ENDPOINTS,
+        [adId, 'status'],
+        {},
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) }
+      );
 
       if (response.ok) {
         const result = await response.json();

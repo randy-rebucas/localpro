@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface JobForm {
   title: string;
@@ -205,10 +207,10 @@ export default function CreateJobPage() {
         formData.append(`image_${index}`, image);
       });
 
-      const response = await fetch('/api/jobs', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'jobs' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', body: formData }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create job");

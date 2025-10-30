@@ -16,6 +16,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import Image from "next/image";
 import { phoneFormatter } from "@/lib/phone-formatter";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 const signInSchema = z.object({
   phone: z
@@ -124,7 +125,7 @@ function SignInForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
-      const response = await fetch("/api/auth/send-code", {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -188,7 +189,7 @@ function SignInForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
-      const response = await fetch("/api/auth/verify-code", {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -204,8 +205,19 @@ function SignInForm() {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Persist API token client-side to enable direct external API calls
+        if (result.token) {
+          const oneWeek = 60 * 60 * 24 * 7;
+          const isProd = process.env.NODE_ENV === 'production';
+          const secure = isProd ? '; Secure' : '';
+          const sameSite = '; SameSite=Lax';
+          document.cookie = `api-token=${result.token}; Path=/; Max-Age=${oneWeek}${sameSite}${secure}`;
+        }
+        // Optionally cache user locally for quick access
+        if (result.user) {
+          try { localStorage.setItem('user', JSON.stringify(result.user)); } catch {}
+        }
         toast.success("Signed in successfully!");
-        // The session cookie is automatically set by the server
         // Redirect to intended destination or dashboard
         setTimeout(() => {
           router.push(redirectTo);

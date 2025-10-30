@@ -118,7 +118,7 @@ export default function AdDetailPage() {
           targetAudience: ['contractors', 'homeowners', 'professionals'],
           startDate: new Date().toISOString(),
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
+          images: ['https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600'],
           clickCount: 245,
           impressionCount: 12500,
           ctr: 1.96,

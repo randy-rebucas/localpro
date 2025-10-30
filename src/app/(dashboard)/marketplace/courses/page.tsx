@@ -3,11 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import {
-    handleClientApiRoute,
-    isAuthenticated
-} from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
+import { isAuthenticated } from "@/lib/client-api-utils";
+import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import {
     Search,
     Star,
@@ -27,6 +24,33 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+
+type Pagination = {
+    current?: number;
+    pages?: number;
+    total?: number;
+    limit?: number;
+    count?: number;
+};
+
+type CoursesResponse = {
+    success?: boolean;
+    data?: Course[];
+    courses?: Course[];
+    pagination?: Pagination;
+} | Course[];
+
+type FeaturedResponse = {
+    success?: boolean;
+    data?: Course[];
+    featured?: Course[];
+} | Course[];
+
+type CategoriesResponse = {
+    success?: boolean;
+    data?: Category[];
+    categories?: Category[];
+} | Category[];
 
 interface Course {
     _id: string;
@@ -230,41 +254,7 @@ export default function MarketplaceCoursesPage() {
 
             console.log("Fetching courses with params:", queryParams);
 
-            const result = await handleClientApiRoute(async () => {
-                console.log("🔍 Making request to local API route...");
-                console.log("Query params:", queryParams);
-
-                // Add timeout to prevent hanging
-                const controller = new AbortController();
-                setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-                const response = await fetch(`/api/academy/courses?${new URLSearchParams(queryParams).toString()}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include', // Include cookies for authentication
-                    signal: controller.signal
-                });
-                console.log("📡 Response status:", response.status);
-                console.log("📡 Response headers:", Object.fromEntries(response.headers.entries()));
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error("❌ API Error Response:", errorText);
-                    throw new Error(`Failed to fetch courses: ${response.status} - ${errorText}`);
-                }
-
-                const data = await response.json();
-                console.log("✅ API Response data:", data);
-                return data;
-            }, "Fetch courses");
-
-            if (result.error) {
-                throw new Error(result.error);
-            }
-
-            const data = result.data;
+            const data = await apiRequest<CoursesResponse>(`${API_ENDPOINTS.academyCourses}?${new URLSearchParams(queryParams).toString()}`);
             console.log("Courses data:", data);
 
             // Handle different response formats according to API documentation
@@ -333,31 +323,7 @@ export default function MarketplaceCoursesPage() {
                 return;
             }
 
-            const result = await handleClientApiRoute(async () => {
-                const response = await fetch(API_ENDPOINTS.academyFeatured, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include', // Include cookies for authentication
-                });
-
-                if (!response.ok) {
-                    // Don't throw error for featured courses - just log and return empty array
-                    console.warn(`Featured courses API returned ${response.status}, using empty array`);
-                    return { success: true, data: [] };
-                }
-
-                return await response.json();
-            }, "Fetch featured courses");
-
-            if (result.error) {
-                console.warn("Error fetching featured courses, using empty array:", result.error);
-                setFeaturedCourses([]);
-                return;
-            }
-
-            const data = result.data;
+            const data = await apiRequest<FeaturedResponse>(API_ENDPOINTS.academyFeatured);
             // Handle different response formats for featured courses
             if (data && typeof data === 'object') {
                 if (data.success && data.data) {
@@ -384,31 +350,7 @@ export default function MarketplaceCoursesPage() {
                 return;
             }
 
-            const result = await handleClientApiRoute(async () => {
-                const response = await fetch(API_ENDPOINTS.academyCategories, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include', // Include cookies for authentication
-                });
-
-                if (!response.ok) {
-                    // Don't throw error for categories - just log and return empty array
-                    console.warn(`Categories API returned ${response.status}, using empty array`);
-                    return { success: true, data: [] };
-                }
-
-                return await response.json();
-            }, "Fetch categories");
-
-            if (result.error) {
-                console.warn("Error fetching categories, using fallback categories:", result.error);
-                setCategories(fallbackCategories);
-                return;
-            }
-
-            const data = result.data;
+            const data = await apiRequest<CategoriesResponse>(API_ENDPOINTS.academyCategories);
             // Handle different response formats for categories
             if (data && typeof data === 'object') {
                 if (data.success && data.data) {

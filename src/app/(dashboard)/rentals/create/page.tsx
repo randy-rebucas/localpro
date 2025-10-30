@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 const categories = [
   "Construction Equipment",
@@ -226,18 +228,19 @@ export default function CreateRentalPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/rentals', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          status,
-          price: parseFloat(formData.price),
-          year: formData.specifications.year ? parseInt(formData.specifications.year) : undefined
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'rentals' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            status,
+            price: parseFloat(formData.price),
+            year: formData.specifications.year ? parseInt(formData.specifications.year) : undefined
+          })
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

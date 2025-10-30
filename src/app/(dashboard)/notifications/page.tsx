@@ -7,8 +7,8 @@ import {
   Bell, 
   RefreshCw
 } from "lucide-react";
-// import { useSession } from "@/hooks/useAuth";
-// import { useAuthErrorHandler } from "@/lib/auth-error-handler";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 type NotificationItem = {
   id: string;
@@ -118,17 +118,17 @@ export default function NotificationsPage() {
 
     setLoading(true);
     try {
-      const url = `/api/communication/notifications`;
-      console.log("Fetching notifications from:", url);
-
-      const response = await fetch(url);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'communicationNotifications' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       console.log("Notifications API - Response:", response);
       if (!response.ok) {
         throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
       
       const data = await response.json();
-      const notifications = data.notifications || [];
+      const notifications = data.notifications || data || [];
       // Sort notifications by date (newest first)
       const sortedNotifications = notifications.sort((a: NotificationItem, b: NotificationItem) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -164,12 +164,12 @@ export default function NotificationsPage() {
     ));
     
     try {
-      const url = `/api/communication/notifications/${id}/read`;
-      console.log("Marking notification as read:", url);
-      
-      const response = await fetch(url, {
-        method: "PUT"
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'communicationNotificationRead' as keyof typeof API_ENDPOINTS,
+        [id],
+        {},
+        { method: 'PUT' }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to mark notification as read: ${response.status}`);
@@ -200,12 +200,12 @@ export default function NotificationsPage() {
     setItems(prev => prev.filter(item => item.id !== id));
     
     try {
-      const url = `/api/communication/notifications/${id}`;
-      console.log("Deleting notification:", url);
-      
-      const response = await fetch(url, {
-        method: "DELETE"
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'communicationNotificationDelete' as keyof typeof API_ENDPOINTS,
+        [id],
+        {},
+        { method: 'DELETE' }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to delete notification: ${response.status}`);
@@ -238,12 +238,10 @@ export default function NotificationsPage() {
     setItems(prev => prev.map(item => ({ ...item, read: true })));
     
     try {
-      const url = `/api/communication/notifications/read-all`;
-      console.log("Marking all notifications as read:", url);
-      
-      const response = await fetch(url, {
-        method: "PUT"
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'communicationNotificationsReadAll' as keyof typeof API_ENDPOINTS,
+        { method: 'PUT' }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to mark all notifications as read: ${response.status}`);

@@ -8,6 +8,7 @@ import {
   handleClientApiRoute 
 } from "@/lib/client-api-utils";
 import { CLIENT_CONFIG } from "@/lib/env";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -456,7 +457,16 @@ export default function MessagesPage() {
     }
     
     try {
-      const eventSource = new EventSource('/api/communication/events');
+      const getCookie = (name: string) => {
+        const match = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='));
+        return match ? decodeURIComponent(match.split('=')[1]) : '';
+      };
+      const apiToken = getCookie('api-token');
+      const base = API_BASE_URL.replace(/\/$/, '');
+      const path = (API_ENDPOINTS as Record<string, string>).communicationEvents || '/communication/events';
+      const url = `${base}${path}${apiToken ? `?token=${encodeURIComponent(apiToken)}` : ''}`;
+
+      const eventSource = new EventSource(url);
       eventSourceRef.current = eventSource;
       
       eventSource.onmessage = (event) => {

@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface SettingsData {
   general: {
@@ -249,13 +251,10 @@ export default function AdminSettings() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch('/api/admin/settings', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'settingsApp' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -286,17 +285,14 @@ export default function AdminSettings() {
       setSaving(true);
       setError(null);
 
-      const response = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          category,
-          settings: updatedSettings
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'settingsAppUpdate' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category, settings: updatedSettings })
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

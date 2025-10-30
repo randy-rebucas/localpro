@@ -29,6 +29,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface Supply {
   id: string;
@@ -159,7 +161,10 @@ export default function MySuppliesPage() {
     const fetchMySupplies = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/supplies/my-supplies');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'suppliesMySupplies' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch my supplies');
@@ -190,7 +195,7 @@ export default function MySuppliesPage() {
               state: 'NY',
               zipCode: '10001'
             },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300'],
             features: ['Professional Grade', 'Eco-Friendly', 'Long Lasting', 'Easy to Use'],
             specifications: {
               brand: 'CleanPro',
@@ -244,7 +249,7 @@ export default function MySuppliesPage() {
               state: 'CA',
               zipCode: '90210'
             },
-            images: ['/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300'],
             features: ['Heavy Duty', 'Professional Grade', 'Durable', 'Versatile'],
             specifications: {
               brand: 'ToolMaster',
@@ -299,7 +304,7 @@ export default function MySuppliesPage() {
               state: 'IL',
               zipCode: '60601'
             },
-            images: ['/api/placeholder/400/300', '/api/placeholder/400/300', '/api/placeholder/400/300'],
+            images: ['https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300', 'https://via.placeholder.com/400x300'],
             features: ['Monthly Delivery', 'Curated Selection', 'Eco-Friendly', 'Flexible'],
             specifications: {
               brand: 'CleanBox',
@@ -416,9 +421,12 @@ export default function MySuppliesPage() {
   const handleDeleteSupply = async (supplyId: string) => {
     if (confirm('Are you sure you want to delete this supply?')) {
       try {
-        const response = await fetch(`/api/supplies/${supplyId}`, {
-          method: 'DELETE',
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'suppliesDelete' as keyof typeof API_ENDPOINTS,
+          [supplyId],
+          {},
+          { method: 'DELETE' }
+        );
 
         if (response.ok) {
           setSupplies(prev => prev.filter(supply => supply.id !== supplyId));

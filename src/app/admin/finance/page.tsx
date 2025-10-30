@@ -19,6 +19,8 @@ import {
 // Import finance components
 import { AddExpenseModal, ExpenseData } from "@/components/admin/add-expense-modal";
 import { WithdrawalRequestModal, WithdrawalData } from "@/components/admin/withdrawal-request-modal";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface FinanceOverview {
   wallet: {
@@ -97,12 +99,14 @@ export default function FinanceAdmin() {
     try {
       setLoading(true);
       const [overviewRes, transactionsRes] = await Promise.all([
-        fetch("/api/finance/overview"),
-        fetch(`/api/finance/transactions?${new URLSearchParams({
-          page: '1',
-          limit: '50',
-          ...filters
-        }).toString()}`)
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeOverview' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeTransactions' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { page: '1', limit: '50', ...filters } }
+        )
       ]);
       
       const overviewResponse = await overviewRes.json();
@@ -192,13 +196,10 @@ export default function FinanceAdmin() {
 
   const handleAddExpense = async (expenseData: ExpenseData) => {
     try {
-      const response = await fetch('/api/finance/expenses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(expenseData),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeExpenses' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(expenseData) }
+      );
 
       if (response.ok) {
         // Refresh data
@@ -215,13 +216,10 @@ export default function FinanceAdmin() {
 
   const handleWithdrawalRequest = async (withdrawalData: WithdrawalData) => {
     try {
-      const response = await fetch('/api/finance/withdraw', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(withdrawalData),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeWithdraw' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withdrawalData) }
+      );
 
       if (response.ok) {
         // Refresh data

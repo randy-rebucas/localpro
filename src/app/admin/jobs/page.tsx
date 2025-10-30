@@ -23,6 +23,8 @@ import {
   Building
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 // Define types locally
 interface Job {
@@ -129,26 +131,7 @@ export default function JobsPage() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("");
 
-  // Helper function to add timeout to fetch requests
-  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-  };
+  //
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -176,16 +159,14 @@ export default function JobsPage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetchWithTimeout(`/api/admin/jobs?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 20000), // 20 second timeout for jobs data
-        fetchWithTimeout('/api/admin/jobs/stats?period=week', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 10000).catch(err => { // 10 second timeout for stats
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'jobsAdmin' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: Object.fromEntries(queryParams) }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'jobsAdminStats' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { period: 'week' } }
+        ).catch(err => { // fallback
           console.warn('Failed to fetch stats, using fallback:', err);
           return {
             ok: true,
@@ -356,11 +337,12 @@ export default function JobsPage() {
   const handleDeleteJob = async (jobId: string) => {
     if (window.confirm('Are you sure you want to delete this job?')) {
       try {
-        const response = await fetch(`/api/admin/jobs/${jobId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'jobsAdminDelete' as keyof typeof API_ENDPOINTS,
+          [jobId],
+          {},
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -378,12 +360,12 @@ export default function JobsPage() {
   const handleToggleStatus = async (jobId: string, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'active' ? 'paused' : 'active';
-      const response = await fetch(`/api/admin/jobs/${jobId}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status: newStatus })
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'jobsAdminStatus' as keyof typeof API_ENDPOINTS,
+        [jobId, 'status'],
+        {},
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

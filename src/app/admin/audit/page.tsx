@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface AuditLog {
   id: string;
@@ -131,16 +133,14 @@ export default function AdminAuditPage() {
 
       try {
         const [logsResponse, statsResponse] = await Promise.all([
-          fetch(`/api/admin/audit-logs?${queryParams}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/audit-logs/stats', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          })
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'adminAuditLogs' as keyof typeof API_ENDPOINTS,
+            { method: 'GET', query: Object.fromEntries(queryParams) }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'adminAuditLogsStats' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          )
         ]);
 
         // Handle logs response
@@ -262,11 +262,10 @@ export default function AdminAuditPage() {
       if (filters.status) queryParams.set('status', filters.status);
       if (filters.search) queryParams.set('search', filters.search);
 
-      const response = await fetch(`/api/admin/audit-logs/export/data?${queryParams}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'adminAuditLogsExportData' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import Image from "next/image";
 import {
   Search,
@@ -27,6 +28,21 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+
+type RentalsPagination = {
+  current: number;
+  pages: number;
+  total: number;
+  limit: number;
+  count: number;
+};
+
+type RentalsResponse = {
+  success: boolean;
+  data?: Rental[];
+  error?: string;
+  pagination?: RentalsPagination;
+};
 
 export interface Rental {
   id: string;
@@ -255,13 +271,7 @@ export default function MarketplaceRentalsPage() {
         sortOrder
       });
 
-      const response = await fetch(`/api/rentals?${queryParams}`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch rentals: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiRequest<RentalsResponse>(`${API_ENDPOINTS.rentals}?${queryParams.toString()}`);
       
       if (data.success) {
         const rentalsData = data.data || [];

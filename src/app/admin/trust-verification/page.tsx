@@ -21,6 +21,8 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface TrustVerificationRequest {
   _id: string;
@@ -103,7 +105,10 @@ export default function AdminTrustVerificationPage() {
       setError(null);
 
       // Fetch statistics
-      const statsResponse = await fetch('/api/trust-verification/statistics');
+      const statsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationStatistics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData.data);
@@ -121,7 +126,10 @@ export default function AdminTrustVerificationPage() {
         sortOrder
       });
 
-      const requestsResponse = await fetch(`/api/trust-verification/requests?${queryParams}`);
+      const requestsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationRequests' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         if (requestsData.success) {
@@ -153,11 +161,12 @@ export default function AdminTrustVerificationPage() {
 
   const handleStatusChange = async (requestId: string, newStatus: string, notes?: string) => {
     try {
-      const response = await fetch(`/api/trust-verification/requests/${requestId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, notes })
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'trustVerificationRequestById' as keyof typeof API_ENDPOINTS,
+        [requestId],
+        {},
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus, notes }) }
+      );
 
       if (response.ok) {
         await fetchData(); // Refresh data
@@ -174,14 +183,14 @@ export default function AdminTrustVerificationPage() {
     if (!bulkAction || selectedRequests.length === 0) return;
 
     try {
-      const response = await fetch('/api/trust-verification/requests/bulk', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestIds: selectedRequests,
-          action: bulkAction
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationRequests' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestIds: selectedRequests, action: bulkAction })
+        }
+      );
 
       if (response.ok) {
         setSelectedRequests([]);

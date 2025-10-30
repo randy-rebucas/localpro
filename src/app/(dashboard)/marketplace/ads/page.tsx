@@ -23,8 +23,23 @@ import {
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/loading";
+
+type AdsPagination = {
+  current: number;
+  pages: number;
+  total: number;
+  limit: number;
+  count: number;
+};
+
+type AdsResponse = {
+  success?: boolean;
+  data?: Ad[];
+  pagination?: AdsPagination;
+};
 
 export interface Ad {
   id: string;
@@ -131,13 +146,7 @@ export default function MarketplaceAdsPage() {
       if (sortBy) params.append('sortBy', sortBy);
       if (sortOrder) params.append('sortOrder', sortOrder);
 
-      const response = await fetch(`/api/ads?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ads: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiRequest<AdsResponse>(`${API_ENDPOINTS.ads}?${params.toString()}`);
       
       if (data.success && data.data) {
         setAds(data.data || []);
@@ -228,16 +237,8 @@ export default function MarketplaceAdsPage() {
 
   const handlePromoteAd = async (adId: string) => {
     try {
-      const response = await fetch(`/api/ads/${adId}/promote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        fetchAds();
-      }
+      await apiRequest(`${API_ENDPOINTS.ads}/${adId}/promote`, { method: 'POST' });
+      fetchAds();
     } catch (error) {
       console.error('Error promoting ad:', error);
     }

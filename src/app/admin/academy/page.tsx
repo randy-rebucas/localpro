@@ -3,6 +3,8 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { Loading } from "@/components/ui/loading";
 import { 
   BookOpen, 
@@ -143,7 +145,10 @@ export default function AcademyAdmin() {
   const fetchCourses = async (page = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/academy/courses?page=${page}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'academyCourses' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { page: String(page) } }
+      );
       const result = await response.json();
       
       if (result.success) {

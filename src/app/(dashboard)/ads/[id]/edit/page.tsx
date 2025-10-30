@@ -131,7 +131,7 @@ export default function EditAdPage() {
           location: { city: "New York", state: "NY", country: "USA" },
           tags: ["hardware", "tools", "materials"],
           priority: "high",
-          images: ["/api/placeholder/400/300", "/api/placeholder/400/300"]
+          images: ["https://via.placeholder.com/400x300", "https://via.placeholder.com/400x300"]
         });
       } finally {
         setLoading(false);

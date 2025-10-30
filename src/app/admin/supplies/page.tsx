@@ -3,6 +3,8 @@
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { Loading } from "@/components/ui/loading";
 import { 
   Package, 
@@ -110,7 +112,10 @@ export default function SuppliesAdmin() {
       setError(null);
       
       // Use admin API endpoint for proper admin access
-      const response = await fetch(`/api/admin/supplies?type=supplies&page=${page}&limit=10&category=${filterCategory !== 'all' ? filterCategory : ''}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesAdmin' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { type: 'supplies', page: String(page), limit: '10', category: filterCategory !== 'all' ? filterCategory : '' } }
+      );
       const data: SuppliesResponse = await response.json();
       
       if (data.success) {
@@ -161,9 +166,12 @@ export default function SuppliesAdmin() {
       setActionLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/admin/supplies/${supplyId}`, {
-        method: 'DELETE',
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'suppliesAdminDelete' as keyof typeof API_ENDPOINTS,
+        [supplyId],
+        {},
+        { method: 'DELETE' }
+      );
       
       if (response.ok) {
         // Refresh the supplies list

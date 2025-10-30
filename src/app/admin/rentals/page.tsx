@@ -18,6 +18,7 @@ import {
   Star,
   Users
 } from "lucide-react";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface Pricing {
   hourly: number;
@@ -197,7 +198,10 @@ export default function RentalsAdmin() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/admin/rentals/statistics");
+      const response = await (await import("@/lib/client-api-utils")).makeClientAuthenticatedRequestWithEndpointSafe(
+        'rentalsStatistics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       
       if (!response.ok) {
         console.warn(`Stats API returned ${response.status}, using fallback data`);

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { 
   X, 
   AlertCircle, 
@@ -90,14 +92,17 @@ export default function AnnouncementsPage() {
     const fetchAnnouncements = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/announcements');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          "announcements" as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
         
         if (!response.ok) {
           throw new Error('Failed to fetch announcements');
         }
         
         const data = await response.json();
-        setAnnouncements(data.announcements || []);
+        setAnnouncements(data.announcements || data || []);
       } catch (err) {
         console.error('Error fetching announcements:', err);
         setError('Failed to load announcements');
@@ -172,12 +177,12 @@ export default function AnnouncementsPage() {
       setDismissedIds(prev => new Set([...prev, id]));
       
       // Call API to mark as dismissed
-      await fetch(`/api/announcements/${id}/dismiss`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await makeClientAuthenticatedRequestWithPathSafe(
+        "announcementsAcknowledge" as keyof typeof API_ENDPOINTS,
+        [id],
+        {},
+        { method: 'POST' }
+      );
     } catch (error) {
       console.error('Error dismissing announcement:', error);
       // Revert optimistic update on error

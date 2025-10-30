@@ -24,6 +24,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface Ad {
   id: string;
@@ -130,14 +132,17 @@ export default function AdsPage() {
     const fetchAds = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/ads');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          "ads" as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }
 
         const data = await response.json();
-        setAds(data.ads || []);
+        setAds(data.ads || data || []);
       } catch (error) {
         console.error('Error fetching ads:', error);
         // Return empty data - external API integration needed
@@ -209,12 +214,12 @@ export default function AdsPage() {
 
   const handlePromoteAd = async (adId: string) => {
     try {
-      const response = await fetch(`/api/ads/${adId}/promote`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        "adsPromote" as keyof typeof API_ENDPOINTS,
+        [adId],
+        {},
+        { method: 'POST' }
+      );
 
       if (response.ok) {
         // Refresh ads list

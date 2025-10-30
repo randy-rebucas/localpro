@@ -14,6 +14,8 @@ import {
   Info
 } from "lucide-react";
 import { useSession } from "@/hooks/useAuth";
+import { makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton } from "@/components/ui/loading";
 import { ListSkeleton } from "@/components/ui/loading";
@@ -97,13 +99,18 @@ export default function ActivityPage() {
       setLoading(true);
       try {
         if (session?.user?.id) {
-          // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-          // if (response.ok) {
-          //   const activityData = await response.json();
-          //   setActivities(activityData);
-          // } else {
-          //   throw new Error('Failed to fetch activities');
-          // }
+          try {
+            const response = await makeClientAuthenticatedRequestWithPathSafe(
+              "logsUserActivity" as keyof typeof API_ENDPOINTS,
+              [session.user.id]
+            );
+            if (response.ok) {
+              const activityData = await response.json();
+              setActivities(activityData);
+              return;
+            }
+            throw new Error('Failed to fetch activities');
+          } catch {}
         }
       } catch {
         // Fallback to mock data
@@ -173,11 +180,18 @@ export default function ActivityPage() {
     setLoading(true);
     try {
       if (session?.user?.id) {
-        // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-        // if (response.ok) {
-        //   const activityData = await response.json();
-        //   setActivities(activityData);
-        // }
+        try {
+          const response = await makeClientAuthenticatedRequestWithPathSafe(
+            "logsUserActivity" as keyof typeof API_ENDPOINTS,
+            [session.user.id]
+          );
+          if (response.ok) {
+            const activityData = await response.json();
+            setActivities(activityData);
+          }
+        } catch {
+          // ignore, keep existing list
+        }
       }
     } catch (error) {
       console.error('Error refreshing activities:', error);

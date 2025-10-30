@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 type SearchResultItem = {
   id?: string | number;
@@ -29,7 +31,10 @@ export default function SearchPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+        const res = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'search' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', signal: controller.signal }
+        );
         const data = await res.json();
         if (!res.ok) throw new Error(data?.error || "Search failed");
         

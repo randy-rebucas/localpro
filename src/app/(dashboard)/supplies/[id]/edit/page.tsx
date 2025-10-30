@@ -184,7 +184,7 @@ export default function EditSupplyPage() {
           delivery: { 
             available: true, estimatedDays: "2", cost: "9.99", freeShippingThreshold: "100"
           },
-          images: ["/api/placeholder/400/300", "/api/placeholder/400/300"],
+          images: ["https://via.placeholder.com/400x300", "https://via.placeholder.com/400x300"],
           tags: ["cleaning", "professional", "kit", "eco-friendly"]
         });
       } finally {

@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 const categories = [
   "Cleaning Supplies",
@@ -256,26 +258,27 @@ export default function CreateSupplyPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/supplies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
-          stock: parseInt(formData.stock),
-          minOrder: parseInt(formData.minOrder),
-          maxOrder: formData.maxOrder ? parseInt(formData.maxOrder) : undefined,
-          delivery: {
-            ...formData.delivery,
-            estimatedDays: parseInt(formData.delivery.estimatedDays),
-            cost: parseFloat(formData.delivery.cost),
-            freeShippingThreshold: formData.delivery.freeShippingThreshold ? parseFloat(formData.delivery.freeShippingThreshold) : undefined
-          }
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'supplies' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            price: parseFloat(formData.price),
+            originalPrice: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+            stock: parseInt(formData.stock),
+            minOrder: parseInt(formData.minOrder),
+            maxOrder: formData.maxOrder ? parseInt(formData.maxOrder) : undefined,
+            delivery: {
+              ...formData.delivery,
+              estimatedDays: parseInt(formData.delivery.estimatedDays),
+              cost: parseFloat(formData.delivery.cost),
+              freeShippingThreshold: formData.delivery.freeShippingThreshold ? parseFloat(formData.delivery.freeShippingThreshold) : undefined
+            }
+          })
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

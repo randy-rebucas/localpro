@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useRoleAccess } from "@/components/role-guard";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface Supply {
   id: string;
@@ -239,7 +241,10 @@ export default function SuppliesPage() {
   // Fetch categories
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch('/api/supplies/categories');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesCategories' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
@@ -264,7 +269,10 @@ export default function SuppliesPage() {
   // Fetch types
   const fetchTypes = useCallback(async () => {
     try {
-      const response = await fetch('/api/supplies/types');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesTypes' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       
       if (!response.ok) {
         throw new Error('Failed to fetch types');
@@ -289,7 +297,10 @@ export default function SuppliesPage() {
   // Fetch statuses
   const fetchStatuses = useCallback(async () => {
     try {
-      const response = await fetch('/api/supplies/statuses');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesStatuses' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       
       if (!response.ok) {
         throw new Error('Failed to fetch statuses');
@@ -314,7 +325,10 @@ export default function SuppliesPage() {
   // Fetch featured supplies
   const fetchFeaturedSupplies = useCallback(async () => {
     try {
-      const response = await fetch('/api/supplies/featured');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesFeatured' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       
       if (!response.ok) {
         throw new Error('Failed to fetch featured supplies');
@@ -353,7 +367,10 @@ export default function SuppliesPage() {
         radius: '10000' // 10km radius
       });
 
-      const response = await fetch(`/api/supplies/nearby?${params}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'suppliesNearby' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+      );
       
       if (!response.ok) {
         throw new Error('Failed to fetch nearby supplies');
@@ -407,7 +424,10 @@ export default function SuppliesPage() {
       if (sortBy) params.append('sortBy', sortBy);
       if (sortOrder) params.append('sortOrder', sortOrder);
 
-      const response = await fetch(`/api/supplies?${params}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'supplies' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to fetch supplies');

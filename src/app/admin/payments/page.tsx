@@ -25,6 +25,8 @@ import { PaymentTransactionsTable } from "@/components/admin/payment-transaction
 import { PaymentMethodChart } from "@/components/admin/payment-method-chart";
 import { RefundModal, RefundData } from "@/components/admin/refund-modal";
 import { TransactionDetailsModal } from "@/components/admin/transaction-details-modal";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface PaymentOverview {
   totalTransactions: number;
@@ -132,12 +134,21 @@ export default function PaymentProcessingPage() {
     try {
       setLoading(true);
       const [overviewRes, transactionsRes] = await Promise.all([
-        fetch("/api/admin/payments/overview"),
-        fetch(`/api/admin/payments/transactions?${new URLSearchParams({
-          page: currentPage.toString(),
-          limit: '50',
-          ...filters
-        }).toString()}`)
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeOverview' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeTransactions' as keyof typeof API_ENDPOINTS,
+          {
+            method: 'GET',
+            query: {
+              page: currentPage.toString(),
+              limit: '50',
+              ...filters
+            }
+          }
+        )
       ]);
       
       const overviewResponse = await overviewRes.json();
@@ -222,16 +233,18 @@ export default function PaymentProcessingPage() {
     if (!selectedTransaction) return;
     
     try {
-      const response = await fetch('/api/admin/payments/refunds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transactionId: selectedTransaction.id,
-          ...refundData
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeTransactions' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'refund',
+            transactionId: selectedTransaction.id,
+            ...refundData
+          })
+        }
+      );
 
       if (response.ok) {
         fetchPaymentData();

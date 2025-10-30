@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface ErrorLog {
   id: string;
@@ -79,7 +81,10 @@ export default function ErrorMonitoringPage() {
       setError(null);
 
       // Fetch error statistics
-      const statsResponse = await fetch('/api/admin/error-monitoring/stats');
+      const statsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'errorMonitoringStats' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (!statsResponse.ok) {
         throw new Error('Failed to fetch error statistics');
       }
@@ -89,7 +94,10 @@ export default function ErrorMonitoringPage() {
       }
 
       // Fetch unresolved errors
-      const errorsResponse = await fetch('/api/admin/error-monitoring/unresolved');
+      const errorsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'errorMonitoringUnresolved' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (!errorsResponse.ok) {
         throw new Error('Failed to fetch errors');
       }
@@ -183,13 +191,10 @@ export default function ErrorMonitoringPage() {
 
   const resolveError = async (errorId: string) => {
     try {
-      const response = await fetch(`/api/admin/error-monitoring/${errorId}/resolve`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'resolve' })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'errorMonitoringResolve' as keyof typeof API_ENDPOINTS,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ errorId, action: 'resolve' }) }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to resolve error');
@@ -211,13 +216,10 @@ export default function ErrorMonitoringPage() {
 
   const unresolveError = async (errorId: string) => {
     try {
-      const response = await fetch(`/api/admin/error-monitoring/${errorId}/resolve`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'unresolve' })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'errorMonitoringResolve' as keyof typeof API_ENDPOINTS,
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ errorId, action: 'unresolve' }) }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to unresolve error');

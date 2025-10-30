@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useAuth";
+import { makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
   Shield,
@@ -54,12 +56,119 @@ export default function ActivityPage() {
       setIsLoading(true);
       try {
         if (session?.user?.id) {
-          // const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
-          // if (response.ok) {
-          //   const activityData = await response.json();
-          //   setRecentActivity(activityData);
-          // } else {
-          //   console.warn("Failed to fetch recent activity:", response.status);
+          // Try external API first
+          try {
+            const response = await makeClientAuthenticatedRequestWithPathSafe(
+              "logsUserActivity" as keyof typeof API_ENDPOINTS,
+              [session.user.id]
+            );
+            if (response.ok) {
+              const activityData = await response.json();
+              setRecentActivity(activityData);
+            } else {
+              console.warn("Failed to fetch recent activity:", response.status);
+              // Set enhanced fallback activity data
+              setRecentActivity([
+                {
+                  id: "1",
+                  type: "marketplace",
+                  action: "Service booking completed",
+                  description: "Successfully booked 'Home Cleaning Service' for tomorrow",
+                  timestamp: "Just now",
+                  icon: "marketplace",
+                  status: "success",
+                  priority: "high",
+                  category: "booking",
+                  value: 150,
+                  unit: "PHP"
+                },
+                {
+                  id: "2",
+                  type: "academy",
+                  action: "Course progress updated",
+                  description: "Completed 75% of 'Digital Marketing Fundamentals'",
+                  timestamp: "5 minutes ago",
+                  icon: "academy",
+                  status: "info",
+                  priority: "medium",
+                  category: "learning",
+                  value: 75,
+                  unit: "%"
+                },
+                {
+                  id: "3",
+                  type: "profile",
+                  action: "Profile verification approved",
+                  description: "Your professional profile has been verified",
+                  timestamp: "15 minutes ago",
+                  icon: "user",
+                  status: "success",
+                  priority: "high",
+                  category: "verification"
+                },
+                {
+                  id: "4",
+                  type: "finance",
+                  action: "Payment received",
+                  description: "Received payment of ₱2,500 for completed service",
+                  timestamp: "1 hour ago",
+                  icon: "finance",
+                  status: "success",
+                  priority: "high",
+                  category: "payment",
+                  value: 2500,
+                  unit: "PHP"
+                },
+                {
+                  id: "5",
+                  type: "notification",
+                  action: "New message received",
+                  description: "You have 3 unread messages from clients",
+                  timestamp: "2 hours ago",
+                  icon: "message",
+                  status: "info",
+                  priority: "medium",
+                  category: "communication"
+                },
+                {
+                  id: "6",
+                  type: "marketplace",
+                  action: "Service rating received",
+                  description: "Received 5-star rating for 'Plumbing Repair' service",
+                  timestamp: "3 hours ago",
+                  icon: "marketplace",
+                  status: "success",
+                  priority: "medium",
+                  category: "rating",
+                  value: 5,
+                  unit: "stars"
+                },
+                {
+                  id: "7",
+                  type: "academy",
+                  action: "Certificate earned",
+                  description: "Earned certificate for 'Project Management Basics'",
+                  timestamp: "1 day ago",
+                  icon: "academy",
+                  status: "success",
+                  priority: "high",
+                  category: "achievement"
+                },
+                {
+                  id: "8",
+                  type: "settings",
+                  action: "Security settings updated",
+                  description: "Two-factor authentication enabled",
+                  timestamp: "2 days ago",
+                  icon: "settings",
+                  status: "info",
+                  priority: "medium",
+                  category: "security"
+                }
+              ]);
+            }
+          } catch (err) {
+            console.warn("Activity external fetch failed, using fallback:", err);
             // Set enhanced fallback activity data
             setRecentActivity([
               {
@@ -159,7 +268,7 @@ export default function ActivityPage() {
                 category: "security"
               }
             ]);
-          // }
+          }
         }
       } catch (error) {
         console.error("Failed to fetch recent activity:", error);

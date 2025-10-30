@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
     handleClientApiRoute,
-    isAuthenticated 
+    isAuthenticated,
+    makeClientAuthenticatedRequestWithEndpoint
 } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 import {
     ArrowLeft,
     Save,
@@ -153,18 +155,17 @@ export default function CreateCoursePage() {
             }
 
             const result = await handleClientApiRoute(async () => {
-                const response = await fetch('/api/academy/courses', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
+                const response = await makeClientAuthenticatedRequestWithEndpoint(
+                    'academyCourseCreate' as keyof typeof API_ENDPOINTS,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    }
+                );
                 if (!response.ok) {
                     throw new Error(`Failed to create course: ${response.status}`);
                 }
-                
                 return await response.json();
             }, "Create course");
 

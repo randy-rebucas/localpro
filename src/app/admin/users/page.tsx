@@ -20,6 +20,8 @@ import {
   ChevronUp
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 // Define types locally
 interface User {
   _id: string;
@@ -205,26 +207,7 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Helper function to add timeout to fetch requests
-  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-  };
+  //
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -250,16 +233,14 @@ export default function UsersPage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetchWithTimeout(`/api/admin/users?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 20000), // 20 second timeout for users data
-        fetchWithTimeout('/api/admin/users/stats?period=week', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 10000).catch(err => { // 10 second timeout for stats
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'usersAdmin' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: Object.fromEntries(queryParams) }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'usersAdminStats' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { period: 'week' } }
+        ).catch(err => { // fallback
           console.warn('Failed to fetch stats, using fallback:', err);
           return {
             ok: true,
@@ -419,11 +400,12 @@ export default function UsersPage() {
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'usersAdminDelete' as keyof typeof API_ENDPOINTS,
+          [userId],
+          {},
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -440,11 +422,12 @@ export default function UsersPage() {
 
   const handleSuspendUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'usersAdminSuspend' as keyof typeof API_ENDPOINTS,
+        [userId, 'suspend'],
+        {},
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -460,11 +443,12 @@ export default function UsersPage() {
 
   const handleActivateUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/activate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'usersAdminActivate' as keyof typeof API_ENDPOINTS,
+        [userId, 'activate'],
+        {},
+        { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

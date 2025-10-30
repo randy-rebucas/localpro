@@ -24,6 +24,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface SupplyOrder {
   id: string;
@@ -150,7 +152,7 @@ export default function MyOrdersPage() {
         type: 'cleaning',
         price: 89.99,
         unit: 'set',
-        images: ['/api/placeholder/400/300'],
+        images: ['https://via.placeholder.com/400x300'],
         supplier: {
           id: '1',
           name: 'Professional Supply Co.',
@@ -194,7 +196,7 @@ export default function MyOrdersPage() {
         type: 'tools',
         price: 149.99,
         unit: 'set',
-        images: ['/api/placeholder/400/300'],
+        images: ['https://via.placeholder.com/400x300'],
         supplier: {
           id: '2',
           name: 'Tool Supply Depot',
@@ -238,7 +240,7 @@ export default function MyOrdersPage() {
         type: 'subscription',
         price: 29.99,
         unit: 'box',
-        images: ['/api/placeholder/400/300'],
+        images: ['https://via.placeholder.com/400x300'],
         supplier: {
           id: '3',
           name: 'Subscription Supply Co.',
@@ -276,7 +278,10 @@ export default function MyOrdersPage() {
     const fetchMyOrders = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/supplies/my-orders');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'suppliesMyOrders' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch my orders');
@@ -315,9 +320,12 @@ export default function MyOrdersPage() {
   const handleCancelOrder = async (orderId: string) => {
     if (confirm('Are you sure you want to cancel this order?')) {
       try {
-        const response = await fetch(`/api/supplies/orders/${orderId}/cancel`, {
-          method: 'PUT',
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'suppliesOrderStatus' as keyof typeof API_ENDPOINTS,
+          [orderId, 'cancel'],
+          {},
+          { method: 'PUT' }
+        );
 
         if (response.ok) {
           setOrders(prev => prev.map(order => 

@@ -18,6 +18,8 @@ import {
   AlertCircle,
   Send
 } from "lucide-react";
+import { makeClientAuthenticatedRequestWithPathSafe, makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface Job {
   id: string;
@@ -104,7 +106,10 @@ export default function JobDetailPage() {
   const fetchJob = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/jobs/${params.id}`);
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'jobsById' as keyof typeof API_ENDPOINTS,
+        [String(params.id)]
+      );
       
       if (!response.ok) {
         throw new Error("Job not found");
@@ -122,7 +127,10 @@ export default function JobDetailPage() {
 
   const fetchRelatedJobs = useCallback(async () => {
     try {
-      const response = await fetch(`/api/jobs/related/${params.id}`);
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'jobs' as keyof typeof API_ENDPOINTS,
+        ['related', String(params.id)]
+      );
       if (response.ok) {
         const data = await response.json();
         setRelatedJobs(Array.isArray(data) ? data : data.jobs || []);
@@ -145,17 +153,18 @@ export default function JobDetailPage() {
 
     try {
       setApplicationLoading(true);
-      const response = await fetch('/api/jobs/applications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jobId: job.id,
-          clientId: job.client.id,
-          ...applicationForm
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'jobsApplications' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jobId: job.id,
+            clientId: job.client.id,
+            ...applicationForm
+          })
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to submit application");

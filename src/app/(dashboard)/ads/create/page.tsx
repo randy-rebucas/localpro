@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 const categories = [
   "Hardware Stores",
@@ -188,17 +190,18 @@ export default function CreateAdPage() {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/ads', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          status,
-          budget: parseFloat(formData.budget)
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'adsCreate' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            status,
+            budget: parseFloat(formData.budget)
+          })
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();

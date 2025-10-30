@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 // Define types locally
 interface Provider {
@@ -241,26 +243,7 @@ export default function ProvidersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  // Helper function to add timeout to fetch requests
-  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-  };
+  //
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -287,16 +270,14 @@ export default function ProvidersPage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetchWithTimeout(`/api/admin/providers?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 20000), // 20 second timeout for providers data
-        fetchWithTimeout('/api/admin/providers?type=overview', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 10000).catch(err => { // 10 second timeout for stats
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'providersAdmin' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: Object.fromEntries(queryParams) }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'providersAdminOverview' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        ).catch(err => { // fallback
           console.warn('Failed to fetch stats, using fallback:', err);
           return {
             ok: true,
@@ -455,11 +436,12 @@ export default function ProvidersPage() {
   const handleDeleteProvider = async (providerId: string) => {
     if (window.confirm('Are you sure you want to delete this provider?')) {
       try {
-        const response = await fetch(`/api/admin/providers/${providerId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'providersAdminDelete' as keyof typeof API_ENDPOINTS,
+          [providerId],
+          {},
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -476,12 +458,12 @@ export default function ProvidersPage() {
 
   const handleUpdateProviderStatus = async (providerId: string, status: string, reason?: string) => {
     try {
-      const response = await fetch(`/api/admin/providers/${providerId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status, reason })
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'providersAdminStatus' as keyof typeof API_ENDPOINTS,
+        [providerId, 'status'],
+        {},
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, reason }) }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

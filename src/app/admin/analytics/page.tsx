@@ -15,6 +15,8 @@ import {
   XCircle,
   Zap
 } from 'lucide-react';
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface AnalyticsData {
   overview: {
@@ -122,7 +124,10 @@ export default function AnalyticsPage() {
       setSlowRequest(false);
 
       const startTime = Date.now();
-      const response = await fetch(`/api/admin/analytics?type=${type}&period=${period}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'analyticsDashboard' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { type, period } }
+      );
       const duration = Date.now() - startTime;
 
       if (duration > 5000) {
@@ -175,22 +180,17 @@ export default function AnalyticsPage() {
 
   const handleExport = async (format: string = 'json') => {
     try {
-      const response = await fetch('/api/admin/analytics', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'export_data',
-          data: {
-            format,
-            filters: {
-              period: selectedPeriod,
-              type: selectedType
-            }
-          }
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'analyticsCustom' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'export_data',
+            data: { format, filters: { period: selectedPeriod, type: selectedType } }
+          })
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');

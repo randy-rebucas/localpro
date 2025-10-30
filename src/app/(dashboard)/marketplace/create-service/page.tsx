@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface ScheduleItem {
   day: string;
@@ -414,10 +416,13 @@ export default function CreateServicePage() {
         formData.append(`image_${index}`, image);
       });
 
-      const response = await fetch('/api/marketplace/services', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'marketplaceServices' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to create service");

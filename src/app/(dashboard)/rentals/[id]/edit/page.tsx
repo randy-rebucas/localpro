@@ -165,7 +165,7 @@ export default function EditRentalPage() {
             startDate: new Date().toISOString().split('T')[0], 
             endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
           },
-          images: ["/api/placeholder/400/300", "/api/placeholder/400/300"]
+          images: ["https://via.placeholder.com/400x300", "https://via.placeholder.com/400x300"]
         });
       } finally {
         setLoading(false);

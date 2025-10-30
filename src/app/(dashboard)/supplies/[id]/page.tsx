@@ -149,7 +149,7 @@ export default function SupplyDetailPage() {
             state: 'NY',
             zipCode: '10001'
           },
-          images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
+          images: ['https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600', 'https://via.placeholder.com/800x600'],
           features: ['Professional Grade', 'Eco-Friendly', 'Long Lasting', 'Easy to Use', 'Versatile', 'Cost Effective'],
           specifications: {
             brand: 'CleanPro',

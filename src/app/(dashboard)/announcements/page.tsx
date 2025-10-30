@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton, ListSkeleton } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 export interface Announcement {
   id: string;
@@ -74,7 +76,10 @@ export default function AnnouncementsPage() {
     const fetchAnnouncements = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/announcements');
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'announcements' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           throw new Error('Failed to fetch announcements');

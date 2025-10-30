@@ -32,6 +32,8 @@ import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 interface DashboardStats {
   totalUsers: number;
@@ -86,13 +88,10 @@ export default function AdminDashboard() {
         setError(null);
 
         // Fetch real data from admin dashboard API
-        const response = await fetch('/api/admin/dashboard', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          'analyticsDashboard' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -126,13 +125,10 @@ export default function AdminDashboard() {
     setRefreshing(true);
     try {
       // Fetch fresh data from admin dashboard API
-      const response = await fetch('/api/admin/dashboard', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'analyticsDashboard' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
