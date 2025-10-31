@@ -1,12 +1,27 @@
 // Utility functions for authentication
 
 /**
- * Get session token from cookies
+ * Get API token from cookies (prioritizes api-token cookie from mobile auth)
+ * Falls back to session cookie for backward compatibility
  */
-export function getSessionToken(): string | null {
+export function getApiToken(): string | null {
   if (typeof document === 'undefined') return null;
   
   const cookies = document.cookie.split(';');
+  
+  // First, try to get api-token cookie (used by mobile authentication)
+  const apiTokenCookie = cookies.find(cookie => 
+    cookie.trim().startsWith('api-token=')
+  );
+  
+  if (apiTokenCookie) {
+    const token = apiTokenCookie.split('=')[1];
+    if (token && token.trim() !== '') {
+      return token;
+    }
+  }
+  
+  // Fallback to session cookie for backward compatibility
   const sessionCookie = cookies.find(cookie => 
     cookie.trim().startsWith('session=')
   );
@@ -15,10 +30,11 @@ export function getSessionToken(): string | null {
   
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('Session token check:', {
-      hasToken: !!token,
+    console.log('Token check:', {
+      hasApiToken: !!apiTokenCookie,
+      hasSessionToken: !!sessionCookie,
       cookieCount: cookies.length,
-      sessionCookie: sessionCookie ? 'found' : 'not found'
+      tokenLength: token?.length || 0
     });
   }
   
@@ -26,28 +42,39 @@ export function getSessionToken(): string | null {
 }
 
 /**
- * Create headers with session token for authenticated requests
+ * Get session token from cookies (legacy function, kept for backward compatibility)
+ * @deprecated Use getApiToken() instead for better mobile auth support
+ */
+export function getSessionToken(): string | null {
+  return getApiToken();
+}
+
+/**
+ * Create headers with API token for authenticated requests
+ * Uses api-token cookie (from mobile auth) or falls back to session cookie
  */
 export function createAuthHeaders(additionalHeaders: Record<string, string> = {}): Record<string, string> {
-  const sessionToken = getSessionToken();
+  const apiToken = getApiToken();
   
   return {
     'Content-Type': 'application/json',
-    ...(sessionToken && { 'Authorization': `Bearer ${sessionToken}` }),
+    ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
     ...additionalHeaders
   };
 }
 
 /**
  * Create fetch options with authentication
+ * Uses api-token cookie (from mobile auth response) or falls back to session cookie
+ * All secure REST API requests will use Authorization: Bearer {token}
  */
 export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
-  const sessionToken = getSessionToken();
+  const apiToken = getApiToken();
   
   // Debug logging
   console.log('🔍 createAuthFetchOptions:', {
-    hasSessionToken: !!sessionToken,
-    tokenLength: sessionToken?.length || 0,
+    hasApiToken: !!apiToken,
+    tokenLength: apiToken?.length || 0,
     allCookies: typeof document !== 'undefined' ? document.cookie : 'N/A'
   });
   
@@ -55,7 +82,7 @@ export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(sessionToken && { 'Authorization': `Bearer ${sessionToken}` }),
+      ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
       ...options.headers
     },
     credentials: 'include'

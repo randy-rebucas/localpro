@@ -33,7 +33,8 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface DashboardStats {
   totalUsers: number;
@@ -346,10 +347,9 @@ export default function AdminDashboard() {
                   <button
                     onClick={async () => {
                       try {
-                        const response = await fetch('/api/admin/setup', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' }
-                        });
+                        const response = await fetch(`${API_BASE_URL}/api/admin/setup`, createAuthFetchOptions({
+                          method: 'POST'
+                        }));
                         const result = await response.json();
                         if (result.success) {
                           alert('Admin role set! Please refresh the page.');
@@ -379,11 +379,10 @@ export default function AdminDashboard() {
                       const newRole = e.target.value;
                       if (newRole) {
                         try {
-                          const response = await fetch('/api/admin/update-role', {
+                          const response = await fetch(`${API_BASE_URL}/api/admin/update-role`, createAuthFetchOptions({
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ role: newRole })
-                          });
+                          }));
                           const result = await response.json();
                           if (result.success) {
                             alert(`Role updated to ${newRole}! Refreshing page...`);

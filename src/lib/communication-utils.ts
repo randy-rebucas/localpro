@@ -1,8 +1,9 @@
 import { createAuthFetchOptions } from './auth-utils';
+import { API_BASE_URL, API_ENDPOINTS } from './api';
 
 // Communication API utility functions
 export class CommunicationAPI {
-  private static baseUrl = '/api/communication';
+  private static baseUrl = `${API_BASE_URL}${API_ENDPOINTS.communicationConversations.replace('/conversations', '')}`;
 
   // Conversation Management
   static async getConversations(params?: { page?: number; limit?: number; search?: string }) {
@@ -195,7 +196,7 @@ export class RealtimeCommunication {
       this.eventSource.close();
     }
 
-    this.eventSource = new EventSource('/api/communication/events');
+    this.eventSource = new EventSource(`${API_BASE_URL}${API_ENDPOINTS.communicationEvents}`);
     
     this.eventSource.onmessage = (event) => {
       try {

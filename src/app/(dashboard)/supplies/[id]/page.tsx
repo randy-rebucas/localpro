@@ -24,6 +24,8 @@ import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 export interface Supply {
   id: string;
@@ -118,7 +120,7 @@ export default function SupplyDetailPage() {
     const fetchSupply = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/supplies/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.suppliesById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Supply not found');

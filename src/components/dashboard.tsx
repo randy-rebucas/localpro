@@ -20,6 +20,8 @@ import {
   ArrowRight,
   Activity
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface ServiceModule {
   id: string;
@@ -148,7 +150,7 @@ export function Dashboard() {
     const fetchUser = async () => {
       try {
         if (session?.user?.id) {
-          const response = await fetch('/api/auth/me');
+          const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authMe}`, createAuthFetchOptions());
           if (response.ok) {
             const userData = await response.json();
             console.log("=== USER DATA FROM API ===");
@@ -170,7 +172,7 @@ export function Dashboard() {
     const fetchRecentActivity = async () => {
       try {
         if (session?.user?.id) {
-          const response = await fetch(`/api/logs/user/${session.user.id}/activity`);
+          const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.logsUserActivity.replace('[userId]', session.user.id)}`, createAuthFetchOptions());
           if (response.ok) {
             const activityData = await response.json();
             console.log("=== RECENT ACTIVITY DATA ===");

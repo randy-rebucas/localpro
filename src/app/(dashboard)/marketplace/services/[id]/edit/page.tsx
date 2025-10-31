@@ -17,6 +17,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Service {
   id: string;
@@ -115,7 +117,7 @@ export default function EditServicePage() {
   const fetchService = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/marketplace/services/${params.id}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${params.id}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error("Service not found");
@@ -272,10 +274,10 @@ export default function EditServicePage() {
         formData.append(`image_${index}`, image);
       });
 
-      const response = await fetch(`/api/marketplace/services/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
         body: formData,
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to update service");

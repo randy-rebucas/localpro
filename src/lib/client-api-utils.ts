@@ -321,13 +321,35 @@ export function isExpiredTokenResponse(response: Response): boolean {
 
 /**
  * Enhanced authenticated request with automatic token expiry handling
+ * Supports query parameters via options.query (custom extension to RequestInit)
  */
 export async function makeClientAuthenticatedRequestWithEndpointSafe(
   endpoint: keyof typeof API_ENDPOINTS,
-  options: RequestInit = {}
+  options: RequestInit & { query?: Record<string, string> } = {}
 ): Promise<Response> {
+  const { query, ...fetchOptions } = options;
+  
+  // Build URL with query parameters if provided
+  let url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  if (query && Object.keys(query).length > 0) {
+    const queryString = new URLSearchParams(query).toString();
+    url += `?${queryString}`;
+  }
+  
   try {
-    const response = await makeClientAuthenticatedRequestWithEndpoint(endpoint, options);
+    const authHeaders = getAuthHeaders();
+    
+    if (!authHeaders) {
+      throw new Error("No authentication token found - please log in");
+    }
+    
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers: {
+        ...authHeaders,
+        ...fetchOptions.headers,
+      },
+    });
     
     // Check if token is expired
     if (isExpiredTokenResponse(response)) {

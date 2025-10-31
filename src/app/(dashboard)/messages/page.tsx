@@ -10,49 +10,244 @@ import {
 import { CLIENT_CONFIG } from "@/lib/env";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
-interface Message {
-  id: string;
-  content: string;
-  createdAt: string;
-  isFromUser: boolean;
-  isRead: boolean;
-  senderId: string;
-  senderName?: string;
-  messageType?: 'text' | 'image' | 'file' | 'system';
-  attachments?: Array<{
-    id: string;
-    url: string;
-    type: string;
-    name: string;
-    size: number;
-  }>;
-  editedAt?: string;
-  replyTo?: {
-    id: string;
-    content: string;
-    senderName: string;
-  };
+// Communication Data Entities (from features/communication/data-entities.md)
+
+export type MessageType = 'text' | 'image' | 'file' | 'system' | 'booking_update' | 'payment_update';
+
+export type ConversationType = 'booking' | 'job_application' | 'support' | 'general' | 'agency';
+
+export type ConversationStatus = 'active' | 'resolved' | 'closed' | 'archived';
+
+export type ConversationPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface MessageAttachment {
+  filename: string;
+  url: string;
+  publicId?: string;
+  mimeType: string;
+  size: number;
 }
 
-interface Conversation {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unreadCount: number;
-  messages: Message[];
-  participants: Array<{
-    id: string;
-    name: string;
-    avatar?: string;
-    isOnline?: boolean;
-    lastSeen?: string;
-  }>;
-  isGroup?: boolean;
-  isTyping?: boolean;
-  typingUsers?: string[];
+export interface MessageMetadata {
+  isEdited?: boolean;
+  editedAt?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  replyTo?: string; // MessageId
 }
+
+export interface MessageReadBy {
+  user: string; // UserId
+  readAt: string; // Date ISO8601
+}
+
+export interface MessageReaction {
+  user: string; // UserId
+  emoji: string;
+  timestamp: string; // Date ISO8601
+}
+
+export interface Message {
+  _id: string;
+  id?: string; // Alias for _id for convenience
+  conversation: string; // ObjectId(Conversation)
+  sender: string | {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    avatar?: {
+      url?: string;
+      thumbnail?: string;
+    };
+    role?: string;
+  }; // ObjectId(User) or populated user object
+  content: string; // required
+  type: MessageType; // default 'text'
+  attachments?: MessageAttachment[];
+  metadata?: MessageMetadata;
+  readBy?: MessageReadBy[];
+  reactions?: MessageReaction[];
+  createdAt: string; // Date ISO8601
+  updatedAt: string; // Date ISO8601
+  // Computed/helper fields
+  isFromUser?: boolean; // computed from sender vs current user
+  isRead?: boolean; // computed from readBy array
+  senderId?: string; // extracted from sender
+  senderName?: string; // extracted from populated sender
+}
+
+export interface ConversationParticipant {
+  user: string | {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    avatar?: {
+      url?: string;
+      thumbnail?: string;
+    };
+    role?: string;
+  }; // ObjectId(User) or populated user object
+  role: 'client' | 'provider' | 'admin' | 'support';
+  joinedAt: string; // Date ISO8601
+  lastReadAt?: string; // Date ISO8601
+}
+
+export interface ConversationContext {
+  bookingId?: string;
+  jobId?: string;
+  agencyId?: string;
+  orderId?: string;
+}
+
+export interface LastMessage {
+  content: string;
+  sender: string; // UserId
+  timestamp: string; // Date ISO8601
+}
+
+export interface Conversation {
+  _id: string;
+  id?: string; // Alias for _id for convenience
+  participants: ConversationParticipant[];
+  type: ConversationType; // default 'general'
+  subject: string; // required
+  context?: ConversationContext;
+  status: ConversationStatus; // default 'active'
+  priority: ConversationPriority; // default 'medium'
+  tags?: string[];
+  lastMessage?: LastMessage;
+  isActive: boolean; // default true
+  createdAt: string; // Date ISO8601
+  updatedAt: string; // Date ISO8601
+  // Computed/helper fields
+  name?: string; // computed from participants
+  avatar?: string; // computed from participants
+  timestamp?: string; // computed from lastMessage or updatedAt
+  unreadCount?: number; // computed
+  messages?: Message[]; // loaded messages
+  isGroup?: boolean; // computed from participants.length > 2
+  isTyping?: boolean; // real-time state
+  typingUsers?: string[]; // real-time state
+}
+
+// Notification Entity
+export type NotificationType =
+  | 'booking_created' | 'booking_confirmed' | 'booking_cancelled' | 'booking_completed'
+  | 'job_application' | 'application_status_update' | 'job_posted'
+  | 'message_received' | 'payment_received' | 'payment_failed'
+  | 'referral_reward' | 'course_enrollment' | 'order_confirmation'
+  | 'subscription_renewal' | 'subscription_cancelled' | 'system_announcement';
+
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface NotificationChannels {
+  inApp: boolean;
+  email: boolean;
+  sms: boolean;
+  push: boolean;
+}
+
+export interface Notification {
+  _id: string;
+  id?: string; // Alias for _id for convenience
+  user: string; // ObjectId(User)
+  type: NotificationType;
+  title: string; // required
+  message: string; // required
+  data?: Record<string, unknown>; // Mixed (context payload)
+  isRead: boolean; // default false
+  readAt?: string; // Date ISO8601
+  priority: NotificationPriority; // default 'medium'
+  channels: NotificationChannels;
+  scheduledFor?: string | null; // Date ISO8601
+  sentAt?: string | null; // Date ISO8601
+  expiresAt?: string | null; // Date ISO8601
+  createdAt: string; // Date ISO8601
+  updatedAt: string; // Date ISO8601
+}
+
+// Helper functions to normalize data from API
+const normalizeMessage = (message: any, currentUserId?: string): Message => {
+  const senderId = typeof message.sender === 'string' ? message.sender : message.sender?._id || message.senderId;
+  const senderName = typeof message.sender === 'object' && message.sender
+    ? `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim() || message.sender.email || 'Unknown'
+    : message.senderName || 'Unknown';
+  
+  return {
+    ...message,
+    _id: message._id || message.id,
+    id: message.id || message._id,
+    sender: message.sender || senderId,
+    senderId,
+    senderName,
+    isFromUser: currentUserId ? senderId === currentUserId : message.isFromUser || false,
+    isRead: message.readBy?.some((r: MessageReadBy) => r.user === currentUserId) || message.isRead || false,
+    type: message.type || 'text',
+    attachments: message.attachments || [],
+    metadata: message.metadata || {},
+    readBy: message.readBy || [],
+    reactions: message.reactions || []
+  };
+};
+
+const normalizeConversation = (conversation: any, currentUserId?: string): Conversation => {
+  const convId = conversation._id || conversation.id;
+  const participants = conversation.participants || [];
+  
+  // Compute name from participants (exclude current user)
+  const otherParticipants = participants.filter((p: ConversationParticipant) => {
+    const userId = typeof p.user === 'string' ? p.user : p.user?._id;
+    return userId !== currentUserId;
+  });
+  
+  let name = conversation.subject || conversation.name || 'Unknown';
+  if (otherParticipants.length > 0) {
+    const firstOther = otherParticipants[0];
+    const otherName = typeof firstOther.user === 'object' && firstOther.user
+      ? `${firstOther.user.firstName || ''} ${firstOther.user.lastName || ''}`.trim() || firstOther.user.email || 'Unknown'
+      : 'Unknown';
+    name = otherParticipants.length === 1 ? otherName : `${otherName} and ${otherParticipants.length - 1} others`;
+  }
+  
+  // Compute avatar from first other participant
+  const avatar = otherParticipants.length > 0 && typeof otherParticipants[0].user === 'object' && otherParticipants[0].user
+    ? otherParticipants[0].user.avatar?.url || otherParticipants[0].user.avatar?.thumbnail
+    : conversation.avatar;
+  
+  // Compute timestamp from lastMessage
+  const timestamp = conversation.lastMessage?.timestamp 
+    || conversation.timestamp 
+    || conversation.updatedAt 
+    || conversation.createdAt;
+  
+  // Normalize messages if present
+  const messages = conversation.messages?.map((msg: any) => normalizeMessage(msg, currentUserId)) || [];
+  
+  return {
+    ...conversation,
+    _id: convId,
+    id: convId,
+    participants,
+    type: conversation.type || 'general',
+    subject: conversation.subject || name,
+    status: conversation.status || 'active',
+    priority: conversation.priority || 'medium',
+    isActive: conversation.isActive !== false,
+    name,
+    avatar,
+    timestamp,
+    unreadCount: conversation.unreadCount || 0,
+    messages,
+    isGroup: participants.length > 2,
+    lastMessage: conversation.lastMessage || (messages.length > 0 ? {
+      content: messages[messages.length - 1].content,
+      sender: messages[messages.length - 1].senderId || '',
+      timestamp: messages[messages.length - 1].createdAt
+    } : undefined)
+  };
+};
 
 export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -76,13 +271,15 @@ export default function MessagesPage() {
   const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   const [messagePage, setMessagePage] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [notifications, setNotifications] = useState<{ id: string; [key: string]: unknown }[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
 
   // Enhanced retry logic
   const retryWithBackoff = useCallback(async (fn: () => Promise<unknown>, maxRetries: number = 3) => {
@@ -104,21 +301,28 @@ export default function MessagesPage() {
 
   // Check if user is authenticated before making API calls
   const checkAuthentication = useCallback(async () => {
-    const result = await handleClientApiRoute(async () => {
-      const response = await makeClientAuthenticatedRequestWithEndpoint(
-        'authMe',
-        { method: 'GET' }
-      );
+      const result = await handleClientApiRoute(async () => {
+        const response = await makeClientAuthenticatedRequestWithEndpoint(
+          'authMe',
+          { method: 'GET' }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Authentication failed: ${response.status}`);
+        }
+        
+        return await response.json();
+      }, "Check authentication");
       
-      if (!response.ok) {
-        throw new Error(`Authentication failed: ${response.status}`);
+      if (!result.error && result.data) {
+        const userData = result.data?.data || result.data;
+        if (userData?._id || userData?.id) {
+          setCurrentUserId(userData._id || userData.id);
+        }
       }
       
-      return await response.json();
-    }, "Check authentication");
-    
-    return !result.error;
-  }, []);
+      return !result.error;
+    }, []);
 
   // API Functions
   const fetchConversations = useCallback(async () => {
@@ -172,8 +376,13 @@ export default function MessagesPage() {
           throw new Error(`Failed to load conversations: ${response.status} ${response.statusText}`);
         }
         
-        const data = await response.json();
-        setConversations(data || []);
+        const responseData = await response.json();
+        // Handle API response structure: { success, data: { conversations: [...], pagination:{...} } }
+        const conversationsData = responseData?.data?.conversations || responseData?.conversations || responseData?.data || [];
+        
+        // Normalize conversations
+        const normalizedConversations = conversationsData.map((conv: any) => normalizeConversation(conv, currentUserId));
+        setConversations(normalizedConversations);
         setRetryCount(0); // Reset retry count on success
       });
     } catch (err) {
@@ -194,7 +403,7 @@ export default function MessagesPage() {
     } finally {
       setLoading(false);
     }
-  }, [retryWithBackoff, retryCount, checkAuthentication]);
+  }, [retryWithBackoff, retryCount, checkAuthentication, currentUserId]);
 
   const fetchConversation = useCallback(async (conversationId: string, page: number = 1) => {
     const result = await handleClientApiRoute(async () => {
@@ -217,8 +426,19 @@ export default function MessagesPage() {
       throw new Error(result.error);
     }
     
+    // Handle API response structure and normalize
+    const conversationData = result.data?.data || result.data;
+    if (conversationData) {
+      const normalized = normalizeConversation(conversationData, currentUserId);
+      // Normalize messages if present
+      if (normalized.messages) {
+        normalized.messages = normalized.messages.map((msg: any) => normalizeMessage(msg, currentUserId));
+      }
+      return normalized;
+    }
+    
     return result.data;
-  }, []);
+  }, [currentUserId]);
 
   const loadMoreMessages = useCallback(async () => {
     if (!activeConversation || loadingMoreMessages || !hasMoreMessages) return;
@@ -226,13 +446,17 @@ export default function MessagesPage() {
     setLoadingMoreMessages(true);
     try {
       const nextPage = messagePage + 1;
-      const data = await fetchConversation(activeConversation.id, nextPage);
+      const convId = activeConversation.id || activeConversation._id;
+      if (!convId) return;
+      const data = await fetchConversation(convId, nextPage);
       
       if (data.messages && data.messages.length > 0) {
+        // Normalize new messages
+        const normalizedMessages = data.messages.map((msg: any) => normalizeMessage(msg, currentUserId));
         setActiveConversation(prev => 
           prev ? { 
             ...prev, 
-            messages: [...data.messages, ...prev.messages] 
+            messages: [...normalizedMessages, ...(prev.messages || [])] 
           } : null
         );
         setMessagePage(nextPage);
@@ -313,37 +537,56 @@ export default function MessagesPage() {
         throw new Error(result.error);
       }
       
-      const newMessage = result.data;
+      const messageData = result.data?.data || result.data;
+      const normalizedNewMessage = normalizeMessage(messageData, currentUserId);
       
       // Update conversations list
       setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { 
-                ...conv, 
-                lastMessage: content, 
-                timestamp: new Date().toLocaleDateString(),
-                unreadCount: 0
-              }
-            : conv
-        )
+        prev.map(conv => {
+          const convId = conv.id || conv._id;
+          if (convId === conversationId) {
+            return {
+              ...conv,
+              lastMessage: {
+                content: normalizedNewMessage.content,
+                sender: normalizedNewMessage.senderId || '',
+                timestamp: normalizedNewMessage.createdAt
+              },
+              timestamp: normalizedNewMessage.createdAt,
+              updatedAt: normalizedNewMessage.createdAt,
+              unreadCount: 0
+            };
+          }
+          return conv;
+        })
       );
 
       // Update active conversation
-      if (activeConversation?.id === conversationId) {
+      const activeConvId = activeConversation?.id || activeConversation?._id;
+      if (activeConvId === conversationId) {
         setActiveConversation(prev => 
-          prev ? { ...prev, messages: [...prev.messages, newMessage] } : null
+          prev ? { 
+            ...prev, 
+            messages: [...(prev.messages || []), normalizedNewMessage],
+            lastMessage: {
+              content: normalizedNewMessage.content,
+              sender: normalizedNewMessage.senderId || '',
+              timestamp: normalizedNewMessage.createdAt
+            },
+            timestamp: normalizedNewMessage.createdAt,
+            updatedAt: normalizedNewMessage.createdAt
+          } : null
         );
       }
       
-      return newMessage;
+      return normalizedNewMessage;
     } catch (err) {
       console.error('Error sending message:', err);
       throw err;
     } finally {
       setSendingMessage(false);
     }
-  }, [activeConversation]);
+  }, [activeConversation, currentUserId]);
 
   const markAsRead = useCallback(async (conversationId: string) => {
     const result = await handleClientApiRoute(async () => {
@@ -393,13 +636,15 @@ export default function MessagesPage() {
       const updatedMessage = result.data;
       
       // Update local state
-      if (activeConversation?.id === conversationId) {
+      const activeConvId = activeConversation?.id || activeConversation?._id;
+      if (activeConvId === conversationId) {
         setActiveConversation(prev => 
           prev ? {
             ...prev,
-            messages: prev.messages.map(msg => 
-              msg.id === messageId ? { ...msg, ...updatedMessage } : msg
-            )
+            messages: (prev.messages || []).map(msg => {
+              const msgId = msg.id || msg._id;
+              return msgId === messageId ? normalizeMessage({ ...msg, ...updatedMessage }, currentUserId) : msg;
+            })
           } : null
         );
       }
@@ -431,11 +676,15 @@ export default function MessagesPage() {
       }
         
       // Update local state
-      if (activeConversation?.id === conversationId) {
+      const activeConvId = activeConversation?.id || activeConversation?._id;
+      if (activeConvId === conversationId) {
         setActiveConversation(prev => 
           prev ? {
             ...prev,
-            messages: prev.messages.filter(msg => msg.id !== messageId)
+            messages: (prev.messages || []).filter(msg => {
+              const msgId = msg.id || msg._id;
+              return msgId !== messageId;
+            })
           } : null
         );
       }
@@ -452,6 +701,12 @@ export default function MessagesPage() {
 
   // Real-time features
   const setupEventSource = useCallback(() => {
+    // Clear any pending reconnection timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
     }
@@ -462,6 +717,10 @@ export default function MessagesPage() {
         return match ? decodeURIComponent(match.split('=')[1]) : '';
       };
       const apiToken = getCookie('api-token');
+      if (!API_BASE_URL) {
+        console.error('API_BASE_URL is not configured');
+        return;
+      }
       const base = API_BASE_URL.replace(/\/$/, '');
       const path = (API_ENDPOINTS as Record<string, string>).communicationEvents || '/communication/events';
       const url = `${base}${path}${apiToken ? `?token=${encodeURIComponent(apiToken)}` : ''}`;
@@ -475,23 +734,32 @@ export default function MessagesPage() {
           
           switch (data.type) {
             case 'new_message':
-              if (data.conversationId === activeConversation?.id) {
+              const normalizedMessage = normalizeMessage(data.message, currentUserId);
+              const activeConvId = activeConversation?.id || activeConversation?._id;
+              if (data.conversationId === activeConvId) {
                 setActiveConversation(prev => 
-                  prev ? { ...prev, messages: [...prev.messages, data.message] } : null
+                  prev ? { ...prev, messages: [...(prev.messages || []), normalizedMessage] } : null
                 );
               }
               // Update conversations list
               setConversations(prev => 
-                prev.map(conv => 
-                  conv.id === data.conversationId 
-                    ? { 
-                        ...conv, 
-                        lastMessage: data.message.content, 
-                        timestamp: new Date().toLocaleDateString(),
-                        unreadCount: conv.id === activeConversation?.id ? 0 : conv.unreadCount + 1
-                      }
-                    : conv
-                )
+                prev.map(conv => {
+                  const convId = conv.id || conv._id;
+                  if (data.conversationId === convId) {
+                    return {
+                      ...conv,
+                      lastMessage: {
+                        content: normalizedMessage.content,
+                        sender: normalizedMessage.senderId || '',
+                        timestamp: normalizedMessage.createdAt
+                      },
+                      timestamp: normalizedMessage.createdAt,
+                      updatedAt: normalizedMessage.createdAt,
+                      unreadCount: convId === activeConvId ? 0 : (conv.unreadCount || 0) + 1
+                    };
+                  }
+                  return conv;
+                })
               );
               break;
               
@@ -524,13 +792,15 @@ export default function MessagesPage() {
               break;
               
             case 'message_read':
-              if (data.conversationId === activeConversation?.id) {
+              const activeReadConvId = activeConversation?.id || activeConversation?._id;
+              if (data.conversationId === activeReadConvId) {
                 setActiveConversation(prev => 
                   prev ? {
                     ...prev,
-                    messages: prev.messages.map(msg => 
-                      msg.id === data.messageId ? { ...msg, isRead: true } : msg
-                    )
+                    messages: (prev.messages || []).map(msg => {
+                      const msgId = msg.id || msg._id;
+                      return msgId === data.messageId ? { ...msg, isRead: true } : msg;
+                    })
                   } : null
                 );
               }
@@ -550,19 +820,54 @@ export default function MessagesPage() {
         }
       };
       
-      eventSource.onerror = (err) => {
-        console.error('EventSource error:', err);
-        // Attempt to reconnect after 5 seconds
-        setTimeout(() => {
-          if (eventSourceRef.current?.readyState === EventSource.CLOSED) {
-            setupEventSource();
-          }
-        }, 5000);
+      eventSource.onerror = (event) => {
+        const readyState = eventSource.readyState;
+        const stateMessage = 
+          readyState === EventSource.CONNECTING ? 'CONNECTING' :
+          readyState === EventSource.OPEN ? 'OPEN' :
+          readyState === EventSource.CLOSED ? 'CLOSED' : 'UNKNOWN';
+        
+        // Log more informative error details
+        console.warn('EventSource error:', {
+          readyState,
+          stateMessage,
+          url: eventSource.url,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Clear any existing reconnect timeout to prevent multiple reconnection attempts
+        if (reconnectTimeoutRef.current) {
+          clearTimeout(reconnectTimeoutRef.current);
+          reconnectTimeoutRef.current = null;
+        }
+        
+        // Only attempt reconnection if the connection is closed and we haven't exceeded max attempts
+        if (readyState === EventSource.CLOSED && reconnectAttemptsRef.current < 5) {
+          const delay = Math.min(5000 * Math.pow(2, reconnectAttemptsRef.current), 30000); // Exponential backoff, max 30s
+          reconnectAttemptsRef.current += 1;
+          
+          console.log(`Attempting to reconnect EventSource (attempt ${reconnectAttemptsRef.current}/5) in ${delay}ms...`);
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectTimeoutRef.current = null;
+            if (eventSourceRef.current?.readyState === EventSource.CLOSED) {
+              setupEventSource();
+            }
+          }, delay);
+        } else if (reconnectAttemptsRef.current >= 5) {
+          console.error('EventSource: Max reconnection attempts reached. Manual refresh may be required.');
+        }
+      };
+      
+      // Reset reconnection attempts on successful connection
+      eventSource.onopen = () => {
+        reconnectAttemptsRef.current = 0;
+        console.log('EventSource connected successfully');
       };
     } catch (err) {
       console.error('Error setting up EventSource:', err);
     }
-  }, [activeConversation]);
+  }, [activeConversation, currentUserId]);
 
   const handleTyping = useCallback((conversationId: string) => {
     if (typingTimeoutRef.current) {
@@ -605,8 +910,10 @@ export default function MessagesPage() {
       file: file
     }));
     
+    const convId = activeConversation.id || activeConversation._id;
+    if (!convId) return;
     try {
-      await sendMessage(activeConversation.id, '', 'file', attachments);
+      await sendMessage(convId, '', 'file', attachments);
     } catch (err) {
       console.error('Error uploading files:', err);
     }
@@ -622,7 +929,7 @@ export default function MessagesPage() {
       const response = await makeClientAuthenticatedRequestWithPath(
         'communicationSearch',
         [],
-        { conversationId: activeConversation.id, query },
+        { conversationId: activeConversation.id || activeConversation._id || '', query },
         { method: 'GET' }
       );
       
@@ -665,6 +972,10 @@ export default function MessagesPage() {
     setupEventSource();
     
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
@@ -694,6 +1005,9 @@ export default function MessagesPage() {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
@@ -703,8 +1017,10 @@ export default function MessagesPage() {
   const handleSendMessage = useCallback(async () => {
     if (!newMessage.trim() || !activeConversation || sendingMessage) return;
 
+    const convId = activeConversation.id || activeConversation._id;
+    if (!convId) return;
     try {
-      await sendMessage(activeConversation.id, newMessage);
+      await sendMessage(convId, newMessage);
       setNewMessage("");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
@@ -721,24 +1037,32 @@ export default function MessagesPage() {
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
     if (activeConversation) {
-      handleTyping(activeConversation.id);
+      const convId = activeConversation.id || activeConversation._id;
+      if (convId) {
+        handleTyping(convId);
+      }
     }
   }, [activeConversation, handleTyping]);
 
   const handleConversationSelect = useCallback(async (conversation: Conversation) => {
+    const convId = conversation.id || conversation._id;
     setActiveConversation(conversation);
     setShowMobileConversations(false); // Close mobile menu on selection
     setMessagePage(1);
     setHasMoreMessages(true);
-    await markAsRead(conversation.id);
+    if (convId) {
+      await markAsRead(convId);
+    }
     
     // Fetch full conversation details if not already loaded
     if (!conversation.messages || conversation.messages.length === 0) {
       try {
-        const fullConversation = await fetchConversation(conversation.id, 1);
-        if (fullConversation) {
-          setActiveConversation(fullConversation);
-          setHasMoreMessages(fullConversation.messages.length === 20);
+        if (convId) {
+          const fullConversation = await fetchConversation(convId, 1);
+          if (fullConversation) {
+            setActiveConversation(fullConversation);
+            setHasMoreMessages((fullConversation.messages?.length || 0) === 20);
+          }
         }
       } catch (err) {
         console.error('Error fetching conversation details:', err);
@@ -757,8 +1081,11 @@ export default function MessagesPage() {
   const handleMessageEdit = useCallback(async (messageId: string, newContent: string) => {
     if (!activeConversation) return;
     
+    const convId = activeConversation.id || activeConversation._id;
+    if (!convId) return;
+    
     try {
-      await updateMessage(activeConversation.id, messageId, newContent);
+      await updateMessage(convId, messageId, newContent);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update message');
     }
@@ -767,8 +1094,11 @@ export default function MessagesPage() {
   const handleMessageDelete = useCallback(async (messageId: string) => {
     if (!activeConversation) return;
     
+    const convId = activeConversation.id || activeConversation._id;
+    if (!convId) return;
+    
     try {
-      await deleteMessage(activeConversation.id, messageId);
+      await deleteMessage(convId, messageId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete message');
     }
@@ -779,9 +1109,10 @@ export default function MessagesPage() {
       console.warn('conversations is not an array:', conversations);
       return [];
     }
-    return conversations.filter(conv =>
-      conv.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    return conversations.filter(conv => {
+      const convName = conv.name || conv.subject || 'Unknown';
+      return convName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
   }, [conversations, searchQuery]);
 
   const memoizedMessages = useMemo(() => 
@@ -979,9 +1310,7 @@ export default function MessagesPage() {
                         {conversation.avatar}
                       </span>
                     </div>
-                    {conversation.participants.some(p => p.isOnline) && (
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                    )}
+                    {/* Online indicator removed - not in data entity */}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -993,13 +1322,15 @@ export default function MessagesPage() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 truncate mt-1">
-                      {conversation.lastMessage}
+                      {typeof conversation.lastMessage === 'string' 
+                        ? conversation.lastMessage 
+                        : conversation.lastMessage?.content || 'No messages'}
                     </p>
                     <div className="flex items-center justify-between mt-1">
                       {conversation.isTyping && (
                         <span className="text-xs text-green-500 italic">typing...</span>
                       )}
-                      {conversation.unreadCount > 0 && (
+                      {(conversation.unreadCount || 0) > 0 && (
                         <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium text-white bg-green-500 rounded-full">
                           {conversation.unreadCount}
                         </span>
@@ -1036,19 +1367,14 @@ export default function MessagesPage() {
                       {activeConversation.avatar}
                     </span>
                   </div>
-                  {activeConversation.participants.some(p => p.isOnline) && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                  )}
+                  {/* Online indicator removed - not in data entity */}
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">
-                    {activeConversation.name}
+                    {activeConversation.name || activeConversation.subject}
                   </h2>
                   <p className="text-sm text-gray-500">
-                    {activeConversation.participants.some(p => p.isOnline) 
-                      ? "Online" 
-                      : `Last seen ${activeConversation.participants[0]?.lastSeen || 'recently'}`
-                    }
+                    {activeConversation.participants.length} participant{activeConversation.participants.length !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -1085,7 +1411,7 @@ export default function MessagesPage() {
                   <h4 className="text-sm font-medium text-blue-900 mb-2">Search Results ({searchResults.length})</h4>
                   <div className="space-y-2">
                     {searchResults.slice(0, 3).map((message) => (
-                      <div key={message.id} className="text-sm text-blue-800 bg-white p-2 rounded border">
+                      <div key={message.id || message._id} className="text-sm text-blue-800 bg-white p-2 rounded border">
                         <span className="font-medium">{message.senderName}:</span> {message.content}
                       </div>
                     ))}
@@ -1113,7 +1439,7 @@ export default function MessagesPage() {
                   
                   return (
                     <div 
-                      key={message.id} 
+                      key={message.id || message._id} 
                       className={`flex ${message.isFromUser ? "justify-end" : "justify-start"} group animate-in slide-in-from-bottom-2 duration-300`}
                     >
                       <div className="relative max-w-xs sm:max-w-sm lg:max-w-md">
@@ -1145,12 +1471,11 @@ export default function MessagesPage() {
                                   : "bg-gray-100 text-gray-900 hover:bg-gray-200"
                               }`}
                             >
-                              {message.replyTo && (
+                              {message.metadata?.replyTo && (
                                 <div className={`text-xs mb-1 p-2 rounded ${
                                   message.isFromUser ? "bg-green-400" : "bg-gray-200"
                                 }`}>
-                                  <p className="font-medium">{message.replyTo.senderName}</p>
-                                  <p className="truncate">{message.replyTo.content}</p>
+                                  <p className="truncate">Replying to message</p>
                                 </div>
                               )}
                               
@@ -1158,15 +1483,15 @@ export default function MessagesPage() {
                               
                               {message.attachments && message.attachments.length > 0 && (
                                 <div className="mt-2 space-y-1">
-                                  {message.attachments.map((attachment) => (
-                                    <div key={attachment.id} className="text-xs">
+                                  {message.attachments.map((attachment, idx) => (
+                                    <div key={idx} className="text-xs">
                                       <a 
                                         href={attachment.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="underline hover:no-underline"
                                       >
-                                        📎 {attachment.name}
+                                        📎 {attachment.filename}
                                       </a>
                                     </div>
                                   ))}
@@ -1182,7 +1507,7 @@ export default function MessagesPage() {
                                     minute: '2-digit' 
                                   })}
                                 </span>
-                                {message.editedAt && (
+                                {message.metadata?.isEdited && message.metadata.editedAt && (
                                   <span className="text-xs italic">(edited)</span>
                                 )}
                                 {message.isFromUser && (
@@ -1198,8 +1523,9 @@ export default function MessagesPage() {
                                   <button
                                     onClick={() => {
                                       const newContent = prompt('Edit message:', message.content);
-                                      if (newContent && newContent !== message.content) {
-                                        handleMessageEdit(message.id, newContent);
+                                      const msgId = message.id || message._id;
+                                      if (newContent && newContent !== message.content && msgId) {
+                                        handleMessageEdit(msgId, newContent);
                                       }
                                     }}
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -1209,8 +1535,9 @@ export default function MessagesPage() {
                                   </button>
                                   <button
                                     onClick={() => {
-                                      if (confirm('Are you sure you want to delete this message?')) {
-                                        handleMessageDelete(message.id);
+                                      const msgId = message.id || message._id;
+                                      if (msgId && confirm('Are you sure you want to delete this message?')) {
+                                        handleMessageDelete(msgId);
                                       }
                                     }}
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"

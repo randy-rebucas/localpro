@@ -1,6 +1,8 @@
 "use client";
 
 import { isAuthenticated, clearAllAuthData } from "./client-api-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "./api";
+import { createAuthFetchOptions } from "./auth-utils";
 
 export interface TokenValidationResult {
   isValid: boolean;
@@ -24,13 +26,10 @@ export async function validateToken(): Promise<TokenValidationResult> {
     }
 
     // Try to make a simple authenticated request to validate the token
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authMe}`, createAuthFetchOptions({
       method: 'GET',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    }));
 
     if (response.ok) {
       return {

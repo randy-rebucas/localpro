@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 const categories = [
   "Construction Equipment",
@@ -120,7 +122,7 @@ export default function EditRentalPage() {
     const fetchRental = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/rentals/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Rental not found');
@@ -297,17 +299,14 @@ export default function EditRentalPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/rentals/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
           year: formData.specifications.year ? parseInt(formData.specifications.year) : undefined
         }),
-      });
+      }));
 
       if (response.ok) {
         router.push(`/rentals/${params.id}`);

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { User, MessageSquare, Phone, Video } from 'lucide-react';
 import Image from 'next/image';
 import { CommunicationAPI, MessageUtils } from '@/lib/communication-utils';
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface User {
   id: string;
@@ -44,7 +46,7 @@ export default function ConversationWithUser({
     try {
       // This would typically fetch user info from a users API
       // For now, we'll use a mock response
-      const response = await fetch(`/api/users/${userId}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.usersById}/${userId}`, createAuthFetchOptions());
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);

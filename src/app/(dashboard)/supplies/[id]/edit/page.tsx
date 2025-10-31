@@ -26,6 +26,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 const categories = [
   "Cleaning Supplies",
@@ -129,7 +131,7 @@ export default function EditSupplyPage() {
     const fetchSupply = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/supplies/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.suppliesById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Supply not found');
@@ -330,11 +332,8 @@ export default function EditSupplyPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/supplies/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.suppliesById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
@@ -349,7 +348,7 @@ export default function EditSupplyPage() {
             freeShippingThreshold: formData.delivery.freeShippingThreshold ? parseFloat(formData.delivery.freeShippingThreshold) : undefined
           }
         }),
-      });
+      }));
 
       if (response.ok) {
         router.push(`/supplies/${params.id}`);

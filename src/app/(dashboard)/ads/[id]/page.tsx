@@ -21,6 +21,8 @@ import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Ad {
   id: string;
@@ -94,7 +96,7 @@ export default function AdDetailPage() {
     const fetchAd = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/ads/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Ad not found');
@@ -157,9 +159,9 @@ export default function AdDetailPage() {
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this ad?')) {
       try {
-        const response = await fetch(`/api/ads/${params.id}`, {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsById}/${params.id}`, createAuthFetchOptions({
           method: 'DELETE',
-        });
+        }));
 
         if (response.ok) {
           router.push('/ads');
@@ -172,9 +174,9 @@ export default function AdDetailPage() {
 
   const handlePromote = async () => {
     try {
-      const response = await fetch(`/api/ads/${params.id}/promote`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsPromote}/${params.id}`, createAuthFetchOptions({
         method: 'POST',
-      });
+      }));
 
       if (response.ok) {
         // Refresh ad data
@@ -187,13 +189,10 @@ export default function AdDetailPage() {
 
   const handleStatusChange = async (newStatus: Ad['status']) => {
     try {
-      const response = await fetch(`/api/ads/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ status: newStatus }),
-      });
+      }));
 
       if (response.ok) {
         setAd(prev => prev ? { ...prev, status: newStatus } : null);

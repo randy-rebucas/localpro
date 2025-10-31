@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 import {
   CheckCircle,
@@ -29,11 +30,19 @@ import {
   Globe,
   Clock,
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 export default function Home() {
   const [expandedByIndex, setExpandedByIndex] = useState<Record<number, boolean>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const toggleFeature = (index: number) => {
     setExpandedByIndex(prev => ({ ...prev, [index]: !prev[index] }));
@@ -157,36 +166,120 @@ export default function Home() {
     },
   ];
 
+  const earlyAccessSchema = z.object({
+    phone: z
+      .string()
+      .min(1, "Phone number is required")
+      .transform((val) => val.trim()) // Remove leading/trailing whitespace
+      .refine((phone) => {
+        // Check for spaces in the phone number
+        return !phone.includes(' ');
+      }, "Phone number should not contain spaces")
+      .refine((phone) => {
+        // Remove all non-digit characters for validation
+        const digits = phone.replace(/[\D\s]/g, '');
+        return digits.length >= 7 && digits.length <= 15;
+      }, "Phone number must be between 7 and 15 digits")
+      .refine((phone) => {
+        // Must start with + for international format, or be a valid number that can be formatted
+        return phone.startsWith('+') || (phone.replace(/[\D\s]/g, '').length >= 7);
+      }, "Please enter a valid phone number"),
+    firstName: z.string().min(1, "First name is required").refine((value) => value.length > 2, {
+      message: "First name must be at least 3 characters long",
+    }),
+    lastName: z.string().min(1, "Last name is required").refine((value) => value.length > 2, {
+      message: "Last name must be at least 3 characters long",
+    }),
+  });
 
-  const handleEarlyAccess = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    const form = e.currentTarget;
-    const data = new FormData(form);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('Early joiner', {
-      phone: data.get('phone'),
-      firstName: data.get('firstName'),
-      lastName: data.get('lastName'),
-    });
-    
-    form.reset();
-    setIsSubmitting(false);
-    alert('Thank you! We\'ll be in touch soon.');
+  type EarlyAccessForm = z.infer<typeof earlyAccessSchema>;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors: earlyAccessErrors },
+    clearErrors,
+    setValue,
+  } = useForm<EarlyAccessForm>({
+    resolver: zodResolver(earlyAccessSchema),
+    defaultValues: {
+      phone: "",
+      firstName: "",
+      lastName: "",
+    },
+    mode: "onSubmit",
+  });
+
+  // Extract register props without 'required' to prevent hydration mismatch
+  const firstNameRegister = register("firstName");
+  const lastNameRegister = register("lastName");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { required: _required, ...firstNameProps } = firstNameRegister;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { required: _required2, ...lastNameProps } = lastNameRegister;
+
+  const handleEarlyAccess = async (data: EarlyAccessForm) => {
+    setIsLoading(true);
+    setErrors({});
+    console.log("Sending early access form data:", data);
+    try {
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, createAuthFetchOptions({
+        method: "POST",
+        body: JSON.stringify({
+          phoneNumber: data.phone.trim(),
+          firstName: data.firstName,
+          lastName: data.lastName,
+        }),
+        signal: controller.signal,
+      }));
+
+      clearTimeout(timeoutId);
+      const result = await response.json();
+      console.log("Send code response:", result);
+      if (response.ok) {
+        setPhoneNumber(data.phone);
+        toast.success("Verification code sent to your phone!");
+        clearErrors();
+      } else {
+        // Handle specific error cases
+        if (response.status === 408) {
+          toast.error("Request timed out. Please check your connection and try again.");
+        } else if (response.status === 503) {
+          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          toast.error(errorMsg || "Service temporarily unavailable. Please try again in a few moments.");
+        } else if (response.status === 429) {
+          toast.error("Too many requests. Please wait before trying again.");
+        } else {
+          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          toast.error(errorMsg || "Failed to send verification code");
+        }
+        setErrors({ phone: result.error || "Failed to send verification code" });
+      }
+    } catch (error) {
+      console.error("Send code error:", error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else {
+        toast.error("Network error. Please check your connection and try again.");
+      }
+      setErrors({ phone: "Network error. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <StaticPageLayout className="bg-white">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800">
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-900">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
         </div>
 
         {/* Grid Pattern Overlay */}
@@ -200,22 +293,22 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="text-center max-w-5xl mx-auto">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full mb-8 border border-white/30 shadow-lg hover:bg-white/30 transition-all">
-              <Sparkles className="w-5 h-5 text-yellow-300 animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-6 py-3 rounded-full mb-8 border border-emerald-400/30 shadow-lg hover:bg-emerald-500/20 transition-all">
+              <Sparkles className="w-5 h-5 text-emerald-300 animate-pulse" />
               <span className="text-sm font-semibold text-white">Coming Soon to the Philippines</span>
-              <Rocket className="w-5 h-5 text-yellow-300" />
+              <Rocket className="w-5 h-5 text-emerald-300" />
             </div>
-            
+
             {/* Main Heading */}
             <h1 className="text-6xl md:text-7xl lg:text-8xl font-extrabold mb-8 leading-tight tracking-tight">
               <span className="block text-white mb-2">Your All-in-One</span>
-              <span className="block bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent animate-gradient">
+              <span className="block bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent animate-gradient">
                 Professional Platform
               </span>
             </h1>
-            
+
             {/* Subheading */}
-            <p className="text-xl md:text-2xl lg:text-3xl text-purple-100 mb-12 leading-relaxed max-w-3xl mx-auto font-light">
+            <p className="text-xl md:text-2xl lg:text-3xl text-teal-100 mb-12 leading-relaxed max-w-3xl mx-auto font-light">
               Connect, grow, and succeed with LocalPro—the complete ecosystem for services, supplies, training, finance, and more.
             </p>
 
@@ -223,7 +316,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16">
               <Button
                 size="lg"
-                className="group bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white hover:from-yellow-500 hover:via-pink-600 hover:to-purple-600 text-lg px-10 py-7 rounded-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-105 border-0"
+                className="group bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-lg px-10 py-7 rounded-2xl font-bold shadow-2xl hover:shadow-emerald-500/50 transition-all transform hover:scale-105 border-0"
                 onClick={() => document.getElementById('early-access')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Join Early Access
@@ -232,7 +325,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-white/50 text-white bg-white/10 backdrop-blur-md hover:bg-white/20 text-lg px-10 py-7 rounded-2xl font-bold shadow-lg transition-all transform hover:scale-105"
+                className="border-2 border-emerald-400/50 text-white bg-white/10 backdrop-blur-md hover:bg-emerald-500/20 text-lg px-10 py-7 rounded-2xl font-bold shadow-lg transition-all transform hover:scale-105"
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Explore Features
@@ -240,7 +333,7 @@ export default function Home() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center gap-8 text-purple-200">
+            <div className="flex flex-wrap justify-center gap-8 text-teal-200">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
                 <span className="text-sm font-medium">Secure & Trusted</span>
@@ -279,8 +372,8 @@ export default function Home() {
                 "from-green-500 to-emerald-500",
               ];
               return (
-                <Card 
-                  key={index} 
+                <Card
+                  key={index}
                   className="relative overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${gradients[index]} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
@@ -300,7 +393,7 @@ export default function Home() {
 
           {/* Popular Services */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full mb-4">
+            <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full mb-4">
               <Heart className="w-4 h-4" />
               <span className="text-sm font-semibold">Most Popular</span>
             </div>
@@ -313,15 +406,15 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {popularServices.map((service, index) => (
-              <Card 
-                key={index} 
-                className="text-center hover:shadow-xl transition-all cursor-pointer border-2 border-gray-100 hover:border-purple-300 group overflow-hidden relative"
-                onMouseEnter={() => {}}
+              <Card
+                key={index}
+                className="text-center hover:shadow-xl transition-all cursor-pointer border-2 border-gray-100 hover:border-emerald-300 group overflow-hidden relative"
+                onMouseEnter={() => { }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <CardContent className="pt-8 pb-6 relative z-10">
                   <div className="text-5xl mb-4 transform group-hover:scale-110 transition-transform">{service.icon}</div>
-                  <p className="text-sm font-bold text-gray-800 group-hover:text-purple-600 transition-colors">{service.name}</p>
+                  <p className="text-sm font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">{service.name}</p>
                 </CardContent>
               </Card>
             ))}
@@ -332,18 +425,18 @@ export default function Home() {
       {/* Features Section */}
       <section id="features" className="py-24 bg-gradient-to-b from-gray-50 via-white to-gray-50 relative overflow-hidden">
         {/* Decorative Background */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform -translate-x-1/2 translate-y-1/2"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 transform -translate-x-1/2 translate-y-1/2"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 px-4 py-2 rounded-full mb-6">
               <Zap className="w-4 h-4" />
               <span className="text-sm font-semibold">Powerful Features</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
               Everything You Need
-              <span className="block bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">to Succeed</span>
+              <span className="block bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">to Succeed</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               A comprehensive suite of tools and services designed to help professionals thrive. From finding services to managing your business—we&apos;ve got you covered.
@@ -366,7 +459,7 @@ export default function Home() {
               return (
                 <Card
                   key={index}
-                  className={`relative overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 ${colors.border} shadow-lg group transform hover:-translate-y-2 ${isOpen ? 'ring-2 ring-purple-300' : ''}`}
+                  className={`relative overflow-hidden hover:shadow-2xl transition-all duration-500 border-2 ${colors.border} shadow-lg group transform hover:-translate-y-2 ${isOpen ? 'ring-2 ring-emerald-300' : ''}`}
                   onMouseEnter={() => setHoveredFeature(index)}
                   onMouseLeave={() => setHoveredFeature(null)}
                 >
@@ -374,7 +467,7 @@ export default function Home() {
                   <div className={`h-1 bg-gradient-to-r ${feature.color} relative overflow-hidden`}>
                     <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} transform ${hoveredFeature === index ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-1000`}></div>
                   </div>
-                  
+
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between mb-4">
                       <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
@@ -383,7 +476,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => toggleFeature(index)}
-                        className={`p-2 rounded-xl transition-all ${isOpen ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400 hover:bg-purple-100 hover:text-purple-600'}`}
+                        className={`p-2 rounded-xl transition-all ${isOpen ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600'}`}
                         aria-expanded={isOpen}
                       >
                         <ArrowRight
@@ -407,7 +500,7 @@ export default function Home() {
                       <div className="mt-4 pt-4 border-t border-gray-100">
                         <button
                           onClick={() => toggleFeature(index)}
-                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1 group"
+                          className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 group"
                         >
                           Learn more
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -415,7 +508,7 @@ export default function Home() {
                       </div>
                     )}
                   </CardContent>
-                  
+
                   {/* Hover Glow Effect */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
                 </Card>
@@ -426,20 +519,20 @@ export default function Home() {
       </section>
 
       {/* Value Propositions Section */}
-      <section className="py-24 bg-gradient-to-br from-purple-50 via-white to-pink-50 relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-emerald-50 via-white to-teal-50 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5" style={{
-          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)`,
           backgroundSize: '50px 50px'
         }}></div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 px-4 py-2 rounded-full mb-6">
               <Star className="w-4 h-4" />
               <span className="text-sm font-semibold">Why Choose Us</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
               Built for Filipino
-              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Professionals</span>
+              <span className="block bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Professionals</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               More than just a platform—connect, grow, and succeed with tools designed for your business
@@ -457,8 +550,8 @@ export default function Home() {
               ];
               const iconGradient = iconGradients[index % iconGradients.length];
               return (
-                <Card 
-                  key={index} 
+                <Card
+                  key={index}
                   className="relative overflow-hidden text-center hover:shadow-2xl transition-all duration-500 border-0 shadow-xl group transform hover:-translate-y-3"
                 >
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${iconGradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}></div>
@@ -466,7 +559,7 @@ export default function Home() {
                     <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br ${iconGradient} mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300`}>
                       <IconComponent className="w-10 h-10 text-white" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">{prop.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors">{prop.title}</h3>
                     <p className="text-gray-600 text-base leading-relaxed">{prop.description}</p>
                   </CardContent>
                   <div className={`absolute inset-0 bg-gradient-to-br ${iconGradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none`}></div>
@@ -478,16 +571,16 @@ export default function Home() {
       </section>
 
       {/* Launch Timeline Section */}
-      <section className="py-24 bg-gradient-to-b from-white via-indigo-50/30 to-white relative">
+      <section className="py-24 bg-gradient-to-b from-white via-emerald-50/30 to-white relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 px-4 py-2 rounded-full mb-6">
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 px-4 py-2 rounded-full mb-6">
               <Calendar className="w-4 h-4" />
               <span className="text-sm font-semibold">Roadmap</span>
             </div>
             <h2 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
               Our Launch
-              <span className="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Timeline</span>
+              <span className="block bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Timeline</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               We&apos;re working hard to bring you the best professional services platform in the Philippines
@@ -496,7 +589,7 @@ export default function Home() {
 
           <div className="relative max-w-4xl mx-auto">
             {/* Timeline Line */}
-            <div className="absolute left-12 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-blue-400 to-purple-400 hidden md:block transform md:-translate-x-1/2 rounded-full"></div>
+            <div className="absolute left-12 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-400 to-cyan-400 hidden md:block transform md:-translate-x-1/2 rounded-full"></div>
 
             <div className="space-y-16">
               {timelineEvents.map((event, index) => {
@@ -518,7 +611,7 @@ export default function Home() {
                     {/* Content Card */}
                     <div className={`flex-1 ${isLeft ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'} md:w-1/2`}>
                       <Card className="shadow-xl hover:shadow-2xl transition-all duration-300 border-0 group transform hover:-translate-y-1">
-                        <div className={`h-1 bg-gradient-to-r ${isLeft ? 'from-emerald-500 to-blue-500' : 'from-blue-500 to-purple-500'}`}></div>
+                        <div className={`h-1 bg-gradient-to-r ${isLeft ? 'from-emerald-500 to-teal-500' : 'from-teal-500 to-cyan-500'}`}></div>
                         <CardContent className="pt-6 pb-6 px-6">
                           <div className={`flex items-center gap-3 mb-3 ${isLeft ? 'md:justify-end' : ''}`}>
                             <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200">
@@ -543,11 +636,11 @@ export default function Home() {
       </section>
 
       {/* Early Access Section */}
-      <section id="early-access" className="py-24 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 text-white relative overflow-hidden">
+      <section id="early-access" className="py-24 bg-gradient-to-br from-slate-900 via-teal-900 to-emerald-900 text-white relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-          <div className="absolute bottom-20 right-10 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-20 left-10 w-72 h-72 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+          <div className="absolute bottom-20 right-10 w-72 h-72 bg-teal-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         </div>
 
         {/* Grid Pattern */}
@@ -560,39 +653,47 @@ export default function Home() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full mb-6 border border-white/30">
-              <Rocket className="w-5 h-5 text-yellow-300" />
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-5 py-2.5 rounded-full mb-6 border border-emerald-400/30">
+              <Rocket className="w-5 h-5 text-emerald-300" />
               <span className="text-sm font-semibold">Get Early Access</span>
             </div>
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6">
               Be Among the
-              <span className="block bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-emerald-300 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
                 First
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-purple-100 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-teal-100 max-w-3xl mx-auto leading-relaxed">
               Join thousands of professionals ready to transform how services work in the Philippines. Get exclusive beta access and help shape the future.
             </p>
           </div>
 
           <Card className="bg-white/10 backdrop-blur-xl border-white/30 shadow-2xl border-2 relative overflow-hidden">
             {/* Glowing Border Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 via-pink-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-            
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-400/20 via-teal-400/20 to-cyan-400/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
             <CardContent className="pt-10 pb-8 px-8 md:px-12 relative z-10">
-              <form onSubmit={handleEarlyAccess} className="space-y-6">
+              <form onSubmit={handleSubmit(handleEarlyAccess)} className="space-y-6" noValidate>
                 <div>
                   <label htmlFor="phone" className="flex items-center gap-2 text-sm font-semibold text-white mb-3">
                     <Phone className="w-5 h-5" />
                     Phone Number
                   </label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    required
-                    placeholder="+63 912 345 6789"
-                    className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+
+                  <PhoneInput
+                    value={phoneNumber || ""}
+                    onChange={(value) => {
+                      setPhoneNumber(value);
+                      setValue('phone', value);
+                      // Clear errors when user starts typing
+                      if (errors.phone) {
+                        setErrors({ ...errors, phone: "" });
+                      }
+                      clearErrors();
+                    }}
+                    error={earlyAccessErrors.phone?.message || errors.phone}
+                    className="w-full px-5 py-4 rounded-2xl border-2 border-white/40 bg-white/25 backdrop-blur-md text-white placeholder-white/70 focus:ring-4 focus:ring-white/40 focus:border-white/80 outline-none transition-all text-lg"
+                    autoComplete="tel"
                   />
                 </div>
 
@@ -604,11 +705,12 @@ export default function Home() {
                     </label>
                     <input
                       id="firstName"
-                      name="firstName"
                       type="text"
-                      required
-                      placeholder="Juan"
-                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+                      {...firstNameProps}
+                      required={false}
+                      placeholder="Enter your first name"
+                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/40 bg-white/25 backdrop-blur-md text-white placeholder-white/70 focus:ring-4 focus:ring-white/40 focus:border-white/80 outline-none transition-all text-lg"
+                      suppressHydrationWarning
                     />
                   </div>
                   <div>
@@ -617,22 +719,23 @@ export default function Home() {
                     </label>
                     <input
                       id="lastName"
-                      name="lastName"
                       type="text"
-                      required
-                      placeholder="Dela Cruz"
-                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/50 focus:ring-4 focus:ring-white/30 focus:border-white/60 outline-none transition-all text-lg"
+                      {...lastNameProps}
+                      required={false}
+                      placeholder="Enter your last name"
+                      className="w-full px-5 py-4 rounded-2xl border-2 border-white/40 bg-white/25 backdrop-blur-md text-white placeholder-white/70 focus:ring-4 focus:ring-white/40 focus:border-white/80 outline-none transition-all text-lg"
+                      suppressHydrationWarning
                     />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isLoading}
                   size="lg"
-                  className="w-full bg-gradient-to-r from-yellow-400 via-pink-500 to-purple-500 text-white hover:from-yellow-500 hover:via-pink-600 hover:to-purple-600 text-xl py-7 rounded-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none border-0"
+                  className="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white hover:from-emerald-600 hover:via-teal-600 hover:to-cyan-600 text-xl py-7 rounded-2xl font-bold shadow-2xl hover:shadow-emerald-500/50 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none border-0"
                 >
-                  {isSubmitting ? (
+                  {isLoading ? (
                     <>
                       <Clock className="mr-2 w-5 h-5 animate-spin" />
                       Submitting...
@@ -653,7 +756,7 @@ export default function Home() {
           </Card>
 
           {/* Trust Indicators */}
-          <div className="mt-12 flex flex-wrap justify-center gap-8 text-purple-200">
+          <div className="mt-12 flex flex-wrap justify-center gap-8 text-teal-200">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5" />
               <span className="text-sm font-medium">100% Secure</span>

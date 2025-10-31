@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Megaphone,
   Search,
@@ -9,61 +9,277 @@ import {
   Info,
   CheckCircle,
   AlertTriangle,
-  ExternalLink
+  ExternalLink,
+  Filter,
+  RefreshCw,
+  Eye,
+  MessageSquare,
+  ThumbsUp,
+  FileText,
+  Calendar,
+  User,
+  Tag,
+  Clock,
+  Shield,
+  Gift,
+  Bell,
+  Wrench,
+  Star,
+  Users
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton, ListSkeleton } from "@/components/ui/loading";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 
-export interface Announcement {
-  id: string;
-  title: string;
-  message: string;
-  type: 'info' | 'success' | 'warning' | 'error' | 'feature';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  startDate: string;
-  endDate?: string;
-  isActive: boolean;
-  isDismissible: boolean;
-  actionUrl?: string;
-  actionText?: string;
-  targetAudience?: string[];
-  createdAt: string;
-  updatedAt: string;
+// Announcement Data Entity (from features/announcements/data-entities.md)
+
+export type AnnouncementType =
+  | 'system' | 'maintenance' | 'feature' | 'security' | 'promotion'
+  | 'policy' | 'event' | 'emergency' | 'update' | 'general';
+
+export type AnnouncementPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export type AnnouncementStatus = 'draft' | 'scheduled' | 'published' | 'archived';
+
+export type TargetAudience =
+  | 'all' | 'providers' | 'clients' | 'agencies' | 'premium'
+  | 'verified' | 'specific_roles';
+
+export type TargetRole =
+  | 'admin' | 'provider' | 'client' | 'agency_admin' | 'agency_owner'
+  | 'instructor' | 'supplier' | 'advertiser';
+
+export interface AnnouncementAttachment {
+  filename: string;
+  url: string;
+  type: 'image' | 'document' | 'video' | 'audio';
+  size: number;
 }
 
-const getAnnouncementIcon = (type: Announcement['type']) => {
+export interface AnnouncementAcknowledgment {
+  user: string; // ObjectId(User)
+  acknowledgedAt: string; // Date ISO8601
+}
+
+export interface AnnouncementCommentReply {
+  user: string; // ObjectId(User)
+  userName: string;
+  content: string; // <=500
+  createdAt: string; // Date ISO8601
+  isEdited?: boolean;
+  editedAt?: string;
+  likes?: string[]; // Array of UserIds
+}
+
+export interface AnnouncementComment {
+  user: string; // ObjectId(User)
+  userName: string;
+  content: string; // <=1000
+  createdAt: string; // Date ISO8601
+  isEdited?: boolean;
+  editedAt?: string;
+  likes?: string[]; // Array of UserIds
+  replies?: AnnouncementCommentReply[];
+}
+
+export interface AnnouncementAnalytics {
+  totalViews?: number;
+  uniqueViews?: number;
+  totalAcknowledged?: number;
+  totalComments?: number;
+  engagementRate?: number;
+}
+
+export interface AnnouncementMetadata {
+  lastModifiedBy?: string; // UserId
+  lastModifiedAt?: string; // Date ISO8601
+  version?: number;
+  isDeleted?: boolean;
+  deletedAt?: string | null; // Date ISO8601
+  deletedBy?: string; // UserId
+}
+
+export interface Announcement {
+  _id: string;
+  id?: string; // Alias for _id
+  title: string; // required, <=200
+  content: string; // required, <=5000
+  summary: string; // required, <=500
+  type: AnnouncementType; // default 'general'
+  priority: AnnouncementPriority; // default 'medium'
+  status: AnnouncementStatus; // default 'draft'
+  targetAudience: TargetAudience; // default 'all'
+  targetRoles?: TargetRole[];
+  targetLocations?: string[];
+  targetCategories?: string[];
+  scheduledAt?: string | null; // Date ISO8601
+  publishedAt?: string | null; // Date ISO8601
+  expiresAt?: string | null; // Date ISO8601
+  isSticky: boolean; // default false
+  allowComments: boolean; // default true
+  requireAcknowledgment: boolean; // default false
+  attachments?: AnnouncementAttachment[];
+  tags?: string[]; // <=50 chars each
+  author: string; // ObjectId(User, required)
+  authorName: string; // required
+  authorRole: string; // required
+  views?: number;
+  acknowledgments?: AnnouncementAcknowledgment[];
+  comments?: AnnouncementComment[];
+  analytics?: AnnouncementAnalytics;
+  metadata?: AnnouncementMetadata;
+  createdAt: string; // Date ISO8601
+  updatedAt: string; // Date ISO8601
+  // Computed/virtual fields
+  isActive?: boolean; // virtual: status==='published' && !expired && !future
+  isExpired?: boolean; // virtual: expiresAt <= now
+  isScheduled?: boolean; // virtual: status==='scheduled' && scheduledAt>now
+  isAcknowledged?: boolean; // computed from acknowledgments array for current user
+  canComment?: boolean; // computed: allowComments && isActive
+  canAcknowledge?: boolean; // computed: requireAcknowledgment && isActive && !isAcknowledged
+}
+
+// Helper function to normalize announcement from API
+const normalizeAnnouncement = (announcement: any, currentUserId?: string): Announcement => {
+  const announcementId = announcement._id || announcement.id;
+  const now = new Date();
+  const expiresAt = announcement.expiresAt ? new Date(announcement.expiresAt) : null;
+  const scheduledAt = announcement.scheduledAt ? new Date(announcement.scheduledAt) : null;
+  const publishedAt = announcement.publishedAt ? new Date(announcement.publishedAt) : null;
+  
+  // Compute virtual fields
+  const isExpired = expiresAt ? expiresAt <= now : false;
+  const isScheduled = announcement.status === 'scheduled' && scheduledAt ? scheduledAt > now : false;
+  const isActive = announcement.status === 'published' && !isExpired && !isScheduled;
+  
+  // Check if user has acknowledged
+  const isAcknowledged = currentUserId && announcement.acknowledgments
+    ? announcement.acknowledgments.some((ack: AnnouncementAcknowledgment) => ack.user === currentUserId || ack.user.toString() === currentUserId)
+    : false;
+  
+  const canComment = announcement.allowComments !== false && isActive;
+  const canAcknowledge = announcement.requireAcknowledgment && isActive && !isAcknowledged;
+  
+  return {
+    ...announcement,
+    _id: announcementId,
+    id: announcementId,
+    type: announcement.type || 'general',
+    priority: announcement.priority || 'medium',
+    status: announcement.status || 'draft',
+    targetAudience: announcement.targetAudience || 'all',
+    isSticky: announcement.isSticky || false,
+    allowComments: announcement.allowComments !== false,
+    requireAcknowledgment: announcement.requireAcknowledgment || false,
+    views: announcement.views || 0,
+    tags: announcement.tags || [],
+    attachments: announcement.attachments || [],
+    acknowledgments: announcement.acknowledgments || [],
+    comments: announcement.comments || [],
+    analytics: announcement.analytics || {},
+    // Computed fields
+    isActive,
+    isExpired,
+    isScheduled,
+    isAcknowledged,
+    canComment,
+    canAcknowledge
+  };
+};
+
+// Helper function to get announcement icon based on type
+const getAnnouncementIcon = (type: AnnouncementType) => {
   switch (type) {
-    case 'success':
-      return <CheckCircle className="w-6 h-6 text-green-600" />;
-    case 'warning':
-      return <AlertTriangle className="w-6 h-6 text-yellow-600" />;
-    case 'error':
-      return <AlertCircle className="w-6 h-6 text-red-600" />;
+    case 'system':
+      return <AlertCircle className="w-5 h-5 text-blue-600" />;
+    case 'maintenance':
+      return <Wrench className="w-5 h-5 text-orange-600" />;
     case 'feature':
-      return <Megaphone className="w-6 h-6 text-blue-600" />;
+      return <Star className="w-5 h-5 text-purple-600" />;
+    case 'security':
+      return <Shield className="w-5 h-5 text-red-600" />;
+    case 'promotion':
+      return <Gift className="w-5 h-5 text-yellow-600" />;
+    case 'policy':
+      return <FileText className="w-5 h-5 text-indigo-600" />;
+    case 'event':
+      return <Calendar className="w-5 h-5 text-green-600" />;
+    case 'emergency':
+      return <AlertTriangle className="w-5 h-5 text-red-600" />;
+    case 'update':
+      return <Bell className="w-5 h-5 text-blue-600" />;
     default:
-      return <Info className="w-6 h-6 text-blue-600" />;
+      return <Megaphone className="w-5 h-5 text-gray-600" />;
   }
 };
 
-const getAnnouncementStyles = (type: Announcement['type']) => {
-  const styles = {
-    info: "bg-blue-50",
-    success: "bg-green-50",
-    warning: "bg-yellow-50",
-    error: "bg-red-50",
-    feature: "bg-purple-50"
+// Helper function to get announcement styles based on type and priority
+const getAnnouncementStyles = (type: AnnouncementType, priority: AnnouncementPriority) => {
+  const typeStyles: Record<AnnouncementType, string> = {
+    system: "bg-blue-50 border-blue-200",
+    maintenance: "bg-orange-50 border-orange-200",
+    feature: "bg-purple-50 border-purple-200",
+    security: "bg-red-50 border-red-200",
+    promotion: "bg-yellow-50 border-yellow-200",
+    policy: "bg-indigo-50 border-indigo-200",
+    event: "bg-green-50 border-green-200",
+    emergency: "bg-red-100 border-red-500 ring-2 ring-red-200",
+    update: "bg-blue-50 border-blue-200",
+    general: "bg-gray-50 border-gray-200"
   };
-  return `rounded-lg p-4 ${styles[type]}`;
+  
+  const priorityBorder = {
+    urgent: "border-l-4 border-red-500",
+    high: "border-l-4 border-orange-500",
+    medium: "border-l-4 border-yellow-500",
+    low: "border-l-4 border-blue-500"
+  };
+  
+  return `${typeStyles[type]} ${priorityBorder[priority]} rounded-lg`;
 };
 
-const formatDate = (dateString: string) => {
+// Helper function to get priority badge
+const getPriorityBadge = (priority: AnnouncementPriority) => {
+  switch (priority) {
+    case 'urgent':
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Urgent</span>;
+    case 'high':
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">High</span>;
+    case 'medium':
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Medium</span>;
+    case 'low':
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Low</span>;
+  }
+};
+
+// Helper function to format date
+const formatDate = (dateString?: string | null) => {
+  if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    year: 'numeric'
   });
+};
+
+// Helper function to format relative time
+const formatRelativeTime = (dateString?: string | null) => {
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) return "Just now";
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  
+  return formatDate(dateString);
 };
 
 export default function AnnouncementsPage() {
@@ -71,85 +287,134 @@ export default function AnnouncementsPage() {
   const [loading, setLoading] = useState(true);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<AnnouncementType | 'all'>('all');
+  const [priorityFilter, setPriorityFilter] = useState<AnnouncementPriority | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<AnnouncementStatus | 'all'>('all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'announcements' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch announcements');
+      }
+
+      const responseData = await response.json();
+      // Handle API response structure: { success, data: { announcements: [...], pagination:{...} } }
+      const announcementsData = responseData?.data?.announcements || responseData?.announcements || responseData?.data || [];
+      
+      // Normalize announcements
+      const normalizedAnnouncements = announcementsData
+        .map((announcement: any) => normalizeAnnouncement(announcement))
+        .filter((announcement: Announcement) => {
+          // Only show active announcements by default (unless filtered)
+          return statusFilter === 'all' || announcement.status === statusFilter;
+        })
+        .sort((a: Announcement, b: Announcement) => {
+          // Sort by sticky first, then by priority, then by publishedAt
+          if (a.isSticky && !b.isSticky) return -1;
+          if (!a.isSticky && b.isSticky) return 1;
+          
+          const priorityOrder: Record<AnnouncementPriority, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+          const aPriority = priorityOrder[a.priority] || 0;
+          const bPriority = priorityOrder[b.priority] || 0;
+          
+          if (aPriority !== bPriority) {
+            return bPriority - aPriority;
+          }
+          
+          const aDate = a.publishedAt || a.createdAt;
+          const bDate = b.publishedAt || b.createdAt;
+          return new Date(bDate).getTime() - new Date(aDate).getTime();
+        });
+      
+      setAnnouncements(normalizedAnnouncements);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      setAnnouncements([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
 
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        setLoading(true);
-        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-          'announcements' as keyof typeof API_ENDPOINTS,
-          { method: 'GET' }
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch announcements');
-        }
-
-        const data = await response.json();
-        setAnnouncements(data.announcements || []);
-      } catch {
-        // Fallback to mock data
-        setAnnouncements([
-          {
-            id: '1',
-            title: 'Welcome to LocalPro!',
-            message: 'Explore our marketplace to find local services and connect with professionals.',
-            type: 'feature',
-            priority: 'high',
-            startDate: new Date().toISOString(),
-            isActive: true,
-            isDismissible: true,
-            actionUrl: '/marketplace',
-            actionText: 'Explore',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '2',
-            title: 'Complete Your Profile',
-            message: 'Add your skills and experience to get better matches.',
-            type: 'warning',
-            priority: 'medium',
-            startDate: new Date().toISOString(),
-            isActive: true,
-            isDismissible: true,
-            actionUrl: '/profile/edit',
-            actionText: 'Complete',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          },
-          {
-            id: '3',
-            title: 'New Features Coming',
-            message: 'Academy courses, Supplies marketplace, and Financial services coming soon.',
-            type: 'info',
-            priority: 'low',
-            startDate: new Date().toISOString(),
-            isActive: true,
-            isDismissible: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAnnouncements();
+  }, [fetchAnnouncements]);
+
+  const handleDismiss = useCallback((id: string) => {
+    setDismissedIds(prev => new Set([...prev, id]));
   }, []);
 
-  const handleDismiss = (id: string) => {
-    setDismissedIds(prev => new Set([...prev, id]));
-  };
+  const handleAcknowledge = useCallback(async (id: string) => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'announcements' as keyof typeof API_ENDPOINTS,
+        [id, 'acknowledge'],
+        {},
+        { method: 'POST' }
+      );
+      
+      if (response.ok) {
+        // Update local state
+        setAnnouncements(prev => prev.map(announcement => {
+          const announcementId = announcement.id || announcement._id;
+          if (announcementId === id) {
+            return {
+              ...announcement,
+              isAcknowledged: true,
+              acknowledgments: [...(announcement.acknowledgments || []), {
+                user: '', // Will be set by backend
+                acknowledgedAt: new Date().toISOString()
+              }]
+            };
+          }
+          return announcement;
+        }));
+      }
+    } catch (error) {
+      console.error('Error acknowledging announcement:', error);
+    }
+  }, []);
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    const matchesSearch = announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      announcement.message.toLowerCase().includes(searchQuery.toLowerCase());
-    const notDismissed = !dismissedIds.has(announcement.id);
+  const filteredAnnouncements = useMemo(() => {
+    return announcements.filter(announcement => {
+      const announcementId = announcement.id || announcement._id;
+      
+      // Search filter
+      const matchesSearch = 
+        !searchQuery ||
+        announcement.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        announcement.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        announcement.content.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Type filter
+      const matchesType = typeFilter === 'all' || announcement.type === typeFilter;
+      
+      // Priority filter
+      const matchesPriority = priorityFilter === 'all' || announcement.priority === priorityFilter;
+      
+      // Dismissed filter
+      const notDismissed = !dismissedIds.has(announcementId);
+      
+      // Show active by default, but respect status filter
+      const matchesStatus = statusFilter === 'all' 
+        ? (announcement.isActive && !announcement.isExpired)
+        : announcement.status === statusFilter;
+      
+      return matchesSearch && matchesType && matchesPriority && notDismissed && matchesStatus;
+    });
+  }, [announcements, searchQuery, typeFilter, priorityFilter, statusFilter, dismissedIds]);
 
-    return matchesSearch && notDismissed && announcement.isActive;
-  });
+  // Get unique types and priorities for filter dropdowns
+  const availableTypes = useMemo(() => {
+    return Array.from(new Set(announcements.map(a => a.type))).sort();
+  }, [announcements]);
 
   if (loading) {
     return (
@@ -194,16 +459,37 @@ export default function AnnouncementsPage() {
         ]}
       />
 
-      {/* Simple Header */}
+      {/* Header */}
       <div className="mb-4">
-        <div className="flex items-center gap-3 mb-3">
-          <Megaphone className="w-5 h-5 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-800">Announcements</h1>
-          
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <Megaphone className="w-5 h-5 text-blue-600" />
+            <h1 className="text-xl font-bold text-gray-800">Announcements</h1>
+            <span className="text-sm text-gray-500">
+              ({filteredAnnouncements.length} of {announcements.length})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              Filters
+            </button>
+            <button
+              onClick={() => fetchAnnouncements()}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
         </div>
 
-        {/* Simple Search */}
-        <div className="relative">
+        {/* Search */}
+        <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
@@ -213,6 +499,73 @@ export default function AnnouncementsPage() {
             className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-shadow"
           />
         </div>
+
+        {/* Filters Panel */}
+        {showFilters && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-700">Filters</h3>
+              <button
+                onClick={() => {
+                  setTypeFilter('all');
+                  setPriorityFilter('all');
+                  setStatusFilter('all');
+                }}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Clear all
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Type Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as AnnouncementType | 'all')}
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Types</option>
+                  {availableTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Priority Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value as AnnouncementPriority | 'all')}
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as AnnouncementStatus | 'all')}
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="published">Published</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="draft">Draft</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Announcements List */}
@@ -222,57 +575,187 @@ export default function AnnouncementsPage() {
             <Megaphone className="w-10 h-10 text-gray-400 mx-auto mb-3" />
             <h3 className="text-base font-semibold text-gray-800 mb-1">No Announcements</h3>
             <p className="text-gray-600">
-              {searchQuery ? "No announcements match your search." : "No announcements available."}
+              {searchQuery || typeFilter !== 'all' || priorityFilter !== 'all' || statusFilter !== 'all'
+                ? "No announcements match your filters."
+                : "No announcements available."}
             </p>
+            {(searchQuery || typeFilter !== 'all' || priorityFilter !== 'all' || statusFilter !== 'all') && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  setTypeFilter('all');
+                  setPriorityFilter('all');
+                  setStatusFilter('all');
+                }}
+                className="mt-4 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
-          filteredAnnouncements.map((announcement) => (
-            <div
-              key={announcement.id}
-              className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${getAnnouncementStyles(announcement.type)}`}
-            >
-              <div className="flex items-start gap-3 p-3">
-                <div className="flex-shrink-0 mt-1">
-                  {getAnnouncementIcon(announcement.type)}
-                </div>
+          filteredAnnouncements.map((announcement) => {
+            const announcementId = announcement.id || announcement._id;
+            const isExpanded = expandedId === announcementId;
+            const hasMoreContent = announcement.content.length > announcement.summary.length;
+            
+            return (
+              <div
+                key={announcementId}
+                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all ${getAnnouncementStyles(announcement.type, announcement.priority)}`}
+              >
+                <div className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {getAnnouncementIcon(announcement.type)}
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 mb-1">
-                    <div className="flex-1">
-                      <h3 className="text-base font-semibold text-gray-800 mb-1">{announcement.title}</h3>
-                      <p className="text-gray-600 text-sm mb-2">{announcement.message}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span>{formatDate(announcement.createdAt)}</span>
-                        <span className="capitalize">{announcement.type}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="text-base font-semibold text-gray-800">
+                              {announcement.title}
+                              {announcement.isSticky && (
+                                <span className="ml-2 text-xs text-blue-600">📌 Pinned</span>
+                              )}
+                            </h3>
+                            {getPriorityBadge(announcement.priority)}
+                            {announcement.isExpired && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                Expired
+                              </span>
+                            )}
+                            {announcement.isScheduled && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
+                                Scheduled
+                              </span>
+                            )}
+                          </div>
+                          
+                          <p className="text-gray-600 text-sm mb-2">
+                            {announcement.summary}
+                          </p>
+                          
+                          {isExpanded && hasMoreContent && (
+                            <div className="text-gray-700 text-sm mb-2 whitespace-pre-wrap">
+                              {announcement.content}
+                            </div>
+                          )}
+                          
+                          {/* Metadata Row */}
+                          <div className="flex items-center gap-3 flex-wrap text-xs text-gray-500 mb-2">
+                            <span className="capitalize">{announcement.type}</span>
+                            {announcement.publishedAt && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {formatDate(announcement.publishedAt)}
+                              </span>
+                            )}
+                            {announcement.authorName && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {announcement.authorName}
+                              </span>
+                            )}
+                            {announcement.views !== undefined && (
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {announcement.views}
+                              </span>
+                            )}
+                            {announcement.analytics?.totalAcknowledged !== undefined && announcement.analytics.totalAcknowledged > 0 && (
+                              <span className="flex items-center gap-1 text-green-600">
+                                <CheckCircle className="w-3 h-3" />
+                                {announcement.analytics.totalAcknowledged} acknowledged
+                              </span>
+                            )}
+                            {announcement.comments && announcement.comments.length > 0 && (
+                              <span className="flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                {announcement.comments.length} comments
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Tags */}
+                          {announcement.tags && announcement.tags.length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                              <Tag className="w-3 h-3 text-gray-400" />
+                              {announcement.tags.map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700"
+                                >
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Attachments */}
+                          {announcement.attachments && announcement.attachments.length > 0 && (
+                            <div className="flex items-center gap-2 flex-wrap mb-2">
+                              <FileText className="w-3 h-3 text-gray-400" />
+                              {announcement.attachments.map((attachment, idx) => (
+                                <a
+                                  key={idx}
+                                  href={attachment.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  {attachment.filename}
+                                  <ExternalLink className="w-2 h-2" />
+                                </a>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-200">
+                            {hasMoreContent && (
+                              <button
+                                onClick={() => setExpandedId(isExpanded ? null : announcementId)}
+                                className="text-xs text-blue-600 hover:text-blue-800"
+                              >
+                                {isExpanded ? 'Show less' : 'Read more'}
+                              </button>
+                            )}
+                            {announcement.canAcknowledge && (
+                              <button
+                                onClick={() => handleAcknowledge(announcementId)}
+                                className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+                              >
+                                <CheckCircle className="w-3 h-3" />
+                                Acknowledge
+                              </button>
+                            )}
+                            {announcement.isAcknowledged && (
+                              <span className="flex items-center gap-1 text-xs text-green-600">
+                                <CheckCircle className="w-3 h-3" />
+                                Acknowledged
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {announcement.isActive && (
+                          <button
+                            onClick={() => handleDismiss(announcementId)}
+                            className="p-1 text-gray-400 hover:text-gray-600 rounded flex-shrink-0"
+                            title="Dismiss"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    {announcement.isDismissible && (
-                      <button
-                        onClick={() => handleDismiss(announcement.id)}
-                        className="p-1 text-gray-400 hover:text-gray-600 rounded"
-                        title="Dismiss"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
-
-                  {announcement.actionUrl && announcement.actionText && (
-                    <div className="pt-2 border-t border-gray-200">
-                      <a
-                        href={announcement.actionUrl}
-                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
-                      >
-                        {announcement.actionText}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

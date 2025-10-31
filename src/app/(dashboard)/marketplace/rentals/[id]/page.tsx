@@ -27,6 +27,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ListSkeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 export interface Rental {
   id: string;
@@ -156,7 +158,7 @@ export default function RentalDetailPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/rentals/${rentalId}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${rentalId}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error(`Failed to fetch rental: ${response.status}`);

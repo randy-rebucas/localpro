@@ -1,22 +1,51 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Camera, Upload, X, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Camera, Upload, X, RotateCw, ZoomIn, ZoomOut, User } from "lucide-react";
 import Image from "next/image";
 
 interface AvatarUploadProps {
   currentAvatar?: string;
   onUpload: (file: File) => void;
   isLoading?: boolean;
+  userName?: string; // Optional name for placeholder initials
 }
 
-export function AvatarUpload({ currentAvatar, onUpload, isLoading }: AvatarUploadProps) {
+export function AvatarUpload({ currentAvatar, onUpload, isLoading, userName }: AvatarUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [showCrop, setShowCrop] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [scale, setScale] = useState(1);
+  const [imageError, setImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Reset image error when avatar changes
+  useEffect(() => {
+    setImageError(false);
+  }, [currentAvatar]);
+
+  // Normalize avatar URL - convert HTTP to HTTPS for Cloudinary
+  const normalizeAvatarUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    // Convert HTTP to HTTPS for Cloudinary URLs
+    if (url.startsWith('http://res.cloudinary.com')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  };
+
+  const normalizedAvatarUrl = normalizeAvatarUrl(currentAvatar);
+
+  // Get initials for placeholder
+  const getInitials = () => {
+    if (!userName) return null;
+    const names = userName.trim().split(/\s+/);
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return userName.substring(0, 2).toUpperCase();
+  };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -79,17 +108,23 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading }: AvatarUploa
     <div className="relative">
       {/* Current Avatar Display */}
       <div className="relative group">
-        {currentAvatar ? (
+        {normalizedAvatarUrl && !imageError ? (
           <Image
-            src={currentAvatar}
+            src={normalizedAvatarUrl}
             alt="Avatar"
             width={96}
             height={96}
             className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-green-300 transition-colors"
+            onError={() => setImageError(true)}
+            priority
           />
         ) : (
-          <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-gray-200 group-hover:border-green-300 transition-colors">
-            <Camera className="w-12 h-12 text-gray-400" />
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center border-4 border-gray-200 group-hover:border-green-300 transition-colors">
+            {getInitials() ? (
+              <span className="text-2xl font-semibold text-gray-600">{getInitials()}</span>
+            ) : (
+              <User className="w-12 h-12 text-gray-500" />
+            )}
           </div>
         )}
         

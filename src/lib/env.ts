@@ -47,7 +47,7 @@ function getApiBaseUrl(): string {
   const nodeEnv = process.env.NODE_ENV;
   return nodeEnv === 'production' 
     ? 'https://localpro-super-app.onrender.com' 
-    : ''; // Empty string for relative paths in development
+    : 'http://localhost:5000'; // Empty string for relative paths in development
 }
 
 // Helper to get server-only environment variables

@@ -6,6 +6,8 @@ import { decrypt } from "@/lib/session";
 const authCache = new Map<string, { 
   isValid: boolean; 
   userRole?: string; 
+  userId?: string;
+  apiToken?: string;
   timestamp: number 
 }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -24,57 +26,130 @@ setInterval(() => {
 async function checkAuth(request: NextRequest): Promise<{ 
   isAuthenticated: boolean; 
   userRole?: string; 
-  userId?: string 
+  userId?: string;
+  apiToken?: string;
 }> {
   // First, try to get Bearer token from Authorization header
   const authHeader = request.headers.get("authorization");
   let sessionToken: string | null = null;
+  let apiToken: string | null = null;
+  
+  // Get cookies
+  const cookieHeader = request.headers.get("cookie") || "";
+  const cookies = cookieHeader.split(';').map(c => c.trim());
   
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    sessionToken = authHeader.substring(7);
+    // Bearer token can be either api-token or session token
+    const bearerToken = authHeader.substring(7);
+    sessionToken = bearerToken;
+    apiToken = bearerToken;
   } else {
-    // Fallback to session cookie
-    const cookieHeader = request.headers.get("cookie") || "";
-    sessionToken = cookieHeader
-      .split(';')
-      .find(c => c.trim().startsWith('session='))
-      ?.split('=')[1] || null;
+    // Check for api-token cookie first (stored directly as cookie from external API)
+    const apiTokenCookie = cookies.find(c => c.startsWith('api-token='));
+    if (apiTokenCookie) {
+      apiToken = apiTokenCookie.split('=')[1];
+    }
+    
+    // Get session cookie for user info
+    const sessionCookie = cookies.find(c => c.startsWith('session='));
+    sessionToken = sessionCookie?.split('=')[1] || null;
   }
 
-  if (!sessionToken) {
+  // If we have api-token but no session, allow authentication based on api-token
+  // The api-token is a JWT from external API, so we consider it valid authentication
+  if (!sessionToken && apiToken) {
+    const cacheKey = `api-token-${apiToken}`;
+    
+    // Check cache first
+    const cached = authCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return { 
+        isAuthenticated: cached.isValid, 
+        userRole: cached.userRole,
+        userId: cached.userId,
+        apiToken: cached.apiToken
+      };
+    }
+
+    // Allow authentication with api-token (user info will be fetched client-side)
+    authCache.set(cacheKey, {
+      isValid: true,
+      userRole: undefined, // Will be fetched client-side
+      userId: undefined, // Will be fetched client-side
+      apiToken: apiToken,
+      timestamp: Date.now(),
+    });
+
+    return { 
+      isAuthenticated: true, 
+      userRole: undefined,
+      userId: undefined,
+      apiToken: apiToken
+    };
+  }
+
+  // Need at least session token or api-token for authentication check
+  if (!sessionToken && !apiToken) {
     return { isAuthenticated: false };
   }
 
-  const cacheKey = sessionToken;
+  const cacheKey = `${sessionToken || 'no-session'}-${apiToken || 'no-api-token'}`;
   
   // Check cache first
   const cached = authCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return { 
       isAuthenticated: cached.isValid, 
-      userRole: cached.userRole 
+      userRole: cached.userRole,
+      userId: cached.userId,
+      apiToken: cached.apiToken
     };
   }
 
   try {
-    // Decrypt and validate session
-    const session = await decrypt(sessionToken);
-    const isValid = Boolean(session !== null && session.userId);
-    
-    // Cache the result
-    authCache.set(cacheKey, {
-      isValid,
-      userRole: session?.role,
-      timestamp: Date.now(),
-    });
+    // Decrypt and validate session cookie to get user info
+    if (sessionToken) {
+      const session = await decrypt(sessionToken);
+      const isValid = Boolean(session !== null && session.userId);
+      
+      // Prioritize api-token cookie, fallback to apiToken from session
+      const finalApiToken = apiToken || session?.apiToken || undefined;
+      
+      // Cache the result
+      authCache.set(cacheKey, {
+        isValid,
+        userRole: session?.role,
+        userId: session?.userId,
+        apiToken: finalApiToken,
+        timestamp: Date.now(),
+      });
 
-    return { 
-      isAuthenticated: isValid, 
-      userRole: session?.role,
-      userId: session?.userId
-    };
+      return { 
+        isAuthenticated: isValid, 
+        userRole: session?.role,
+        userId: session?.userId,
+        apiToken: finalApiToken
+      };
+    }
+    
+    // If we only have api-token (already handled above, but keeping as fallback)
+    if (apiToken) {
+      return { 
+        isAuthenticated: true, 
+        apiToken: apiToken
+      };
+    }
+    
+    return { isAuthenticated: false };
   } catch (error) {
     console.error("Auth check failed:", error);
+    // If session decryption fails but we have api-token, still allow
+    if (apiToken) {
+      return { 
+        isAuthenticated: true, 
+        apiToken: apiToken
+      };
+    }
     return { isAuthenticated: false };
   }
 }
@@ -232,6 +307,11 @@ function isStaticOrInternal(pathname: string): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Block service worker requests - return 404
+  if (pathname === '/sw.js' || pathname.startsWith('/sw.js')) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   // Skip middleware for static files and Next.js internal routes
   if (isStaticOrInternal(pathname)) {

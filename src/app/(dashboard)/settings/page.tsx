@@ -232,8 +232,8 @@ export default function SettingsPage() {
                 onValueChange={(value) => onInput("privacy.profileVisibility", (v) => v)({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "public", label: "Public" },
-                  { value: "private", label: "Private" },
-                  { value: "connections", label: "Connections" }
+                  { value: "contacts_only", label: "Contacts Only" },
+                  { value: "private", label: "Private" }
                 ]}
               />
             </div>
@@ -301,7 +301,11 @@ export default function SettingsPage() {
                 onValueChange={(value) => onInput("communication.preferredLanguage")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "en", label: "English" },
-                  { value: "fil", label: "Filipino" }
+                  { value: "fil", label: "Filipino" },
+                  { value: "es", label: "Spanish" },
+                  { value: "zh", label: "Chinese" },
+                  { value: "ja", label: "Japanese" },
+                  { value: "ko", label: "Korean" }
                 ]}
               />
             </div>
@@ -336,10 +340,19 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <Input
+              <Select
                 label="Currency"
                 value={settings.communication.currency}
-                onChange={onInput("communication.currency")}
+                onValueChange={(value) => onInput("communication.currency")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
+                options={[
+                  { value: "PHP", label: "PHP (Philippine Peso)" },
+                  { value: "USD", label: "USD (US Dollar)" },
+                  { value: "EUR", label: "EUR (Euro)" },
+                  { value: "GBP", label: "GBP (British Pound)" },
+                  { value: "JPY", label: "JPY (Japanese Yen)" },
+                  { value: "KRW", label: "KRW (Korean Won)" },
+                  { value: "CNY", label: "CNY (Chinese Yuan)" }
+                ]}
               />
             </div>
           </div>
@@ -367,6 +380,19 @@ export default function SettingsPage() {
               <div />
               <NumberInput label="Minimum job value" value={settings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
               <NumberInput label="Maximum job value" value={settings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
+              <div className="md:col-span-3">
+                <label className="block text-sm text-gray-700 mb-1">Preferred job types</label>
+                <div className="flex flex-wrap gap-2">
+                  {(["cleaning", "maintenance", "repair", "installation", "consultation", "other"] as const).map((jobType) => (
+                    <Checkbox
+                      key={jobType}
+                      label={jobType.charAt(0).toUpperCase() + jobType.slice(1)}
+                      checked={settings.service.preferredJobTypes.includes(jobType)}
+                      onChange={onArrayToggle("service.preferredJobTypes", jobType)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
@@ -418,7 +444,7 @@ export default function SettingsPage() {
                   { value: "paypal", label: "PayPal" },
                   { value: "paymaya", label: "PayMaya" },
                   { value: "gcash", label: "GCash" },
-                  { value: "bank", label: "Bank" },
+                  { value: "bank_transfer", label: "Bank Transfer" },
                   { value: "cash", label: "Cash" }
                 ]}
               />

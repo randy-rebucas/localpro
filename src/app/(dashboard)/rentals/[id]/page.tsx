@@ -25,6 +25,8 @@ import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Rental {
   id: string;
@@ -120,7 +122,7 @@ export default function RentalDetailPage() {
     const fetchRental = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/rentals/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Rental not found');
@@ -197,9 +199,9 @@ export default function RentalDetailPage() {
   const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this rental?')) {
       try {
-        const response = await fetch(`/api/rentals/${params.id}`, {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${params.id}`, createAuthFetchOptions({
           method: 'DELETE',
-        });
+        }));
 
         if (response.ok) {
           router.push('/rentals');
@@ -226,13 +228,10 @@ export default function RentalDetailPage() {
     }
 
     try {
-      const response = await fetch(`/api/rentals/${params.id}/book`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.rentalsBook}/${params.id}/book`, createAuthFetchOptions({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(bookingForm),
-      });
+      }));
 
       if (response.ok) {
         alert('Booking request submitted successfully!');

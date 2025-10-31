@@ -13,6 +13,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Service {
   id: string;
@@ -48,10 +50,10 @@ export default function MyServicesPage() {
         params.append("status", statusFilter);
       }
 
-      const url = `/api/marketplace/my-services?${params.toString()}`;
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceMyServices}?${params.toString()}`;
       console.log("Fetching services from:", url);
       
-      const response = await fetch(url);
+      const response = await fetch(url, createAuthFetchOptions());
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -81,13 +83,10 @@ export default function MyServicesPage() {
 
   const updateServiceStatus = async (serviceId: string, status: string) => {
     try {
-      const response = await fetch(`/api/marketplace/services/${serviceId}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ status }),
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to update service status");
@@ -106,9 +105,9 @@ export default function MyServicesPage() {
     }
 
     try {
-      const response = await fetch(`/api/marketplace/services/${serviceId}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`, createAuthFetchOptions({
         method: 'DELETE',
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to delete service");

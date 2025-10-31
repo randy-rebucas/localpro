@@ -415,4 +415,6 @@ export const API_ENDPOINTS = {
   usersBadges: "/api/users",
   usersBulk: "/api/users/bulk",
   usersDelete: "/api/users",
+
+  registrationEarlyAccess: "/api/registration/early",
 } as const;

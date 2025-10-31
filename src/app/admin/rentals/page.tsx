@@ -18,7 +18,8 @@ import {
   Star,
   Users
 } from "lucide-react";
-import { API_ENDPOINTS } from "@/lib/api";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Pricing {
   hourly: number;
@@ -170,7 +171,7 @@ export default function RentalsAdmin() {
         ...(searchTerm && { search: searchTerm })
       });
       
-      const response = await fetch(`/api/admin/rentals?${params}`);
+      const response = await fetch(`${API_BASE_URL}/api/admin/rentals?${params}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

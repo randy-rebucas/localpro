@@ -20,6 +20,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Booking {
   id: string;
@@ -82,10 +84,10 @@ export default function BookingsPage() {
         params.append("dateTo", dateTo);
       }
 
-      const url = `/api/marketplace/my-bookings?${params.toString()}`;
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceMyBookings}?${params.toString()}`;
       console.log("Fetching bookings from:", url);
 
-      const response = await fetch(url);
+      const response = await fetch(url, createAuthFetchOptions());
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -141,13 +143,10 @@ export default function BookingsPage() {
 
   const updateBookingStatus = async (bookingId: string, status: string) => {
     try {
-      const response = await fetch(`/api/marketplace/bookings/${bookingId}/status`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceBookingStatus}/${bookingId}/status`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ status }),
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to update booking status");

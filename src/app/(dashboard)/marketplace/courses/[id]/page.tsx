@@ -8,6 +8,8 @@ import {
     handleClientApiRoute,
     isAuthenticated 
 } from "@/lib/client-api-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 import {
     Star,
     Clock,
@@ -122,12 +124,9 @@ export default function CourseDetailPage() {
             }
 
             const result = await handleClientApiRoute(async () => {
-                const response = await fetch(`/api/academy/courses/${courseId}`, {
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.academyCourseById}/${courseId}`, createAuthFetchOptions({
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+                }));
                 
                 if (!response.ok) {
                     throw new Error(`Failed to fetch course: ${response.status}`);
@@ -169,12 +168,9 @@ export default function CourseDetailPage() {
             }
 
             const result = await handleClientApiRoute(async () => {
-                const response = await fetch(`/api/academy/courses/${courseId}/enroll`, {
+                const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.academyCoursesEnroll.replace('[id]', courseId)}`, createAuthFetchOptions({
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+                }));
                 
                 if (!response.ok) {
                     throw new Error(`Failed to enroll in course: ${response.status}`);

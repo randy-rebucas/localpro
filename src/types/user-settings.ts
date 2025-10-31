@@ -1,4 +1,4 @@
-export type Visibility = "public" | "private" | "connections";
+export type Visibility = "public" | "contacts_only" | "private";
 
 export interface UserSettings {
   privacy: {
@@ -44,11 +44,11 @@ export interface UserSettings {
     };
   };
   communication: {
-    preferredLanguage: string;
+    preferredLanguage: "en" | "fil" | "es" | "zh" | "ja" | "ko";
     timezone: string;
     dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
     timeFormat: "12h" | "24h";
-    currency: string;
+    currency: "PHP" | "USD" | "EUR" | "GBP" | "JPY" | "KRW" | "CNY";
     autoReply: {
       enabled: boolean;
       message: string;
@@ -59,7 +59,7 @@ export interface UserSettings {
     autoAcceptJobs: boolean;
     minimumJobValue: number;
     maximumJobValue: number;
-    preferredJobTypes: string[];
+    preferredJobTypes: Array<"cleaning" | "maintenance" | "repair" | "installation" | "consultation" | "other">;
     workingHours: {
       start: string; // HH:mm
       end: string;   // HH:mm
@@ -79,7 +79,7 @@ export interface UserSettings {
     };
   };
   payment: {
-    preferredPaymentMethod: "paypal" | "paymaya" | "gcash" | "bank" | "cash";
+    preferredPaymentMethod: "paypal" | "paymaya" | "gcash" | "bank_transfer" | "cash";
     autoWithdraw: {
       enabled: boolean;
       threshold: number;

@@ -258,10 +258,10 @@ export default function MarketplaceCoursesPage() {
             console.log("Courses data:", data);
 
             // Handle different response formats according to API documentation
-            if (data && typeof data === 'object') {
-                if (data.success && data.data) {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                if ('success' in data && data.success && 'data' in data && data.data) {
                     // Standard API response format
-                    if (data.pagination) {
+                    if ('pagination' in data && data.pagination) {
                         setPagination({
                             current: data.pagination.current || 1,
                             pages: data.pagination.pages || 1,
@@ -281,10 +281,10 @@ export default function MarketplaceCoursesPage() {
                         limit: 12,
                         count: data.length
                     });
-                } else if (data.courses && Array.isArray(data.courses)) {
+                } else if ('courses' in data && Array.isArray(data.courses)) {
                     // Alternative response format
                     setCourses(data.courses);
-                    if (data.pagination) {
+                    if ('pagination' in data && data.pagination) {
                         setPagination({
                             current: data.pagination.current || 1,
                             pages: data.pagination.pages || 1,
@@ -304,6 +304,16 @@ export default function MarketplaceCoursesPage() {
                 } else {
                     setCourses([]);
                 }
+            } else if (Array.isArray(data)) {
+                // Direct array response
+                setCourses(data);
+                setPagination({
+                    current: 1,
+                    pages: 1,
+                    total: data.length,
+                    limit: 12,
+                    count: data.length
+                });
             } else {
                 setCourses([]);
             }
@@ -325,16 +335,16 @@ export default function MarketplaceCoursesPage() {
 
             const data = await apiRequest<FeaturedResponse>(API_ENDPOINTS.academyFeatured);
             // Handle different response formats for featured courses
-            if (data && typeof data === 'object') {
-                if (data.success && data.data) {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                if ('success' in data && data.success && 'data' in data && data.data) {
                     setFeaturedCourses(data.data);
-                } else if (data.featured && Array.isArray(data.featured)) {
+                } else if ('featured' in data && Array.isArray(data.featured)) {
                     setFeaturedCourses(data.featured);
-                } else if (Array.isArray(data)) {
-                    setFeaturedCourses(data);
                 } else {
                     setFeaturedCourses([]);
                 }
+            } else if (Array.isArray(data)) {
+                setFeaturedCourses(data);
             } else {
                 setFeaturedCourses([]);
             }
@@ -352,16 +362,16 @@ export default function MarketplaceCoursesPage() {
 
             const data = await apiRequest<CategoriesResponse>(API_ENDPOINTS.academyCategories);
             // Handle different response formats for categories
-            if (data && typeof data === 'object') {
-                if (data.success && data.data) {
+            if (data && typeof data === 'object' && !Array.isArray(data)) {
+                if ('success' in data && data.success && 'data' in data && data.data) {
                     setCategories(data.data);
-                } else if (data.categories && Array.isArray(data.categories)) {
+                } else if ('categories' in data && Array.isArray(data.categories)) {
                     setCategories(data.categories);
-                } else if (Array.isArray(data)) {
-                    setCategories(data);
                 } else {
                     setCategories(fallbackCategories);
                 }
+            } else if (Array.isArray(data)) {
+                setCategories(data);
             } else {
                 setCategories(fallbackCategories);
             }

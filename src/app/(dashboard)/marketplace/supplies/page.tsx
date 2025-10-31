@@ -272,34 +272,8 @@ export default function MarketplaceSuppliesPage() {
             console.log("Supplies data:", data);
 
             // Handle the API response structure with pagination
-            if (data.success && data.data) {
-                console.log("API Response - Success:", data.success);
-                console.log("API Response - Message:", data.message);
-                console.log("API Response - Pagination:", data.pagination);
-                console.log("API Response - Data count:", data.data.length);
-
-                // Set pagination info
-                if (data.pagination) {
-                    setPagination({
-                        current: data.pagination.current || 1,
-                        pages: data.pagination.pages || 1,
-                        total: data.pagination.total || 0,
-                        limit: data.pagination.limit || 15,
-                        count: data.pagination.count || 0
-                    });
-                }
-
-                // Set supplies data
-                setSupplies(data.data || []);
-
-                // Debug: Log the first supply to see its structure
-                if (data.data && data.data.length > 0) {
-                    console.log("First supply structure:", data.data[0]);
-                    console.log("First supply supplier:", data.data[0].supplier);
-                    console.log("First supply pricing:", data.data[0].price);
-                }
-            } else if (Array.isArray(data)) {
-                // Fallback for direct array response
+            if (Array.isArray(data)) {
+                // Direct array response
                 setSupplies(data);
                 setPagination({
                     current: 1,
@@ -308,16 +282,65 @@ export default function MarketplaceSuppliesPage() {
                     limit: 15,
                     count: data.length
                 });
-            } else if (data.supplies) {
-                // Fallback for supplies property
-                setSupplies(data.supplies);
-                setPagination({
-                    current: 1,
-                    pages: 1,
-                    total: data.supplies.length,
-                    limit: 15,
-                    count: data.supplies.length
-                });
+            } else if (data && typeof data === 'object') {
+                // Object response format
+                if ('success' in data && data.success && 'data' in data && data.data) {
+                    console.log("API Response - Success:", data.success);
+                    console.log("API Response - Message:", data.message);
+                    console.log("API Response - Pagination:", data.pagination);
+                    console.log("API Response - Data count:", data.data.length);
+
+                    // Set pagination info
+                    if ('pagination' in data && data.pagination) {
+                        setPagination({
+                            current: data.pagination.current || 1,
+                            pages: data.pagination.pages || 1,
+                            total: data.pagination.total || 0,
+                            limit: data.pagination.limit || 15,
+                            count: data.pagination.count || 0
+                        });
+                    }
+
+                    // Set supplies data
+                    setSupplies(data.data || []);
+
+                    // Debug: Log the first supply to see its structure
+                    if (data.data && data.data.length > 0) {
+                        console.log("First supply structure:", data.data[0]);
+                        console.log("First supply supplier:", data.data[0].supplier);
+                        console.log("First supply pricing:", data.data[0].price);
+                    }
+                } else if ('supplies' in data && Array.isArray((data as { supplies?: Supply[] }).supplies)) {
+                    // Alternative response format with supplies property
+                    const supplies = (data as { supplies: Supply[]; pagination?: SuppliesPagination }).supplies;
+                    setSupplies(supplies);
+                    if ('pagination' in data && data.pagination) {
+                        setPagination({
+                            current: data.pagination.current || 1,
+                            pages: data.pagination.pages || 1,
+                            total: data.pagination.total || 0,
+                            limit: data.pagination.limit || 15,
+                            count: data.pagination.count || 0
+                        });
+                    } else {
+                        setPagination({
+                            current: 1,
+                            pages: 1,
+                            total: supplies.length,
+                            limit: 15,
+                            count: supplies.length
+                        });
+                    }
+                } else {
+                    setSupplies([]);
+                    setPagination({
+                        current: 1,
+                        pages: 1,
+                        total: 0,
+                        limit: 15,
+                        count: 0
+                    });
+                }
             } else {
                 setSupplies([]);
                 setPagination({

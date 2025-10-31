@@ -19,6 +19,8 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Job {
   id: string;
@@ -101,12 +103,9 @@ export default function BrowseJobsPage() {
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
-        const response = await fetch(`/api/jobs?${params.toString()}`, {
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobs}?${params.toString()}`, createAuthFetchOptions({
           signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        }));
 
         clearTimeout(timeoutId);
 

@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 const categories = [
   "Hardware Stores",
@@ -93,7 +95,7 @@ export default function EditAdPage() {
     const fetchAd = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/ads/${params.id}`);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsById}/${params.id}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Ad not found');
@@ -253,16 +255,13 @@ export default function EditAdPage() {
 
     setSaving(true);
     try {
-      const response = await fetch(`/api/ads/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           ...formData,
           budget: parseFloat(formData.budget)
         }),
-      });
+      }));
 
       if (response.ok) {
         router.push(`/ads/${params.id}`);

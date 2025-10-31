@@ -379,7 +379,7 @@ export default function DashboardLayout({
                   {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
                 <div className="flex items-center">
-                  <Logo/>
+                  <Logo href="/dashboard"/>
                 </div>
               </div>
 

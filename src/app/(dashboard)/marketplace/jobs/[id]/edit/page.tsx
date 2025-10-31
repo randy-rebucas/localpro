@@ -19,6 +19,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Job {
   id: string;
@@ -130,7 +132,7 @@ export default function EditJobPage() {
   const fetchJob = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/jobs/${params.id}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsById}/${params.id}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error("Job not found");
@@ -293,10 +295,10 @@ export default function EditJobPage() {
         formData.append(`image_${index}`, image);
       });
 
-      const response = await fetch(`/api/jobs/${params.id}`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsById}/${params.id}`, createAuthFetchOptions({
         method: 'PUT',
         body: formData,
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to update job");

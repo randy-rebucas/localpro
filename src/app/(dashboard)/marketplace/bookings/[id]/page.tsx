@@ -20,6 +20,8 @@ import {
   CreditCard,
   Download
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface Booking {
   id: string;
@@ -71,7 +73,7 @@ export default function BookingDetailPage() {
   const fetchBooking = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/marketplace/bookings/${params.id}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceBookings}/${params.id}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error("Booking not found");
@@ -96,11 +98,8 @@ export default function BookingDetailPage() {
   const updateBookingStatus = async (status: string) => {
     try {
       setUpdating(true);
-      const response = await fetch(`/api/marketplace/bookings/${params.id}/status`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceBookingStatus}/${params.id}/status`, createAuthFetchOptions({
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ status }),
       });
 

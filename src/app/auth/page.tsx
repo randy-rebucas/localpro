@@ -17,6 +17,7 @@ import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import Image from "next/image";
 import { phoneFormatter } from "@/lib/phone-formatter";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 const signInSchema = z.object({
   phone: z
@@ -120,22 +121,43 @@ function SignInForm() {
     setErrors({});
     setIsAnimating(true);
     console.log("Sending verification code for phone:", phone.trim());
+
+    // Validate API configuration before making request
+    if (!API_BASE_URL) {
+      console.error("API_BASE_URL is not configured");
+      toast.error("Service configuration error. Please refresh the page and try again.");
+      setErrors({ phone: "Service configuration error" });
+      setIsLoading(false);
+      setTimeout(() => setIsAnimating(false), 300);
+      return;
+    }
+
     try {
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`;
+      console.log("Sending code with URL:", url);
+
+      const response = await fetch(url, createAuthFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ phoneNumber: phone.trim() }),
         signal: controller.signal,
-      });
+      }));
 
       clearTimeout(timeoutId);
-      const result = await response.json();
+
+      // Try to parse JSON, but handle cases where response might not be JSON
+      let result;
+      try {
+        const text = await response.text();
+        result = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        throw new Error(`Invalid response from server: ${response.status} ${response.statusText}`);
+      }
+
       console.log("Send code response:", result);
       if (response.ok) {
         setPhoneNumber(phone);
@@ -160,12 +182,29 @@ function SignInForm() {
       }
     } catch (error) {
       console.error("Send code error:", error);
-      if (error instanceof Error && error.name === 'AbortError') {
-        toast.error("Request timed out. Please try again.");
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          toast.error("Request timed out. Please try again.");
+          setErrors({ phone: "Request timed out. Please try again." });
+        } else if (error.message.includes('fetch failed') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          // Network connectivity issue
+          const errorMsg = "Unable to connect to service. Please check your internet connection and ensure the backend server is running.";
+          toast.error(errorMsg);
+          setErrors({ phone: errorMsg });
+          console.error("Network error details:", {
+            apiBaseUrl: API_BASE_URL,
+            endpoint: API_ENDPOINTS.authSendCode,
+            fullUrl: `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`
+          });
+        } else {
+          toast.error(error.message || "Network error. Please check your connection and try again.");
+          setErrors({ phone: error.message || "Network error. Please try again." });
+        }
       } else {
         toast.error("Network error. Please check your connection and try again.");
+        setErrors({ phone: "Network error. Please try again." });
       }
-      setErrors({ phone: "Network error. Please try again." });
     } finally {
       setIsLoading(false);
       setTimeout(() => setIsAnimating(false), 300);
@@ -180,6 +219,14 @@ function SignInForm() {
       return;
     }
 
+    // Validate API configuration before making request
+    if (!API_BASE_URL) {
+      console.error("API_BASE_URL is not configured");
+      toast.error("Service configuration error. Please refresh the page and try again.");
+      setErrors({ code: "Service configuration error" });
+      return;
+    }
+
     setIsLoading(true);
     setErrors({});
     setIsAnimating(true);
@@ -189,21 +236,31 @@ function SignInForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`;
+      console.log("Verifying code with URL:", url);
+
+      const response = await fetch(url, createAuthFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           phoneNumber,
           code: verificationCode,
         }),
         signal: controller.signal,
-      });
+      }));
 
       clearTimeout(timeoutId);
-      const result = await response.json();
 
+      // Try to parse JSON, but handle cases where response might not be JSON
+      let result;
+      try {
+        const text = await response.text();
+        result = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        throw new Error(`Invalid response from server: ${response.status} ${response.statusText}`);
+      }
+
+      console.log("Verify code response:", result);
       if (response.ok && result.success) {
         // Persist API token client-side to enable direct external API calls
         if (result.token) {
@@ -235,12 +292,29 @@ function SignInForm() {
       }
     } catch (error) {
       console.error("Verify code error:", error);
-      if (error instanceof Error && error.name === 'AbortError') {
-        toast.error("Request timed out. Please try again.");
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          toast.error("Request timed out. Please try again.");
+          setErrors({ code: "Request timed out. Please try again." });
+        } else if (error.message.includes('fetch failed') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          // Network connectivity issue
+          const errorMsg = "Unable to connect to service. Please check your internet connection and ensure the backend server is running.";
+          toast.error(errorMsg);
+          setErrors({ code: errorMsg });
+          console.error("Network error details:", {
+            apiBaseUrl: API_BASE_URL,
+            endpoint: API_ENDPOINTS.authVerifyCode,
+            fullUrl: `${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`
+          });
+        } else {
+          toast.error(error.message || "An error occurred during verification");
+          setErrors({ code: error.message || "An error occurred during verification" });
+        }
       } else {
-        toast.error("An error occurred during verification");
+        toast.error("An unexpected error occurred during verification");
+        setErrors({ code: "An unexpected error occurred during verification" });
       }
-      setErrors({ code: "An error occurred during verification" });
     } finally {
       setIsLoading(false);
       setTimeout(() => setIsAnimating(false), 300);

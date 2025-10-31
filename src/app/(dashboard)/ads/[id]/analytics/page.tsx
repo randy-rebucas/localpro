@@ -19,6 +19,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/loading";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface AnalyticsData {
   adId: string;
@@ -85,7 +87,7 @@ export default function AdAnalyticsPage() {
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/ads/${params.id}/analytics?period=${selectedPeriod}`);
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.adsAnalytics}/${params.id}/analytics?period=${selectedPeriod}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error('Failed to fetch analytics');

@@ -4,8 +4,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 const verificationSchema = z.object({
   code: z.string().min(4, "Code must be at least 4 digits").max(8, "Code must be at most 8 digits"),
@@ -26,6 +29,7 @@ export function VerificationModal({
   onSuccess, 
   contact 
 }: VerificationModalProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -41,26 +45,35 @@ export function VerificationModal({
   const onSubmit = async (data: VerificationForm) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/verify-code", {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, createAuthFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           phone: contact,
           code: data.code,
           type: "phone",
         }),
-      });
+      }));
 
       const result = await response.json();
 
-      if (response.ok) {
+      if (response.ok && result.success) {
+        // Persist API token client-side for secure REST API requests
+        // The token from mobile authentication response will be used in Authorization: Bearer header
+        if (result.token) {
+          const oneWeek = 60 * 60 * 24 * 7;
+          const isProd = process.env.NODE_ENV === 'production';
+          const secure = isProd ? '; Secure' : '';
+          const sameSite = '; SameSite=Lax';
+          document.cookie = `api-token=${result.token}; Path=/; Max-Age=${oneWeek}${sameSite}${secure}`;
+          console.log('✅ API token stored for Bearer authentication');
+        }
         setIsVerified(true);
         toast.success("Verification successful!");
         setTimeout(() => {
           onSuccess();
           onClose();
+          // Redirect to dashboard after successful mobile authentication
+          router.push("/dashboard");
         }, 1500);
       } else {
         toast.error(result.error || "Invalid verification code");
@@ -76,16 +89,13 @@ export function VerificationModal({
   const resendCode = async () => {
     setIsResending(true);
     try {
-      const response = await fetch("/api/auth/send-code", {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, createAuthFetchOptions({
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           phone: contact,
           type: "phone",
         }),
-      });
+      }));
 
       const result = await response.json();
 

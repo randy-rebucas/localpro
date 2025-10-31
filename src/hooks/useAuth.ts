@@ -5,7 +5,9 @@ import { makeClientAuthenticatedRequestWithEndpointSafe } from '@/lib/client-api
 import { API_ENDPOINTS } from '@/lib/api';
 
 export interface User {
-  id: string;
+  id?: string;
+  _id?: string; // MongoDB-style ID
+  userId?: string; // Alternative ID field
   email: string;
   name: string;
   role: string;
@@ -57,9 +59,25 @@ export function useSession() {
         console.log('🔍 useSession: Response headers:', Object.fromEntries(response.headers.entries()));
         
         if (response.ok) {
-          const userData = await response.json();
-          console.log('🔍 useSession: User data received:', userData);
-          setSession({ user: userData });
+          const responseData = await response.json();
+          console.log('🔍 useSession: User data received:', responseData);
+          
+          // Handle different response structures: { success: true, data: {...} } or direct user object
+          const userData = responseData?.data || responseData?.user || responseData;
+          
+          // Normalize user data: convert _id to id if needed
+          const normalizedUser = userData ? {
+            ...userData,
+            id: userData.id || userData._id || userData.userId || '',
+          } : null;
+          
+          if (normalizedUser && normalizedUser.id) {
+            console.log('🔍 useSession: Normalized user ID:', normalizedUser.id);
+            setSession({ user: normalizedUser as User });
+          } else {
+            console.warn('🔍 useSession: No valid user ID found in response');
+            setSession(null);
+          }
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.log('🔍 useSession: Response not ok, error data:', errorData);
