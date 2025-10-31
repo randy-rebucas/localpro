@@ -397,13 +397,21 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfileData | null>(initialProfile || null);
   const [loading, setLoading] = useState(!initialProfile);
+  const profileFetchedRef = useRef(false);
+  const fetchInProgressRef = useRef(false);
   
   // Fetch full user profile
   useEffect(() => {
+    // Skip if already fetched or fetch in progress
+    if (profileFetchedRef.current || fetchInProgressRef.current) {
+      return;
+    }
+    
     const fetchProfile = async () => {
       if (initialProfile) {
         setProfile(initialProfile);
         setLoading(false);
+        profileFetchedRef.current = true;
         return;
       }
       
@@ -412,8 +420,10 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         const normalized = normalizeUser(session.user);
         setProfile(normalized);
         setLoading(false);
+        profileFetchedRef.current = true;
         
         // Then try to fetch full profile from API to enrich the data
+        fetchInProgressRef.current = true;
         try {
           const response = await makeClientAuthenticatedRequestWithEndpointSafe(
             'authMe' as keyof typeof API_ENDPOINTS,
@@ -430,11 +440,14 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         } catch (error) {
           console.error('Error fetching user profile:', error);
           // Keep session-based profile if API fails
+        } finally {
+          fetchInProgressRef.current = false;
         }
         return;
       }
       
       // If no session yet, try to fetch from API
+      fetchInProgressRef.current = true;
       try {
         setLoading(true);
         const response = await makeClientAuthenticatedRequestWithEndpointSafe(
@@ -447,6 +460,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
           const userData = responseData?.data || responseData || responseData?.user;
           if (userData) {
             setProfile(normalizeUser(userData));
+            profileFetchedRef.current = true;
           } else {
             // If API returns no data, show empty state
             console.warn('No user data received from API');
@@ -458,11 +472,12 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         console.error('Error fetching user profile:', error);
       } finally {
         setLoading(false);
+        fetchInProgressRef.current = false;
       }
     };
     
     fetchProfile();
-  }, [session, initialProfile]);
+  }, [session?.user?.id, initialProfile]);
   
   // Get user role for conditional rendering
   const userRole = session?.user?.role || profile?.role;

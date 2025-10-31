@@ -81,6 +81,11 @@ export default function DashboardLayout({
   // Use the auth redirect hook
   const { redirectToLogin } = useAuthRedirect();
 
+  // Refs to prevent duplicate fetches
+  const userFetchedRef = useRef(false);
+  const fetchedUserIdRef = useRef<string | null>(null);
+  const fetchInProgressRef = useRef(false);
+
   useEffect(() => {
     console.log("🔍 Dashboard Layout useEffect - Status:", status);
     console.log("🔍 Dashboard Layout useEffect - Session:", !!session);
@@ -123,13 +128,30 @@ export default function DashboardLayout({
     
     // Only fetch user data if we have a session AND API token
     if (status === "authenticated" && session?.user?.id && isAuthenticated()) {
+      const userId = session.user.id;
+      
+      // Check if we've already fetched this user's data
+      if (userFetchedRef.current && fetchedUserIdRef.current === userId && user !== null) {
+        console.log("⏭️ User data already fetched for this user, skipping");
+        setLoading(false);
+        return;
+      }
+      
+      // Prevent concurrent fetches
+      if (fetchInProgressRef.current) {
+        console.log("⏭️ User data fetch already in progress, skipping");
+        return;
+      }
+      
       console.log("✅ Fetching user data - all conditions met");
+      fetchInProgressRef.current = true;
+      
       const fetchUser = async () => {
         try {
           const result = await handleClientApiRoute(async () => {
             const response = await makeClientAuthenticatedRequestWithPathSafe(
               'usersById',
-              [session?.user?.id],
+              [userId],
               {},
               { method: 'GET' }
             );
@@ -148,17 +170,23 @@ export default function DashboardLayout({
             if (result.isAuthError || result.status === 401) {
               console.log("Authentication error detected, handling token expiry");
               handleExpiredToken();
+              fetchInProgressRef.current = false;
               return;
             }
             
             setError("Failed to load user data. Please try refreshing the page.");
+            fetchInProgressRef.current = false;
           } else {
             console.log("✅ User data fetched successfully");
             setUser(result.data);
+            userFetchedRef.current = true;
+            fetchedUserIdRef.current = userId;
+            fetchInProgressRef.current = false;
           }
         } catch (error) {
           console.error("Error in fetchUser:", error);
           setError("Failed to load user data. Please try refreshing the page.");
+          fetchInProgressRef.current = false;
         } finally {
           setLoading(false);
         }
@@ -175,15 +203,19 @@ export default function DashboardLayout({
       console.log("🔴 Session:", !!session);
       console.log("🔴 IsAuthenticated:", isAuthenticated());
       redirectToLogin();
+      setLoading(false);
     } else if (status === "unauthenticated") {
       console.log("🔴 User is unauthenticated, stopping loading");
+      userFetchedRef.current = false;
+      fetchedUserIdRef.current = null;
+      fetchInProgressRef.current = false;
       setLoading(false);
     } else {
       console.log("🟡 Unknown status, stopping loading");
       // If no session and not loading, stop loading
       setLoading(false);
     }
-  }, [status, session, redirectToLogin]);
+  }, [status, session?.user?.id]);
 
   // useEffect(() => {
   //   const fetchUnread = async () => {
