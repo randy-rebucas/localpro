@@ -1,796 +1,1144 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { apiRequest, API_ENDPOINTS } from "@/lib/api";
+import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import Image from "next/image";
+import { GridSkeleton } from "@/components/ui/loading";
 import {
-  Search,
-  Plus,
-  MapPin,
-  Star,
-  Eye,
-  Edit,
-  Heart,
-  Share2,
-  Grid3X3,
-  List,
-  SortAsc,
-  SortDesc,
-  Filter,
-  Wrench,
-  Car,
-  Home,
-  Hammer
+    Search,
+    Star,
+    MapPin,
+    Clock,
+    ChevronDown,
+    Grid,
+    List,
+    SlidersHorizontal,
+    Plus,
+    RefreshCw,
+    Truck,
+    Wrench,
+    Car,
+    Hammer,
+    Zap,
 } from "lucide-react";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 
 type RentalsPagination = {
-  current: number;
-  pages: number;
-  total: number;
-  limit: number;
-  count: number;
+    current?: number;
+    pages?: number;
+    total?: number;
+    limit?: number;
+    count?: number;
 };
 
-type RentalsResponse = {
-  success: boolean;
-  data?: Rental[];
-  error?: string;
-  pagination?: RentalsPagination;
-};
+type RentalsApiResponse = {
+    success?: boolean;
+    message?: string;
+    data?: RentalItem[];
+    rentals?: RentalItem[];
+    rentalItems?: RentalItem[];
+    pagination?: RentalsPagination;
+} | RentalItem[];
 
-export interface Rental {
-  id: string;
+// RentalItem Image Interface
+interface RentalItemImage {
+  url: string;
+  publicId?: string;
+  thumbnail?: string;
+  alt?: string;
+}
+
+// RentalItem Entity Interface (matching data-entities.md)
+export interface RentalItem {
+  _id?: string;
+  id?: string;
   name: string;
+  title: string;
   description: string;
-  category: string;
-  type: 'equipment' | 'vehicle' | 'space' | 'tool';
-  status: 'available' | 'rented' | 'maintenance' | 'unavailable';
-  price: number;
-  priceUnit: 'hour' | 'day' | 'week' | 'month';
+  category: 'tools' | 'vehicles' | 'equipment' | 'machinery';
+  subcategory: string;
+  owner: {
+    _id?: string;
+    id?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+    rating?: number;
+    reviewCount?: number;
+    verified?: boolean;
+  } | string; // Can be populated object or just ID
+  pricing: {
+    hourly?: number;
+    daily?: number;
+    weekly?: number;
+    monthly?: number;
+    currency: string;
+  };
+  availability: {
+    isAvailable: boolean;
+    schedule?: Array<{
+      startDate: string | Date;
+      endDate: string | Date;
+      reason?: 'rented' | 'maintenance' | 'unavailable';
+    }>;
+  };
   location: {
-    address: string;
-    city: string;
-    state: string;
-    zipCode: string;
+    address?: {
+      street?: string;
+      city?: string;
+      state?: string;
+      zipCode?: string;
+      country?: string;
+    };
     coordinates?: {
       lat: number;
       lng: number;
     };
+    pickupRequired?: boolean;
+    deliveryAvailable?: boolean;
+    deliveryFee?: number;
   };
-  images: string[];
-  features: string[];
-  specifications: {
+  specifications?: {
     brand?: string;
     model?: string;
     year?: number;
-    condition: 'excellent' | 'good' | 'fair' | 'poor';
-    capacity?: string;
-    dimensions?: string;
-    weight?: string;
+    condition?: 'excellent' | 'good' | 'fair' | 'poor';
+    features?: string[];
+    dimensions?: {
+      length?: number;
+      width?: number;
+      height?: number;
+      unit?: string;
+    };
+    weight?: {
+      value?: number;
+      unit?: string;
+    };
   };
-  owner: {
-    id: string;
-    name: string;
-    avatar?: string;
-    rating?: number;
-    reviewCount?: number;
-    verified: boolean;
+  requirements?: {
+    minAge?: number;
+    licenseRequired?: boolean;
+    licenseType?: string;
+    deposit?: number;
+    insuranceRequired?: boolean;
   };
-  availability: {
-    startDate: string;
-    endDate: string;
-    isAvailable: boolean;
+  images?: RentalItemImage[] | string[]; // Support both formats
+  documents?: Array<{
+    type?: 'manual' | 'warranty' | 'insurance' | 'license' | 'other';
+    url?: string;
+    publicId?: string;
+    name?: string;
+  }>;
+  maintenance?: {
+    lastService?: string | Date;
+    nextService?: string | Date;
+    serviceHistory?: Array<{
+      date?: string | Date;
+      type?: string;
+      description?: string;
+      cost?: number;
+    }>;
   };
-  rating?: number;
-  reviewCount?: number;
-  viewsCount: number;
-  isFeatured: boolean;
-  isFavorited: boolean;
-  createdAt: string;
-  updatedAt: string;
+  rating?: {
+    average: number;
+    count: number;
+  };
+  reviews?: Array<{
+    user: string | {
+      _id?: string;
+      id?: string;
+      name?: string;
+    };
+    rating: number;
+    comment?: string;
+    createdAt?: string | Date;
+  }>;
+  averageRating?: number;
+  isActive?: boolean;
+  isFeatured?: boolean;
+  views?: number;
+  tags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+  
+  // Legacy fields for backward compatibility
+  type?: 'equipment' | 'vehicle' | 'space' | 'tool';
+  status?: 'available' | 'rented' | 'maintenance' | 'unavailable';
+  price?: number;
+  priceUnit?: 'hour' | 'day' | 'week' | 'month';
+  viewsCount?: number;
+  isFavorited?: boolean;
+}
+
+// Legacy Rental type alias for backward compatibility
+type Rental = RentalItem;
+
+interface FilterOptions {
+    category: string;
+    priceRange: [number, number];
+    rating: number;
+    location: string;
+    availability: boolean;
+    coordinates?: { lat: number; lng: number };
+    radius?: number;
 }
 
 const categories = [
-  "All Categories",
-  "Construction Equipment",
-  "Vehicles",
-  "Tools",
-  "Event Equipment",
-  "Electronics",
-  "Furniture",
-  "Sports Equipment"
+    { value: "", label: "All Categories" },
+    { value: "tools", label: "Tools" },
+    { value: "vehicles", label: "Vehicles" },
+    { value: "equipment", label: "Equipment" },
+    { value: "machinery", label: "Machinery" }
 ];
-
-const types = [
-  "All Types",
-  "equipment",
-  "vehicle", 
-  "space",
-  "tool"
-];
-
-const statuses = [
-  "All Status",
-  "available",
-  "rented",
-  "maintenance",
-  "unavailable"
-];
-
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'equipment':
-      return <Wrench className="w-4 h-4" />;
-    case 'vehicle':
-      return <Car className="w-4 h-4" />;
-    case 'space':
-      return <Home className="w-4 h-4" />;
-    case 'tool':
-      return <Hammer className="w-4 h-4" />;
-    default:
-      return <Wrench className="w-4 h-4" />;
-  }
-};
-
-const getConditionColor = (condition: string) => {
-  switch (condition) {
-    case 'excellent':
-      return 'text-green-600 bg-green-100';
-    case 'good':
-      return 'text-blue-600 bg-blue-100';
-    case 'fair':
-      return 'text-yellow-600 bg-yellow-100';
-    case 'poor':
-      return 'text-red-600 bg-red-100';
-    default:
-      return 'text-gray-600 bg-gray-100';
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'available':
-      return 'text-green-600 bg-green-100';
-    case 'rented':
-      return 'text-blue-600 bg-blue-100';
-    case 'maintenance':
-      return 'text-yellow-600 bg-yellow-100';
-    case 'unavailable':
-      return 'text-red-600 bg-red-100';
-    default:
-      return 'text-gray-600 bg-gray-100';
-  }
-};
-
-// Rental-specific skeleton components
-const RentalCardSkeleton = () => (
-  <Card className="overflow-hidden animate-pulse">
-    <div className="relative h-48 bg-gray-200" />
-    <div className="p-4 space-y-3">
-      <div className="flex items-start justify-between">
-        <div className="h-6 bg-gray-200 rounded w-3/4" />
-        <div className="h-6 bg-gray-200 rounded w-20" />
-      </div>
-      <div className="space-y-2">
-        <div className="h-4 bg-gray-200 rounded w-full" />
-        <div className="h-4 bg-gray-200 rounded w-5/6" />
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="h-4 bg-gray-200 rounded w-16" />
-        <div className="h-4 bg-gray-200 rounded w-20" />
-        <div className="h-4 bg-gray-200 rounded w-24" />
-      </div>
-      <div className="flex items-center justify-between">
-        <div className="h-5 bg-gray-200 rounded w-24" />
-        <div className="h-6 bg-gray-200 rounded w-20" />
-      </div>
-      <div className="flex gap-2">
-        <div className="h-10 bg-gray-200 rounded flex-1" />
-        <div className="h-10 bg-gray-200 rounded w-10" />
-      </div>
-    </div>
-  </Card>
-);
-
-const RentalListSkeleton = () => (
-  <Card className="p-4 animate-pulse">
-    <div className="flex">
-      <div className="relative w-32 h-24 bg-gray-200 rounded-lg flex-shrink-0" />
-      <div className="flex-1 ml-4 space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="h-6 bg-gray-200 rounded w-1/2" />
-          <div className="h-6 bg-gray-200 rounded w-20" />
-        </div>
-        <div className="space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-full" />
-          <div className="h-4 bg-gray-200 rounded w-4/5" />
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="h-4 bg-gray-200 rounded w-24" />
-          <div className="h-4 bg-gray-200 rounded w-32" />
-          <div className="h-4 bg-gray-200 rounded w-20" />
-        </div>
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
-            <div className="h-8 bg-gray-200 rounded w-20" />
-            <div className="h-8 bg-gray-200 rounded w-16" />
-          </div>
-          <div className="h-6 bg-gray-200 rounded w-24" />
-        </div>
-      </div>
-    </div>
-  </Card>
-);
 
 export default function MarketplaceRentalsPage() {
-  const [rentals, setRentals] = useState<Rental[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All Categories");
-  const [selectedType, setSelectedType] = useState("All Types");
-  const [selectedStatus, setSelectedStatus] = useState("All Status");
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
-  const [location, setLocation] = useState("");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showFilters, setShowFilters] = useState(false);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pages: 1,
-    total: 0,
-    limit: 15,
-    count: 0
-  });
-  const router = useRouter();
+    const [rentals, setRentals] = useState<RentalItem[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [sortBy, setSortBy] = useState("price_low");
+    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [showFilters, setShowFilters] = useState(false);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pages: 1,
+        total: 0,
+        limit: 15,
+        count: 0
+    });
+    const [filters, setFilters] = useState<FilterOptions>({
+        category: "",
+        priceRange: [0, 10000],
+        rating: 0,
+        location: "",
+        availability: true,
+        coordinates: undefined,
+        radius: 10000, // 10km default radius
+    });
+  
+    const sortOptions = [
+        { value: "relevance", label: "Most Relevant" },
+        { value: "price_low", label: "Price: Low to High" },
+        { value: "price_high", label: "Price: High to Low" },
+        { value: "rating", label: "Highest Rated" },
+        { value: "newest", label: "Newest First" }
+    ];
 
-  const fetchRentals = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const queryParams = new URLSearchParams({
-        type: 'rentals',
-        page: pagination.current.toString(),
-        limit: pagination.limit.toString(),
-        ...(selectedCategory !== "All Categories" && { category: selectedCategory }),
-        ...(selectedType !== "All Types" && { type: selectedType }),
-        ...(selectedStatus !== "All Status" && { status: selectedStatus }),
-        ...(searchQuery && { search: searchQuery }),
-        ...(location && { location }),
-        ...(priceRange.min && { minPrice: priceRange.min }),
-        ...(priceRange.max && { maxPrice: priceRange.max }),
-        sortBy,
-        sortOrder
-      });
-
-      const data = await apiRequest<RentalsResponse>(`${API_ENDPOINTS.rentals}?${queryParams.toString()}`);
-      
-      if (data.success) {
-        const rentalsData = data.data || [];
-        
-        // Debug: Check for duplicate IDs
-        const ids = rentalsData.map((rental: Rental) => rental?.id).filter(Boolean);
-        const uniqueIds = new Set(ids);
-        if (ids.length !== uniqueIds.size) {
-          console.warn('Duplicate rental IDs detected:', ids);
+    const getCurrentLocation = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const coordinates = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    setFilters(prev => ({ ...prev, coordinates }));
+                },
+                (error) => {
+                    console.error("Error getting location:", error);
+                    setError("Unable to get your location. Please enter your location manually.");
+                }
+            );
+        } else {
+            console.warn("Geolocation is not supported by this browser.");
+            setError("Location services are not available. Please enter your location manually.");
         }
-        
-        setRentals(rentalsData);
-        if (data.pagination) {
-          setPagination(prev => ({
-            ...prev,
-            ...data.pagination
-          }));
+    };
+
+    // Normalize rental item data from API response
+    const normalizeRentalItem = useCallback((item: any): RentalItem => {
+    return {
+      ...item,
+      _id: item._id || item.id,
+      id: item.id || item._id,
+      // Handle pricing structure
+      pricing: item.pricing || {
+        hourly: item.price && item.priceUnit === 'hour' ? item.price : undefined,
+        daily: item.price && item.priceUnit === 'day' ? item.price : undefined,
+        weekly: item.price && item.priceUnit === 'week' ? item.price : undefined,
+        monthly: item.price && item.priceUnit === 'month' ? item.price : undefined,
+        currency: item.currency || 'USD'
+      },
+      // Handle availability
+      availability: item.availability || {
+        isAvailable: item.status === 'available' || item.isAvailable !== false,
+        schedule: item.availability?.schedule || []
+      },
+      // Handle location
+      location: item.location && typeof item.location === 'object' && 'address' in item.location
+        ? item.location
+        : {
+            address: item.location || {
+              street: item.location?.street,
+              city: item.location?.city,
+              state: item.location?.state,
+              zipCode: item.location?.zipCode,
+              country: item.location?.country
+            },
+            coordinates: item.location?.coordinates,
+            pickupRequired: item.location?.pickupRequired !== false,
+            deliveryAvailable: item.location?.deliveryAvailable || false,
+            deliveryFee: item.location?.deliveryFee
+          },
+      // Handle images
+      images: Array.isArray(item.images)
+        ? item.images.map((img: any) =>
+            typeof img === 'string'
+              ? { url: img, alt: item.title || item.name }
+              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || item.title || item.name }
+          )
+        : [],
+      // Handle owner
+      owner: typeof item.owner === 'string'
+        ? { id: item.owner }
+        : {
+            _id: item.owner?._id || item.owner?.id,
+            id: item.owner?.id || item.owner?._id,
+            name: item.owner?.name,
+            firstName: item.owner?.firstName,
+            lastName: item.owner?.lastName,
+            avatar: item.owner?.avatar,
+            rating: item.owner?.rating,
+            reviewCount: item.owner?.reviewCount,
+            verified: item.owner?.verified
+          },
+      // Handle rating
+      rating: item.rating || {
+        average: item.averageRating || item.rating?.average || 0,
+        count: item.reviews?.length || item.rating?.count || item.reviewCount || 0
+      },
+      averageRating: item.averageRating || item.rating?.average || 0,
+      // Set defaults
+      isActive: item.isActive !== undefined ? item.isActive : true,
+      views: item.views || item.viewsCount || 0
+    };
+  }, []);
+
+    const fetchRentals = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const params = new URLSearchParams();
+
+            // Add pagination first
+            params.append("page", pagination.current.toString());
+            params.append("limit", pagination.limit.toString());
+
+            // Determine which endpoint to use based on whether coordinates are available
+            const hasCoordinates = filters.coordinates && filters.coordinates.lat && filters.coordinates.lng;
+            
+            // Add location parameters for nearby endpoint
+            if (hasCoordinates && filters.coordinates) {
+                params.append("lat", filters.coordinates.lat.toString());
+                params.append("lng", filters.coordinates.lng.toString());
+                params.append("radius", (filters.radius || 50000).toString());
+            }
+            
+            // Common filters
+            if (searchQuery) params.append("search", searchQuery);
+            if (filters.category) params.append("category", filters.category);
+            if (filters.location && !hasCoordinates) params.append("location", filters.location);
+            
+            // Add price range
+            if (filters.priceRange[0] > 0) params.append("minPrice", filters.priceRange[0].toString());
+            if (filters.priceRange[1] < 10000) params.append("maxPrice", filters.priceRange[1].toString());
+            
+            // Availability filters
+            if (filters.availability) params.append("isActive", "true");
+            
+            if (filters.rating > 0) {
+                params.append("minRating", filters.rating.toString());
+                params.append("sortBy", "averageRating");
+                params.append("sortOrder", "desc");
+            }
+
+            // Enhanced sorting
+            if (sortBy === "price_low") {
+                params.append("sortBy", "price");
+                params.append("sortOrder", "asc");
+            } else if (sortBy === "price_high") {
+                params.append("sortBy", "price");
+                params.append("sortOrder", "desc");
+            } else if (sortBy === "rating") {
+                params.append("sortBy", "rating");
+                params.append("sortOrder", "desc");
+            } else if (sortBy === "newest") {
+                params.append("sortBy", "createdAt");
+                params.append("sortOrder", "desc");
+            } else {
+                params.append("sort", sortBy);
+            }
+
+            console.log("Fetching rentals with params:", params.toString());
+
+            // Determine which endpoint to use
+            const endpoint = hasCoordinates 
+                ? API_ENDPOINTS.rentalsNearby || API_ENDPOINTS.rentals
+                : API_ENDPOINTS.rentals;
+
+            // Add timeout to prevent hanging
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            let data: RentalsApiResponse;
+            try {
+                data = await apiRequest<RentalsApiResponse>(`${endpoint}?${params.toString()}`, {
+                    signal: controller.signal
+                });
+            } catch (fetchError) {
+                console.log("Primary API failed, trying fallback API:", fetchError);
+                data = await apiRequest<RentalsApiResponse>(`${API_ENDPOINTS.rentals}?${params.toString()}`, {
+                    signal: controller.signal
+                });
+            } finally {
+                clearTimeout(timeoutId);
+            }
+            
+            console.log(`Fetched from ${hasCoordinates ? 'nearby' : 'regular'} endpoint`);
+
+            // Handle the API response structure with pagination
+            if (Array.isArray(data)) {
+                // Direct array response - normalize rentals
+                const normalizedRentals = data.map((item: any) => normalizeRentalItem(item));
+                setRentals(normalizedRentals);
+                setPagination({
+                    current: 1,
+                    pages: 1,
+                    total: normalizedRentals.length,
+                    limit: 15,
+                    count: normalizedRentals.length
+                });
+            } else if (data && typeof data === 'object') {
+                // Object response format
+                if ('success' in data && data.success && 'data' in data && data.data) {
+                    // Set pagination info
+                    if ('pagination' in data && data.pagination) {
+                        setPagination({
+                            current: data.pagination.current || 1,
+                            pages: data.pagination.pages || 1,
+                            total: data.pagination.total || 0,
+                            limit: data.pagination.limit || 15,
+                            count: data.pagination.count || 0
+                        });
+                    }
+
+                    // Normalize and set rentals data
+                    const normalizedRentals = (data.data || []).map((item: any) => normalizeRentalItem(item));
+                    setRentals(normalizedRentals);
+                } else if (('rentals' in data || 'rentalItems' in data) && Array.isArray((data as any).rentals || (data as any).rentalItems)) {
+                    // Alternative response format with rentals/rentalItems property
+                    const rentalsData = (data as any).rentals || (data as any).rentalItems || [];
+                    const normalizedRentals = rentalsData.map((item: any) => normalizeRentalItem(item));
+                    setRentals(normalizedRentals);
+                    if ('pagination' in data && data.pagination) {
+                        setPagination({
+                            current: data.pagination.current || 1,
+                            pages: data.pagination.pages || 1,
+                            total: data.pagination.total || 0,
+                            limit: data.pagination.limit || 15,
+                            count: data.pagination.count || 0
+                        });
+                    } else {
+                        setPagination({
+                            current: 1,
+                            pages: 1,
+                            total: normalizedRentals.length,
+                            limit: 15,
+                            count: normalizedRentals.length
+                        });
+                    }
+                } else {
+                    setRentals([]);
+                    setPagination({
+                        current: 1,
+                        pages: 1,
+                        total: 0,
+                        limit: 15,
+                        count: 0
+                    });
+                }
+            } else {
+                setRentals([]);
+                setPagination({
+                    current: 1,
+                    pages: 1,
+                    total: 0,
+                    limit: 15,
+                    count: 0
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching rentals:", error);
+
+            setError('Failed to fetch rentals. Please try again later.');
+            setRentals([]);
+        } finally {
+            setLoading(false);
         }
-      } else {
-        throw new Error(data.error || 'Failed to fetch rentals');
-      }
-    } catch (err) {
-      console.error('Error fetching rentals:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch rentals');
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, selectedType, selectedStatus, searchQuery, location, priceRange, sortBy, sortOrder, pagination]);
+    }, [searchQuery, filters, sortBy, pagination.current, pagination.limit, normalizeRentalItem]);
 
-  useEffect(() => {
-    fetchRentals();
-  }, [fetchRentals]);
+    // Debounced search to improve performance
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            fetchRentals();
+        }, 300); // 300ms debounce
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPagination(prev => ({ ...prev, current: 1 }));
-    fetchRentals();
-  };
+        return () => clearTimeout(timeoutId);
+    }, [fetchRentals]);
 
-  const handleFilterChange = () => {
-    setPagination(prev => ({ ...prev, current: 1 }));
-    fetchRentals();
-  };
+    // Trigger fetch when pagination changes
+    useEffect(() => {
+        fetchRentals();
+    }, [fetchRentals]);
 
-  const handlePageChange = (page: number) => {
-    setPagination(prev => ({ ...prev, current: page }));
-  };
+    const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
 
-  const handleCreateRental = () => {
-    router.push('/rentals/create');
-  };
+    const clearFilters = () => {
+        setFilters({
+            category: "",
+            priceRange: [0, 10000],
+            rating: 0,
+            location: "",
+            availability: true,
+            coordinates: undefined,
+            radius: 10000,
+        });
+    };
 
-  const handleViewRental = (rentalId: string) => {
-    router.push(`/marketplace/rentals/${rentalId}`);
-  };
+    const getCategoryIcon = (category: RentalItem['category']) => {
+        switch (category) {
+            case 'tools': return <Hammer className="w-4 h-4" />;
+            case 'vehicles': return <Car className="w-4 h-4" />;
+            case 'equipment': return <Wrench className="w-4 h-4" />;
+            case 'machinery': return <Truck className="w-4 h-4" />;
+            default: return <Wrench className="w-4 h-4" />;
+        }
+    };
 
-  const handleEditRental = (rentalId: string) => {
-    router.push(`/rentals/${rentalId}/edit`);
-  };
-
-  const handleToggleFavorite = async (rentalId: string) => {
-    // TODO: Implement favorite toggle
-    console.log('Toggle favorite for rental:', rentalId);
-  };
-
-  const handleShareRental = (rentalId: string) => {
-    // TODO: Implement share functionality
-    console.log('Share rental:', rentalId);
-  };
-
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Breadcrumbs
-            items={[
-              { label: "Dashboard", href: "/dashboard" },
-              { label: "Marketplace", href: "/marketplace" },
-              { label: "Rentals", href: "/marketplace/rentals" }
-            ]}
-          />
-          <div className="flex justify-between items-start mt-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Equipment Rentals</h1>
-              <p className="text-gray-600 mt-2">Find and rent equipment, vehicles, tools, and spaces</p>
+    const renderStars = useCallback((rating: number, rentalId?: string) => {
+        return (
+            <div className="flex">
+                {Array.from({ length: 5 }, (_, i) => (
+                    <Star
+                        key={`${rentalId || 'default'}-star-${i}`}
+                        className={`w-4 h-4 ${i < Math.floor(rating)
+                                ? "text-yellow-400 fill-current"
+                                : "text-gray-300"
+                            }`}
+                    />
+                ))}
             </div>
-            <Button onClick={handleCreateRental} className="flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              List Equipment
-            </Button>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <Card className="p-6 mb-8">
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    type="text"
-                    placeholder="Search rentals..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" className="flex items-center gap-2">
-                  <Search className="w-4 h-4" />
-                  Search
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="w-4 h-4" />
-                  Filters
-                </Button>
-              </div>
-            </div>
-
-            {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={(value) => {
-                      setSelectedCategory(value);
-                      handleFilterChange();
-                    }}
-                  >
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-                  <Select
-                    value={selectedType}
-                    onValueChange={(value) => {
-                      setSelectedType(value);
-                      handleFilterChange();
-                    }}
-                  >
-                    {types.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <Select
-                    value={selectedStatus}
-                    onValueChange={(value) => {
-                      setSelectedStatus(value);
-                      handleFilterChange();
-                    }}
-                  >
-                    {statuses.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                  <Input
-                    type="text"
-                    placeholder="City, State"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Price</label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={priceRange.min}
-                    onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Price</label>
-                  <Input
-                    type="number"
-                    placeholder="1000"
-                    value={priceRange.max}
-                    onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                  />
-                </div>
-              </div>
-            )}
-          </form>
-        </Card>
-
-        {/* Results Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-4">
-            {loading && rentals.length > 0 ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-gray-300 border-t-green-600 rounded-full animate-spin" />
-                <p className="text-gray-600">Loading...</p>
-              </div>
-            ) : (
-              <p className="text-gray-600">
-                {pagination.total} rental{pagination.total !== 1 ? 's' : ''} found
-              </p>
-            )}
-            <div className="flex items-center gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Select
-              value={sortBy}
-              onValueChange={(value) => setSortBy(value)}
-            >
-              <option value="createdAt">Newest First</option>
-              <option value="price">Price</option>
-              <option value="rating">Rating</option>
-              <option value="name">Name</option>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-            >
-              {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-            </Button>
-          </div>
-        </div>
-
-        {/* Error State */}
-        {error && (
-          <Card className="p-6 mb-8">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={fetchRentals} variant="outline">
-                Try Again
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Rentals Grid/List */}
-        {loading && rentals.length === 0 ? (
-          // Initial loading state with skeletons matching view mode
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-            : "space-y-4"
-          }>
-            {Array.from({ length: 6 }).map((_, i) => (
-              viewMode === 'grid' ? (
-                <RentalCardSkeleton key={i} />
-              ) : (
-                <RentalListSkeleton key={i} />
-              )
-            ))}
-          </div>
-        ) : (
-          <div className={viewMode === 'grid' 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-            : "space-y-4"
-          }>
-            {rentals.filter(rental => rental && rental.id).length === 0 ? (
-              <div className="col-span-full text-center py-12">
-                <p className="text-gray-500">No rentals found</p>
-              </div>
-            ) : (
-              rentals.filter(rental => rental && rental.id).map((rental, index) => (
-              <Card key={rental.id || `rental-${index}`} className="overflow-hidden hover:shadow-lg transition-shadow">
-                {viewMode === 'grid' ? (
-                  // Grid View
-                  <>
-                    <div className="relative h-48 bg-gray-200">
-                      {rental.images && rental.images.length > 0 ? (
-                        <Image
-                          src={rental.images[0]}
-                          alt={rental.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          {getTypeIcon(rental.type)}
-                        </div>
-                      )}
-                      {rental.isFeatured && (
-                        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
-                          Featured
-                        </div>
-                      )}
-                      <div className="absolute top-2 right-2 flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleToggleFavorite(rental.id)}
-                        >
-                          <Heart className={`w-4 h-4 ${rental.isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleShareRental(rental.id)}
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+        );
+    }, []);
+    if (loading) {
+        return (
+            <div className="p-6 space-y-6">
+                {/* Header Skeleton */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div className="space-y-2">
+                        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
+                        <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
                     </div>
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-lg text-gray-900 line-clamp-1">
-                          {rental.name}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(rental.status)}`}>
-                          {rental.status}
-                        </span>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                        {rental.description}
-                      </p>
-                      <div className="flex items-center gap-2 mb-2">
-                        {getTypeIcon(rental.type)}
-                        <span className="text-sm text-gray-600">{rental.category}</span>
-                        <span className={`px-2 py-1 rounded text-xs ${getConditionColor(rental.specifications.condition)}`}>
-                          {rental.specifications.condition}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {rental.location.city}, {rental.location.state}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">
-                            {typeof rental.rating === 'number' ? rental.rating.toFixed(1) : '0.0'}
-                          </span>
-                          <span className="text-sm text-gray-500">({rental.reviewCount || 0})</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${rental.price}
-                          </span>
-                          <span className="text-sm text-gray-500">/{rental.priceUnit}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleViewRental(rental.id)}
-                          className="flex-1"
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleEditRental(rental.id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
+                    <div className="mt-4 sm:mt-0">
+                        <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
                     </div>
-                  </>
-                ) : (
-                  // List View
-                  <div className="flex p-4">
-                    <div className="relative w-32 h-24 bg-gray-200 rounded-lg flex-shrink-0">
-                      {rental.images && rental.images.length > 0 ? (
-                        <Image
-                          src={rental.images[0]}
-                          alt={rental.name}
-                          fill
-                          className="object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          {getTypeIcon(rental.type)}
+                </div>
+
+                {/* Search and Filters Skeleton */}
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                    <div className="flex flex-col lg:flex-row gap-4">
+                        <div className="flex-1">
+                            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex-1 ml-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-lg text-gray-900">
-                          {rental.name}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(rental.status)}`}>
-                            {rental.status}
-                          </span>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleToggleFavorite(rental.id)}
-                          >
-                            <Heart className={`w-4 h-4 ${rental.isFavorited ? 'fill-red-500 text-red-500' : ''}`} />
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                        {rental.description}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                        <div className="flex items-center gap-1">
-                          {getTypeIcon(rental.type)}
-                          <span>{rental.category}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{rental.location.city}, {rental.location.state}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span>
-                            {typeof rental.rating === 'number' ? rental.rating.toFixed(1) : '0.0'} ({rental.reviewCount || 0})
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            onClick={() => handleViewRental(rental.id)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditRental(rental.id)}
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Edit
-                          </Button>
+                            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+                            <div className="h-10 bg-gray-200 rounded w-10 animate-pulse"></div>
+                            <div className="h-10 bg-gray-200 rounded w-20 animate-pulse"></div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-lg font-bold text-gray-900">
-                            ${rental.price}
-                          </span>
-                          <span className="text-sm text-gray-500">/{rental.priceUnit}</span>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                )}
-              </Card>
-              ))
-            )}
-          </div>
-        )}
+                </div>
 
-        {/* Pagination */}
-        {pagination.pages > 1 && (
-          <div className="flex justify-center mt-8">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.current - 1)}
-                disabled={pagination.current === 1}
-              >
-                Previous
-              </Button>
-              {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                const page = i + 1;
-                return (
-                  <Button
-                    key={page}
-                    variant={pagination.current === page ? "default" : "outline"}
-                    onClick={() => handlePageChange(page)}
-                    className="w-10"
-                  >
-                    {page}
-                  </Button>
-                );
-              })}
-              <Button
-                variant="outline"
-                onClick={() => handlePageChange(pagination.current + 1)}
-                disabled={pagination.current === pagination.pages}
-              >
-                Next
-              </Button>
+                {/* Rental Cards Skeleton */}
+                <GridSkeleton count={6} columns={3} />
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-4">
+                <Card interactive={false}>
+                    <EmptyState
+                        icon={Search}
+                        iconColor="text-red-600"
+                        iconBgColor="bg-red-100"
+                        title="Unable to Load Rentals"
+                        description={error}
+                        actions={[
+                            {
+                                type: "button",
+                                onClick: fetchRentals,
+                                label: "Try Again",
+                                icon: RefreshCw,
+                                variant: "primary"
+                            },
+                            {
+                                type: "button",
+                                onClick: () => {
+                                    setSearchQuery("");
+                                    setFilters({
+                                        category: "",
+                                        priceRange: [0, 10000],
+                                        rating: 0,
+                                        location: "",
+                                        availability: true,
+                                        coordinates: undefined,
+                                        radius: 10000,
+                                    });
+                                    fetchRentals();
+                                },
+                                label: "Reset Filters",
+                                variant: "secondary"
+                            }
+                        ]}
+                    />
+                </Card>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-4 space-y-4">
+            {/* Header */}
+            <PageHeader
+                title="Browse Rentals"
+                subtitle="Find and rent equipment, vehicles, tools, and machinery"
+                actions={[
+                    {
+                        type: "button",
+                        onClick: getCurrentLocation,
+                        label: "Use Current Location",
+                        icon: MapPin,
+                        variant: "outline",
+                        className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                    },
+                    {
+                        type: "link",
+                        href: "/rentals/create",
+                        label: "List Your Rental",
+                        icon: Plus,
+                        variant: "primary"
+                    }
+                ]}
+            />
+
+            {/* Main Layout: Filters on Left, Content on Right */}
+            <div className="flex flex-col lg:flex-row gap-4">
+                {/* Left Sidebar - Filters */}
+                <aside className="w-full lg:w-64 flex-shrink-0">
+                    <Card className="p-4 sticky top-4">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                            </div>
+
+                            {/* Category Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Category
+                                </label>
+                                <select
+                                    value={filters.category}
+                                    onChange={(e) => handleFilterChange("category", e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    {categories.map(category => (
+                                        <option key={category.value} value={category.value}>
+                                            {category.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Price Range */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Price Range
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        placeholder="Min"
+                                        value={filters.priceRange[0]}
+                                        onChange={(e) => handleFilterChange("priceRange", [Number(e.target.value), filters.priceRange[1]])}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    />
+                                    <span className="text-gray-500">to</span>
+                                    <input
+                                        type="number"
+                                        placeholder="Max"
+                                        value={filters.priceRange[1]}
+                                        onChange={(e) => handleFilterChange("priceRange", [filters.priceRange[0], Number(e.target.value)])}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Rating Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Minimum Rating
+                                </label>
+                                <select
+                                    value={filters.rating}
+                                    onChange={(e) => handleFilterChange("rating", Number(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                >
+                                    <option value={0}>Any Rating</option>
+                                    <option value={4}>4+ Stars</option>
+                                    <option value={3}>3+ Stars</option>
+                                    <option value={2}>2+ Stars</option>
+                                </select>
+                            </div>
+
+                            {/* Location Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Location
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="City, State"
+                                    value={filters.location}
+                                    onChange={(e) => handleFilterChange("location", e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Clear Filters */}
+                            <div>
+                                <button
+                                    onClick={clearFilters}
+                                    className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                >
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+                </aside>
+
+                {/* Right Content Area */}
+                <div className="flex-1 space-y-4">
+                    {/* Search and Controls */}
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {/* Search */}
+                            <div className="flex-1">
+                                <div className="relative group">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search rentals, locations..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Results */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <p className="text-gray-600">
+                                    {pagination.total} rental{pagination.total !== 1 ? 's' : ''} found
+                                    {pagination.pages > 1 && (
+                                        <span className="ml-2 text-sm text-gray-500">
+                                            (Page {pagination.current} of {pagination.pages})
+                                        </span>
+                                    )}
+                                </p>
+                                {pagination.count > 0 && (
+                                    <p className="text-sm text-gray-500">
+                                        Showing {rentals.length} of {pagination.count} results
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                            >
+                                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+                            </button>
+                        </div>
+
+                        {rentals.length === 0 ? (
+                            <Card interactive={false}>
+                                <EmptyState
+                                    icon={Truck}
+                                    iconColor="text-purple-600"
+                                    iconBgColor="bg-purple-100"
+                                    title="No Rentals Found"
+                                    description="We couldn't find any rentals matching your criteria. Try adjusting your search terms or filters."
+                                    actions={[
+                                        {
+                                            type: "button",
+                                            onClick: () => {
+                                                setSearchQuery("");
+                                                setFilters({
+                                                    category: "",
+                                                    priceRange: [0, 10000],
+                                                    rating: 0,
+                                                    location: "",
+                                                    availability: true,
+                                                    coordinates: undefined,
+                                                    radius: 10000,
+                                                });
+                                            },
+                                            label: "Clear All Filters",
+                                            variant: "primary"
+                                        },
+                                        {
+                                            type: "button",
+                                            onClick: () => setSearchQuery(""),
+                                            label: "Clear Search",
+                                            variant: "secondary"
+                                        }
+                                    ]}
+                                />
+                            </Card>
+                        ) : (
+                            <>
+                                <div className={`grid gap-4 ${viewMode === "grid"
+                                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                                        : "grid-cols-1"
+                                    }`}>
+                                    {rentals.map((rental) => (
+                                        <RentalCard
+                                            key={rental._id || rental.id}
+                                            rental={rental}
+                                            viewMode={viewMode}
+                                            renderStars={renderStars}
+                                            getCategoryIcon={getCategoryIcon}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {pagination.pages > 1 && (
+                                    <div className="flex items-center justify-center gap-2 mt-6">
+                                        <button
+                                            onClick={() => {
+                                                if (pagination.current > 1) {
+                                                    setPagination(prev => ({ ...prev, current: prev.current - 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current <= 1}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+
+                                        <span className="px-4 py-2 text-sm text-gray-600">
+                                            Page {pagination.current} of {pagination.pages}
+                                        </span>
+
+                                        <button
+                                            onClick={() => {
+                                                if (pagination.current < pagination.pages) {
+                                                    setPagination(prev => ({ ...prev, current: prev.current + 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current >= pagination.pages}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 }
+
+interface RentalCardProps {
+    rental: RentalItem;
+    viewMode: "grid" | "list";
+    renderStars: (rating: number, rentalId?: string) => React.ReactElement;
+    getCategoryIcon: (category: RentalItem['category']) => React.ReactElement;
+}
+
+const RentalCard = React.memo(function RentalCard({
+    rental,
+    viewMode,
+    renderStars,
+    getCategoryIcon
+}: RentalCardProps) {
+    // Get rental ID
+    const rentalId = rental._id || rental.id || '';
+    
+    // Normalize owner data
+    const owner = typeof rental.owner === 'string' 
+        ? { id: rental.owner, name: 'Unknown Owner' }
+        : rental.owner || {};
+    const ownerName = owner.name || 
+        (owner.firstName && owner.lastName 
+            ? `${owner.firstName} ${owner.lastName}` 
+            : owner.firstName || owner.lastName || 'Unknown Owner');
+    
+    const rentalRating = rental.averageRating || rental.rating?.average || 0;
+    const reviewCount = rental.rating?.count || rental.reviews?.length || 0;
+    
+    // Get pricing display
+    const getPriceDisplay = () => {
+        const pricing = rental.pricing;
+        if (pricing.daily) return { amount: pricing.daily, unit: 'day', currency: pricing.currency || 'USD' };
+        if (pricing.hourly) return { amount: pricing.hourly, unit: 'hour', currency: pricing.currency || 'USD' };
+        if (pricing.weekly) return { amount: pricing.weekly, unit: 'week', currency: pricing.currency || 'USD' };
+        if (pricing.monthly) return { amount: pricing.monthly, unit: 'month', currency: pricing.currency || 'USD' };
+        // Fallback to legacy fields
+        if (rental.price) return { amount: rental.price, unit: rental.priceUnit || 'day', currency: pricing.currency || 'USD' };
+        return null;
+    };
+    const priceDisplay = getPriceDisplay();
+    
+    // Get first image URL (handle both old string array and new object array format)
+    const getImageUrl = () => {
+        if (!rental.images || rental.images.length === 0) return null;
+        const firstImage = rental.images[0];
+        return typeof firstImage === 'string' ? firstImage : (firstImage.url || firstImage.thumbnail || null);
+    };
+    const imageUrl = getImageUrl();
+
+    // Format price with currency
+    const formatPrice = (price: number, curr: string = priceDisplay?.currency || 'USD') => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: curr
+        }).format(price);
+    };
+    
+    // Get location display
+    const locationCity = rental.location?.address?.city || '';
+    const locationState = rental.location?.address?.state || '';
+    
+    // Get availability status
+    const isAvailable = rental.availability?.isAvailable !== false;
+    
+    // Get category label
+    const getCategoryLabel = (category: RentalItem['category']) => {
+        const labels: Record<string, string> = {
+            tools: 'Tools',
+            vehicles: 'Vehicles',
+            equipment: 'Equipment',
+            machinery: 'Machinery'
+        };
+        return labels[category] || category;
+    };
+
+    return (
+        <Link
+            href={`/marketplace/rentals/${rentalId}`}
+            className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${viewMode === "list" ? "flex" : ""
+                }`}
+        >
+            <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
+                <div className={viewMode === "list" ? "flex gap-6" : ""}>
+                    {/* Rental Image */}
+                    <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300 relative`}>
+                        {imageUrl ? (
+                            <Image
+                                src={imageUrl}
+                                alt={
+                                    rental.images && 
+                                    Array.isArray(rental.images) && 
+                                    rental.images.length > 0 && 
+                                    typeof rental.images[0] === 'object' && 
+                                    rental.images[0].alt 
+                                        ? rental.images[0].alt 
+                                        : rental.title || rental.name
+                                }
+                                width={viewMode === "list" ? 192 : 400}
+                                height={viewMode === "list" ? 128 : 192}
+                                className="w-full h-full object-cover rounded-lg"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-gray-100 to-gray-200">
+                                <div className="text-center">
+                                    <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                                        {getCategoryIcon(rental.category)}
+                                    </div>
+                                    <span className="text-sm">No Image</span>
+                                </div>
+                            </div>
+                        )}
+                        {rental.isFeatured && (
+                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
+                                Featured
+                            </div>
+                        )}
+                        {!isAvailable && (
+                            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                                Unavailable
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Rental Details */}
+                    <div className={viewMode === "list" ? "flex-1" : ""}>
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-semibold text-gray-700 line-clamp-1">
+                                    {rental.title || rental.name || 'Unnamed Rental'}
+                                </h3>
+                                {rental.specifications?.brand && (
+                                    <p className="text-xs text-gray-500 mt-0.5">by {rental.specifications.brand}</p>
+                                )}
+                            </div>
+                            <div className="text-right ml-3 flex-shrink-0">
+                                {priceDisplay && (
+                                    <div className="text-xl font-bold text-green-600">
+                                        {formatPrice(priceDisplay.amount, priceDisplay.currency)}
+                                    </div>
+                                )}
+                                {priceDisplay && (
+                                    <div className="text-xs text-gray-500">
+                                        /{priceDisplay.unit}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                            {rental.description || 'No description available'}
+                        </p>
+
+                        {/* Owner Info */}
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-xs font-medium text-gray-600">
+                                    {ownerName.charAt(0).toUpperCase()}
+                                </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-700 truncate">{ownerName}</p>
+                                <div className="flex items-center gap-1">
+                                    {renderStars(rentalRating, rentalId)}
+                                    <span className="text-xs text-gray-500">
+                                        ({reviewCount || 0})
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tags */}
+                        {rental.tags && rental.tags.length > 0 && (
+                            <div className="mb-2">
+                                <div className="flex flex-wrap gap-1">
+                                    {rental.tags.slice(0, 3).map((tag, index) => (
+                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                    {rental.tags.length > 3 && (
+                                        <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                                            +{rental.tags.length - 3} more
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Rental Meta */}
+                        <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-1">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                        {isAvailable ? 'Available' : 'Unavailable'}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded flex items-center gap-1">
+                                        {getCategoryIcon(rental.category)}
+                                        {getCategoryLabel(rental.category)}
+                                    </span>
+                                </div>
+                                {(locationCity || locationState) && (
+                                    <div className="flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        <span className="text-xs">
+                                            {locationCity && locationState ? `${locationCity}, ${locationState}` : locationCity || locationState}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4" />
+                                <span>{Number(rentalRating).toFixed(1)} ({reviewCount})</span>
+                            </div>
+                        </div>
+
+                        {/* Rental Badges */}
+                        <div className="mt-2 flex flex-wrap gap-1">
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                {rental.category?.replace(/\b\w/g, l => l.toUpperCase()) || 'Rental'}
+                            </span>
+                            {rental.subcategory && (
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+                                    {rental.subcategory}
+                                </span>
+                            )}
+                            {rental.isFeatured && (
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                    <Star className="w-3 h-3 inline mr-1" />
+                                    Featured
+                                </span>
+                            )}
+                            {rental.location?.deliveryAvailable && (
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                    <Truck className="w-3 h-3 inline mr-1" />
+                                    Delivery Available
+                                </span>
+                            )}
+                            {rental.specifications?.condition && (
+                                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                                    rental.specifications.condition === 'excellent' ? 'bg-green-100 text-green-800' :
+                                    rental.specifications.condition === 'good' ? 'bg-blue-100 text-blue-800' :
+                                    rental.specifications.condition === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'
+                                }`}>
+                                    {rental.specifications.condition}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+});

@@ -25,83 +25,99 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 
+// Service Image Interface
+interface ServiceImage {
+  url: string;
+  publicId?: string;
+  thumbnail?: string;
+  alt?: string;
+}
+
+// Service Entity Interface (matching data-entities.md)
 interface Service {
-  _id: string;
+  _id?: string;
+  id?: string;
   title: string;
   description: string;
-  category: string;
-  subcategory?: string;
+  category: 'cleaning' | 'plumbing' | 'electrical' | 'moving' | 'landscaping' | 
+           'painting' | 'carpentry' | 'flooring' | 'roofing' | 'hvac' | 
+           'appliance_repair' | 'locksmith' | 'handyman' | 'home_security' |
+           'pool_maintenance' | 'pest_control' | 'carpet_cleaning' | 'window_cleaning' |
+           'gutter_cleaning' | 'power_washing' | 'snow_removal' | 'other';
+  subcategory: string;
   provider: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    profile: {
-      rating: number;
+    _id?: string;
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    name?: string;
+    profile?: {
+      rating?: number;
     };
-  };
+  } | string; // Can be populated object or just ID
   pricing: {
-    type: string;
+    type: 'hourly' | 'fixed' | 'per_sqft' | 'per_item';
     basePrice: number;
     currency: string;
   };
-  availability: {
-    timezone: string;
-    schedule: Array<{
-      day: string;
+  availability?: {
+    schedule?: Array<{
+      day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
       startTime: string;
       endTime: string;
-      available: boolean;
+      isAvailable?: boolean;
     }>;
+    timezone?: string;
   };
   serviceArea: string[];
-  features: string[];
-  requirements: string[];
-  serviceType: string;
-  estimatedDuration: {
+  images?: ServiceImage[] | string[]; // Support both formats (new structure or legacy string array)
+  features?: string[];
+  requirements?: string[];
+  serviceType?: 'one_time' | 'recurring' | 'emergency' | 'maintenance' | 'installation';
+  estimatedDuration?: {
     min: number;
     max: number;
   };
-  teamSize: number;
-  equipmentProvided: boolean;
-  materialsIncluded: boolean;
-  warranty: {
+  teamSize?: number;
+  equipmentProvided?: boolean;
+  materialsIncluded?: boolean;
+  warranty?: {
     hasWarranty: boolean;
-    duration: number;
-    description: string;
+    duration?: number;
+    description?: string;
   };
-  insurance: {
+  insurance?: {
     covered: boolean;
-    coverageAmount: number;
+    coverageAmount?: number;
   };
-  emergencyService: {
+  emergencyService?: {
     available: boolean;
-    surcharge: number;
-    responseTime: string;
+    surcharge?: number;
+    responseTime?: string;
   };
-  servicePackages: Array<{
+  servicePackages?: Array<{
     name: string;
-    description: string;
+    description?: string;
     price: number;
-    features: string[];
-    duration: number;
-    _id: string;
+    features?: string[];
+    duration?: number;
+    _id?: string;
   }>;
-  addOns: Array<{
+  addOns?: Array<{
     name: string;
-    description: string;
+    description?: string;
     price: number;
-    category: string;
-    _id: string;
+    category?: string;
+    _id?: string;
   }>;
-  isActive: boolean;
-  rating: {
+  isActive?: boolean;
+  rating?: {
     average: number;
     count: number;
   };
-  images: string[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 interface FilterOptions {
@@ -146,8 +162,23 @@ export default function MarketplacePage() {
     { value: "electrical", label: "Electrical" },
     { value: "moving", label: "Moving" },
     { value: "landscaping", label: "Landscaping" },
-    { value: "maintenance", label: "Maintenance" },
-    { value: "repair", label: "Repair" }
+    { value: "painting", label: "Painting" },
+    { value: "carpentry", label: "Carpentry" },
+    { value: "flooring", label: "Flooring" },
+    { value: "roofing", label: "Roofing" },
+    { value: "hvac", label: "HVAC" },
+    { value: "appliance_repair", label: "Appliance Repair" },
+    { value: "locksmith", label: "Locksmith" },
+    { value: "handyman", label: "Handyman" },
+    { value: "home_security", label: "Home Security" },
+    { value: "pool_maintenance", label: "Pool Maintenance" },
+    { value: "pest_control", label: "Pest Control" },
+    { value: "carpet_cleaning", label: "Carpet Cleaning" },
+    { value: "window_cleaning", label: "Window Cleaning" },
+    { value: "gutter_cleaning", label: "Gutter Cleaning" },
+    { value: "power_washing", label: "Power Washing" },
+    { value: "snow_removal", label: "Snow Removal" },
+    { value: "other", label: "Other" }
   ];
 
   const sortOptions = [
@@ -155,8 +186,37 @@ export default function MarketplacePage() {
     { value: "price_low", label: "Price: Low to High" },
     { value: "price_high", label: "Price: High to Low" },
     { value: "rating", label: "Highest Rated" },
-    { value: "newest", label: "Newest First" }
+    { value: "newest", label: "Newest First" },
+    { value: "distance", label: "Nearest First" }
   ];
+  
+  // Normalize service data from API response
+  const normalizeService = useCallback((service: any): Service => {
+    return {
+      ...service,
+      _id: service._id || service.id,
+      id: service.id || service._id,
+      images: Array.isArray(service.images) 
+        ? service.images.map((img: any) => 
+            typeof img === 'string' 
+              ? { url: img, alt: service.title } 
+              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || service.title }
+          )
+        : [],
+      provider: typeof service.provider === 'string' 
+        ? { id: service.provider } 
+        : {
+            _id: service.provider?._id || service.provider?.id,
+            id: service.provider?.id || service.provider?._id,
+            firstName: service.provider?.firstName,
+            lastName: service.provider?.lastName,
+            name: service.provider?.name,
+            profile: service.provider?.profile
+          },
+      rating: service.rating || { average: 0, count: 0 },
+      isActive: service.isActive !== undefined ? service.isActive : true
+    };
+  }, []);
 
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
@@ -167,6 +227,7 @@ export default function MarketplacePage() {
             lng: position.coords.longitude
           };
           setFilters(prev => ({ ...prev, coordinates }));
+          // fetchServices will be triggered automatically via useEffect when filters change
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -187,10 +248,28 @@ export default function MarketplacePage() {
       
       const params = new URLSearchParams();
       
+      // Determine which endpoint to use based on whether coordinates are available
+      const hasCoordinates = filters.coordinates && filters.coordinates.lat && filters.coordinates.lng;
+      const endpoint = hasCoordinates 
+        ? API_ENDPOINTS.marketplaceServicesNearby 
+        : API_ENDPOINTS.marketplaceServices;
+      
+      // Add location parameters for nearby endpoint
+      if (hasCoordinates && filters.coordinates) {
+        params.append("lat", filters.coordinates.lat.toString());
+        params.append("lng", filters.coordinates.lng.toString());
+        params.append("radius", (filters.radius || 50000).toString());
+      }
+      
+      // Common filters
       if (searchQuery) params.append("search", searchQuery);
       if (filters.category) params.append("category", filters.category);
-      if (filters.location) params.append("location", filters.location);
-      if (filters.availability) params.append("available", "true");
+      if (filters.location && !hasCoordinates) params.append("location", filters.location);
+      if (filters.availability) {
+        params.append("available", "true");
+        // Also check availability schedule
+        params.append("hasSchedule", "true");
+      }
       if (filters.rating > 0) {
         params.append("rating", filters.rating.toString());
         params.append("sortBy", "rating.average");
@@ -198,12 +277,6 @@ export default function MarketplacePage() {
       }
       if (filters.priceRange[0] > 0) params.append("minPrice", filters.priceRange[0].toString());
       if (filters.priceRange[1] < 1000) params.append("maxPrice", filters.priceRange[1].toString());
-      
-      // Add coordinates and radius if available
-      if (filters.coordinates) {
-        params.append("coordinates", JSON.stringify(filters.coordinates));
-        if (filters.radius) params.append("radius", filters.radius.toString());
-      }
       
       // Enhanced sorting
       if (sortBy === "price_low") {
@@ -220,10 +293,10 @@ export default function MarketplacePage() {
       }
       
       // Add pagination with the specified parameters
-      params.append("page", "1");
-      params.append("limit", "15");
+      params.append("page", pagination.current.toString());
+      params.append("limit", pagination.limit.toString());
 
-      console.log("Fetching services with params:", params.toString());
+      console.log(`Fetching services from ${hasCoordinates ? 'nearby' : 'regular'} endpoint with params:`, params.toString());
       
       // Add timeout to prevent hanging
       const controller = new AbortController();
@@ -231,13 +304,13 @@ export default function MarketplacePage() {
       
       let response;
       try {
-        response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}?${params.toString()}`, createAuthFetchOptions({
+        response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`, createAuthFetchOptions({
           signal: controller.signal
         }));
       } catch (fetchError) {
         console.log("Primary API failed, trying simple API:", fetchError);
         // Try the simple API as fallback
-        response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}?${params.toString()}`, createAuthFetchOptions({
+        response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`, createAuthFetchOptions({
           signal: controller.signal
         }));
       }
@@ -274,8 +347,9 @@ export default function MarketplacePage() {
           });
         }
         
-        // Set services data
-        setServices(data.data || []);
+        // Normalize and set services data
+        const normalizedServices = (data.data || []).map((service: any) => normalizeService(service));
+        setServices(normalizedServices);
         
         // Debug: Log the first service to see its structure
         if (data.data && data.data.length > 0) {
@@ -285,7 +359,8 @@ export default function MarketplacePage() {
         }
       } else if (Array.isArray(data)) {
         // Fallback for direct array response
-        setServices(data);
+        const normalizedServices = data.map((service: any) => normalizeService(service));
+        setServices(normalizedServices);
         setPagination({
           current: 1,
           pages: 1,
@@ -295,7 +370,8 @@ export default function MarketplacePage() {
         });
       } else if (data.services) {
         // Fallback for services property
-        setServices(data.services);
+        const normalizedServices = data.services.map((service: any) => normalizeService(service));
+        setServices(normalizedServices);
         setPagination({
           current: 1,
           pages: 1,
@@ -321,9 +397,10 @@ export default function MarketplacePage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, sortBy]);
+  }, [searchQuery, filters, sortBy, pagination.current, pagination.limit]);
 
   // Debounced search to improve performance
+  // Pagination changes trigger immediately, filter/search changes are debounced
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchServices();
@@ -694,9 +771,8 @@ export default function MarketplacePage() {
                 <button
                   onClick={() => {
                     if (pagination.current > 1) {
-                      // Update pagination and refetch
+                      // Update pagination - useEffect will trigger fetchServices
                       setPagination(prev => ({ ...prev, current: prev.current - 1 }));
-                      fetchServices();
                     }
                   }}
                   disabled={pagination.current <= 1}
@@ -712,9 +788,8 @@ export default function MarketplacePage() {
                 <button
                   onClick={() => {
                     if (pagination.current < pagination.pages) {
-                      // Update pagination and refetch
+                      // Update pagination - useEffect will trigger fetchServices
                       setPagination(prev => ({ ...prev, current: prev.current + 1 }));
-                      fetchServices();
                     }
                   }}
                   disabled={pagination.current >= pagination.pages}
@@ -738,15 +813,35 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderStars }: ServiceCardProps) {
-  const providerName = service.provider ? `${service.provider.firstName} ${service.provider.lastName}` : 'Unknown Provider';
-  const providerRating = service.provider?.profile?.rating || 0;
+  // Get service ID
+  const serviceId = service._id || service.id || '';
+  
+  // Normalize provider data
+  const provider = typeof service.provider === 'string' 
+    ? { id: service.provider, name: 'Unknown Provider' }
+    : service.provider || {};
+  const providerName = provider.name || 
+    (provider.firstName && provider.lastName 
+      ? `${provider.firstName} ${provider.lastName}` 
+      : provider.firstName || provider.lastName || 'Unknown Provider');
+  const providerRating = provider?.profile?.rating || 0;
+  
   const serviceRating = service.rating?.average || 0;
   const reviewCount = service.rating?.count || 0;
   const basePrice = service.pricing?.basePrice || 0;
   const currency = service.pricing?.currency || 'USD';
+  const pricingType = service.pricing?.type || 'fixed';
   const duration = service.estimatedDuration ? 
     `${service.estimatedDuration.min}-${service.estimatedDuration.max} hours` : 
     'Duration not specified';
+  
+  // Get first image URL (handle both old string array and new object array format)
+  const getImageUrl = () => {
+    if (!service.images || service.images.length === 0) return null;
+    const firstImage = service.images[0];
+    return typeof firstImage === 'string' ? firstImage : (firstImage.url || firstImage.thumbnail || null);
+  };
+  const imageUrl = getImageUrl();
   
   // Format price with currency
   const formatPriceWithCurrency = (price: number, curr: string) => {
@@ -755,10 +850,21 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderS
       currency: curr
     }).format(price);
   };
+  
+  // Format pricing type label
+  const getPricingLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      hourly: 'hour',
+      fixed: 'flat rate',
+      per_sqft: 'per sq ft',
+      per_item: 'per item'
+    };
+    return labels[type] || type;
+  };
 
   return (
     <Link
-      href={`/marketplace/services/${service._id}`}
+      href={`/marketplace/services/${serviceId}`}
       className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
         viewMode === "list" ? "flex" : ""
       }`}
@@ -767,10 +873,18 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderS
         <div className={viewMode === "list" ? "flex gap-6" : ""}>
           {/* Service Image */}
           <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
-            {service.images && service.images.length > 0 ? (
+            {imageUrl ? (
               <Image
-                src={service.images[0]}
-                alt={service.title}
+                src={imageUrl}
+                alt={
+                  service.images && 
+                  Array.isArray(service.images) && 
+                  service.images.length > 0 && 
+                  typeof service.images[0] === 'object' && 
+                  service.images[0].alt 
+                    ? service.images[0].alt 
+                    : service.title
+                }
                 width={viewMode === "list" ? 192 : 400}
                 height={viewMode === "list" ? 128 : 192}
                 className="w-full h-full object-cover rounded-lg"
@@ -797,9 +911,9 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderS
                 <div className="text-xl font-bold text-green-600">
                   {formatPriceWithCurrency(basePrice, currency)}
                 </div>
-                {service.pricing?.type && (
+                {pricingType && (
                   <div className="text-xs text-gray-500 capitalize">
-                    per {service.pricing.type}
+                    {getPricingLabel(pricingType)}
                   </div>
                 )}
               </div>
@@ -813,15 +927,15 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderS
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-xs font-medium text-gray-600">
-                  {providerName.charAt(0)}
+                  {providerName.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-700 truncate">{providerName}</p>
                 <div className="flex items-center gap-1">
-                  {renderStars(providerRating, service._id)}
+                  {renderStars(serviceRating || providerRating, serviceId)}
                   <span className="text-xs text-gray-500">
-                    ({reviewCount})
+                    ({reviewCount || 0})
                   </span>
                 </div>
               </div>
@@ -842,6 +956,21 @@ const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderS
                     </span>
                   )}
                 </div>
+              </div>
+            )}
+            
+            {/* Service Type Badge */}
+            {service.serviceType && (
+              <div className="mb-2">
+                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                  service.serviceType === 'emergency' 
+                    ? 'bg-red-100 text-red-800' 
+                    : service.serviceType === 'recurring'
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-indigo-100 text-indigo-800'
+                }`}>
+                  {service.serviceType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </span>
               </div>
             )}
 

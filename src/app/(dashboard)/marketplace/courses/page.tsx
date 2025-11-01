@@ -52,46 +52,119 @@ type CategoriesResponse = {
     categories?: Category[];
 } | Category[];
 
+// Course Thumbnail Interface
+interface CourseThumbnail {
+    url: string;
+    publicId?: string;
+    thumbnail?: string;
+}
+
+// Course Entity Interface (matching data-entities.md)
 interface Course {
-    _id: string;
+    _id?: string;
+    id?: string;
     title: string;
     description: string;
-    shortDescription?: string;
-    category: string;
-    subcategory?: string;
-    level: 'beginner' | 'intermediate' | 'advanced';
-    duration: number; // in hours
-    price: number;
-    originalPrice?: number;
-    currency: string;
-    thumbnail?: string;
+    category: 'cleaning' | 'plumbing' | 'electrical' | 'moving' | 'business' | 'safety' | 'certification';
+    level: 'beginner' | 'intermediate' | 'advanced' | 'expert';
     instructor: {
-        _id: string;
-        name: string;
+        _id?: string;
+        id?: string;
+        name?: string;
+        firstName?: string;
+        lastName?: string;
         avatar?: string;
         bio?: string;
-        rating: number;
-        reviewCount: number;
-        verified: boolean;
+        rating?: number;
+        reviewCount?: number;
+        verified?: boolean;
+    } | string; // Can be populated object or just ID
+    partner?: {
+        name?: string;
+        logo?: string;
+        website?: string;
     };
-    rating: {
+    duration: {
+        hours: number;
+        weeks?: number;
+    } | number; // Support both new structure and legacy format
+    pricing: {
+        regularPrice: number;
+        discountedPrice?: number;
+        currency: string;
+    } | {
+        // Legacy format support
+        price?: number;
+        regularPrice?: number;
+        originalPrice?: number;
+        discountedPrice?: number;
+        currency?: string;
+    };
+    curriculum?: Array<{
+        module: string;
+        lessons?: Array<{
+            title?: string;
+            description?: string;
+            duration?: number;
+            type?: 'video' | 'text' | 'quiz' | 'practical';
+            content?: {
+                url?: string;
+                publicId?: string;
+                type?: string;
+            };
+            isFree?: boolean;
+        }>;
+    }>;
+    prerequisites?: string[];
+    learningOutcomes?: string[];
+    certification?: {
+        isAvailable?: boolean;
+        name?: string;
+        issuer?: string;
+        validity?: number;
+        requirements?: string[];
+    };
+    enrollment?: {
+        current?: number;
+        maxCapacity?: number;
+        isOpen?: boolean;
+    };
+    schedule?: {
+        startDate?: string | Date;
+        endDate?: string | Date;
+        sessions?: Array<{
+            date?: string | Date;
+            startTime?: string;
+            endTime?: string;
+            type?: 'live' | 'recorded' | 'practical';
+        }>;
+    };
+    rating?: {
         average: number;
         count: number;
     };
-    studentsCount: number;
-    lessonsCount: number;
-    isPublished: boolean;
-    isFeatured: boolean;
-    isEnrolled: boolean;
-    tags: string[];
-    language: string;
-    createdAt: string;
-    updatedAt: string;
-    lastUpdated: string;
-    difficulty: number; // 1-5 scale
-    prerequisites: string[];
-    learningOutcomes: string[];
-    whatYouWillLearn: string[];
+    isActive?: boolean;
+    thumbnail?: CourseThumbnail | string; // Support both new structure and legacy string format
+    tags?: string[];
+    createdAt?: string;
+    updatedAt?: string;
+    __v?: number;
+    
+    // Legacy fields for backward compatibility
+    shortDescription?: string;
+    subcategory?: string;
+    price?: number;
+    originalPrice?: number;
+    currency?: string;
+    studentsCount?: number;
+    lessonsCount?: number;
+    isPublished?: boolean;
+    isFeatured?: boolean;
+    isEnrolled?: boolean;
+    language?: string;
+    lastUpdated?: string;
+    difficulty?: number; // 1-5 scale
+    whatYouWillLearn?: string[];
 }
 
 interface Category {
@@ -164,8 +237,81 @@ export default function MarketplaceCoursesPage() {
         { value: "", label: "All Levels" },
         { value: "beginner", label: "Beginner" },
         { value: "intermediate", label: "Intermediate" },
-        { value: "advanced", label: "Advanced" }
+        { value: "advanced", label: "Advanced" },
+        { value: "expert", label: "Expert" }
     ];
+    
+    // Course categories matching data entity specification
+    const courseCategories = [
+        { value: "", label: "All Categories" },
+        { value: "cleaning", label: "Cleaning" },
+        { value: "plumbing", label: "Plumbing" },
+        { value: "electrical", label: "Electrical" },
+        { value: "moving", label: "Moving" },
+        { value: "business", label: "Business" },
+        { value: "safety", label: "Safety" },
+        { value: "certification", label: "Certification" }
+    ];
+    
+    // Normalize course data from API response
+    const normalizeCourse = useCallback((course: any): Course => {
+        return {
+            ...course,
+            _id: course._id || course.id,
+            id: course.id || course._id,
+            // Handle pricing structure
+            pricing: course.pricing || {
+                regularPrice: course.price || course.pricing?.regularPrice || course.pricing?.price || 0,
+                discountedPrice: course.originalPrice || course.pricing?.discountedPrice,
+                currency: course.currency || course.pricing?.currency || 'USD'
+            },
+            // Handle duration structure
+            duration: course.duration && typeof course.duration === 'object' 
+                ? course.duration
+                : {
+                    hours: course.duration || 0,
+                    weeks: course.durationWeeks
+                },
+            // Handle thumbnail structure
+            thumbnail: course.thumbnail && typeof course.thumbnail === 'object'
+                ? course.thumbnail
+                : course.thumbnail
+                    ? { url: course.thumbnail }
+                    : undefined,
+            // Handle instructor (can be populated object or just ID)
+            instructor: typeof course.instructor === 'string'
+                ? { id: course.instructor }
+                : {
+                    _id: course.instructor?._id || course.instructor?.id,
+                    id: course.instructor?.id || course.instructor?._id,
+                    name: course.instructor?.name,
+                    firstName: course.instructor?.firstName,
+                    lastName: course.instructor?.lastName,
+                    avatar: course.instructor?.avatar,
+                    bio: course.instructor?.bio,
+                    rating: course.instructor?.rating,
+                    reviewCount: course.instructor?.reviewCount,
+                    verified: course.instructor?.verified
+                },
+            // Handle rating
+            rating: course.rating || {
+                average: course.averageRating || 0,
+                count: course.ratingCount || course.reviewsCount || 0
+            },
+            // Set defaults
+            isActive: course.isActive !== undefined ? course.isActive : course.isPublished !== undefined ? course.isPublished : true,
+            enrollment: course.enrollment || {
+                current: course.studentsCount || 0,
+                maxCapacity: course.maxCapacity,
+                isOpen: course.enrollmentOpen !== undefined ? course.enrollmentOpen : true
+            },
+            // Count lessons from curriculum if available
+            lessonsCount: course.lessonsCount || (course.curriculum 
+                ? course.curriculum.reduce((acc: number, module: any) => acc + (module.lessons?.length || 0), 0)
+                : 0),
+            studentsCount: course.studentsCount || course.enrollment?.current || 0
+        };
+    }, []);
 
     const languages = [
         { value: "", label: "All Languages" },
@@ -232,7 +378,7 @@ export default function MarketplaceCoursesPage() {
                 queryParams.isFeatured = "true";
             }
 
-            // Add sorting
+            // Add sorting (matching API documentation)
             if (sortBy === "price_low") {
                 queryParams.sortBy = "price";
                 queryParams.sortOrder = "asc";
@@ -240,13 +386,19 @@ export default function MarketplaceCoursesPage() {
                 queryParams.sortBy = "price";
                 queryParams.sortOrder = "desc";
             } else if (sortBy === "rating") {
-                queryParams.sortBy = "rating.average";
+                queryParams.sortBy = "rating";
                 queryParams.sortOrder = "desc";
             } else if (sortBy === "students") {
-                queryParams.sortBy = "studentsCount";
+                queryParams.sortBy = "enrollment.current";
                 queryParams.sortOrder = "desc";
             } else if (sortBy === "duration") {
-                queryParams.sortBy = "duration";
+                queryParams.sortBy = "duration.hours";
+                queryParams.sortOrder = "asc";
+            } else if (sortBy === "newest") {
+                queryParams.sortBy = "createdAt";
+                queryParams.sortOrder = "desc";
+            } else if (sortBy === "oldest") {
+                queryParams.sortBy = "createdAt";
                 queryParams.sortOrder = "asc";
             } else {
                 queryParams.sort = sortBy;
@@ -260,7 +412,7 @@ export default function MarketplaceCoursesPage() {
             // Handle different response formats according to API documentation
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 if ('success' in data && data.success && 'data' in data && data.data) {
-                    // Standard API response format
+                    // Standard API response format - normalize courses
                     if ('pagination' in data && data.pagination) {
                         setPagination({
                             current: data.pagination.current || 1,
@@ -270,20 +422,23 @@ export default function MarketplaceCoursesPage() {
                             count: data.pagination.count || 0
                         });
                     }
-                    setCourses(data.data || []);
+                    const normalizedCourses = (data.data || []).map((course: any) => normalizeCourse(course));
+                    setCourses(normalizedCourses);
                 } else if (Array.isArray(data)) {
                     // Direct array response
-                    setCourses(data);
+                    const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                    setCourses(normalizedCourses);
                     setPagination({
                         current: 1,
                         pages: 1,
-                        total: data.length,
+                        total: normalizedCourses.length,
                         limit: 12,
-                        count: data.length
+                        count: normalizedCourses.length
                     });
                 } else if ('courses' in data && Array.isArray(data.courses)) {
                     // Alternative response format
-                    setCourses(data.courses);
+                    const normalizedCourses = data.courses.map((course: any) => normalizeCourse(course));
+                    setCourses(normalizedCourses);
                     if ('pagination' in data && data.pagination) {
                         setPagination({
                             current: data.pagination.current || 1,
@@ -296,9 +451,9 @@ export default function MarketplaceCoursesPage() {
                         setPagination({
                             current: 1,
                             pages: 1,
-                            total: data.courses.length,
+                            total: normalizedCourses.length,
                             limit: 12,
-                            count: data.courses.length
+                            count: normalizedCourses.length
                         });
                     }
                 } else {
@@ -306,13 +461,14 @@ export default function MarketplaceCoursesPage() {
                 }
             } else if (Array.isArray(data)) {
                 // Direct array response
-                setCourses(data);
+                const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                setCourses(normalizedCourses);
                 setPagination({
                     current: 1,
                     pages: 1,
-                    total: data.length,
+                    total: normalizedCourses.length,
                     limit: 12,
-                    count: data.length
+                    count: normalizedCourses.length
                 });
             } else {
                 setCourses([]);
@@ -325,7 +481,7 @@ export default function MarketplaceCoursesPage() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [searchQuery, filters, sortBy, pagination]);
+    }, [searchQuery, filters, sortBy, pagination.current, pagination.limit, normalizeCourse]);
 
     const fetchFeaturedCourses = useCallback(async () => {
         try {
@@ -337,14 +493,17 @@ export default function MarketplaceCoursesPage() {
             // Handle different response formats for featured courses
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 if ('success' in data && data.success && 'data' in data && data.data) {
-                    setFeaturedCourses(data.data);
+                    const normalizedCourses = data.data.map((course: any) => normalizeCourse(course));
+                    setFeaturedCourses(normalizedCourses);
                 } else if ('featured' in data && Array.isArray(data.featured)) {
-                    setFeaturedCourses(data.featured);
+                    const normalizedCourses = data.featured.map((course: any) => normalizeCourse(course));
+                    setFeaturedCourses(normalizedCourses);
                 } else {
                     setFeaturedCourses([]);
                 }
             } else if (Array.isArray(data)) {
-                setFeaturedCourses(data);
+                const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                setFeaturedCourses(normalizedCourses);
             } else {
                 setFeaturedCourses([]);
             }
@@ -352,7 +511,7 @@ export default function MarketplaceCoursesPage() {
             console.warn("Error fetching featured courses, using empty array:", error);
             setFeaturedCourses([]);
         }
-    }, []);
+    }, [normalizeCourse]);
 
     const fetchCategories = useCallback(async () => {
         try {
@@ -419,7 +578,8 @@ export default function MarketplaceCoursesPage() {
         switch (level) {
             case 'beginner': return 'bg-green-100 text-green-800';
             case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-            case 'advanced': return 'bg-red-100 text-red-800';
+            case 'advanced': return 'bg-orange-100 text-orange-800';
+            case 'expert': return 'bg-red-100 text-red-800';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
@@ -449,14 +609,15 @@ export default function MarketplaceCoursesPage() {
         );
     }, []);
 
-    const formatPrice = (price: number, currency: string = 'USD') => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: currency
-        }).format(price);
-    };
 
-    const formatDuration = (hours: number) => {
+    const formatDuration = (duration: Course['duration']) => {
+        const hours = typeof duration === 'object' ? duration.hours : duration;
+        const weeks = typeof duration === 'object' ? duration.weeks : undefined;
+        
+        if (weeks && weeks > 0) {
+            return `${weeks} week${weeks !== 1 ? 's' : ''} (${hours}h)`;
+        }
+        
         if (hours < 1) {
             return `${Math.round(hours * 60)}m`;
         } else if (hours < 24) {
@@ -466,6 +627,35 @@ export default function MarketplaceCoursesPage() {
             const remainingHours = Math.round(hours % 24);
             return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
         }
+    };
+    
+    const formatPrice = (pricing: Course['pricing'], showCurrency: boolean = true) => {
+        let regularPrice: number;
+        if ('regularPrice' in pricing) {
+            regularPrice = pricing.regularPrice || 0;
+        } else if ('price' in pricing) {
+            regularPrice = pricing.price || 0;
+        } else if ('regularPrice' in pricing && pricing.regularPrice !== undefined) {
+            regularPrice = pricing.regularPrice;
+        } else {
+            regularPrice = 0;
+        }
+        
+        const discountedPrice = 'discountedPrice' in pricing 
+            ? pricing.discountedPrice 
+            : ('originalPrice' in pricing ? pricing.originalPrice : ('discountedPrice' in pricing ? pricing.discountedPrice : undefined));
+        const currency = ('currency' in pricing ? pricing.currency : 'USD') || 'USD';
+        
+        if (regularPrice === 0) {
+            return 'Free';
+        }
+        
+        const formatted = new Intl.NumberFormat('en-US', {
+            style: showCurrency ? 'currency' : 'decimal',
+            currency: currency
+        }).format(regularPrice);
+        
+        return formatted;
     };
 
     if (loading) {
@@ -613,77 +803,17 @@ export default function MarketplaceCoursesPage() {
                 </button>
             </div>
 
-            {/* Search and Filters */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-                <div className="flex flex-col lg:flex-row gap-3">
-                    {/* Search */}
-                    <div className="flex-1">
-                        <div className="relative group">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
-                            <input
-                                type="text"
-                                placeholder="Search courses, instructors, or topics..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery("")}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                    ×
-                                </button>
-                            )}
-                        </div>
-                    </div>
+            {/* Main Layout: Filters on Left, Content on Right */}
+            <div className="flex flex-col lg:flex-row gap-4">
+                {/* Left Sidebar - Filters */}
+                <aside className="w-full lg:w-64 flex-shrink-0">
+                    <Card className="p-4 sticky top-4">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                            </div>
 
-                    {/* Sort and View Controls */}
-                    <div className="flex gap-2">
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            {sortOptions.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                        >
-                            <SlidersHorizontal className="w-4 h-4" />
-                            Filters
-                            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        <button
-                            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                            title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-                        >
-                            {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-                        </button>
-
-                        <button
-                            onClick={() => fetchCourses(true)}
-                            disabled={refreshing}
-                            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Refresh courses"
-                        >
-                            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Filter Panel */}
-                {showFilters && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                             {/* Category Filter */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -694,10 +824,9 @@ export default function MarketplaceCoursesPage() {
                                     onChange={(e) => handleFilterChange("category", e.target.value)}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
-                                    <option value="">All Categories</option>
-                                    {(categories.length > 0 ? categories : fallbackCategories).map(category => (
-                                        <option key={category._id} value={category._id}>
-                                            {category.name}
+                                    {courseCategories.map(category => (
+                                        <option key={category.value} value={category.value}>
+                                            {category.label}
                                         </option>
                                     ))}
                                 </select>
@@ -825,121 +954,171 @@ export default function MarketplaceCoursesPage() {
                                     <span className="ml-2 text-sm text-gray-700">Featured courses only</span>
                                 </label>
                             </div>
-                        </div>
 
-                        <div className="flex justify-end mt-4">
-                            <button
-                                onClick={clearFilters}
-                                className="text-gray-600 hover:text-gray-800 transition-colors"
-                            >
-                                Clear Filters
-                            </button>
+                            {/* Clear Filters */}
+                            <div>
+                                <button
+                                    onClick={clearFilters}
+                                    className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                >
+                                    Clear Filters
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+                </aside>
+
+                {/* Right Content Area */}
+                <div className="flex-1 space-y-4">
+                    {/* Search and Controls */}
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {/* Search */}
+                            <div className="flex-1">
+                                <div className="relative group">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search courses, instructors, or topics..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Refresh Control */}
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => fetchCourses(true)}
+                                    disabled={refreshing}
+                                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Refresh courses"
+                                >
+                                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                )}
-            </div>
 
-            {/* Results */}
-            <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <p className="text-gray-600">
-                            {refreshing && (
-                                <RefreshCw className="w-4 h-4 inline mr-2 animate-spin" />
-                            )}
-                            {activeTab === "featured" ? featuredCourses.length : pagination.total} course{(activeTab === "featured" ? featuredCourses.length : pagination.total) !== 1 ? 's' : ''} found
-                            {pagination.pages > 1 && activeTab === "all" && (
-                                <span className="ml-2 text-sm text-gray-500">
-                                    (Page {pagination.current} of {pagination.pages})
-                                </span>
-                            )}
-                        </p>
-                        {pagination.count > 0 && activeTab === "all" && (
-                            <p className="text-sm text-gray-500">
-                                Showing {courses.length} of {pagination.count} results
-                            </p>
+                    {/* Results */}
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <p className="text-gray-600">
+                                    {refreshing && (
+                                        <RefreshCw className="w-4 h-4 inline mr-2 animate-spin" />
+                                    )}
+                                    {activeTab === "featured" ? featuredCourses.length : pagination.total} course{(activeTab === "featured" ? featuredCourses.length : pagination.total) !== 1 ? 's' : ''} found
+                                    {pagination.pages > 1 && activeTab === "all" && (
+                                        <span className="ml-2 text-sm text-gray-500">
+                                            (Page {pagination.current} of {pagination.pages})
+                                        </span>
+                                    )}
+                                </p>
+                                {pagination.count > 0 && activeTab === "all" && (
+                                    <p className="text-sm text-gray-500">
+                                        Showing {courses.length} of {pagination.count} results
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                            >
+                                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+                            </button>
+                        </div>
+
+                        {currentCourses.length === 0 ? (
+                            <Card interactive={false}>
+                                <EmptyState
+                                    icon={BookOpen}
+                                    iconColor="text-blue-600"
+                                    iconBgColor="bg-blue-100"
+                                    title="No Courses Found"
+                                    description="We couldn't find any courses matching your criteria. Try adjusting your search terms or filters."
+                                    actions={[
+                                        {
+                                            type: "button",
+                                            onClick: clearFilters,
+                                            label: "Clear All Filters",
+                                            variant: "primary"
+                                        },
+                                        {
+                                            type: "button",
+                                            onClick: () => setSearchQuery(""),
+                                            label: "Clear Search",
+                                            variant: "secondary"
+                                        }
+                                    ]}
+                                />
+                            </Card>
+                        ) : (
+                            <>
+                                <div className={`grid gap-4 ${viewMode === "grid"
+                                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                                        : "grid-cols-1"
+                                    }`}>
+                                    {currentCourses.map((course) => (
+                                        <CourseCard
+                                            key={course._id || course.id}
+                                            course={course}
+                                            viewMode={viewMode}
+                                            renderStars={renderStars}
+                                            getLevelColor={getLevelColor}
+                                            getDifficultyStars={getDifficultyStars}
+                                            formatPrice={formatPrice}
+                                            formatDuration={formatDuration}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {pagination.pages > 1 && activeTab === "all" && (
+                                    <div className="flex items-center justify-center gap-2 mt-6">
+                                        <button
+                                            onClick={() => {
+                                                if (pagination.current > 1) {
+                                                    setPagination(prev => ({ ...prev, current: prev.current - 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current <= 1}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+
+                                        <span className="px-4 py-2 text-sm text-gray-600">
+                                            Page {pagination.current} of {pagination.pages}
+                                        </span>
+
+                                        <button
+                                            onClick={() => {
+                                                if (pagination.current < pagination.pages) {
+                                                    setPagination(prev => ({ ...prev, current: prev.current + 1 }));
+                                                }
+                                            }}
+                                            disabled={pagination.current >= pagination.pages}
+                                            className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
-
-                {currentCourses.length === 0 ? (
-                    <Card interactive={false}>
-                        <EmptyState
-                            icon={BookOpen}
-                            iconColor="text-blue-600"
-                            iconBgColor="bg-blue-100"
-                            title="No Courses Found"
-                            description="We couldn't find any courses matching your criteria. Try adjusting your search terms or filters."
-                            actions={[
-                                {
-                                    type: "button",
-                                    onClick: clearFilters,
-                                    label: "Clear All Filters",
-                                    variant: "primary"
-                                },
-                                {
-                                    type: "button",
-                                    onClick: () => setSearchQuery(""),
-                                    label: "Clear Search",
-                                    variant: "secondary"
-                                }
-                            ]}
-                        />
-                    </Card>
-                ) : (
-                    <>
-                        <div className={`grid gap-4 ${viewMode === "grid"
-                            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                            : "grid-cols-1"
-                            }`}>
-                            {currentCourses.map((course) => (
-                                <CourseCard
-                                    key={course._id}
-                                    course={course}
-                                    viewMode={viewMode}
-                                    renderStars={renderStars}
-                                    getLevelColor={getLevelColor}
-                                    getDifficultyStars={getDifficultyStars}
-                                    formatPrice={formatPrice}
-                                    formatDuration={formatDuration}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Pagination */}
-                        {pagination.pages > 1 && activeTab === "all" && (
-                            <div className="flex items-center justify-center gap-2 mt-6">
-                                <button
-                                    onClick={() => {
-                                        if (pagination.current > 1) {
-                                            setPagination(prev => ({ ...prev, current: prev.current - 1 }));
-                                        }
-                                    }}
-                                    disabled={pagination.current <= 1}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Previous
-                                </button>
-
-                                <span className="px-4 py-2 text-sm text-gray-600">
-                                    Page {pagination.current} of {pagination.pages}
-                                </span>
-
-                                <button
-                                    onClick={() => {
-                                        if (pagination.current < pagination.pages) {
-                                            setPagination(prev => ({ ...prev, current: prev.current + 1 }));
-                                        }
-                                    }}
-                                    disabled={pagination.current >= pagination.pages}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        )}
-                    </>
-                )}
             </div>
         </div>
     );
@@ -951,8 +1130,8 @@ interface CourseCardProps {
     renderStars: (rating: number, courseId?: string) => React.ReactElement;
     getLevelColor: (level: Course['level']) => string;
     getDifficultyStars: (difficulty: number) => React.ReactElement[];
-    formatPrice: (price: number, currency?: string) => string;
-    formatDuration: (hours: number) => string;
+    formatPrice: (pricing: Course['pricing'], showCurrency?: boolean) => string;
+    formatDuration: (duration: Course['duration']) => string;
 }
 
 const CourseCard = React.memo(function CourseCard({
@@ -964,26 +1143,76 @@ const CourseCard = React.memo(function CourseCard({
     formatPrice,
     formatDuration
 }: CourseCardProps) {
-    const instructorName = course.instructor ? course.instructor.name : 'Unknown Instructor';
-    const instructorRating = course.instructor?.rating || 0;
+    const courseId = course._id || course.id || '';
+    
+    // Normalize instructor data
+    const instructor = typeof course.instructor === 'string' 
+        ? { id: course.instructor, name: 'Unknown Instructor' }
+        : course.instructor || {};
+    const instructorName = instructor.name || 
+        (instructor.firstName && instructor.lastName 
+            ? `${instructor.firstName} ${instructor.lastName}` 
+            : instructor.firstName || instructor.lastName || 'Unknown Instructor');
+    const instructorRating = instructor.rating || 0;
+    
     const courseRating = course.rating?.average || 0;
     const reviewCount = course.rating?.count || 0;
-    const basePrice = course.price || 0;
+    
+    // Get pricing values
+    const pricing = course.pricing;
+    let regularPrice: number;
+    if ('regularPrice' in pricing) {
+        regularPrice = pricing.regularPrice || 0;
+    } else if ('price' in pricing) {
+        regularPrice = pricing.price || 0;
+    } else if ('regularPrice' in pricing && pricing.regularPrice !== undefined) {
+        regularPrice = pricing.regularPrice;
+    } else {
+        regularPrice = 0;
+    }
+    const discountedPrice = 'discountedPrice' in pricing 
+        ? pricing.discountedPrice 
+        : ('originalPrice' in pricing ? pricing.originalPrice : ('discountedPrice' in pricing ? pricing.discountedPrice : undefined));
+    
+    // Get thumbnail URL
+    const getThumbnailUrl = () => {
+        if (!course.thumbnail) return null;
+        return typeof course.thumbnail === 'string' 
+            ? course.thumbnail 
+            : (course.thumbnail.url || course.thumbnail.thumbnail || null);
+    };
+    const thumbnailUrl = getThumbnailUrl();
+    
+    // Get enrollment info
+    const enrollmentCount = course.enrollment?.current || course.studentsCount || 0;
+    const maxCapacity = course.enrollment?.maxCapacity;
+    const isEnrollmentOpen = course.enrollment?.isOpen !== false;
+    
+    // Get lessons count
+    const lessonsCount = course.lessonsCount || (course.curriculum 
+        ? course.curriculum.reduce((acc, module) => acc + (module.lessons?.length || 0), 0)
+        : 0);
 
     return (
         <Link
-            href={`/academy/courses/${course._id}`}
-            className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${viewMode === "list" ? "flex" : ""
+            href={`/academy/courses/${courseId}`}
+            className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden ${viewMode === "list" ? "flex" : ""
                 }`}
         >
-            <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
+            <div className={viewMode === "list" ? "flex-1 p-4" : "p-4 w-full"}>
                 <div className={viewMode === "list" ? "flex gap-6" : ""}>
                     {/* Course Thumbnail */}
                     <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
-                        {course.thumbnail ? (
+                        {thumbnailUrl ? (
                             <Image
-                                src={course.thumbnail}
-                                alt={course.title}
+                                src={thumbnailUrl}
+                                alt={
+                                    course.thumbnail && 
+                                    typeof course.thumbnail === 'object' && 
+                                    course.thumbnail.url 
+                                        ? course.title 
+                                        : course.title
+                                }
                                 width={viewMode === "list" ? 192 : 400}
                                 height={viewMode === "list" ? 128 : 192}
                                 className="w-full h-full object-cover rounded-lg"
@@ -1008,11 +1237,15 @@ const CourseCard = React.memo(function CourseCard({
                             </h3>
                             <div className="text-right ml-3 flex-shrink-0">
                                 <div className="text-xl font-bold text-blue-600">
-                                    {basePrice === 0 ? 'Free' : formatPrice(basePrice, course.currency)}
+                                    {formatPrice(pricing)}
                                 </div>
-                                {course.originalPrice && course.originalPrice > basePrice && (
+                                {discountedPrice && discountedPrice < regularPrice && (
                                     <div className="text-sm text-gray-500 line-through">
-                                        {formatPrice(course.originalPrice, course.currency)}
+                                        {formatPrice(
+                                            'regularPrice' in pricing
+                                                ? { ...pricing, regularPrice: discountedPrice, discountedPrice: undefined }
+                                                : { ...pricing, regularPrice: discountedPrice, discountedPrice: undefined }
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1025,7 +1258,7 @@ const CourseCard = React.memo(function CourseCard({
                         {/* Instructor Info */}
                         <div className="flex items-center gap-2 mb-2">
                             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                                {course.instructor?.avatar ? (
+                                {typeof course.instructor === 'object' && course.instructor?.avatar ? (
                                     <Image
                                         src={course.instructor.avatar}
                                         alt={instructorName}
@@ -1035,7 +1268,7 @@ const CourseCard = React.memo(function CourseCard({
                                     />
                                 ) : (
                                     <span className="text-xs font-medium text-gray-600">
-                                        {instructorName.charAt(0)}
+                                        {instructorName.charAt(0).toUpperCase()}
                                     </span>
                                 )}
                             </div>
@@ -1051,29 +1284,39 @@ const CourseCard = React.memo(function CourseCard({
                         </div>
 
                         {/* Course Meta */}
-                        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
-                            <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between text-sm text-gray-500 mb-2 gap-2 overflow-hidden">
+                            <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1 pr-2">
+                                <div className="flex items-center gap-1 flex-shrink-0">
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(course.level)}`}>
                                         {course.level}
                                     </span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{formatDuration(course.duration)}</span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <Clock className="w-3 h-3 flex-shrink-0" />
+                                    <span className="whitespace-nowrap text-xs">{formatDuration(course.duration)}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Play className="w-3 h-3" />
-                                    <span>{course.lessonsCount} lessons</span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <Play className="w-3 h-3 flex-shrink-0" />
+                                    <span className="whitespace-nowrap text-xs">{lessonsCount} lessons</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Users className="w-3 h-3" />
-                                    <span>{course.studentsCount} students</span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                    <Users className="w-3 h-3 flex-shrink-0" />
+                                    <span className="whitespace-nowrap text-xs">{enrollmentCount} student{enrollmentCount !== 1 ? 's' : ''}</span>
+                                    {maxCapacity && (
+                                        <span className="text-xs text-gray-400 whitespace-nowrap">/ {maxCapacity}</span>
+                                    )}
                                 </div>
+                                {!isEnrollmentOpen && (
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded whitespace-nowrap">
+                                            Enrollment Closed
+                                        </span>
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 flex-shrink-0 ml-auto">
                                 {renderStars(courseRating, course._id)}
-                                <span>{courseRating.toFixed(1)} ({reviewCount})</span>
+                                <span className="whitespace-nowrap text-xs">{courseRating.toFixed(1)} ({reviewCount})</span>
                             </div>
                         </div>
 
@@ -1098,8 +1341,13 @@ const CourseCard = React.memo(function CourseCard({
                         {/* Course Badges */}
                         <div className="flex flex-wrap gap-1">
                             <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                                {course.category?.toLowerCase() || 'course'}
+                                {course.category?.charAt(0).toUpperCase() + course.category?.slice(1) || 'Course'}
                             </span>
+                            {course.partner && (
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                                    {course.partner.name || 'Partner Course'}
+                                </span>
+                            )}
                             {course.isFeatured && (
                                 <span className="inline-block px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
                                     <Award className="w-3 h-3 inline mr-1" />
@@ -1112,7 +1360,13 @@ const CourseCard = React.memo(function CourseCard({
                                     Enrolled
                                 </span>
                             )}
-                            {course.instructor?.verified && (
+                            {course.certification?.isAvailable && (
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                    <Award className="w-3 h-3 inline mr-1" />
+                                    Certificate Available
+                                </span>
+                            )}
+                            {instructor.verified && (
                                 <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
                                     Verified Instructor
                                 </span>
@@ -1120,12 +1374,14 @@ const CourseCard = React.memo(function CourseCard({
                         </div>
 
                         {/* Difficulty Rating */}
-                        <div className="mt-2 flex items-center gap-2">
-                            <span className="text-xs text-gray-500">Difficulty:</span>
-                            <div className="flex">
-                                {getDifficultyStars(course.difficulty)}
+                        {course.difficulty && (
+                            <div className="mt-2 flex items-center gap-2">
+                                <span className="text-xs text-gray-500">Difficulty:</span>
+                                <div className="flex">
+                                    {getDifficultyStars(course.difficulty)}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
