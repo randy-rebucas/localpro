@@ -13,6 +13,8 @@ import {
   Save,
   CheckCircle2,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
   LucideIcon
 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
@@ -29,36 +31,51 @@ import toast from "react-hot-toast";
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 
-// Settings Section Component
+// Settings Section Component with Toggle
 function SettingsSection({ 
   icon: Icon, 
   title, 
   description, 
-  children 
+  children,
+  isExpanded,
+  onToggle
 }: { 
   icon: LucideIcon; 
   title: string; 
   description?: string; 
-  children: React.ReactNode 
+  children: React.ReactNode;
+  isExpanded?: boolean;
+  onToggle?: () => void;
 }) {
+  const expanded = isExpanded ?? true;
+  const ChevronIcon = expanded ? ChevronUp : ChevronDown;
+
   return (
     <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-600">
-            <Icon className="w-5 h-5" />
+      <button
+        onClick={onToggle}
+        className="w-full bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 hover:from-gray-100 hover:to-gray-200 transition-colors"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-600">
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="text-left">
+              <h3 className="font-semibold text-gray-900 text-base">{title}</h3>
+              {description && (
+                <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+              )}
+            </div>
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 text-base">{title}</h3>
-            {description && (
-              <p className="text-xs text-gray-500 mt-0.5">{description}</p>
-            )}
-          </div>
+          <ChevronIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
         </div>
-      </div>
-      <div className="p-6">
-        {children}
-      </div>
+      </button>
+      {expanded && (
+        <div className="p-6 transition-all duration-200 ease-in-out">
+          {children}
+        </div>
+      )}
     </section>
   );
 }
@@ -69,7 +86,24 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<boolean>(false);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    privacy: true, // Privacy expanded by default
+    notifications: false,
+    communication: false,
+    service: false,
+    payment: false,
+    security: false,
+    app: false,
+    analytics: false,
+  });
   const { data: session } = useSession();
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -92,12 +126,15 @@ export default function SettingsPage() {
   }, []);
 
   const userRole = session?.user?.role;
-  const isProvider = userRole === 'PROVIDER';
-  const isSupplier = userRole === 'SUPPLIER';
-  const isInstructor = userRole === 'INSTRUCTOR';
-  const isAgencyOwner = userRole === 'AGENCY_OWNER';
-  const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
-  const isAdmin = userRole === 'ADMIN';
+  // Normalize role format (handle both uppercase and lowercase)
+  const normalizedRole = userRole?.toUpperCase();
+  const isClient = normalizedRole === 'CLIENT' || userRole === 'client';
+  const isProvider = normalizedRole === 'PROVIDER' || userRole === 'provider';
+  const isSupplier = normalizedRole === 'SUPPLIER' || userRole === 'supplier';
+  const isInstructor = normalizedRole === 'INSTRUCTOR' || userRole === 'instructor';
+  const isAgencyOwner = normalizedRole === 'AGENCY_OWNER' || userRole === 'agency_owner';
+  const isAgencyAdmin = normalizedRole === 'AGENCY_ADMIN' || userRole === 'agency_admin';
+  const isAdmin = normalizedRole === 'ADMIN' || userRole === 'admin';
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
@@ -342,6 +379,8 @@ export default function SettingsPage() {
             icon={Lock}
             title="Privacy"
             description="Control who can see your information and contact you"
+            isExpanded={expandedSections.privacy}
+            onToggle={() => toggleSection('privacy')}
           >
             <div className="space-y-1">
               <RowSelect
@@ -363,8 +402,10 @@ export default function SettingsPage() {
                   ["Show rating", "privacy.showRating"],
                   ["Show portfolio", "privacy.showPortfolio"],
                   ["Allow direct messages", "privacy.allowDirectMessages"],
-                  ...(isServiceProvider ? [["Allow job invitations", "privacy.allowJobInvitations"]] : []),
-                  ...(isBusinessRole ? [["Allow referral requests", "privacy.allowReferralRequests"]] : []),
+                  // Non-client only: Job invitations (service providers)
+                  ...(isServiceProvider && !isClient ? [["Allow job invitations", "privacy.allowJobInvitations"]] : []),
+                  // Non-client only: Referral requests (business roles)
+                  ...(isBusinessRole && !isClient ? [["Allow referral requests", "privacy.allowReferralRequests"]] : []),
                 ].map(([label, path]) => (
                   <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
                 ))}
@@ -377,6 +418,8 @@ export default function SettingsPage() {
             icon={Bell}
             title="Notifications"
             description="Manage how and when you receive notifications"
+            isExpanded={expandedSections.notifications}
+            onToggle={() => toggleSection('notifications')}
           >
             <div className="space-y-6">
               {/* Push Notifications */}
@@ -388,8 +431,11 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {[
                     ["Enabled", "notifications.push.enabled"],
-                    ...(isServiceProvider ? [["Job matches", "notifications.push.jobMatches"], ["Booking updates", "notifications.push.bookingUpdates"]] : []),
-                    ...(isBusinessRole ? [["Payment updates", "notifications.push.paymentUpdates"], ["Referral updates", "notifications.push.referralUpdates"]] : []),
+                    ["New messages", "notifications.push.newMessages"],
+                    // Non-client only: Job-related notifications (service providers)
+                    ...(isServiceProvider && !isClient ? [["Job matches", "notifications.push.jobMatches"], ["Booking updates", "notifications.push.bookingUpdates"]] : []),
+                    // Non-client only: Business-related notifications (business roles)
+                    ...(isBusinessRole && !isClient ? [["Payment updates", "notifications.push.paymentUpdates"], ["Referral updates", "notifications.push.referralUpdates"]] : []),
                     ["System updates", "notifications.push.systemUpdates"],
                     ["Marketing", "notifications.push.marketing"],
                   ].map(([label, path]) => (
@@ -408,8 +454,10 @@ export default function SettingsPage() {
                   {[
                     ["Enabled", "notifications.email.enabled"],
                     ["New messages", "notifications.email.newMessages"],
-                    ...(isServiceProvider ? [["Job matches", "notifications.email.jobMatches"], ["Booking updates", "notifications.email.bookingUpdates"]] : []),
-                    ...(isBusinessRole ? [["Payment updates", "notifications.email.paymentUpdates"], ["Referral updates", "notifications.email.referralUpdates"], ["Weekly digest", "notifications.email.weeklyDigest"], ["Monthly report", "notifications.email.monthlyReport"]] : []),
+                    // Non-client only: Job-related notifications (service providers)
+                    ...(isServiceProvider && !isClient ? [["Job matches", "notifications.email.jobMatches"], ["Booking updates", "notifications.email.bookingUpdates"]] : []),
+                    // Non-client only: Business-related notifications and reports (business roles)
+                    ...(isBusinessRole && !isClient ? [["Payment updates", "notifications.email.paymentUpdates"], ["Referral updates", "notifications.email.referralUpdates"], ["Weekly digest", "notifications.email.weeklyDigest"], ["Monthly report", "notifications.email.monthlyReport"]] : []),
                     ["System updates", "notifications.email.systemUpdates"],
                     ["Marketing", "notifications.email.marketing"],
                   ].map(([label, path]) => (
@@ -428,8 +476,10 @@ export default function SettingsPage() {
                   {[
                     ["Enabled", "notifications.sms.enabled"],
                     ["Urgent messages", "notifications.sms.urgentMessages"],
-                    ...(isServiceProvider ? [["Booking reminders", "notifications.sms.bookingReminders"]] : []),
-                    ...(isBusinessRole ? [["Payment alerts", "notifications.sms.paymentAlerts"]] : []),
+                    // Non-client only: Booking reminders (service providers)
+                    ...(isServiceProvider && !isClient ? [["Booking reminders", "notifications.sms.bookingReminders"]] : []),
+                    // Non-client only: Payment alerts (business roles)
+                    ...(isBusinessRole && !isClient ? [["Payment alerts", "notifications.sms.paymentAlerts"]] : []),
                     ["Security alerts", "notifications.sms.securityAlerts"],
                   ].map(([label, path]) => (
                     <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
@@ -444,6 +494,8 @@ export default function SettingsPage() {
             icon={MessageSquare}
             title="Communication"
             description="Language, timezone, and formatting preferences"
+            isExpanded={expandedSections.communication}
+            onToggle={() => toggleSection('communication')}
           >
             <div className="space-y-1">
               <RowSelect
@@ -499,7 +551,8 @@ export default function SettingsPage() {
                 ]}
               />
             </div>
-            {isBusinessRole && (
+            {/* Auto-reply: Non-client only (business roles) */}
+            {isBusinessRole && !isClient && (
               <div className="mt-5 pt-5 border-t border-gray-100">
                 <div className="space-y-1">
                   <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
@@ -517,12 +570,14 @@ export default function SettingsPage() {
             )}
           </SettingsSection>
 
-          {/* Service Settings */}
-          {isServiceProvider && (
+          {/* Service Settings - Non-client only (service providers) */}
+          {isServiceProvider && !isClient && (
             <SettingsSection
               icon={Briefcase}
               title="Service Preferences"
               description="Configure your service area, job preferences, and availability"
+              isExpanded={expandedSections.service}
+              onToggle={() => toggleSection('service')}
             >
               <div className="space-y-1">
                 <RowNumberInput label="Service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={1} max={100} />
@@ -583,7 +638,9 @@ export default function SettingsPage() {
           <SettingsSection
             icon={CreditCard}
             title="Payment"
-            description="Payment methods, withdrawal, and invoice preferences"
+            description={isClient ? "Choose your preferred payment method" : "Payment methods, withdrawal, and invoice preferences"}
+            isExpanded={expandedSections.payment}
+            onToggle={() => toggleSection('payment')}
           >
             <div className="space-y-1">
               <RowSelect
@@ -598,7 +655,8 @@ export default function SettingsPage() {
                   { value: "cash", label: "Cash" }
                 ]}
               />
-              {isBusinessRole && (
+              {/* Auto-withdrawal and Invoice settings: Non-client only (business roles) */}
+              {isBusinessRole && !isClient && (
                 <>
                   <div className="pt-3 border-t border-gray-100 space-y-1">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Auto-Withdrawal</p>
@@ -644,6 +702,8 @@ export default function SettingsPage() {
             icon={Shield}
             title="Security"
             description="Protect your account with authentication and alerts"
+            isExpanded={expandedSections.security}
+            onToggle={() => toggleSection('security')}
           >
             <div className="space-y-1">
               <ToggleRow label="Two-factor authentication" checked={settings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
@@ -680,6 +740,8 @@ export default function SettingsPage() {
             icon={Smartphone}
             title="App Preferences"
             description="Customize your app experience"
+            isExpanded={expandedSections.app}
+            onToggle={() => toggleSection('app')}
           >
             <div className="space-y-1">
               <RowSelect
@@ -758,6 +820,8 @@ export default function SettingsPage() {
             icon={BarChart3}
             title="Analytics & Personalization"
             description="Control data sharing and personalized recommendations"
+            isExpanded={expandedSections.analytics}
+            onToggle={() => toggleSection('analytics')}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {[
