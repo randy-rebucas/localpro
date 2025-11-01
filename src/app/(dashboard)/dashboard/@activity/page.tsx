@@ -232,7 +232,7 @@ export default function ActivityPage() {
               const activities = responseData?.data?.activities || responseData?.activities || responseData?.data || [];
               
               // Normalize activities: ensure both _id and id are present, compute age if not present
-              const normalizedActivities = activities.map((activity: any) => ({
+              const normalizedActivities = activities.map((activity: Record<string, unknown>) => ({
                 ...activity,
                 _id: activity._id || activity.id,
                 id: activity.id || activity._id,

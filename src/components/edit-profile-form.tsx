@@ -7,9 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
   User, 
-  Phone, 
-  MapPin, 
-  Globe, 
   Briefcase, 
   Save,
   CheckCircle,
@@ -263,7 +260,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   // Administrative roles
   const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
   const [isLoading, setIsLoading] = useState(false);
-  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -355,7 +351,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     
     // For clients, only include allowed fields
     if (isClientUser) {
-      const payload: any = {};
+      const payload: Record<string, unknown> = {};
       
       // Only include firstName if it has a value
       if (values.firstName && values.firstName.trim()) {
@@ -373,7 +369,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       }
       
       // Build profile object - only include bio and address for clients
-      const profilePayload: any = {};
+      const profilePayload: Record<string, unknown> = {};
       
       const bioValue = values.profile?.bio || values.bio;
       if (bioValue && bioValue.trim()) {
@@ -382,7 +378,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       // Build address object - only include if it has meaningful data
       if (values.profile?.address) {
-        const address: any = {};
+        const address: Record<string, unknown> = {};
         let hasAddressData = false;
         
         if (values.profile.address.street && values.profile.address.street.trim()) {
@@ -408,7 +404,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         
         // Include coordinates if they exist
         if (values.profile.address.coordinates) {
-          const coords: any = {};
+          const coords: Record<string, unknown> = {};
           if (typeof values.profile.address.coordinates.lat === 'number' && !isNaN(values.profile.address.coordinates.lat)) {
             coords.lat = values.profile.address.coordinates.lat;
             hasAddressData = true;
@@ -458,7 +454,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     const coverageAmountNum = values.profile?.insurance?.coverageAmount ? Number(values.profile.insurance.coverageAmount) : undefined;
 
     // Build base payload - only include fields from payload interface
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     
     // Only include email if it has a value
     if (values.email && values.email.trim()) {
@@ -476,7 +472,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }
     
     // Build profile object - only include fields with values
-    const profilePayload: any = {};
+    const profilePayload: Record<string, unknown> = {};
     
     if (values.profile?.avatar) {
       profilePayload.avatar = values.profile.avatar;
@@ -489,7 +485,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     
     // Build address object - only include if it has meaningful data
     if (values.profile?.address) {
-      const address: any = {};
+      const address: Record<string, unknown> = {};
       let hasAddressData = false;
       
       if (values.profile.address.street && values.profile.address.street.trim()) {
@@ -515,7 +511,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       // Include coordinates if they exist
       if (values.profile.address.coordinates) {
-        const coords: any = {};
+        const coords: Record<string, unknown> = {};
         if (typeof values.profile.address.coordinates.lat === 'number' && !isNaN(values.profile.address.coordinates.lat)) {
           coords.lat = values.profile.address.coordinates.lat;
           hasAddressData = true;
@@ -565,8 +561,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Build certifications array - filter out empty entries and clean up structure
     if (values.profile?.certifications && Array.isArray(values.profile.certifications) && values.profile.certifications.length > 0) {
       const cleanCertifications = values.profile.certifications
-        .map((cert: any) => {
-          const cleaned: any = {};
+        .map((cert: Record<string, unknown>) => {
+          const cleaned: Record<string, unknown> = {};
           if (cert.name && cert.name.trim()) cleaned.name = cert.name.trim();
           if (cert.issuer && cert.issuer.trim()) cleaned.issuer = cert.issuer.trim();
           if (cert.issueDate && cert.issueDate.trim()) cleaned.issueDate = cert.issueDate.trim();
@@ -589,7 +585,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     
     // Build insurance object - only include fields with values
     if (values.profile?.insurance) {
-      const insurancePayload: any = {};
+      const insurancePayload: Record<string, unknown> = {};
       let hasInsuranceData = false;
       
       if (typeof values.profile.insurance.hasInsurance === 'boolean') {
@@ -633,7 +629,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     
     // Build backgroundCheck object - only include fields with values
     if (values.profile?.backgroundCheck) {
-      const bgCheckPayload: any = {};
+      const bgCheckPayload: Record<string, unknown> = {};
       let hasBgCheckData = false;
       
       if (values.profile.backgroundCheck.status && values.profile.backgroundCheck.status.trim()) {
@@ -665,13 +661,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     
     // Build availability object - only include if it has meaningful data
     if (values.profile?.availability) {
-      const availabilityPayload: any = {};
+      const availabilityPayload: Record<string, unknown> = {};
       let hasAvailabilityData = false;
       
       if (values.profile.availability.schedule && Array.isArray(values.profile.availability.schedule) && values.profile.availability.schedule.length > 0) {
         const cleanSchedule = values.profile.availability.schedule
-          .map((sched: any) => {
-            const cleaned: any = {};
+          .map((sched: Record<string, unknown>) => {
+            const cleaned: Record<string, unknown> = {};
             if (sched.day && sched.day.trim()) cleaned.day = sched.day.trim();
             if (sched.startTime && sched.startTime.trim()) cleaned.startTime = sched.startTime.trim();
             if (sched.endTime && sched.endTime.trim()) cleaned.endTime = sched.endTime.trim();
@@ -705,18 +701,18 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Build portfolio array - ensure it matches the expected structure
     if (values.portfolio && Array.isArray(values.portfolio) && values.portfolio.length > 0) {
       const cleanPortfolio = values.portfolio
-        .map((item: any) => {
+        .map((item: Record<string, unknown>) => {
           // If it's already an object with the expected structure, use it
           if (typeof item === 'object' && item !== null) {
-            const cleaned: any = {};
-            if (item.title && item.title.trim()) cleaned.title = item.title.trim();
-            if (item.description && item.description.trim()) cleaned.description = item.description.trim();
-            if (item.category && item.category.trim()) cleaned.category = item.category.trim();
-            if (item.completedAt && item.completedAt.trim()) cleaned.completedAt = item.completedAt.trim();
+            const cleaned: Record<string, unknown> = {};
+            if (typeof item.title === 'string' && item.title.trim()) cleaned.title = item.title.trim();
+            if (typeof item.description === 'string' && item.description.trim()) cleaned.description = item.description.trim();
+            if (typeof item.category === 'string' && item.category.trim()) cleaned.category = item.category.trim();
+            if (typeof item.completedAt === 'string' && item.completedAt.trim()) cleaned.completedAt = item.completedAt.trim();
             if (item.images && Array.isArray(item.images) && item.images.length > 0) {
               cleaned.images = item.images
-                .map((img: any) => {
-                  const cleanedImg: any = {};
+                .map((img: Record<string, unknown>) => {
+                  const cleanedImg: Record<string, unknown> = {};
                   if (img.url && img.url.trim()) cleanedImg.url = img.url.trim();
                   if (img.publicId && img.publicId.trim()) cleanedImg.publicId = img.publicId.trim();
                   if (img.thumbnail && img.thumbnail.trim()) cleanedImg.thumbnail = img.thumbnail.trim();
@@ -737,7 +733,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           }
           return null;
         })
-        .filter(Boolean);
+        .filter((item): item is Record<string, unknown> => item !== null);
       
       if (cleanPortfolio.length > 0) {
         profilePayload.portfolio = cleanPortfolio;
@@ -754,7 +750,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
   // Auto-save functionality - only when there are actual changes
   useEffect(() => {
-    const userIdForAutoSave = session?.user?.id || session?.user?._id || (profile as any)?._id || (profile as any)?.id;
+    const userIdForAutoSave = session?.user?.id || session?.user?._id || (profile as UserProfile & { _id?: string; id?: string })?._id || (profile as UserProfile & { _id?: string; id?: string })?.id;
     if (!userIdForAutoSave || !hasUnsavedChanges || autoSaveStatus === 'saving') return;
 
     const timeoutId = setTimeout(async () => {
@@ -788,7 +784,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }, 3000); // Auto-save after 3 seconds of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, session?.user?.id, hasUnsavedChanges, autoSaveStatus, buildNestedPayload]);
+  }, [watchedValues, session?.user?.id, session?.user?._id, hasUnsavedChanges, autoSaveStatus, buildNestedPayload, profile]);
 
   // Use a ref to track if we're currently fetching to prevent multiple simultaneous requests
   const isFetchingRef = useRef(false);
@@ -826,7 +822,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         experience: session.user.experience,
         avatar: typeof session.user.avatar === 'string' 
           ? session.user.avatar 
-          : (session.user as any).profile?.avatar 
+          : (session.user as UserProfileData).profile?.avatar 
           || session.user.avatar,
         portfolio: session.user.portfolio as string[],
         createdAt: session.user.createdAt || new Date().toISOString(),
@@ -1003,7 +999,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   } finally {
     isFetchingRef.current = false;
   }
-}, [session?.user, session?.user?.id, reset, profile, initialProfile]);
+}, [session?.user, reset, profile, initialProfile]);
 
   // Initialize form from initialProfile if provided (priority over fetching)
   useEffect(() => {
@@ -1020,16 +1016,16 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           : '');
       
       // Extract phoneNumber - check both root level and nested
-      const phoneNumber = (initialProfile as any).phoneNumber || initialProfile.phone || "";
+      const phoneNumber = (initialProfile as UserProfile & { phoneNumber?: string }).phoneNumber || initialProfile.phone || "";
       
       // Extract all nested profile data
-      const profileData = (initialProfile as any).profile || {};
+      const profileData = (initialProfile as UserProfile & { profile?: Record<string, unknown> }).profile || {};
       
       // Build complete form data from initialProfile
       const formData: ProfileForm = {
         name: fullName,
-        firstName: initialProfile.firstName || (initialProfile as any).profile?.firstName || "",
-        lastName: initialProfile.lastName || (initialProfile as any).profile?.lastName || "",
+        firstName: initialProfile.firstName || (profileData as { firstName?: string }).firstName || "",
+        lastName: initialProfile.lastName || (profileData as { lastName?: string }).lastName || "",
         role: (initialProfile.role || "") as "" | "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | undefined,
         email: initialProfile.email || "",
         phoneNumber: phoneNumber,
@@ -1074,21 +1070,21 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           backgroundCheck: profileData.backgroundCheck,
           availability: profileData.availability || { schedule: [] },
         },
-        portfolio: (initialProfile as any).profile?.portfolio || [],
-        preferences: (initialProfile as any).preferences || {
+        portfolio: (profileData as { portfolio?: PortfolioItem[] }).portfolio || [],
+        preferences: (initialProfile as UserProfile & { preferences?: ProfileForm['preferences'] }).preferences || {
           notifications: { sms: false, email: true, push: true },
           language: "",
         },
-        agency: (initialProfile as any).agency || {
+        agency: (initialProfile as UserProfile & { agency?: ProfileForm['agency'] }).agency || {
           agencyId: "",
           role: "",
           status: "",
           commissionRate: undefined,
         },
-        tags: Array.isArray((initialProfile as any).tags)
-          ? (initialProfile as any).tags.join(", ")
+        tags: Array.isArray((initialProfile as UserProfile & { tags?: string[] }).tags)
+          ? (initialProfile as UserProfile & { tags?: string[] }).tags?.join(", ") || ""
           : "",
-        notes: (initialProfile as any).notes || [],
+        notes: (initialProfile as UserProfile & { notes?: unknown[] }).notes || [],
       };
       
       console.log('📝 Form data prepared:', formData);
@@ -1297,14 +1293,14 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         
         // If there are validation details, append them
         if (errorData.errors && Array.isArray(errorData.errors)) {
-          const validationErrors = errorData.errors.map((e: any) => `${e.field || e.path}: ${e.message || e.msg}`).join(', ');
+          const validationErrors = errorData.errors.map((e: Record<string, unknown>) => `${e.field || e.path}: ${e.message || e.msg}`).join(', ');
           errorMessage += ` - ${validationErrors}`;
         } else if (errorData.details && Array.isArray(errorData.details)) {
-          const validationErrors = errorData.details.map((d: any) => d.message || d.msg).join(', ');
+          const validationErrors = errorData.details.map((d: Record<string, unknown>) => d.message || d.msg).join(', ');
           errorMessage += ` - ${validationErrors}`;
         } else if (typeof errorData.validation === 'object') {
           const validationErrors = Object.entries(errorData.validation)
-            .map(([field, errors]: [string, any]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
+            .map(([field, errors]: [string, unknown]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : String(errors)}`)
             .join('; ');
           errorMessage += ` - ${validationErrors}`;
         }
@@ -1346,7 +1342,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Validate file type
     if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
       const errorMsg = 'Only JPEG and PNG images are allowed';
-      setAvatarUploadError(errorMsg);
       toast.error(errorMsg);
       return;
     }
@@ -1355,13 +1350,11 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     const maxSize = 2 * 1024 * 1024; // 2MB in bytes
     if (file.size > maxSize) {
       const errorMsg = 'File size must be less than 2MB';
-      setAvatarUploadError(errorMsg);
       toast.error(errorMsg);
       return;
     }
 
     setIsLoading(true);
-    setAvatarUploadError(null);
 
     try {
       const formData = new FormData();
@@ -1393,7 +1386,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
       if (!response.ok || !data.success) {
         const errorMsg = data.message || data.error || "Failed to upload avatar";
-        setAvatarUploadError(errorMsg);
         toast.error(errorMsg);
         return;
       }
@@ -1432,7 +1424,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     } catch (error) {
       console.error("Error uploading avatar:", error);
       const errorMsg = error instanceof Error ? error.message : "Failed to upload avatar";
-      setAvatarUploadError(errorMsg);
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);

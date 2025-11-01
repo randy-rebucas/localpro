@@ -10,8 +10,6 @@ import {
   Settings,
   User,
   CheckCircle,
-  AlertCircle,
-  Info,
   ShoppingCart,
   Briefcase,
   BookOpen,
@@ -27,11 +25,10 @@ import {
   Eye,
   MapPin,
   Filter,
-  X,
   Star
 } from "lucide-react";
 import { useSession } from "@/hooks/useAuth";
-import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton } from "@/components/ui/loading";
@@ -177,7 +174,7 @@ export interface ActivityItem {
 }
 
 // Helper function to normalize activity from API
-const normalizeActivity = (activity: any): ActivityItem => {
+const normalizeActivity = (activity: Record<string, unknown>): ActivityItem => {
   const activityId = activity._id || activity.id;
   
   return {
@@ -337,7 +334,7 @@ const formatActivityAge = (dateString?: string): string => {
 };
 
 // Helper function to get activity icon based on category and type
-const getActivityIcon = (category: ActivityCategory, type?: ActivityType) => {
+const getActivityIcon = (category: ActivityCategory) => {
   // Category-based icons
   switch (category) {
     case 'authentication':
@@ -426,7 +423,7 @@ export default function ActivityPage() {
             
             // Normalize activities
             const normalizedActivities = activitiesData
-              .map((activity: any) => normalizeActivity(activity))
+              .map((activity: Record<string, unknown>) => normalizeActivity(activity))
               .filter((activity: ActivityItem) => !activity.isDeleted && activity.isVisible)
               .sort((a: ActivityItem, b: ActivityItem) => 
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()

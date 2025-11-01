@@ -192,7 +192,7 @@ export default function AnnouncementsPage() {
         const announcements = responseData?.data?.announcements || responseData?.announcements || responseData?.data || [];
         
         // Normalize IDs: ensure both _id and id are present
-        const normalizedAnnouncements = announcements.map((announcement: any) => ({
+        const normalizedAnnouncements = announcements.map((announcement: Record<string, unknown>) => ({
           ...announcement,
           _id: announcement._id || announcement.id,
           id: announcement.id || announcement._id,

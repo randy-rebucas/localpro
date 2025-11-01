@@ -6,7 +6,6 @@ import {
   Search,
   X,
   AlertCircle,
-  Info,
   CheckCircle,
   AlertTriangle,
   ExternalLink,
@@ -14,18 +13,15 @@ import {
   RefreshCw,
   Eye,
   MessageSquare,
-  ThumbsUp,
   FileText,
   Calendar,
   User,
   Tag,
-  Clock,
   Shield,
   Gift,
   Bell,
   Wrench,
-  Star,
-  Users
+  Star
 } from "lucide-react";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Skeleton, ListSkeleton } from "@/components/ui/loading";
@@ -141,12 +137,11 @@ export interface Announcement {
 }
 
 // Helper function to normalize announcement from API
-const normalizeAnnouncement = (announcement: any, currentUserId?: string): Announcement => {
-  const announcementId = announcement._id || announcement.id;
+const normalizeAnnouncement = (announcement: Record<string, unknown>, currentUserId?: string): Announcement => {
+  const announcementId = (announcement._id || announcement.id) as string;
   const now = new Date();
-  const expiresAt = announcement.expiresAt ? new Date(announcement.expiresAt) : null;
-  const scheduledAt = announcement.scheduledAt ? new Date(announcement.scheduledAt) : null;
-  const publishedAt = announcement.publishedAt ? new Date(announcement.publishedAt) : null;
+  const expiresAt = announcement.expiresAt ? new Date(announcement.expiresAt as string) : null;
+  const scheduledAt = announcement.scheduledAt ? new Date(announcement.scheduledAt as string) : null;
   
   // Compute virtual fields
   const isExpired = expiresAt ? expiresAt <= now : false;
@@ -263,24 +258,6 @@ const formatDate = (dateString?: string | null) => {
   });
 };
 
-// Helper function to format relative time
-const formatRelativeTime = (dateString?: string | null) => {
-  if (!dateString) return 'N/A';
-  
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-  if (diffInMinutes < 1) return "Just now";
-  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-  if (diffInHours < 24) return `${diffInHours}h ago`;
-  if (diffInDays < 7) return `${diffInDays}d ago`;
-  
-  return formatDate(dateString);
-};
 
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -309,9 +286,9 @@ export default function AnnouncementsPage() {
       // Handle API response structure: { success, data: { announcements: [...], pagination:{...} } }
       const announcementsData = responseData?.data?.announcements || responseData?.announcements || responseData?.data || [];
       
-      // Normalize announcements
-      const normalizedAnnouncements = announcementsData
-        .map((announcement: any) => normalizeAnnouncement(announcement))
+            // Normalize announcements
+            const normalizedAnnouncements = announcementsData
+              .map((announcement: Record<string, unknown>) => normalizeAnnouncement(announcement))
         .filter((announcement: Announcement) => {
           // Only show active announcements by default (unless filtered)
           return statusFilter === 'all' || announcement.status === statusFilter;

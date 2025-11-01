@@ -60,7 +60,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
   }, [profile?.referral?.referralCode]);
 
   // Social sharing handlers
-  const handleShare = useCallback((platform: string, url: string) => {
+  const handleShare = useCallback((platform: string) => {
     if (!referralLink) return;
     
     const shareText = `Join me on LocalPro! Use my referral code ${profile?.referral?.referralCode} to get started and earn rewards. ${referralLink}`;
@@ -179,7 +179,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
           <label className="block text-xs text-gray-600 mb-2">Share via Social Media</label>
           <div className="grid grid-cols-3 gap-2">
             <button
-              onClick={() => handleShare('facebook', referralLink || '')}
+              onClick={() => handleShare('facebook')}
               disabled={!referralLink}
               className="flex flex-col items-center justify-center gap-1 p-3 bg-[#1877F2] text-white rounded-lg hover:bg-[#166FE5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Share on Facebook"
@@ -188,7 +188,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
               <span className="text-xs">Facebook</span>
             </button>
             <button
-              onClick={() => handleShare('twitter', referralLink || '')}
+              onClick={() => handleShare('twitter')}
               disabled={!referralLink}
               className="flex flex-col items-center justify-center gap-1 p-3 bg-[#1DA1F2] text-white rounded-lg hover:bg-[#1a91da] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Share on Twitter/X"
@@ -197,7 +197,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
               <span className="text-xs">Twitter</span>
             </button>
             <button
-              onClick={() => handleShare('linkedin', referralLink || '')}
+              onClick={() => handleShare('linkedin')}
               disabled={!referralLink}
               className="flex flex-col items-center justify-center gap-1 p-3 bg-[#0077B5] text-white rounded-lg hover:bg-[#006399] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Share on LinkedIn"
@@ -206,7 +206,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
               <span className="text-xs">LinkedIn</span>
             </button>
             <button
-              onClick={() => handleShare('whatsapp', referralLink || '')}
+              onClick={() => handleShare('whatsapp')}
               disabled={!referralLink}
               className="flex flex-col items-center justify-center gap-1 p-3 bg-[#25D366] text-white rounded-lg hover:bg-[#20ba5a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Share on WhatsApp"
@@ -215,7 +215,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
               <span className="text-xs">WhatsApp</span>
             </button>
             <button
-              onClick={() => handleShare('email', referralLink || '')}
+              onClick={() => handleShare('email')}
               disabled={!referralLink}
               className="flex flex-col items-center justify-center gap-1 p-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Share via Email"

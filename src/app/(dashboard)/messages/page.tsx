@@ -169,7 +169,7 @@ export interface Notification {
 }
 
 // Helper functions to normalize data from API
-const normalizeMessage = (message: any, currentUserId?: string): Message => {
+const normalizeMessage = (message: Record<string, unknown>, currentUserId?: string): Message => {
   const senderId = typeof message.sender === 'string' ? message.sender : message.sender?._id || message.senderId;
   const senderName = typeof message.sender === 'object' && message.sender
     ? `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim() || message.sender.email || 'Unknown'
@@ -192,7 +192,7 @@ const normalizeMessage = (message: any, currentUserId?: string): Message => {
   };
 };
 
-const normalizeConversation = (conversation: any, currentUserId?: string): Conversation => {
+const normalizeConversation = (conversation: Record<string, unknown>, currentUserId?: string): Conversation => {
   const convId = conversation._id || conversation.id;
   const participants = conversation.participants || [];
   
@@ -223,7 +223,7 @@ const normalizeConversation = (conversation: any, currentUserId?: string): Conve
     || conversation.createdAt;
   
   // Normalize messages if present
-  const messages = conversation.messages?.map((msg: any) => normalizeMessage(msg, currentUserId)) || [];
+  const messages = conversation.messages?.map((msg: Record<string, unknown>) => normalizeMessage(msg, currentUserId)) || [];
   
   return {
     ...conversation,
@@ -271,7 +271,6 @@ export default function MessagesPage() {
   const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   const [messagePage, setMessagePage] = useState(1);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -381,7 +380,7 @@ export default function MessagesPage() {
         const conversationsData = responseData?.data?.conversations || responseData?.conversations || responseData?.data || [];
         
         // Normalize conversations
-        const normalizedConversations = conversationsData.map((conv: any) => normalizeConversation(conv, currentUserId));
+        const normalizedConversations = conversationsData.map((conv: Record<string, unknown>) => normalizeConversation(conv, currentUserId));
         setConversations(normalizedConversations);
         setRetryCount(0); // Reset retry count on success
       });
@@ -432,7 +431,7 @@ export default function MessagesPage() {
       const normalized = normalizeConversation(conversationData, currentUserId);
       // Normalize messages if present
       if (normalized.messages) {
-        normalized.messages = normalized.messages.map((msg: any) => normalizeMessage(msg, currentUserId));
+        normalized.messages = normalized.messages.map((msg: Record<string, unknown>) => normalizeMessage(msg, currentUserId));
       }
       return normalized;
     }
@@ -452,7 +451,7 @@ export default function MessagesPage() {
       
       if (data.messages && data.messages.length > 0) {
         // Normalize new messages
-        const normalizedMessages = data.messages.map((msg: any) => normalizeMessage(msg, currentUserId));
+        const normalizedMessages = data.messages.map((msg: Record<string, unknown>) => normalizeMessage(msg, currentUserId));
         setActiveConversation(prev => 
           prev ? { 
             ...prev, 
@@ -469,7 +468,7 @@ export default function MessagesPage() {
     } finally {
       setLoadingMoreMessages(false);
     }
-  }, [activeConversation, loadingMoreMessages, hasMoreMessages, messagePage, fetchConversation]);
+  }, [activeConversation, loadingMoreMessages, hasMoreMessages, messagePage, fetchConversation, currentUserId]);
 
   // Notification functions
   const fetchUnreadCount = useCallback(async () => {
@@ -652,7 +651,7 @@ export default function MessagesPage() {
       console.error('Error updating message:', err);
       throw err;
     }
-  }, [activeConversation]);
+  }, [activeConversation, currentUserId]);
 
   const deleteMessage = useCallback(async (conversationId: string, messageId: string) => {
     try {
@@ -806,8 +805,7 @@ export default function MessagesPage() {
               }
               break;
               
-            case 'notification':
-              setNotifications(prev => [data.notification, ...prev]);
+              case 'notification':
               setUnreadCount(prev => prev + 1);
               break;
               
@@ -820,7 +818,7 @@ export default function MessagesPage() {
         }
       };
       
-      eventSource.onerror = (event) => {
+      eventSource.onerror = () => {
         const readyState = eventSource.readyState;
         const stateMessage = 
           readyState === EventSource.CONNECTING ? 'CONNECTING' :

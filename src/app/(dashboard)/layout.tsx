@@ -215,7 +215,7 @@ export default function DashboardLayout({
       // If no session and not loading, stop loading
       setLoading(false);
     }
-  }, [status, session?.user?.id]);
+  }, [status, session?.user?.id, redirectToLogin, session, user]);
 
   // useEffect(() => {
   //   const fetchUnread = async () => {

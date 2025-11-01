@@ -21,9 +21,6 @@ import { useEffect, useState, useCallback } from "react";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Loading } from "@/components/ui/loading";
@@ -137,7 +134,6 @@ export default function SettingsPage() {
   const isAdmin = normalizedRole === 'ADMIN' || userRole === 'admin';
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
-  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
 
   function mergeWithDefaults(incoming: Partial<UserSettings>): UserSettings {
     return {
@@ -840,7 +836,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
             <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We're here to help.</p>
+            <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
             <button className="w-full px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200">
               Contact Support
             </button>
@@ -935,18 +931,3 @@ function RowTextarea(props: { label: string; value: string; onChange: (e: Change
   );
 }
 
-function NumberInput(props: { label: string; value: number; onChange: (e: ChangeEvent) => void; min?: number; max?: number }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1.5">{props.label}</label>
-      <input 
-        type="number" 
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" 
-        value={Number.isFinite(props.value) ? props.value : 0} 
-        onChange={props.onChange} 
-        min={props.min} 
-        max={props.max} 
-      />
-    </div>
-  );
-}

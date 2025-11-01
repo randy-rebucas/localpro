@@ -56,7 +56,7 @@ export interface NotificationItem {
 }
 
 // Helper function to normalize notification from API
-const normalizeNotification = (notification: any): NotificationItem => {
+const normalizeNotification = (notification: Record<string, unknown>): NotificationItem => {
   const notificationId = notification._id || notification.id;
   
   // Compute href from data or type
@@ -334,7 +334,7 @@ export default function NotificationsPage() {
       
       // Normalize notifications and filter out expired ones
       const normalizedNotifications = notificationsData
-        .map((notif: any) => normalizeNotification(notif))
+        .map((notif: Record<string, unknown>) => normalizeNotification(notif))
         .filter((notif: NotificationItem) => {
           // Filter out expired notifications
           if (notif.expiresAt) {

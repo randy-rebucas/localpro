@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle, Lightbulb, TrendingUp, Target, Loader2, AlertCircle, User, Shield, FileText, Sparkles, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle, Lightbulb, TrendingUp, Loader2, AlertCircle, User, Shield, FileText, Sparkles, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 
@@ -123,7 +123,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
     ];
     
     const completedFields = fields.filter(field => {
-      const profile = profileData as any;
+      const profile = profileData as Record<string, unknown>;
       if (field === 'skills') {
         const skills = profile?.profile?.skills || profile?.skills;
         return Array.isArray(skills) && skills.length > 0;
@@ -152,7 +152,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
       total: fields.length,
       missing: fields.filter(field => !completedFields.includes(field))
     };
-  }, [apiData, profileData]);
+  }, [profileData, overallScore]);
 
   interface Recommendation {
     id?: string;
@@ -288,12 +288,6 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
       textColor: 'text-green-700',
       progressColor: 'bg-green-600'
     }
-  };
-
-  const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600";
-    if (percentage >= 60) return "text-yellow-600";
-    return "text-red-600";
   };
 
   const getScoreBgColor = (percentage: number) => {

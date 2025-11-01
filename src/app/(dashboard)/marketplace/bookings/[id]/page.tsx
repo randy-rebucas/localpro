@@ -101,7 +101,7 @@ export default function BookingDetailPage() {
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceBookingStatus}/${params.id}/status`, createAuthFetchOptions({
         method: 'PUT',
         body: JSON.stringify({ status }),
-      });
+      }));
 
       if (!response.ok) {
         throw new Error("Failed to update booking status");

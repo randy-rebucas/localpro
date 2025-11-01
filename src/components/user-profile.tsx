@@ -8,7 +8,6 @@ import {
   User as UserIcon, 
   Phone, 
   MapPin, 
-  Globe, 
   Briefcase, 
   Edit3,
   CheckCircle,
@@ -19,13 +18,9 @@ import {
   Star,
   Clock,
   TrendingUp,
-  Users,
   Building2,
-  FileText,
-  Calendar,
   Mail,
   Wallet,
-  Activity,
   Target,
   Zap
 } from "lucide-react";
@@ -33,13 +28,11 @@ import { ProfileCompleteness } from "./profile-completeness";
 import { AccountInfo } from "./account-info";
 import { WalletInfo } from "./wallet-info";
 import { AgencyInfo } from "./agency-info";
-import { ReferralInfo } from "./referral-info";
 import { ActivitySummary } from "./activity-summary";
 import { QuickActions } from "./quick-actions";
 import { Loading } from "@/components/ui/loading";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
-import { CLIENT_CONFIG } from "@/lib/env";
 
 // User Data Entity (from features/users/data-entities.md)
 
@@ -270,7 +263,7 @@ export interface UserProfileData {
 }
 
 // Helper function to normalize user from API
-const normalizeUser = (user: any): UserProfileData => {
+const normalizeUser = (user: Record<string, unknown>): UserProfileData => {
   if (!user) {
     // Return minimal valid profile if user is null/undefined
     return {
@@ -483,7 +476,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     };
     
     fetchProfile();
-  }, [session?.user?.id, initialProfile]);
+  }, [session?.user?.id, session?.user, initialProfile]);
   
   // Get user role for conditional rendering
   const userRole = session?.user?.role || profile?.role;
@@ -524,15 +517,6 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     profile?.updatedAt ? new Date(profile.updatedAt).toLocaleDateString() : "N/A"
   ), [profile?.updatedAt]);
 
-  const normalizedWebsite = useMemo(() => {
-    if (!profile?.website) return null;
-    try {
-      const hasProtocol = /^(https?:)?\/\//i.test(profile.website);
-      return hasProtocol ? profile.website : `https://${profile.website}`;
-    } catch {
-      return profile.website;
-    }
-  }, [profile?.website]);
 
   const avatarUrl = useMemo(() => {
     return profile?.profile?.avatar?.url || profile?.profile?.avatar?.thumbnail || null;

@@ -111,7 +111,7 @@ export function extractReferralCodeFromUrl(url: string): string | null {
   try {
     const urlObj = new URL(url);
     return urlObj.searchParams.get('ref');
-  } catch (error) {
+  } catch {
     // If URL parsing fails, try regex fallback
     const match = url.match(/[?&]ref=([^&]+)/);
     return match ? match[1] : null;
