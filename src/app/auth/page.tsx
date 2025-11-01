@@ -17,7 +17,7 @@ import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import Image from "next/image";
 import { phoneFormatter } from "@/lib/phone-formatter";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { makeClientPublicRequest } from "@/lib/client-api-utils";
 
 const signInSchema = z.object({
   phone: z
@@ -140,11 +140,11 @@ function SignInForm() {
       const url = `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`;
       console.log("Sending code with URL:", url);
 
-      const response = await fetch(url, createAuthFetchOptions({
+      const response = await makeClientPublicRequest(API_ENDPOINTS.authSendCode as keyof typeof API_ENDPOINTS, {
         method: "POST",
         body: JSON.stringify({ phoneNumber: phone.trim() }),
         signal: controller.signal,
-      }));
+      });
 
       clearTimeout(timeoutId);
 
@@ -239,14 +239,14 @@ function SignInForm() {
       const url = `${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`;
       console.log("Verifying code with URL:", url);
 
-      const response = await fetch(url, createAuthFetchOptions({
+      const response = await makeClientPublicRequest(API_ENDPOINTS.authVerifyCode as keyof typeof API_ENDPOINTS, {
         method: "POST",
         body: JSON.stringify({
           phoneNumber,
           code: verificationCode,
         }),
         signal: controller.signal,
-      }));
+      });
 
       clearTimeout(timeoutId);
 

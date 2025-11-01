@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { makeClientPublicRequest, makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 
 interface HealthMetrics {
@@ -125,7 +125,8 @@ export default function AdminHealthPage() {
       setLoading(true);
       setError(null);
 
-      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+      // Health endpoint is public per API documentation
+      const response = await makeClientPublicRequest(
         'settingsAppHealth' as keyof typeof API_ENDPOINTS,
         { method: 'GET' }
       );

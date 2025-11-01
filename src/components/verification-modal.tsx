@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { makeClientPublicRequest, makeClientAuthenticatedRequestWithEndpoint } from "@/lib/client-api-utils";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 
 const verificationSchema = z.object({
@@ -45,14 +45,14 @@ export function VerificationModal({
   const onSubmit = async (data: VerificationForm) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`, createAuthFetchOptions({
+      const response = await makeClientPublicRequest(API_ENDPOINTS.authVerifyCode as keyof typeof API_ENDPOINTS, {
         method: "POST",
         body: JSON.stringify({
           phone: contact,
           code: data.code,
           type: "phone",
         }),
-      }));
+      });
 
       const result = await response.json();
 
@@ -89,13 +89,13 @@ export function VerificationModal({
   const resendCode = async () => {
     setIsResending(true);
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, createAuthFetchOptions({
+      const response = await makeClientPublicRequest(API_ENDPOINTS.authSendCode as keyof typeof API_ENDPOINTS, {
         method: "POST",
         body: JSON.stringify({
           phone: contact,
           type: "phone",
         }),
-      }));
+      });
 
       const result = await response.json();
 

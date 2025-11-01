@@ -57,36 +57,50 @@ export interface NotificationItem {
 
 // Helper function to normalize notification from API
 const normalizeNotification = (notification: Record<string, unknown>): NotificationItem => {
-  const notificationId = notification._id || notification.id;
+  const notificationId = (notification._id || notification.id) as string;
+  
+  // Safely access data property with proper typing
+  const data = notification.data as Record<string, unknown> | undefined;
   
   // Compute href from data or type
-  let href: string | null | undefined = notification.href || notification.data?.href;
-  if (!href && notification.data) {
+  let href: string | null | undefined = (notification.href || data?.href) as string | null | undefined;
+  if (!href && data) {
     // Try to construct href from data context
-    if (notification.data.bookingId) {
-      href = `/bookings/${notification.data.bookingId}`;
-    } else if (notification.data.jobId) {
-      href = `/jobs/${notification.data.jobId}`;
-    } else if (notification.data.orderId) {
-      href = `/orders/${notification.data.orderId}`;
-    } else if (notification.type === 'message_received' && notification.data.conversationId) {
-      href = `/messages?conversation=${notification.data.conversationId}`;
+    if (typeof data.bookingId === 'string') {
+      href = `/bookings/${data.bookingId}`;
+    } else if (typeof data.jobId === 'string') {
+      href = `/jobs/${data.jobId}`;
+    } else if (typeof data.orderId === 'string') {
+      href = `/orders/${data.orderId}`;
+    } else if (notification.type === 'message_received' && typeof data.conversationId === 'string') {
+      href = `/messages?conversation=${data.conversationId}`;
     }
   }
   
   return {
-    ...notification,
     _id: notificationId,
     id: notificationId,
-    type: notification.type || 'system_announcement',
-    priority: notification.priority || 'medium',
-    isRead: notification.isRead !== undefined ? notification.isRead : notification.read || false,
-    channels: notification.channels || {
+    user: notification.user as string,
+    type: (notification.type || 'system_announcement') as NotificationType,
+    title: notification.title as string,
+    message: notification.message as string,
+    data: data,
+    isRead: notification.isRead !== undefined 
+      ? Boolean(notification.isRead) 
+      : Boolean(notification.read) || false,
+    readAt: notification.readAt as string | null | undefined,
+    priority: (notification.priority || 'medium') as NotificationPriority,
+    channels: (notification.channels as NotificationChannels | undefined) || {
       inApp: true,
       email: false,
       sms: false,
       push: false
     },
+    scheduledFor: notification.scheduledFor as string | null | undefined,
+    sentAt: notification.sentAt as string | null | undefined,
+    expiresAt: notification.expiresAt as string | null | undefined,
+    createdAt: notification.createdAt as string,
+    updatedAt: notification.updatedAt as string,
     href
   };
 };
@@ -325,7 +339,9 @@ export default function NotificationsPage() {
       );
       console.log("Notifications API - Response:", response);
       if (!response.ok) {
-        throw new Error(`Failed to fetch notifications: ${response.status}`);
+        const errorText = await response.text();
+        console.error("Notifications API error:", response.status, errorText);
+        throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
       }
       
       const responseData = await response.json();
@@ -360,11 +376,17 @@ export default function NotificationsPage() {
     } catch (err) {
       console.error("Error loading notifications:", err);
      
-      // For network errors, show empty state but don't redirect
-      if (err instanceof TypeError && err.message.includes('fetch')) {
-        console.warn("Network error - showing empty state");
+      // For network errors, show user-friendly message but keep empty state
+      if (err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('Failed to fetch'))) {
+        console.warn("Network error - unable to connect to API server");
+        // Show empty state - the error details are logged for debugging
+        setItems([]);
+      } else if (err instanceof Error && err.message.includes('API base URL')) {
+        console.error("Configuration error - API_BASE_URL not set");
         setItems([]);
       } else {
+        // Other errors - still show empty state
+        console.error("Unexpected error loading notifications:", err);
         setItems([]);
       }
     } finally {

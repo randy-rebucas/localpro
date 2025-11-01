@@ -31,7 +31,7 @@ import {
   Clock,
 } from "lucide-react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -226,7 +226,7 @@ export default function Home() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authSendCode}`, createAuthFetchOptions({
+      const response = await makeClientPublicRequest(API_ENDPOINTS.authSendCode as keyof typeof API_ENDPOINTS, {
         method: "POST",
         body: JSON.stringify({
           phoneNumber: data.phone.trim(),
@@ -234,7 +234,7 @@ export default function Home() {
           lastName: data.lastName,
         }),
         signal: controller.signal,
-      }));
+      });
 
       clearTimeout(timeoutId);
       const result = await response.json();

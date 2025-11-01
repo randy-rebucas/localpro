@@ -329,18 +329,48 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
 ): Promise<Response> {
   const { query, ...fetchOptions } = options;
   
+  // Validate API_BASE_URL
+  if (!API_BASE_URL || typeof API_BASE_URL !== 'string' || API_BASE_URL.trim() === '') {
+    console.error('API_BASE_URL is not configured:', API_BASE_URL);
+    throw new Error('API base URL is not configured. Please check your environment variables.');
+  }
+  
+  // Validate endpoint exists
+  if (!API_ENDPOINTS[endpoint]) {
+    console.error('Invalid endpoint:', endpoint);
+    throw new Error(`Invalid API endpoint: ${String(endpoint)}`);
+  }
+  
   // Build URL with query parameters if provided
   let url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
   if (query && Object.keys(query).length > 0) {
     const queryString = new URLSearchParams(query).toString();
     url += `?${queryString}`;
   }
-  
+
+  // Validate URL is properly formed
+  try {
+    new URL(url);
+  } catch (urlError) {
+    console.error('Invalid URL constructed:', url);
+    throw new Error(`Invalid API URL: ${url}. Please check API_BASE_URL configuration.`);
+  }
+
   try {
     const authHeaders = getAuthHeaders();
     
     if (!authHeaders) {
       throw new Error("No authentication token found - please log in");
+    }
+    
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🌐 Making authenticated request:', {
+        url,
+        endpoint,
+        method: fetchOptions.method || 'GET',
+        hasAuth: !!authHeaders
+      });
     }
     
     const response = await fetch(url, {
@@ -359,6 +389,25 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
     
     return response;
   } catch (error) {
+    // Enhance error message for network failures
+    if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Failed to fetch'))) {
+      const enhancedError = new Error(
+        `Network error: Unable to connect to API at ${url}. ` +
+        `This could be due to: 1) Server is not running, 2) CORS configuration issue, 3) Network connectivity problem. ` +
+        `Please check if the API server is running and accessible.`
+      );
+      // Preserve original error for debugging
+      (enhancedError as Error & { originalError?: Error }).originalError = error;
+      console.error('Network request failed:', {
+        url,
+        endpoint,
+        apiBaseUrl: API_BASE_URL,
+        error: enhancedError.message,
+        originalError: error
+      });
+      throw enhancedError;
+    }
+    
     // If it's an auth error, handle it
     if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized"))) {
       handleExpiredToken();
