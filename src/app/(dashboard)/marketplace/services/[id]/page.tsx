@@ -195,20 +195,23 @@ export default function ServiceDetailPage() {
 
   // Normalize service data from API response
   const normalizeService = useCallback((serviceData: Partial<Service> & Record<string, unknown>): Service => {
+    const availabilityData = serviceData.availability as Service['availability'] | undefined;
     return {
       ...serviceData,
       _id: serviceData._id || serviceData.id || '',
       id: serviceData.id || serviceData._id || '',
+      title: (serviceData.title as string) || '',
+      description: (serviceData.description as string) || '',
       // Handle images
       images: Array.isArray(serviceData.images)
         ? serviceData.images.map((img: string | ServiceImage | Record<string, unknown>) =>
             typeof img === 'string'
-              ? { url: img, alt: serviceData.title || '' }
+              ? { url: img, alt: (serviceData.title as string) || '' }
               : {
                   url: (img as ServiceImage).url || (img as ServiceImage).publicId || '',
                   publicId: (img as ServiceImage).publicId,
                   thumbnail: (img as ServiceImage).thumbnail,
-                  alt: (img as ServiceImage).alt || serviceData.title || ''
+                  alt: (img as ServiceImage).alt || (serviceData.title as string) || ''
                 }
           )
         : [],
@@ -225,9 +228,12 @@ export default function ServiceDetailPage() {
             rating: serviceData.provider?.rating
           },
       // Handle availability schedule
-      availability: serviceData.availability || {
+      availability: availabilityData ? {
+        schedule: availabilityData.schedule || [],
+        timezone: availabilityData.timezone || 'UTC'
+      } : {
         schedule: [],
-        timezone: serviceData.availability?.timezone || 'UTC'
+        timezone: 'UTC'
       },
       // Handle pricing with defaults
       pricing: serviceData.pricing ? {
@@ -256,6 +262,8 @@ export default function ServiceDetailPage() {
       // Handle emergencyService (preserve if exists)
       emergencyService: serviceData.emergencyService,
       // Set defaults
+      category: (serviceData.category as Service['category']) || 'other',
+      subcategory: (serviceData.subcategory as string) || '',
       isActive: serviceData.isActive !== undefined ? serviceData.isActive : true,
       serviceArea: serviceData.serviceArea || [],
       features: serviceData.features || [],
@@ -1009,6 +1017,7 @@ export default function ServiceDetailPage() {
               
               const providerRating = provider.profile?.rating || provider.rating || 0;
               const providerSkills = provider.profile?.skills || [];
+              const providerId = provider._id || provider.id;
               
               return (
                 <>
@@ -1020,9 +1029,18 @@ export default function ServiceDetailPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-gray-700">
-                          {providerName}
-                        </h4>
+                        {providerId ? (
+                          <Link
+                            href={`/marketplace/providers/${providerId}`}
+                            className="font-medium text-gray-700 hover:text-green-600 transition-colors cursor-pointer"
+                          >
+                            {providerName}
+                          </Link>
+                        ) : (
+                          <h4 className="font-medium text-gray-700">
+                            {providerName}
+                          </h4>
+                        )}
                         <CheckCircle className="w-4 h-4 text-green-500" />
                       </div>
                       <div className="flex items-center gap-1">
@@ -1083,9 +1101,19 @@ export default function ServiceDetailPage() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h5 className="text-sm font-medium text-gray-700 truncate">
-                                {otherProviderName}
-                              </h5>
+                              {otherProviderId ? (
+                                <Link
+                                  href={`/marketplace/providers/${otherProviderId}`}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-sm font-medium text-gray-700 truncate hover:text-green-600 transition-colors cursor-pointer"
+                                >
+                                  {otherProviderName}
+                                </Link>
+                              ) : (
+                                <h5 className="text-sm font-medium text-gray-700 truncate">
+                                  {otherProviderName}
+                                </h5>
+                              )}
                               <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
                             </div>
                             <div className="flex items-center gap-1">

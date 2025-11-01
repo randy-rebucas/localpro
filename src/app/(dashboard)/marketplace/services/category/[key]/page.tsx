@@ -189,6 +189,10 @@ export default function CategoryServicesPage() {
       ...serviceData,
       _id: serviceData._id || serviceData.id,
       id: serviceData.id || serviceData._id,
+      title: (serviceData.title as string) || '',
+      description: (serviceData.description as string) || '',
+      category: (serviceData.category as string) || '',
+      subcategory: (serviceData.subcategory as string) || '',
       images: Array.isArray(serviceData.images)
         ? serviceData.images.map((img: string | ServiceImage | Record<string, unknown>) =>
             typeof img === 'string'
@@ -317,7 +321,7 @@ export default function CategoryServicesPage() {
       // Normalize services - filter out null/undefined/empty services
       const normalizedServices = (servicesList || [])
         .filter(service => service != null && service !== undefined)
-        .map(normalizeService)
+        .map(service => normalizeService(service as Partial<Service> & Record<string, unknown>))
         .filter(service => service && service.title); // Ensure service has required fields
       setServices(normalizedServices);
 

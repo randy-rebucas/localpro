@@ -191,6 +191,7 @@ interface FilterOptions {
 export default function MarketplaceCoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
     // Fallback categories in case API is not available
     const fallbackCategories = useMemo(() => [
@@ -252,62 +253,107 @@ export default function MarketplaceCoursesPage() {
     
     // Normalize course data from API response
     const normalizeCourse = useCallback((course: Partial<Course> & Record<string, unknown>): Course => {
+        // Extract pricing values safely
+        const pricingValue = course.pricing as Course['pricing'] | undefined;
+        const priceValue = course.price as number | undefined;
+        const originalPriceValue = course.originalPrice as number | undefined;
+        const currencyValue = course.currency as string | undefined;
+        
+        // Handle pricing structure
+        let normalizedPricing: Course['pricing'];
+        if (pricingValue && typeof pricingValue === 'object') {
+            // If pricing exists as an object, use it with defaults
+            normalizedPricing = {
+                regularPrice: (pricingValue as any).regularPrice ?? (pricingValue as any).price ?? priceValue ?? 0,
+                discountedPrice: (pricingValue as any).discountedPrice ?? originalPriceValue,
+                currency: (pricingValue as any).currency ?? currencyValue ?? 'USD'
+            };
+        } else {
+            // Create new pricing object from legacy fields
+            normalizedPricing = {
+                regularPrice: priceValue ?? 0,
+                discountedPrice: originalPriceValue,
+                currency: currencyValue ?? 'USD'
+            };
+        }
+        
+        // Handle duration structure
+        const durationWeeksValue = course.durationWeeks as number | undefined;
+        const normalizedDuration: Course['duration'] = course.duration && typeof course.duration === 'object' 
+            ? course.duration as Course['duration']
+            : {
+                hours: (course.duration as number | undefined) || 0,
+                weeks: durationWeeksValue
+            };
+        
+        // Handle thumbnail structure
+        const normalizedThumbnail = course.thumbnail && typeof course.thumbnail === 'object'
+            ? course.thumbnail
+            : course.thumbnail
+                ? { url: course.thumbnail as string }
+                : undefined;
+        
+        // Handle instructor (can be populated object or just ID)
+        const normalizedInstructor = typeof course.instructor === 'string'
+            ? { id: course.instructor }
+            : {
+                _id: (course.instructor as any)?._id || (course.instructor as any)?.id,
+                id: (course.instructor as any)?.id || (course.instructor as any)?._id,
+                name: (course.instructor as any)?.name,
+                firstName: (course.instructor as any)?.firstName,
+                lastName: (course.instructor as any)?.lastName,
+                avatar: (course.instructor as any)?.avatar,
+                bio: (course.instructor as any)?.bio,
+                rating: (course.instructor as any)?.rating,
+                reviewCount: (course.instructor as any)?.reviewCount,
+                verified: (course.instructor as any)?.verified
+            };
+        
+        // Handle rating
+        const averageRating = (course.averageRating as number | undefined) ?? (course.rating as any)?.average;
+        const ratingCount = (course.ratingCount as number | undefined) ?? (course.reviewsCount as number | undefined) ?? (course.rating as any)?.count;
+        const normalizedRating = course.rating && typeof course.rating === 'object' && 'average' in course.rating
+            ? course.rating as Course['rating']
+            : {
+                average: typeof averageRating === 'number' ? averageRating : 0,
+                count: typeof ratingCount === 'number' ? ratingCount : 0
+            };
+        
+        // Set defaults
+        const isActive = course.isActive !== undefined ? course.isActive : (course.isPublished as boolean | undefined) !== undefined ? course.isPublished : true;
+        
+        // Handle enrollment
+        const maxCapacityValue = course.maxCapacity as number | undefined;
+        const enrollmentOpenValue = course.enrollmentOpen as boolean | undefined;
+        const normalizedEnrollment = course.enrollment && typeof course.enrollment === 'object'
+            ? course.enrollment
+            : {
+                current: (course.studentsCount as number | undefined) || 0,
+                maxCapacity: maxCapacityValue,
+                isOpen: enrollmentOpenValue !== undefined ? enrollmentOpenValue : true
+            };
+        
         return {
             ...course,
             _id: course._id || course.id,
             id: course.id || course._id,
-            // Handle pricing structure
-            pricing: course.pricing || {
-                regularPrice: course.price || course.pricing?.regularPrice || course.pricing?.price || 0,
-                discountedPrice: course.originalPrice || course.pricing?.discountedPrice,
-                currency: course.currency || course.pricing?.currency || 'USD'
-            },
-            // Handle duration structure
-            duration: course.duration && typeof course.duration === 'object' 
-                ? course.duration
-                : {
-                    hours: course.duration || 0,
-                    weeks: course.durationWeeks
-                },
-            // Handle thumbnail structure
-            thumbnail: course.thumbnail && typeof course.thumbnail === 'object'
-                ? course.thumbnail
-                : course.thumbnail
-                    ? { url: course.thumbnail }
-                    : undefined,
-            // Handle instructor (can be populated object or just ID)
-            instructor: typeof course.instructor === 'string'
-                ? { id: course.instructor }
-                : {
-                    _id: course.instructor?._id || course.instructor?.id,
-                    id: course.instructor?.id || course.instructor?._id,
-                    name: course.instructor?.name,
-                    firstName: course.instructor?.firstName,
-                    lastName: course.instructor?.lastName,
-                    avatar: course.instructor?.avatar,
-                    bio: course.instructor?.bio,
-                    rating: course.instructor?.rating,
-                    reviewCount: course.instructor?.reviewCount,
-                    verified: course.instructor?.verified
-                },
-            // Handle rating
-            rating: course.rating || {
-                average: course.averageRating || 0,
-                count: course.ratingCount || course.reviewsCount || 0
-            },
-            // Set defaults
-            isActive: course.isActive !== undefined ? course.isActive : course.isPublished !== undefined ? course.isPublished : true,
-            enrollment: course.enrollment || {
-                current: course.studentsCount || 0,
-                maxCapacity: course.maxCapacity,
-                isOpen: course.enrollmentOpen !== undefined ? course.enrollmentOpen : true
-            },
+            title: (course.title as string) || 'Untitled Course',
+            description: (course.description as string) || '',
+            category: (course.category as Course['category']) || 'business',
+            level: (course.level as Course['level']) || 'beginner',
+            pricing: normalizedPricing,
+            duration: normalizedDuration,
+            thumbnail: normalizedThumbnail,
+            instructor: normalizedInstructor,
+            rating: normalizedRating,
+            isActive: isActive,
+            enrollment: normalizedEnrollment,
             // Count lessons from curriculum if available
-            lessonsCount: course.lessonsCount || (course.curriculum 
+            lessonsCount: (course.lessonsCount as number | undefined) || (course.curriculum 
                 ? (course.curriculum as Array<{ lessons?: Array<unknown> }>).reduce((acc: number, module) => acc + (module.lessons?.length || 0), 0)
                 : 0),
-            studentsCount: course.studentsCount || course.enrollment?.current || 0
-        };
+            studentsCount: (course.studentsCount as number | undefined) || normalizedEnrollment.current || 0
+        } as Course;
     }, []);
 
     const languages = [
@@ -408,7 +454,7 @@ export default function MarketplaceCoursesPage() {
                             count: data.pagination.count || 0
                         });
                     }
-                    const normalizedCourses = (data.data || []).map((course: Partial<Course> & Record<string, unknown>) => normalizeCourse(course));
+                    const normalizedCourses = ((data.data || []) as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                     setCourses(normalizedCourses);
                 } else if (Array.isArray(data)) {
                     // Direct array response
@@ -1178,7 +1224,7 @@ const CourseCard = React.memo(function CourseCard({
 
     return (
         <Link
-            href={`/academy/courses/${courseId}`}
+            href={`/marketplace/courses/${courseId}`}
             className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group overflow-hidden ${viewMode === "list" ? "flex" : ""
                 }`}
         >

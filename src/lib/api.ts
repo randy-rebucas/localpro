@@ -53,6 +53,7 @@ export const API_ENDPOINTS = {
   marketplaceListings: "/api/marketplace/services",
   marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
   marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
+  marketplaceProvidersById: "/api/marketplace/providers/[id]",
 
   
   // Job Board
@@ -87,7 +88,7 @@ export const API_ENDPOINTS = {
   academyCoursesThumbnail: "/api/academy/courses/[id]/thumbnail",
   academyCoursesVideosById: "/api/academy/courses/[id]/videos/[videoId]",
   academyCoursesVideos: "/api/academy/courses/[id]/videos",
-  academyCoursesById: "/api/academy/courses/[id]",
+  academyCoursesById: "/api/academy/courses",
   academyStatistics: "/api/academy/statistics",
   academyCourseCreate: "/api/academy/courses",
   academyCourseUpdate: "/api/academy/courses",
@@ -96,15 +97,15 @@ export const API_ENDPOINTS = {
   
   // Supplies & Equipment
   supplies: "/api/supplies",
+  suppliesById: "/api/supplies/[id]",
   suppliesItems: "/api/supplies/items",
   suppliesProducts: "/api/supplies/products",
-  suppliesProductsById: "/api/supplies/products",
+  suppliesProductsById: "/api/supplies/products/[id]",
   suppliesCategories: "/api/supplies/categories",
   suppliesTypes: "/api/supplies/types",
   suppliesStatuses: "/api/supplies/statuses",
   suppliesFeatured: "/api/supplies/featured",
   suppliesNearby: "/api/supplies/nearby",
-  suppliesById: "/api/supplies",
   suppliesMySupplies: "/api/supplies/my-supplies",
   suppliesMyOrders: "/api/supplies/my-orders",
   suppliesImages: "/api/supplies",

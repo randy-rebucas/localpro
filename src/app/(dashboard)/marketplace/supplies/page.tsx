@@ -158,29 +158,105 @@ export default function MarketplaceSuppliesPage() {
         subscriptionEligible: false
     });
 
-    const categories = [
-        { value: "", label: "All Categories" },
-        { value: "cleaning_supplies", label: "Cleaning Supplies" },
-        { value: "tools", label: "Tools" },
-        { value: "materials", label: "Materials" },
-        { value: "equipment", label: "Equipment" }
-    ];
+    const [categories, setCategories] = useState<Array<{ value: string; label: string }>>([
+        { value: "", label: "All Categories" }
+    ]);
     
+    // Fetch categories from API
+    const fetchCategories = useCallback(async () => {
+        try {
+            const data = await apiRequest<{
+                success?: boolean;
+                data?: Array<{ _id: string; count?: number }>;
+            }>(API_ENDPOINTS.suppliesCategories);
+            
+            if (data && 'data' in data && Array.isArray(data.data)) {
+                const categoryLabels: Record<string, string> = {
+                    cleaning_supplies: 'Cleaning Supplies',
+                    tools: 'Tools',
+                    materials: 'Materials',
+                    equipment: 'Equipment'
+                };
+                
+                const fetchedCategories = [
+                    { value: "", label: "All Categories" },
+                    ...data.data.map((cat) => ({
+                        value: cat._id,
+                        label: categoryLabels[cat._id] || cat._id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                    }))
+                ];
+                setCategories(fetchedCategories);
+            }
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+            // Keep default "All Categories" option if fetch fails
+        }
+    }, []);
+
     // Normalize product data from API response
     const normalizeProduct = useCallback((product: Partial<Product> & Record<string, unknown>): Product => {
+        // Type-safe helper to get numeric value
+        const getNumber = (value: unknown, defaultValue: number = 0): number => {
+            if (typeof value === 'number') return value;
+            if (typeof value === 'string') {
+                const parsed = parseFloat(value);
+                return isNaN(parsed) ? defaultValue : parsed;
+            }
+            return defaultValue;
+        };
+
+        // Type-safe helper to get string value
+        const getString = (value: unknown, defaultValue: string = ''): string => {
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number') return String(value);
+            return defaultValue;
+        };
+
+        // Extract pricing data
+        const pricingData = product.pricing as Product['pricing'] | undefined;
+        const priceValue = (product.price as number | undefined) ?? (product.retailPrice as number | undefined);
+        const retailPrice = pricingData?.retailPrice ?? priceValue ?? 0;
+        const wholesalePrice = pricingData?.wholesalePrice ?? (product.wholesalePrice as number | undefined);
+        const currency = pricingData?.currency ?? getString(product.currency, 'USD');
+
+        // Extract inventory data
+        const inventoryData = product.inventory as Product['inventory'] | undefined;
+        const stockValue = (product.stock as number | undefined) ?? (product.quantity as number | undefined);
+        const quantity = inventoryData?.quantity ?? stockValue ?? 0;
+        const minStock = inventoryData?.minStock ?? (product.minStock as number | undefined);
+        const maxStock = inventoryData?.maxStock ?? (product.maxStock as number | undefined);
+        const location = inventoryData?.location ?? getString(product.inventory?.location);
+
+        // Extract rating data
+        const ratingData = product.rating as { average?: number } | undefined;
+        const averageRating = getNumber(
+            product.averageRating ?? ratingData?.average,
+            0
+        );
+
+        // Extract views
+        const views = getNumber(product.views ?? product.viewsCount, 0);
+
         return {
             ...product,
             _id: product._id || product.id,
             id: product.id || product._id,
+            name: getString(product.name ?? product.title, 'Unnamed Product'),
+            title: getString(product.title ?? product.name, 'Unnamed Product'),
+            description: getString(product.description, ''),
+            category: (product.category as Product['category']) || 'cleaning_supplies',
+            subcategory: getString(product.subcategory, ''),
+            brand: getString(product.brand, ''),
+            sku: getString(product.sku, ''),
             images: Array.isArray(product.images) 
                 ? product.images.map((img: string | ProductImage | Record<string, unknown>) => 
                     typeof img === 'string' 
-                        ? { url: img, alt: (product.title || product.name || '') as string } 
+                        ? { url: img, alt: getString(product.title || product.name, '') } 
                         : {
                             url: (img as ProductImage).url || (img as ProductImage).publicId || '',
                             publicId: (img as ProductImage).publicId,
                             thumbnail: (img as ProductImage).thumbnail,
-                            alt: (img as ProductImage).alt || (product.title || product.name || '') as string
+                            alt: (img as ProductImage).alt || getString(product.title || product.name, '')
                           }
                   )
                 : [],
@@ -193,21 +269,21 @@ export default function MarketplaceSuppliesPage() {
                     firstName: product.supplier?.firstName,
                     lastName: product.supplier?.lastName
                   },
-            pricing: product.pricing || {
-                retailPrice: product.price || product.retailPrice || 0,
-                wholesalePrice: product.wholesalePrice,
-                currency: product.currency || 'USD'
+            pricing: {
+                retailPrice,
+                wholesalePrice,
+                currency
             },
-            inventory: product.inventory || {
-                quantity: product.stock || product.quantity || 0,
-                minStock: product.minStock,
-                maxStock: product.maxStock,
-                location: product.inventory?.location
+            inventory: {
+                quantity,
+                minStock,
+                maxStock,
+                location
             },
-            averageRating: product.averageRating || product.rating?.average || 0,
+            averageRating,
             isActive: product.isActive !== undefined ? product.isActive : true,
-            views: product.views || product.viewsCount || 0
-        };
+            views
+        } as Product;
     }, []);
 
 
@@ -363,7 +439,8 @@ export default function MarketplaceSuppliesPage() {
                     }
 
                     // Normalize and set products data
-                    const normalizedProducts = (data.data || []).map((product: Partial<Product> & Record<string, unknown>) => normalizeProduct(product));
+                    const productsArray = (data.data || []) as Array<Partial<Product> & Record<string, unknown>>;
+                    const normalizedProducts = productsArray.map((product) => normalizeProduct(product));
                     setSupplies(normalizedProducts);
 
                     // Debug: Log the first product to see its structure
@@ -426,6 +503,11 @@ export default function MarketplaceSuppliesPage() {
             setLoading(false);
         }
     }, [searchQuery, filters, sortBy, pagination, normalizeProduct]);
+
+    // Fetch categories on mount
+    useEffect(() => {
+        fetchCategories();
+    }, [fetchCategories]);
 
     // Debounced search to improve performance
     useEffect(() => {
