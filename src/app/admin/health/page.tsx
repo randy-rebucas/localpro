@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import { makeClientPublicRequest, makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 
 interface HealthMetrics {

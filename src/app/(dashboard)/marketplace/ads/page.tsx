@@ -173,8 +173,6 @@ export interface AdCampaign {
   tags?: string[];
 }
 
-// Legacy Ad type alias for backward compatibility
-type Ad = AdCampaign;
 
 const categories = [
   { value: "", label: "All Categories" },
@@ -194,16 +192,7 @@ const adTypes = [
   { value: "interactive", label: "Interactive" }
 ];
 
-const statuses = [
-  { value: "", label: "All Status" },
-  { value: "draft", label: "Draft" },
-  { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
-  { value: "active", label: "Active" },
-  { value: "paused", label: "Paused" },
-  { value: "completed", label: "Completed" },
-  { value: "rejected", label: "Rejected" }
-];
+// Statuses are handled by the API filter (status: 'active'), no need for this filter
 
 
 export default function MarketplaceAdsPage() {
@@ -213,8 +202,8 @@ export default function MarketplaceAdsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortBy] = useState('createdAt');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [pagination, setPagination] = useState({
@@ -227,17 +216,22 @@ export default function MarketplaceAdsPage() {
   const router = useRouter();
   
   // Normalize ad campaign data from API response
-  const normalizeAdCampaign = useCallback((campaign: any): AdCampaign => {
+  const normalizeAdCampaign = useCallback((campaign: Partial<AdCampaign> & Record<string, unknown>): AdCampaign => {
     return {
       ...campaign,
       _id: campaign._id || campaign.id,
       id: campaign.id || campaign._id,
       // Handle images
       images: Array.isArray(campaign.images)
-        ? campaign.images.map((img: any) =>
+        ? campaign.images.map((img: string | AdImage | Record<string, unknown>) =>
             typeof img === 'string'
-              ? { url: img, alt: campaign.title }
-              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail }
+              ? { url: img, alt: (campaign.title || '') as string }
+              : {
+                  url: (img as AdImage).url || (img as AdImage).publicId || '',
+                  publicId: (img as AdImage).publicId,
+                  thumbnail: (img as AdImage).thumbnail,
+                  alt: (img as AdImage).alt || (campaign.title || '') as string
+                }
           )
         : [],
       // Handle advertiser
@@ -343,14 +337,16 @@ export default function MarketplaceAdsPage() {
       let paginationData: AdsPagination | undefined;
       
       if (Array.isArray(data)) {
-        campaignsData = data.map((campaign: any) => normalizeAdCampaign(campaign));
+        campaignsData = (data as Array<Partial<AdCampaign> & Record<string, unknown>>).map((campaign) => normalizeAdCampaign(campaign));
       } else if (data && typeof data === 'object') {
-        if ('success' in data && data.success) {
-          campaignsData = (data.data || data.campaigns || data.ads || []).map((campaign: any) => normalizeAdCampaign(campaign));
-          paginationData = data.pagination;
-        } else if ('data' in data && Array.isArray(data.data)) {
-          campaignsData = data.data.map((campaign: any) => normalizeAdCampaign(campaign));
-          paginationData = data.pagination;
+        const dataObj = data as Record<string, unknown>;
+        if ('success' in dataObj && dataObj.success) {
+          const campaignsArray = (dataObj.data || dataObj.campaigns || dataObj.ads || []) as Array<Partial<AdCampaign> & Record<string, unknown>>;
+          campaignsData = campaignsArray.map((campaign) => normalizeAdCampaign(campaign));
+          paginationData = dataObj.pagination as AdsPagination | undefined;
+        } else if ('data' in dataObj && Array.isArray(dataObj.data)) {
+          campaignsData = (dataObj.data as Array<Partial<AdCampaign> & Record<string, unknown>>).map((campaign) => normalizeAdCampaign(campaign));
+          paginationData = dataObj.pagination as AdsPagination | undefined;
         }
       }
       
@@ -382,7 +378,7 @@ export default function MarketplaceAdsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedCategory, selectedType, sortBy, sortOrder, pagination.current, pagination.limit, userLocation, normalizeAdCampaign]);
+  }, [searchQuery, selectedCategory, selectedType, sortBy, sortOrder, pagination, userLocation, normalizeAdCampaign]);
 
   // Get location on mount
   useEffect(() => {
@@ -422,7 +418,8 @@ export default function MarketplaceAdsPage() {
   });
 
   const sortedAds = [...filteredAds].sort((a, b) => {
-    let aValue: any, bValue: any;
+    let aValue: string | number | Date;
+    let bValue: string | number | Date;
     
     switch (sortBy) {
       case 'title':
@@ -689,7 +686,6 @@ const AdCard = React.memo(function AdCard({ ad, viewMode, onView }: AdCardProps)
   // Get location
   const locationCity = ad.location?.city || '';
   const locationState = ad.location?.state || '';
-  const locationCountry = ad.location?.country || '';
   
   // Get schedule dates
   const startDate = ad.schedule?.startDate ? new Date(ad.schedule.startDate) : null;

@@ -8,8 +8,6 @@ import {
     Search,
     Star,
     MapPin,
-    Clock,
-    ChevronDown,
     Grid,
     List,
     SlidersHorizontal,
@@ -19,7 +17,6 @@ import {
     Wrench,
     Car,
     Hammer,
-    Zap,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -175,8 +172,6 @@ export interface RentalItem {
   isFavorited?: boolean;
 }
 
-// Legacy Rental type alias for backward compatibility
-type Rental = RentalItem;
 
 interface FilterOptions {
     category: string;
@@ -201,9 +196,8 @@ export default function MarketplaceRentalsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("price_low");
+    const [sortBy] = useState("price_low");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [showFilters, setShowFilters] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
         pages: 1,
@@ -221,13 +215,6 @@ export default function MarketplaceRentalsPage() {
         radius: 10000, // 10km default radius
     });
   
-    const sortOptions = [
-        { value: "relevance", label: "Most Relevant" },
-        { value: "price_low", label: "Price: Low to High" },
-        { value: "price_high", label: "Price: High to Low" },
-        { value: "rating", label: "Highest Rated" },
-        { value: "newest", label: "Newest First" }
-    ];
 
     const getCurrentLocation = () => {
         if (navigator.geolocation) {
@@ -251,7 +238,7 @@ export default function MarketplaceRentalsPage() {
     };
 
     // Normalize rental item data from API response
-    const normalizeRentalItem = useCallback((item: any): RentalItem => {
+    const normalizeRentalItem = useCallback((item: Partial<RentalItem> & Record<string, unknown>): RentalItem => {
     return {
       ...item,
       _id: item._id || item.id,
@@ -287,10 +274,15 @@ export default function MarketplaceRentalsPage() {
           },
       // Handle images
       images: Array.isArray(item.images)
-        ? item.images.map((img: any) =>
+        ? item.images.map((img: string | RentalItemImage | Record<string, unknown>) =>
             typeof img === 'string'
-              ? { url: img, alt: item.title || item.name }
-              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || item.title || item.name }
+              ? { url: img, alt: (item.title || item.name || '') as string }
+              : {
+                  url: (img as RentalItemImage).url || (img as RentalItemImage).publicId || '',
+                  publicId: (img as RentalItemImage).publicId,
+                  thumbnail: (img as RentalItemImage).thumbnail,
+                  alt: (img as RentalItemImage).alt || (item.title || item.name || '') as string
+                }
           )
         : [],
       // Handle owner
@@ -405,7 +397,7 @@ export default function MarketplaceRentalsPage() {
             // Handle the API response structure with pagination
             if (Array.isArray(data)) {
                 // Direct array response - normalize rentals
-                const normalizedRentals = data.map((item: any) => normalizeRentalItem(item));
+                const normalizedRentals = (data as Array<Partial<RentalItem> & Record<string, unknown>>).map((item) => normalizeRentalItem(item));
                 setRentals(normalizedRentals);
                 setPagination({
                     current: 1,
@@ -429,39 +421,42 @@ export default function MarketplaceRentalsPage() {
                     }
 
                     // Normalize and set rentals data
-                    const normalizedRentals = (data.data || []).map((item: any) => normalizeRentalItem(item));
+                    const normalizedRentals = (data.data || []).map((item: Partial<RentalItem> & Record<string, unknown>) => normalizeRentalItem(item));
                     setRentals(normalizedRentals);
-                } else if (('rentals' in data || 'rentalItems' in data) && Array.isArray((data as any).rentals || (data as any).rentalItems)) {
-                    // Alternative response format with rentals/rentalItems property
-                    const rentalsData = (data as any).rentals || (data as any).rentalItems || [];
-                    const normalizedRentals = rentalsData.map((item: any) => normalizeRentalItem(item));
-                    setRentals(normalizedRentals);
-                    if ('pagination' in data && data.pagination) {
-                        setPagination({
-                            current: data.pagination.current || 1,
-                            pages: data.pagination.pages || 1,
-                            total: data.pagination.total || 0,
-                            limit: data.pagination.limit || 15,
-                            count: data.pagination.count || 0
-                        });
+                } else if (('rentals' in data || 'rentalItems' in data)) {
+                    const dataObj = data as Record<string, unknown>;
+                    const rentalsArray = (dataObj.rentals || dataObj.rentalItems) as Array<Partial<RentalItem> & Record<string, unknown>>;
+                    if (Array.isArray(rentalsArray)) {
+                        // Alternative response format with rentals/rentalItems property
+                        const normalizedRentals = rentalsArray.map((item) => normalizeRentalItem(item));
+                        setRentals(normalizedRentals);
+                        if ('pagination' in data && data.pagination) {
+                            setPagination({
+                                current: data.pagination.current || 1,
+                                pages: data.pagination.pages || 1,
+                                total: data.pagination.total || 0,
+                                limit: data.pagination.limit || 15,
+                                count: data.pagination.count || 0
+                            });
+                        } else {
+                            setPagination({
+                                current: 1,
+                                pages: 1,
+                                total: normalizedRentals.length,
+                                limit: 15,
+                                count: normalizedRentals.length
+                            });
+                        }
                     } else {
+                        setRentals([]);
                         setPagination({
                             current: 1,
                             pages: 1,
-                            total: normalizedRentals.length,
+                            total: 0,
                             limit: 15,
-                            count: normalizedRentals.length
+                            count: 0
                         });
                     }
-                } else {
-                    setRentals([]);
-                    setPagination({
-                        current: 1,
-                        pages: 1,
-                        total: 0,
-                        limit: 15,
-                        count: 0
-                    });
                 }
             } else {
                 setRentals([]);
@@ -481,7 +476,7 @@ export default function MarketplaceRentalsPage() {
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, filters, sortBy, pagination.current, pagination.limit, normalizeRentalItem]);
+    }, [searchQuery, filters, sortBy, pagination, normalizeRentalItem]);
 
     // Debounced search to improve performance
     useEffect(() => {

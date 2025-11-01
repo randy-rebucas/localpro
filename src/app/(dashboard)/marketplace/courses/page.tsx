@@ -9,7 +9,6 @@ import {
     Search,
     Star,
     Clock,
-    ChevronDown,
     Grid,
     List,
     SlidersHorizontal,
@@ -192,7 +191,6 @@ interface FilterOptions {
 export default function MarketplaceCoursesPage() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
 
     // Fallback categories in case API is not available
     const fallbackCategories = useMemo(() => [
@@ -209,9 +207,8 @@ export default function MarketplaceCoursesPage() {
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("relevance");
+    const [sortBy] = useState("relevance");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [showFilters, setShowFilters] = useState(false);
     const [activeTab, setActiveTab] = useState<"all" | "featured">("all");
     const [pagination, setPagination] = useState({
         current: 1,
@@ -254,7 +251,7 @@ export default function MarketplaceCoursesPage() {
     ];
     
     // Normalize course data from API response
-    const normalizeCourse = useCallback((course: any): Course => {
+    const normalizeCourse = useCallback((course: Partial<Course> & Record<string, unknown>): Course => {
         return {
             ...course,
             _id: course._id || course.id,
@@ -307,7 +304,7 @@ export default function MarketplaceCoursesPage() {
             },
             // Count lessons from curriculum if available
             lessonsCount: course.lessonsCount || (course.curriculum 
-                ? course.curriculum.reduce((acc: number, module: any) => acc + (module.lessons?.length || 0), 0)
+                ? (course.curriculum as Array<{ lessons?: Array<unknown> }>).reduce((acc: number, module) => acc + (module.lessons?.length || 0), 0)
                 : 0),
             studentsCount: course.studentsCount || course.enrollment?.current || 0
         };
@@ -320,17 +317,6 @@ export default function MarketplaceCoursesPage() {
         { value: "fr", label: "French" },
         { value: "de", label: "German" },
         { value: "pt", label: "Portuguese" }
-    ];
-
-    const sortOptions = [
-        { value: "relevance", label: "Most Relevant" },
-        { value: "newest", label: "Newest First" },
-        { value: "oldest", label: "Oldest First" },
-        { value: "price_low", label: "Price: Low to High" },
-        { value: "price_high", label: "Price: High to Low" },
-        { value: "rating", label: "Highest Rated" },
-        { value: "students", label: "Most Popular" },
-        { value: "duration", label: "Duration" }
     ];
 
     const fetchCourses = useCallback(async (isRefresh = false) => {
@@ -422,11 +408,11 @@ export default function MarketplaceCoursesPage() {
                             count: data.pagination.count || 0
                         });
                     }
-                    const normalizedCourses = (data.data || []).map((course: any) => normalizeCourse(course));
+                    const normalizedCourses = (data.data || []).map((course: Partial<Course> & Record<string, unknown>) => normalizeCourse(course));
                     setCourses(normalizedCourses);
                 } else if (Array.isArray(data)) {
                     // Direct array response
-                    const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                    const normalizedCourses = (data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                     setCourses(normalizedCourses);
                     setPagination({
                         current: 1,
@@ -437,7 +423,7 @@ export default function MarketplaceCoursesPage() {
                     });
                 } else if ('courses' in data && Array.isArray(data.courses)) {
                     // Alternative response format
-                    const normalizedCourses = data.courses.map((course: any) => normalizeCourse(course));
+                    const normalizedCourses = (data.courses as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                     setCourses(normalizedCourses);
                     if ('pagination' in data && data.pagination) {
                         setPagination({
@@ -461,7 +447,7 @@ export default function MarketplaceCoursesPage() {
                 }
             } else if (Array.isArray(data)) {
                 // Direct array response
-                const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                const normalizedCourses = (data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                 setCourses(normalizedCourses);
                 setPagination({
                     current: 1,
@@ -481,7 +467,7 @@ export default function MarketplaceCoursesPage() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [searchQuery, filters, sortBy, pagination.current, pagination.limit, normalizeCourse]);
+    }, [searchQuery, filters, sortBy, pagination, normalizeCourse]);
 
     const fetchFeaturedCourses = useCallback(async () => {
         try {
@@ -493,16 +479,16 @@ export default function MarketplaceCoursesPage() {
             // Handle different response formats for featured courses
             if (data && typeof data === 'object' && !Array.isArray(data)) {
                 if ('success' in data && data.success && 'data' in data && data.data) {
-                    const normalizedCourses = data.data.map((course: any) => normalizeCourse(course));
+                    const normalizedCourses = (data.data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                     setFeaturedCourses(normalizedCourses);
                 } else if ('featured' in data && Array.isArray(data.featured)) {
-                    const normalizedCourses = data.featured.map((course: any) => normalizeCourse(course));
+                    const normalizedCourses = (data.featured as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                     setFeaturedCourses(normalizedCourses);
                 } else {
                     setFeaturedCourses([]);
                 }
             } else if (Array.isArray(data)) {
-                const normalizedCourses = data.map((course: any) => normalizeCourse(course));
+                const normalizedCourses = (data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
                 setFeaturedCourses(normalizedCourses);
             } else {
                 setFeaturedCourses([]);
@@ -641,9 +627,6 @@ export default function MarketplaceCoursesPage() {
             regularPrice = 0;
         }
         
-        const discountedPrice = 'discountedPrice' in pricing 
-            ? pricing.discountedPrice 
-            : ('originalPrice' in pricing ? pricing.originalPrice : ('discountedPrice' in pricing ? pricing.discountedPrice : undefined));
         const currency = ('currency' in pricing ? pricing.currency : 'USD') || 'USD';
         
         if (regularPrice === 0) {

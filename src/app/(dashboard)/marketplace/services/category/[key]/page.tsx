@@ -12,7 +12,6 @@ import {
   Grid,
   List,
   SlidersHorizontal,
-  RefreshCw,
   ChevronLeft,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -131,7 +130,7 @@ export default function CategoryServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingCategory, setLoadingCategory] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -185,20 +184,20 @@ export default function CategoryServicesPage() {
   }, [categoryKey]);
 
   // Normalize service data from API response
-  const normalizeService = useCallback((serviceData: any): Service => {
+  const normalizeService = useCallback((serviceData: Partial<Service> & Record<string, unknown>): Service => {
     return {
       ...serviceData,
       _id: serviceData._id || serviceData.id,
       id: serviceData.id || serviceData._id,
       images: Array.isArray(serviceData.images)
-        ? serviceData.images.map((img: any) =>
+        ? serviceData.images.map((img: string | ServiceImage | Record<string, unknown>) =>
             typeof img === 'string'
-              ? { url: img, alt: serviceData.title }
+              ? { url: img, alt: (serviceData.title || '') as string }
               : { 
-                url: img.url || img.publicId || '', 
-                publicId: img.publicId, 
-                thumbnail: img.thumbnail, 
-                alt: img.alt || serviceData.title 
+                url: (img as ServiceImage).url || (img as ServiceImage).publicId || '', 
+                publicId: (img as ServiceImage).publicId, 
+                thumbnail: (img as ServiceImage).thumbnail, 
+                alt: (img as ServiceImage).alt || (serviceData.title || '') 
               }
           )
         : [],

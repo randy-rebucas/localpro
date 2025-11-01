@@ -7,8 +7,8 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
-import { makeClientPublicRequest, makeClientAuthenticatedRequestWithEndpoint } from "@/lib/client-api-utils";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { makeClientPublicRequest } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
 
 const verificationSchema = z.object({
   code: z.string().min(4, "Code must be at least 4 digits").max(8, "Code must be at most 8 digits"),

@@ -190,7 +190,7 @@ export default function BookingsPage() {
   const [dateTo, setDateTo] = useState<string>("");
   
   // Normalize booking data from API response
-  const normalizeBooking = useCallback((booking: any): Booking => {
+  const normalizeBooking = useCallback((booking: Partial<Booking> & Record<string, unknown>): Booking => {
     return {
       ...booking,
       _id: booking._id || booking.id,
@@ -325,13 +325,13 @@ export default function BookingsPage() {
       // Ensure bookings is always an array and normalize
       let bookingsData: Booking[] = [];
       if (Array.isArray(data)) {
-        bookingsData = data.map((booking: any) => normalizeBooking(booking));
+        bookingsData = data.map((booking: Partial<Booking> & Record<string, unknown>) => normalizeBooking(booking));
         console.log("Using direct array data");
       } else if (data && Array.isArray(data.bookings)) {
-        bookingsData = data.bookings.map((booking: any) => normalizeBooking(booking));
+        bookingsData = (data.bookings as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         console.log("Using data.bookings array");
       } else if (data && Array.isArray(data.data)) {
-        bookingsData = data.data.map((booking: any) => normalizeBooking(booking));
+        bookingsData = (data.data as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         console.log("Using data.data array");
       } else {
         console.warn("Unexpected API response structure:", data);
@@ -351,7 +351,7 @@ export default function BookingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, typeFilter, dateFrom, dateTo]);
+  }, [statusFilter, typeFilter, dateFrom, dateTo, normalizeBooking]);
 
   useEffect(() => {
     fetchBookings();
@@ -378,27 +378,12 @@ export default function BookingsPage() {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeString: string) => {
-    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
     });
   };
 

@@ -9,7 +9,6 @@ import {
     Star,
     MapPin,
     Clock,
-    ChevronDown,
     Grid,
     List,
     SlidersHorizontal,
@@ -119,8 +118,6 @@ interface Product {
     __v?: number;
 }
 
-// Legacy Supply type alias for backward compatibility
-type Supply = Product;
 
 interface FilterOptions {
     category: string;
@@ -140,9 +137,8 @@ export default function MarketplaceSuppliesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy, setSortBy] = useState("price_low");
+    const [sortBy] = useState("price_low");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [showFilters, setShowFilters] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
         pages: 1,
@@ -171,16 +167,21 @@ export default function MarketplaceSuppliesPage() {
     ];
     
     // Normalize product data from API response
-    const normalizeProduct = useCallback((product: any): Product => {
+    const normalizeProduct = useCallback((product: Partial<Product> & Record<string, unknown>): Product => {
         return {
             ...product,
             _id: product._id || product.id,
             id: product.id || product._id,
             images: Array.isArray(product.images) 
-                ? product.images.map((img: any) => 
+                ? product.images.map((img: string | ProductImage | Record<string, unknown>) => 
                     typeof img === 'string' 
-                        ? { url: img, alt: product.title || product.name } 
-                        : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || product.title || product.name }
+                        ? { url: img, alt: (product.title || product.name || '') as string } 
+                        : {
+                            url: (img as ProductImage).url || (img as ProductImage).publicId || '',
+                            publicId: (img as ProductImage).publicId,
+                            thumbnail: (img as ProductImage).thumbnail,
+                            alt: (img as ProductImage).alt || (product.title || product.name || '') as string
+                          }
                   )
                 : [],
             supplier: typeof product.supplier === 'string' 
@@ -209,13 +210,6 @@ export default function MarketplaceSuppliesPage() {
         };
     }, []);
 
-    const sortOptions = [
-        { value: "relevance", label: "Most Relevant" },
-        { value: "price_low", label: "Price: Low to High" },
-        { value: "price_high", label: "Price: High to Low" },
-        { value: "rating", label: "Highest Rated" },
-        { value: "newest", label: "Newest First" }
-    ];
 
     const getCurrentLocation = () => {
         if (navigator.geolocation) {
@@ -340,7 +334,7 @@ export default function MarketplaceSuppliesPage() {
             // Handle the API response structure with pagination
             if (Array.isArray(data)) {
                 // Direct array response - normalize products
-                const normalizedProducts = data.map((product: any) => normalizeProduct(product));
+                const normalizedProducts = (data as Array<Partial<Product> & Record<string, unknown>>).map((product) => normalizeProduct(product));
                 setSupplies(normalizedProducts);
                 setPagination({
                     current: 1,
@@ -369,7 +363,7 @@ export default function MarketplaceSuppliesPage() {
                     }
 
                     // Normalize and set products data
-                    const normalizedProducts = (data.data || []).map((product: any) => normalizeProduct(product));
+                    const normalizedProducts = (data.data || []).map((product: Partial<Product> & Record<string, unknown>) => normalizeProduct(product));
                     setSupplies(normalizedProducts);
 
                     // Debug: Log the first product to see its structure
@@ -378,37 +372,40 @@ export default function MarketplaceSuppliesPage() {
                         console.log("First product supplier:", normalizedProducts[0].supplier);
                         console.log("First product pricing:", normalizedProducts[0].pricing);
                     }
-                } else if (('supplies' in data || 'products' in data) && Array.isArray((data as any).supplies || (data as any).products)) {
-                    // Alternative response format with supplies/products property
-                    const products = (data as any).supplies || (data as any).products || [];
-                    const normalizedProducts = products.map((product: any) => normalizeProduct(product));
-                    setSupplies(normalizedProducts);
-                    if ('pagination' in data && data.pagination) {
-                        setPagination({
-                            current: data.pagination.current || 1,
-                            pages: data.pagination.pages || 1,
-                            total: data.pagination.total || 0,
-                            limit: data.pagination.limit || 15,
-                            count: data.pagination.count || 0
-                        });
+                } else if (('supplies' in data || 'products' in data)) {
+                    const dataObj = data as Record<string, unknown>;
+                    const productsArray = (dataObj.supplies || dataObj.products) as Array<Partial<Product> & Record<string, unknown>>;
+                    if (Array.isArray(productsArray)) {
+                        // Alternative response format with supplies/products property
+                        const normalizedProducts = productsArray.map((product) => normalizeProduct(product));
+                        setSupplies(normalizedProducts);
+                        if ('pagination' in data && data.pagination) {
+                            setPagination({
+                                current: data.pagination.current || 1,
+                                pages: data.pagination.pages || 1,
+                                total: data.pagination.total || 0,
+                                limit: data.pagination.limit || 15,
+                                count: data.pagination.count || 0
+                            });
+                        } else {
+                            setPagination({
+                                current: 1,
+                                pages: 1,
+                                total: normalizedProducts.length,
+                                limit: 15,
+                                count: normalizedProducts.length
+                            });
+                        }
                     } else {
+                        setSupplies([]);
                         setPagination({
                             current: 1,
                             pages: 1,
-                            total: normalizedProducts.length,
+                            total: 0,
                             limit: 15,
-                            count: normalizedProducts.length
+                            count: 0
                         });
                     }
-                } else {
-                    setSupplies([]);
-                    setPagination({
-                        current: 1,
-                        pages: 1,
-                        total: 0,
-                        limit: 15,
-                        count: 0
-                    });
                 }
             } else {
                 setSupplies([]);
@@ -428,7 +425,7 @@ export default function MarketplaceSuppliesPage() {
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, filters, sortBy, pagination.current, pagination.limit, normalizeProduct]);
+    }, [searchQuery, filters, sortBy, pagination, normalizeProduct]);
 
     // Debounced search to improve performance
     useEffect(() => {

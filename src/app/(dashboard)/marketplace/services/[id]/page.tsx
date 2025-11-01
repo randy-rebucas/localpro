@@ -194,17 +194,22 @@ export default function ServiceDetailPage() {
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   // Normalize service data from API response
-  const normalizeService = useCallback((serviceData: any): Service => {
+  const normalizeService = useCallback((serviceData: Partial<Service> & Record<string, unknown>): Service => {
     return {
       ...serviceData,
-      _id: serviceData._id || serviceData.id,
-      id: serviceData.id || serviceData._id,
+      _id: serviceData._id || serviceData.id || '',
+      id: serviceData.id || serviceData._id || '',
       // Handle images
       images: Array.isArray(serviceData.images)
-        ? serviceData.images.map((img: any) =>
+        ? serviceData.images.map((img: string | ServiceImage | Record<string, unknown>) =>
             typeof img === 'string'
-              ? { url: img, alt: serviceData.title }
-              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || serviceData.title }
+              ? { url: img, alt: serviceData.title || '' }
+              : {
+                  url: (img as ServiceImage).url || (img as ServiceImage).publicId || '',
+                  publicId: (img as ServiceImage).publicId,
+                  thumbnail: (img as ServiceImage).thumbnail,
+                  alt: (img as ServiceImage).alt || serviceData.title || ''
+                }
           )
         : [],
       // Handle provider
@@ -351,15 +356,15 @@ export default function ServiceDetailPage() {
           ? serviceData.provider
           : null;
 
-        services.forEach((svc: any) => {
-          const serviceId = svc._id || svc.id;
+        services.forEach((svc: Partial<Service> & Record<string, unknown>) => {
+          const serviceId = (svc._id || svc.id) as string | undefined;
           // Skip the current service
           if (serviceId === currentServiceId) return;
 
           if (svc.provider) {
             const provider = typeof svc.provider === 'string' 
               ? { id: svc.provider }
-              : svc.provider;
+              : svc.provider as ProviderWithService;
             
             const providerId = provider._id || provider.id;
             if (!providerId) return;
@@ -378,7 +383,7 @@ export default function ServiceDetailPage() {
                 profile: provider.profile,
                 rating: provider.profile?.rating || provider.rating || 0,
                 serviceId: serviceId,
-                serviceTitle: svc.title
+                serviceTitle: (svc.title || '') as string
               });
             }
           }
@@ -392,7 +397,7 @@ export default function ServiceDetailPage() {
     } finally {
       setLoadingProviders(false);
     }
-  }, []);
+  }, [params.id]);
 
   useEffect(() => {
     if (params.id) {
@@ -655,7 +660,7 @@ export default function ServiceDetailPage() {
       {/* Service Images */}
       {service.images && service.images.length > 0 && (() => {
         // Get image URL (handle both formats)
-        const getImageUrl = (img: ServiceImage | string, index: number) => {
+        const getImageUrl = (img: ServiceImage | string) => {
           return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
         };
         const getImageAlt = (img: ServiceImage | string, index: number) => {
@@ -669,7 +674,7 @@ export default function ServiceDetailPage() {
             <div className="md:col-span-2">
               <div className="relative group overflow-hidden rounded-lg">
                 <Image
-                  src={getImageUrl(service.images[selectedImageIndex], selectedImageIndex)}
+                  src={getImageUrl(service.images[selectedImageIndex])}
                   alt={getImageAlt(service.images[selectedImageIndex], selectedImageIndex)}
                   width={400}
                   height={256}
@@ -690,7 +695,7 @@ export default function ServiceDetailPage() {
                   }`}
                 >
                   <Image
-                    src={getImageUrl(image, index)}
+                    src={getImageUrl(image)}
                     alt={getImageAlt(image, index)}
                     width={100}
                     height={100}

@@ -351,7 +351,7 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
   // Validate URL is properly formed
   try {
     new URL(url);
-  } catch (urlError) {
+  } catch {
     console.error('Invalid URL constructed:', url);
     throw new Error(`Invalid API URL: ${url}. Please check API_BASE_URL configuration.`);
   }

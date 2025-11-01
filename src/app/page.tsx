@@ -30,7 +30,7 @@ import {
   Globe,
   Clock,
 } from "lucide-react";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { API_ENDPOINTS } from "@/lib/api";
 import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -69,7 +69,7 @@ export default function MarketplacePage() {
         setCategories(data.data);
       } else if (Array.isArray(data)) {
         // Fallback if response is directly an array
-        setCategories(data as any);
+        setCategories(data as Array<{ id: string; name: string; slug: string; description?: string; icon?: string }>);
       } else {
         console.warn("Unexpected categories response format:", data);
         setCategories([]);
