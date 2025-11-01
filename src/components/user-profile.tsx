@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useMemo, useState } from "react";
+import { useEffect, useCallback, useMemo, useState, useRef } from "react";
 import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -484,6 +484,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   
   // Role-based visibility helpers (normalize role format)
   const normalizedRole = userRole?.toUpperCase();
+  const isClient = normalizedRole === 'CLIENT' || profile?.role === 'client';
   const isProvider = normalizedRole === 'PROVIDER' || profile?.role === 'provider';
   const isSupplier = normalizedRole === 'SUPPLIER' || profile?.role === 'supplier';
   const isInstructor = normalizedRole === 'INSTRUCTOR' || profile?.role === 'instructor';
@@ -650,22 +651,22 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             {/* Profile Information */}
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Name */}
+                {/* First Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <UserIcon className="w-4 h-4 inline mr-2" />
-                    Full Name
+                    First Name
                   </label>
-                  <p className="text-gray-700 py-2">{profile?.name || "Not provided"}</p>
+                  <p className="text-gray-700 py-2">{profile?.firstName || "Not provided"}</p>
                 </div>
 
-                {/* Phone */}
+                {/* Last Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="w-4 h-4 inline mr-2" />
-                    Phone
+                    <UserIcon className="w-4 h-4 inline mr-2" />
+                    Last Name
                   </label>
-                  <p className="text-gray-700 py-2">{profile?.phone || profile?.phoneNumber || "Not provided"}</p>
+                  <p className="text-gray-700 py-2">{profile?.lastName || "Not provided"}</p>
                 </div>
 
                 {/* Email */}
@@ -676,31 +677,57 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   </label>
                   <p className="text-gray-700 py-2">{profile?.email || "Not provided"}</p>
                 </div>
-
-                {/* Location */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    Location
-                  </label>
-                  <p className="text-gray-700 py-2">{profile?.location || "Not provided"}</p>
-                </div>
-
-                {/* Website */}
-                {normalizedWebsite && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Globe className="w-4 h-4 inline mr-2" />
-                      Website
-                    </label>
-                    <p className="text-gray-700 py-2">
-                      <a href={normalizedWebsite} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">
-                        {profile?.website}
-                      </a>
-                    </p>
-                  </div>
-                )}
               </div>
+
+              {/* Address Section */}
+              {profile?.profile?.address && (
+                <div className="border-t border-gray-200 pt-6">
+                  <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Address
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {profile.profile.address.street && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Street</label>
+                        <p className="text-gray-700 py-2">{profile.profile.address.street}</p>
+                      </div>
+                    )}
+                    {profile.profile.address.city && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                        <p className="text-gray-700 py-2">{profile.profile.address.city}</p>
+                      </div>
+                    )}
+                    {profile.profile.address.state && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                        <p className="text-gray-700 py-2">{profile.profile.address.state}</p>
+                      </div>
+                    )}
+                    {profile.profile.address.zipCode && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                        <p className="text-gray-700 py-2">{profile.profile.address.zipCode}</p>
+                      </div>
+                    )}
+                    {profile.profile.address.country && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                        <p className="text-gray-700 py-2">{profile.profile.address.country}</p>
+                      </div>
+                    )}
+                    {(profile.profile.address.coordinates?.lat || profile.profile.address.coordinates?.lng) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Coordinates</label>
+                        <p className="text-gray-700 py-2">
+                          {profile.profile.address.coordinates.lat?.toFixed(6)}, {profile.profile.address.coordinates.lng?.toFixed(6)}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Bio */}
               {profile?.profile?.bio && (
@@ -710,8 +737,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Business Information - for business roles */}
-              {isBusinessRole && profile?.profile?.businessName && (
+              {/* Business Information - Only for non-client roles */}
+              {!isClient && isBusinessRole && profile?.profile?.businessName && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
@@ -738,8 +765,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Skills */}
-              {profile?.profile?.skills && profile.profile.skills.length > 0 && (
+              {/* Skills - Only for non-client roles */}
+              {!isClient && profile?.profile?.skills && profile.profile.skills.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Briefcase className="w-4 h-4 inline mr-2" />
@@ -758,8 +785,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Specialties - for service providers */}
-              {isServiceProvider && profile?.profile?.specialties && profile.profile.specialties.length > 0 && (
+              {/* Specialties - Only for non-client roles */}
+              {!isClient && isServiceProvider && profile?.profile?.specialties && profile.profile.specialties.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Target className="w-4 h-4 inline mr-2" />
@@ -778,8 +805,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Service Areas - for service providers */}
-              {isServiceProvider && profile?.profile?.serviceAreas && profile.profile.serviceAreas.length > 0 && (
+              {/* Service Areas - Only for non-client roles */}
+              {!isClient && isServiceProvider && profile?.profile?.serviceAreas && profile.profile.serviceAreas.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <MapPin className="w-4 h-4 inline mr-2" />
@@ -798,8 +825,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Experience - for business roles */}
-              {isBusinessRole && profile?.profile?.experience !== undefined && (
+              {/* Experience - Only for non-client roles */}
+              {!isClient && isBusinessRole && profile?.profile?.experience !== undefined && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
@@ -808,8 +835,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Rating and Reviews */}
-              {(profile?.profile?.rating !== undefined || profile?.profile?.totalReviews !== undefined) && (
+              {/* Rating and Reviews - Only for non-client roles */}
+              {!isClient && (profile?.profile?.rating !== undefined || profile?.profile?.totalReviews !== undefined) && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                   {profile.profile.rating !== undefined && (
                     <div>
@@ -836,8 +863,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Certifications */}
-              {profile?.profile?.certifications && profile.profile.certifications.length > 0 && (
+              {/* Certifications - Only for non-client roles */}
+              {!isClient && profile?.profile?.certifications && profile.profile.certifications.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -869,8 +896,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Insurance */}
-              {isServiceProvider && profile?.profile?.insurance && (
+              {/* Insurance - Only for non-client roles */}
+              {!isClient && isBusinessRole && profile?.profile?.insurance && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -907,8 +934,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Background Check */}
-              {isServiceProvider && profile?.profile?.backgroundCheck && (
+              {/* Background Check - Only for non-client roles */}
+              {!isClient && isBusinessRole && profile?.profile?.backgroundCheck && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -938,8 +965,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Portfolio Gallery */}
-              {isBusinessRole && profile?.profile?.portfolio && profile.profile.portfolio.length > 0 && (
+              {/* Portfolio Gallery - Only for non-client roles */}
+              {!isClient && isBusinessRole && profile?.profile?.portfolio && profile.profile.portfolio.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Briefcase className="w-4 h-4" />
@@ -966,8 +993,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Verification Levels */}
-              {profile?.verification && Object.values(profile.verification).some(v => v === true) && (
+              {/* Verification Levels - Only for non-client roles */}
+              {!isClient && profile?.verification && Object.values(profile.verification).some(v => v === true) && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -1001,8 +1028,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Badges */}
-              {profile?.badges && profile.badges.length > 0 && (
+              {/* Badges - Only for non-client roles */}
+              {!isClient && profile?.badges && profile.badges.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -1026,8 +1053,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                 </div>
               )}
 
-              {/* Performance Metrics */}
-              {(profile?.responseTime?.average !== undefined || profile?.completionRate !== undefined || profile?.cancellationRate !== undefined) && (
+              {/* Performance Metrics - Only for non-client roles */}
+              {!isClient && (profile?.responseTime?.average !== undefined || profile?.completionRate !== undefined || profile?.cancellationRate !== undefined) && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -1135,8 +1162,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               </div>
             </div>
 
-            {/* Wallet - for business roles */}
-            {isBusinessRole && profile?.wallet && (
+            {/* Wallet - Only for non-client roles */}
+            {!isClient && isBusinessRole && profile?.wallet && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                   <Wallet className="w-4 h-4" />
@@ -1153,8 +1180,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               </div>
             )}
 
-            {/* Agency Information */}
-            {profile?.agency?.agencyId && (
+            {/* Agency Information - Only for non-client roles (not in payload, but visible for admin purposes) */}
+            {!isClient && profile?.agency?.agencyId && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                   <Users className="w-4 h-4" />

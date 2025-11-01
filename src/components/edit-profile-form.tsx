@@ -246,6 +246,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const userRole = session?.user?.role;
   
   // Role-based visibility helpers
+  const isClient = userRole === 'CLIENT' || userRole === 'client';
   const isProvider = userRole === 'PROVIDER';
   const isSupplier = userRole === 'SUPPLIER';
   const isInstructor = userRole === 'INSTRUCTOR';
@@ -348,6 +349,95 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   }, [watchedValues, initialValues]);
 
   const buildNestedPayload = useCallback((values: ProfileForm) => {
+    // Check if user is a client - clients can only update specific fields
+    const currentUserRole = session?.user?.role;
+    const isClientUser = currentUserRole === 'CLIENT' || currentUserRole === 'client';
+    
+    // For clients, only include allowed fields
+    if (isClientUser) {
+      const payload: any = {};
+      
+      // Only include firstName if it has a value
+      if (values.firstName && values.firstName.trim()) {
+        payload.firstName = values.firstName.trim();
+      }
+      
+      // Only include lastName if it has a value
+      if (values.lastName && values.lastName.trim()) {
+        payload.lastName = values.lastName.trim();
+      }
+      
+      // Only include email if it has a value
+      if (values.email && values.email.trim()) {
+        payload.email = values.email.trim();
+      }
+      
+      // Build profile object - only include bio and address for clients
+      const profilePayload: any = {};
+      
+      const bioValue = values.profile?.bio || values.bio;
+      if (bioValue && bioValue.trim()) {
+        profilePayload.bio = bioValue.trim();
+      }
+      
+      // Build address object - only include if it has meaningful data
+      if (values.profile?.address) {
+        const address: any = {};
+        let hasAddressData = false;
+        
+        if (values.profile.address.street && values.profile.address.street.trim()) {
+          address.street = values.profile.address.street.trim();
+          hasAddressData = true;
+        }
+        if (values.profile.address.city && values.profile.address.city.trim()) {
+          address.city = values.profile.address.city.trim();
+          hasAddressData = true;
+        }
+        if (values.profile.address.state && values.profile.address.state.trim()) {
+          address.state = values.profile.address.state.trim();
+          hasAddressData = true;
+        }
+        if (values.profile.address.zipCode && values.profile.address.zipCode.trim()) {
+          address.zipCode = values.profile.address.zipCode.trim();
+          hasAddressData = true;
+        }
+        if (values.profile.address.country && values.profile.address.country.trim()) {
+          address.country = values.profile.address.country.trim();
+          hasAddressData = true;
+        }
+        
+        // Include coordinates if they exist
+        if (values.profile.address.coordinates) {
+          const coords: any = {};
+          if (typeof values.profile.address.coordinates.lat === 'number' && !isNaN(values.profile.address.coordinates.lat)) {
+            coords.lat = values.profile.address.coordinates.lat;
+            hasAddressData = true;
+          }
+          if (typeof values.profile.address.coordinates.lng === 'number' && !isNaN(values.profile.address.coordinates.lng)) {
+            coords.lng = values.profile.address.coordinates.lng;
+            hasAddressData = true;
+          }
+          if (Object.keys(coords).length > 0) {
+            address.coordinates = coords;
+          }
+        }
+        
+        if (hasAddressData) {
+          profilePayload.address = address;
+        }
+      }
+      
+      // Only include profile if it has any fields
+      if (Object.keys(profilePayload).length > 0) {
+        payload.profile = profilePayload;
+      }
+      
+      return payload;
+    }
+    
+    // For non-client roles, use the payload structure matching the interface
+    // Only include fields from the payload interface: firstName, lastName, email, and profile fields
+    
     // Convert comma-separated strings to arrays (from form to entity format)
     const skillsArray = values.profile?.skills 
       ? (typeof values.profile.skills === 'string' 
@@ -362,24 +452,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     const specialtiesArray = values.profile?.specialties && typeof values.profile.specialties === 'string'
       ? values.profile.specialties.split(",").map(s => s.trim()).filter(Boolean)
       : Array.isArray(values.profile?.specialties) ? values.profile.specialties : [];
-    
-    const tagsArray = values.tags && typeof values.tags === 'string'
-      ? values.tags.split(",").map(s => s.trim()).filter(Boolean)
-      : Array.isArray(values.tags) ? values.tags : [];
 
     const experienceNum = values.profile?.experience ?? (values.experience ? Number(values.experience) : undefined);
     const yearsInBusinessNum = values.profile?.yearsInBusiness ? Number(values.profile.yearsInBusiness) : undefined;
     const coverageAmountNum = values.profile?.insurance?.coverageAmount ? Number(values.profile.insurance.coverageAmount) : undefined;
-    const commissionNum = values.agency?.commissionRate ? Number(values.agency.commissionRate) : undefined;
 
-    // Build base payload - only include non-empty values
+    // Build base payload - only include fields from payload interface
     const payload: any = {};
-    
-    // Only include phoneNumber if it has a value
-    const phoneNumberValue = values.phoneNumber || values.phone;
-    if (phoneNumberValue && phoneNumberValue.trim()) {
-      payload.phoneNumber = phoneNumberValue.trim();
-    }
     
     // Only include email if it has a value
     if (values.email && values.email.trim()) {
@@ -394,11 +473,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Only include lastName if it has a value
     if (values.lastName && values.lastName.trim()) {
       payload.lastName = values.lastName.trim();
-    }
-    
-    // Only include role if it has a value
-    if (values.role && values.role.trim()) {
-      payload.role = values.role.trim();
     }
     
     // Build profile object - only include fields with values
@@ -675,34 +749,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       payload.profile = profilePayload;
     }
     
-    // Only include preferences if it exists and has values
-    if (values.preferences && Object.keys(values.preferences).length > 0) {
-      payload.preferences = values.preferences;
-    }
-    
-    // Only include agency if it exists and has values
-    if (values.agency) {
-      const agencyPayload: any = { ...values.agency };
-      if (typeof commissionNum === 'number' && !isNaN(commissionNum)) {
-        agencyPayload.commissionRate = commissionNum;
-      }
-      // Only include if it has meaningful data
-      if (Object.keys(agencyPayload).length > 0 && 
-          (agencyPayload.agencyId || agencyPayload.role || agencyPayload.status || agencyPayload.commissionRate)) {
-        payload.agency = agencyPayload;
-      }
-    }
-    
-    if (tagsArray.length > 0) {
-      payload.tags = tagsArray;
-    }
-    
-    if (values.notes && Array.isArray(values.notes) && values.notes.length > 0) {
-      payload.notes = values.notes;
-    }
-    
     return payload;
-  }, []);
+  }, [session?.user?.role]);
 
   // Auto-save functionality - only when there are actual changes
   useEffect(() => {
@@ -1576,25 +1624,28 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
               {/* Form Fields */}
               <div className="space-y-8">
-                {/* Personal */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Personal</h3>
-                  <div className="h-px bg-gray-200" />
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="w-4 h-4 inline mr-2" />
-                    Full Name
-                  </label>
-                  <input
-                    {...register("name")}
-                    type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-                  )}
-                </div>
+                {/* Personal - Hidden for clients */}
+                {!isClient && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Personal</h3>
+                    <div className="h-px bg-gray-200" />
+                    {/* Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <User className="w-4 h-4 inline mr-2" />
+                        Full Name
+                      </label>
+                      <input
+                        {...register("name")}
+                        type="text"
+                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
+                      />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Contact */}
                 <div className="space-y-3">
@@ -1622,45 +1673,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                       type="email"
                     />
                   </div>
-                  <div>
-                    <Input
-                      label="Phone Number"
-                      {...register("phoneNumber")}
-                      type="tel"
-                      placeholder="+63-900-000-0000"
-                    />
-                  </div>
                 </div>
 
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="w-4 h-4 inline mr-2" />
-                    Phone
-                  </label>
-                  <input
-                    {...register("phone")}
-                    type="tel"
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
-                  />
-                </div>
 
                 {/* Address */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Address</h3>
                   <div className="h-px bg-gray-200" />
-                {/* Location */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    Location
-                  </label>
-                  <input
-                    {...register("location")}
-                    type="text"
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
-                  />
-                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -1686,62 +1705,49 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                 </div>
                 </div>
 
-                {/* Website */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Globe className="w-4 h-4 inline mr-2" />
-                    Website
-                  </label>
-                  <input
-                    {...register("website")}
-                    type="url"
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
-                  />
-                  {errors.website && (
-                    <p className="mt-1 text-sm text-red-600">{errors.website.message}</p>
-                  )}
-                </div>
 
-                {/* Skills & Specialties */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
-                    {isBusinessRole ? "Professional Skills & Specialties" : "Skills"}
-                  </h3>
-                  <div className="h-px bg-gray-200" />
-                {/* Skills */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Briefcase className="w-4 h-4 inline mr-2" />
-                    {isBusinessRole ? "Professional Skills" : "Skills"}
-                  </label>
-                  <input
-                    {...register("skills")}
-                    type="text"
-                    placeholder="Enter skills separated by commas"
-                    className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
-                  />
-                </div>
+                {/* Skills & Specialties - Hidden for clients */}
+                {!isClient && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isBusinessRole ? "Professional Skills & Specialties" : "Skills"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
+                    {/* Skills */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <Briefcase className="w-4 h-4 inline mr-2" />
+                        {isBusinessRole ? "Professional Skills" : "Skills"}
+                      </label>
+                      <input
+                        {...register("profile.skills")}
+                        type="text"
+                        placeholder="Enter skills separated by commas"
+                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
+                      />
+                    </div>
 
-                {/* Service Areas and Specialties - Only for service providers */}
-                {isServiceProvider && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
-                      <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
-                      <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
-                    </div>
+                    {/* Service Areas and Specialties - Only for service providers */}
+                    {isServiceProvider && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
+                          <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+                          <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-                </div>
 
                 {/* Bio */}
                 <div>
                   <Textarea
                     label="Bio"
-                    {...register("bio")}
+                    {...register("profile.bio")}
                     rows={3}
                     placeholder="Tell us about yourself..."
                   />
@@ -1760,12 +1766,18 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                         {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
                       </label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input {...register("experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                         <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                         <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <input {...register("profile.businessType")} type="text" placeholder="Business type" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        <select {...register("profile.businessType")} className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300">
+                          <option value="">Select business type</option>
+                          <option value="individual">Individual</option>
+                          <option value="small_business">Small Business</option>
+                          <option value="enterprise">Enterprise</option>
+                          <option value="franchise">Franchise</option>
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -1846,7 +1858,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     <div className="h-px bg-gray-200" />
                     <div className="space-y-3">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <input {...register("profile.backgroundCheck.status")} placeholder="Status" className="px-3 py-2 border border-gray-200 rounded" />
+                        <select {...register("profile.backgroundCheck.status")} className="px-3 py-2 border border-gray-200 rounded">
+                          <option value="">Select status</option>
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                          <option value="not_required">Not Required</option>
+                        </select>
                         <input {...register("profile.backgroundCheck.completedAt")} type="date" className="px-3 py-2 border border-gray-200 rounded" />
                         <input {...register("profile.backgroundCheck.document.url")} placeholder="Document URL" className="px-3 py-2 border border-gray-200 rounded" />
                       </div>
@@ -1887,12 +1905,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                   </div>
                 )}
 
-                {/* Preferences and Agency */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
-                    {isAdministrative ? "Preferences & Agency" : "Preferences"}
-                  </h3>
-                  <div className="h-px bg-gray-200" />
+                {/* Preferences and Agency - Hidden for clients */}
+                {!isClient && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                      {isAdministrative ? "Preferences & Agency" : "Preferences"}
+                    </h3>
+                    <div className="h-px bg-gray-200" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1914,33 +1933,35 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     </div>
                   )}
                 </div>
-                </div>
-              </div>
-                </div>
-
-                {/* Tags & Notes */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Tags & Notes</h3>
-                  <div className="h-px bg-gray-200" />
-                {/* Tags */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                  <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
-                </div>
-
-                {/* Notes */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">Notes</label>
-                    <button type="button" onClick={() => addNote({ note: "" })} className="text-green-600 text-sm">Add note</button>
                   </div>
-                  {noteFields.map((field, idx) => (
-                    <div key={field.id} className="flex items-center gap-2">
-                      <input {...register(`notes.${idx}.note` as const)} placeholder="Note" className="flex-1 px-3 py-2 border border-gray-200 rounded" />
-                      <button type="button" onClick={() => removeNote(idx)} className="text-red-600 text-sm">Remove</button>
+                )}
+
+                {/* Tags & Notes - Hidden for clients */}
+                {!isClient && (
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Tags & Notes</h3>
+                    <div className="h-px bg-gray-200" />
+                    {/* Tags */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                      <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                     </div>
-                  ))}
-                </div>
+
+                    {/* Notes */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-gray-700">Notes</label>
+                        <button type="button" onClick={() => addNote({ note: "" })} className="text-green-600 text-sm">Add note</button>
+                      </div>
+                      {noteFields.map((field, idx) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                          <input {...register(`notes.${idx}.note` as const)} placeholder="Note" className="flex-1 px-3 py-2 border border-gray-200 rounded" />
+                          <button type="button" onClick={() => removeNote(idx)} className="text-red-600 text-sm">Remove</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               </div>
               
