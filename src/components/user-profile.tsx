@@ -25,15 +25,21 @@ import {
   Calendar,
   Mail,
   Wallet,
-  Gift,
   Activity,
   Target,
   Zap
 } from "lucide-react";
 import { ProfileCompleteness } from "./profile-completeness";
+import { AccountInfo } from "./account-info";
+import { WalletInfo } from "./wallet-info";
+import { AgencyInfo } from "./agency-info";
+import { ReferralInfo } from "./referral-info";
+import { ActivitySummary } from "./activity-summary";
+import { QuickActions } from "./quick-actions";
 import { Loading } from "@/components/ui/loading";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
+import { CLIENT_CONFIG } from "@/lib/env";
 
 // User Data Entity (from features/users/data-entities.md)
 
@@ -1112,254 +1118,31 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             />
 
             {/* Account Info */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">Account Info</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Member since</span>
-                  <span className="text-sm font-medium text-gray-700">{formattedCreatedAt}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Role</span>
-                  <span className="text-sm font-medium text-gray-700 capitalize">
-                    {profile?.role || "User"}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Status</span>
-                  <span className="flex items-center text-sm font-medium text-green-600">
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    {profile?.status === 'active' ? 'Active' : profile?.status || 'Active'}
-                  </span>
-                </div>
-                {profile?.isVerified !== undefined && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Verification</span>
-                    <span className={`flex items-center text-sm font-medium ${profile.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
-                      {profile.isVerified ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Verified
-                        </>
-                      ) : (
-                        <>
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          Pending
-                        </>
-                      )}
-                    </span>
-                  </div>
-                )}
-                {profile?.trustScore !== undefined && profile.trustScore > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Trust Score</span>
-                    <span className="flex items-center text-sm font-medium text-blue-600">
-                      <Shield className="w-4 h-4 mr-1" />
-                      {profile.trustScore}/100
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+            <AccountInfo 
+              profile={profile} 
+              formattedCreatedAt={formattedCreatedAt} 
+            />
 
             {/* Wallet - Only for non-client roles */}
-            {!isClient && isBusinessRole && profile?.wallet && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Wallet className="w-4 h-4" />
-                  Wallet
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Balance</span>
-                    <span className="text-lg font-semibold text-gray-700">
-                      {profile.wallet.currency || 'PHP'} {(profile.wallet.balance || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {!isClient && isBusinessRole && <WalletInfo profile={profile} />}
 
-            {/* Agency Information - Only for non-client roles (not in payload, but visible for admin purposes) */}
-            {!isClient && profile?.agency?.agencyId && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  Agency
-                </h3>
-                <div className="space-y-2">
-                  {profile.agency.role && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Role</span>
-                      <span className="text-sm font-medium text-gray-700 capitalize">
-                        {profile.agency.role}
-                      </span>
-                    </div>
-                  )}
-                  {profile.agency.status && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Status</span>
-                      <span className="text-sm font-medium text-gray-700 capitalize">
-                        {profile.agency.status}
-                      </span>
-                    </div>
-                  )}
-                  {profile.agency.commissionRate !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Commission</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {profile.agency.commissionRate}%
-                      </span>
-                    </div>
-                  )}
-                  {profile.agency.joinedAt && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Joined</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {new Date(profile.agency.joinedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* Agency Information - Only for non-client roles */}
+            {!isClient && <AgencyInfo profile={profile} />}
 
             {/* Referral Information */}
-            {profile?.referral?.referralCode && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Gift className="w-4 h-4" />
-                  Referral Program
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Your Referral Code</label>
-                    <p className="text-sm font-mono font-semibold text-gray-700 bg-gray-50 p-2 rounded">
-                      {profile.referral.referralCode}
-                    </p>
-                  </div>
-                  {profile.referral.referralStats && (
-                    <div className="space-y-2 pt-3 border-t border-gray-200">
-                      {profile.referral.referralStats.referralTier && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Tier</span>
-                          <span className="text-sm font-medium text-gray-700 capitalize">
-                            {profile.referral.referralStats.referralTier}
-                          </span>
-                        </div>
-                      )}
-                      {profile.referral.referralStats.totalReferrals !== undefined && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Total Referrals</span>
-                          <span className="text-sm font-medium text-gray-700">
-                            {profile.referral.referralStats.totalReferrals}
-                          </span>
-                        </div>
-                      )}
-                      {profile.referral.referralStats.successfulReferrals !== undefined && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Successful</span>
-                          <span className="text-sm font-medium text-gray-700">
-                            {profile.referral.referralStats.successfulReferrals}
-                          </span>
-                        </div>
-                      )}
-                      {profile.referral.referralStats.totalRewardsEarned !== undefined && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Rewards Earned</span>
-                          <span className="text-sm font-medium text-green-600">
-                            {profile.referral.referralStats.totalRewardsEarned}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            {/* <ReferralInfo profile={profile} /> */}
 
             {/* Activity Summary */}
-            {profile?.activity && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                  <Activity className="w-4 h-4" />
-                  Activity
-                </h3>
-                <div className="space-y-2">
-                  {profile.activity.lastActiveAt && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Last Active</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {new Date(profile.activity.lastActiveAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                  {profile.activity.totalSessions !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Total Sessions</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {profile.activity.totalSessions}
-                      </span>
-                    </div>
-                  )}
-                  {profile.lastLoginAt && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Last Login</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {new Date(profile.lastLoginAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                  {profile.loginCount !== undefined && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Login Count</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {profile.loginCount}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <ActivitySummary profile={profile} />
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  View Public Profile
-                </button>
-                {/* Role-specific actions */}
-                {isBusinessRole && (
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Download Resume
-                  </button>
-                )}
-                {isServiceProvider && (
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Service Dashboard
-                  </button>
-                )}
-                {isSupplier && (
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Supply Dashboard
-                  </button>
-                )}
-                {isInstructor && (
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Academy Dashboard
-                  </button>
-                )}
-                {isAdministrative && (
-                  <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                    Agency Dashboard
-                  </button>
-                )}
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
-                  Privacy Settings
-                </button>
-              </div>
-            </div>
+            <QuickActions
+              isBusinessRole={isBusinessRole}
+              isServiceProvider={isServiceProvider}
+              isSupplier={isSupplier}
+              isInstructor={isInstructor}
+              isAdministrative={isAdministrative}
+            />
           </div>
         </div>
       </div>
