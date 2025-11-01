@@ -36,7 +36,7 @@ export default function MarketplaceNav() {
     // Browse Section
     {
       href: "/marketplace",
-      label: "Browse Services",
+      label: "Browse by Category",
       icon: Store,
       section: "browse",
       // All users can browse services

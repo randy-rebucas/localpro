@@ -48,25 +48,34 @@ export const getPlaceholderImageUrl = (
 ): string => {
   const baseUrl = 'https://placehold.co';
   const size = `${width}x${height}`;
-  const params = new URLSearchParams();
   
+  // Build the path with colors: /widthxheight/backgroundColor/textColor
+  let path = `/${size}`;
+  if (backgroundColor && textColor) {
+    // Remove # if present
+    const bgColor = backgroundColor.replace('#', '');
+    const txtColor = textColor.replace('#', '');
+    path = `/${size}/${bgColor}/${txtColor}`;
+  } else if (backgroundColor) {
+    const bgColor = backgroundColor.replace('#', '');
+    path = `/${size}/${bgColor}`;
+  }
+  
+  // Build URL with format extension
+  let url = `${baseUrl}${path}`;
+  if (format !== 'svg') {
+    // Add format extension: .png, .jpg, etc.
+    url = `${url}.${format}`;
+  }
+  
+  // Add text as query parameter if provided
   if (text) {
-    params.set('text', text);
+    // Encode the text for URL safety, then replace %20 (encoded spaces) with + as per placehold.co docs
+    const textParam = encodeURIComponent(text).replace(/%20/g, '+');
+    url = `${url}?text=${textParam}`;
   }
   
-  if (backgroundColor) {
-    params.set('bg', backgroundColor);
-  }
-  
-  if (textColor) {
-    params.set('text', textColor);
-  }
-  
-  const queryString = params.toString();
-  const url = queryString ? `${baseUrl}/${size}?${queryString}` : `${baseUrl}/${size}`;
-  
-  // Add format extension if not SVG
-  return format === 'svg' ? url : `${url}.${format}`;
+  return url;
 };
 
 /**

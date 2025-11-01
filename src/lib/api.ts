@@ -40,8 +40,8 @@ export const API_ENDPOINTS = {
   
   // Marketplace Services
   marketplaceServices: "/api/marketplace/services",
-  marketplaceServicesNearby: "/api/marketplace/services/nearby",
   marketplaceServiceById: "/api/marketplace/services",
+  marketplaceServicesCategories: "/api/marketplace/services/categories",
   marketplaceMyServices: "/api/marketplace/my-services",
   marketplaceMyBookings: "/api/marketplace/my-bookings",
   marketplaceBookings: "/api/marketplace/bookings",
@@ -51,6 +51,9 @@ export const API_ENDPOINTS = {
   marketplacePayPalApprove: "/api/marketplace/bookings/paypal/approve",
   marketplacePayPalOrder: "/api/marketplace/bookings/paypal/order",
   marketplaceListings: "/api/marketplace/services",
+  marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
+  marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
+
   
   // Job Board
   jobs: "/api/jobs",

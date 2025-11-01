@@ -2,477 +2,111 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { GridSkeleton } from "@/components/ui/loading";
-import { 
-  Search, 
-  // Filter, 
-  Star, 
-  MapPin, 
-  Clock, 
-  // DollarSign,
-  ChevronDown,
-  Grid,
-  List,
-  SlidersHorizontal,
-  Plus,
-  Store,
-  RefreshCw
-} from "lucide-react";
+import { Star, RefreshCw } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 
-// Service Image Interface
-interface ServiceImage {
-  url: string;
-  publicId?: string;
-  thumbnail?: string;
-  alt?: string;
-}
-
-// Service Entity Interface (matching data-entities.md)
-interface Service {
-  _id?: string;
-  id?: string;
-  title: string;
+interface ServiceCategory {
+  key: string;
+  name: string;
   description: string;
-  category: 'cleaning' | 'plumbing' | 'electrical' | 'moving' | 'landscaping' | 
-           'painting' | 'carpentry' | 'flooring' | 'roofing' | 'hvac' | 
-           'appliance_repair' | 'locksmith' | 'handyman' | 'home_security' |
-           'pool_maintenance' | 'pest_control' | 'carpet_cleaning' | 'window_cleaning' |
-           'gutter_cleaning' | 'power_washing' | 'snow_removal' | 'other';
-  subcategory: string;
-  provider: {
-    _id?: string;
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    name?: string;
-    profile?: {
-      rating?: number;
-    };
-  } | string; // Can be populated object or just ID
-  pricing: {
-    type: 'hourly' | 'fixed' | 'per_sqft' | 'per_item';
-    basePrice: number;
-    currency: string;
-  };
-  availability?: {
-    schedule?: Array<{
-      day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
-      startTime: string;
-      endTime: string;
-      isAvailable?: boolean;
+  icon: string;
+  subcategories: string[];
+  statistics: {
+    totalServices: number;
+    pricing: {
+      average: number;
+      min: number;
+      max: number;
+    } | null;
+    rating: {
+      average: number;
+      totalRatings: number;
+    } | null;
+    popularSubcategories: Array<{
+      subcategory: string;
+      count: number;
     }>;
-    timezone?: string;
   };
-  serviceArea: string[];
-  images?: ServiceImage[] | string[]; // Support both formats (new structure or legacy string array)
-  features?: string[];
-  requirements?: string[];
-  serviceType?: 'one_time' | 'recurring' | 'emergency' | 'maintenance' | 'installation';
-  estimatedDuration?: {
-    min: number;
-    max: number;
-  };
-  teamSize?: number;
-  equipmentProvided?: boolean;
-  materialsIncluded?: boolean;
-  warranty?: {
-    hasWarranty: boolean;
-    duration?: number;
-    description?: string;
-  };
-  insurance?: {
-    covered: boolean;
-    coverageAmount?: number;
-  };
-  emergencyService?: {
-    available: boolean;
-    surcharge?: number;
-    responseTime?: string;
-  };
-  servicePackages?: Array<{
-    name: string;
-    description?: string;
-    price: number;
-    features?: string[];
-    duration?: number;
-    _id?: string;
-  }>;
-  addOns?: Array<{
-    name: string;
-    description?: string;
-    price: number;
-    category?: string;
-    _id?: string;
-  }>;
-  isActive?: boolean;
-  rating?: {
-    average: number;
-    count: number;
-  };
-  createdAt?: string;
-  updatedAt?: string;
-  __v?: number;
 }
 
-interface FilterOptions {
-  category: string;
-  priceRange: [number, number];
-  rating: number;
-  location: string;
-  availability: boolean;
-  coordinates?: { lat: number; lng: number };
-  radius?: number;
+interface CategoriesResponse {
+  success: boolean;
+  message?: string;
+  data: ServiceCategory[];
+  summary?: {
+    totalCategories: number;
+    totalServices: number;
+    totalProviders: number;
+    categoriesWithServices: number;
+  };
 }
 
 export default function MarketplacePage() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("price_low");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showFilters, setShowFilters] = useState(false);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pages: 1,
-    total: 0,
-    limit: 15,
-    count: 0
-  });
-  const [filters, setFilters] = useState<FilterOptions>({
-    category: "",
-    priceRange: [0, 1000],
-    rating: 0,
-    location: "",
-    availability: true,
-    coordinates: undefined,
-    radius: 10000 // 10km default radius
-  });
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const categories = [
-    { value: "", label: "All Categories" },
-    { value: "cleaning", label: "Cleaning" },
-    { value: "plumbing", label: "Plumbing" },
-    { value: "electrical", label: "Electrical" },
-    { value: "moving", label: "Moving" },
-    { value: "landscaping", label: "Landscaping" },
-    { value: "painting", label: "Painting" },
-    { value: "carpentry", label: "Carpentry" },
-    { value: "flooring", label: "Flooring" },
-    { value: "roofing", label: "Roofing" },
-    { value: "hvac", label: "HVAC" },
-    { value: "appliance_repair", label: "Appliance Repair" },
-    { value: "locksmith", label: "Locksmith" },
-    { value: "handyman", label: "Handyman" },
-    { value: "home_security", label: "Home Security" },
-    { value: "pool_maintenance", label: "Pool Maintenance" },
-    { value: "pest_control", label: "Pest Control" },
-    { value: "carpet_cleaning", label: "Carpet Cleaning" },
-    { value: "window_cleaning", label: "Window Cleaning" },
-    { value: "gutter_cleaning", label: "Gutter Cleaning" },
-    { value: "power_washing", label: "Power Washing" },
-    { value: "snow_removal", label: "Snow Removal" },
-    { value: "other", label: "Other" }
-  ];
-
-  const sortOptions = [
-    { value: "relevance", label: "Most Relevant" },
-    { value: "price_low", label: "Price: Low to High" },
-    { value: "price_high", label: "Price: High to Low" },
-    { value: "rating", label: "Highest Rated" },
-    { value: "newest", label: "Newest First" },
-    { value: "distance", label: "Nearest First" }
-  ];
-  
-  // Normalize service data from API response
-  const normalizeService = useCallback((service: any): Service => {
-    return {
-      ...service,
-      _id: service._id || service.id,
-      id: service.id || service._id,
-      images: Array.isArray(service.images) 
-        ? service.images.map((img: any) => 
-            typeof img === 'string' 
-              ? { url: img, alt: service.title } 
-              : { url: img.url || img.publicId || '', publicId: img.publicId, thumbnail: img.thumbnail, alt: img.alt || service.title }
-          )
-        : [],
-      provider: typeof service.provider === 'string' 
-        ? { id: service.provider } 
-        : {
-            _id: service.provider?._id || service.provider?.id,
-            id: service.provider?.id || service.provider?._id,
-            firstName: service.provider?.firstName,
-            lastName: service.provider?.lastName,
-            name: service.provider?.name,
-            profile: service.provider?.profile
-          },
-      rating: service.rating || { average: 0, count: 0 },
-      isActive: service.isActive !== undefined ? service.isActive : true
-    };
-  }, []);
-
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const coordinates = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setFilters(prev => ({ ...prev, coordinates }));
-          // fetchServices will be triggered automatically via useEffect when filters change
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          // Optionally show user-friendly error message
-          setError("Unable to get your location. Please enter your location manually.");
-        }
-      );
-    } else {
-      console.warn("Geolocation is not supported by this browser.");
-      setError("Location services are not available. Please enter your location manually.");
-    }
-  };
-
-  const fetchServices = useCallback(async () => {
+  const fetchCategories = useCallback(async () => {
     try {
-      setLoading(true);
+      setLoadingCategories(true);
       setError(null);
-      
-      const params = new URLSearchParams();
-      
-      // Determine which endpoint to use based on whether coordinates are available
-      const hasCoordinates = filters.coordinates && filters.coordinates.lat && filters.coordinates.lng;
-      const endpoint = hasCoordinates 
-        ? API_ENDPOINTS.marketplaceServicesNearby 
-        : API_ENDPOINTS.marketplaceServices;
-      
-      // Add location parameters for nearby endpoint
-      if (hasCoordinates && filters.coordinates) {
-        params.append("lat", filters.coordinates.lat.toString());
-        params.append("lng", filters.coordinates.lng.toString());
-        params.append("radius", (filters.radius || 50000).toString());
-      }
-      
-      // Common filters
-      if (searchQuery) params.append("search", searchQuery);
-      if (filters.category) params.append("category", filters.category);
-      if (filters.location && !hasCoordinates) params.append("location", filters.location);
-      if (filters.availability) {
-        params.append("available", "true");
-        // Also check availability schedule
-        params.append("hasSchedule", "true");
-      }
-      if (filters.rating > 0) {
-        params.append("rating", filters.rating.toString());
-        params.append("sortBy", "rating.average");
-        params.append("sortOrder", "desc");
-      }
-      if (filters.priceRange[0] > 0) params.append("minPrice", filters.priceRange[0].toString());
-      if (filters.priceRange[1] < 1000) params.append("maxPrice", filters.priceRange[1].toString());
-      
-      // Enhanced sorting
-      if (sortBy === "price_low") {
-        params.append("sortBy", "pricing.basePrice");
-        params.append("sortOrder", "asc");
-      } else if (sortBy === "price_high") {
-        params.append("sortBy", "pricing.basePrice");
-        params.append("sortOrder", "desc");
-      } else if (sortBy === "rating") {
-        params.append("sortBy", "rating.average");
-        params.append("sortOrder", "desc");
-      } else {
-        params.append("sort", sortBy);
-      }
-      
-      // Add pagination with the specified parameters
-      params.append("page", pagination.current.toString());
-      params.append("limit", pagination.limit.toString());
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}`,
+        createAuthFetchOptions()
+      );
 
-      console.log(`Fetching services from ${hasCoordinates ? 'nearby' : 'regular'} endpoint with params:`, params.toString());
-      
-      // Add timeout to prevent hanging
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
-      let response;
-      try {
-        response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`, createAuthFetchOptions({
-          signal: controller.signal
-        }));
-      } catch (fetchError) {
-        console.log("Primary API failed, trying simple API:", fetchError);
-        // Try the simple API as fallback
-        response = await fetch(`${API_BASE_URL}${endpoint}?${params.toString()}`, createAuthFetchOptions({
-          signal: controller.signal
-        }));
-      }
-      
-      clearTimeout(timeoutId);
-      
-      console.log("Response status:", response.status);
-      console.log("Response ok:", response.ok);
-      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API Error:", errorData);
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch services`);
+        throw new Error("Failed to fetch categories");
       }
 
-      const data = await response.json();
-      console.log("Services data:", data);
+      const data: CategoriesResponse = await response.json();
       
-      // Handle the API response structure with pagination
-      if (data.success && data.data) {
-        console.log("API Response - Success:", data.success);
-        console.log("API Response - Message:", data.message);
-        console.log("API Response - Pagination:", data.pagination);
-        console.log("API Response - Data count:", data.data.length);
-        
-        // Set pagination info
-        if (data.pagination) {
-          setPagination({
-            current: data.pagination.current || 1,
-            pages: data.pagination.pages || 1,
-            total: data.pagination.total || 0,
-            limit: data.pagination.limit || 15,
-            count: data.pagination.count || 0
-          });
-        }
-        
-        // Normalize and set services data
-        const normalizedServices = (data.data || []).map((service: any) => normalizeService(service));
-        setServices(normalizedServices);
-        
-        // Debug: Log the first service to see its structure
-        if (data.data && data.data.length > 0) {
-          console.log("First service structure:", data.data[0]);
-          console.log("First service provider:", data.data[0].provider);
-          console.log("First service pricing:", data.data[0].pricing);
-        }
+      // Handle API response structure: {success: true, data: [...]}
+      if (data.success && data.data && Array.isArray(data.data)) {
+        setCategories(data.data);
       } else if (Array.isArray(data)) {
-        // Fallback for direct array response
-        const normalizedServices = data.map((service: any) => normalizeService(service));
-        setServices(normalizedServices);
-        setPagination({
-          current: 1,
-          pages: 1,
-          total: data.length,
-          limit: 15,
-          count: data.length
-        });
-      } else if (data.services) {
-        // Fallback for services property
-        const normalizedServices = data.services.map((service: any) => normalizeService(service));
-        setServices(normalizedServices);
-        setPagination({
-          current: 1,
-          pages: 1,
-          total: data.services.length,
-          limit: 15,
-          count: data.services.length
-        });
+        // Fallback if response is directly an array
+        setCategories(data as any);
       } else {
-        setServices([]);
-        setPagination({
-          current: 1,
-          pages: 1,
-          total: 0,
-          limit: 15,
-          count: 0
-        });
+        console.warn("Unexpected categories response format:", data);
+        setCategories([]);
       }
     } catch (error) {
-      console.error("Error fetching services:", error);
-
-      setServices([]);
-      setError(null); // Clear any previous errors since we have data
+      console.error("Error fetching categories:", error);
+      setError(error instanceof Error ? error.message : "Failed to load categories");
+      setCategories([]);
     } finally {
-      setLoading(false);
+      setLoadingCategories(false);
     }
-  }, [searchQuery, filters, sortBy, pagination.current, pagination.limit]);
-
-  // Debounced search to improve performance
-  // Pagination changes trigger immediately, filter/search changes are debounced
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchServices();
-    }, 300); // 300ms debounce
-
-    return () => clearTimeout(timeoutId);
-  }, [fetchServices]);
-
-  const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      category: "",
-      priceRange: [0, 1000],
-      rating: 0,
-      location: "",
-      availability: true,
-      coordinates: undefined,
-      radius: 10000
-    });
-  };
-
-
-  const renderStars = useCallback((rating: number, serviceId?: string) => {
-    return (
-      <div className="flex">
-        {Array.from({ length: 5 }, (_, i) => (
-          <Star
-            key={`${serviceId || 'default'}-star-${i}`}
-            className={`w-4 h-4 ${
-              i < Math.floor(rating)
-                ? "text-yellow-400 fill-current"
-                : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-    );
   }, []);
 
-  if (loading) {
+  // Fetch categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  if (loadingCategories) {
     return (
-      <div className="p-6 space-y-6">
-        {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-2">
-            <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
-            <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
-          </div>
-          <div className="mt-4 sm:mt-0">
-            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-          </div>
+      <div className="p-4 space-y-4">
+        <div className="mb-4">
+          <div className="h-7 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
         </div>
-
-        {/* Search and Filters Skeleton */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="p-4 border border-gray-200 rounded-lg">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse mb-2"></div>
+                <div className="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
+                <div className="h-10 bg-gray-200 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse mt-2"></div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-              <div className="h-10 bg-gray-200 rounded w-10 animate-pulse"></div>
-              <div className="h-10 bg-gray-200 rounded w-20 animate-pulse"></div>
-            </div>
-          </div>
+          ))}
         </div>
-
-        {/* Service Cards Skeleton */}
-        <GridSkeleton count={6} columns={3} />
       </div>
     );
   }
@@ -482,36 +116,18 @@ export default function MarketplacePage() {
       <div className="p-4">
         <Card interactive={false}>
           <EmptyState
-            icon={Search}
+            icon={RefreshCw}
             iconColor="text-red-600"
             iconBgColor="bg-red-100"
-            title="Unable to Load Services"
+            title="Unable to Load Categories"
             description={error}
             actions={[
               {
                 type: "button",
-                onClick: fetchServices,
+                onClick: fetchCategories,
                 label: "Try Again",
                 icon: RefreshCw,
                 variant: "primary"
-              },
-              {
-                type: "button",
-                onClick: () => {
-                  setSearchQuery("");
-                  setFilters({
-                    category: "",
-                    priceRange: [0, 1000],
-                    rating: 0,
-                    location: "",
-                    availability: true,
-                    coordinates: undefined,
-                    radius: 10000
-                  });
-                  fetchServices();
-                },
-                label: "Reset Filters",
-                variant: "secondary"
               }
             ]}
           />
@@ -522,510 +138,67 @@ export default function MarketplacePage() {
 
   return (
     <div className="p-4 space-y-4">
-      {/* Header */}
-      <PageHeader
-        title="Browse Services"
-        subtitle="Find and book services from local providers"
-        actions={[
-          {
-            type: "button",
-            onClick: getCurrentLocation,
-            label: "Use Current Location",
-            icon: MapPin,
-            variant: "outline",
-            className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-          },
-          {
-            type: "link",
-            href: "/marketplace/create-service",
-            label: "List Your Service",
-            icon: Plus,
-            variant: "primary"
-          }
-        ]}
-      />
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search */}
-          <div className="flex-1">
-            <div className="relative group">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search services, providers, or locations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Sort and View Controls */}
-          <div className="flex gap-2">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-              Filters
-              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
-        </div>
-
-        {/* Filter Panel */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200 animate-in slide-in-from-top-2 duration-300">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Category Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange("category", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {categories.map(category => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Price Range */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Price Range
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={filters.priceRange[0]}
-                    onChange={(e) => handleFilterChange("priceRange", [Number(e.target.value), filters.priceRange[1]])}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                  <span className="text-gray-500">to</span>
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={filters.priceRange[1]}
-                    onChange={(e) => handleFilterChange("priceRange", [filters.priceRange[0], Number(e.target.value)])}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Rating Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Minimum Rating
-                </label>
-                <select
-                  value={filters.rating}
-                  onChange={(e) => handleFilterChange("rating", Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value={0}>Any Rating</option>
-                  <option value={4}>4+ Stars</option>
-                  <option value={3}>3+ Stars</option>
-                  <option value={2}>2+ Stars</option>
-                </select>
-              </div>
-
-              {/* Location Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location
-                </label>
-                <input
-                  type="text"
-                  placeholder="City, State"
-                  value={filters.location}
-                  onChange={(e) => handleFilterChange("location", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={clearFilters}
-                className="text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Clear Filters
-              </button>
-            </div>
-          </div>
-        )}
+      {/* Categories Grid */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">Browse by Category</h2>
+        <p className="text-sm text-gray-500">Explore services by category</p>
       </div>
-
-      {/* Results */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <p className="text-gray-600">
-              {pagination.total} service{pagination.total !== 1 ? 's' : ''} found
-              {pagination.pages > 1 && (
-                <span className="ml-2 text-sm text-gray-500">
-                  (Page {pagination.current} of {pagination.pages})
-                </span>
-              )}
-            </p>
-            {pagination.count > 0 && (
-              <p className="text-sm text-gray-500">
-                Showing {services.length} of {pagination.count} results
-              </p>
-            )}
-          </div>
-          <button
-            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-          >
-            {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {services.length === 0 ? (
-          <Card interactive={false}>
-            <EmptyState
-              icon={Search}
-              iconColor="text-purple-600"
-              iconBgColor="bg-purple-100"
-              title="No Services Found"
-              description="We couldn't find any services matching your criteria. Try adjusting your search terms or filters."
-              actions={[
-                {
-                  type: "button",
-                  onClick: () => {
-                    setSearchQuery("");
-                    setFilters({
-                      category: "",
-                      priceRange: [0, 1000],
-                      rating: 0,
-                      location: "",
-                      availability: true,
-                      coordinates: undefined,
-                      radius: 10000
-                    });
-                  },
-                  label: "Clear All Filters",
-                  variant: "primary"
-                },
-                {
-                  type: "button",
-                  onClick: () => setSearchQuery(""),
-                  label: "Clear Search",
-                  variant: "secondary"
-                }
-              ]}
-            />
-          </Card>
-        ) : (
-          <>
-            <div className={`grid gap-4 ${
-              viewMode === "grid" 
-                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-                : "grid-cols-1"
-            }`}>
-              {services.map((service) => (
-                <ServiceCard
-                  key={service._id}
-                  service={service}
-                  viewMode={viewMode}
-                  renderStars={renderStars}
-                />
-              ))}
-            </div>
-            
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <button
-                  onClick={() => {
-                    if (pagination.current > 1) {
-                      // Update pagination - useEffect will trigger fetchServices
-                      setPagination(prev => ({ ...prev, current: prev.current - 1 }));
-                    }
-                  }}
-                  disabled={pagination.current <= 1}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                
-                <span className="px-4 py-2 text-sm text-gray-600">
-                  Page {pagination.current} of {pagination.pages}
-                </span>
-                
-                <button
-                  onClick={() => {
-                    if (pagination.current < pagination.pages) {
-                      // Update pagination - useEffect will trigger fetchServices
-                      setPagination(prev => ({ ...prev, current: prev.current + 1 }));
-                    }
-                  }}
-                  disabled={pagination.current >= pagination.pages}
-                  className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-interface ServiceCardProps {
-  service: Service;
-  viewMode: "grid" | "list";
-  renderStars: (rating: number, serviceId?: string) => React.ReactElement;
-}
-
-const ServiceCard = React.memo(function ServiceCard({ service, viewMode, renderStars }: ServiceCardProps) {
-  // Get service ID
-  const serviceId = service._id || service.id || '';
-  
-  // Normalize provider data
-  const provider = typeof service.provider === 'string' 
-    ? { id: service.provider, name: 'Unknown Provider' }
-    : service.provider || {};
-  const providerName = provider.name || 
-    (provider.firstName && provider.lastName 
-      ? `${provider.firstName} ${provider.lastName}` 
-      : provider.firstName || provider.lastName || 'Unknown Provider');
-  const providerRating = provider?.profile?.rating || 0;
-  
-  const serviceRating = service.rating?.average || 0;
-  const reviewCount = service.rating?.count || 0;
-  const basePrice = service.pricing?.basePrice || 0;
-  const currency = service.pricing?.currency || 'USD';
-  const pricingType = service.pricing?.type || 'fixed';
-  const duration = service.estimatedDuration ? 
-    `${service.estimatedDuration.min}-${service.estimatedDuration.max} hours` : 
-    'Duration not specified';
-  
-  // Get first image URL (handle both old string array and new object array format)
-  const getImageUrl = () => {
-    if (!service.images || service.images.length === 0) return null;
-    const firstImage = service.images[0];
-    return typeof firstImage === 'string' ? firstImage : (firstImage.url || firstImage.thumbnail || null);
-  };
-  const imageUrl = getImageUrl();
-  
-  // Format price with currency
-  const formatPriceWithCurrency = (price: number, curr: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: curr
-    }).format(price);
-  };
-  
-  // Format pricing type label
-  const getPricingLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      hourly: 'hour',
-      fixed: 'flat rate',
-      per_sqft: 'per sq ft',
-      per_item: 'per item'
-    };
-    return labels[type] || type;
-  };
-
-  return (
-    <Link
-      href={`/marketplace/services/${serviceId}`}
-      className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
-        viewMode === "list" ? "flex" : ""
-      }`}
-    >
-      <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
-        <div className={viewMode === "list" ? "flex gap-6" : ""}>
-          {/* Service Image */}
-          <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300`}>
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={
-                  service.images && 
-                  Array.isArray(service.images) && 
-                  service.images.length > 0 && 
-                  typeof service.images[0] === 'object' && 
-                  service.images[0].alt 
-                    ? service.images[0].alt 
-                    : service.title
-                }
-                width={viewMode === "list" ? 192 : 400}
-                height={viewMode === "list" ? 128 : 192}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <Store className="w-6 h-6" />
-                  </div>
-                  <span className="text-sm">No Image</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Service Details */}
-          <div className={viewMode === "list" ? "flex-1" : ""}>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-semibold text-gray-700 line-clamp-1 flex-1">
-                {service.title || 'Unnamed Service'}
-              </h3>
-              <div className="text-right ml-3 flex-shrink-0">
-                <div className="text-xl font-bold text-green-600">
-                  {formatPriceWithCurrency(basePrice, currency)}
-                </div>
-                {pricingType && (
-                  <div className="text-xs text-gray-500 capitalize">
-                    {getPricingLabel(pricingType)}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-              {service.description || 'No description available'}
-            </p>
-
-            {/* Provider Info */}
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-medium text-gray-600">
-                  {providerName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-700 truncate">{providerName}</p>
-                <div className="flex items-center gap-1">
-                  {renderStars(serviceRating || providerRating, serviceId)}
-                  <span className="text-xs text-gray-500">
-                    ({reviewCount || 0})
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Service Features */}
-            {service.features && service.features.length > 0 && (
-              <div className="mb-2">
-                <div className="flex flex-wrap gap-1">
-                  {service.features.slice(0, 3).map((feature, index) => (
-                    <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      {feature}
-                    </span>
-                  ))}
-                  {service.features.length > 3 && (
-                    <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                      +{service.features.length - 3} more
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            {/* Service Type Badge */}
-            {service.serviceType && (
-              <div className="mb-2">
-                <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                  service.serviceType === 'emergency' 
-                    ? 'bg-red-100 text-red-800' 
-                    : service.serviceType === 'recurring'
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-indigo-100 text-indigo-800'
-                }`}>
-                  {service.serviceType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                </span>
-              </div>
-            )}
-
-            {/* Service Meta */}
-            <div className="flex items-center justify-between text-sm text-gray-500">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>{duration}</span>
-                </div>
-                {service.serviceArea && service.serviceArea.length > 0 && (
-                  <div className="flex items-center gap-1">
-                    <MapPin className="w-4 h-4" />
-                    <span>{service.serviceArea[0]}</span>
-                    {service.serviceArea.length > 1 && (
-                      <span className="text-xs">+{service.serviceArea.length - 1} more</span>
+      
+      {categories.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {categories.map((category) => (
+            <Link
+              key={category.key}
+              href={`/marketplace/services/category/${category.key}`}
+              className="group p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:shadow-md transition-all text-left block bg-white"
+            >
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="text-4xl mb-2">{category.icon}</div>
+                <h3 className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
+                  {category.name}
+                </h3>
+                <p className="text-xs text-gray-500 line-clamp-2 min-h-[2.5rem]">
+                  {category.description}
+                </p>
+                {category.statistics.totalServices > 0 && (
+                  <div className="mt-2 pt-2 border-t border-gray-100 w-full">
+                    <div className="text-xs text-gray-600">
+                      <span className="font-semibold text-green-600">
+                        {category.statistics.totalServices}
+                      </span>
+                      {" "}service{category.statistics.totalServices !== 1 ? 's' : ''}
+                    </div>
+                    {category.statistics.pricing && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        ${category.statistics.pricing.min} - ${category.statistics.pricing.max}
+                      </div>
+                    )}
+                    {category.statistics.rating && category.statistics.rating.totalRatings > 0 && (
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-xs text-gray-600">
+                          {category.statistics.rating.average.toFixed(1)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4" />
-                <span>{Number(serviceRating).toFixed(1)} ({reviewCount})</span>
-              </div>
-            </div>
-
-            {/* Service Badges */}
-            <div className="mt-2 flex flex-wrap gap-1">
-              <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                {service.category?.toLowerCase() || 'service'}
-              </span>
-              {service.subcategory && (
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                  {service.subcategory.replace('_', ' ')}
-                </span>
-              )}
-              {service.insurance?.covered && (
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                  Insured
-                </span>
-              )}
-              {service.warranty?.hasWarranty && (
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                  {service.warranty.duration} day warranty
-                </span>
-              )}
-              {service.emergencyService?.available && (
-                <span className="inline-block px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                  Emergency Available
-                </span>
-              )}
-            </div>
-          </div>
+            </Link>
+          ))}
         </div>
-      </div>
-    </Link>
+      ) : (
+        <Card interactive={false}>
+          <EmptyState
+            icon={RefreshCw}
+            iconColor="text-gray-400"
+            iconBgColor="bg-gray-100"
+            title="No Categories Available"
+            description="Categories will appear here once they are available."
+          />
+        </Card>
+      )}
+    </div>
   );
-});
+}
+
