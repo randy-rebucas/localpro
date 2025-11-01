@@ -88,7 +88,7 @@ export interface UserSettings {
     invoiceSettings: {
       includeTax: boolean;
       taxRate: number;
-      invoiceTemplate: string;
+      invoiceTemplate: "standard" | "detailed" | "minimal";
     };
   };
   security: {
