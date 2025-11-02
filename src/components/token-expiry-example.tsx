@@ -8,6 +8,7 @@ import {
 } from "@/lib/client-api-utils";
 import { useTokenValidation } from "@/lib/token-validation";
 import { useAuthErrorHandler } from "@/lib/auth-error-handler";
+import { logger } from "@/lib/logger";
 
 /**
  * Example component demonstrating how to handle expired tokens
@@ -45,7 +46,7 @@ export function TokenExpiryExample() {
 
       if (result.error) {
         if (result.isAuthError) {
-          console.log("Authentication error detected, token will be handled automatically");
+          logger.debug("Authentication error detected, token will be handled automatically");
           // The safe wrapper already handled the token expiry
           setError("Authentication expired. You will be redirected to login.");
         } else {
@@ -55,7 +56,7 @@ export function TokenExpiryExample() {
         setUserData(result.data);
       }
     } catch (error) {
-      console.error("Unexpected error:", error);
+      logger.error("Unexpected error", error instanceof Error ? error : new Error(String(error)));
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -97,7 +98,7 @@ export function TokenExpiryExample() {
         setUserData(result.data);
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error fetching user data with validation", error instanceof Error ? error : new Error(String(error)));
       setError("An error occurred");
     } finally {
       setLoading(false);
@@ -137,7 +138,7 @@ export function TokenExpiryExample() {
         setUserData(result.data);
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error fetching user data with error handler", error instanceof Error ? error : new Error(String(error)));
       setError("An error occurred");
     } finally {
       setLoading(false);
@@ -152,7 +153,7 @@ export function TokenExpiryExample() {
         setLastValidation(new Date());
         
         if (!isValid.isValid) {
-          console.warn("Token validation failed:", isValid.error);
+          logger.warn("Token validation failed", undefined, { error: isValid.error });
         }
       }
     };

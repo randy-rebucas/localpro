@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { makeClientAuthenticatedRequestWithEndpointSafe } from '@/lib/client-api-utils';
-import { API_ENDPOINTS } from '@/lib/api';
+import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
+import { createAuthFetchOptions, getApiToken } from '@/lib/auth-utils';
+import { logger } from '@/lib/logger';
 
 export interface User {
   id?: string;
@@ -37,30 +38,41 @@ export function useSession() {
   useEffect(() => {
     const fetchSession = async () => {
       try {
-        console.log('🔍 useSession: Fetching session...');
-        console.log('🔍 useSession: Current cookies:', document.cookie);
-        console.log('🔍 useSession: Window location:', window.location.href);
+        logger.debug('useSession: Fetching session', {
+          cookies: typeof document !== 'undefined' ? document.cookie : 'N/A',
+          location: typeof window !== 'undefined' ? window.location.href : 'N/A'
+        });
         
         // Add timeout to prevent hanging
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
-          console.log('⚠️ useSession: Request timeout after 10 seconds');
+          logger.warn('useSession: Request timeout after 10 seconds');
           controller.abort();
         }, 10000); // 10 second timeout
         
-        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-          'authMe' as keyof typeof API_ENDPOINTS,
-          { method: 'GET', signal: controller.signal }
-        );
+        if (!getApiToken()) {
+          logger.debug('useSession: No API token found');
+          setSession(null);
+          setLoading(false);
+          return;
+        }
+        
+        const url = `${API_BASE_URL}${API_ENDPOINTS.authMe}`;
+        const response = await fetch(url, {
+          ...createAuthFetchOptions({ method: 'GET' }),
+          signal: controller.signal
+        });
         
         clearTimeout(timeoutId);
         
-        console.log('🔍 useSession: Response status:', response.status);
-        console.log('🔍 useSession: Response headers:', Object.fromEntries(response.headers.entries()));
+        logger.debug('useSession: Response received', {
+          status: response.status,
+          headers: Object.fromEntries(response.headers.entries())
+        });
         
         if (response.ok) {
           const responseData = await response.json();
-          console.log('🔍 useSession: User data received:', responseData);
+          logger.debug('useSession: User data received', { hasData: !!responseData });
           
           // Handle different response structures: { success: true, data: {...} } or direct user object
           const userData = responseData?.data || responseData?.user || responseData;
@@ -72,25 +84,25 @@ export function useSession() {
           } : null;
           
           if (normalizedUser && normalizedUser.id) {
-            console.log('🔍 useSession: Normalized user ID:', normalizedUser.id);
+            logger.debug('useSession: Normalized user ID', { userId: normalizedUser.id });
             setSession({ user: normalizedUser as User });
           } else {
-            console.warn('🔍 useSession: No valid user ID found in response');
+            logger.warn('useSession: No valid user ID found in response');
             setSession(null);
           }
         } else {
           const errorData = await response.json().catch(() => ({}));
-          console.log('🔍 useSession: Response not ok, error data:', errorData);
+          logger.debug('useSession: Response not ok', { status: response.status, errorData });
           setSession(null);
         }
       } catch (error) {
-        console.error('🔍 useSession: Failed to fetch session:', error);
+        logger.error('useSession: Failed to fetch session', error instanceof Error ? error : new Error(String(error)));
         if (error instanceof Error && error.name === 'AbortError') {
-          console.log('⚠️ useSession: Request was aborted due to timeout');
+          logger.warn('useSession: Request was aborted due to timeout');
         }
         setSession(null);
       } finally {
-        console.log('🔍 useSession: Setting loading to false');
+        logger.debug('useSession: Setting loading to false');
         setLoading(false);
       }
     };
@@ -100,12 +112,12 @@ export function useSession() {
 
   // Add a fallback timeout to prevent infinite loading
   useEffect(() => {
-    const fallbackTimeout = setTimeout(() => {
-      if (loading) {
-        console.log('⚠️ useSession: Fallback timeout - forcing loading to false');
-        setLoading(false);
-      }
-    }, 15000); // 15 second fallback timeout
+        const fallbackTimeout = setTimeout(() => {
+          if (loading) {
+            logger.warn('useSession: Fallback timeout - forcing loading to false');
+            setLoading(false);
+          }
+        }, 15000); // 15 second fallback timeout
 
     return () => clearTimeout(fallbackTimeout);
   }, [loading]);
@@ -115,12 +127,17 @@ export function useSession() {
 
 export async function signOut() {
   try {
-    await makeClientAuthenticatedRequestWithEndpointSafe(
-      'authLogout' as keyof typeof API_ENDPOINTS,
-      { method: 'POST' }
-    );
+    if (!getApiToken()) {
+      window.location.href = '/auth';
+      return;
+    }
+    
+    const url = `${API_BASE_URL}${API_ENDPOINTS.authLogout}`;
+    await fetch(url, createAuthFetchOptions({ method: 'POST' }));
     window.location.href = '/auth';
-  } catch (error) {
-    console.error('Failed to sign out:', error);
-  }
+      } catch (error) {
+        logger.error('Failed to sign out', error instanceof Error ? error : new Error(String(error)));
+        // Still redirect even if logout request fails
+        window.location.href = '/auth';
+      }
 }

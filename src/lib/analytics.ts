@@ -1,4 +1,5 @@
 // Analytics and performance monitoring utilities
+import { logger } from './logger';
 
 interface AnalyticsEvent {
   name: string;
@@ -16,16 +17,16 @@ class Analytics {
   // Track custom events
   track(event: AnalyticsEvent) {
     if (!this.isEnabled) {
-      console.log('Analytics Event:', event);
+      logger.debug('Analytics Event', { eventName: event.name, hasProperties: !!event.properties });
       return;
     }
 
     // Send to analytics service (e.g., Google Analytics, Mixpanel, etc.)
     try {
       // Example: gtag('event', event.name, event.properties);
-      console.log('Analytics Event:', event);
+      logger.debug('Analytics Event', { eventName: event.name, hasProperties: !!event.properties });
     } catch (error) {
-      console.error('Analytics tracking error:', error);
+      logger.error('Analytics tracking error', error instanceof Error ? error : new Error(String(error)), { eventName: event.name });
     }
   }
 

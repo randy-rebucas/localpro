@@ -66,7 +66,7 @@ Notes:
 ```
 src/
 ├── app/
-│   ├── (dashboard)/          # Dashboard pages
+│   ├── (authenticated)/      # Authenticated user pages (formerly dashboard)
 │   ├── admin/               # Admin panel pages
 │   ├── api/                 # API routes (176+ endpoints)
 │   └── auth/                # Authentication pages

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Send, Paperclip, Smile, X } from 'lucide-react';
 import { CommunicationAPI, RealtimeCommunication, MessageUtils } from '@/lib/communication-utils';
+import { logger } from '@/lib/logger';
 
 interface Message {
   id: string;
@@ -59,7 +60,7 @@ export default function MessageComposer({
       setMessage('');
       setAttachments([]);
     } catch (error) {
-      console.error('Error sending message:', error);
+      logger.error('Error sending message', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setSending(false);
     }

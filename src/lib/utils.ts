@@ -122,7 +122,24 @@ export function setToStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error('Failed to save to localStorage:', error);
+    // Use logger if available, fallback to console
+    interface WindowWithLogger extends Window {
+      logger?: {
+        error: (message: string, error: Error) => void;
+      };
+    }
+    const windowWithLogger = window as WindowWithLogger;
+    if (typeof window !== 'undefined' && windowWithLogger.logger) {
+      windowWithLogger.logger.error('Failed to save to localStorage', error instanceof Error ? error : new Error(String(error)));
+    } else {
+      // Import logger for proper logging using dynamic import
+      import('./logger').then(({ logger }) => {
+        logger.error('Failed to save to localStorage', error instanceof Error ? error : new Error(String(error)));
+      }).catch(() => {
+        // Last resort fallback - logger not available, silently fail
+        // In production, errors should be handled by error tracking services
+      });
+    }
   }
 }
 
@@ -132,7 +149,24 @@ export function removeFromStorage(key: string): void {
   try {
     localStorage.removeItem(key);
   } catch (error) {
-    console.error('Failed to remove from localStorage:', error);
+    // Use logger if available, fallback to console
+    interface WindowWithLogger extends Window {
+      logger?: {
+        error: (message: string, error: Error) => void;
+      };
+    }
+    const windowWithLogger = window as WindowWithLogger;
+    if (typeof window !== 'undefined' && windowWithLogger.logger) {
+      windowWithLogger.logger.error('Failed to remove from localStorage', error instanceof Error ? error : new Error(String(error)));
+    } else {
+      // Import logger for proper logging using dynamic import
+      import('./logger').then(({ logger }) => {
+        logger.error('Failed to remove from localStorage', error instanceof Error ? error : new Error(String(error)));
+      }).catch(() => {
+        // Last resort fallback - logger not available, silently fail
+        // In production, errors should be handled by error tracking services
+      });
+    }
   }
 }
 

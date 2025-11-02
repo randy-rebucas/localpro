@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decrypt } from "@/lib/session";
+import { logger } from "@/lib/logger";
 
 // Cache for authentication checks to improve performance
 const authCache = new Map<string, { 
@@ -142,7 +143,7 @@ async function checkAuth(request: NextRequest): Promise<{
     
     return { isAuthenticated: false };
   } catch (error) {
-    console.error("Auth check failed:", error);
+    logger.error("Auth check failed", error instanceof Error ? error : new Error(String(error)), { hasApiToken: !!apiToken });
     // If session decryption fails but we have api-token, still allow
     if (apiToken) {
       return { 

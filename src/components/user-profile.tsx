@@ -31,8 +31,9 @@ import { AgencyInfo } from "./agency-info";
 import { ActivitySummary } from "./activity-summary";
 import { QuickActions } from "./quick-actions";
 import { Loading } from "@/components/ui/loading";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 // User Data Entity (from features/users/data-entities.md)
 
@@ -424,10 +425,9 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         // Then try to fetch full profile from API to enrich the data
         fetchInProgressRef.current = true;
         try {
-          const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-            'authMe' as keyof typeof API_ENDPOINTS,
-            { method: 'GET' }
-          );
+          if (!getApiToken()) return;
+          const url = `${API_BASE_URL}${API_ENDPOINTS.authMe}`;
+          const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
           
           if (response.ok) {
             const responseData = await response.json();
@@ -437,7 +437,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             }
           }
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          logger.error('Error fetching user profile', error instanceof Error ? error : new Error(String(error)));
           // Keep session-based profile if API fails
         } finally {
           fetchInProgressRef.current = false;
@@ -462,13 +462,13 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             profileFetchedRef.current = true;
           } else {
             // If API returns no data, show empty state
-            console.warn('No user data received from API');
+            logger.warn('No user data received from API');
           }
         } else {
-          console.warn('Failed to fetch user profile:', response.status);
+          logger.warn('Failed to fetch user profile', undefined, { status: response.status });
         }
       } catch (error) {
-        console.error('Error fetching user profile:', error);
+        logger.error('Error fetching user profile', error instanceof Error ? error : new Error(String(error)));
       } finally {
         setLoading(false);
         fetchInProgressRef.current = false;

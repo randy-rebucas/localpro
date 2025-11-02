@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, Download, TrendingDown, Clock, CheckCircle, XCircle, CreditCard } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface Transaction {
   id: string;
@@ -94,7 +95,7 @@ export function TransactionDetailsModal({
 
   const handleDownloadReceipt = () => {
     // Implement receipt download
-    console.log('Download receipt for transaction:', transaction.id);
+    logger.debug('Download receipt for transaction', { transactionId: transaction.id });
   };
 
   const handleRefund = () => {

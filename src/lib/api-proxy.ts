@@ -28,7 +28,7 @@ export function createApiProxy(endpoint: string) {
 
         return NextResponse.json(data);
       } catch (error) {
-        console.error(`Error in GET ${endpoint}:`, error);
+        logger.error(`Error in GET ${endpoint}`, error instanceof Error ? error : new Error(String(error)), { endpoint });
         return NextResponse.json(
           { error: "Internal server error" },
           { status: 500 }
@@ -59,7 +59,7 @@ export function createApiProxy(endpoint: string) {
 
         return NextResponse.json(data, { status: response.status });
       } catch (error) {
-        console.error(`Error in POST ${endpoint}:`, error);
+        logger.error(`Error in POST ${endpoint}`, error instanceof Error ? error : new Error(String(error)), { endpoint });
         return NextResponse.json(
           { error: "Internal server error" },
           { status: 500 }
@@ -90,7 +90,7 @@ export function createApiProxy(endpoint: string) {
 
         return NextResponse.json(data);
       } catch (error) {
-        console.error(`Error in PUT ${endpoint}:`, error);
+        logger.error(`Error in PUT ${endpoint}`, error instanceof Error ? error : new Error(String(error)), { endpoint });
         return NextResponse.json(
           { error: "Internal server error" },
           { status: 500 }
@@ -118,7 +118,7 @@ export function createApiProxy(endpoint: string) {
 
         return NextResponse.json(data);
       } catch (error) {
-        console.error(`Error in DELETE ${endpoint}:`, error);
+        logger.error(`Error in DELETE ${endpoint}`, error instanceof Error ? error : new Error(String(error)), { endpoint });
         return NextResponse.json(
           { error: "Internal server error" },
           { status: 500 }

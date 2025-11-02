@@ -2,6 +2,7 @@
  * Phone number formatter utility with automatic international format conversion
  * Detects user location and converts local numbers to international format
  */
+import { logger } from './logger';
 
 export interface CountryInfo {
   code: string;
@@ -88,7 +89,7 @@ export class PhoneFormatter {
         }
       }
     } catch (error) {
-      console.warn('Could not detect user country:', error);
+      logger.warn('Could not detect user country', undefined, { error: error instanceof Error ? error.message : String(error) });
       // Default to US if detection fails
       this.userCountry = 'US';
       this.detectedCountry = COUNTRY_CODES['US'];
@@ -180,7 +181,7 @@ export class PhoneFormatter {
       const data = await response.json();
       return data.countryCode || null;
     } catch (error) {
-      console.warn('Reverse geocoding failed:', error);
+      logger.warn('Reverse geocoding failed', undefined, { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }

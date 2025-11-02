@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 export interface Announcement {
   id: string;
@@ -111,7 +112,7 @@ export default function Announcements({
         const data = await response.json();
         setAnnouncements(data.announcements || []);
       } catch (err) {
-        console.error('Error fetching announcements:', err);
+        logger.error('Error fetching announcements', err instanceof Error ? err : new Error(String(err)));
         setError('Failed to load announcements');
         
         // Fallback to mock data for development
@@ -175,7 +176,7 @@ export default function Announcements({
         method: 'POST',
       }));
     } catch (error) {
-      console.error('Error dismissing announcement:', error);
+      logger.error('Error dismissing announcement', error instanceof Error ? error : new Error(String(error)));
       // Revert optimistic update on error
       setDismissedIds(prev => {
         const newSet = new Set(prev);

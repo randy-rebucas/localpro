@@ -9,6 +9,7 @@ import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 const verificationSchema = z.object({
   code: z.string().min(4, "Code must be at least 4 digits").max(8, "Code must be at most 8 digits"),
@@ -65,7 +66,7 @@ export function VerificationModal({
           const secure = isProd ? '; Secure' : '';
           const sameSite = '; SameSite=Lax';
           document.cookie = `api-token=${result.token}; Path=/; Max-Age=${oneWeek}${sameSite}${secure}`;
-          console.log('✅ API token stored for Bearer authentication');
+          logger.debug('API token stored for Bearer authentication');
         }
         setIsVerified(true);
         toast.success("Verification successful!");
@@ -79,7 +80,7 @@ export function VerificationModal({
         toast.error(result.error || "Invalid verification code");
       }
     } catch (error) {
-      console.error("Verification error:", error);
+      logger.error("Verification error", error instanceof Error ? error : new Error(String(error)));
       toast.error("Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -105,7 +106,7 @@ export function VerificationModal({
         toast.error(result.error || "Failed to send verification code");
       }
     } catch (error) {
-      console.error("Resend error:", error);
+      logger.error("Resend error", error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to resend code. Please try again.");
     } finally {
       setIsResending(false);

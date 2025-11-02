@@ -48,7 +48,7 @@ export async function validateToken(): Promise<TokenValidationResult> {
       };
     }
   } catch (error) {
-    console.error("Token validation error:", error);
+    logger.error("Token validation error", error instanceof Error ? error : new Error(String(error)));
     return {
       isValid: false,
       error: error instanceof Error ? error.message : "Unknown error during token validation"
@@ -64,7 +64,7 @@ export async function validateTokenWithFallback(): Promise<boolean> {
   const result = await validateToken();
   
   if (!result.isValid && result.shouldRedirect) {
-    console.warn("Token validation failed, clearing auth data and redirecting to login");
+    logger.warn("Token validation failed, clearing auth data and redirecting to login");
     
     // Clear all authentication data
     clearAllAuthData();

@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ENDPOINTS } from './api';
+import { logger } from './logger';
 
 /**
  * Client-side API utilities for frontend components
@@ -30,7 +31,7 @@ export function clearApiToken(): void {
 function getAuthHeaders(): HeadersInit | null {
   // Debug: Log all cookies in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('All cookies:', document.cookie);
+    logger.debug('All cookies', { cookieCount: document.cookie.split(';').filter(c => c.trim()).length });
   }
 
   // Get API token cookie from browser (non-httpOnly cookie)
@@ -103,9 +104,7 @@ export async function makeClientAuthenticatedRequestWithPath(
   
   // Debug logging for development
   if (process.env.NODE_ENV === 'development') {
-    console.log('🌐 Making authenticated request to:', url);
-    console.log('🔑 Auth headers:', authHeaders);
-    console.log('📡 API_BASE_URL:', API_BASE_URL);
+    logger.debug('Making authenticated request', { url, hasAuthHeaders: !!authHeaders, apiBaseUrl: API_BASE_URL });
   }
   
   return fetch(url, {
@@ -196,7 +195,7 @@ export function handleClientApiError(error: unknown, context: string = "API requ
     details = error instanceof Error ? error.message : String(error);
   }
 
-  console.error(`${context} error:`, error);
+  logger.error(`${context} error`, error instanceof Error ? error : new Error(String(error)), { statusCode, isAuthError });
   
   return {
     error: errorMessage,
@@ -231,18 +230,19 @@ export async function handleClientApiRoute<T = unknown>(
  * Reliable redirect function that works in all contexts
  */
 export function redirectToLogin(): void {
-  console.log("🔄 redirectToLogin() called");
-  console.log("🔄 Current URL:", typeof window !== 'undefined' ? window.location.href : 'N/A');
-  console.log("🔄 Current pathname:", typeof window !== 'undefined' ? window.location.pathname : 'N/A');
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'N/A';
+  const currentPathname = typeof window !== 'undefined' ? window.location.pathname : 'N/A';
+  
+  logger.debug("redirectToLogin() called", { currentUrl, currentPathname });
   
   if (typeof window !== 'undefined') {
     // Check if we're already on the auth page to prevent loops
     if (window.location.pathname === '/auth') {
-      console.log("🔄 Already on auth page, skipping redirect");
+      logger.debug("Already on auth page, skipping redirect");
       return;
     }
     
-    console.log("🔄 Using window.location.href redirect");
+    logger.debug("Using window.location.href redirect");
     
     // Add a small delay to prevent rapid redirects
     setTimeout(() => {
@@ -251,7 +251,7 @@ export function redirectToLogin(): void {
       }
     }, 100);
   } else {
-    console.log("🔄 Window not available, cannot redirect");
+    logger.warn("Window not available, cannot redirect");
   }
 }
 
@@ -259,7 +259,7 @@ export function redirectToLogin(): void {
  * Comprehensive function to clear all authentication and session data
  */
 export function clearAllAuthData(): void {
-  console.log("🧹 Clearing all authentication and session data");
+  logger.debug("Clearing all authentication and session data");
   
   if (typeof window !== 'undefined') {
     // Clear API token first
@@ -295,7 +295,7 @@ export function clearAllAuthData(): void {
       document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
     });
     
-    console.log("✅ All auth data cleared from localStorage, sessionStorage, and cookies");
+    logger.debug("All auth data cleared from localStorage, sessionStorage, and cookies");
   }
 }
 
@@ -303,7 +303,7 @@ export function clearAllAuthData(): void {
  * Handle expired token by clearing auth data and redirecting to login
  */
 export function handleExpiredToken(): void {
-  console.warn("Token expired - clearing auth data and redirecting to login");
+  logger.warn("Token expired - clearing auth data and redirecting to login");
   
   // Clear all authentication data
   clearAllAuthData();
@@ -331,13 +331,13 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
   
   // Validate API_BASE_URL
   if (!API_BASE_URL || typeof API_BASE_URL !== 'string' || API_BASE_URL.trim() === '') {
-    console.error('API_BASE_URL is not configured:', API_BASE_URL);
+    logger.error('API_BASE_URL is not configured', undefined, { apiBaseUrl: API_BASE_URL });
     throw new Error('API base URL is not configured. Please check your environment variables.');
   }
   
   // Validate endpoint exists
   if (!API_ENDPOINTS[endpoint]) {
-    console.error('Invalid endpoint:', endpoint);
+    logger.error('Invalid endpoint', undefined, { endpoint: String(endpoint) });
     throw new Error(`Invalid API endpoint: ${String(endpoint)}`);
   }
   
@@ -352,7 +352,7 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
   try {
     new URL(url);
   } catch {
-    console.error('Invalid URL constructed:', url);
+    logger.error('Invalid URL constructed', undefined, { url });
     throw new Error(`Invalid API URL: ${url}. Please check API_BASE_URL configuration.`);
   }
 
@@ -365,9 +365,9 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
     
     // Debug logging in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('🌐 Making authenticated request:', {
+      logger.debug('Making authenticated request', {
         url,
-        endpoint,
+        endpoint: String(endpoint),
         method: fetchOptions.method || 'GET',
         hasAuth: !!authHeaders
       });
@@ -398,12 +398,11 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
       );
       // Preserve original error for debugging
       (enhancedError as Error & { originalError?: Error }).originalError = error;
-      console.error('Network request failed:', {
+      logger.error('Network request failed', enhancedError, {
         url,
-        endpoint,
+        endpoint: String(endpoint),
         apiBaseUrl: API_BASE_URL,
-        error: enhancedError.message,
-        originalError: error
+        errorMessage: enhancedError.message
       });
       throw enhancedError;
     }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface ServiceModule {
   id: string;
@@ -130,20 +131,17 @@ export function Dashboard() {
 
   useEffect(() => {
     // Log session data to console
-    console.log("=== SESSION DATA ===");
-    console.log("Session:", session);
-    console.log("Status:", status);
-    
-    if (session?.user) {
-      console.log("User ID:", session.user.id);
-      console.log("User Email:", session.user.email);
-      console.log("User Name:", session.user.name);
-      console.log("User Role:", session.user.role);
-      console.log("User Phone:", session.user.phone);
-      console.log("User First Name:", session.user.firstName);
-      console.log("User Last Name:", session.user.lastName);
-    }
-    console.log("===================");
+    logger.debug('Dashboard session data', {
+      hasSession: !!session,
+      status,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      userName: session?.user?.name,
+      userRole: session?.user?.role,
+      userPhone: session?.user?.phone,
+      userFirstName: session?.user?.firstName,
+      userLastName: session?.user?.lastName
+    });
 
     // Fetch user data from custom API
     // Middleware ensures user is authenticated, so this should always succeed
@@ -153,17 +151,18 @@ export function Dashboard() {
           const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authMe}`, createAuthFetchOptions());
           if (response.ok) {
             const userData = await response.json();
-            console.log("=== USER DATA FROM API ===");
-            console.log("User Data:", userData);
-            console.log("User Data Keys:", Object.keys(userData));
-            console.log("==========================");
+            logger.debug('User data from API', {
+              hasUserData: !!userData,
+              userDataKeys: userData ? Object.keys(userData) : [],
+              userId: userData?.id || userData?._id || userData?.userId
+            });
             setUser(userData);
           } else {
             throw new Error(`Failed to fetch user data: ${response.status}`);
           }
         }
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        logger.error("Failed to fetch user data", error instanceof Error ? error : new Error(String(error)));
       }
     };
 
@@ -175,12 +174,13 @@ export function Dashboard() {
           const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.logsUserActivity.replace('[userId]', session.user.id)}`, createAuthFetchOptions());
           if (response.ok) {
             const activityData = await response.json();
-            console.log("=== RECENT ACTIVITY DATA ===");
-            console.log("Activity Data:", activityData);
-            console.log("=============================");
+            logger.debug('Recent activity data', {
+              hasData: !!activityData,
+              activityCount: Array.isArray(activityData) ? activityData.length : 0
+            });
             setRecentActivity(activityData);
           } else {
-            console.warn("Failed to fetch recent activity:", response.status);
+            logger.warn('Failed to fetch recent activity', undefined, { status: response.status });
             // Set fallback activity data if API fails
             setRecentActivity([
               { id: 1, action: "Dashboard loaded", time: "Just now", icon: "dashboard" },
@@ -189,7 +189,7 @@ export function Dashboard() {
           }
         }
       } catch (error) {
-        console.error("Failed to fetch recent activity:", error);
+        logger.error("Failed to fetch recent activity", error instanceof Error ? error : new Error(String(error)));
         // Set fallback activity data if API fails
         setRecentActivity([
           { id: 1, action: "Dashboard loaded", time: "Just now", icon: "dashboard" },

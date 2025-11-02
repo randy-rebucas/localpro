@@ -3,6 +3,7 @@
 import React from "react";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -27,7 +28,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error("ErrorBoundary caught an error", error, {
+      componentStack: errorInfo.componentStack,
+      errorBoundary: true
+    });
     this.setState({ error, errorInfo });
     
     if (this.props.onError) {
@@ -104,7 +108,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 // Hook for functional components to trigger error boundary
 export function useErrorHandler() {
   return (error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error("Error caught by useErrorHandler:", error, errorInfo);
+    logger.error("Error caught by useErrorHandler", error, {
+      componentStack: errorInfo?.componentStack,
+      errorHandler: true
+    });
     // In a real app, you might want to send this to an error reporting service
   };
 }

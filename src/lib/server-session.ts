@@ -77,7 +77,7 @@ export async function getServerSession(request: NextRequest): Promise<ServerSess
       apiToken: session.apiToken // Include the actual API token
     };
   } catch (error) {
-    console.error("Failed to get server session:", error);
+    logger.error("Failed to get server session", error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }

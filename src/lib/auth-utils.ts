@@ -1,4 +1,5 @@
 // Utility functions for authentication
+import { logger } from './logger';
 
 /**
  * Get API token from cookies (prioritizes api-token cookie from mobile auth)
@@ -30,7 +31,7 @@ export function getApiToken(): string | null {
   
   // Debug logging in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('Token check:', {
+    logger.debug('Token check', {
       hasApiToken: !!apiTokenCookie,
       hasSessionToken: !!sessionCookie,
       cookieCount: cookies.length,
@@ -72,11 +73,13 @@ export function createAuthFetchOptions(options: RequestInit = {}): RequestInit {
   const apiToken = getApiToken();
   
   // Debug logging
-  console.log('🔍 createAuthFetchOptions:', {
-    hasApiToken: !!apiToken,
-    tokenLength: apiToken?.length || 0,
-    allCookies: typeof document !== 'undefined' ? document.cookie : 'N/A'
-  });
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug('createAuthFetchOptions', {
+      hasApiToken: !!apiToken,
+      tokenLength: apiToken?.length || 0,
+      allCookies: typeof document !== 'undefined' ? document.cookie : 'N/A'
+    });
+  }
   
   return {
     ...options,

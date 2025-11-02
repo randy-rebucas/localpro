@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 const documentSchema = z.object({
   url: z.string().url().optional().or(z.literal("")),
@@ -777,7 +778,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           setTimeout(() => setAutoSaveStatus('idle'), 3000);
         }
       } catch (error) {
-        console.error("Auto-save error:", error);
+        logger.error("Auto-save error", error instanceof Error ? error : new Error(String(error)));
         setAutoSaveStatus('error');
         setTimeout(() => setAutoSaveStatus('idle'), 3000);
       }
@@ -792,13 +793,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const fetchProfile = useCallback(async () => {
     // Skip if initialProfile is provided (it will be handled by useEffect)
     if (initialProfile) {
-      console.log('⏭️ Skipping fetchProfile - initialProfile provided');
+      logger.debug('Skipping fetchProfile - initialProfile provided');
       return;
     }
     
     // Prevent multiple simultaneous fetches
     if (isFetchingRef.current) {
-      console.log('⏭️ Skipping fetchProfile - already fetching');
+      logger.debug('Skipping fetchProfile - already fetching');
       return;
     }
 
@@ -888,7 +889,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Then try to fetch full profile from API
     const userIdForFetch = session?.user?.id || session?.user?._id;
     if (!userIdForFetch) {
-      console.log('⏭️ Skipping fetchProfile - no user ID');
+      logger.debug('Skipping fetchProfile - no user ID');
       return;
     }
     
@@ -900,18 +901,18 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       if (response.ok) {
         const responseData = await response.json();
-        console.log('API Response:', responseData);
+        logger.debug('Edit profile API response', { hasData: !!responseData });
         
         // Handle different response structures: { success: true, data: {...} } or direct user object
         const userData = responseData?.data || responseData?.user || responseData;
         
         if (!userData || (typeof userData === 'object' && Object.keys(userData).length === 0)) {
-          console.error('User data is empty or invalid');
+          logger.warn('User data is empty or invalid');
           toast.error("Failed to fetch profile data");
           return;
         }
         
-        console.log('Extracted User Data:', userData);
+        logger.debug('Extracted user data', { userId: userData?.id || userData?._id, hasEmail: !!userData?.email });
         
         // Extract avatar from nested profile.avatar structure (preserve object structure)
         const avatarData = userData.profile?.avatar 
@@ -994,7 +995,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       toast.error(error.error || "Failed to fetch profile");
     }
   } catch (error) {
-    console.error("Error fetching profile:", error);
+    logger.error("Error fetching profile", error instanceof Error ? error : new Error(String(error)));
     toast.error("Failed to fetch profile");
   } finally {
     isFetchingRef.current = false;
@@ -1004,7 +1005,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   // Initialize form from initialProfile if provided (priority over fetching)
   useEffect(() => {
     if (initialProfile) {
-      console.log('🔄 Initializing form from initialProfile:', initialProfile);
+      logger.debug('Initializing form from initialProfile', { userId: initialProfile?.id || initialProfile?._id });
       
       // Update profile state
       setProfile(initialProfile);
@@ -1087,10 +1088,10 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         notes: (initialProfile as UserProfile & { notes?: unknown[] }).notes || [],
       };
       
-      console.log('📝 Form data prepared:', formData);
+      logger.debug('Form data prepared', { hasData: !!formData, userId: initialProfile?.id || initialProfile?._id });
       reset(formData);
       setInitialValues(formData);
-      console.log('✅ Form initialized successfully');
+      logger.debug('Form initialized successfully');
     }
   }, [initialProfile, reset]);
 
@@ -1098,19 +1099,19 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   useEffect(() => {
     // If initialProfile is provided, don't fetch - use it instead
     if (initialProfile) {
-      console.log('⏭️ Skipping fetchProfile - initialProfile provided in useEffect');
+      logger.debug('Skipping fetchProfile - initialProfile provided in useEffect');
       return;
     }
     
     // Only fetch if we have a session user ID and we're not already fetching
     const userId = session?.user?.id || session?.user?._id;
     if (!userId) {
-      console.log('⏭️ Skipping fetchProfile - no user ID');
+      logger.debug('Skipping fetchProfile - no user ID');
       return;
     }
     
     if (isFetchingRef.current) {
-      console.log('⏭️ Skipping fetchProfile - already fetching');
+      logger.debug('Skipping fetchProfile - already fetching');
       return;
     }
     
@@ -1121,28 +1122,26 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
 
   const onSubmit = async (data: ProfileForm) => {
-    console.log('🔄 Form submission started');
-    console.log('📋 Form data:', data);
-    console.log('🔐 Session:', session);
+    logger.debug('Form submission started', { hasSession: !!session, userId: session?.user?.id });
     
     // Note: /api/auth/profile endpoint uses the authenticated user's token,
     // so we don't need to pass user ID in the URL
     if (!session?.user) {
-      console.error('❌ No session user available:', { session });
+      logger.error('No session user available', undefined, { hasSession: !!session });
       toast.error("You must be logged in to save changes");
       return;
     }
     
     if (!session.user.id && !session.user._id) {
-      console.warn('⚠️ Session exists but no user ID found:', { session });
+      logger.warn('Session exists but no user ID found', undefined, { hasSession: !!session });
       // Continue anyway - the API should handle auth from token
     }
     
-    console.log('✅ Updating profile for authenticated user');
+    logger.debug('Updating profile for authenticated user', { userId: session.user.id || session.user._id });
     
     // Validate API configuration
     if (!API_BASE_URL) {
-      console.error('❌ API_BASE_URL is not configured');
+      logger.error('API_BASE_URL is not configured');
       toast.error("Service configuration error. Please refresh the page and try again.");
       return;
     }
@@ -1150,13 +1149,15 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     setIsLoading(true);
     try {
       const payload = buildNestedPayload(data);
-      console.log('📤 Submitting profile update payload:', JSON.stringify(payload, null, 2));
-      console.log('🌐 API URL:', `${API_BASE_URL}${API_ENDPOINTS.authProfile}`);
+      logger.debug('Submitting profile update', { 
+        apiUrl: `${API_BASE_URL}${API_ENDPOINTS.authProfile}`,
+        payloadSize: JSON.stringify(payload).length 
+      });
       
       // Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => {
-        console.warn('⚠️ Request timeout after 30 seconds');
+        logger.warn('Request timeout after 30 seconds');
         controller.abort();
       }, 30000); // 30 second timeout
       
@@ -1172,18 +1173,19 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       clearTimeout(timeoutId);
 
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+      logger.debug('Profile update response', { 
+        status: response.status,
+        contentType: response.headers.get("content-type")
+      });
       
       // Check if response is ok before trying to parse JSON
-      const contentType = response.headers.get("content-type");
-      console.log('📥 Response content-type:', contentType);
+      // Removed unused: const contentType = response.headers.get("content-type");
 
       if (response.ok) {
         let responseData;
         try {
           const responseText = await response.text();
-          console.log('📥 Response body (raw):', responseText);
+          logger.debug('Profile update response body', { hasText: !!responseText, length: responseText.length });
           
           if (responseText) {
             responseData = JSON.parse(responseText);
@@ -1191,19 +1193,19 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
             responseData = {};
           }
         } catch (parseError) {
-          console.error('❌ Failed to parse response:', parseError);
+          logger.error('Failed to parse response', parseError instanceof Error ? parseError : new Error(String(parseError)));
           toast.error("Profile updated but couldn't parse response");
           setIsLoading(false);
           return;
         }
         
-        console.log('✅ Profile updated response:', responseData);
+        logger.debug('Profile updated response', { hasData: !!responseData });
         
         // Handle response structure: { success: true, data: {...} } or direct user object
         const updatedProfile = responseData?.data || responseData?.user || responseData;
         
         if (updatedProfile && Object.keys(updatedProfile).length > 0) {
-          console.log('✅ Setting updated profile:', updatedProfile);
+          logger.debug('Setting updated profile', { userId: updatedProfile?.id || updatedProfile?._id });
           setProfile(updatedProfile as UserProfile);
           setHasUnsavedChanges(false);
           setInitialValues({ ...data, skills: data.skills || "" });
@@ -1276,16 +1278,15 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           
           toast.success(responseData.message || "Profile updated successfully!");
         } else {
-          console.warn('⚠️ Updated profile is empty or invalid');
+          logger.warn('Updated profile is empty or invalid');
           toast.success("Profile updated successfully!");
         }
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Update error - Full response:', {
+        logger.error('Update error', undefined, {
           status: response.status,
           statusText: response.statusText,
-          errorData,
-          payload: payload
+          hasErrorData: !!errorData
         });
         
         // Extract detailed validation errors if available
@@ -1305,11 +1306,11 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           errorMessage += ` - ${validationErrors}`;
         }
         
-        console.error('❌ Update error message:', errorMessage);
+        logger.error('Update error message', undefined, { errorMessage });
         toast.error(errorMessage);
       }
     } catch (error) {
-      console.error("❌ Error updating profile:", error);
+      logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)));
       
       let errorMessage = "Failed to update profile";
       
@@ -1326,10 +1327,9 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         }
       }
       
-      console.error('❌ Full error details:', {
-        error,
-        message: errorMessage,
-        stack: error instanceof Error ? error.stack : undefined
+      logger.error('Full error details', error instanceof Error ? error : new Error(String(error)), {
+        errorMessage,
+        errorName: error instanceof Error ? error.name : 'Unknown'
       });
       
       toast.error(errorMessage);
@@ -1422,7 +1422,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         throw new Error("Invalid response format");
       }
     } catch (error) {
-      console.error("Error uploading avatar:", error);
+      logger.error("Error uploading avatar", error instanceof Error ? error : new Error(String(error)));
       const errorMsg = error instanceof Error ? error.message : "Failed to upload avatar";
       toast.error(errorMsg);
     } finally {
@@ -1476,7 +1476,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         throw new Error("Invalid response format");
       }
     } catch (error) {
-      console.error("Error uploading portfolio:", error);
+      logger.error("Error uploading portfolio", error instanceof Error ? error : new Error(String(error)));
       const errorMsg = error instanceof Error ? error.message : "Failed to upload portfolio";
       toast.error(errorMsg);
     } finally {
@@ -1508,7 +1508,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         toast.error("Failed to remove portfolio image");
       }
     } catch (error) {
-      console.error("Error removing portfolio image:", error);
+      logger.error("Error removing portfolio image", error instanceof Error ? error : new Error(String(error)));
       toast.error("Failed to remove portfolio image");
     } finally {
       setIsLoading(false);
@@ -1528,7 +1528,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     );
   }
 
-  console.log(initialValues);
+  logger.debug('Initial values', { hasInitialValues: !!initialValues });
   return (
     <div className="bg-white rounded-xl shadow-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
       {/* Header */}
@@ -1584,7 +1584,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         <form onSubmit={handleSubmit(
           onSubmit,
           (errors) => {
-            console.error('❌ Form validation errors:', errors);
+            logger.error('Form validation errors', undefined, { errorCount: Object.keys(errors).length });
             toast.error("Please fix form errors before saving");
           }
         )} className="space-y-6">

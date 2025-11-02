@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, Lightbulb, TrendingUp, Loader2, AlertCircle, User, Shield, FileText, Sparkles, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface CategoryCompleteness {
   completed: boolean;
@@ -53,10 +54,12 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
       setError(null);
       
       try {
-        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-          'authProfileCompleteness' as keyof typeof API_ENDPOINTS,
-          { method: 'GET' }
-        );
+        if (!getApiToken()) {
+          throw new Error('Not authenticated');
+        }
+        
+        const url = `${API_BASE_URL}${API_ENDPOINTS.authProfileCompleteness}`;
+        const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
         
         if (response.ok) {
           const responseData = await response.json();
@@ -70,7 +73,7 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
           throw new Error(`Failed to fetch profile completeness: ${response.status}`);
         }
       } catch (err) {
-        console.error('Error fetching profile completeness:', err);
+        logger.error('Error fetching profile completeness', err instanceof Error ? err : new Error(String(err)));
         setError('Failed to load profile completeness');
         // Will fall back to client-side calculation
       } finally {

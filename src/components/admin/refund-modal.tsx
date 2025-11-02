@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, DollarSign, AlertTriangle } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface Transaction {
   id: string;
@@ -75,7 +76,7 @@ export function RefundModal({ isOpen, onClose, onSubmit, transaction }: RefundMo
       setErrors({});
       onClose();
     } catch (error) {
-      console.error('Error processing refund:', error);
+      logger.error('Error processing refund', error instanceof Error ? error : new Error(String(error)), { transactionId: transaction?.id });
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 export function UnregisterServiceWorker() {
   useEffect(() => {
@@ -10,14 +11,14 @@ export function UnregisterServiceWorker() {
         registrations.forEach((registration) => {
           registration.unregister().then((success) => {
             if (success) {
-              console.log('Service worker unregistered successfully');
+              logger.debug('Service worker unregistered successfully');
             }
           }).catch((error) => {
-            console.error('Error unregistering service worker:', error);
+            logger.error('Error unregistering service worker', error instanceof Error ? error : new Error(String(error)));
           });
         });
       }).catch((error) => {
-        console.error('Error getting service worker registrations:', error);
+        logger.error('Error getting service worker registrations', error instanceof Error ? error : new Error(String(error)));
       });
 
       // Clear all caches if available
@@ -29,7 +30,7 @@ export function UnregisterServiceWorker() {
             })
           );
         }).catch((error) => {
-          console.error('Error clearing caches:', error);
+          logger.error('Error clearing caches', error instanceof Error ? error : new Error(String(error)));
         });
       }
     }

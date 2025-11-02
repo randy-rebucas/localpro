@@ -31,7 +31,7 @@ export function handleAuthError(
   // Check if it's a 401 authentication error
   if ((error && typeof error === 'object' && 'status' in error && error.status === 401) || 
       (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response && error.response.status === 401)) {
-    console.warn("Authentication failed - session may have expired");
+    logger.warn("Authentication failed - session may have expired");
     
     // Store the auth error for token validation
     storeAuthError("401 Authentication failed");
@@ -55,7 +55,7 @@ export function handleAuthError(
   }
   
   // For other errors, log them
-  console.error("Authentication error:", error);
+  logger.error("Authentication error", error instanceof Error ? error : new Error(String(error)));
 }
 
 /**
@@ -121,7 +121,7 @@ export function useAuthErrorHandler() {
     } = options;
 
     if (isAuthError(error)) {
-      console.warn("Authentication failed - session may have expired");
+      logger.warn("Authentication failed - session may have expired");
       
       if (redirectToLogin) {
         // Clear session data
@@ -141,7 +141,7 @@ export function useAuthErrorHandler() {
       }
     }
     
-    console.error("Authentication error:", error);
+    logger.error("Authentication error", error instanceof Error ? error : new Error(String(error)));
   };
 
   return { handleAuthError, isAuthError };

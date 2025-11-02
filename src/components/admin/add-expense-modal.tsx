@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -42,7 +43,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
       });
       onClose();
     } catch (error) {
-      console.error('Error submitting expense:', error);
+      logger.error('Error submitting expense', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }

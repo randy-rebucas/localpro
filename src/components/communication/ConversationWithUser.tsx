@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { CommunicationAPI, MessageUtils } from '@/lib/communication-utils';
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface User {
   id: string;
@@ -52,7 +53,7 @@ export default function ConversationWithUser({
         setUser(userData);
       }
     } catch (err) {
-      console.error('Error fetching user info:', err);
+      logger.error('Error fetching user info', err instanceof Error ? err : new Error(String(err)));
     }
   }, [userId]);
 
@@ -67,7 +68,7 @@ export default function ConversationWithUser({
         onConversationFound(data.conversation);
       }
     } catch (err) {
-      console.error('Error checking existing conversation:', err);
+      logger.error('Error checking existing conversation', err instanceof Error ? err : new Error(String(err)));
       setError('Failed to check for existing conversation');
     } finally {
       setLoading(false);
@@ -82,7 +83,7 @@ export default function ConversationWithUser({
       onConversationFound(newConversation);
       onCreateConversation(userId);
     } catch (err) {
-      console.error('Error creating conversation:', err);
+      logger.error('Error creating conversation', err instanceof Error ? err : new Error(String(err)));
       setError('Failed to start conversation');
     } finally {
       setLoading(false);

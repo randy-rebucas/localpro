@@ -13,9 +13,10 @@ import {
   Share2 
 } from "lucide-react";
 import { UserProfileData } from "./user-profile";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { CLIENT_CONFIG } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 interface ReferralInfoProps {
   profile: UserProfileData | null;
@@ -38,24 +39,24 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
     if (!profile?.referral?.referralCode) return;
     
     try {
-      await makeClientAuthenticatedRequestWithEndpointSafe(
-        'referralsTrack' as keyof typeof API_ENDPOINTS,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            referralCode: profile.referral.referralCode,
-            trackingData: {
-              source,
-              utmSource: platform || source,
-              utmMedium: 'social',
-              utmCampaign: 'referral_share'
-            }
-          })
-        }
-      );
+      if (!getApiToken()) return;
+      
+      const url = `${API_BASE_URL}${API_ENDPOINTS.referralsTrack}`;
+      await fetch(url, createAuthFetchOptions({
+        method: 'POST',
+        body: JSON.stringify({
+          referralCode: profile.referral.referralCode,
+          trackingData: {
+            source,
+            utmSource: platform || source,
+            utmMedium: 'social',
+            utmCampaign: 'referral_share'
+          }
+        }),
+      }));
     } catch (error) {
       // Silently fail tracking - don't disrupt user experience
-      console.error('Failed to track referral share:', error);
+      logger.error('Failed to track referral share', error instanceof Error ? error : new Error(String(error)));
     }
   }, [profile?.referral?.referralCode]);
 
@@ -92,7 +93,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
       setCopied('link');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error('Failed to copy link:', error);
+      logger.error('Failed to copy link', error instanceof Error ? error : new Error(String(error)));
       alert('Failed to copy link. Please try again.');
     }
   }, [referralLink, trackReferralShare]);
@@ -106,7 +107,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
       setCopied('code');
       setTimeout(() => setCopied(null), 2000);
     } catch (error) {
-      console.error('Failed to copy code:', error);
+      logger.error('Failed to copy code', error instanceof Error ? error : new Error(String(error)));
       alert('Failed to copy code. Please try again.');
     }
   }, [profile?.referral?.referralCode]);
