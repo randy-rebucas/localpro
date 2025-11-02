@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -12,7 +12,8 @@ import {
   SlidersHorizontal,
   Grid,
   List,
-  RefreshCw
+  RefreshCw,
+  Plus
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,7 @@ interface AdImage {
   url: string;
   publicId?: string;
   thumbnail?: string;
+  alt?: string;
 }
 
 // Ad Campaign Entity Interface (matching data-entities.md)
@@ -214,6 +216,10 @@ export default function MarketplaceAdsPage() {
     count: 0
   });
   const router = useRouter();
+  const locationRequestedRef = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const paginationRef = useRef(pagination);
   
   // Normalize ad campaign data from API response
   const normalizeAdCampaign = useCallback((campaign: Partial<AdCampaign> & Record<string, unknown>): AdCampaign => {
@@ -221,6 +227,12 @@ export default function MarketplaceAdsPage() {
       ...campaign,
       _id: campaign._id || campaign.id,
       id: campaign.id || campaign._id,
+      // Ensure required fields have defaults
+      title: campaign.title || (campaign.content?.headline as string) || 'Untitled Ad',
+      description: campaign.description || (campaign.content?.body as string) || '',
+      type: campaign.type || 'banner',
+      category: campaign.category || 'products',
+      status: campaign.status || 'draft',
       // Handle images
       images: Array.isArray(campaign.images)
         ? campaign.images.map((img: string | AdImage | Record<string, unknown>) =>
@@ -246,29 +258,44 @@ export default function MarketplaceAdsPage() {
             verification: campaign.advertiser?.verification
           },
       // Handle budget
-      budget: campaign.budget && typeof campaign.budget === 'object'
-        ? campaign.budget
-        : {
-            total: campaign.budget || campaign.budget?.total || 0,
-            daily: campaign.budget?.daily,
-            currency: campaign.budget?.currency || campaign.currency || 'USD'
-          },
+      budget: (() => {
+        if (campaign.budget && typeof campaign.budget === 'object' && 'total' in campaign.budget) {
+          return campaign.budget as AdCampaign['budget'];
+        }
+        const budgetValue = typeof campaign.budget === 'number' ? campaign.budget : 0;
+        return {
+          total: budgetValue || 0,
+          daily: undefined,
+          currency: (campaign as { currency?: string }).currency || 'USD'
+        };
+      })(),
       // Handle schedule
-      schedule: campaign.schedule || {
-        startDate: campaign.startDate || campaign.schedule?.startDate || new Date(),
-        endDate: campaign.endDate || campaign.schedule?.endDate || new Date(),
-        timeSlots: campaign.schedule?.timeSlots || []
-      },
+      schedule: (() => {
+        if (campaign.schedule && typeof campaign.schedule === 'object' && 'startDate' in campaign.schedule) {
+          return campaign.schedule as AdCampaign['schedule'];
+        }
+        return {
+          startDate: (campaign as { startDate?: string | Date }).startDate || new Date(),
+          endDate: (campaign as { endDate?: string | Date }).endDate || new Date(),
+          timeSlots: []
+        };
+      })(),
       // Handle performance
-      performance: campaign.performance || {
-        impressions: campaign.impressions || campaign.impressionCount || 0,
-        clicks: campaign.clicks || campaign.clickCount || 0,
-        conversions: campaign.conversions || 0,
-        spend: campaign.spent || campaign.performance?.spend || 0,
-        ctr: campaign.ctr || campaign.performance?.ctr || 0,
-        cpc: campaign.cpc || campaign.performance?.cpc || 0,
-        cpm: campaign.cpm || campaign.performance?.cpm || 0
-      },
+      performance: (() => {
+        if (campaign.performance && typeof campaign.performance === 'object' && 'impressions' in campaign.performance) {
+          return campaign.performance as AdCampaign['performance'];
+        }
+        const perf = campaign.performance as AdCampaign['performance'] | undefined;
+        return {
+          impressions: campaign.impressions || campaign.impressionCount || perf?.impressions || 0,
+          clicks: campaign.clicks || campaign.clickCount || perf?.clicks || 0,
+          conversions: (typeof campaign.conversions === 'number' ? campaign.conversions : (perf?.conversions ?? 0)),
+          spend: campaign.spent || perf?.spend || 0,
+          ctr: (typeof campaign.ctr === 'number' ? campaign.ctr : (perf?.ctr ?? 0)),
+          cpc: (typeof campaign.cpc === 'number' ? campaign.cpc : (perf?.cpc ?? 0)),
+          cpm: (typeof campaign.cpm === 'number' ? campaign.cpm : (perf?.cpm ?? 0))
+        };
+      })(),
       // Handle targetAudience (legacy array format support)
       targetAudience: campaign.targetAudience && typeof campaign.targetAudience === 'object' && !Array.isArray(campaign.targetAudience)
         ? campaign.targetAudience
@@ -311,8 +338,9 @@ export default function MarketplaceAdsPage() {
       setError(null);
       
       const params = new URLSearchParams();
-      params.append('page', pagination.current.toString());
-      params.append('limit', pagination.limit.toString());
+      // Read current pagination values from ref
+      params.append('page', paginationRef.current.current.toString());
+      params.append('limit', paginationRef.current.limit.toString());
       
       // Add location parameters if available
       if (userLocation) {
@@ -324,7 +352,7 @@ export default function MarketplaceAdsPage() {
       // Always request only active ads
       params.append('status', 'active');
       
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       if (selectedCategory) params.append('category', selectedCategory);
       if (selectedType) params.append('type', selectedType);
       if (sortBy) params.append('sortBy', sortBy);
@@ -351,25 +379,38 @@ export default function MarketplaceAdsPage() {
       }
       
       setAds(campaignsData);
+      // Only update pagination if we got pagination data from the API
       if (paginationData) {
-        setPagination(prev => ({
-          ...prev,
-          ...paginationData
-        }));
+        setPagination(prev => {
+          const newPagination = {
+            ...prev,
+            ...paginationData
+          };
+          paginationRef.current = newPagination;
+          return newPagination;
+        });
       } else if (campaignsData.length > 0) {
-        setPagination(prev => ({
-          ...prev,
-          total: campaignsData.length,
-          count: campaignsData.length,
-          pages: 1
-        }));
+        setPagination(prev => {
+          const newPagination = {
+            ...prev,
+            total: campaignsData.length,
+            count: campaignsData.length,
+            pages: 1
+          };
+          paginationRef.current = newPagination;
+          return newPagination;
+        });
       } else {
-        setPagination(prev => ({
-          ...prev,
-          total: 0,
-          count: 0,
-          pages: 1
-        }));
+        setPagination(prev => {
+          const newPagination = {
+            ...prev,
+            total: 0,
+            count: 0,
+            pages: 1
+          };
+          paginationRef.current = newPagination;
+          return newPagination;
+        });
       }
     } catch (error) {
       console.error('Error fetching ads:', error);
@@ -378,70 +419,98 @@ export default function MarketplaceAdsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedCategory, selectedType, sortBy, sortOrder, pagination, userLocation, normalizeAdCampaign]);
+  }, [debouncedSearchQuery, selectedCategory, selectedType, sortBy, sortOrder, userLocation, normalizeAdCampaign]);
 
-  // Get location on mount
+  // Get location on mount (only once)
   useEffect(() => {
-    getCurrentLocation();
+    if (!locationRequestedRef.current) {
+      locationRequestedRef.current = true;
+      getCurrentLocation();
+    }
   }, [getCurrentLocation]);
 
-  // Fetch ads when location or filters change
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Update pagination ref when pagination state changes
+  useEffect(() => {
+    paginationRef.current = pagination;
+  }, [pagination]);
+
+  // Fetch ads when location or filters change (but not pagination)
   useEffect(() => {
     fetchAds();
-  }, [fetchAds]);
+  }, [debouncedSearchQuery, selectedCategory, selectedType, userLocation, fetchAds]);
 
   // Filter to show only active and non-expired ads with client-side filtering for search
-  const filteredAds = ads.filter(ad => {
-    // Only show active ads
-    if (ad.status !== 'active') {
-      return false;
-    }
-    
-    // Exclude expired ads
-    if (ad.schedule?.endDate) {
-      const endDate = new Date(ad.schedule.endDate);
-      const now = new Date();
-      if (endDate < now) {
-        return false; // Ad has expired
+  const filteredAds = useMemo(() => {
+    return ads.filter(ad => {
+      // Only show active ads
+      if (ad.status !== 'active') {
+        return false;
       }
-    }
-    
-    const matchesSearch = !searchQuery || 
-                         ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         ad.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (typeof ad.advertiser === 'object' && !Array.isArray(ad.advertiser) && 
-                          (ad.advertiser.businessName || '').toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesCategory = !selectedCategory || ad.category === selectedCategory;
-    const matchesType = !selectedType || ad.type === selectedType;
-    
-    return matchesSearch && matchesCategory && matchesType;
-  });
+      
+      // Exclude expired ads
+      if (ad.schedule?.endDate) {
+        const endDate = new Date(ad.schedule.endDate);
+        const now = new Date();
+        if (endDate < now) {
+          return false; // Ad has expired
+        }
+      }
+      
+      // Note: Search is handled server-side, so we only filter by category/type client-side if needed
+      const matchesCategory = !selectedCategory || ad.category === selectedCategory;
+      const matchesType = !selectedType || ad.type === selectedType;
+      
+      return matchesCategory && matchesType;
+    });
+  }, [ads, selectedCategory, selectedType]);
 
-  const sortedAds = [...filteredAds].sort((a, b) => {
-    let aValue: string | number | Date;
-    let bValue: string | number | Date;
-    
-    switch (sortBy) {
-      case 'title':
-        aValue = a.title;
-        bValue = b.title;
-        break;
-      case 'createdAt':
-      default:
-        aValue = new Date(a.createdAt || 0).getTime();
-        bValue = new Date(b.createdAt || 0).getTime();
-        break;
-    }
-    
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
+  const sortedAds = useMemo(() => {
+    return [...filteredAds].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+      
+      switch (sortBy) {
+        case 'title':
+          aValue = a.title;
+          bValue = b.title;
+          break;
+        case 'createdAt':
+        default:
+          aValue = new Date(a.createdAt || 0).getTime();
+          bValue = new Date(b.createdAt || 0).getTime();
+          break;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [filteredAds, sortBy, sortOrder]);
 
   const handleViewAd = (adId: string) => {
     router.push(`/ads/${adId}`);
+  };
+
+  const handleCreateAd = () => {
+    router.push('/ads/create');
   };
 
 
@@ -497,6 +566,13 @@ export default function MarketplaceAdsPage() {
             label: "Refresh Location",
             icon: MapPin,
             variant: "secondary"
+          },
+          {
+            type: "button",
+            onClick: handleCreateAd,
+            label: "Create Ad",
+            icon: Plus,
+            variant: "primary"
           }
         ]}
       />
@@ -640,9 +716,9 @@ export default function MarketplaceAdsPage() {
                 ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
                 : "grid-cols-1"
             }`}>
-              {sortedAds.map((ad) => (
+              {sortedAds.map((ad, index) => (
                 <AdCard
-                  key={ad.id}
+                  key={ad.id || ad._id || `ad-${index}`}
                   ad={ad}
                   viewMode={viewMode}
                   onView={handleViewAd}

@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { GridSkeleton } from "@/components/ui/loading";
+import { useRoleAccess } from "@/components/role-guard";
 import {
     Search,
     Star,
@@ -17,6 +18,8 @@ import {
     Wrench,
     Car,
     Hammer,
+    ArrowRight,
+    Sparkles,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -214,10 +217,16 @@ export default function MarketplaceRentalsPage() {
         coordinates: undefined,
         radius: 10000, // 10km default radius
     });
+    const locationRequestedRef = useRef(false);
+    const paginationRef = useRef(pagination);
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+    const { isProvider, isAdmin, isClient } = useRoleAccess();
   
 
-    const getCurrentLocation = () => {
+    const getCurrentLocation = useCallback(() => {
+        if (locationRequestedRef.current) return; // Prevent multiple calls
         if (navigator.geolocation) {
+            locationRequestedRef.current = true;
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const coordinates = {
@@ -235,7 +244,7 @@ export default function MarketplaceRentalsPage() {
             console.warn("Geolocation is not supported by this browser.");
             setError("Location services are not available. Please enter your location manually.");
         }
-    };
+    }, []);
 
     // Normalize rental item data from API response
     const normalizeRentalItem = useCallback((item: Partial<RentalItem> & Record<string, unknown>): RentalItem => {
@@ -243,35 +252,53 @@ export default function MarketplaceRentalsPage() {
       ...item,
       _id: item._id || item.id,
       id: item.id || item._id,
+      // Ensure required fields have defaults
+      name: item.name || item.title || 'Unnamed Rental',
+      title: item.title || item.name || 'Unnamed Rental',
+      description: item.description || '',
+      category: item.category || 'tools',
+      subcategory: item.subcategory || '',
       // Handle pricing structure
-      pricing: item.pricing || {
-        hourly: item.price && item.priceUnit === 'hour' ? item.price : undefined,
-        daily: item.price && item.priceUnit === 'day' ? item.price : undefined,
-        weekly: item.price && item.priceUnit === 'week' ? item.price : undefined,
-        monthly: item.price && item.priceUnit === 'month' ? item.price : undefined,
-        currency: item.currency || 'USD'
-      },
+      pricing: (() => {
+        if (item.pricing && typeof item.pricing === 'object' && 'currency' in item.pricing) {
+          return item.pricing as RentalItem['pricing'];
+        }
+        const priceValue = typeof item.price === 'number' ? item.price : undefined;
+        const priceUnit = typeof item.priceUnit === 'string' ? item.priceUnit : undefined;
+        const currency = typeof item.currency === 'string' ? item.currency : 'USD';
+        return {
+          hourly: priceValue && priceUnit === 'hour' ? priceValue : undefined,
+          daily: priceValue && priceUnit === 'day' ? priceValue : undefined,
+          weekly: priceValue && priceUnit === 'week' ? priceValue : undefined,
+          monthly: priceValue && priceUnit === 'month' ? priceValue : undefined,
+          currency
+        };
+      })(),
       // Handle availability
       availability: item.availability || {
         isAvailable: item.status === 'available' || item.isAvailable !== false,
-        schedule: item.availability?.schedule || []
+        schedule: []
       },
       // Handle location
-      location: item.location && typeof item.location === 'object' && 'address' in item.location
-        ? item.location
-        : {
-            address: item.location || {
-              street: item.location?.street,
-              city: item.location?.city,
-              state: item.location?.state,
-              zipCode: item.location?.zipCode,
-              country: item.location?.country
-            },
-            coordinates: item.location?.coordinates,
-            pickupRequired: item.location?.pickupRequired !== false,
-            deliveryAvailable: item.location?.deliveryAvailable || false,
-            deliveryFee: item.location?.deliveryFee
+      location: (() => {
+        if (item.location && typeof item.location === 'object' && 'address' in item.location) {
+          return item.location as RentalItem['location'];
+        }
+        const loc = item.location as RentalItem['location'] | undefined;
+        return {
+          address: loc?.address || {
+            street: (item as { location?: { street?: string } }).location?.street,
+            city: (item as { location?: { city?: string } }).location?.city,
+            state: (item as { location?: { state?: string } }).location?.state,
+            zipCode: (item as { location?: { zipCode?: string } }).location?.zipCode,
+            country: (item as { location?: { country?: string } }).location?.country
           },
+          coordinates: loc?.coordinates,
+          pickupRequired: loc?.pickupRequired !== false,
+          deliveryAvailable: loc?.deliveryAvailable || false,
+          deliveryFee: loc?.deliveryFee
+        };
+      })(),
       // Handle images
       images: Array.isArray(item.images)
         ? item.images.map((img: string | RentalItemImage | Record<string, unknown>) =>
@@ -300,10 +327,17 @@ export default function MarketplaceRentalsPage() {
             verified: item.owner?.verified
           },
       // Handle rating
-      rating: item.rating || {
-        average: item.averageRating || item.rating?.average || 0,
-        count: item.reviews?.length || item.rating?.count || item.reviewCount || 0
-      },
+      rating: (() => {
+        if (item.rating && typeof item.rating === 'object' && 'average' in item.rating) {
+          return item.rating as RentalItem['rating'];
+        }
+        const ratingObj = item.rating as RentalItem['rating'] | undefined;
+        const reviewLength = Array.isArray(item.reviews) ? item.reviews.length : 0;
+        return {
+          average: (typeof item.averageRating === 'number' ? item.averageRating : (ratingObj?.average ?? 0)),
+          count: reviewLength || (typeof ratingObj?.count === 'number' ? ratingObj.count : 0) || (typeof item.reviewCount === 'number' ? item.reviewCount : 0)
+        };
+      })(),
       averageRating: item.averageRating || item.rating?.average || 0,
       // Set defaults
       isActive: item.isActive !== undefined ? item.isActive : true,
@@ -318,9 +352,9 @@ export default function MarketplaceRentalsPage() {
 
             const params = new URLSearchParams();
 
-            // Add pagination first
-            params.append("page", pagination.current.toString());
-            params.append("limit", pagination.limit.toString());
+            // Add pagination first (read from ref to avoid dependency issues)
+            params.append("page", paginationRef.current.current.toString());
+            params.append("limit", paginationRef.current.limit.toString());
 
             // Determine which endpoint to use based on whether coordinates are available
             const hasCoordinates = filters.coordinates && filters.coordinates.lat && filters.coordinates.lng;
@@ -333,7 +367,7 @@ export default function MarketplaceRentalsPage() {
             }
             
             // Common filters
-            if (searchQuery) params.append("search", searchQuery);
+            if (debouncedSearchQuery) params.append("search", debouncedSearchQuery);
             if (filters.category) params.append("category", filters.category);
             if (filters.location && !hasCoordinates) params.append("location", filters.location);
             
@@ -410,19 +444,25 @@ export default function MarketplaceRentalsPage() {
                 // Object response format
                 if ('success' in data && data.success && 'data' in data && data.data) {
                     // Set pagination info
+                    let newPagination;
                     if ('pagination' in data && data.pagination) {
-                        setPagination({
+                        newPagination = {
                             current: data.pagination.current || 1,
                             pages: data.pagination.pages || 1,
                             total: data.pagination.total || 0,
                             limit: data.pagination.limit || 15,
                             count: data.pagination.count || 0
-                        });
+                        };
+                    } else {
+                        newPagination = paginationRef.current;
                     }
 
                     // Normalize and set rentals data
-                    const normalizedRentals = (data.data || []).map((item: Partial<RentalItem> & Record<string, unknown>) => normalizeRentalItem(item));
+                    const rentalsData = (data.data || []) as Array<Partial<RentalItem> & Record<string, unknown>>;
+                    const normalizedRentals = rentalsData.map((item) => normalizeRentalItem(item));
                     setRentals(normalizedRentals);
+                    paginationRef.current = newPagination;
+                    setPagination(newPagination);
                 } else if (('rentals' in data || 'rentalItems' in data)) {
                     const dataObj = data as Record<string, unknown>;
                     const rentalsArray = (dataObj.rentals || dataObj.rentalItems) as Array<Partial<RentalItem> & Record<string, unknown>>;
@@ -430,23 +470,21 @@ export default function MarketplaceRentalsPage() {
                         // Alternative response format with rentals/rentalItems property
                         const normalizedRentals = rentalsArray.map((item) => normalizeRentalItem(item));
                         setRentals(normalizedRentals);
-                        if ('pagination' in data && data.pagination) {
-                            setPagination({
-                                current: data.pagination.current || 1,
-                                pages: data.pagination.pages || 1,
-                                total: data.pagination.total || 0,
-                                limit: data.pagination.limit || 15,
-                                count: data.pagination.count || 0
-                            });
-                        } else {
-                            setPagination({
-                                current: 1,
-                                pages: 1,
-                                total: normalizedRentals.length,
-                                limit: 15,
-                                count: normalizedRentals.length
-                            });
-                        }
+                        const newPagination = ('pagination' in data && data.pagination) ? {
+                            current: data.pagination.current || 1,
+                            pages: data.pagination.pages || 1,
+                            total: data.pagination.total || 0,
+                            limit: data.pagination.limit || 15,
+                            count: data.pagination.count || 0
+                        } : {
+                            current: 1,
+                            pages: 1,
+                            total: normalizedRentals.length,
+                            limit: 15,
+                            count: normalizedRentals.length
+                        };
+                        paginationRef.current = newPagination;
+                        setPagination(newPagination);
                     } else {
                         setRentals([]);
                         setPagination({
@@ -460,13 +498,15 @@ export default function MarketplaceRentalsPage() {
                 }
             } else {
                 setRentals([]);
-                setPagination({
+                const newPagination = {
                     current: 1,
                     pages: 1,
                     total: 0,
                     limit: 15,
                     count: 0
-                });
+                };
+                paginationRef.current = newPagination;
+                setPagination(newPagination);
             }
         } catch (error) {
             console.error("Error fetching rentals:", error);
@@ -476,21 +516,33 @@ export default function MarketplaceRentalsPage() {
         } finally {
             setLoading(false);
         }
-    }, [searchQuery, filters, sortBy, pagination, normalizeRentalItem]);
+    }, [debouncedSearchQuery, filters, sortBy, normalizeRentalItem]);
 
-    // Debounced search to improve performance
+    // Debounce search query
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            fetchRentals();
-        }, 300); // 300ms debounce
-
+            setDebouncedSearchQuery(searchQuery);
+        }, 500);
+        
         return () => clearTimeout(timeoutId);
-    }, [fetchRentals]);
+    }, [searchQuery]);
 
-    // Trigger fetch when pagination changes
+    // Update pagination ref when pagination state changes
+    useEffect(() => {
+        paginationRef.current = pagination;
+    }, [pagination]);
+
+    // Fetch rentals when filters or search change (but not pagination)
     useEffect(() => {
         fetchRentals();
-    }, [fetchRentals]);
+    }, [debouncedSearchQuery, filters, sortBy, fetchRentals]);
+
+    // Fetch rentals when pagination changes (via pagination buttons)
+    useEffect(() => {
+        if (pagination.current > 0) {
+            fetchRentals();
+        }
+    }, [pagination.current, fetchRentals]);
 
     const handleFilterChange = (key: keyof FilterOptions, value: string | number | boolean | number[]) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -625,13 +677,14 @@ export default function MarketplaceRentalsPage() {
                         variant: "outline",
                         className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                     },
-                    {
-                        type: "link",
+                    // Only show "List Your Rental" button for admin or provider roles
+                    ...(isAdmin || isProvider ? [{
+                        type: "link" as const,
                         href: "/rentals/create",
                         label: "List Your Rental",
                         icon: Plus,
-                        variant: "primary"
-                    }
+                        variant: "primary" as const
+                    }] : [])
                 ]}
             />
 
@@ -760,6 +813,27 @@ export default function MarketplaceRentalsPage() {
                             </div>
                         </div>
                     </div>
+
+                    {/* Call-out Card for Clients to Become Providers */}
+                    {isClient && !isProvider && !isAdmin && (
+                        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
+                            <div className="px-3 py-1">
+                                <div className="flex items-center justify-between gap-4">
+                                    <p className="text-lg font-medium text-gray-700 flex items-center gap-2">
+                                        <Sparkles className="w-4 h-4 text-green-600" />
+                                        <span>List your equipment and start earning as a provider</span>
+                                    </p>
+                                    <Link
+                                        href="/plus?upgrade=provider"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap"
+                                    >
+                                        Upgrade
+                                        <ArrowRight className="w-3.5 h-3.5" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
 
                     {/* Results */}
                     <div className="space-y-3">
