@@ -89,7 +89,7 @@ export class PhoneFormatter {
         }
       }
     } catch (error) {
-      logger.warn('Could not detect user country', undefined, { error: error instanceof Error ? error.message : String(error) });
+      logger.warn('Could not detect user country', { error: error instanceof Error ? error.message : String(error) });
       // Default to US if detection fails
       this.userCountry = 'US';
       this.detectedCountry = COUNTRY_CODES['US'];
@@ -181,7 +181,7 @@ export class PhoneFormatter {
       const data = await response.json();
       return data.countryCode || null;
     } catch (error) {
-      logger.warn('Reverse geocoding failed', undefined, { error: error instanceof Error ? error.message : String(error) });
+      logger.warn('Reverse geocoding failed', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }

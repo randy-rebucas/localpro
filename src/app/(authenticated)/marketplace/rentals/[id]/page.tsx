@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { ListSkeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 export interface Rental {
   id: string;

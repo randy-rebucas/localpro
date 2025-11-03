@@ -180,7 +180,7 @@ export function Dashboard() {
             });
             setRecentActivity(activityData);
           } else {
-            logger.warn('Failed to fetch recent activity', undefined, { status: response.status });
+            logger.warn('Failed to fetch recent activity', { status: response.status });
             // Set fallback activity data if API fails
             setRecentActivity([
               { id: 1, action: "Dashboard loaded", time: "Just now", icon: "dashboard" },

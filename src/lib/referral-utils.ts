@@ -30,7 +30,7 @@ export function storeReferralCode(code: string): void {
   try {
     localStorage.setItem(REFERRAL_CODE_KEY, trimmedCode);
   } catch (error) {
-    logger.warn('Failed to store referral code in localStorage', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to store referral code in localStorage', { error: error instanceof Error ? error.message : String(error) });
   }
 
   // Store in cookie for cross-session persistence
@@ -41,7 +41,7 @@ export function storeReferralCode(code: string): void {
     const cookieValue = `${REFERRAL_CODE_KEY}=${trimmedCode}; expires=${expirationDate.toUTCString()}; path=/; SameSite=Lax`;
     document.cookie = cookieValue;
   } catch (error) {
-    logger.warn('Failed to store referral code in cookie', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to store referral code in cookie', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 
@@ -58,7 +58,7 @@ export function getStoredReferralCode(): string | null {
       if (code) return code;
     }
   } catch (error) {
-    logger.warn('Failed to read referral code from cookie', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to read referral code from cookie', { error: error instanceof Error ? error.message : String(error) });
   }
 
   // Fallback to localStorage
@@ -66,7 +66,7 @@ export function getStoredReferralCode(): string | null {
     const code = localStorage.getItem(REFERRAL_CODE_KEY);
     if (code) return code;
   } catch (error) {
-    logger.warn('Failed to read referral code from localStorage', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to read referral code from localStorage', { error: error instanceof Error ? error.message : String(error) });
   }
 
   return null;
@@ -80,14 +80,14 @@ export function clearReferralCode(): void {
   try {
     localStorage.removeItem(REFERRAL_CODE_KEY);
   } catch (error) {
-    logger.warn('Failed to clear referral code from localStorage', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to clear referral code from localStorage', { error: error instanceof Error ? error.message : String(error) });
   }
 
   // Clear cookie
   try {
     document.cookie = `${REFERRAL_CODE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   } catch (error) {
-    logger.warn('Failed to clear referral code from cookie', undefined, { error: error instanceof Error ? error.message : String(error) });
+    logger.warn('Failed to clear referral code from cookie', { error: error instanceof Error ? error.message : String(error) });
   }
 }
 

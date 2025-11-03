@@ -1,6 +1,7 @@
 import { serialize } from 'cookie';
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
 import { AUTH_CONFIG } from './env';
+import { logger } from './logger';
 
 const secret = new TextEncoder().encode(AUTH_CONFIG.sessionSecret);
 

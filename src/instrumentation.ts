@@ -21,9 +21,15 @@ export async function onRequestError(
     path: string;
     headers: Record<string, string | string[]>;
     method: string;
+  },
+  context: {
+    routerKind: string;
+    routePath: string;
+    routeType: string;
+    [key: string]: unknown;
   }
 ) {
   // Capture request errors from nested React Server Components
-  Sentry.captureRequestError(err, request);
+  Sentry.captureRequestError(err, request, context);
 }
 

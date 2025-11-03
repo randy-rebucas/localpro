@@ -233,7 +233,11 @@ export default function SuppliesPage() {
           });
         },
         (error) => {
-          logger.warn('Could not get user location', error instanceof Error ? error : new Error(String(error)));
+          logger.warn('Could not get user location', { 
+            error: error instanceof Error ? error.message : String(error),
+            code: (error as GeolocationPositionError)?.code,
+            message: (error as GeolocationPositionError)?.message
+          });
         }
       );
     }
@@ -470,7 +474,14 @@ export default function SuppliesPage() {
         count: paginationData.count || supplies.length
       });
     } catch (error) {
-      logger.error('Error fetching supplies', error instanceof Error ? error : new Error(String(error)), { filters: { category, type, status, searchQuery } });
+      logger.error('Error fetching supplies', error instanceof Error ? error : new Error(String(error)), { 
+        filters: { 
+          category: selectedCategory, 
+          type: selectedType, 
+          status: selectedStatus, 
+          searchQuery 
+        } 
+      });
       setError('Failed to fetch supplies. Please try again later.');
       setSupplies([]);
     } finally {

@@ -32,7 +32,7 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
   if (value === undefined) return defaultValue;
   const parsed = parseInt(value, 10);
   if (isNaN(parsed)) {
-    logger.warn(`Invalid number for ${key}`, undefined, { value, defaultValue });
+    logger.warn(`Invalid number for ${key}`, { value, defaultValue });
     return defaultValue;
   }
   return parsed;

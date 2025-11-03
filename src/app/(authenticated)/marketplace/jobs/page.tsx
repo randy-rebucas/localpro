@@ -21,6 +21,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface Job {
   id: string;
@@ -128,7 +129,7 @@ export default function BrowseJobsPage() {
         
         // Ensure jobsData is always an array
         if (!Array.isArray(jobsData)) {
-          logger.warn("Jobs data is not an array", undefined, { dataType: typeof jobsData });
+          logger.warn("Jobs data is not an array", { dataType: typeof jobsData });
           jobsData = [];
         }
         

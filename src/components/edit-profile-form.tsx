@@ -564,15 +564,28 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       const cleanCertifications = values.profile.certifications
         .map((cert: Record<string, unknown>) => {
           const cleaned: Record<string, unknown> = {};
-          if (cert.name && cert.name.trim()) cleaned.name = cert.name.trim();
-          if (cert.issuer && cert.issuer.trim()) cleaned.issuer = cert.issuer.trim();
-          if (cert.issueDate && cert.issueDate.trim()) cleaned.issueDate = cert.issueDate.trim();
-          if (cert.expiryDate && cert.expiryDate.trim()) cleaned.expiryDate = cert.expiryDate.trim();
-          if (cert.document && (cert.document.url || cert.document.publicId)) {
+          const certName = typeof cert.name === 'string' ? cert.name : '';
+          const certIssuer = typeof cert.issuer === 'string' ? cert.issuer : '';
+          const certIssueDate = typeof cert.issueDate === 'string' ? cert.issueDate : '';
+          const certExpiryDate = typeof cert.expiryDate === 'string' ? cert.expiryDate : '';
+          
+          if (certName.trim()) cleaned.name = certName.trim();
+          if (certIssuer.trim()) cleaned.issuer = certIssuer.trim();
+          if (certIssueDate.trim()) cleaned.issueDate = certIssueDate.trim();
+          if (certExpiryDate.trim()) cleaned.expiryDate = certExpiryDate.trim();
+          
+          const certDoc = cert.document && typeof cert.document === 'object' && !Array.isArray(cert.document)
+            ? cert.document as Record<string, unknown>
+            : null;
+          if (certDoc && (certDoc.url || certDoc.publicId)) {
             cleaned.document = {};
-            if (cert.document.url && cert.document.url.trim()) cleaned.document.url = cert.document.url.trim();
-            if (cert.document.publicId && cert.document.publicId.trim()) cleaned.document.publicId = cert.document.publicId.trim();
-            if (cert.document.filename && cert.document.filename.trim()) cleaned.document.filename = cert.document.filename.trim();
+            const docUrl = typeof certDoc.url === 'string' ? certDoc.url : '';
+            const docPublicId = typeof certDoc.publicId === 'string' ? certDoc.publicId : '';
+            const docFilename = typeof certDoc.filename === 'string' ? certDoc.filename : '';
+            
+            if (docUrl.trim()) (cleaned.document as Record<string, unknown>).url = docUrl.trim();
+            if (docPublicId.trim()) (cleaned.document as Record<string, unknown>).publicId = docPublicId.trim();
+            if (docFilename.trim()) (cleaned.document as Record<string, unknown>).filename = docFilename.trim();
           }
           // Only include if it has at least name or issuer
           return (cleaned.name || cleaned.issuer) ? cleaned : null;
@@ -609,18 +622,28 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         insurancePayload.expiryDate = values.profile.insurance.expiryDate.trim();
         hasInsuranceData = true;
       }
-      if (values.profile.insurance.document && (values.profile.insurance.document.url || values.profile.insurance.document.publicId)) {
-        insurancePayload.document = {};
-        if (values.profile.insurance.document.url && values.profile.insurance.document.url.trim()) {
-          insurancePayload.document.url = values.profile.insurance.document.url.trim();
+      const insuranceDoc = values.profile.insurance.document && typeof values.profile.insurance.document === 'object' && !Array.isArray(values.profile.insurance.document)
+        ? values.profile.insurance.document as Record<string, unknown>
+        : null;
+      if (insuranceDoc && (insuranceDoc.url || insuranceDoc.publicId)) {
+        const docPayload: Record<string, unknown> = {};
+        const docUrl = typeof insuranceDoc.url === 'string' ? insuranceDoc.url : '';
+        const docPublicId = typeof insuranceDoc.publicId === 'string' ? insuranceDoc.publicId : '';
+        const docFilename = typeof insuranceDoc.filename === 'string' ? insuranceDoc.filename : '';
+        
+        if (docUrl.trim()) {
+          docPayload.url = docUrl.trim();
         }
-        if (values.profile.insurance.document.publicId && values.profile.insurance.document.publicId.trim()) {
-          insurancePayload.document.publicId = values.profile.insurance.document.publicId.trim();
+        if (docPublicId.trim()) {
+          docPayload.publicId = docPublicId.trim();
         }
-        if (values.profile.insurance.document.filename && values.profile.insurance.document.filename.trim()) {
-          insurancePayload.document.filename = values.profile.insurance.document.filename.trim();
+        if (docFilename.trim()) {
+          docPayload.filename = docFilename.trim();
         }
-        hasInsuranceData = true;
+        if (Object.keys(docPayload).length > 0) {
+          insurancePayload.document = docPayload;
+          hasInsuranceData = true;
+        }
       }
       
       if (hasInsuranceData) {
@@ -641,18 +664,28 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         bgCheckPayload.completedAt = values.profile.backgroundCheck.completedAt.trim();
         hasBgCheckData = true;
       }
-      if (values.profile.backgroundCheck.document && (values.profile.backgroundCheck.document.url || values.profile.backgroundCheck.document.publicId)) {
-        bgCheckPayload.document = {};
-        if (values.profile.backgroundCheck.document.url && values.profile.backgroundCheck.document.url.trim()) {
-          bgCheckPayload.document.url = values.profile.backgroundCheck.document.url.trim();
+      const bgCheckDoc = values.profile.backgroundCheck.document && typeof values.profile.backgroundCheck.document === 'object' && !Array.isArray(values.profile.backgroundCheck.document)
+        ? values.profile.backgroundCheck.document as Record<string, unknown>
+        : null;
+      if (bgCheckDoc && (bgCheckDoc.url || bgCheckDoc.publicId)) {
+        const docPayload: Record<string, unknown> = {};
+        const docUrl = typeof bgCheckDoc.url === 'string' ? bgCheckDoc.url : '';
+        const docPublicId = typeof bgCheckDoc.publicId === 'string' ? bgCheckDoc.publicId : '';
+        const docFilename = typeof bgCheckDoc.filename === 'string' ? bgCheckDoc.filename : '';
+        
+        if (docUrl.trim()) {
+          docPayload.url = docUrl.trim();
         }
-        if (values.profile.backgroundCheck.document.publicId && values.profile.backgroundCheck.document.publicId.trim()) {
-          bgCheckPayload.document.publicId = values.profile.backgroundCheck.document.publicId.trim();
+        if (docPublicId.trim()) {
+          docPayload.publicId = docPublicId.trim();
         }
-        if (values.profile.backgroundCheck.document.filename && values.profile.backgroundCheck.document.filename.trim()) {
-          bgCheckPayload.document.filename = values.profile.backgroundCheck.document.filename.trim();
+        if (docFilename.trim()) {
+          docPayload.filename = docFilename.trim();
         }
-        hasBgCheckData = true;
+        if (Object.keys(docPayload).length > 0) {
+          bgCheckPayload.document = docPayload;
+          hasBgCheckData = true;
+        }
       }
       
       if (hasBgCheckData) {
@@ -669,9 +702,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         const cleanSchedule = values.profile.availability.schedule
           .map((sched: Record<string, unknown>) => {
             const cleaned: Record<string, unknown> = {};
-            if (sched.day && sched.day.trim()) cleaned.day = sched.day.trim();
-            if (sched.startTime && sched.startTime.trim()) cleaned.startTime = sched.startTime.trim();
-            if (sched.endTime && sched.endTime.trim()) cleaned.endTime = sched.endTime.trim();
+            const schedDay = typeof sched.day === 'string' ? sched.day : '';
+            const schedStartTime = typeof sched.startTime === 'string' ? sched.startTime : '';
+            const schedEndTime = typeof sched.endTime === 'string' ? sched.endTime : '';
+            
+            if (schedDay.trim()) cleaned.day = schedDay.trim();
+            if (schedStartTime.trim()) cleaned.startTime = schedStartTime.trim();
+            if (schedEndTime.trim()) cleaned.endTime = schedEndTime.trim();
             if (typeof sched.isAvailable === 'boolean') cleaned.isAvailable = sched.isAvailable;
             // Only include if it has at least day
             return cleaned.day ? cleaned : null;
@@ -702,35 +739,54 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Build portfolio array - ensure it matches the expected structure
     if (values.portfolio && Array.isArray(values.portfolio) && values.portfolio.length > 0) {
       const cleanPortfolio = values.portfolio
-        .map((item: Record<string, unknown>) => {
+        .map((item: unknown) => {
           // If it's already an object with the expected structure, use it
-          if (typeof item === 'object' && item !== null) {
+          if (typeof item === 'object' && item !== null && !Array.isArray(item)) {
+            const itemObj = item as Record<string, unknown>;
             const cleaned: Record<string, unknown> = {};
-            if (typeof item.title === 'string' && item.title.trim()) cleaned.title = item.title.trim();
-            if (typeof item.description === 'string' && item.description.trim()) cleaned.description = item.description.trim();
-            if (typeof item.category === 'string' && item.category.trim()) cleaned.category = item.category.trim();
-            if (typeof item.completedAt === 'string' && item.completedAt.trim()) cleaned.completedAt = item.completedAt.trim();
-            if (item.images && Array.isArray(item.images) && item.images.length > 0) {
-              cleaned.images = item.images
-                .map((img: Record<string, unknown>) => {
+            const itemTitle = typeof itemObj.title === 'string' ? itemObj.title : '';
+            const itemDesc = typeof itemObj.description === 'string' ? itemObj.description : '';
+            const itemCategory = typeof itemObj.category === 'string' ? itemObj.category : '';
+            const itemCompletedAt = typeof itemObj.completedAt === 'string' ? itemObj.completedAt : '';
+            
+            if (itemTitle.trim()) cleaned.title = itemTitle.trim();
+            if (itemDesc.trim()) cleaned.description = itemDesc.trim();
+            if (itemCategory.trim()) cleaned.category = itemCategory.trim();
+            if (itemCompletedAt.trim()) cleaned.completedAt = itemCompletedAt.trim();
+            if (itemObj.images && Array.isArray(itemObj.images) && itemObj.images.length > 0) {
+              cleaned.images = itemObj.images
+                .map((img: unknown) => {
+                  const imgObj = typeof img === 'object' && img !== null && !Array.isArray(img) ? img as Record<string, unknown> : {};
                   const cleanedImg: Record<string, unknown> = {};
-                  if (img.url && img.url.trim()) cleanedImg.url = img.url.trim();
-                  if (img.publicId && img.publicId.trim()) cleanedImg.publicId = img.publicId.trim();
-                  if (img.thumbnail && img.thumbnail.trim()) cleanedImg.thumbnail = img.thumbnail.trim();
+                  const imgUrl = typeof imgObj.url === 'string' ? imgObj.url : '';
+                  const imgPublicId = typeof imgObj.publicId === 'string' ? imgObj.publicId : '';
+                  const imgThumbnail = typeof imgObj.thumbnail === 'string' ? imgObj.thumbnail : '';
+                  
+                  if (imgUrl.trim()) cleanedImg.url = imgUrl.trim();
+                  if (imgPublicId.trim()) cleanedImg.publicId = imgPublicId.trim();
+                  if (imgThumbnail.trim()) cleanedImg.thumbnail = imgThumbnail.trim();
                   return Object.keys(cleanedImg).length > 0 ? cleanedImg : null;
                 })
                 .filter(Boolean);
             }
             // Only include if it has at least title or images
-            return (cleaned.title || (cleaned.images && cleaned.images.length > 0)) ? cleaned : null;
-          } else if (typeof item === 'string' && item.trim()) {
-            // Legacy: if it's a string URL, convert to portfolio object
-            return {
-              images: [{
-                url: item.trim(),
-                thumbnail: item.trim()
-              }]
-            };
+            const cleanedImages = cleaned.images as unknown[];
+            return (cleaned.title || (cleanedImages && Array.isArray(cleanedImages) && cleanedImages.length > 0)) ? cleaned : null;
+          }
+          
+          // Handle string items (legacy format)
+          if (typeof item === 'string') {
+            const trimmed: string = item;
+            const trimmedValue = trimmed.trim();
+            if (trimmedValue.length > 0) {
+              // Legacy: if it's a string URL, convert to portfolio object
+              return {
+                images: [{
+                  url: trimmedValue,
+                  thumbnail: trimmedValue
+                }]
+              };
+            }
           }
           return null;
         })
@@ -823,7 +879,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         experience: session.user.experience,
         avatar: typeof session.user.avatar === 'string' 
           ? session.user.avatar 
-          : (session.user as UserProfileData).profile?.avatar 
+          : (session.user as UserProfile).profile?.avatar 
           || session.user.avatar,
         portfolio: session.user.portfolio as string[],
         createdAt: session.user.createdAt || new Date().toISOString(),
@@ -1005,7 +1061,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   // Initialize form from initialProfile if provided (priority over fetching)
   useEffect(() => {
     if (initialProfile) {
-      logger.debug('Initializing form from initialProfile', { userId: initialProfile?.id || initialProfile?._id });
+      logger.debug('Initializing form from initialProfile', { userId: initialProfile?.id || (initialProfile as UserProfile & { _id?: string })?._id });
       
       // Update profile state
       setProfile(initialProfile);
@@ -1021,57 +1077,90 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       // Extract all nested profile data
       const profileData = (initialProfile as UserProfile & { profile?: Record<string, unknown> }).profile || {};
+      const profileDataTyped = profileData as Record<string, unknown>;
       
       // Build complete form data from initialProfile
       const formData: ProfileForm = {
         name: fullName,
-        firstName: initialProfile.firstName || (profileData as { firstName?: string }).firstName || "",
-        lastName: initialProfile.lastName || (profileData as { lastName?: string }).lastName || "",
+        firstName: initialProfile.firstName || (typeof profileDataTyped.firstName === 'string' ? profileDataTyped.firstName : "") || "",
+        lastName: initialProfile.lastName || (typeof profileDataTyped.lastName === 'string' ? profileDataTyped.lastName : "") || "",
         role: (initialProfile.role || "") as "" | "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | undefined,
         email: initialProfile.email || "",
         phoneNumber: phoneNumber,
         phone: initialProfile.phone || phoneNumber || "",
-        bio: profileData.bio || initialProfile.bio || "",
-        location: initialProfile.location || profileData.location || "",
-        website: initialProfile.website || profileData.website || "",
+        bio: (typeof profileDataTyped.bio === 'string' ? profileDataTyped.bio : "") || (initialProfile.bio || ""),
+        location: (initialProfile.location || "") || (typeof profileDataTyped.location === 'string' ? profileDataTyped.location : ""),
+        website: (initialProfile.website || "") || (typeof profileDataTyped.website === 'string' ? profileDataTyped.website : ""),
         skills: Array.isArray(initialProfile.skills)
           ? initialProfile.skills.join(", ")
-          : Array.isArray(profileData.skills)
-          ? profileData.skills.join(", ")
+          : Array.isArray(profileDataTyped.skills)
+          ? (profileDataTyped.skills as string[]).join(", ")
           : "",
         experience:
           typeof profileData.experience !== "undefined"
             ? String(profileData.experience)
             : (initialProfile.experience ? String(initialProfile.experience) : ""),
         profile: {
-          avatar: typeof initialProfile.avatar === 'object' 
+          avatar: ((typeof initialProfile.avatar === 'object' && initialProfile.avatar !== null
             ? initialProfile.avatar 
-            : (initialProfile.avatar ? { url: initialProfile.avatar } : undefined)
-            || profileData.avatar,
-          bio: profileData.bio || initialProfile.bio || "",
-          address: profileData.address || {
-            street: "",
-            city: "",
-            state: "",
-            zipCode: "",
-            country: "",
-          },
-          experience: profileData.experience,
-          businessName: profileData.businessName || "",
-          businessType: profileData.businessType || "",
-          yearsInBusiness: profileData.yearsInBusiness,
-          serviceAreas: Array.isArray(profileData.serviceAreas)
-            ? profileData.serviceAreas.join(", ")
+            : (initialProfile.avatar ? { url: String(initialProfile.avatar) } : undefined))
+            || (typeof profileDataTyped.avatar === 'object' && profileDataTyped.avatar && !Array.isArray(profileDataTyped.avatar) && profileDataTyped.avatar !== null
+              ? profileDataTyped.avatar 
+              : undefined)) as unknown as { url?: string; publicId?: string; thumbnail?: string } | undefined,
+          bio: (typeof profileDataTyped.bio === 'string' ? profileDataTyped.bio : "") || initialProfile.bio || "",
+          address: ((typeof profileDataTyped.address === 'object' && profileDataTyped.address && !Array.isArray(profileDataTyped.address)
+            ? profileDataTyped.address
+            : {
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+              }) || {
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+              }) as { street?: string; city?: string; state?: string; zipCode?: string; country?: string; coordinates?: { lat?: number; lng?: number } } | undefined,
+          experience: (typeof profileDataTyped.experience !== 'undefined' 
+            ? (typeof profileDataTyped.experience === 'number' 
+              ? profileDataTyped.experience 
+              : typeof profileDataTyped.experience === 'string'
+              ? profileDataTyped.experience
+              : undefined)
+            : undefined) as string | number | undefined,
+          businessName: (typeof profileDataTyped.businessName === 'string' ? profileDataTyped.businessName : "") || "",
+          businessType: (typeof profileDataTyped.businessType === 'string' 
+            ? profileDataTyped.businessType 
+            : "") as "" | "individual" | "small_business" | "enterprise" | "franchise" | undefined,
+          yearsInBusiness: (typeof profileDataTyped.yearsInBusiness === 'number' 
+            ? profileDataTyped.yearsInBusiness 
+            : typeof profileDataTyped.yearsInBusiness === 'string'
+            ? profileDataTyped.yearsInBusiness
+            : undefined) as string | number | undefined,
+          serviceAreas: Array.isArray(profileDataTyped.serviceAreas)
+            ? (profileDataTyped.serviceAreas as string[]).join(", ")
             : "",
-          specialties: Array.isArray(profileData.specialties)
-            ? profileData.specialties.join(", ")
+          specialties: Array.isArray(profileDataTyped.specialties)
+            ? (profileDataTyped.specialties as string[]).join(", ")
             : "",
-          certifications: profileData.certifications || [],
-          insurance: profileData.insurance,
-          backgroundCheck: profileData.backgroundCheck,
-          availability: profileData.availability || { schedule: [] },
+          certifications: (Array.isArray(profileDataTyped.certifications) 
+            ? (profileDataTyped.certifications as Array<{ name?: string; issuer?: string; issueDate?: string; expiryDate?: string; document?: { url?: string; publicId?: string; filename?: string } }>)
+            : undefined) as Array<{ name?: string; issuer?: string; issueDate?: string; expiryDate?: string; document?: { url?: string; publicId?: string; filename?: string } }> | undefined,
+          insurance: (profileDataTyped.insurance && typeof profileDataTyped.insurance === 'object' && !Array.isArray(profileDataTyped.insurance)
+            ? profileDataTyped.insurance
+            : undefined) as { hasInsurance?: boolean; provider?: string; policyNumber?: string; coverageAmount?: string | number; expiryDate?: string; document?: { url?: string; publicId?: string; filename?: string } } | undefined,
+          backgroundCheck: (profileDataTyped.backgroundCheck && typeof profileDataTyped.backgroundCheck === 'object' && !Array.isArray(profileDataTyped.backgroundCheck)
+            ? profileDataTyped.backgroundCheck
+            : undefined) as { status?: "" | "pending" | "approved" | "rejected" | "not_required"; completedAt?: string; document?: { url?: string; publicId?: string; filename?: string } } | undefined,
+          availability: ((profileDataTyped.availability && typeof profileDataTyped.availability === 'object')
+            ? (profileDataTyped.availability as { schedule?: Array<{ day?: "" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"; startTime?: string; endTime?: string; isAvailable?: boolean }>; timezone?: string; emergencyService?: boolean })
+            : ({ schedule: [] as Array<{ day?: "" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"; startTime?: string; endTime?: string; isAvailable?: boolean }> })) as { schedule?: Array<{ day?: "" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"; startTime?: string; endTime?: string; isAvailable?: boolean }>; timezone?: string; emergencyService?: boolean } | undefined,
         },
-        portfolio: (profileData as { portfolio?: PortfolioItem[] }).portfolio || [],
+        portfolio: (Array.isArray(profileDataTyped.portfolio) 
+          ? (profileDataTyped.portfolio as ProfileForm['portfolio'])
+          : []) as ProfileForm['portfolio'],
         preferences: (initialProfile as UserProfile & { preferences?: ProfileForm['preferences'] }).preferences || {
           notifications: { sms: false, email: true, push: true },
           language: "",
@@ -1085,10 +1174,16 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         tags: Array.isArray((initialProfile as UserProfile & { tags?: string[] }).tags)
           ? (initialProfile as UserProfile & { tags?: string[] }).tags?.join(", ") || ""
           : "",
-        notes: (initialProfile as UserProfile & { notes?: unknown[] }).notes || [],
+        notes: (Array.isArray((initialProfile as UserProfile & { notes?: unknown[] }).notes) 
+          ? ((initialProfile as UserProfile & { notes?: Array<{ note?: string; addedBy?: string; addedAt?: string }> }).notes || []).map(note => 
+              (typeof note === 'object' && note !== null && !Array.isArray(note)
+                ? note as { note?: string; addedBy?: string; addedAt?: string }
+                : { note: typeof note === 'string' ? note : undefined })
+            ) as ProfileForm['notes']
+          : []) as ProfileForm['notes'],
       };
       
-      logger.debug('Form data prepared', { hasData: !!formData, userId: initialProfile?.id || initialProfile?._id });
+      logger.debug('Form data prepared', { hasData: !!formData, userId: initialProfile?.id || (initialProfile as UserProfile & { _id?: string; id?: string })?._id });
       reset(formData);
       setInitialValues(formData);
       logger.debug('Form initialized successfully');
@@ -1127,13 +1222,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Note: /api/auth/profile endpoint uses the authenticated user's token,
     // so we don't need to pass user ID in the URL
     if (!session?.user) {
-      logger.error('No session user available', undefined, { hasSession: !!session });
+      logger.error('No session user available', new Error('No session user'), { hasSession: !!session });
       toast.error("You must be logged in to save changes");
       return;
     }
     
     if (!session.user.id && !session.user._id) {
-      logger.warn('Session exists but no user ID found', undefined, { hasSession: !!session });
+      logger.warn('Session exists but no user ID found', { hasSession: !!session });
       // Continue anyway - the API should handle auth from token
     }
     

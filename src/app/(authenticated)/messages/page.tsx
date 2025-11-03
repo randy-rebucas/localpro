@@ -167,82 +167,185 @@ export interface Notification {
 
 // Helper functions to normalize data from API
 const normalizeMessage = (message: Record<string, unknown>, currentUserId?: string): Message => {
-  const senderId = typeof message.sender === 'string' ? message.sender : message.sender?._id || message.senderId;
-  const senderName = typeof message.sender === 'object' && message.sender
-    ? `${message.sender.firstName || ''} ${message.sender.lastName || ''}`.trim() || message.sender.email || 'Unknown'
-    : message.senderName || 'Unknown';
+  const sender = message.sender;
+  const senderId = typeof sender === 'string' 
+    ? sender 
+    : (sender && typeof sender === 'object' && '_id' in sender && typeof sender._id === 'string' 
+        ? sender._id 
+        : undefined) || (message.senderId as string | undefined);
   
+  let senderName: string;
+  if (sender && typeof sender === 'object' && 'firstName' in sender) {
+    const senderObj = sender as Record<string, unknown>;
+    const firstName = typeof senderObj.firstName === 'string' ? senderObj.firstName : '';
+    const lastName = typeof senderObj.lastName === 'string' ? senderObj.lastName : '';
+    const email = typeof senderObj.email === 'string' ? senderObj.email : '';
+    senderName = `${firstName} ${lastName}`.trim() || email || 'Unknown';
+  } else {
+    senderName = (typeof message.senderName === 'string' ? message.senderName : 'Unknown');
+  }
+  
+  const messageId = typeof message._id === 'string' ? message._id : (typeof message.id === 'string' ? message.id : '');
+  const messageIdAlias = typeof message.id === 'string' ? message.id : messageId;
+  
+  // Ensure sender is properly typed - use senderId as fallback string if sender is invalid
+  let normalizedSender: string | { _id: string; firstName?: string; lastName?: string; email?: string; avatar?: { url?: string; thumbnail?: string }; role?: string };
+  if (typeof sender === 'string') {
+    normalizedSender = sender;
+  } else if (sender && typeof sender === 'object' && '_id' in sender && typeof sender._id === 'string') {
+    const senderObj = sender as Record<string, unknown>;
+    normalizedSender = {
+      _id: sender._id,
+      firstName: typeof senderObj.firstName === 'string' ? senderObj.firstName : undefined,
+      lastName: typeof senderObj.lastName === 'string' ? senderObj.lastName : undefined,
+      email: typeof senderObj.email === 'string' ? senderObj.email : undefined,
+      avatar: senderObj.avatar && typeof senderObj.avatar === 'object' ? {
+        url: typeof (senderObj.avatar as Record<string, unknown>).url === 'string' ? (senderObj.avatar as Record<string, unknown>).url as string : undefined,
+        thumbnail: typeof (senderObj.avatar as Record<string, unknown>).thumbnail === 'string' ? (senderObj.avatar as Record<string, unknown>).thumbnail as string : undefined
+      } : undefined,
+      role: typeof senderObj.role === 'string' ? senderObj.role : undefined
+    };
+  } else {
+    normalizedSender = senderId || '';
+  }
+  
+  // Safely extract typed values
+  const readBy = Array.isArray(message.readBy) 
+    ? message.readBy as MessageReadBy[]
+    : [];
+  const attachments = Array.isArray(message.attachments)
+    ? message.attachments as MessageAttachment[]
+    : [];
+  const reactions = Array.isArray(message.reactions)
+    ? message.reactions as MessageReaction[]
+    : [];
+  const messageType = (typeof message.type === 'string' && ['text', 'image', 'file', 'system', 'booking_update', 'payment_update'].includes(message.type))
+    ? message.type as MessageType
+    : 'text';
+  const metadata = message.metadata && typeof message.metadata === 'object' && !Array.isArray(message.metadata)
+    ? message.metadata as MessageMetadata
+    : {};
+
+  // Extract required fields
+  const conversationId = typeof message.conversation === 'string' ? message.conversation : '';
+  const content = typeof message.content === 'string' ? message.content : '';
+  const createdAt = typeof message.createdAt === 'string' ? message.createdAt : new Date().toISOString();
+  const updatedAt = typeof message.updatedAt === 'string' ? message.updatedAt : createdAt;
+
   return {
-    ...message,
-    _id: message._id || message.id,
-    id: message.id || message._id,
-    sender: message.sender || senderId,
+    _id: messageId,
+    id: messageIdAlias,
+    conversation: conversationId,
+    sender: normalizedSender,
+    content,
+    type: messageType,
+    attachments,
+    metadata,
+    readBy,
+    reactions,
+    createdAt,
+    updatedAt,
+    // Computed fields
     senderId,
     senderName,
-    isFromUser: currentUserId ? senderId === currentUserId : message.isFromUser || false,
-    isRead: message.readBy?.some((r: MessageReadBy) => r.user === currentUserId) || message.isRead || false,
-    type: message.type || 'text',
-    attachments: message.attachments || [],
-    metadata: message.metadata || {},
-    readBy: message.readBy || [],
-    reactions: message.reactions || []
+    isFromUser: currentUserId ? senderId === currentUserId : (typeof message.isFromUser === 'boolean' ? message.isFromUser : false),
+    isRead: readBy.some((r: MessageReadBy) => r.user === currentUserId) || (typeof message.isRead === 'boolean' ? message.isRead : false)
   };
 };
 
 const normalizeConversation = (conversation: Record<string, unknown>, currentUserId?: string): Conversation => {
-  const convId = conversation._id || conversation.id;
-  const participants = conversation.participants || [];
+  const convId = typeof conversation._id === 'string' ? conversation._id : (typeof conversation.id === 'string' ? conversation.id : '');
+  const participants = Array.isArray(conversation.participants)
+    ? conversation.participants as ConversationParticipant[]
+    : [];
   
   // Compute name from participants (exclude current user)
   const otherParticipants = participants.filter((p: ConversationParticipant) => {
-    const userId = typeof p.user === 'string' ? p.user : p.user?._id;
+    const userId = typeof p.user === 'string' ? p.user : (typeof p.user === 'object' && p.user && '_id' in p.user && typeof p.user._id === 'string' ? p.user._id : undefined);
     return userId !== currentUserId;
   });
   
-  let name = conversation.subject || conversation.name || 'Unknown';
+  let name = typeof conversation.subject === 'string' ? conversation.subject : (typeof conversation.name === 'string' ? conversation.name : 'Unknown');
   if (otherParticipants.length > 0) {
     const firstOther = otherParticipants[0];
-    const otherName = typeof firstOther.user === 'object' && firstOther.user
-      ? `${firstOther.user.firstName || ''} ${firstOther.user.lastName || ''}`.trim() || firstOther.user.email || 'Unknown'
+    const otherName = typeof firstOther.user === 'object' && firstOther.user && '_id' in firstOther.user
+      ? `${(firstOther.user as { firstName?: string }).firstName || ''} ${(firstOther.user as { lastName?: string }).lastName || ''}`.trim() || (firstOther.user as { email?: string }).email || 'Unknown'
       : 'Unknown';
     name = otherParticipants.length === 1 ? otherName : `${otherName} and ${otherParticipants.length - 1} others`;
   }
   
   // Compute avatar from first other participant
-  const avatar = otherParticipants.length > 0 && typeof otherParticipants[0].user === 'object' && otherParticipants[0].user
-    ? otherParticipants[0].user.avatar?.url || otherParticipants[0].user.avatar?.thumbnail
-    : conversation.avatar;
+  const avatar = otherParticipants.length > 0 && typeof otherParticipants[0].user === 'object' && otherParticipants[0].user && '_id' in otherParticipants[0].user
+    ? ((otherParticipants[0].user as { avatar?: { url?: string; thumbnail?: string } }).avatar?.url || (otherParticipants[0].user as { avatar?: { url?: string; thumbnail?: string } }).avatar?.thumbnail)
+    : (typeof conversation.avatar === 'string' ? conversation.avatar : undefined);
   
   // Compute timestamp from lastMessage
-  const timestamp = conversation.lastMessage?.timestamp 
-    || conversation.timestamp 
-    || conversation.updatedAt 
-    || conversation.createdAt;
+  const lastMessageObj = conversation.lastMessage && typeof conversation.lastMessage === 'object' && !Array.isArray(conversation.lastMessage)
+    ? conversation.lastMessage as Record<string, unknown>
+    : null;
+  const timestamp = (lastMessageObj && typeof lastMessageObj.timestamp === 'string' ? lastMessageObj.timestamp : null)
+    || (typeof conversation.timestamp === 'string' ? conversation.timestamp : null)
+    || (typeof conversation.updatedAt === 'string' ? conversation.updatedAt : null)
+    || (typeof conversation.createdAt === 'string' ? conversation.createdAt : '');
   
   // Normalize messages if present
-  const messages = conversation.messages?.map((msg: Record<string, unknown>) => normalizeMessage(msg, currentUserId)) || [];
+  const messages = Array.isArray(conversation.messages)
+    ? conversation.messages.map((msg: unknown) => normalizeMessage(msg as Record<string, unknown>, currentUserId))
+    : [];
   
+  // Safely extract conversation type, status, priority
+  const conversationType = (typeof conversation.type === 'string' && ['booking', 'job_application', 'support', 'general', 'agency'].includes(conversation.type))
+    ? conversation.type as ConversationType
+    : 'general';
+  const conversationStatus = (typeof conversation.status === 'string' && ['active', 'resolved', 'closed', 'archived'].includes(conversation.status))
+    ? conversation.status as ConversationStatus
+    : 'active';
+  const conversationPriority = (typeof conversation.priority === 'string' && ['low', 'medium', 'high', 'urgent'].includes(conversation.priority))
+    ? conversation.priority as ConversationPriority
+    : 'medium';
+  const subject = typeof conversation.subject === 'string' ? conversation.subject : name;
+  const unreadCountNum = typeof conversation.unreadCount === 'number' ? conversation.unreadCount : 0;
+  
+  // Build lastMessage
+  let lastMessage: LastMessage | undefined;
+  if (lastMessageObj && typeof lastMessageObj.content === 'string' && typeof lastMessageObj.sender === 'string' && typeof lastMessageObj.timestamp === 'string') {
+    lastMessage = {
+      content: lastMessageObj.content,
+      sender: lastMessageObj.sender,
+      timestamp: lastMessageObj.timestamp
+    };
+  } else if (messages.length > 0) {
+    const lastMsg = messages[messages.length - 1];
+    lastMessage = {
+      content: lastMsg.content,
+      sender: lastMsg.senderId || '',
+      timestamp: lastMsg.createdAt
+    };
+  }
+  
+  // Extract required fields
+  const createdAt = typeof conversation.createdAt === 'string' ? conversation.createdAt : new Date().toISOString();
+  const updatedAt = typeof conversation.updatedAt === 'string' ? conversation.updatedAt : createdAt;
+
   return {
-    ...conversation,
     _id: convId,
     id: convId,
     participants,
-    type: conversation.type || 'general',
-    subject: conversation.subject || name,
-    status: conversation.status || 'active',
-    priority: conversation.priority || 'medium',
+    type: conversationType,
+    subject,
+    status: conversationStatus,
+    priority: conversationPriority,
     isActive: conversation.isActive !== false,
+    createdAt,
+    updatedAt,
+    // Computed fields
     name,
     avatar,
     timestamp,
-    unreadCount: conversation.unreadCount || 0,
+    unreadCount: unreadCountNum,
     messages,
     isGroup: participants.length > 2,
-    lastMessage: conversation.lastMessage || (messages.length > 0 ? {
-      content: messages[messages.length - 1].content,
-      sender: messages[messages.length - 1].senderId || '',
-      timestamp: messages[messages.length - 1].createdAt
-    } : undefined)
+    lastMessage
   };
 };
 
@@ -417,10 +520,13 @@ export default function MessagesPage() {
       // Handle API response structure and normalize
       const conversationData = responseData?.data || responseData;
     if (conversationData) {
-      const normalized = normalizeConversation(conversationData, currentUserId);
+      const normalized = normalizeConversation(conversationData as Record<string, unknown>, currentUserId);
       // Normalize messages if present
       if (normalized.messages) {
-        normalized.messages = normalized.messages.map((msg: Record<string, unknown>) => normalizeMessage(msg, currentUserId));
+        normalized.messages = normalized.messages.map((msg: Message) => {
+          // Messages are already normalized, but ensure they're in the correct format
+          return msg;
+        });
       }
       return normalized;
     }
@@ -579,7 +685,7 @@ export default function MessagesPage() {
         throw new Error(`Failed to mark conversation as read: ${response.status}`);
       }
     } catch {
-      logger.warn('Failed to mark conversation as read', undefined, { conversationId });
+      logger.warn('Failed to mark conversation as read', { conversationId });
     }
   }, []);
 
@@ -788,7 +894,7 @@ export default function MessagesPage() {
           readyState === EventSource.CLOSED ? 'CLOSED' : 'UNKNOWN';
         
         // Log more informative error details
-        logger.warn('EventSource error', undefined, {
+        logger.warn('EventSource error', {
           readyState,
           stateMessage,
           url: eventSource.url,
@@ -1061,7 +1167,7 @@ export default function MessagesPage() {
 
   const filteredConversations = useMemo(() => {
     if (!Array.isArray(conversations)) {
-      logger.warn('conversations is not an array', undefined, { type: typeof conversations });
+      logger.warn('conversations is not an array', { type: typeof conversations });
       return [];
     }
     return conversations.filter(conv => {

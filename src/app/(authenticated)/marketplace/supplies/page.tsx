@@ -392,7 +392,7 @@ export default function MarketplaceSuppliesPage() {
                     signal: controller.signal
                 });
             } catch (fetchError) {
-                logger.warn("Primary API failed, trying fallback API", undefined, { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
+                logger.warn("Primary API failed, trying fallback API", { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
                 // Try alternative endpoint
                 const fallbackEndpoint = endpoint === API_ENDPOINTS.suppliesNearby
                     ? API_ENDPOINTS.suppliesProducts || API_ENDPOINTS.supplies
@@ -501,7 +501,7 @@ export default function MarketplaceSuppliesPage() {
             }
         } catch (error) {
             logger.error("Error fetching supplies", error instanceof Error ? error : new Error(String(error)), { 
-                hasCoordinates, 
+                hasCoordinates: !!(filters.coordinates && filters.coordinates.lat && filters.coordinates.lng), 
                 searchQuery, 
                 category: filters.category 
             });

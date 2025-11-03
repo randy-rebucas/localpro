@@ -33,6 +33,7 @@ import { QuickActions } from "./quick-actions";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { logger } from "@/lib/logger";
 
 // User Data Entity (from features/users/data-entities.md)
@@ -291,61 +292,126 @@ const normalizeUser = (user: Record<string, unknown>): UserProfileData => {
     };
   }
   
-  const userId = user._id || user.id || 'unknown';
+  const userId = (typeof user._id === 'string' ? user._id : undefined) || (typeof user.id === 'string' ? user.id : undefined) || 'unknown';
+  
+  // Safely extract and type-check user properties
+  const userName = typeof user.name === 'string' ? user.name : undefined;
+  const firstName = typeof user.firstName === 'string' ? user.firstName : undefined;
+  const lastName = typeof user.lastName === 'string' ? user.lastName : undefined;
+  const email = typeof user.email === 'string' ? user.email : undefined;
   
   // Compute name from firstName and lastName
-  const name = user.name || 
-    (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : null) ||
-    user.firstName ||
-    user.lastName ||
-    user.email?.split('@')[0] ||
+  const name = userName || 
+    (firstName && lastName ? `${firstName} ${lastName}` : null) ||
+    firstName ||
+    lastName ||
+    (email ? email.split('@')[0] : null) ||
     'User';
   
   // Compute location from address
-  const location = user.location || 
-    (user.profile?.address 
+  const locationRoot = typeof user.location === 'string' ? user.location : undefined;
+  const profileValue = user.profile && typeof user.profile === 'object' && !Array.isArray(user.profile)
+    ? user.profile as Record<string, unknown>
+    : null;
+  const addressValue = profileValue?.address && typeof profileValue.address === 'object' && !Array.isArray(profileValue.address)
+    ? profileValue.address as Record<string, unknown>
+    : null;
+  
+  const location = locationRoot || 
+    (addressValue 
       ? [
-          user.profile.address.street,
-          user.profile.address.city,
-          user.profile.address.state,
-          user.profile.address.country
-        ].filter(Boolean).join(', ')
+          typeof addressValue.street === 'string' ? addressValue.street : undefined,
+          typeof addressValue.city === 'string' ? addressValue.city : undefined,
+          typeof addressValue.state === 'string' ? addressValue.state : undefined,
+          typeof addressValue.country === 'string' ? addressValue.country : undefined
+        ].filter((item): item is string => typeof item === 'string').join(', ')
       : null);
   
+  // Extract and type-check other fields
+  const phone = typeof user.phone === 'string' ? user.phone : undefined;
+  const phoneNumber = typeof user.phoneNumber === 'string' ? user.phoneNumber : undefined;
+  const role = typeof user.role === 'string' ? user.role as UserRole : 'client';
+  const isVerified = typeof user.isVerified === 'boolean' ? user.isVerified : false;
+  const trustScore = typeof user.trustScore === 'number' ? user.trustScore : 0;
+  const completionRate = typeof user.completionRate === 'number' ? user.completionRate : 0;
+  const cancellationRate = typeof user.cancellationRate === 'number' ? user.cancellationRate : 0;
+  const isActive = user.isActive !== false;
+  const status = (typeof user.status === 'string' ? user.status : 'pending_verification') as UserStatus;
+  
+  // Extract profile fields safely
+  const profileAvatar = profileValue?.avatar;
+  const rootAvatar = user.avatar;
+  const avatar = (profileAvatar && typeof profileAvatar === 'object' && !Array.isArray(profileAvatar))
+    ? profileAvatar as Avatar
+    : (typeof rootAvatar === 'string' ? { url: rootAvatar } : undefined);
+  
+  const profileSkills = profileValue?.skills;
+  const rootSkills = user.skills;
+  const skills = (Array.isArray(profileSkills) ? profileSkills as string[] : undefined) || 
+    (Array.isArray(rootSkills) ? rootSkills as string[] : []);
+  
+  const profilePortfolio = profileValue?.portfolio;
+  const rootPortfolio = user.portfolio;
+  const portfolio = (Array.isArray(profilePortfolio) ? profilePortfolio as PortfolioItem[] : undefined) ||
+    (rootPortfolio ? 
+      Array.isArray(rootPortfolio) && typeof rootPortfolio[0] === 'string' 
+        ? rootPortfolio.map((url: string) => ({ images: [{ url }] })) as PortfolioItem[]
+        : (Array.isArray(rootPortfolio) ? rootPortfolio as PortfolioItem[] : [])
+      : []);
+  
+  // Extract nested objects safely
+  const verification = (user.verification && typeof user.verification === 'object' && !Array.isArray(user.verification))
+    ? user.verification as Verification
+    : {};
+  const badges = Array.isArray(user.badges) ? user.badges as Badge[] : [];
+  const agency = (user.agency && typeof user.agency === 'object' && !Array.isArray(user.agency))
+    ? user.agency as Agency
+    : {};
+  const referral = (user.referral && typeof user.referral === 'object' && !Array.isArray(user.referral))
+    ? user.referral as Referral
+    : {};
+  const wallet = (user.wallet && typeof user.wallet === 'object' && !Array.isArray(user.wallet))
+    ? user.wallet as Wallet
+    : { balance: 0, currency: 'PHP' };
+  const activity = (user.activity && typeof user.activity === 'object' && !Array.isArray(user.activity))
+    ? user.activity as Activity
+    : {};
+  const responseTime = (user.responseTime && typeof user.responseTime === 'object' && !Array.isArray(user.responseTime))
+    ? user.responseTime as ResponseTime
+    : {};
+  const createdAt = typeof user.createdAt === 'string' ? user.createdAt : new Date().toISOString();
+  const updatedAt = typeof user.updatedAt === 'string' ? user.updatedAt : new Date().toISOString();
+  
   return {
-    ...user,
+    ...(typeof user === 'object' && user !== null && !Array.isArray(user) ? user : {}),
     _id: userId,
     id: userId,
     name,
-    phone: user.phone || user.phoneNumber,
-    phoneNumber: user.phoneNumber || user.phone,
-    location,
-    role: user.role || 'client',
-    isVerified: user.isVerified || false,
-    trustScore: user.trustScore || 0,
-    completionRate: user.completionRate || 0,
-    cancellationRate: user.cancellationRate || 0,
-    isActive: user.isActive !== false,
-    status: user.status || 'pending_verification',
+    phone: phone || phoneNumber || undefined,
+    phoneNumber: phoneNumber || phone || undefined,
+    location: location || undefined,
+    role,
+    isVerified,
+    trustScore,
+    completionRate,
+    cancellationRate,
+    isActive,
+    status,
     profile: {
-      ...user.profile,
-      avatar: user.profile?.avatar || (user.avatar ? { url: typeof user.avatar === 'string' ? user.avatar : undefined } : undefined),
-      skills: user.profile?.skills || user.skills || [],
-      portfolio: user.profile?.portfolio || (user.portfolio ? 
-        Array.isArray(user.portfolio) && typeof user.portfolio[0] === 'string' 
-          ? user.portfolio.map((url: string) => ({ images: [{ url }] }))
-          : user.portfolio
-        : []),
+      ...(profileValue || {}),
+      avatar,
+      skills,
+      portfolio,
     },
-    verification: user.verification || {},
-    badges: user.badges || [],
-    agency: user.agency || {},
-    referral: user.referral || {},
-    wallet: user.wallet || { balance: 0, currency: 'PHP' },
-    activity: user.activity || {},
-    responseTime: user.responseTime || {},
-    createdAt: user.createdAt || new Date().toISOString(),
-    updatedAt: user.updatedAt || new Date().toISOString()
+    verification,
+    badges,
+    agency,
+    referral,
+    wallet,
+    activity,
+    responseTime,
+    createdAt,
+    updatedAt
   };
 };
 
@@ -417,7 +483,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
       
       // First, try to use session data immediately if available
       if (session?.user) {
-        const normalized = normalizeUser(session.user);
+        const normalized = normalizeUser(session.user as unknown as Record<string, unknown>);
         setProfile(normalized);
         setLoading(false);
         profileFetchedRef.current = true;
@@ -465,7 +531,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             logger.warn('No user data received from API');
           }
         } else {
-          logger.warn('Failed to fetch user profile', undefined, { status: response.status });
+          logger.warn('Failed to fetch user profile', { status: response.status });
         }
       } catch (error) {
         logger.error('Error fetching user profile', error instanceof Error ? error : new Error(String(error)));

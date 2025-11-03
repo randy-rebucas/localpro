@@ -502,9 +502,10 @@ export default function ServiceDetailPage() {
     const serviceId = service._id || service.id;
     if (!serviceId) return;
     
+    const newFavorited = !isFavorited;
+    
     try {
       const favorites = JSON.parse(localStorage.getItem('favoriteServices') || '[]');
-      const newFavorited = !isFavorited;
       
       if (newFavorited) {
         // Add to favorites if not already present

@@ -3,6 +3,7 @@
 import { isAuthenticated, clearAllAuthData } from "./client-api-utils";
 import { API_BASE_URL, API_ENDPOINTS } from "./api";
 import { createAuthFetchOptions } from "./auth-utils";
+import { logger } from "./logger";
 
 export interface TokenValidationResult {
   isValid: boolean;

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 /**
  * Extract session token from request headers or cookies
@@ -265,7 +266,7 @@ export async function checkApiHealth(): Promise<boolean> {
     });
     return response.ok;
   } catch (error) {
-    logger.warn('API health check failed', undefined, { error: error instanceof Error ? error.message : 'Unknown error' });
+    logger.warn('API health check failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return false;
   }
 }

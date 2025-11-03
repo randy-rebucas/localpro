@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { storeAuthError } from "./token-validation";
+import { logger } from "./logger";
 
 /**
  * Authentication Error Handler

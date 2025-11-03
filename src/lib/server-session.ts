@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { decrypt } from "./session";
+import { logger } from "./logger";
 
 export interface ServerSession {
   sessionId: string; // Unique session identifier

@@ -153,7 +153,7 @@ export function TokenExpiryExample() {
         setLastValidation(new Date());
         
         if (!isValid.isValid) {
-          logger.warn("Token validation failed", undefined, { error: isValid.error });
+          logger.warn("Token validation failed", { error: isValid.error });
         }
       }
     };

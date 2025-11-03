@@ -372,6 +372,60 @@ export default function MarketplaceCoursesPage() {
     ];
 
     const fetchCourses = useCallback(async (isRefresh = false) => {
+        // Declare queryParams outside try block so it's available in catch block
+        const queryParams: Record<string, string> = {
+            page: pagination.current.toString(),
+            limit: pagination.limit.toString(),
+            search: searchQuery || "",
+            category: filters.category || "",
+            subcategory: filters.subcategory || "",
+            level: filters.level || "",
+            language: filters.language || "",
+            minPrice: filters.priceRange[0].toString(),
+            maxPrice: filters.priceRange[1].toString(),
+            minDuration: filters.duration[0].toString(),
+            maxDuration: filters.duration[1].toString(),
+        };
+
+        if (filters.rating > 0) {
+            queryParams.minRating = filters.rating.toString();
+        }
+        if (filters.difficulty > 0) {
+            queryParams.difficulty = filters.difficulty.toString();
+        }
+        if (filters.isFree) {
+            queryParams.isFree = "true";
+        }
+        if (filters.isFeatured) {
+            queryParams.isFeatured = "true";
+        }
+
+        // Add sorting (matching API documentation)
+        if (sortBy === "price_low") {
+            queryParams.sortBy = "price";
+            queryParams.sortOrder = "asc";
+        } else if (sortBy === "price_high") {
+            queryParams.sortBy = "price";
+            queryParams.sortOrder = "desc";
+        } else if (sortBy === "rating") {
+            queryParams.sortBy = "rating";
+            queryParams.sortOrder = "desc";
+        } else if (sortBy === "students") {
+            queryParams.sortBy = "enrollment.current";
+            queryParams.sortOrder = "desc";
+        } else if (sortBy === "duration") {
+            queryParams.sortBy = "duration.hours";
+            queryParams.sortOrder = "asc";
+        } else if (sortBy === "newest") {
+            queryParams.sortBy = "createdAt";
+            queryParams.sortOrder = "desc";
+        } else if (sortBy === "oldest") {
+            queryParams.sortBy = "createdAt";
+            queryParams.sortOrder = "asc";
+        } else {
+            queryParams.sort = sortBy;
+        }
+
         try {
             if (isRefresh) {
                 setRefreshing(true);
@@ -388,60 +442,6 @@ export default function MarketplaceCoursesPage() {
             }
 
             logger.debug("User is authenticated, proceeding with API request");
-
-            const queryParams: Record<string, string> = {
-                page: pagination.current.toString(),
-                limit: pagination.limit.toString(),
-                search: searchQuery || "",
-                category: filters.category || "",
-                subcategory: filters.subcategory || "",
-                level: filters.level || "",
-                language: filters.language || "",
-                minPrice: filters.priceRange[0].toString(),
-                maxPrice: filters.priceRange[1].toString(),
-                minDuration: filters.duration[0].toString(),
-                maxDuration: filters.duration[1].toString(),
-            };
-
-            if (filters.rating > 0) {
-                queryParams.minRating = filters.rating.toString();
-            }
-            if (filters.difficulty > 0) {
-                queryParams.difficulty = filters.difficulty.toString();
-            }
-            if (filters.isFree) {
-                queryParams.isFree = "true";
-            }
-            if (filters.isFeatured) {
-                queryParams.isFeatured = "true";
-            }
-
-            // Add sorting (matching API documentation)
-            if (sortBy === "price_low") {
-                queryParams.sortBy = "price";
-                queryParams.sortOrder = "asc";
-            } else if (sortBy === "price_high") {
-                queryParams.sortBy = "price";
-                queryParams.sortOrder = "desc";
-            } else if (sortBy === "rating") {
-                queryParams.sortBy = "rating";
-                queryParams.sortOrder = "desc";
-            } else if (sortBy === "students") {
-                queryParams.sortBy = "enrollment.current";
-                queryParams.sortOrder = "desc";
-            } else if (sortBy === "duration") {
-                queryParams.sortBy = "duration.hours";
-                queryParams.sortOrder = "asc";
-            } else if (sortBy === "newest") {
-                queryParams.sortBy = "createdAt";
-                queryParams.sortOrder = "desc";
-            } else if (sortBy === "oldest") {
-                queryParams.sortBy = "createdAt";
-                queryParams.sortOrder = "asc";
-            } else {
-                queryParams.sort = sortBy;
-            }
-
             logger.debug("Fetching courses with params", { queryParams });
 
             const data = await apiRequest<CoursesResponse>(`${API_ENDPOINTS.academyCourses}?${new URLSearchParams(queryParams).toString()}`);
@@ -512,7 +512,7 @@ export default function MarketplaceCoursesPage() {
                 setCourses([]);
             }
         } catch (error) {
-            logger.error("Error fetching courses", error instanceof Error ? error : new Error(String(error)), { queryParams, filters, sortBy, pagination });
+            logger.error("Error fetching courses", error instanceof Error ? error : new Error(String(error)), { queryParams: queryParams, filters: filters, sortBy: sortBy, pagination: pagination });
             setError(error instanceof Error ? error.message : 'Failed to fetch courses. Please try again later.');
             setCourses([]);
         } finally {
@@ -546,7 +546,10 @@ export default function MarketplaceCoursesPage() {
                 setFeaturedCourses([]);
             }
         } catch (error) {
-            logger.warn("Error fetching featured courses, using empty array", error instanceof Error ? error : new Error(String(error)));
+            logger.warn("Error fetching featured courses, using empty array", { 
+                error: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined
+            });
             setFeaturedCourses([]);
         }
     }, [normalizeCourse]);
@@ -573,7 +576,10 @@ export default function MarketplaceCoursesPage() {
                 setCategories(fallbackCategories);
             }
         } catch (error) {
-            logger.warn("Error fetching categories, using fallback categories", error instanceof Error ? error : new Error(String(error)));
+            logger.warn("Error fetching categories, using fallback categories", { 
+                error: error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined
+            });
             setCategories(fallbackCategories);
         }
     }, [fallbackCategories]);

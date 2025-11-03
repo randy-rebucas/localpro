@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface ServiceCategory {
   key: string;
@@ -68,10 +69,23 @@ export default function MarketplacePage() {
       if (data.success && data.data && Array.isArray(data.data)) {
         setCategories(data.data);
       } else if (Array.isArray(data)) {
-        // Fallback if response is directly an array
-        setCategories(data as Array<{ id: string; name: string; slug: string; description?: string; icon?: string }>);
+        // Fallback if response is directly an array - map to ServiceCategory structure
+        const mappedCategories: ServiceCategory[] = (data as Array<{ id?: string; name: string; slug?: string; description?: string; icon?: string }>).map((item) => ({
+          key: item.id || item.slug || item.name.toLowerCase().replace(/\s+/g, '-'),
+          name: item.name,
+          description: item.description || '',
+          icon: item.icon || '',
+          subcategories: [],
+          statistics: {
+            totalServices: 0,
+            pricing: null,
+            rating: null,
+            popularSubcategories: []
+          }
+        }));
+        setCategories(mappedCategories);
       } else {
-        logger.warn("Unexpected categories response format", undefined, { hasData: !!data });
+        logger.warn("Unexpected categories response format", { hasData: !!data });
         setCategories([]);
       }
     } catch (error) {

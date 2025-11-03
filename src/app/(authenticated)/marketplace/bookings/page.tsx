@@ -251,18 +251,30 @@ export default function BookingsPage() {
       // Handle status (normalize to lowercase)
       status: (booking.status || 'pending').toLowerCase() as Booking['status'],
       // Handle pricing
-      pricing: booking.pricing || {
-        basePrice: booking.totalPrice || (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) || 0,
-        totalAmount: booking.totalPrice || booking.pricing?.totalAmount || 0,
-        currency: booking.pricing?.currency || (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) || 'USD',
-        additionalFees: booking.pricing?.additionalFees || []
+      pricing: booking.pricing ? {
+        ...booking.pricing,
+        basePrice: booking.pricing.basePrice ?? booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
+        totalAmount: booking.pricing.totalAmount ?? booking.totalPrice ?? 0,
+        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        additionalFees: booking.pricing.additionalFees ?? []
+      } : {
+        basePrice: booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
+        totalAmount: booking.totalPrice ?? 0,
+        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        additionalFees: []
       },
       // Handle payment
-      payment: booking.payment || {
+      payment: booking.payment ? {
+        ...booking.payment,
+        status: booking.payment.status ?? (booking.paymentStatus ? (booking.paymentStatus.toLowerCase() as 'pending' | 'paid' | 'refunded' | 'failed') : 'pending'),
+        method: booking.payment.method ?? 'cash',
+        transactionId: booking.payment.transactionId,
+        paidAt: booking.payment.paidAt
+      } : {
         status: (booking.paymentStatus || 'pending').toLowerCase() as 'pending' | 'paid' | 'refunded' | 'failed',
-        method: booking.payment?.method || 'cash',
-        transactionId: booking.payment?.transactionId,
-        paidAt: booking.payment?.paidAt
+        method: 'cash',
+        transactionId: undefined,
+        paidAt: undefined
       },
       // Handle address
       address: booking.address || {},
@@ -335,7 +347,7 @@ export default function BookingsPage() {
         bookingsData = (data.data as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         logger.debug("Using data.data array", { count: bookingsData.length });
       } else {
-        logger.warn("Unexpected API response structure", undefined, { 
+        logger.warn("Unexpected API response structure", { 
           hasData: !!data,
           properties: data ? Object.keys(data) : []
         });

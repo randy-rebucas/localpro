@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_BASE_URL } from "./api";
+import { logger } from "./logger";
 
 // Generic API proxy function
 export function createApiProxy(endpoint: string) {

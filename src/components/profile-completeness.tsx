@@ -127,26 +127,53 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
     
     const completedFields = fields.filter(field => {
       const profile = profileData as Record<string, unknown>;
+      
+      // Safely extract nested profile object
+      const profileValue = profile?.profile;
+      const profileNested = (profileValue && typeof profileValue === 'object' && profileValue !== null && !Array.isArray(profileValue))
+        ? profileValue as Record<string, unknown>
+        : null;
+      
       if (field === 'skills') {
-        const skills = profile?.profile?.skills || profile?.skills;
-        return Array.isArray(skills) && skills.length > 0;
+        const skills = profileNested ? profileNested['skills'] : undefined;
+        const skillsRoot = profile ? profile['skills'] : undefined;
+        const skillsValue = skills || skillsRoot;
+        return Array.isArray(skillsValue) && skillsValue.length > 0;
       }
       if (field === 'portfolio') {
-        const portfolio = profile?.profile?.portfolio || profile?.portfolio;
-        return Array.isArray(portfolio) && portfolio.length > 0;
+        const portfolio = profileNested ? profileNested['portfolio'] : undefined;
+        const portfolioRoot = profile ? profile['portfolio'] : undefined;
+        const portfolioValue = portfolio || portfolioRoot;
+        return Array.isArray(portfolioValue) && portfolioValue.length > 0;
       }
       if (field === 'avatar') {
-        const avatar = profile?.profile?.avatar || profile?.avatar;
-        return avatar && (avatar.url || avatar.thumbnail);
+        const avatar = profileNested ? profileNested['avatar'] : undefined;
+        const avatarRoot = profile ? profile['avatar'] : undefined;
+        const avatarValue = avatar || avatarRoot;
+        if (!avatarValue) return false;
+        const avatarObj = (typeof avatarValue === 'object' && avatarValue !== null && !Array.isArray(avatarValue))
+          ? avatarValue as Record<string, unknown>
+          : null;
+        return avatarObj ? !!(avatarObj['url'] || avatarObj['thumbnail']) : false;
       }
       if (field === 'bio') {
-        return profile?.profile?.bio || profile?.bio;
+        const bio = profileNested ? profileNested['bio'] : undefined;
+        const bioRoot = profile ? profile['bio'] : undefined;
+        return !!(bio || bioRoot);
       }
       if (field === 'location') {
-        const address = profile?.profile?.address || profile?.address;
-        return address && (address.city || address.location);
+        const address = profileNested ? profileNested['address'] : undefined;
+        const addressRoot = profile ? profile['address'] : undefined;
+        const addressValue = address || addressRoot;
+        if (!addressValue) return false;
+        const addressObj = (typeof addressValue === 'object' && addressValue !== null && !Array.isArray(addressValue))
+          ? addressValue as Record<string, unknown>
+          : null;
+        return addressObj ? !!(addressObj['city'] || addressObj['location']) : false;
       }
-      return profile?.[field] || profile?.profile?.[field];
+      const fieldValueRoot = profile ? profile[field] : undefined;
+      const fieldValueNested = profileNested ? profileNested[field] : undefined;
+      return !!(fieldValueRoot || fieldValueNested);
     });
     
     return {
