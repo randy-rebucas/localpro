@@ -5,7 +5,7 @@ export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 export type RentalStatus = "pending" | "confirmed" | "active" | "completed" | "cancelled" | "disputed";
 export type PaymentStatus = "pending" | "paid" | "refunded" | "partial";
 export type ReturnCondition = "excellent" | "good" | "fair" | "poor" | "damaged";
-export type RentalPeriod = "hourly" | "daily" | "weekly" | "monthly";
+export type RentalPeriodType = "hourly" | "daily" | "weekly" | "monthly";
 
 export interface Pricing {
   hourly?: number;
