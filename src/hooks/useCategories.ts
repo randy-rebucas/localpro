@@ -57,7 +57,7 @@ export function useCategories() {
           setError(null);
         }
         return;
-      } catch (error) {
+      } catch {
         // If the request failed, continue to make a new one
       }
     }

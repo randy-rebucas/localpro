@@ -39,8 +39,6 @@ interface GlobalHeaderProps {
   showRoleNavigation?: boolean;
   /** Show favorites link */
   showFavorites?: boolean;
-  /** Show messages link */
-  showMessages?: boolean;
   /** Show notifications dropdown or just link */
   notificationsDropdown?: boolean;
   /** Logo link href (default: "/dashboard" or "/" if unauthenticated) */
@@ -60,7 +58,6 @@ interface GlobalHeaderProps {
 export function GlobalHeader({
   showRoleNavigation = false,
   showFavorites = true,
-  showMessages = false,
   notificationsDropdown = true,
   logoHref,
   showMobileMenu = false,
@@ -94,7 +91,8 @@ export function GlobalHeader({
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; isRead: boolean; createdAt: string }>>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [favoritesCount, setFavoritesCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_favoritesCount, _setFavoritesCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [roleView, setRoleView] = useState<'client' | 'provider'>('client');
@@ -116,10 +114,10 @@ export function GlobalHeader({
         const favoriteCourses = JSON.parse(localStorage.getItem('favoriteCourses') || '[]');
         const favoriteSupplies = JSON.parse(localStorage.getItem('favoriteSupplies') || '[]');
         const totalFavorites = favoriteServices.length + favoriteProviders.length + favoriteCourses.length + favoriteSupplies.length;
-        setFavoritesCount(totalFavorites);
+        _setFavoritesCount(totalFavorites);
       } catch (error) {
         logger.error('Error loading favorites counts', error instanceof Error ? error : new Error(String(error)));
-        setFavoritesCount(0);
+        _setFavoritesCount(0);
       }
     };
 

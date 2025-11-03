@@ -122,7 +122,7 @@ export function useCategoryServices(categoryKey: string | null) {
       if (Array.isArray(data)) {
         // If response is directly an array, separate featured and regular services
         const featured = data.filter((service) => service.isFeatured === true);
-        const regular = data.filter((service) => !service.isFeatured || service.isFeatured === false);
+        const regular = data.filter((service) => service.isFeatured !== true);
         setFeaturedServices(featured);
         setServices(regular);
       } else if (typeof data === 'object' && data !== null) {
@@ -139,9 +139,10 @@ export function useCategoryServices(categoryKey: string | null) {
           }
         } else {
           // Fallback: treat as array of services
-          const servicesArray = (data as any).services || (data as any).data || [];
+          const fallbackData = data as { services?: MarketplaceService[]; data?: MarketplaceService[] };
+          const servicesArray = fallbackData.services || fallbackData.data || [];
           const featured = servicesArray.filter((service: MarketplaceService) => service.isFeatured === true);
-          const regular = servicesArray.filter((service: MarketplaceService) => !service.isFeatured || service.isFeatured === false);
+          const regular = servicesArray.filter((service: MarketplaceService) => service.isFeatured !== true);
           setFeaturedServices(featured);
           setServices(regular);
         }

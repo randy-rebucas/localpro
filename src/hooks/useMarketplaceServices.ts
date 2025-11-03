@@ -110,7 +110,7 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
           setError(null);
         }
         return;
-      } catch (error) {
+      } catch {
         // If the request failed, continue to make a new one
       }
     }
@@ -223,9 +223,10 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
           paginationData = responseData.pagination || null;
         } else {
           // Fallback: try to extract data array
-          const servicesArray = (data as any).data || (data as any).services || [];
+          const fallbackData = data as { data?: MarketplaceService[]; services?: MarketplaceService[]; pagination?: CachedServices['pagination'] };
+          const servicesArray = fallbackData.data || fallbackData.services || [];
           servicesData = Array.isArray(servicesArray) ? servicesArray : [];
-          paginationData = (data as any).pagination || null;
+          paginationData = fallbackData.pagination || null;
         }
       } else {
         logger.warn("Unexpected services response format", { hasData: !!data });
@@ -280,20 +281,7 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
 
     activeRequests.set(cacheKey, requestPromise);
     return requestPromise;
-  }, [
-    params.categoryKey,
-    params.subcategory,
-    params.location,
-    params.minPrice,
-    params.maxPrice,
-    params.rating,
-    params.page,
-    params.limit,
-    params.sortBy,
-    params.sortOrder,
-    params.groupByCategory,
-    params.isActive,
-  ]);
+  }, [params]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -306,7 +294,7 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
 
   // Separate featured and regular services
   const featuredServices = services.filter((service) => service.isFeatured === true);
-  const regularServices = services.filter((service) => !service.isFeatured || service.isFeatured === false);
+  const regularServices = services.filter((service) => service.isFeatured !== true);
 
   return {
     services: regularServices,

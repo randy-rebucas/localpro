@@ -20,7 +20,6 @@ function MarketplaceLayoutContent() {
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [categoryKey, setCategoryKey] = useState<string | null>(null);
-  const [sidebarCategory, setSidebarCategory] = useState<string>("");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [minRating, setMinRating] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -46,9 +45,7 @@ function MarketplaceLayoutContent() {
             if (price > 0) {
               const calculatedMax = Math.ceil(price / 1000) * 1000;
               setMaxPrice(calculatedMax);
-              if (priceRange[1] === 10000) {
-                setPriceRange([0, calculatedMax]);
-              }
+              setPriceRange((prev) => prev[1] === 10000 ? [0, calculatedMax] : prev);
             }
           }
         }
@@ -109,7 +106,6 @@ function MarketplaceLayoutContent() {
   useEffect(() => {
     const key = getCategoryKey(selectedCategory);
     setCategoryKey(key);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const hasActiveFilters = useMemo(() => {
@@ -125,7 +121,6 @@ function MarketplaceLayoutContent() {
     setSelectedCategory(null);
     setCategoryKey(null);
     setSubcategory(null);
-    setSidebarCategory("");
     setPriceRange([0, maxPrice]);
     setMinRating(0);
     setIsAvailable(false);
@@ -133,33 +128,10 @@ function MarketplaceLayoutContent() {
     setCurrentPage(1);
   };
 
-  const handleCategoryChange = (categoryKey: string) => {
-    setSidebarCategory(categoryKey);
-    // Find the category object from the categories context
-    if (categoryKey) {
-      const category = categories.find((cat) => {
-        const key = cat.key || cat.id || cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
-        return key === categoryKey;
-      });
-      if (category) {
-        handleCategorySelect(category);
-      }
-    } else {
-      handleCategorySelect(null);
-    }
-  };
-
   const handleCategorySelect = (category: ServiceCategory | null) => {
     setSelectedCategory(category);
     const key = getCategoryKey(category);
     setCategoryKey(key);
-    // Update sidebar category to match
-    if (category) {
-      const key = getCategoryKey(category);
-      setSidebarCategory(key || "");
-    } else {
-      setSidebarCategory("");
-    }
   };
 
   return (
@@ -167,7 +139,6 @@ function MarketplaceLayoutContent() {
         <GlobalHeader
           showRoleNavigation={false}
           showFavorites={true}
-          showMessages={true}
           notificationsDropdown={true}
           logoHref="/"
           showFilter={true}

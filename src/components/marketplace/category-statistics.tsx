@@ -74,7 +74,7 @@ export function CategoryStatistics({ category }: CategoryStatisticsProps) {
         )}
 
         {/* Provider Count */}
-        {(stats as any).providerCount !== undefined && (
+        {stats.providerCount !== undefined && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
               <Users className="w-4 h-4 text-green-600" />
@@ -82,20 +82,20 @@ export function CategoryStatistics({ category }: CategoryStatisticsProps) {
             <div className="min-w-0">
               <p className="text-xs text-gray-600 font-medium leading-tight">Providers</p>
               <p className="text-base font-bold text-gray-900">
-                {(stats as any).providerCount || 0}
+                {stats.providerCount || 0}
               </p>
             </div>
           </div>
         )}
 
         {/* Subcategories - Show top 3 */}
-        {(stats as any).subcategoryDistribution && Array.isArray((stats as any).subcategoryDistribution) && (stats as any).subcategoryDistribution.length > 0 && (
+        {stats.subcategoryDistribution && Array.isArray(stats.subcategoryDistribution) && stats.subcategoryDistribution.length > 0 && (
           <div className="flex items-center gap-2 col-span-2 md:col-span-4 pt-2 border-t border-green-200">
             <Tag className="w-4 h-4 text-green-600 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-600 font-medium mb-1.5">Subcategories</p>
               <div className="flex flex-wrap gap-1.5">
-                {(stats as any).subcategoryDistribution.slice(0, 3).map((item: any, index: number) => (
+                {stats.subcategoryDistribution.slice(0, 3).map((item, index: number) => (
                   <span
                     key={index}
                     className="text-xs bg-white px-2 py-0.5 rounded border border-green-200 text-gray-700 font-medium"

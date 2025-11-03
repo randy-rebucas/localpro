@@ -33,21 +33,18 @@ export interface Session {
 }
 
 export function useSession() {
-  // Try to use shared context if available (will work when SessionProvider is in tree)
-  const context = useContext(SessionContext);
-  if (context !== undefined) {
-    const { session, loading } = context;
-    return { 
-      data: session, 
-      status: loading ? 'loading' : session ? 'authenticated' : 'unauthenticated' 
-    };
-  }
-
-  // Fallback implementation (used if SessionProvider is not in tree)
+  // Always call hooks in the same order
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-
+  
+  // Try to use shared context if available (will work when SessionProvider is in tree)
+  const context = useContext(SessionContext);
+  
   useEffect(() => {
+    // Skip fetching if we have context (SessionProvider handles it)
+    if (context !== undefined) {
+      return;
+    }
     const fetchSession = async () => {
       try {
         if (!getApiToken()) {
@@ -92,7 +89,16 @@ export function useSession() {
     };
 
     fetchSession();
-  }, []);
+  }, [context]);
+
+  // If context is available, use it; otherwise use local state
+  if (context !== undefined) {
+    const { session: contextSession, loading: contextLoading } = context;
+    return { 
+      data: contextSession, 
+      status: contextLoading ? 'loading' : contextSession ? 'authenticated' : 'unauthenticated' 
+    };
+  }
 
   return { data: session, status: loading ? 'loading' : session ? 'authenticated' : 'unauthenticated' };
 }

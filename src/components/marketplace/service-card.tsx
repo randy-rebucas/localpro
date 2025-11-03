@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MapPin, Star, CheckCircle2, Heart, Clock, Tag, User } from "lucide-react";
+import { MapPin, Star, CheckCircle2, Heart, Clock, User } from "lucide-react";
 
 interface ServiceCardProps {
   id: number;
@@ -36,7 +36,6 @@ export function ServiceCard({
   pricingType = "service",
   duration,
   features = [],
-  serviceType,
   subcategory,
   isVerified = false,
   isActive = true,

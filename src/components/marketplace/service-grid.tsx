@@ -29,7 +29,6 @@ export function ServiceGrid({
   loading = false, 
   hasActiveFilters = false,
   pagination = null,
-  currentPage = 1,
   onPageChange,
 }: ServiceGridProps) {
   // Transform services to match ServiceCard props
@@ -43,7 +42,13 @@ export function ServiceGrid({
     if (typeof service.rating === 'number') {
       rating = service.rating;
     } else if (service.rating && typeof service.rating === 'object') {
-      const ratingObj = service.rating as any;
+      const ratingObj = service.rating as { 
+        average?: number; 
+        rating?: number; 
+        count?: number; 
+        totalRatings?: number; 
+        totalReviews?: number; 
+      };
       rating = ratingObj.average || ratingObj.rating || 0;
       reviewCount = ratingObj.count || ratingObj.totalRatings || ratingObj.totalReviews || 0;
     }
@@ -212,7 +217,6 @@ export function ServiceGrid({
             {/* Page Numbers */}
             <div className="flex items-center gap-1">
               {(() => {
-                const pagesToShow = Math.min(5, pagination.pages);
                 const pages: number[] = [];
                 
                 if (pagination.pages <= 5) {
