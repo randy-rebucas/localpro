@@ -180,12 +180,6 @@ function MarketplaceLayoutContent() {
               onMinRatingChange={setMinRating}
               isAvailable={isAvailable}
               onAvailabilityChange={setIsAvailable}
-              location={location}
-              onLocationChange={setLocation}
-              locationCoordinates={locationCoordinates}
-              onLocationCoordinatesChange={setLocationCoordinates}
-              radius={radius}
-              onRadiusChange={setRadius}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={handleClearFilters}
             />

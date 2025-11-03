@@ -22,6 +22,9 @@ interface LocationAutocompleteProps {
   disabled?: boolean;
 }
 
+// Google Maps event listener type
+type GoogleMapsEventListener = unknown;
+
 declare global {
   interface Window {
     google?: {
@@ -32,21 +35,24 @@ declare global {
             fields?: string[];
           }) => {
             getPlace: () => google.maps.places.PlaceResult;
-            addListener: (event: string, callback: () => void) => any;
+            addListener: (event: string, callback: () => void) => GoogleMapsEventListener;
           };
           PlacesServiceStatus?: {
             OK: string;
           };
         };
         event?: {
-          removeListener?: (listener: any) => void;
+          removeListener?: (listener: GoogleMapsEventListener) => void;
         };
       };
     };
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace google {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace maps {
+      // eslint-disable-next-line @typescript-eslint/no-namespace
       namespace places {
         interface PlaceResult {
           geometry?: {
@@ -73,8 +79,11 @@ export function LocationAutocomplete({
   disabled = false,
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null); // Google Maps Autocomplete instance
-  const placeChangedListenerRef = useRef<any>(null); // Store listener for cleanup
+  // Google Maps Autocomplete instance - using any due to complex Google Maps types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autocompleteRef = useRef<any>(null);
+  // Store listener for cleanup
+  const placeChangedListenerRef = useRef<GoogleMapsEventListener | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
@@ -289,6 +298,7 @@ export function LocationAutocomplete({
         try {
           if (error && typeof error === 'object') {
             // Try direct property access first
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const errorAny = error as any;
             if (typeof errorAny.code === 'number') {
               errorCode = errorAny.code;
@@ -297,7 +307,7 @@ export function LocationAutocomplete({
               errorMsg = errorAny.message;
             }
           }
-        } catch (e) {
+        } catch {
           // Ignore access errors
         }
         

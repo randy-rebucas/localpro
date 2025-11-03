@@ -10,11 +10,6 @@ import {
   Star,
 } from "lucide-react";
 
-interface LocationCoordinates {
-  lat: number;
-  lng: number;
-}
-
 interface FilterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -27,12 +22,6 @@ interface FilterSidebarProps {
   onMinRatingChange: (rating: number) => void;
   isAvailable: boolean;
   onAvailabilityChange: (available: boolean) => void;
-  location: string;
-  onLocationChange: (location: string) => void;
-  locationCoordinates: LocationCoordinates | null;
-  onLocationCoordinatesChange: (coords: LocationCoordinates | null) => void;
-  radius: number;
-  onRadiusChange: (radius: number) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }
@@ -47,12 +36,6 @@ export function FilterSidebar({
   onMinRatingChange,
   isAvailable,
   onAvailabilityChange,
-  location,
-  onLocationChange,
-  locationCoordinates,
-  onLocationCoordinatesChange,
-  radius,
-  onRadiusChange,
   hasActiveFilters,
   onClearFilters,
 }: FilterSidebarProps) {

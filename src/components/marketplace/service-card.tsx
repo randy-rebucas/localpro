@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
 
 interface ServiceCardProps {
@@ -57,18 +58,13 @@ export function ServiceCard({
       {/* Service Image - Horizontal List Style */}
       <div className="relative w-48 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden self-stretch flex items-center justify-center">
         {imageUrl ? (
-          <img 
+          <Image 
             src={imageUrl} 
-            alt={title}
-            className="w-full h-auto object-cover min-h-full"
-            onError={(e) => {
-              // Fallback to placeholder if image fails to load
-              e.currentTarget.style.display = 'none';
-              const placeholder = e.currentTarget.parentElement?.querySelector('.image-placeholder');
-              if (placeholder) {
-                (placeholder as HTMLElement).style.display = 'flex';
-              }
-            }}
+            alt={title || "Service image"}
+            fill
+            className="object-cover"
+            sizes="192px"
+            unoptimized={imageUrl.startsWith('http://localhost') || !imageUrl.startsWith('http')}
           />
         ) : null}
         <div 
