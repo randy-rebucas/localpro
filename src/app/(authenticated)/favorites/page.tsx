@@ -173,12 +173,13 @@ export default function FavoritesPage() {
 
   // Fetch favorites data
   const fetchFavorites = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    const ids = loadFavoriteIds();
+    const allFavorites: FavoriteItem[] = [];
+    
     try {
-      setLoading(true);
-      setError(null);
-      
-      const ids = loadFavoriteIds();
-      const allFavorites: FavoriteItem[] = [];
 
       // Fetch services
       if (ids.services.length > 0) {
@@ -489,13 +490,13 @@ const FavoriteCard = React.memo(function FavoriteCard({
   const renderContent = () => {
     switch (type) {
       case 'services':
-        return <ServiceCard service={data as Service} viewMode={viewMode} />;
+        return <ServiceCard service={data as unknown as Service} viewMode={viewMode} />;
       case 'providers':
-        return <ProviderCard provider={data as Provider} viewMode={viewMode} />;
+        return <ProviderCard provider={data as unknown as Provider} viewMode={viewMode} />;
       case 'courses':
-        return <CourseCard course={data as Course} viewMode={viewMode} />;
+        return <CourseCard course={data as unknown as Course} viewMode={viewMode} />;
       case 'supplies':
-        return <SupplyCard supply={data as Supply} viewMode={viewMode} />;
+        return <SupplyCard supply={data as unknown as Supply} viewMode={viewMode} />;
     }
   };
 

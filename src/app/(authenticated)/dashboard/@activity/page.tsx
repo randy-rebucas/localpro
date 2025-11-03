@@ -229,23 +229,26 @@ export default function ActivityPage() {
               const activities = responseData?.data?.activities || responseData?.activities || responseData?.data || [];
               
               // Normalize activities: ensure both _id and id are present, compute age if not present
-              const normalizedActivities = activities.map((activity: Record<string, unknown>) => ({
-                ...activity,
-                _id: activity._id || activity.id,
-                id: activity.id || activity._id,
-                // Compute age if not provided
-                age: activity.age || formatActivityAge(activity.createdAt),
-                // Ensure defaults
-                visibility: activity.visibility || 'private',
-                isVisible: activity.isVisible !== false,
-                impact: activity.impact || 'medium',
-                points: activity.points || 0,
-                category: activity.category || 'other'
-              }));
+              const normalizedActivities = activities.map((activity: Record<string, unknown>) => {
+                const createdAt = typeof activity.createdAt === 'string' ? activity.createdAt : '';
+                return {
+                  ...activity,
+                  _id: activity._id || activity.id,
+                  id: activity.id || activity._id,
+                  // Compute age if not provided
+                  age: activity.age || formatActivityAge(createdAt),
+                  // Ensure defaults
+                  visibility: activity.visibility || 'private',
+                  isVisible: activity.isVisible !== false,
+                  impact: activity.impact || 'medium',
+                  points: activity.points || 0,
+                  category: activity.category || 'other'
+                };
+              });
               
               setRecentActivity(normalizedActivities);
             } else {
-              logger.warn("Failed to fetch recent activity", undefined, { status: response.status });
+              logger.warn("Failed to fetch recent activity", { status: response.status });
               // Set enhanced fallback activity data
               setRecentActivity([
                 {
@@ -409,7 +412,7 @@ export default function ActivityPage() {
               ]);
             }
           } catch (err) {
-            logger.warn("Activity external fetch failed, using fallback", undefined, { error: err instanceof Error ? err.message : String(err) });
+            logger.warn("Activity external fetch failed, using fallback", { error: err instanceof Error ? err.message : String(err) });
             // Use the same fallback data structure as above
             if (session?.user?.id) {
               setRecentActivity([
@@ -695,7 +698,7 @@ export default function ActivityPage() {
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4 p-4" : "space-y-1"}>
             {filteredActivities.slice(0, 3).map((activity) => {
               const activityId = activity.id || activity._id;
-              const displayAge = activity.age || formatActivityAge(activity.createdAt);
+              const displayAge = activity.age || formatActivityAge(activity.createdAt || '');
               
               return (
                 <div key={activityId} className={`group hover:bg-gray-50 transition-colors ${viewMode === "list" ? "p-4 border-b border-gray-100 last:border-b-0" : "p-4 border border-gray-100 rounded-lg"}`}>

@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/loading";
+import { logger } from "@/lib/logger";
 
 type AdsPagination = {
   current: number;

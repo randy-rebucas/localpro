@@ -225,7 +225,7 @@ export default function BookingsPage() {
       // Handle provider
       provider: typeof booking.provider === 'string'
         ? { id: booking.provider }
-        : typeof booking.service?.provider === 'object'
+        : (typeof booking.service === 'object' && booking.service !== null && typeof booking.service.provider === 'object' && booking.service.provider !== null)
           ? {
               _id: booking.service.provider?._id || booking.service.provider?.id,
               id: booking.service.provider?.id || booking.service.provider?._id,
@@ -252,9 +252,9 @@ export default function BookingsPage() {
       status: (booking.status || 'pending').toLowerCase() as Booking['status'],
       // Handle pricing
       pricing: booking.pricing || {
-        basePrice: booking.totalPrice || booking.service?.pricing?.basePrice || 0,
+        basePrice: booking.totalPrice || (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) || 0,
         totalAmount: booking.totalPrice || booking.pricing?.totalAmount || 0,
-        currency: booking.pricing?.currency || booking.service?.pricing?.currency || 'USD',
+        currency: booking.pricing?.currency || (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) || 'USD',
         additionalFees: booking.pricing?.additionalFees || []
       },
       // Handle payment

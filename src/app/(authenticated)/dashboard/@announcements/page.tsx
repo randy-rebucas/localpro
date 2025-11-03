@@ -196,25 +196,31 @@ export default function AnnouncementsPage() {
         const announcements = responseData?.data?.announcements || responseData?.announcements || responseData?.data || [];
         
         // Normalize IDs: ensure both _id and id are present
-        const normalizedAnnouncements = announcements.map((announcement: Record<string, unknown>) => ({
-          ...announcement,
-          _id: announcement._id || announcement.id,
-          id: announcement.id || announcement._id,
-          // Ensure virtual fields are computed if not present
-          isActive: announcement.isActive ?? (
-            announcement.status === 'published' &&
-            (!announcement.expiresAt || new Date(announcement.expiresAt) > new Date()) &&
-            (!announcement.publishedAt || new Date(announcement.publishedAt) <= new Date())
-          ),
-          isExpired: announcement.isExpired ?? (
-            announcement.expiresAt ? new Date(announcement.expiresAt) <= new Date() : false
-          ),
-          isScheduled: announcement.isScheduled ?? (
-            announcement.status === 'scheduled' &&
-            announcement.scheduledAt &&
-            new Date(announcement.scheduledAt) > new Date()
-          )
-        }));
+        const normalizedAnnouncements = announcements.map((announcement: Record<string, unknown>) => {
+          const expiresAt = typeof announcement.expiresAt === 'string' || announcement.expiresAt === null ? announcement.expiresAt : null;
+          const publishedAt = typeof announcement.publishedAt === 'string' || announcement.publishedAt === null ? announcement.publishedAt : null;
+          const scheduledAt = typeof announcement.scheduledAt === 'string' || announcement.scheduledAt === null ? announcement.scheduledAt : null;
+          
+          return {
+            ...announcement,
+            _id: announcement._id || announcement.id,
+            id: announcement.id || announcement._id,
+            // Ensure virtual fields are computed if not present
+            isActive: announcement.isActive ?? (
+              announcement.status === 'published' &&
+              (!expiresAt || new Date(expiresAt) > new Date()) &&
+              (!publishedAt || new Date(publishedAt) <= new Date())
+            ),
+            isExpired: announcement.isExpired ?? (
+              expiresAt ? new Date(expiresAt) <= new Date() : false
+            ),
+            isScheduled: announcement.isScheduled ?? (
+              announcement.status === 'scheduled' &&
+              scheduledAt &&
+              new Date(scheduledAt) > new Date()
+            )
+          };
+        });
         
         setAnnouncements(normalizedAnnouncements);
       } catch (err) {

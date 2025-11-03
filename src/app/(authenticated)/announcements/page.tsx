@@ -150,30 +150,68 @@ const normalizeAnnouncement = (announcement: Record<string, unknown>, currentUse
   const isActive = announcement.status === 'published' && !isExpired && !isScheduled;
   
   // Check if user has acknowledged
-  const isAcknowledged = currentUserId && announcement.acknowledgments
-    ? announcement.acknowledgments.some((ack: AnnouncementAcknowledgment) => ack.user === currentUserId || ack.user.toString() === currentUserId)
+  const acknowledgments = Array.isArray(announcement.acknowledgments) 
+    ? announcement.acknowledgments as AnnouncementAcknowledgment[] 
+    : [];
+  const isAcknowledged = currentUserId && acknowledgments.length > 0
+    ? acknowledgments.some((ack: AnnouncementAcknowledgment) => ack.user === currentUserId || ack.user.toString() === currentUserId)
     : false;
   
-  const canComment = announcement.allowComments !== false && isActive;
-  const canAcknowledge = announcement.requireAcknowledgment && isActive && !isAcknowledged;
+  // Type-safe field extraction
+  const type = (typeof announcement.type === 'string' ? announcement.type : 'general') as AnnouncementType;
+  const priority = (typeof announcement.priority === 'string' ? announcement.priority : 'medium') as AnnouncementPriority;
+  const status = (typeof announcement.status === 'string' ? announcement.status : 'draft') as AnnouncementStatus;
+  const targetAudience = (typeof announcement.targetAudience === 'string' ? announcement.targetAudience : 'all') as TargetAudience;
+  const isSticky = typeof announcement.isSticky === 'boolean' ? announcement.isSticky : false;
+  const allowComments = typeof announcement.allowComments === 'boolean' ? announcement.allowComments : true;
+  const requireAcknowledgment = typeof announcement.requireAcknowledgment === 'boolean' ? announcement.requireAcknowledgment : false;
+  
+  // Compute derived fields using validated values
+  const canComment = allowComments && isActive;
+  const canAcknowledge = requireAcknowledgment && isActive && !isAcknowledged;
+  const views = typeof announcement.views === 'number' ? announcement.views : 0;
+  const tags = Array.isArray(announcement.tags) ? announcement.tags as string[] : [];
+  const attachments = Array.isArray(announcement.attachments) ? announcement.attachments as AnnouncementAttachment[] : [];
+  const comments = Array.isArray(announcement.comments) ? announcement.comments as AnnouncementComment[] : [];
+  const analytics = (announcement.analytics && typeof announcement.analytics === 'object' && !Array.isArray(announcement.analytics))
+    ? announcement.analytics as AnnouncementAnalytics
+    : {};
+  
+  // Required string fields
+  const title = typeof announcement.title === 'string' ? announcement.title : '';
+  const content = typeof announcement.content === 'string' ? announcement.content : '';
+  const summary = typeof announcement.summary === 'string' ? announcement.summary : '';
+  const author = typeof announcement.author === 'string' ? announcement.author : '';
+  const authorName = typeof announcement.authorName === 'string' ? announcement.authorName : '';
+  const authorRole = typeof announcement.authorRole === 'string' ? announcement.authorRole : '';
+  const createdAt = typeof announcement.createdAt === 'string' ? announcement.createdAt : new Date().toISOString();
+  const updatedAt = typeof announcement.updatedAt === 'string' ? announcement.updatedAt : createdAt;
   
   return {
     ...announcement,
     _id: announcementId,
     id: announcementId,
-    type: announcement.type || 'general',
-    priority: announcement.priority || 'medium',
-    status: announcement.status || 'draft',
-    targetAudience: announcement.targetAudience || 'all',
-    isSticky: announcement.isSticky || false,
-    allowComments: announcement.allowComments !== false,
-    requireAcknowledgment: announcement.requireAcknowledgment || false,
-    views: announcement.views || 0,
-    tags: announcement.tags || [],
-    attachments: announcement.attachments || [],
-    acknowledgments: announcement.acknowledgments || [],
-    comments: announcement.comments || [],
-    analytics: announcement.analytics || {},
+    title,
+    content,
+    summary,
+    author,
+    authorName,
+    authorRole,
+    createdAt,
+    updatedAt,
+    type,
+    priority,
+    status,
+    targetAudience,
+    isSticky,
+    allowComments,
+    requireAcknowledgment,
+    views,
+    tags,
+    attachments,
+    acknowledgments,
+    comments,
+    analytics,
     // Computed fields
     isActive,
     isExpired,

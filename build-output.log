@@ -1,0 +1,28 @@
+
+> localpro-super-app@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.5
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · clientTraceMetadata
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (185kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+<w> [webpack.cache.PackFileCacheStrategy] Serializing big strings (139kiB) impacts deserialization performance (consider using Buffer instead and decode when needed)
+ ✓ Compiled successfully in 25.3s
+   Linting and checking validity of types ...
+Failed to compile.
+
+./src/app/(authenticated)/dashboard/@activity/page.tsx:237:56
+Type error: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+
+[0m [90m 235 |[39m                 id[33m:[39m activity[33m.[39mid [33m||[39m activity[33m.[39m_id[33m,[39m
+ [90m 236 |[39m                 [90m// Compute age if not provided[39m
+[31m[1m>[22m[39m[90m 237 |[39m                 age[33m:[39m activity[33m.[39mage [33m||[39m formatActivityAge(activity[33m.[39mcreatedAt)[33m,[39m
+ [90m     |[39m                                                        [31m[1m^[22m[39m
+ [90m 238 |[39m                 [90m// Ensure defaults[39m
+ [90m 239 |[39m                 visibility[33m:[39m activity[33m.[39mvisibility [33m||[39m [32m'private'[39m[33m,[39m
+ [90m 240 |[39m                 isVisible[33m:[39m activity[33m.[39misVisible [33m!==[39m [36mfalse[39m[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

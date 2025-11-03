@@ -176,30 +176,48 @@ export interface ActivityItem {
 
 // Helper function to normalize activity from API
 const normalizeActivity = (activity: Record<string, unknown>): ActivityItem => {
-  const activityId = activity._id || activity.id;
+  const activityId = String(activity._id || activity.id || '');
+  
+  const activityType = (typeof activity.type === 'string' ? activity.type : 'search_performed') as ActivityType;
+  const category = ((typeof activity.category === 'string' ? activity.category : getCategoryFromType(activityType)) || 'other') as ActivityCategory;
+  const visibility = (typeof activity.visibility === 'string' ? activity.visibility : 'private') as ActivityVisibility;
+  const impact = (typeof activity.impact === 'string' ? activity.impact : 'medium') as ActivityImpact;
+  const isVisible = typeof activity.isVisible === 'boolean' ? activity.isVisible : activity.isVisible !== false;
+  const isDeleted = typeof activity.isDeleted === 'boolean' ? activity.isDeleted : Boolean(activity.isDeleted);
+  const points = typeof activity.points === 'number' ? activity.points : 0;
+  const analytics = (activity.analytics && typeof activity.analytics === 'object' && !Array.isArray(activity.analytics)) 
+    ? activity.analytics as ActivityAnalytics 
+    : { views: 0, likes: 0, shares: 0, comments: 0 };
+  const tags = Array.isArray(activity.tags) ? activity.tags as string[] : [];
+  const relatedEntities = Array.isArray(activity.relatedEntities) ? activity.relatedEntities as RelatedEntity[] : [];
+  const createdAt = typeof activity.createdAt === 'string' ? activity.createdAt : '';
+  const age = typeof activity.age === 'string' ? activity.age : formatActivityAge(createdAt);
+  const user = typeof activity.user === 'string' ? activity.user : '';
+  const action = typeof activity.action === 'string' ? activity.action : '';
+  const description = typeof activity.description === 'string' ? activity.description : '';
   
   return {
     ...activity,
     _id: activityId,
     id: activityId,
-    type: activity.type || 'other',
-    category: activity.category || getCategoryFromType(activity.type) || 'other',
-    visibility: activity.visibility || 'private',
-    isVisible: activity.isVisible !== false,
-    isDeleted: activity.isDeleted || false,
-    impact: activity.impact || 'medium',
-    points: activity.points || 0,
-    analytics: activity.analytics || {
-      views: 0,
-      likes: 0,
-      shares: 0,
-      comments: 0
-    },
-    tags: activity.tags || [],
-    relatedEntities: activity.relatedEntities || [],
+    user,
+    type: activityType,
+    category,
+    action,
+    description,
+    visibility,
+    isVisible,
+    isDeleted,
+    impact,
+    points,
+    analytics,
+    tags,
+    relatedEntities,
+    createdAt,
+    updatedAt: typeof activity.updatedAt === 'string' ? activity.updatedAt : createdAt,
     // Compute age
-    age: activity.age || formatActivityAge(activity.createdAt)
-  };
+    age
+  } as ActivityItem;
 };
 
 // Helper function to get category from type
@@ -688,7 +706,7 @@ export default function ActivityPage() {
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-1">
-                    {getActivityIcon(activity.category, activity.type)}
+                    {getActivityIcon(activity.category)}
                   </div>
 
                   <div className="flex-1 min-w-0">

@@ -56,6 +56,7 @@ export default function AuthenticatedLayout({
     }
     
     // If we have a session but no API token, redirect to get fresh tokens
+    const hasToken = getApiToken();
     if (status === "authenticated" && session && !hasToken) {
       logger.warn('Redirecting: Session exists but no API token', { userId: session.user?.id });
       redirectToLogin();

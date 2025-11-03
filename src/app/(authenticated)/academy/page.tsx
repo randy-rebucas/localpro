@@ -874,9 +874,9 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView }: 
                                 )}
                             </div>
                             <div className="text-right ml-3 flex-shrink-0">
-                                {priceDisplay.regular > 0 ? (
+                                {priceDisplay.regular !== undefined && priceDisplay.regular > 0 ? (
                                     <div className="text-xl font-bold text-green-600">
-                                        {priceDisplay.discounted && priceDisplay.discounted < priceDisplay.regular ? (
+                                        {priceDisplay.discounted && priceDisplay.regular !== undefined && priceDisplay.discounted < priceDisplay.regular ? (
                                             <>
                                                 <span className="text-sm text-gray-400 line-through mr-1">
                                                     {formatPrice(priceDisplay.regular, priceDisplay.currency)}
@@ -884,7 +884,7 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView }: 
                                                 {formatPrice(priceDisplay.discounted, priceDisplay.currency)}
                                             </>
                                         ) : (
-                                            formatPrice(priceDisplay.regular, priceDisplay.currency)
+                                            priceDisplay.regular !== undefined && formatPrice(priceDisplay.regular, priceDisplay.currency)
                                         )}
                                     </div>
                                 ) : (
