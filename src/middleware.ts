@@ -302,7 +302,8 @@ function isStaticOrInternal(pathname: string): boolean {
     pathname.startsWith("/sitemap.xml") ||
     pathname.startsWith("/api/health") ||
     pathname.startsWith("/api/test") ||
-    pathname.includes(".") // Files with extensions
+    // Match files with common static file extensions
+    /\.(css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map)$/i.test(pathname)
   );
 }
 
@@ -435,12 +436,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
+     * - _next/static (static files including CSS)
      * - _next/image (image optimization files)
      * - favicon.ico, robots.txt, sitemap.xml (metadata files)
-     * - files with extensions (images, etc.)
+     * - files with extensions (images, CSS, JS, etc.)
      * - public folder
      */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*|public).*)",
+    "/((?!_next/static|_next/image|_next/css|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)|public).*)",
   ],
 };
