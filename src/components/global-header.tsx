@@ -13,7 +13,6 @@ import {
   Search,
   Bell,
   Heart,
-  ShoppingCart,
   User,
   Settings,
   LogOut,
@@ -31,6 +30,8 @@ import {
   CreditCard,
   Shield,
   HelpCircle,
+  Filter,
+  Wallet,
 } from "lucide-react";
 
 interface GlobalHeaderProps {
@@ -38,8 +39,6 @@ interface GlobalHeaderProps {
   showRoleNavigation?: boolean;
   /** Show favorites link */
   showFavorites?: boolean;
-  /** Show cart link */
-  showCart?: boolean;
   /** Show messages link */
   showMessages?: boolean;
   /** Show notifications dropdown or just link */
@@ -50,6 +49,10 @@ interface GlobalHeaderProps {
   showMobileMenu?: boolean;
   /** Callback when mobile menu is toggled */
   onMobileMenuToggle?: (open: boolean) => void;
+  /** Show filter icon */
+  showFilter?: boolean;
+  /** Callback when filter icon is clicked */
+  onFilterClick?: () => void;
   /** Additional className for the header */
   className?: string;
 }
@@ -57,54 +60,54 @@ interface GlobalHeaderProps {
 export function GlobalHeader({
   showRoleNavigation = false,
   showFavorites = true,
-  showCart = true,
   showMessages = false,
   notificationsDropdown = true,
   logoHref,
   showMobileMenu = false,
   onMobileMenuToggle,
+  showFilter = false,
+  onFilterClick,
   className = "",
 }: GlobalHeaderProps = {}) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const { 
-    isServiceProvider, 
-    isSupplier, 
-    isInstructor, 
-    isAgencyOwner, 
-    isAgencyAdmin, 
-    isAdmin 
+  const {
+    isServiceProvider,
+    isSupplier,
+    isInstructor,
+    isAgencyOwner,
+    isAgencyAdmin,
+    isAdmin,
+    isBusinessRole,
   } = useRoleAccess();
+
+  // Check if user has multiple roles (business role users can also act as clients)
+  const hasMultipleRoles = isBusinessRole;
 
   // State management
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showFavoritesTooltip, setShowFavoritesTooltip] = useState(false);
-  const [showCartTooltip, setShowCartTooltip] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);
   const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; isRead: boolean; createdAt: string }>>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [favoritesCount, setFavoritesCount] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [roleView, setRoleView] = useState<'client' | 'provider'>('client');
 
   // Refs for click outside detection
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
-  const favoritesRef = useRef<HTMLDivElement>(null);
-  const cartRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLFormElement>(null);
 
-  // Determine logo href
-  const defaultLogoHref = session ? "/dashboard" : "/";
-  const logoLink = logoHref || defaultLogoHref;
+  // Determine logo href - always links to homepage per requirements
+  const logoLink = logoHref || "/";
 
-  // Load favorites and cart count from localStorage
+  // Load favorites count from localStorage
   useEffect(() => {
     const updateCounts = () => {
       try {
@@ -114,13 +117,9 @@ export function GlobalHeader({
         const favoriteSupplies = JSON.parse(localStorage.getItem('favoriteSupplies') || '[]');
         const totalFavorites = favoriteServices.length + favoriteProviders.length + favoriteCourses.length + favoriteSupplies.length;
         setFavoritesCount(totalFavorites);
-
-        const cart = JSON.parse(localStorage.getItem('cart') || '{"items":[]}');
-        setCartCount(cart.items?.length || 0);
       } catch (error) {
-        logger.error('Error loading favorites/cart counts', error instanceof Error ? error : new Error(String(error)));
+        logger.error('Error loading favorites counts', error instanceof Error ? error : new Error(String(error)));
         setFavoritesCount(0);
-        setCartCount(0);
       }
     };
 
@@ -200,7 +199,7 @@ export function GlobalHeader({
 
       try {
         setLoadingSearch(true);
-        
+
         // Search suggestions is PUBLIC endpoint (per API_ENDPOINTS_WITH_ROLES.md)
         const queryString = new URLSearchParams({ q: searchQuery }).toString();
         const url = `${API_BASE_URL}${API_ENDPOINTS.searchSuggestions}?${queryString}`;
@@ -240,12 +239,6 @@ export function GlobalHeader({
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
       }
-      if (favoritesRef.current && !favoritesRef.current.contains(event.target as Node)) {
-        setShowFavoritesTooltip(false);
-      }
-      if (cartRef.current && !cartRef.current.contains(event.target as Node)) {
-        setShowCartTooltip(false);
-      }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchSuggestions(false);
       }
@@ -277,13 +270,13 @@ export function GlobalHeader({
 
   const handleNotificationClick = async (notificationId: string) => {
     if (!session || !getApiToken()) return;
-    
+
     try {
       // Replace [id] placeholder with actual notification ID
       const endpoint = API_ENDPOINTS.communicationNotificationsRead.replace('[id]', notificationId);
       const url = `${API_BASE_URL}${endpoint}`;
       const response = await fetch(url, createAuthFetchOptions({ method: 'PUT' }));
-      
+
       if (response.ok) {
         setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
@@ -317,7 +310,7 @@ export function GlobalHeader({
 
   const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <form onSubmit={handleSearch} className="relative w-full" ref={searchRef}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
       <input
         type="text"
         value={searchQuery}
@@ -330,12 +323,11 @@ export function GlobalHeader({
         onFocus={() => {
           if (searchSuggestions.length > 0) setShowSearchSuggestions(true);
         }}
-        placeholder="Search services, products, courses..."
-        className={`w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition ${
-          isMobile ? 'text-sm' : ''
-        }`}
+        placeholder="Search services, providers, or jobs…"
+        className={`w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition ${isMobile ? 'text-sm' : ''
+          }`}
       />
-      
+
       {showSearchSuggestions && (searchSuggestions.length > 0 || loadingSearch) && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border-2 border-gray-200 max-h-64 overflow-y-auto z-50">
           {loadingSearch ? (
@@ -394,15 +386,31 @@ export function GlobalHeader({
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Mobile Search Icon */}
-            <button 
+            <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
               aria-label="Toggle search"
             >
-              {mobileSearchOpen ? <X className="w-5 h-5 text-gray-600" /> : <Search className="w-5 h-5 text-gray-600" />}
+              {mobileSearchOpen ? (
+              <X className="w-5 h-5 text-gray-700" aria-hidden="true" />
+            ) : (
+              <Search className="w-5 h-5 text-gray-700" aria-hidden="true" />
+            )}
             </button>
+
+            {/* Filter Icon */}
+            {showFilter && onFilterClick && (
+              <button
+                onClick={onFilterClick}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Open filters"
+                title="Filters"
+              >
+                <Filter className="w-5 h-5 text-gray-700" aria-hidden="true" />
+              </button>
+            )}
 
             {/* Role-based Navigation Icons */}
             {showRoleNavigation && session && (
@@ -410,11 +418,10 @@ export function GlobalHeader({
                 {isServiceProvider && (
                   <Link
                     href="/marketplace"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/marketplace")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Marketplace"
                     aria-label="Navigate to Marketplace"
                     aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
@@ -425,11 +432,10 @@ export function GlobalHeader({
                 {isSupplier && (
                   <Link
                     href="/supplies"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/supplies")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/supplies")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Supplies"
                     aria-label="Navigate to Supplies"
                     aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
@@ -440,11 +446,10 @@ export function GlobalHeader({
                 {isInstructor && (
                   <Link
                     href="/academy"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/academy")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/academy")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Academy"
                     aria-label="Navigate to Academy"
                     aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
@@ -455,11 +460,10 @@ export function GlobalHeader({
                 {isServiceProvider && (
                   <Link
                     href="/rentals"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/rentals")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/rentals")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Rentals"
                     aria-label="Navigate to Rentals"
                     aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
@@ -470,40 +474,43 @@ export function GlobalHeader({
                 {isServiceProvider && (
                   <Link
                     href="/marketplace/jobs"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/marketplace/jobs")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace/jobs")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Jobs"
+                    aria-label="Navigate to Jobs"
+                    aria-current={pathname?.startsWith("/marketplace/jobs") ? "page" : undefined}
                   >
-                    <Briefcase className="w-5 h-5" />
+                    <Briefcase className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
                 {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
                   <Link
                     href="/analytics"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/analytics")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/analytics")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Analytics"
+                    aria-label="Navigate to Analytics"
+                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
                   >
-                    <BarChart3 className="w-5 h-5" />
+                    <BarChart3 className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
                 {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
                   <Link
                     href="/finance"
-                    className={`p-2 rounded-lg transition-colors ${
-                      pathname?.startsWith("/finance")
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/finance")
                         ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                    }`}
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
                     title="Finance"
+                    aria-label="Navigate to Finance"
+                    aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
                   >
-                    <CreditCard className="w-5 h-5" />
+                    <CreditCard className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
               </div>
@@ -519,9 +526,9 @@ export function GlobalHeader({
                     aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                     aria-expanded={showNotifications}
                   >
-                    <Bell className="w-5 h-5 text-gray-600" />
+                    <Bell className="w-5 h-5 text-gray-700" aria-hidden="true" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
+                      <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
@@ -549,9 +556,8 @@ export function GlobalHeader({
                             <button
                               key={notification.id}
                               onClick={() => handleNotificationClick(notification.id)}
-                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${
-                                !notification.isRead ? 'bg-blue-50' : ''
-                              }`}
+                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${!notification.isRead ? 'bg-blue-50' : ''
+                                }`}
                             >
                               <div className="flex items-start gap-2">
                                 <div className={`flex-1 ${!notification.isRead ? 'font-semibold' : ''}`}>
@@ -574,16 +580,15 @@ export function GlobalHeader({
               ) : (
                 <Link
                   href="/dashboard/notifications"
-                  className={`relative p-2 rounded-lg transition-colors ${
-                    pathname?.startsWith("/notifications")
+                  className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/notifications")
                       ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                  }`}
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
                   title="Notifications"
                 >
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-5 h-5" aria-hidden="true" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 h-4 text-[10px] font-medium text-white bg-green-600 rounded-full">
+                    <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -591,66 +596,59 @@ export function GlobalHeader({
               )
             )}
 
-            {/* Messages */}
-            {showMessages && session && (
+            {/* Messages / Chat */}
+            {session && (
               <Link
                 href="/dashboard/messages"
-                className={`p-2 rounded-lg transition-colors ${
-                  pathname?.startsWith("/messages")
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/messages")
                     ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"
-                }`}
-                title="Messages"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Chat"
+                aria-label="Messages"
               >
-                <MessageSquare className="w-5 h-5" />
+                <MessageSquare className="w-5 h-5" aria-hidden="true" />
               </Link>
             )}
 
             {/* Favorites */}
             {showFavorites && session && (
-              <div className="relative hidden sm:block" ref={favoritesRef}>
-                <Link
-                  href="/dashboard/favorites"
-                  className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  onMouseEnter={() => setShowFavoritesTooltip(true)}
-                  onMouseLeave={() => setShowFavoritesTooltip(false)}
-                >
-                  <Heart className="w-5 h-5 text-gray-600" />
-                  {favoritesCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-pink-500 text-white text-xs rounded-full flex items-center justify-center font-semibold">
-                      {favoritesCount > 9 ? '9+' : favoritesCount}
-                    </span>
-                  )}
-                </Link>
-                {showFavoritesTooltip && favoritesCount > 0 && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border-2 border-gray-200 z-50 p-2">
-                    <p className="text-xs text-gray-600">You have {favoritesCount} favorite{favoritesCount !== 1 ? 's' : ''}</p>
-                  </div>
-                )}
-              </div>
+              <Link
+                href="/dashboard/favorites"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/favorites")
+                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Favorites"
+                aria-label="Favorites"
+              >
+                <Heart className="w-5 h-5" aria-hidden="true" />
+              </Link>
             )}
 
-            {/* Cart */}
-            {showCart && session && (
-              <div className="relative hidden sm:block" ref={cartRef}>
-                <Link
-                  href="/dashboard/cart"
-                  className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  onMouseEnter={() => setShowCartTooltip(true)}
-                  onMouseLeave={() => setShowCartTooltip(false)}
-                >
-                  <ShoppingCart className="w-5 h-5 text-gray-600" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-xs rounded-full flex items-center justify-center font-semibold">
-                      {cartCount > 9 ? '9+' : cartCount}
-                    </span>
-                  )}
-                </Link>
-                {showCartTooltip && cartCount > 0 && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border-2 border-gray-200 z-50 p-2">
-                    <p className="text-xs text-gray-600">{cartCount} item{cartCount !== 1 ? 's' : ''} in cart</p>
-                  </div>
-                )}
+            {/* Role Toggle (Client View / Provider View) - Only show if user has multiple roles */}
+            {hasMultipleRoles && session && (
+              <div className="hidden sm:flex items-center border-r border-gray-300 pr-3 mr-1">
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setRoleView('client')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${roleView === 'client'
+                        ? 'bg-white text-green-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    Client View
+                  </button>
+                  <button
+                    onClick={() => setRoleView('provider')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${roleView === 'provider'
+                        ? 'bg-white text-green-700 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                  >
+                    Provider View
+                  </button>
+                </div>
               </div>
             )}
 
@@ -683,15 +681,23 @@ export function GlobalHeader({
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <User className="w-4 h-4" />
-                      <span>My Profile</span>
+                      <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/wallet"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <Wallet className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <span>Wallet</span>
                     </Link>
                     <Link
                       href="/dashboard/settings"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <Settings className="w-4 h-4" />
+                      <Settings className="w-4 h-4 text-gray-500" aria-hidden="true" />
                       <span>Settings</span>
                     </Link>
                     <Link
@@ -699,7 +705,7 @@ export function GlobalHeader({
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <HelpCircle className="w-4 h-4" />
+                      <HelpCircle className="w-4 h-4 text-gray-500" aria-hidden="true" />
                       <span>Help</span>
                     </Link>
                     {isAdmin && (
@@ -710,7 +716,7 @@ export function GlobalHeader({
                           className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <Shield className="w-4 h-4" />
+                          <Shield className="w-4 h-4 text-gray-500" aria-hidden="true" />
                           <span>Admin Dashboard</span>
                         </Link>
                       </>
@@ -720,7 +726,7 @@ export function GlobalHeader({
                       onClick={handleSignOut}
                       className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <LogOut className="w-4 h-4 text-red-600" aria-hidden="true" />
                       <span>Sign Out</span>
                     </button>
                   </div>

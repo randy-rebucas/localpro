@@ -1,13 +1,16 @@
 "use client";
 
 import React from "react";
+import { SessionProvider } from "@/contexts/session-context";
 import { useSession } from "@/hooks/useAuth";
+import { getApiToken } from "@/lib/auth-utils";
 import { Loader2, Shield } from "lucide-react";
 import { MobileAuthForm } from "@/components/auth/mobile-auth-form";
 import { MarketplaceLayout } from "@/components/marketplace/marketplace-layout";
 
-export default function Home() {
+function HomeContent() {
   const { data: session, status } = useSession();
+  const apiToken = getApiToken();
 
   // Show loading state
   if (status === 'loading') {
@@ -26,11 +29,23 @@ export default function Home() {
     );
   }
 
-  // Show authentication if not authenticated
-  if (status === 'unauthenticated' || !session) {
+  // If there's an API token, allow access to marketplace even if session fetch failed
+  // This allows marketplace browsing with a token even if /api/auth/me fails
+  const hasValidToken = !!apiToken;
+
+  // Show authentication if not authenticated and no token exists
+  if ((status === 'unauthenticated' || !session) && !hasValidToken) {
     return <MobileAuthForm />;
   }
 
-  // Show marketplace layout if authenticated
+  // Show marketplace layout if authenticated or has valid token
   return <MarketplaceLayout />;
+}
+
+export default function Home() {
+  return (
+    <SessionProvider>
+      <HomeContent />
+    </SessionProvider>
+  );
 }

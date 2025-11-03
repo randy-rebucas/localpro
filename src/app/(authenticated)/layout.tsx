@@ -208,7 +208,6 @@ export default function AuthenticatedLayout({
           <GlobalHeader
             showRoleNavigation={true}
             showFavorites={true}
-            showCart={true}
             showMessages={true}
             notificationsDropdown={true}
             logoHref="/dashboard"
