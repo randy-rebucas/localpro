@@ -151,8 +151,6 @@ function MarketplaceLayoutContent() {
           showFavorites={true}
           notificationsDropdown={true}
           logoHref="/"
-          showFilter={true}
-          onFilterClick={() => setFilterDrawerOpen(true)}
         />
 
         {/* Hero / Header Section */}
