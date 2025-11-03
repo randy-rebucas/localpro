@@ -141,7 +141,7 @@ function SignInForm() {
       const url = `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`;
       logger.debug("Sending code with URL", { url });
 
-      const response = await makeClientPublicRequest(API_ENDPOINTS.authSendCode as keyof typeof API_ENDPOINTS, {
+      const response = await makeClientPublicRequest('authSendCode', {
         method: "POST",
         body: JSON.stringify({ phoneNumber: phone.trim() }),
         signal: controller.signal,
@@ -240,7 +240,7 @@ function SignInForm() {
       const url = `${API_BASE_URL}${API_ENDPOINTS.authVerifyCode}`;
       logger.debug("Verifying code with URL", { url, phoneNumber });
 
-      const response = await makeClientPublicRequest(API_ENDPOINTS.authVerifyCode as keyof typeof API_ENDPOINTS, {
+      const response = await makeClientPublicRequest('authVerifyCode', {
         method: "POST",
         body: JSON.stringify({
           phoneNumber,

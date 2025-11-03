@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
-  if (process.env.NEXT_RUNTIME === 'edge') {
-    // Edge runtime Sentry initialization
+  if (process.env.NEXT_RUNTIME === 'edge' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    // Edge runtime Sentry initialization (only if DSN is provided)
     Sentry.init({
       dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
       
@@ -29,7 +29,9 @@ export async function onRequestError(
     [key: string]: unknown;
   }
 ) {
-  // Capture request errors from nested React Server Components
-  Sentry.captureRequestError(err, request, context);
+  // Capture request errors from nested React Server Components (only if Sentry is initialized)
+  if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+    Sentry.captureRequestError(err, request, context);
+  }
 }
 

@@ -9,7 +9,7 @@ import { VerificationCodeInput } from "@/components/ui/verification-code-input";
 import { CheckCircle, Loader2, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/api";
 import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { phoneFormatter } from "@/lib/phone-formatter";
 import { logger } from "@/lib/logger";
@@ -89,7 +89,7 @@ export function MobileAuthForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const response = await makeClientPublicRequest(API_ENDPOINTS.authSendCode as keyof typeof API_ENDPOINTS, {
+      const response = await makeClientPublicRequest('authSendCode', {
         method: "POST",
         body: JSON.stringify({ phoneNumber: phone.trim() }),
         signal: controller.signal,
@@ -154,7 +154,7 @@ export function MobileAuthForm() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-      const response = await makeClientPublicRequest(API_ENDPOINTS.authVerifyCode as keyof typeof API_ENDPOINTS, {
+      const response = await makeClientPublicRequest('authVerifyCode', {
         method: "POST",
         body: JSON.stringify({
           phoneNumber,

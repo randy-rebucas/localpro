@@ -1,8 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 
-// Initialize Sentry
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+// Initialize Sentry only if DSN is provided
+if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
@@ -56,8 +57,12 @@ Sentry.init({
     
     return event;
   },
-});
+  });
+}
 
 // Export router transition hook to instrument navigations
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+// Only export if Sentry is initialized, otherwise provide a no-op function
+export const onRouterTransitionStart = process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? Sentry.captureRouterTransitionStart
+  : () => {};
 

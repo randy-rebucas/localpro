@@ -69,6 +69,35 @@ const nextConfig: NextConfig = {
   
   // Security headers
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // Build connect-src with conditional localhost for development
+    const connectSrc = [
+      "'self'",
+      "https://*.onrender.com",
+      "https://*.vercel-analytics.com",
+      "https://va.vercel-scripts.com",
+      "https://*.sentry.io",
+      ...(isDevelopment ? ["http://localhost:5000", "ws://localhost:5000"] : []),
+    ].join(' ');
+
+    // Build CSP directives
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: blob:",
+      `connect-src ${connectSrc}`,
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      // Only add upgrade-insecure-requests in production to allow localhost in dev
+      ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
+    ];
+
     return [
       {
         source: '/(.*)',
@@ -100,20 +129,7 @@ const nextConfig: NextConfig = {
           // Content Security Policy
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.onrender.com https://*.vercel-analytics.com https://*.sentry.io",
-              "frame-src 'none'",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-ancestors 'none'",
-              "upgrade-insecure-requests",
-            ].join('; '),
+            value: cspDirectives.join('; '),
           },
         ],
       },
