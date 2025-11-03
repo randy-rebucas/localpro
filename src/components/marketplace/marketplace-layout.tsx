@@ -8,6 +8,8 @@ import { FilterSidebar } from "./filter-sidebar";
 import { ServiceGrid } from "./service-grid";
 import { MarketplaceFooter } from "./marketplace-footer";
 import { ServiceCategory } from "./categories-carousel";
+import { LocationAutocomplete } from "./location-autocomplete";
+import { Navigation, MapPin } from "lucide-react";
 import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
 import { useCategories } from "@/hooks/useCategories";
 import { API_BASE_URL } from "@/lib/api";
@@ -24,6 +26,8 @@ function MarketplaceLayoutContent() {
   const [minRating, setMinRating] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [location, setLocation] = useState("");
+  const [locationCoordinates, setLocationCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [radius, setRadius] = useState(5000); // Default 5km in meters
   const [subcategory, setSubcategory] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState(10000);
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,13 +63,16 @@ function MarketplaceLayoutContent() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryKey, subcategory, location, priceRange, minRating, isAvailable]);
+  }, [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, isAvailable]);
 
   // Build query parameters for services fetch
   const servicesParams = useMemo(() => ({
     categoryKey: categoryKey || undefined,
     subcategory: subcategory || undefined,
     location: location.trim() || undefined,
+    lat: locationCoordinates?.lat,
+    lng: locationCoordinates?.lng,
+    radius: locationCoordinates ? radius : undefined,
     minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
     maxPrice: priceRange[1] < maxPrice ? priceRange[1] : undefined,
     rating: minRating > 0 ? minRating : undefined,
@@ -75,7 +82,7 @@ function MarketplaceLayoutContent() {
     sortBy: 'createdAt',
     sortOrder: 'desc' as const,
     groupByCategory: false,
-  }), [categoryKey, subcategory, location, priceRange, minRating, maxPrice, isAvailable, currentPage]);
+  }), [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, maxPrice, isAvailable, currentPage]);
 
   // Fetch services with filters applied via query parameters
   const { featuredServices, services, loading: loadingServices, pagination } = useMarketplaceServices(servicesParams);
@@ -114,8 +121,9 @@ function MarketplaceLayoutContent() {
            minRating !== 0 ||
            isAvailable ||
            location.trim() !== "" ||
+           locationCoordinates !== null ||
            subcategory !== null;
-  }, [priceRange, maxPrice, minRating, isAvailable, location, subcategory]);
+  }, [priceRange, maxPrice, minRating, isAvailable, location, locationCoordinates, subcategory]);
 
   const handleClearFilters = () => {
     setSelectedCategory(null);
@@ -125,6 +133,8 @@ function MarketplaceLayoutContent() {
     setMinRating(0);
     setIsAvailable(false);
     setLocation("");
+    setLocationCoordinates(null);
+    setRadius(5000); // Reset to default 5km
     setCurrentPage(1);
   };
 
@@ -172,12 +182,74 @@ function MarketplaceLayoutContent() {
               onAvailabilityChange={setIsAvailable}
               location={location}
               onLocationChange={setLocation}
+              locationCoordinates={locationCoordinates}
+              onLocationCoordinatesChange={setLocationCoordinates}
+              radius={radius}
+              onRadiusChange={setRadius}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={handleClearFilters}
             />
 
             {/* Main Content Area */}
             <div className="flex-1 min-w-0">
+              {/* Location Selector - Above Service Results */}
+              <div className="mb-6 bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                    <label className="text-sm font-semibold text-gray-900">Location</label>
+                  </div>
+                  
+                  {/* Location Autocomplete */}
+                  <LocationAutocomplete
+                    value={location}
+                    onChange={setLocation}
+                    onCoordinatesChange={setLocationCoordinates}
+                    placeholder="Search location..."
+                  />
+
+                  {/* Nearby Filter with Radius Slider */}
+                  {locationCoordinates && (
+                    <div className="space-y-3 pt-3 border-t border-gray-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Navigation className="w-4 h-4 text-green-600" />
+                        <label className="text-sm font-semibold text-gray-900">Search Radius</label>
+                      </div>
+                      
+                      {/* Radius Display */}
+                      <div className="bg-green-50 rounded-xl px-4 py-3 border border-green-100">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-600">Radius</span>
+                          <span className="text-base font-bold text-green-700">
+                            {(radius / 1000).toFixed(1)} km
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Radius Slider */}
+                      <div className="relative py-2">
+                        <input
+                          type="range"
+                          min="1000"
+                          max="50000"
+                          step="1000"
+                          value={radius}
+                          onChange={(e) => setRadius(Number(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                          style={{
+                            background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>1 km</span>
+                          <span>50 km</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Service Listings */}
               <ServiceGrid 
                 featuredServices={featuredServices}

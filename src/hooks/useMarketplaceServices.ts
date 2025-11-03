@@ -29,6 +29,9 @@ function getCacheKey(params: MarketplaceServicesParams): string {
     params.categoryKey || '',
     params.subcategory || '',
     params.location || '',
+    params.lat?.toString() || '',
+    params.lng?.toString() || '',
+    params.radius?.toString() || '',
     params.minPrice?.toString() || '',
     params.maxPrice?.toString() || '',
     params.rating?.toString() || '',
@@ -46,6 +49,9 @@ export interface MarketplaceServicesParams {
   categoryKey?: string | null;
   subcategory?: string | null;
   location?: string;
+  lat?: number;
+  lng?: number;
+  radius?: number; // Radius in meters
   minPrice?: number;
   maxPrice?: number;
   rating?: number;
@@ -149,6 +155,15 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
       
       if (params.location?.trim()) {
         queryParams.append('location', params.location.trim());
+      }
+      
+      // Nearby filter - include lat, lng, and radius if coordinates are provided
+      if (params.lat !== undefined && params.lng !== undefined) {
+        queryParams.append('lat', params.lat.toString());
+        queryParams.append('lng', params.lng.toString());
+        if (params.radius !== undefined && params.radius > 0) {
+          queryParams.append('radius', params.radius.toString());
+        }
       }
       
       if (params.minPrice !== undefined && params.minPrice > 0) {

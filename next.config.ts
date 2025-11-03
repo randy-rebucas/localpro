@@ -78,16 +78,19 @@ const nextConfig: NextConfig = {
       "https://*.vercel-analytics.com",
       "https://va.vercel-scripts.com",
       "https://*.sentry.io",
+      "https://maps.googleapis.com",
+      "https://*.googleapis.com",
+      "https://maps.gstatic.com",
       ...(isDevelopment ? ["http://localhost:5000", "ws://localhost:5000"] : []),
     ].join(' ');
 
     // Build CSP directives
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com https://maps.googleapis.com https://*.googleapis.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https: blob:",
+      "img-src 'self' data: https: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.gstatic.com",
       `connect-src ${connectSrc}`,
       "frame-src 'none'",
       "object-src 'none'",
@@ -116,7 +119,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(), geolocation=(self)',
           },
           {
             key: 'X-XSS-Protection',

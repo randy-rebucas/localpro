@@ -85,6 +85,17 @@ export function ServiceGrid({
             : null
       : null;
     
+    // Get image URL - check images array first, then fallback to single image field
+    let imageUrl: string | undefined = undefined;
+    if (service.images && Array.isArray(service.images) && service.images.length > 0) {
+      const firstImage = service.images[0];
+      imageUrl = firstImage?.url || firstImage?.thumbnail || undefined;
+    } else {
+      // Check for alternative image fields
+      const serviceWithImage = service as MarketplaceService & { image?: string; imageUrl?: string };
+      imageUrl = serviceWithImage.image || serviceWithImage.imageUrl || undefined;
+    }
+    
     return {
       id: typeof serviceId === 'string' ? parseInt(serviceId.slice(-6), 16) || index : serviceId,
       serviceId: serviceId,
@@ -103,6 +114,7 @@ export function ServiceGrid({
       subcategory: service.subcategory,
       isVerified: service.isVerified || service.provider?.isVerified || false,
       isActive: service.isActive !== false,
+      imageUrl: imageUrl,
     };
   };
 

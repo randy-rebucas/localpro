@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MapPin, Star, CheckCircle2, Heart, Clock, User } from "lucide-react";
+import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
 
 interface ServiceCardProps {
   id: number;
@@ -21,6 +21,7 @@ interface ServiceCardProps {
   subcategory?: string;
   isVerified?: boolean;
   isActive?: boolean;
+  imageUrl?: string;
 }
 
 export function ServiceCard({
@@ -39,12 +40,13 @@ export function ServiceCard({
   subcategory,
   isVerified = false,
   isActive = true,
+  imageUrl,
 }: ServiceCardProps) {
   // Format pricing type for display
   const pricingTypeLabel = pricingType === 'hourly' ? 'hr' : pricingType === 'fixed' ? 'service' : pricingType;
   
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all group flex flex-row relative">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all group flex flex-row relative items-stretch">
       {/* Favorite Icon - Top Right */}
       <div className="absolute top-3 right-3 z-10">
         <div className="bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
@@ -52,9 +54,29 @@ export function ServiceCard({
         </div>
       </div>
 
-      {/* Provider Image - Horizontal List Style */}
-      <div className="relative w-48 h-48 flex-shrink-0 bg-gradient-to-br from-green-400 to-green-600">
-        {/* Image placeholder - could show service image here if available */}
+      {/* Service Image - Horizontal List Style */}
+      <div className="relative w-48 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden self-stretch flex items-center justify-center">
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={title}
+            className="w-full h-auto object-cover min-h-full"
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              e.currentTarget.style.display = 'none';
+              const placeholder = e.currentTarget.parentElement?.querySelector('.image-placeholder');
+              if (placeholder) {
+                (placeholder as HTMLElement).style.display = 'flex';
+              }
+            }}
+          />
+        ) : null}
+        <div 
+          className={`image-placeholder w-full h-full flex flex-col items-center justify-center min-h-[12rem] ${imageUrl ? 'hidden' : 'flex'}`}
+        >
+          <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+          <span className="text-xs text-gray-500 text-center px-2">No Image</span>
+        </div>
       </div>
 
       {/* Content - List Style */}

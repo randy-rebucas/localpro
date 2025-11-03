@@ -7,9 +7,13 @@ import {
   DollarSign,
   Award,
   Clock,
-  MapPin,
   Star,
 } from "lucide-react";
+
+interface LocationCoordinates {
+  lat: number;
+  lng: number;
+}
 
 interface FilterSidebarProps {
   isOpen: boolean;
@@ -25,6 +29,10 @@ interface FilterSidebarProps {
   onAvailabilityChange: (available: boolean) => void;
   location: string;
   onLocationChange: (location: string) => void;
+  locationCoordinates: LocationCoordinates | null;
+  onLocationCoordinatesChange: (coords: LocationCoordinates | null) => void;
+  radius: number;
+  onRadiusChange: (radius: number) => void;
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }
@@ -41,6 +49,10 @@ export function FilterSidebar({
   onAvailabilityChange,
   location,
   onLocationChange,
+  locationCoordinates,
+  onLocationCoordinatesChange,
+  radius,
+  onRadiusChange,
   hasActiveFilters,
   onClearFilters,
 }: FilterSidebarProps) {
@@ -267,26 +279,6 @@ export function FilterSidebar({
                   }`}
                 />
               </button>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-100"></div>
-
-          {/* Location Selector */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-green-600" />
-              <label className="text-sm font-semibold text-gray-900">Location</label>
-            </div>
-            <div className="relative">
-              <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Search location..."
-                value={location}
-                onChange={(e) => onLocationChange(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium bg-white hover:border-gray-300 transition-colors placeholder:text-gray-400"
-              />
             </div>
           </div>
 

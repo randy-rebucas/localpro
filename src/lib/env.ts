@@ -78,7 +78,7 @@ export const CLIENT_CONFIG = {
   apiTimeout: getNumberEnvVar('NEXT_PUBLIC_API_TIMEOUT', 10000),
   
   // External services (public keys only)
-  googleMapsApiKey: getOptionalEnvVar('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY'),
+  googleMapsApiKey: getOptionalEnvVar('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY', 'AIzaSyCJG1n0iHEeMhb-QGUnZRw3vKaSDWSA5UQ'),
  
   // Analytics (public)
   googleAnalyticsId: getOptionalEnvVar('NEXT_PUBLIC_GA_ID'),
