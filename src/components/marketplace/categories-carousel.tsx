@@ -2,7 +2,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Loader2, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
-import { useCategoriesContext } from "./categories-context";
 
 export interface ServiceCategory {
   key?: string;
@@ -44,19 +43,26 @@ export interface ServiceCategory {
 }
 
 interface CategoriesCarouselProps {
+  categories: ServiceCategory[];
   onCategorySelect?: (category: ServiceCategory | null) => void;
   selectedCategoryId?: string | null;
   showDescription?: boolean;
   className?: string;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export function CategoriesCarousel({
+  categories,
   onCategorySelect,
   selectedCategoryId,
   showDescription = false,
   className = "",
+  loading = false,
+  error = null,
+  onRetry,
 }: CategoriesCarouselProps) {
-  const { categories, loading, error, refetch } = useCategoriesContext();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -149,13 +155,15 @@ export function CategoriesCarousel({
         <div className="flex flex-col items-center gap-3 max-w-md text-center">
           <AlertCircle className="w-8 h-8 text-red-500" />
           <p className="text-sm text-gray-600">{error}</p>
-          <button
-            onClick={refetch}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Retry
+            </button>
+          )}
         </div>
       </div>
     );

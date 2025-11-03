@@ -1,17 +1,37 @@
 "use client";
 
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { ServiceCard } from "./service-card";
 import { MarketplaceService } from "@/hooks/useCategoryServices";
+
+interface Pagination {
+  current: number;
+  pages: number;
+  total: number;
+  limit: number;
+  count: number;
+}
 
 interface ServiceGridProps {
   featuredServices?: MarketplaceService[];
   services?: MarketplaceService[];
   loading?: boolean;
+  hasActiveFilters?: boolean;
+  pagination?: Pagination | null;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
-export function ServiceGrid({ featuredServices = [], services = [], loading = false }: ServiceGridProps) {
+export function ServiceGrid({ 
+  featuredServices = [], 
+  services = [], 
+  loading = false, 
+  hasActiveFilters = false,
+  pagination = null,
+  currentPage = 1,
+  onPageChange,
+}: ServiceGridProps) {
   // Transform services to match ServiceCard props
   const transformService = (service: MarketplaceService, index: number) => {
     const serviceId = service._id || service.id || `service-${index}`;
@@ -96,23 +116,42 @@ export function ServiceGrid({ featuredServices = [], services = [], loading = fa
   }
 
   const allServices = [...featuredServicesToRender, ...servicesToRender];
+  const totalCount = featuredServicesToRender.length + servicesToRender.length;
 
   if (allServices.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-gray-600">No services available in this category</p>
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="text-sm text-gray-600 mb-2">
+          {hasActiveFilters 
+            ? "No services match your filters" 
+            : "No services available in this category"}
+        </p>
+        {hasActiveFilters && (
+          <p className="text-xs text-gray-500">Try adjusting your filter criteria</p>
+        )}
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
+      {/* Results Count */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+          <span className="font-medium">{totalCount}</span>
+          <span>{totalCount === 1 ? 'service' : 'services'} found</span>
+        </div>
+      )}
+
       {/* Featured Services Section */}
       {featuredServicesToRender.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-green-600 rounded-full"></div>
             <h2 className="text-xl font-bold text-gray-900">Featured Services</h2>
+            {featuredServicesToRender.length > 0 && (
+              <span className="text-sm text-gray-500">({featuredServicesToRender.length})</span>
+            )}
           </div>
           <div className="space-y-4">
             {featuredServicesToRender.map((service) => (
@@ -129,12 +168,105 @@ export function ServiceGrid({ featuredServices = [], services = [], loading = fa
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-6 bg-gray-300 rounded-full"></div>
               <h2 className="text-xl font-bold text-gray-900">All Services</h2>
+              {servicesToRender.length > 0 && (
+                <span className="text-sm text-gray-500">({servicesToRender.length})</span>
+              )}
             </div>
           )}
           <div className="space-y-4">
             {servicesToRender.map((service) => (
               <ServiceCard key={service.id} {...service} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {pagination && pagination.pages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-200">
+          {/* Pagination Info */}
+          <div className="text-sm text-gray-600">
+            Showing <span className="font-medium">{((pagination.current - 1) * pagination.limit) + 1}</span> to{" "}
+            <span className="font-medium">
+              {Math.min(pagination.current * pagination.limit, pagination.total)}
+            </span>{" "}
+            of <span className="font-medium">{pagination.total}</span> results
+          </div>
+
+          {/* Pagination Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Previous Button */}
+            <button
+              onClick={() => onPageChange && onPageChange(pagination.current - 1)}
+              disabled={pagination.current === 1 || loading}
+              className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                pagination.current === 1 || loading
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {(() => {
+                const pagesToShow = Math.min(5, pagination.pages);
+                const pages: number[] = [];
+                
+                if (pagination.pages <= 5) {
+                  // Show all pages if 5 or less
+                  for (let i = 1; i <= pagination.pages; i++) {
+                    pages.push(i);
+                  }
+                } else if (pagination.current <= 3) {
+                  // Show first 5 pages
+                  for (let i = 1; i <= 5; i++) {
+                    pages.push(i);
+                  }
+                } else if (pagination.current >= pagination.pages - 2) {
+                  // Show last 5 pages
+                  for (let i = pagination.pages - 4; i <= pagination.pages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  // Show current page with 2 before and 2 after
+                  for (let i = pagination.current - 2; i <= pagination.current + 2; i++) {
+                    pages.push(i);
+                  }
+                }
+
+                return pages.map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => onPageChange && onPageChange(pageNum)}
+                    disabled={loading}
+                    className={`w-10 h-10 text-sm font-medium rounded-lg transition-all ${
+                      pagination.current === pageNum
+                        ? "bg-green-600 text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                    } ${loading ? "cursor-not-allowed opacity-50" : ""}`}
+                  >
+                    {pageNum}
+                  </button>
+                ));
+              })()}
+            </div>
+
+            {/* Next Button */}
+            <button
+              onClick={() => onPageChange && onPageChange(pagination.current + 1)}
+              disabled={pagination.current === pagination.pages || loading}
+              className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                pagination.current === pagination.pages || loading
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+              }`}
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}

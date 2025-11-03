@@ -4,20 +4,26 @@ import React from "react";
 import { CategoriesCarousel } from "./categories-carousel"; 
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
 import { CategoryStatistics } from "./category-statistics";
-import { useCategoriesContext } from "./categories-context";
 
 interface MarketplaceHeroProps {
   userName: string;
   selectedCategory: string | null;
+  categories: ServiceCategory[];
+  categoriesLoading?: boolean;
+  categoriesError?: string | null;
   onCategorySelect: (category: ServiceCategory | undefined) => void;
+  onCategoriesRetry?: () => void;
 }
 
 export function MarketplaceHero({
   userName,
   selectedCategory,
+  categories,
+  categoriesLoading = false,
+  categoriesError = null,
   onCategorySelect,
+  onCategoriesRetry,
 }: MarketplaceHeroProps) {
-  const { categories } = useCategoriesContext();
   
   // Find the selected category object
   const selectedCategoryObj = selectedCategory 
@@ -39,7 +45,14 @@ export function MarketplaceHero({
         </div>
 
         {/* Category Carousel */}
-        <CategoriesCarousel onCategorySelect={onCategorySelect as (category: ServiceCategory | null) => void} selectedCategoryId={selectedCategory} />
+        <CategoriesCarousel 
+          categories={categories}
+          loading={categoriesLoading}
+          error={categoriesError}
+          onRetry={onCategoriesRetry}
+          onCategorySelect={onCategorySelect as (category: ServiceCategory | null) => void} 
+          selectedCategoryId={selectedCategory} 
+        />
         
         {/* Category Statistics */}
         {selectedCategoryObj && <CategoryStatistics category={selectedCategoryObj} />}

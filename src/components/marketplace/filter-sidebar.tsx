@@ -17,6 +17,7 @@ interface FilterSidebarProps {
   sidebarCategory?: string;
   onCategoryChange?: (category: string) => void;
   priceRange: [number, number];
+  maxPrice?: number;
   onPriceRangeChange: (range: [number, number]) => void;
   minRating: number;
   onMinRatingChange: (rating: number) => void;
@@ -32,6 +33,7 @@ export function FilterSidebar({
   isOpen,
   onClose,
   priceRange,
+  maxPrice = 10000,
   onPriceRangeChange,
   minRating,
   onMinRatingChange,
@@ -118,8 +120,8 @@ export function FilterSidebar({
                 <div
                   className="absolute h-2 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2"
                   style={{
-                    left: `${(priceRange[0] / 10000) * 100}%`,
-                    width: `${((priceRange[1] - priceRange[0]) / 10000) * 100}%`,
+                    left: `${(priceRange[0] / maxPrice) * 100}%`,
+                    width: `${((priceRange[1] - priceRange[0]) / maxPrice) * 100}%`,
                   }}
                 ></div>
 
@@ -127,8 +129,8 @@ export function FilterSidebar({
                 <input
                   type="range"
                   min="0"
-                  max="10000"
-                  step="100"
+                  max={maxPrice}
+                  step={Math.max(1, Math.floor(maxPrice / 100))}
                   value={priceRange[0]}
                   onChange={(e) => {
                     const newMin = parseInt(e.target.value);
@@ -139,7 +141,7 @@ export function FilterSidebar({
                   }}
                   className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb z-10 top-1/2 transform -translate-y-1/2"
                   style={{
-                    zIndex: priceRange[0] > priceRange[1] - 500 ? 20 : 10,
+                    zIndex: priceRange[0] > priceRange[1] - (maxPrice * 0.05) ? 20 : 10,
                   }}
                 />
 
@@ -147,8 +149,8 @@ export function FilterSidebar({
                 <input
                   type="range"
                   min="0"
-                  max="10000"
-                  step="100"
+                  max={maxPrice}
+                  step={Math.max(1, Math.floor(maxPrice / 100))}
                   value={priceRange[1]}
                   onChange={(e) => {
                     const newMax = parseInt(e.target.value);
@@ -159,7 +161,7 @@ export function FilterSidebar({
                   }}
                   className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb z-10 top-1/2 transform -translate-y-1/2"
                   style={{
-                    zIndex: priceRange[1] < priceRange[0] + 500 ? 20 : 10,
+                    zIndex: priceRange[1] < priceRange[0] + (maxPrice * 0.05) ? 20 : 10,
                   }}
                 />
               </div>
