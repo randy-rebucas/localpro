@@ -3,7 +3,6 @@
 import React from "react";
 import { CategoriesCarousel } from "./categories-carousel"; 
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
-import { CategoryStatistics } from "./category-statistics";
 
 interface MarketplaceHeroProps {
   userName: string;
@@ -24,15 +23,6 @@ export function MarketplaceHero({
   onCategorySelect,
   onCategoriesRetry,
 }: MarketplaceHeroProps) {
-  
-  // Find the selected category object
-  const selectedCategoryObj = selectedCategory 
-    ? categories.find((cat) => {
-        const key = cat.key || cat.id || cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-');
-        return key === selectedCategory;
-      })
-    : null;
-
   return (
     <section className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -53,9 +43,6 @@ export function MarketplaceHero({
           onCategorySelect={onCategorySelect as (category: ServiceCategory | null) => void} 
           selectedCategoryId={selectedCategory} 
         />
-        
-        {/* Category Statistics */}
-        {selectedCategoryObj && <CategoryStatistics category={selectedCategoryObj} />}
       </div>
     </section>
   );
