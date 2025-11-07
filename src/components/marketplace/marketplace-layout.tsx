@@ -8,8 +8,7 @@ import { FilterSidebar } from "./filter-sidebar";
 import { ServiceGrid } from "./service-grid";
 import { MarketplaceFooter } from "./marketplace-footer";
 import { ServiceCategory } from "./categories-carousel";
-import { LocationAutocomplete } from "./location-autocomplete";
-import { Navigation, MapPin } from "lucide-react";
+import { Navigation, MapPin, Grid3x3, List, Loader2 } from "lucide-react";
 import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
 import { useCategories } from "@/hooks/useCategories";
 import { API_BASE_URL } from "@/lib/api";
@@ -31,6 +30,12 @@ function MarketplaceLayoutContent() {
   const [subcategory, setSubcategory] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState(10000);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [groupByCategory, setGroupByCategory] = useState<boolean>(false);
+  const limit = 10; // Fixed limit per page
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   // Fetch max price once on initial load (without filters) to set the price range
   useEffect(() => {
@@ -63,7 +68,7 @@ function MarketplaceLayoutContent() {
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, isAvailable]);
+  }, [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, isAvailable, sortBy, sortOrder, groupByCategory]);
 
   // Build query parameters for services fetch
   const servicesParams = useMemo(() => ({
@@ -78,11 +83,11 @@ function MarketplaceLayoutContent() {
     rating: minRating > 0 ? minRating : undefined,
     isActive: isAvailable ? true : undefined, // Only filter if explicitly enabled
     page: currentPage,
-    limit: 10, // Items per page
-    sortBy: 'createdAt',
-    sortOrder: 'desc' as const,
-    groupByCategory: false,
-  }), [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, maxPrice, isAvailable, currentPage]);
+    limit: limit,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+    groupByCategory: groupByCategory,
+  }), [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, maxPrice, isAvailable, currentPage, limit, sortBy, sortOrder, groupByCategory]);
 
   // Fetch services with filters applied via query parameters
   const { featuredServices, services, loading: loadingServices, pagination } = useMarketplaceServices(servicesParams);
@@ -144,6 +149,60 @@ function MarketplaceLayoutContent() {
     setCategoryKey(key);
   };
 
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      logger.warn("Geolocation is not supported by this browser");
+      return;
+    }
+
+    setDetectingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        setLocationCoordinates({ lat, lng });
+        setLocation(""); // Clear text location when using coordinates
+        
+        // Try to reverse geocode to get location name
+        try {
+          const { API_ENDPOINTS } = await import("@/lib/api");
+          const response = await fetch(
+            `${API_BASE_URL}${API_ENDPOINTS.mapsReverseGeocode}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ lat, lng }),
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.address) {
+              setLocation(data.address);
+            }
+          }
+        } catch (error) {
+          logger.error("Error reverse geocoding", error instanceof Error ? error : new Error(String(error)));
+        } finally {
+          setDetectingLocation(false);
+        }
+      },
+      (error) => {
+        logger.error("Error getting location", error instanceof Error ? error : new Error(String(error)));
+        setDetectingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   return (
     <div className="bg-gray-50 min-h-screen">
         <GlobalHeader
@@ -184,42 +243,50 @@ function MarketplaceLayoutContent() {
 
             {/* Main Content Area */}
             <div className="flex-1 min-w-0">
-              {/* Location Selector - Above Service Results */}
+              {/* Controls Bar - Location on Left, View/Sort Controls on Right */}
               <div className="mb-6 bg-white rounded-xl p-4 shadow-sm border border-gray-200">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-green-600" />
-                    <label className="text-sm font-semibold text-gray-900">Location</label>
-                  </div>
-                  
-                  {/* Location Autocomplete */}
-                  <LocationAutocomplete
-                    value={location}
-                    onChange={setLocation}
-                    onCoordinatesChange={setLocationCoordinates}
-                    placeholder="Search location..."
-                  />
-
-                  {/* Nearby Filter with Radius Slider */}
-                  {locationCoordinates && (
-                    <div className="space-y-3 pt-3 border-t border-gray-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Navigation className="w-4 h-4 text-green-600" />
-                        <label className="text-sm font-semibold text-gray-900">Search Radius</label>
-                      </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  {/* Left Side - Location Detection */}
+                  <div className="flex-1 w-full sm:w-auto">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDetectLocation}
+                        disabled={detectingLocation}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        {detectingLocation ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Detecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="w-4 h-4" />
+                            <span>Detect Current Location</span>
+                          </>
+                        )}
+                      </button>
                       
-                      {/* Radius Display */}
-                      <div className="bg-green-50 rounded-xl px-4 py-3 border border-green-100">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-600">Radius</span>
-                          <span className="text-base font-bold text-green-700">
-                            {(radius / 1000).toFixed(1)} km
-                          </span>
+                      {locationCoordinates && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Navigation className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{(radius / 1000).toFixed(1)} km radius</span>
+                          <button
+                            onClick={() => {
+                              setLocationCoordinates(null);
+                              setLocation("");
+                            }}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Clear
+                          </button>
                         </div>
-                      </div>
-
-                      {/* Radius Slider */}
-                      <div className="relative py-2">
+                      )}
+                    </div>
+                    
+                    {/* Radius Slider - Show when location is detected */}
+                    {locationCoordinates && (
+                      <div className="mt-3 space-y-2">
                         <input
                           type="range"
                           min="1000"
@@ -232,13 +299,75 @@ function MarketplaceLayoutContent() {
                             background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb 100%)`
                           }}
                         />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <div className="flex justify-between text-xs text-gray-500">
                           <span>1 km</span>
                           <span>50 km</span>
                         </div>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Right Side - Sort, Group, and View Mode Controls */}
+                  <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    {/* Sort By */}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="createdAt">Date Created</option>
+                      <option value="basePrice">Price</option>
+                      <option value="rating">Rating</option>
+                      <option value="title">Title</option>
+                    </select>
+
+                    {/* Sort Order */}
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+
+                    {/* Group By Category Toggle */}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={groupByCategory}
+                        onChange={(e) => setGroupByCategory(e.target.checked)}
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                      />
+                      <span className="text-sm text-gray-700">Group by Category</span>
+                    </label>
+
+                    {/* View Mode Toggle - Moved to the right */}
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'grid'
+                            ? 'bg-white text-green-700 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Grid View"
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'list'
+                            ? 'bg-white text-green-700 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="List View"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
@@ -251,6 +380,8 @@ function MarketplaceLayoutContent() {
                 pagination={pagination}
                 currentPage={currentPage}
                 onPageChange={handlePageChange}
+                viewMode={viewMode}
+                selectedCategory={selectedCategory}
               />
             </div>
           </div>

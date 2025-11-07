@@ -1,7 +1,38 @@
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
-import { Loader2, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  Loader2, 
+  AlertCircle, 
+  RefreshCw, 
+  ChevronLeft, 
+  ChevronRight,
+  Wrench,
+  Home,
+  Car,
+  Sparkles,
+  Briefcase,
+  GraduationCap,
+  Heart,
+  Utensils,
+  Dumbbell,
+  Music,
+  Camera,
+  Palette,
+  Code,
+  Stethoscope,
+  Hammer,
+  Paintbrush,
+  Scissors,
+  ShoppingBag,
+  Baby,
+  Dog,
+  TreePine,
+  Laptop,
+  Settings,
+  Package,
+  LucideIcon
+} from "lucide-react";
 
 export interface ServiceCategory {
   key?: string;
@@ -52,6 +83,99 @@ interface CategoriesCarouselProps {
   error?: string | null;
   onRetry?: () => void;
 }
+
+// Icon mapping function - maps category names/keys to Lucide icons
+export const getCategoryIcon = (category: ServiceCategory): LucideIcon => {
+  const categoryKey = (category.key || category.id || category.slug || category.name.toLowerCase().replace(/\s+/g, '-')).toLowerCase();
+  const categoryName = category.name.toLowerCase();
+
+  // Map common category names to icons
+  const iconMap: Record<string, LucideIcon> = {
+    // Home & Property
+    'home': Home,
+    'house': Home,
+    'property': Home,
+    'real-estate': Home,
+    'cleaning': Sparkles,
+    'janitorial': Sparkles,
+    'maintenance': Wrench,
+    'plumbing': Wrench,
+    'electrical': Wrench,
+    'repair': Wrench,
+    'renovation': Hammer,
+    'construction': Hammer,
+    'painting': Paintbrush,
+    'landscaping': TreePine,
+    'gardening': TreePine,
+    
+    // Transportation
+    'car': Car,
+    'vehicle': Car,
+    'transport': Car,
+    'moving': Car,
+    'delivery': Package,
+    
+    // Personal Care
+    'beauty': Sparkles,
+    'salon': Scissors,
+    'hair': Scissors,
+    'spa': Heart,
+    'wellness': Heart,
+    'fitness': Dumbbell,
+    'gym': Dumbbell,
+    'health': Stethoscope,
+    'medical': Stethoscope,
+    
+    // Education & Professional
+    'education': GraduationCap,
+    'tutoring': GraduationCap,
+    'training': GraduationCap,
+    'business': Briefcase,
+    'professional': Briefcase,
+    'consulting': Briefcase,
+    
+    // Food & Entertainment
+    'food': Utensils,
+    'catering': Utensils,
+    'restaurant': Utensils,
+    'music': Music,
+    'entertainment': Music,
+    'photography': Camera,
+    'photo': Camera,
+    'video': Camera,
+    'art': Palette,
+    'design': Palette,
+    
+    // Technology
+    'tech': Laptop,
+    'technology': Laptop,
+    'it': Laptop,
+    'computer': Laptop,
+    'software': Code,
+    'web': Code,
+    'programming': Code,
+    
+    // Other
+    'pet': Dog,
+    'pets': Dog,
+    'baby': Baby,
+    'childcare': Baby,
+    'shopping': ShoppingBag,
+    'retail': ShoppingBag,
+    'settings': Settings,
+    'other': Package,
+  };
+
+  // Try to find icon by category key/slug
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (categoryKey.includes(key) || categoryName.includes(key)) {
+      return icon;
+    }
+  }
+
+  // Default fallback icon
+  return Package;
+};
 
 export function CategoriesCarousel({
   categories,
@@ -212,11 +336,16 @@ export function CategoriesCarousel({
                 }`}
                 type="button"
               >
-                {category.icon && (
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl">
-                    {category.icon}
-                  </div>
-                )}
+                {(() => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      isSelected ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                  );
+                })()}
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-sm font-medium text-gray-700">{category.name}</span>
                   {showDescription && category.description && (

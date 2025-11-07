@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Search, FilterX, Package } from "lucide-react";
 import { ServiceCard } from "./service-card";
 import { MarketplaceService } from "@/hooks/useCategoryServices";
+import { ServiceCategory } from "./categories-carousel";
 
 interface Pagination {
   current: number;
@@ -21,6 +22,8 @@ interface ServiceGridProps {
   pagination?: Pagination | null;
   currentPage?: number;
   onPageChange?: (page: number) => void;
+  viewMode?: 'grid' | 'list';
+  selectedCategory?: ServiceCategory | null;
 }
 
 export function ServiceGrid({ 
@@ -30,6 +33,8 @@ export function ServiceGrid({
   hasActiveFilters = false,
   pagination = null,
   onPageChange,
+  viewMode = 'grid',
+  selectedCategory = null,
 }: ServiceGridProps) {
   // Transform services to match ServiceCard props
   const transformService = (service: MarketplaceService, index: number) => {
@@ -136,15 +141,42 @@ export function ServiceGrid({
   const totalCount = featuredServicesToRender.length + servicesToRender.length;
 
   if (allServices.length === 0) {
+    const EmptyIcon = hasActiveFilters ? FilterX : Package;
+    const categoryName = selectedCategory?.name;
+    
+    const title = hasActiveFilters 
+      ? "No services found" 
+      : categoryName
+        ? `No services in ${categoryName}`
+        : "No services available";
+    
+    const description = hasActiveFilters
+      ? categoryName
+        ? `No services match your filters in ${categoryName}. Try adjusting your filters to see more results.`
+        : "Try adjusting your filters to see more results"
+      : categoryName
+        ? `There are currently no services available in this category. Check back later or explore other categories.`
+        : "Check back later or explore other categories";
+
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-sm text-gray-600 mb-2">
-          {hasActiveFilters 
-            ? "No services match your filters" 
-            : "No services available in this category"}
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <EmptyIcon className="w-10 h-10 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-gray-600 text-center max-w-md mb-6">
+          {description}
         </p>
         {hasActiveFilters && (
-          <p className="text-xs text-gray-500">Try adjusting your filter criteria</p>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <Search className="w-4 h-4" />
+            <span>Try removing some filters or expanding your search</span>
+          </div>
+        )}
+        {categoryName && !hasActiveFilters && (
+          <div className="mt-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
+            <span className="text-xs font-medium text-green-700">Category: {categoryName}</span>
+          </div>
         )}
       </div>
     );
@@ -170,9 +202,9 @@ export function ServiceGrid({
               <span className="text-sm text-gray-500">({featuredServicesToRender.length})</span>
             )}
           </div>
-          <div className="space-y-4">
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
             {featuredServicesToRender.map((service) => (
-              <ServiceCard key={service.id} {...service} />
+              <ServiceCard key={service.id} {...service} viewMode={viewMode} />
             ))}
           </div>
         </div>
@@ -190,9 +222,9 @@ export function ServiceGrid({
               )}
             </div>
           )}
-          <div className="space-y-4">
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
             {servicesToRender.map((service) => (
-              <ServiceCard key={service.id} {...service} />
+              <ServiceCard key={service.id} {...service} viewMode={viewMode} />
             ))}
           </div>
         </div>

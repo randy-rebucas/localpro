@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { getCategoryIcon } from "@/components/marketplace/categories-carousel";
 
 interface ServiceCategory {
   key: string;
@@ -167,7 +168,14 @@ export default function MarketplacePage() {
               className="group p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:shadow-md transition-all text-left block bg-white"
             >
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="text-4xl mb-2">{category.icon}</div>
+                {(() => {
+                  const IconComponent = getCategoryIcon(category);
+                  return (
+                    <div className="w-16 h-16 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center mb-2 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
+                      <IconComponent className="w-8 h-8" />
+                    </div>
+                  );
+                })()}
                 <h3 className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
                   {category.name}
                 </h3>

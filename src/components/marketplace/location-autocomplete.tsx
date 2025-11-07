@@ -1,10 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import Script from "next/script";
 import toast from "react-hot-toast";
 import { MapPin, Loader2, X } from "lucide-react";
-import { CLIENT_CONFIG } from "@/lib/env";
 import { API_BASE_URL } from "@/lib/api";
 import { API_ENDPOINTS } from "@/lib/api";
 
@@ -22,52 +20,25 @@ interface LocationAutocompleteProps {
   disabled?: boolean;
 }
 
-// Google Maps event listener type
-type GoogleMapsEventListener = unknown;
+interface PlacePrediction {
+  placeId: string;
+  description: string;
+  structuredFormatting?: {
+    mainText: string;
+    secondaryText: string;
+  };
+}
 
-declare global {
-  interface Window {
-    google?: {
-      maps?: {
-        places?: {
-          Autocomplete?: new (input: HTMLInputElement, options?: {
-            types?: string[];
-            fields?: string[];
-          }) => {
-            getPlace: () => google.maps.places.PlaceResult;
-            addListener: (event: string, callback: () => void) => GoogleMapsEventListener;
-          };
-          PlacesServiceStatus?: {
-            OK: string;
-          };
-        };
-        event?: {
-          removeListener?: (listener: GoogleMapsEventListener) => void;
-        };
-      };
+interface PlaceDetails {
+  placeId: string;
+  formattedAddress?: string;
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
     };
-  }
-  
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace google {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    namespace maps {
-      // eslint-disable-next-line @typescript-eslint/no-namespace
-      namespace places {
-        interface PlaceResult {
-          geometry?: {
-            location?: {
-              lat: () => number;
-              lng: () => number;
-            };
-          };
-          formatted_address?: string;
-          name?: string;
-          place_id?: string;
-        }
-      }
-    }
-  }
+  };
+  name?: string;
 }
 
 export function LocationAutocomplete({
@@ -79,122 +50,180 @@ export function LocationAutocomplete({
   disabled = false,
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  // Google Maps Autocomplete instance - using any due to complex Google Maps types
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const autocompleteRef = useRef<any>(null);
-  // Store listener for cleanup
-  const placeChangedListenerRef = useRef<GoogleMapsEventListener | null>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
+  const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
-  const apiKey = CLIENT_CONFIG.googleMapsApiKey;
-  const scriptUrl = apiKey 
-    ? `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
-    : null;
+  const fetchPredictions = useCallback(async (input: string) => {
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
 
-  // Handle script load
-  const handleScriptLoad = useCallback(() => {
-    // Double-check that the API is actually available
-    if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Autocomplete) {
-      setIsScriptLoaded(true);
-      setIsLoading(false);
-    } else {
-      console.warn("Google Maps script loaded but API not available");
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.mapsPlacesSearch}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input: input,
+            options: {
+              types: 'address', // or 'establishment' for businesses
+            }
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data?.predictions) {
+        setPredictions(data.data.predictions);
+        setShowSuggestions(true);
+        setSelectedIndex(-1);
+      } else {
+        setPredictions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error: unknown) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      console.error('Error fetching predictions:', error);
+      setPredictions([]);
+      setShowSuggestions(false);
+      // Only show error toast for non-abort errors
+      if (error instanceof Error && error.name !== 'AbortError') {
+        toast.error('Failed to fetch location suggestions. Please try again.', {
+          duration: 3000,
+          position: "top-right",
+        });
+      }
+    } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const handleScriptError = useCallback(() => {
-    console.error("Failed to load Google Maps script", {
-      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'missing',
-      url: scriptUrl,
-    });
-    
-    // Provide helpful error message
-    const errorMessage = apiKey 
-      ? "Unable to load Google Maps. Please check your internet connection and API key configuration. Ensure your API key has the Maps JavaScript API and Places API enabled."
-      : "Google Maps API key is missing. Please configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.";
-    
-    toast.error(errorMessage, {
-      duration: 6000,
-      position: "top-right",
-    });
-    setIsLoading(false);
-  }, [apiKey, scriptUrl]);
-
-  // Check if script is already loaded on mount
+  // Debounced search with request cancellation
   useEffect(() => {
-    if (typeof window !== "undefined" && window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Autocomplete) {
-      setIsScriptLoaded(true);
-    }
-    
-    // Warn if API key is missing
-    if (!apiKey) {
-      console.warn("Google Maps API key not found. Location autocomplete will be limited. Please configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.");
-    }
-  }, [apiKey]);
+    const timer = setTimeout(() => {
+      if (value.length > 2 && !disabled) {
+        fetchPredictions(value);
+      } else {
+        setPredictions([]);
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+    }, 300);
 
-  // Initialize autocomplete
+    return () => {
+      clearTimeout(timer);
+      // Cancel any pending request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [value, disabled, fetchPredictions]);
+
+  // Close suggestions when clicking outside
   useEffect(() => {
-    if (!isScriptLoaded || !inputRef.current || disabled) {
-      return;
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+    };
 
-    if (!window.google || !window.google.maps || !window.google.maps.places || !window.google.maps.places.Autocomplete) {
-      return;
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    // Cleanup previous autocomplete instance if it exists
-    if (autocompleteRef.current && placeChangedListenerRef.current && window.google?.maps?.event?.removeListener) {
-      window.google.maps.event.removeListener(placeChangedListenerRef.current);
-    }
-
+  const handleSelect = useCallback(async (prediction: PlacePrediction) => {
+    setShowSuggestions(false);
+    setPredictions([]);
+    setSelectedIndex(-1);
+    onChange(prediction.description);
+    
+    // Fetch full place details to get coordinates
+    setIsLoadingDetails(true);
     try {
-      const AutocompleteClass = window.google.maps.places.Autocomplete;
-      const autocomplete = new AutocompleteClass(inputRef.current, {
-        types: ["geocode"], // Use geocode for addresses, or use ["(regions)"] for regions only - they cannot be mixed
-        fields: ["geometry", "formatted_address", "place_id", "name"],
-      });
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.mapsPlaceById}/${prediction.placeId}`
+      );
 
-      const placeChangedListener = autocomplete.addListener("place_changed", () => {
-        const place = autocomplete.getPlace();
-        if (place.geometry?.location) {
-          const lat = place.geometry.location.lat();
-          const lng = place.geometry.location.lng();
-          const address = place.formatted_address || place.name || value;
-          
-          onChange(address);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        const placeDetails: PlaceDetails = data.data;
+        const address = placeDetails.formattedAddress || prediction.description;
+        
+        onChange(address);
+        
+        // Extract coordinates if available
+        if (placeDetails.geometry?.location) {
+          const { lat, lng } = placeDetails.geometry.location;
           onCoordinatesChange?.({ lat, lng });
           
-          // Show success toast
           toast.success("Location selected", {
             duration: 2000,
             position: "top-right",
           });
-        } else if (place.name) {
-          // If we have a name but no geometry, just update the address
-          onChange(place.name);
+        } else {
+          // If no coordinates, still update the address
+          onCoordinatesChange?.(null);
+          toast.success("Location selected", {
+            duration: 2000,
+            position: "top-right",
+          });
         }
-      });
-
-      autocompleteRef.current = autocomplete;
-      placeChangedListenerRef.current = placeChangedListener;
-
-      // Cleanup function
-      return () => {
-        if (placeChangedListenerRef.current && window.google?.maps?.event?.removeListener) {
-          window.google.maps.event.removeListener(placeChangedListenerRef.current);
-          placeChangedListenerRef.current = null;
-        }
-      };
+      } else {
+        // Fallback: just use the prediction description
+        onChange(prediction.description);
+        onCoordinatesChange?.(null);
+        toast.success("Location selected", {
+          duration: 2000,
+          position: "top-right",
+        });
+      }
     } catch (error) {
-      console.error("Error initializing autocomplete:", error);
-      toast.error("Failed to initialize location autocomplete", {
-        duration: 4000,
+      console.error('Error fetching place details:', error);
+      // Fallback: just use the prediction description
+      onChange(prediction.description);
+      onCoordinatesChange?.(null);
+      toast.success("Location selected", {
+        duration: 2000,
         position: "top-right",
       });
+    } finally {
+      setIsLoadingDetails(false);
     }
-  }, [isScriptLoaded, disabled, onChange, onCoordinatesChange, value]);
+  }, [onChange, onCoordinatesChange]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -203,8 +232,43 @@ export function LocationAutocomplete({
     // Clear coordinates if input is cleared
     if (!newValue.trim()) {
       onCoordinatesChange?.(null);
+      setPredictions([]);
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
     }
   }, [onChange, onCoordinatesChange]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || predictions.length === 0) {
+      if (e.key === 'Escape') {
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => Math.min(prev + 1, predictions.length - 1));
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => Math.max(prev - 1, -1));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0 && selectedIndex < predictions.length) {
+          handleSelect(predictions[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  }, [showSuggestions, predictions, selectedIndex, handleSelect]);
 
   const handleDetectLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -227,7 +291,6 @@ export function LocationAutocomplete({
         const lng = position.coords.longitude;
 
         // Try to reverse geocode using Google Maps API via backend
-        // According to API docs, this endpoint expects POST
         try {
           const response = await fetch(
             `${API_BASE_URL}${API_ENDPOINTS.mapsReverseGeocode}`,
@@ -239,7 +302,6 @@ export function LocationAutocomplete({
               body: JSON.stringify({ 
                 lat, 
                 lng,
-                // Optional: include additional parameters for better results
               }),
             }
           );
@@ -379,25 +441,18 @@ export function LocationAutocomplete({
   }, [onChange, onCoordinatesChange]);
 
   const handleClear = useCallback(() => {
-          onChange("");
-          onCoordinatesChange?.(null);
-          if (inputRef.current) {
-            inputRef.current.value = "";
-          }
+    onChange("");
+    onCoordinatesChange?.(null);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+    setPredictions([]);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
   }, [onChange, onCoordinatesChange]);
 
   return (
     <div className={`relative ${className}`}>
-      {/* Load Google Maps script using Next.js Script component */}
-      {scriptUrl && (
-        <Script
-          src={scriptUrl}
-          strategy="lazyOnload"
-          onLoad={handleScriptLoad}
-          onError={handleScriptError}
-        />
-      )}
-      
       <div className="relative">
         <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
         <input
@@ -406,24 +461,42 @@ export function LocationAutocomplete({
           placeholder={placeholder}
           value={value}
           onChange={handleInputChange}
-          disabled={disabled || isLoading}
+          onKeyDown={handleKeyDown}
+          onFocus={() => {
+            if (predictions.length > 0) {
+              setShowSuggestions(true);
+            }
+          }}
+          disabled={disabled || isLoading || isLoadingDetails}
           className={`w-full pl-11 pr-24 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium bg-white hover:border-gray-300 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed ${className}`}
+          aria-label="Location search"
+          aria-autocomplete="list"
+          aria-expanded={showSuggestions}
+          aria-controls="location-suggestions"
+          role="combobox"
         />
         <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
-          {value && (
+          {(isLoading || isLoadingDetails) && (
+            <div className="p-1">
+              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            </div>
+          )}
+          {value && !isLoading && !isLoadingDetails && (
             <button
               onClick={handleClear}
               className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
               aria-label="Clear location"
+              type="button"
             >
               <X className="w-4 h-4 text-gray-400" />
             </button>
           )}
           <button
             onClick={handleDetectLocation}
-            disabled={disabled || isLoading}
+            disabled={disabled || isLoading || isLoadingDetails}
             className="px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             title="Detect current location"
+            type="button"
           >
             {isLoading ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -433,7 +506,44 @@ export function LocationAutocomplete({
           </button>
         </div>
       </div>
+
+      {/* Suggestions Dropdown */}
+      {showSuggestions && predictions.length > 0 && (
+        <div
+          ref={suggestionsRef}
+          id="location-suggestions"
+          className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto"
+          role="listbox"
+        >
+          {predictions.map((prediction, index) => (
+            <div
+              key={prediction.placeId}
+              onClick={() => handleSelect(prediction)}
+              onMouseEnter={() => setSelectedIndex(index)}
+              className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
+                index === selectedIndex
+                  ? 'bg-green-50 border-green-200'
+                  : 'hover:bg-gray-50'
+              }`}
+              role="option"
+              aria-selected={index === selectedIndex}
+            >
+              {prediction.structuredFormatting ? (
+                <div>
+                  <div className="font-medium text-gray-900">
+                    {prediction.structuredFormatting.mainText}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {prediction.structuredFormatting.secondaryText}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-gray-900">{prediction.description}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
-
