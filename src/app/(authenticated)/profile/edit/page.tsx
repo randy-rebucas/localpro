@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { EditProfileForm } from "@/components/edit-profile-form";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { UserProfile } from "@/components/edit-profile-form";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
+import { Edit3, RefreshCw, AlertCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -95,19 +96,31 @@ export default function EditProfilePage() {
 
   if (!mounted || loading) {
     return (
-      <div>
-        <Breadcrumbs
-          className="text-sm text-gray-500 mb-4"
-          items={[
-            { label: "Marketplace", href: "/marketplace" },
-            { label: "Profile", href: "/profile" },
-            { label: "Edit" },
-          ]}
-        />
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="bg-white rounded-lg p-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading profile...</p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/profile"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to profile"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <Edit3 className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Profile</h1>
+            <p className="text-sm text-gray-600">Update your account information</p>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
+            <p className="text-gray-600 font-medium">Loading profile...</p>
+            <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
           </div>
         </div>
       </div>
@@ -115,22 +128,48 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div>
-      <Breadcrumbs
-        className="text-sm text-gray-500 mb-4"
-        items={[
-          { label: "Dashboard", href: "/dashboard" },
-          { label: "Profile", href: "/profile" },
-          { label: "Edit" },
-        ]}
-      />
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/profile"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Back to profile"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        </Link>
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <Edit3 className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Profile</h1>
+          <p className="text-sm text-gray-600">Update your account information and settings</p>
+        </div>
+      </div>
 
+      {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-red-600">{error}</p>
+        <div className="bg-white rounded-xl border border-red-200 shadow-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Profile</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Try Again
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Edit Form */}
       {!error && (
         <EditProfileForm initialProfile={profile} />
       )}

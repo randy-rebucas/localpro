@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ListSkeleton } from "@/components/ui/loading";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
@@ -334,11 +333,16 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <div className="p-4 space-y-6">
-        <PageHeader
-          title="Favorites"
-          subtitle="Your saved items and services"
-        />
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
+            <Heart className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Favorites</h1>
+            <p className="text-sm text-gray-600">Your saved items and services</p>
+          </div>
+        </div>
         <ListSkeleton />
       </div>
     );
@@ -350,15 +354,44 @@ export default function FavoritesPage() {
                         favoriteIds.supplies.length;
 
   return (
-    <div className="p-4 space-y-4">
-      <PageHeader
-        title="Favorites"
-        subtitle={`You have ${totalFavorites} favorite${totalFavorites !== 1 ? 's' : ''}`}
-      />
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/20">
+            <Heart className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Favorites</h1>
+            <p className="text-sm text-gray-600">
+              {totalFavorites > 0 ? (
+                <span className="font-medium text-gray-700">{totalFavorites} saved item{totalFavorites !== 1 ? 's' : ''}</span>
+              ) : (
+                <span>Your saved items and services</span>
+              )}
+            </p>
+          </div>
+        </div>
+        {filteredFavorites.length > 0 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+              className={`p-2.5 rounded-lg transition-all border ${
+                viewMode === "grid"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+              title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+            >
+              {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg shadow-sm border-b border-gray-200">
-        <div className="flex flex-wrap gap-2 px-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex flex-wrap gap-1 p-2">
           {(['services', 'providers', 'courses', 'supplies'] as FavoriteType[]).map((type) => {
             const Icon = getTypeIcon(type);
             const count = getTabCount(type);
@@ -368,17 +401,17 @@ export default function FavoritesPage() {
               <button
                 key={type}
                 onClick={() => setActiveTab(type)}
-                className={`px-4 py-3 flex items-center gap-2 border-b-2 transition-colors ${
+                className={`px-4 py-2.5 flex items-center gap-2 rounded-lg transition-all ${
                   isActive
-                    ? 'border-green-600 text-green-600 font-medium'
-                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20 font-semibold'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="capitalize">{type}</span>
+                <span className="capitalize font-medium">{type}</span>
                 {count > 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${
-                    isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {count}
                   </span>
@@ -389,22 +422,9 @@ export default function FavoritesPage() {
         </div>
       </div>
 
-      {/* View Mode Toggle */}
-      {filteredFavorites.length > 0 && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-            className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-          >
-            {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-          </button>
-        </div>
-      )}
-
       {/* Content */}
       {error ? (
-        <Card interactive={false}>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <EmptyState
             icon={Heart}
             iconColor="text-red-600"
@@ -421,9 +441,9 @@ export default function FavoritesPage() {
               }
             ]}
           />
-        </Card>
+        </div>
       ) : filteredFavorites.length === 0 ? (
-        <Card interactive={false}>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
           <EmptyState
             icon={Heart}
             iconColor="text-gray-600"
@@ -442,7 +462,7 @@ export default function FavoritesPage() {
               }
             ]}
           />
-        </Card>
+        </div>
       ) : (
         <div className={`grid gap-4 ${
           viewMode === "grid" 
@@ -501,15 +521,15 @@ const FavoriteCard = React.memo(function FavoriteCard({
   };
 
   return (
-    <Card className={`${viewMode === "list" ? "flex gap-4 p-4" : "relative"} group hover:shadow-lg transition-all`}>
+    <Card className={`${viewMode === "list" ? "flex gap-4 p-5" : "relative"} group hover:shadow-xl transition-all duration-200 border border-gray-200 rounded-xl overflow-hidden`}>
       <div className={viewMode === "list" ? "flex-1 relative" : "relative"}>
         {renderContent()}
-        <div className={`${viewMode === "list" ? "absolute top-6 right-6" : "absolute top-2 right-2"} flex gap-2 z-10`}>
+        <div className={`${viewMode === "list" ? "absolute top-4 right-4" : "absolute top-3 right-3"} flex gap-2 z-10`}>
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onView(id, type)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-sm"
+            className="opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-md border border-gray-200 hover:bg-gray-50"
             title="View details"
           >
             <Eye className="w-4 h-4" />
@@ -518,7 +538,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
             size="sm"
             variant="ghost"
             onClick={() => onRemove(id, type)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50 bg-white shadow-sm"
+            className="opacity-0 group-hover:opacity-100 transition-opacity text-red-600 hover:text-red-700 hover:bg-red-50 bg-white shadow-md border border-red-200"
             title="Remove from favorites"
           >
             <Trash2 className="w-4 h-4" />
@@ -545,7 +565,7 @@ function ServiceCard({ service, viewMode }: { service: Service; viewMode: "grid"
   return (
     <div className={`${viewMode === "list" ? "flex gap-4" : ""}`}>
       {imageUrl && (
-        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-lg overflow-hidden ${viewMode === "list" ? "" : "mb-3"}`}>
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-sm`}>
           <Image
             src={imageUrl}
             alt={service.title}
@@ -555,20 +575,20 @@ function ServiceCard({ service, viewMode }: { service: Service; viewMode: "grid"
           />
         </div>
       )}
-      <div className={viewMode === "list" ? "flex-1" : "p-4"}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+      <div className={viewMode === "list" ? "flex-1" : "p-5"}>
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
           {service.title}
         </h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
           {service.description}
         </p>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">{providerName}</span>
-          <span className="font-medium text-green-600">{price}</span>
+        <div className="flex items-center justify-between text-sm mb-3">
+          <span className="text-gray-600 font-medium">{providerName}</span>
+          <span className="font-semibold text-emerald-600">{price}</span>
         </div>
         {service.serviceArea && service.serviceArea.length > 0 && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-            <MapPin className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex">
+            <MapPin className="w-3.5 h-3.5" />
             <span>{service.serviceArea[0]}</span>
           </div>
         )}
@@ -588,28 +608,28 @@ function ProviderCard({ provider, viewMode }: { provider: Provider; viewMode: "g
     : '';
 
   return (
-    <div className={viewMode === "list" ? "flex-1" : "p-4"}>
+    <div className={viewMode === "list" ? "flex-1" : "p-5"}>
       <div className="flex items-start gap-4">
-        <div className={`${viewMode === "list" ? "w-12 h-12" : "w-16 h-16"} bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white ${viewMode === "list" ? "text-lg" : "text-xl"} font-bold flex-shrink-0`}>
+        <div className={`${viewMode === "list" ? "w-12 h-12" : "w-16 h-16"} bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center text-white ${viewMode === "list" ? "text-lg" : "text-xl"} font-bold flex-shrink-0 shadow-md`}>
           {name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className={`${viewMode === "list" ? "text-base" : "text-lg"} font-semibold text-gray-900`}>{name}</h3>
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className={`${viewMode === "list" ? "text-base" : "text-lg"} font-bold text-gray-900`}>{name}</h3>
             {provider.verification?.isVerified && (
-              <CheckCircle className="w-4 h-4 text-green-600" />
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
             )}
           </div>
           {location && (
-            <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
-              <MapPin className="w-3 h-3" />
+            <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex">
+              <MapPin className="w-3.5 h-3.5" />
               <span>{location}</span>
             </div>
           )}
           {provider.rating && (
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-sm font-medium">{provider.rating.toFixed(1)}</span>
+            <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1.5 rounded-lg inline-flex">
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <span className="text-sm font-semibold text-gray-900">{provider.rating.toFixed(1)}</span>
             </div>
           )}
         </div>
@@ -628,7 +648,7 @@ function CourseCard({ course, viewMode }: { course: Course; viewMode: "grid" | "
   return (
     <div className={`${viewMode === "list" ? "flex gap-4" : ""}`}>
       {imageUrl && (
-        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-lg overflow-hidden ${viewMode === "list" ? "" : "mb-3"}`}>
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-sm`}>
           <Image
             src={imageUrl}
             alt={course.title}
@@ -638,32 +658,32 @@ function CourseCard({ course, viewMode }: { course: Course; viewMode: "grid" | "
           />
         </div>
       )}
-      <div className={viewMode === "list" ? "flex-1" : "p-4"}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+      <div className={viewMode === "list" ? "flex-1" : "p-5"}>
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
           {course.title}
         </h3>
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
           {course.description}
         </p>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">{instructorName}</span>
+        <div className="flex items-center justify-between text-sm mb-3">
+          <span className="text-gray-600 font-medium">{instructorName}</span>
           {course.price !== undefined && (
-            <span className="font-medium text-green-600">
+            <span className="font-semibold text-emerald-600">
               ${course.price.toLocaleString()}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+        <div className="flex items-center gap-3 mt-3">
           {course.rating && (
-            <div className="flex items-center gap-1">
-              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-              <span>{course.rating.toFixed(1)}</span>
+            <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1.5 rounded-lg">
+              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+              <span className="text-xs font-semibold text-gray-900">{course.rating.toFixed(1)}</span>
             </div>
           )}
           {course.studentsCount !== undefined && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{course.studentsCount} students</span>
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="font-medium">{course.studentsCount} students</span>
             </div>
           )}
         </div>
@@ -688,7 +708,7 @@ function SupplyCard({ supply, viewMode }: { supply: Supply; viewMode: "grid" | "
   return (
     <div className={`${viewMode === "list" ? "flex gap-4" : ""}`}>
       {imageUrl && (
-        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-lg overflow-hidden ${viewMode === "list" ? "" : "mb-3"}`}>
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gray-200 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-sm`}>
           <Image
             src={imageUrl}
             alt={supply.name}
@@ -698,22 +718,22 @@ function SupplyCard({ supply, viewMode }: { supply: Supply; viewMode: "grid" | "
           />
         </div>
       )}
-      <div className={viewMode === "list" ? "flex-1" : "p-4"}>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+      <div className={viewMode === "list" ? "flex-1" : "p-5"}>
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
           {supply.name}
         </h3>
         {supply.description && (
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
             {supply.description}
           </p>
         )}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">{supplierName}</span>
-          <span className="font-medium text-green-600">{price}</span>
+        <div className="flex items-center justify-between text-sm mb-3">
+          <span className="text-gray-600 font-medium">{supplierName}</span>
+          <span className="font-semibold text-emerald-600">{price}</span>
         </div>
         {supply.location && (
-          <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-            <MapPin className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex">
+            <MapPin className="w-3.5 h-3.5" />
             <span>{supply.location.city}{supply.location.state ? `, ${supply.location.state}` : ''}</span>
           </div>
         )}

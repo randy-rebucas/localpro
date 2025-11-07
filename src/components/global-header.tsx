@@ -279,7 +279,7 @@ export function GlobalHeader({
         setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
-      router.push('/dashboard/notifications');
+      router.push('/notifications');
       setShowNotifications(false);
     } catch (error) {
       logger.error('Error marking notification as read', error instanceof Error ? error : new Error(String(error)));
@@ -539,7 +539,7 @@ export function GlobalHeader({
                       <div className="p-3 border-b border-gray-200 flex items-center justify-between">
                         <h3 className="font-semibold text-gray-800 text-sm">Notifications</h3>
                         <Link
-                          href="/dashboard/notifications"
+                          href="/notifications"
                           className="text-xs text-green-600 hover:text-green-700 font-medium"
                           onClick={() => setShowNotifications(false)}
                         >
@@ -579,7 +579,7 @@ export function GlobalHeader({
                 </div>
               ) : (
                 <Link
-                  href="/dashboard/notifications"
+                  href="/notifications"
                   className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/notifications")
                       ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
                       : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -599,7 +599,7 @@ export function GlobalHeader({
             {/* Messages / Chat */}
             {session && (
               <Link
-                href="/dashboard/messages"
+                href="/messages"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/messages")
                     ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
                     : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -614,7 +614,7 @@ export function GlobalHeader({
             {/* Favorites */}
             {showFavorites && session && (
               <Link
-                href="/dashboard/favorites"
+                href="/favorites"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/favorites")
                     ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
                     : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
@@ -685,7 +685,7 @@ export function GlobalHeader({
                       <span>Profile</span>
                     </Link>
                     <Link
-                      href="/dashboard/wallet"
+                      href="/wallet"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
@@ -693,7 +693,7 @@ export function GlobalHeader({
                       <span>Wallet</span>
                     </Link>
                     <Link
-                      href="/dashboard/settings"
+                      href="/settings"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
@@ -701,7 +701,7 @@ export function GlobalHeader({
                       <span>Settings</span>
                     </Link>
                     <Link
-                      href="/dashboard/help-center"
+                      href="/help-center"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >

@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
 import { createAuthFetchOptions, getApiToken } from '@/lib/auth-utils';
 import { logger } from '@/lib/logger';
-import { SessionContext } from '@/contexts/session-context';
+import { SessionContext, clearSessionCache } from '@/contexts/session-context';
 
 export interface User {
   id?: string;
@@ -105,17 +105,85 @@ export function useSession() {
 
 export async function signOut() {
   try {
-    if (!getApiToken()) {
-      window.location.href = '/auth';
-      return;
+    // Call logout API endpoint if we have a token
+    if (getApiToken()) {
+      try {
+        const url = `${API_BASE_URL}${API_ENDPOINTS.authLogout}`;
+        await fetch(url, createAuthFetchOptions({ method: 'POST' }));
+      } catch (apiError) {
+        const errorMessage = apiError instanceof Error ? apiError.message : String(apiError);
+        logger.warn('Logout API call failed, continuing with local cleanup', { error: errorMessage });
+      }
     }
     
-    const url = `${API_BASE_URL}${API_ENDPOINTS.authLogout}`;
-    await fetch(url, createAuthFetchOptions({ method: 'POST' }));
+    // Clear all authentication data (cookies, localStorage, sessionStorage)
+    if (typeof window !== 'undefined') {
+      // Clear cookies - specifically session and api-token
+      const cookiesToClear = ['session', 'api-token', 'auth-token', 'token', 'access-token', 'refresh-token'];
+      const domain = window.location.hostname;
+      
+      cookiesToClear.forEach(cookieName => {
+        // Clear with different path and domain combinations
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${domain}`;
+      });
+      
+      // Clear all cookies (fallback for any other auth cookies)
+      document.cookie.split(";").forEach(function(cookie) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.trim().substring(0, eqPos) : cookie.trim();
+        if (name) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${domain}`;
+        }
+      });
+      
+      // Clear localStorage auth data
+      const authKeys = [
+        'session',
+        'auth-token', 
+        'api-token',
+        'user',
+        'lastAuthError',
+        'auth-session',
+        'user-session',
+        'token',
+        'access-token',
+        'refresh-token'
+      ];
+      
+      authKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      // Clear sessionStorage completely
+      sessionStorage.clear();
+      
+      // Clear SessionContext cache
+      clearSessionCache();
+      
+      logger.debug('All authentication data cleared');
+    }
+    
+    // Redirect to auth page
     window.location.href = '/auth';
-      } catch (error) {
-        logger.error('Failed to sign out', error instanceof Error ? error : new Error(String(error)));
-        // Still redirect even if logout request fails
-        window.location.href = '/auth';
-      }
+  } catch (error) {
+    logger.error('Failed to sign out', error instanceof Error ? error : new Error(String(error)));
+    // Still clear local data and redirect even if something fails
+    if (typeof window !== 'undefined') {
+      // Force clear cookies
+      document.cookie.split(";").forEach(function(cookie) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.trim().substring(0, eqPos) : cookie.trim();
+        if (name) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        }
+      });
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    window.location.href = '/auth';
+  }
 }

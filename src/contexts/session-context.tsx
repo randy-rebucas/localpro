@@ -144,3 +144,14 @@ export function useSessionContext() {
   return context;
 }
 
+/**
+ * Clear the session cache (useful for logout)
+ * This clears the module-level cache variables
+ */
+export function clearSessionCache(): void {
+  cachedSession = null;
+  cacheTimestamp = 0;
+  sessionPromise = null;
+  logger.debug('Session cache cleared');
+}
+
