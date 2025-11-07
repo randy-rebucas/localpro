@@ -10,6 +10,7 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { AuthDebug } from "@/components/auth-debug";
 import { GlobalHeader } from "@/components/global-header";
+import { MarketplaceFooter } from "@/components/marketplace/marketplace-footer";
 import { usePathname } from "next/navigation";
 import { logger } from "@/lib/logger";
 
@@ -209,7 +210,7 @@ export default function AuthenticatedLayout({
             showRoleNavigation={true}
             showFavorites={true}
             notificationsDropdown={true}
-            logoHref="/dashboard"
+            logoHref="/"
             showMobileMenu={false}
           />
         </div>
@@ -225,12 +226,12 @@ export default function AuthenticatedLayout({
           {/* Content Container */}
           <div className="relative z-10">
             {isFullPageRoute ? (
-              // Full page layout for dashboard
+              // Full page layout for dashboard (container handled in dashboard/layout.tsx)
               <div className="min-h-[calc(100vh-4rem)]">
                 {children}
               </div>
             ) : (
-              // Standard content layout
+              // Standard content layout with container
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
                 <div className="space-y-6">
                   {children}
@@ -240,8 +241,8 @@ export default function AuthenticatedLayout({
           </div>
         </main>
 
-        {/* Footer Spacer */}
-        <div className="h-20"></div>
+        {/* Global Footer */}
+        <MarketplaceFooter />
       </div>
     </ErrorBoundary>
   );

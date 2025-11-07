@@ -23,11 +23,11 @@ export default function NotFound() {
         
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
-            href="/dashboard"
+            href="/marketplace"
             className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             <Home className="w-4 h-4" />
-            Go to Dashboard
+            Go to Marketplace
           </Link>
           
           <button

@@ -323,7 +323,7 @@ export default function SettingsPage() {
       <Breadcrumbs
         className="text-sm text-gray-500 mb-6"
         items={[
-          { label: "Dashboard", href: "/dashboard" },
+          { label: "Marketplace", href: "/marketplace" },
           { label: "Settings" },
         ]}
       />

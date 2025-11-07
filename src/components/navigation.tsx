@@ -27,7 +27,7 @@ export default function Navigation() {
   const pathname = usePathname();
 
   const navigation: NavigationItem[] = [
-    { name: "Dashboard", href: "/dashboard", icon: Home },
+    { name: "Home", href: "/marketplace", icon: Home },
     { name: "Marketplace", href: "/marketplace", icon: Store },
     { name: "Supplies", href: "/supplies", icon: Package },
     { name: "Rentals", href: "/rentals", icon: Truck },
@@ -45,14 +45,14 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/dashboard" className="text-xl font-bold text-green-600">
+              <Link href="/marketplace" className="text-xl font-bold text-green-600">
                 LocalPro
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               {navigation.map((item) => {
                 const isActive = pathname === item.href || 
-                  (item.href !== "/dashboard" && pathname?.startsWith(item.href));
+                  (item.href !== "/marketplace" && pathname?.startsWith(item.href));
                 
                 return (
                   <Link

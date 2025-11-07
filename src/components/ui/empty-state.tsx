@@ -177,8 +177,8 @@ export function ActivityEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
       actions={[
         {
           type: "link",
-          href: "/dashboard",
-          label: "Go to Dashboard",
+          href: "/marketplace",
+          label: "Go to Marketplace",
           variant: "primary" as const,
           icon: Activity
         },
@@ -244,8 +244,8 @@ export function SettingsEmptyState() {
       actions={[
         {
           type: "link",
-          href: "/dashboard",
-          label: "Back to Dashboard",
+          href: "/marketplace",
+          label: "Back to Marketplace",
           variant: "primary" as const,
           icon: Settings
         }

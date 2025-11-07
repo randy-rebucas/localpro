@@ -399,7 +399,7 @@ export default function AdDetailPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Ads', href: '/ads' },
           { label: ad.title, href: `/ads/${ad.id}` }
         ]}

@@ -547,11 +547,11 @@ export function MarketplaceHeader() {
             {/* Mobile Menu Items */}
             <div className="mt-4 space-y-2">
               <Link 
-                href="/dashboard" 
+                href="/marketplace" 
                 className="block py-2 text-gray-700 hover:text-green-600"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Dashboard
+                Marketplace
               </Link>
               <Link 
                 href="/marketplace" 

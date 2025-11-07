@@ -73,8 +73,8 @@ export function VerificationModal({
         setTimeout(() => {
           onSuccess();
           onClose();
-          // Redirect to dashboard after successful mobile authentication
-          router.push("/dashboard");
+          // Redirect to marketplace after successful mobile authentication
+          router.push("/marketplace");
         }, 1500);
       } else {
         toast.error(result.error || "Invalid verification code");

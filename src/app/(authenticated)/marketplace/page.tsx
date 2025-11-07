@@ -1,226 +1,383 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { Star, RefreshCw } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import React, { useState, useEffect, useMemo } from "react";
+import { useSession } from "@/hooks/useAuth";
+import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
+import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
+import { ServiceGrid } from "@/components/marketplace/service-grid";
+import { ServiceCategory } from "@/components/marketplace/categories-carousel";
+import { Navigation, MapPin, Grid3x3, List, Loader2 } from "lucide-react";
+import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
+import { useCategories } from "@/hooks/useCategories";
+import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { getCategoryIcon } from "@/components/marketplace/categories-carousel";
-
-interface ServiceCategory {
-  key: string;
-  name: string;
-  description: string;
-  icon: string;
-  subcategories: string[];
-  statistics: {
-    totalServices: number;
-    pricing: {
-      average: number;
-      min: number;
-      max: number;
-    } | null;
-    rating: {
-      average: number;
-      totalRatings: number;
-    } | null;
-    popularSubcategories: Array<{
-      subcategory: string;
-      count: number;
-    }>;
-  };
-}
-
-interface CategoriesResponse {
-  success: boolean;
-  message?: string;
-  data: ServiceCategory[];
-  summary?: {
-    totalCategories: number;
-    totalServices: number;
-    totalProviders: number;
-    categoriesWithServices: number;
-  };
-}
 
 export default function MarketplacePage() {
-  const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
+  const { data: session } = useSession();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
+  const [categoryKey, setCategoryKey] = useState<string | null>(null);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [minRating, setMinRating] = useState(0);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [location, setLocation] = useState("");
+  const [locationCoordinates, setLocationCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [radius, setRadius] = useState(5000); // Default 5km in meters
+  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [maxPrice, setMaxPrice] = useState(10000);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<string>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [groupByCategory, setGroupByCategory] = useState<boolean>(false);
+  const limit = 10; // Fixed limit per page
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      setLoadingCategories(true);
-      setError(null);
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}`,
-        createAuthFetchOptions()
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-
-      const data: CategoriesResponse = await response.json();
-      
-      // Handle API response structure: {success: true, data: [...]}
-      if (data.success && data.data && Array.isArray(data.data)) {
-        setCategories(data.data);
-      } else if (Array.isArray(data)) {
-        // Fallback if response is directly an array - map to ServiceCategory structure
-        const mappedCategories: ServiceCategory[] = (data as Array<{ id?: string; name: string; slug?: string; description?: string; icon?: string }>).map((item) => ({
-          key: item.id || item.slug || item.name.toLowerCase().replace(/\s+/g, '-'),
-          name: item.name,
-          description: item.description || '',
-          icon: item.icon || '',
-          subcategories: [],
-          statistics: {
-            totalServices: 0,
-            pricing: null,
-            rating: null,
-            popularSubcategories: []
+  // Fetch max price once on initial load (without filters) to set the price range
+  useEffect(() => {
+    const fetchMaxPrice = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/marketplace/services?limit=1&sortBy=basePrice&sortOrder=desc`,
+          createAuthFetchOptions()
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const services = Array.isArray(data) ? data : (data.data || []);
+          if (services.length > 0) {
+            const service = services[0];
+            const price = service.pricing?.basePrice || service.basePrice || service.price || 0;
+            if (price > 0) {
+              const calculatedMax = Math.ceil(price / 1000) * 1000;
+              setMaxPrice(calculatedMax);
+              setPriceRange((prev) => prev[1] === 10000 ? [0, calculatedMax] : prev);
+            }
           }
-        }));
-        setCategories(mappedCategories);
-      } else {
-        logger.warn("Unexpected categories response format", { hasData: !!data });
-        setCategories([]);
+        }
+      } catch (error) {
+        logger.error("Error fetching max price", error instanceof Error ? error : new Error(String(error)));
       }
-    } catch (error) {
-      logger.error("Error fetching categories", error instanceof Error ? error : new Error(String(error)));
-      setError(error instanceof Error ? error.message : "Failed to load categories");
-      setCategories([]);
-    } finally {
-      setLoadingCategories(false);
-    }
+    };
+    fetchMaxPrice();
   }, []);
 
-  // Fetch categories on mount
+  // Reset page to 1 when filters change
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    setCurrentPage(1);
+  }, [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, isAvailable, sortBy, sortOrder, groupByCategory]);
 
-  if (loadingCategories) {
-    return (
-      <div className="p-4 space-y-4">
-        <div className="mb-4">
-          <div className="h-7 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
-          <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {[...Array(10)].map((_, i) => (
-            <div key={i} className="p-4 border border-gray-200 rounded-lg">
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse mb-2"></div>
-                <div className="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
-                <div className="h-10 bg-gray-200 rounded w-full animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse mt-2"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Build query parameters for services fetch
+  const servicesParams = useMemo(() => ({
+    categoryKey: categoryKey || undefined,
+    subcategory: subcategory || undefined,
+    location: location.trim() || undefined,
+    lat: locationCoordinates?.lat,
+    lng: locationCoordinates?.lng,
+    radius: locationCoordinates ? radius : undefined,
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+    maxPrice: priceRange[1] < maxPrice ? priceRange[1] : undefined,
+    rating: minRating > 0 ? minRating : undefined,
+    isActive: isAvailable ? true : undefined, // Only filter if explicitly enabled
+    page: currentPage,
+    limit: limit,
+    sortBy: sortBy,
+    sortOrder: sortOrder,
+    groupByCategory: groupByCategory,
+  }), [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, maxPrice, isAvailable, currentPage, limit, sortBy, sortOrder, groupByCategory]);
 
-  if (error) {
-    return (
-      <div className="p-4">
-        <Card interactive={false}>
-          <EmptyState
-            icon={RefreshCw}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
-            title="Unable to Load Categories"
-            description={error}
-            actions={[
-              {
-                type: "button",
-                onClick: fetchCategories,
-                label: "Try Again",
-                icon: RefreshCw,
-                variant: "primary"
-              }
-            ]}
-          />
-        </Card>
-      </div>
+  // Fetch services with filters applied via query parameters
+  const { featuredServices, services, loading: loadingServices, pagination } = useMarketplaceServices(servicesParams);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getUserName = () => {
+    if (session?.user?.firstName) {
+      return session.user.firstName;
+    }
+    if (session?.user?.name) {
+      return session.user.name.split(" ")[0];
+    }
+    return "there";
+  };
+
+  // Get category key from selected category
+  const getCategoryKey = (category: ServiceCategory | null): string | null => {
+    if (!category) return null;
+    return category.key || category.id || category.slug || category.name.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  // Update category key when selected category changes
+  useEffect(() => {
+    const key = getCategoryKey(selectedCategory);
+    setCategoryKey(key);
+  }, [selectedCategory]);
+
+  const hasActiveFilters = useMemo(() => {
+    return priceRange[0] !== 0 ||
+           priceRange[1] !== maxPrice ||
+           minRating !== 0 ||
+           isAvailable ||
+           location.trim() !== "" ||
+           locationCoordinates !== null ||
+           subcategory !== null;
+  }, [priceRange, maxPrice, minRating, isAvailable, location, locationCoordinates, subcategory]);
+
+  const handleClearFilters = () => {
+    setSelectedCategory(null);
+    setCategoryKey(null);
+    setSubcategory(null);
+    setPriceRange([0, maxPrice]);
+    setMinRating(0);
+    setIsAvailable(false);
+    setLocation("");
+    setLocationCoordinates(null);
+    setRadius(5000); // Reset to default 5km
+    setCurrentPage(1);
+  };
+
+  const handleCategorySelect = (category: ServiceCategory | null) => {
+    setSelectedCategory(category);
+    const key = getCategoryKey(category);
+    setCategoryKey(key);
+  };
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      logger.warn("Geolocation is not supported by this browser");
+      return;
+    }
+
+    setDetectingLocation(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        
+        setLocationCoordinates({ lat, lng });
+        setLocation(""); // Clear text location when using coordinates
+        
+        // Try to reverse geocode to get location name
+        try {
+          const { API_ENDPOINTS } = await import("@/lib/api");
+          const response = await fetch(
+            `${API_BASE_URL}${API_ENDPOINTS.mapsReverseGeocode}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ lat, lng }),
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.address) {
+              setLocation(data.address);
+            }
+          }
+        } catch (error) {
+          logger.error("Error reverse geocoding", error instanceof Error ? error : new Error(String(error)));
+        } finally {
+          setDetectingLocation(false);
+        }
+      },
+      (error) => {
+        logger.error("Error getting location", error instanceof Error ? error : new Error(String(error)));
+        setDetectingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
-  }
+  };
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Categories Grid */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Browse by Category</h2>
-        <p className="text-sm text-gray-500">Explore services by category</p>
-      </div>
-      
-      {categories.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {categories.map((category) => (
-            <Link
-              key={category.key}
-              href={`/marketplace/services/category/${category.key}`}
-              className="group p-4 border border-gray-200 rounded-lg hover:border-green-500 hover:shadow-md transition-all text-left block bg-white"
-            >
-              <div className="flex flex-col items-center text-center space-y-2">
-                {(() => {
-                  const IconComponent = getCategoryIcon(category);
-                  return (
-                    <div className="w-16 h-16 rounded-xl bg-gray-100 text-gray-600 flex items-center justify-center mb-2 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
-                      <IconComponent className="w-8 h-8" />
+    <div className="bg-gray-50 min-h-screen">
+        {/* Hero / Header Section */}
+        <MarketplaceHero
+          userName={getUserName()}
+          selectedCategory={categoryKey}
+          categories={categories}
+          categoriesLoading={categoriesLoading}
+          categoriesError={categoriesError}
+          onCategorySelect={handleCategorySelect as (category: ServiceCategory | undefined) => void}
+          onCategoriesRetry={refetchCategories}
+        />
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Left Sidebar - Filters */}
+            <FilterSidebar
+              isOpen={filterDrawerOpen}
+              onClose={() => setFilterDrawerOpen(false)}
+              priceRange={priceRange}
+              maxPrice={maxPrice}
+              onPriceRangeChange={setPriceRange}
+              minRating={minRating}
+              onMinRatingChange={setMinRating}
+              isAvailable={isAvailable}
+              onAvailabilityChange={setIsAvailable}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={handleClearFilters}
+            />
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              {/* Controls Bar - Location on Left, View/Sort Controls on Right */}
+              <div className="mb-6 bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-gray-200">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  {/* Left Side - Location Detection */}
+                  <div className="flex-1 w-full sm:w-auto">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleDetectLocation}
+                        disabled={detectingLocation}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium shadow-sm hover:shadow-md"
+                      >
+                        {detectingLocation ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Detecting...</span>
+                          </>
+                        ) : (
+                          <>
+                            <MapPin className="w-4 h-4" />
+                            <span>Detect Current Location</span>
+                          </>
+                        )}
+                      </button>
+                      
+                      {locationCoordinates && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Navigation className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{(radius / 1000).toFixed(1)} km radius</span>
+                          <button
+                            onClick={() => {
+                              setLocationCoordinates(null);
+                              setLocation("");
+                            }}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  );
-                })()}
-                <h3 className="font-medium text-gray-700 group-hover:text-green-600 transition-colors">
-                  {category.name}
-                </h3>
-                <p className="text-xs text-gray-500 line-clamp-2 min-h-[2.5rem]">
-                  {category.description}
-                </p>
-                {category.statistics.totalServices > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-100 w-full">
-                    <div className="text-xs text-gray-600">
-                      <span className="font-semibold text-green-600">
-                        {category.statistics.totalServices}
-                      </span>
-                      {" "}service{category.statistics.totalServices !== 1 ? 's' : ''}
-                    </div>
-                    {category.statistics.pricing && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        ${category.statistics.pricing.min} - ${category.statistics.pricing.max}
-                      </div>
-                    )}
-                    {category.statistics.rating && category.statistics.rating.totalRatings > 0 && (
-                      <div className="flex items-center justify-center gap-1 mt-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs text-gray-600">
-                          {category.statistics.rating.average.toFixed(1)}
-                        </span>
+                    
+                    {/* Radius Slider - Show when location is detected */}
+                    {locationCoordinates && (
+                      <div className="mt-3 space-y-2">
+                        <input
+                          type="range"
+                          min="1000"
+                          max="50000"
+                          step="1000"
+                          value={radius}
+                          onChange={(e) => setRadius(Number(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                          style={{
+                            background: `linear-gradient(to right, #16a34a 0%, #16a34a ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb ${((radius - 1000) / (50000 - 1000)) * 100}%, #e5e7eb 100%)`
+                          }}
+                        />
+                        <div className="flex justify-between text-xs text-gray-500">
+                          <span>1 km</span>
+                          <span>50 km</span>
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
+
+                  {/* Right Side - Sort, Group, and View Mode Controls */}
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                    {/* Sort By */}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors hover:border-gray-400"
+                    >
+                      <option value="createdAt">Date Created</option>
+                      <option value="basePrice">Price</option>
+                      <option value="rating">Rating</option>
+                      <option value="title">Title</option>
+                    </select>
+
+                    {/* Sort Order */}
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors hover:border-gray-400"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+
+                    {/* Group By Category Toggle */}
+                    <label className="flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md hover:bg-gray-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={groupByCategory}
+                        onChange={(e) => setGroupByCategory(e.target.checked)}
+                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500 focus:ring-2"
+                      />
+                      <span className="text-sm text-gray-700 whitespace-nowrap">Group by Category</span>
+                    </label>
+
+                    {/* View Mode Toggle - Moved to the right */}
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'grid'
+                            ? 'bg-white text-green-700 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Grid View"
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'list'
+                            ? 'bg-white text-green-700 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="List View"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </Link>
-          ))}
+
+              {/* Service Listings */}
+              <ServiceGrid 
+                featuredServices={featuredServices}
+                services={services}
+                loading={loadingServices}
+                hasActiveFilters={hasActiveFilters}
+                pagination={pagination}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
+                viewMode={viewMode}
+                selectedCategory={selectedCategory}
+              />
+            </div>
+          </div>
         </div>
-      ) : (
-        <Card interactive={false}>
-          <EmptyState
-            icon={RefreshCw}
-            iconColor="text-gray-400"
-            iconBgColor="bg-gray-100"
-            title="No Categories Available"
-            description="Categories will appear here once they are available."
-          />
-        </Card>
-      )}
-    </div>
+      </div>
   );
 }
 

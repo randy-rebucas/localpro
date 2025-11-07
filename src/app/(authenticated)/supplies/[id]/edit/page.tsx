@@ -380,7 +380,7 @@ export default function EditSupplyPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Supplies & Materials', href: '/supplies' },
           { label: 'Edit Supply', href: `/supplies/${params.id}/edit` }
         ]}

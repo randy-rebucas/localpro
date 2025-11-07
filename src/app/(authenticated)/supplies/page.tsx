@@ -650,7 +650,7 @@ export default function SuppliesPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Supplies & Materials', href: '/supplies' }
         ]}
       />

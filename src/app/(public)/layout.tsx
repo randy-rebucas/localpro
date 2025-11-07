@@ -114,10 +114,10 @@ export default function PublicLayout({
                     {showUserMenu && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                         <Link
-                          href="/dashboard"
+                          href="/marketplace"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         >
-                          Dashboard
+                          Marketplace
                         </Link>
                         <Link
                           href="/profile"
@@ -188,10 +188,10 @@ export default function PublicLayout({
                     {session ? (
                       <>
                         <Link
-                          href="/dashboard"
+                          href="/marketplace"
                           className="block px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
                         >
-                          Dashboard
+                          Marketplace
                         </Link>
                         <Link
                           href="/profile"

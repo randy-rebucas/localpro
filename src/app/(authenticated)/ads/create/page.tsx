@@ -422,7 +422,7 @@ export default function CreateAdPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Ads', href: '/ads' },
           { label: 'Create Ad', href: '/ads/create' }
         ]}

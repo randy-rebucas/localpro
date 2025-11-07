@@ -89,11 +89,11 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
               </button>
               
               <Link
-                href="/dashboard"
+                href="/marketplace"
                 className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 <Home className="w-4 h-4" />
-                Go to Dashboard
+                Go to Marketplace
               </Link>
             </div>
           </div>

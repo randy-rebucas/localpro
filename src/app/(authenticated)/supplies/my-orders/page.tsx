@@ -370,7 +370,7 @@ export default function MyOrdersPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Supplies & Materials', href: '/supplies' },
           { label: 'My Orders', href: '/supplies/my-orders' }
         ]}

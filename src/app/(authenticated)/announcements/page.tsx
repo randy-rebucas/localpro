@@ -443,7 +443,7 @@ export default function AnnouncementsPage() {
         <Breadcrumbs
           className="text-sm text-gray-500 mb-4"
           items={[
-            { label: "Dashboard", href: "/dashboard" },
+            { label: "Marketplace", href: "/marketplace" },
             { label: "Announcements" },
           ]}
         />

@@ -275,7 +275,7 @@ export default function RentalDetailPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Rentals', href: '/rentals' },
           { label: rental.name, href: `/rentals/${rental.id}` }
         ]}

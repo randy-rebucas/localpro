@@ -121,7 +121,21 @@ function SignInForm() {
     setIsLoading(true);
     setErrors({});
     setIsAnimating(true);
-    logger.debug("Sending verification code for phone", { phone: phone.trim() });
+    
+    // Ensure phone number is properly formatted
+    const formattedPhone = phoneFormatter.formatPhoneNumber(phone.trim());
+    logger.debug("Sending verification code for phone", { original: phone.trim(), formatted: formattedPhone });
+
+    // Validate phone number format before sending
+    const validation = phoneFormatter.validatePhoneNumber(formattedPhone);
+    if (!validation.isValid) {
+      const errorMsg = validation.error || "Invalid phone number format";
+      toast.error(errorMsg);
+      setErrors({ phone: errorMsg });
+      setIsLoading(false);
+      setTimeout(() => setIsAnimating(false), 300);
+      return;
+    }
 
     // Validate API configuration before making request
     if (!API_BASE_URL) {
@@ -139,11 +153,14 @@ function SignInForm() {
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout to allow for backend retries
 
       const url = `${API_BASE_URL}${API_ENDPOINTS.authSendCode}`;
-      logger.debug("Sending code with URL", { url });
+      logger.debug("Sending code with URL", { url, phoneNumber: formattedPhone });
+
+      const requestBody = { phoneNumber: formattedPhone };
+      logger.debug("Request body", requestBody);
 
       const response = await makeClientPublicRequest('authSendCode', {
         method: "POST",
-        body: JSON.stringify({ phoneNumber: phone.trim() }),
+        body: JSON.stringify(requestBody),
         signal: controller.signal,
       });
 
@@ -151,35 +168,55 @@ function SignInForm() {
 
       // Try to parse JSON, but handle cases where response might not be JSON
       let result;
+      let responseText = '';
       try {
-        const text = await response.text();
-        result = text ? JSON.parse(text) : {};
+        responseText = await response.text();
+        result = responseText ? JSON.parse(responseText) : {};
       } catch (parseError) {
-        logger.error("Failed to parse response", parseError instanceof Error ? parseError : new Error(String(parseError)), { status: response.status, statusText: response.statusText });
+        logger.error("Failed to parse response", parseError instanceof Error ? parseError : new Error(String(parseError)), { 
+          status: response.status, 
+          statusText: response.statusText,
+          responseText: responseText?.substring(0, 200) 
+        });
         throw new Error(`Invalid response from server: ${response.status} ${response.statusText}`);
       }
 
-      logger.debug("Send code response", { result, status: response.status });
+      logger.debug("Send code response", { result, status: response.status, statusText: response.statusText });
+      
       if (response.ok) {
-        setPhoneNumber(phone);
+        setPhoneNumber(formattedPhone);
         setStep("code");
         setCountdown(60); // 60 second countdown
         toast.success("Verification code sent to your phone!");
         clearErrors();
       } else {
         // Handle specific error cases
+        const errorMessage = result.message || result.error || "Failed to send verification code";
+        const errorCode = result.code;
+        const errorDetails = result.details;
+        
+        logger.error("Send code failed", new Error(errorMessage), { 
+          status: response.status, 
+          errorCode, 
+          errorDetails,
+          result 
+        });
+        
         if (response.status === 408) {
           toast.error("Request timed out. Please check your connection and try again.");
         } else if (response.status === 503) {
-          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
-          toast.error(errorMsg || "Service temporarily unavailable. Please try again in a few moments.");
+          toast.error(errorDetails ? `${errorMessage} - ${errorDetails}` : errorMessage || "Service temporarily unavailable. Please try again in a few moments.");
         } else if (response.status === 429) {
           toast.error("Too many requests. Please wait before trying again.");
+        } else if (response.status === 400) {
+          // Bad request - likely invalid phone format
+          toast.error(errorMessage || "Invalid phone number format. Please use international format (e.g., +1234567890)");
+        } else if (response.status === 500) {
+          toast.error("Server error. Please try again later.");
         } else {
-          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
-          toast.error(errorMsg || "Failed to send verification code");
+          toast.error(errorDetails ? `${errorMessage} - ${errorDetails}` : errorMessage);
         }
-        setErrors({ phone: result.error || "Failed to send verification code" });
+        setErrors({ phone: errorMessage });
       }
     } catch (error) {
       logger.error("Send code error", error instanceof Error ? error : new Error(String(error)), { phone: phone.trim() });

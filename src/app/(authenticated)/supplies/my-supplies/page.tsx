@@ -457,7 +457,7 @@ export default function MySuppliesPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Supplies & Materials', href: '/supplies' },
           { label: 'My Supplies', href: '/supplies/my-supplies' }
         ]}

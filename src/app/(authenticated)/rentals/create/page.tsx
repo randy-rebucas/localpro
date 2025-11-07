@@ -263,7 +263,7 @@ export default function CreateRentalPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Rentals', href: '/rentals' },
           { label: 'Create Rental', href: '/rentals/create' }
         ]}

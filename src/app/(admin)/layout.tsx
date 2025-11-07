@@ -38,8 +38,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const hasAnyRole = session?.user?.role && session.user.role !== 'client';
     
     if (!roleAccess.isAdmin && !(isDevelopment && hasAnyRole)) {
-      logger.debug("Redirecting to dashboard - user is not admin", { userRole: session?.user?.role });
-      router.push("/dashboard");
+      logger.debug("Redirecting to marketplace - user is not admin", { userRole: session?.user?.role });
+      router.push("/marketplace");
       return;
     }
   }, [session, status, router, roleAccess.isAdmin, roleAccess]);

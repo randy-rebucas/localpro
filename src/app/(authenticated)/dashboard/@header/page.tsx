@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useAuth";
-import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
-import { logger } from "@/lib/logger";
 import { 
   TrendingUp,
   Zap,
@@ -14,14 +11,7 @@ import {
 export default function HeaderPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [greeting, setGreeting] = useState("");
-  const [user, setUser] = useState<{ 
-    name?: string; 
-    firstName?: string; 
-    lastName?: string;
-    role?: string;
-    lastLogin?: string;
-  } | null>(null);
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   // Update time every minute
   useEffect(() => {
@@ -43,29 +33,6 @@ export default function HeaderPage() {
     }
   }, [currentTime]);
 
-  // Fetch user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!session?.user?.id || !getApiToken()) return;
-      
-      try {
-        const url = `${API_BASE_URL}${API_ENDPOINTS.authMe}`;
-        const response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
-        if (response.ok) {
-          const userData = await response.json();
-          const user = userData?.data || userData;
-          setUser(user);
-        }
-      } catch (error) {
-        logger.error("Failed to fetch user data", error instanceof Error ? error : new Error(String(error)));
-      }
-    };
-
-    if (status === "authenticated" && session?.user?.id) {
-      fetchUser();
-    }
-  }, [session, status]);
-
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
       hour: 'numeric', 
@@ -83,16 +50,13 @@ export default function HeaderPage() {
   };
 
   const getUserDisplayName = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName} ${user.lastName}`;
-    }
-    if (user?.name) {
-      return user.name;
+    if (session?.user?.firstName) {
+      return session.user.firstName;
     }
     if (session?.user?.name) {
-      return session.user.name;
+      return session.user.name.split(" ")[0];
     }
-    return "User";
+    return "there";
   };
 
   return (

@@ -374,8 +374,10 @@ export function GlobalHeader({
                 <Menu className="w-6 h-6" />
               </button>
             )}
-            <Logo href={logoLink} withText={false} size={32} />
-            <span className="hidden sm:block text-xl font-bold text-gray-900">LocalPro</span>
+            <Link href={logoLink} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+              <Logo withText={false} size={32} />
+              <span className="hidden sm:block text-xl font-bold text-gray-900">LocalPro</span>
+            </Link>
           </div>
 
           {/* Center: Search Bar - Hidden on mobile */}

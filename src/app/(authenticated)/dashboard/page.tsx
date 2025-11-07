@@ -74,9 +74,7 @@ export default function DashboardPage() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<DashboardLoading />}>
-        <div className="space-y-4">
-          {/* Dashboard content handled by parallel routes */}
-        </div>
+        {/* Dashboard content handled by parallel routes in layout.tsx */}
       </Suspense>
     </ErrorBoundary>
   );

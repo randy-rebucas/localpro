@@ -222,7 +222,7 @@ export default function RentalDetailPage() {
           <div className="mb-8">
             <Breadcrumbs
               items={[
-                { label: "Dashboard", href: "/dashboard" },
+                { label: "Marketplace", href: "/marketplace" },
                 { label: "Marketplace", href: "/marketplace" },
                 { label: "Rentals", href: "/marketplace/rentals" },
                 { label: "Loading...", href: "#" }
@@ -242,7 +242,7 @@ export default function RentalDetailPage() {
           <div className="mb-8">
             <Breadcrumbs
               items={[
-                { label: "Dashboard", href: "/dashboard" },
+                { label: "Marketplace", href: "/marketplace" },
                 { label: "Marketplace", href: "/marketplace" },
                 { label: "Rentals", href: "/marketplace/rentals" },
                 { label: "Error", href: "#" }

@@ -198,7 +198,7 @@ export default function AdAnalyticsPage() {
     <div className="space-y-6">
       <Breadcrumbs
         items={[
-          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Marketplace', href: '/marketplace' },
           { label: 'Ads', href: '/ads' },
           { label: 'Analytics', href: `/ads/${params.id}/analytics` }
         ]}

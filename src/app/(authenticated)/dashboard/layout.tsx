@@ -38,41 +38,43 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header Section */}
-      {header && (
-        <Suspense fallback={<HeaderLoadingState />}>
-          <div key="dashboard-header">{header}</div>
-        </Suspense>
-      )}
-      
-      {/* Services Section */}
-      {services && (
-        <Suspense fallback={<ServicesLoadingState />}>
-          <div key="dashboard-services">{services}</div>
-        </Suspense>
-      )}
-      
-      {/* 2-Column Section: Announcements and Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {announcements && (
-          <Suspense fallback={<AnnouncementsLoadingState />}>
-            <div key="dashboard-announcements">{announcements}</div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="space-y-6">
+        {/* Header Section */}
+        {header && (
+          <Suspense fallback={<HeaderLoadingState />}>
+            <div key="dashboard-header">{header}</div>
           </Suspense>
         )}
-        {activity && (
-          <Suspense fallback={<ActivityLoadingState />}>
-            <div key="dashboard-activity">{activity}</div>
+        
+        {/* Services Section */}
+        {services && (
+          <Suspense fallback={<ServicesLoadingState />}>
+            <div key="dashboard-services">{services}</div>
+          </Suspense>
+        )}
+        
+        {/* 2-Column Section: Announcements and Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {announcements && (
+            <Suspense fallback={<AnnouncementsLoadingState />}>
+              <div key="dashboard-announcements">{announcements}</div>
+            </Suspense>
+          )}
+          {activity && (
+            <Suspense fallback={<ActivityLoadingState />}>
+              <div key="dashboard-activity">{activity}</div>
+            </Suspense>
+          )}
+        </div>
+        
+        {/* Main Content (children) - for any additional content */}
+        {children && (
+          <Suspense fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse" />}>
+            {children}
           </Suspense>
         )}
       </div>
-      
-      {/* Main Content (children) - for any additional content */}
-      {children && (
-        <Suspense fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse" />}>
-          {children}
-        </Suspense>
-      )}
     </div>
   );
 }
