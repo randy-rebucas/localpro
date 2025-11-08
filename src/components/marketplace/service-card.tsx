@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
 
 interface ServiceCardProps {
@@ -28,6 +29,7 @@ interface ServiceCardProps {
 
 export function ServiceCard({
   id,
+  serviceId,
   title = `Professional Service ${id}`,
   description = "Professional service provider with years of experience and excellent reviews.",
   location = "Location not specified",
@@ -45,9 +47,37 @@ export function ServiceCard({
   imageUrl,
   viewMode = 'list',
 }: ServiceCardProps) {
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = React.useState(false);
+  
   // Format pricing type for display
   const pricingTypeLabel = pricingType === 'hourly' ? 'hr' : pricingType === 'fixed' ? 'service' : pricingType;
   const isGrid = viewMode === 'grid';
+  
+  // Get the actual service ID to use for navigation - ensure it's a string
+  const actualServiceId = String(serviceId || id);
+  
+  // Handle View Details click
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    router.push(`/marketplace/services/${actualServiceId}`);
+    // Reset after a short delay to allow navigation
+    setTimeout(() => setIsNavigating(false), 1000);
+  };
+  
+  // Handle Book Now click
+  const handleBookNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isActive || isNavigating) return;
+    
+    setIsNavigating(true);
+    router.push(`/marketplace/services/${actualServiceId}/book`);
+    // Reset after a short delay to allow navigation
+    setTimeout(() => setIsNavigating(false), 1000);
+  };
   
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'}`}>
@@ -174,15 +204,18 @@ export function ServiceCard({
           {/* Right Side - CTA Buttons */}
           <div className={`flex ${isGrid ? 'flex-col gap-2 w-full' : 'gap-2 flex-shrink-0'}`}>
             <button 
-              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors`}
+              onClick={handleViewDetails}
+              disabled={isNavigating}
+              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              View Details
+              {isNavigating ? 'Loading...' : 'View Details'}
             </button>
             <button 
-              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
-              disabled={!isActive}
+              onClick={handleBookNow}
+              disabled={!isActive || isNavigating}
+              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md`}
             >
-              Book Now
+              {isNavigating ? 'Loading...' : 'Book Now'}
             </button>
           </div>
         </div>

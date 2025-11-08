@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { 
@@ -15,7 +15,9 @@ import {
   Heart,
   Shield,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  Briefcase
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
@@ -133,25 +135,6 @@ interface Review {
   helpful: number;
 }
 
-interface BookingForm {
-  bookingDate: string; // Combined date and time (ISO format)
-  duration: number; // in hours
-  address: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-  specialInstructions?: string;
-  // Legacy fields for backward compatibility
-  date?: string;
-  time?: string;
-  notes?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-}
-
 interface ProviderWithService {
   _id?: string;
   id?: string;
@@ -169,28 +152,15 @@ interface ProviderWithService {
 
 export default function ServiceDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [service, setService] = useState<Service | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showBookingForm, setShowBookingForm] = useState(false);
-  const [bookingForm, setBookingForm] = useState<BookingForm>({
-    bookingDate: "",
-    duration: 0, // in hours
-    address: {
-      street: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: ""
-    },
-    specialInstructions: ""
-  });
-  const [bookingLoading, setBookingLoading] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [providersWithService, setProvidersWithService] = useState<ProviderWithService[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
+  const [otherProviderServices, setOtherProviderServices] = useState<Service[]>([]);
+  const [loadingOtherServices, setLoadingOtherServices] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
@@ -301,15 +271,6 @@ export default function ServiceDetailPage() {
         const favorites = JSON.parse(localStorage.getItem('favoriteServices') || '[]');
         setIsFavorited(favorites.includes(serviceId));
       }
-      
-      setBookingForm(prev => ({
-        ...prev,
-        duration: normalizedService.estimatedDuration?.min || 2,
-        address: {
-          ...prev.address,
-          // Can be filled from user profile or location
-        }
-      }));
     } catch (error) {
       logger.error("Error fetching service", error instanceof Error ? error : new Error(String(error)), { serviceId: params.id });
       setError("Failed to load service details");
@@ -424,70 +385,58 @@ export default function ServiceDetailPage() {
     }
   }, [service, fetchProvidersWithService]);
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!service) return;
+  // Fetch other services from the same provider
+  const fetchOtherProviderServices = useCallback(async (serviceData: Service) => {
+    // Get provider ID
+    const providerId = typeof serviceData.provider === 'string' 
+      ? serviceData.provider 
+      : (serviceData.provider._id || serviceData.provider.id);
+    
+    if (!providerId) return;
 
     try {
-      setBookingLoading(true);
+      setLoadingOtherServices(true);
+      const queryParams = new URLSearchParams({
+        provider: String(providerId),
+        limit: '6',
+        isActive: 'true'
+      }).toString();
       
-      // Construct bookingDate from date and time if using legacy format
-      let bookingDateValue: string;
-      if (bookingForm.bookingDate) {
-        bookingDateValue = bookingForm.bookingDate;
-      } else if (bookingForm.date && bookingForm.time) {
-        // Combine date and time into ISO format
-        const dateTime = new Date(`${bookingForm.date}T${bookingForm.time}`);
-        bookingDateValue = dateTime.toISOString();
-      } else {
-        throw new Error("Booking date is required");
-      }
-      
-      const serviceId = service._id || service.id || '';
-      const providerId = typeof service.provider === 'string' 
-        ? service.provider 
-        : (service.provider._id || service.provider.id || '');
-      
-      if (!getApiToken()) {
-        throw new Error('Please log in to create a booking');
-      }
-      
-      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceBookings}`;
-      const response = await fetch(url, createAuthFetchOptions({
-        method: 'POST',
-        body: JSON.stringify({
-            service: serviceId,
-            provider: providerId,
-            bookingDate: bookingDateValue,
-            duration: bookingForm.duration, // in hours
-            address: bookingForm.address,
-            specialInstructions: bookingForm.specialInstructions || bookingForm.notes,
-            pricing: {
-              basePrice: service.pricing.basePrice,
-              currency: service.pricing.currency || 'USD',
-              type: service.pricing.type,
-              totalAmount: service.pricing.type === 'hourly' && bookingForm.duration > 0
-                ? service.pricing.basePrice * bookingForm.duration
-                : service.pricing.basePrice // Will be calculated with fees on backend
-            }
-          })
-        }
-      ));
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}?${queryParams}`;
+      const response = await fetch(url, getApiToken()
+        ? createAuthFetchOptions({ method: 'GET' })
+        : { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+      );
 
-      if (!response.ok) {
-        throw new Error("Failed to create booking");
+      if (response.ok) {
+        const data = await response.json();
+        const servicesList = Array.isArray(data) 
+          ? data 
+          : (data.data || data.services || []);
+        
+        // Filter out the current service
+        const currentServiceId = serviceData._id || serviceData.id;
+        const otherServices = servicesList.filter((svc: Service) => {
+          const svcId = svc._id || svc.id;
+          return svcId !== currentServiceId;
+        });
+        
+        setOtherProviderServices(otherServices.slice(0, 6)); // Limit to 6 services
       }
-
-      const booking = await response.json();
-      const bookingId = booking._id || booking.id || booking._id || '';
-      router.push(`/marketplace/bookings/${bookingId}`);
     } catch (error) {
-      logger.error("Error creating booking", error instanceof Error ? error : new Error(String(error)), { serviceId: params.id, bookingForm });
-      alert("Failed to create booking. Please try again.");
+      logger.error("Error fetching other provider services", error instanceof Error ? error : new Error(String(error)), { providerId });
     } finally {
-      setBookingLoading(false);
+      setLoadingOtherServices(false);
     }
-  };
+  }, []);
+
+  // Fetch other services when service is loaded
+  useEffect(() => {
+    if (service) {
+      fetchOtherProviderServices(service);
+    }
+  }, [service, fetchOtherProviderServices]);
+
 
   const formatPrice = (price: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
@@ -607,24 +556,29 @@ export default function ServiceDetailPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500">
-        <Link href="/marketplace" className="hover:text-gray-700">
-          Marketplace
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/marketplace"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Back to marketplace"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <span>/</span>
-        <span className="text-gray-700">{service.title}</span>
-      </nav>
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+          <Briefcase className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{service.title}</h1>
+          <p className="text-sm text-gray-600">{service.description ? service.description.substring(0, 80) + (service.description.length > 80 ? '...' : '') : 'Professional service'}</p>
+        </div>
+      </div>
 
-      {/* Service Header */}
+      {/* Service Details */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h1 className="text-2xl font-bold text-gray-700">{service.title}</h1>
-              <CheckCircle className="w-6 h-6 text-green-500" />
-            </div>
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
               <div className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
@@ -742,12 +696,12 @@ export default function ServiceDetailPage() {
                 : 'per service'}
             </div>
           </div>
-          <button
-            onClick={() => setShowBookingForm(true)}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+          <Link
+            href={`/marketplace/services/${params.id}/book`}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold inline-block text-center"
           >
             Book Now
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -1147,6 +1101,96 @@ export default function ServiceDetailPage() {
             )}
           </div>
 
+          {/* Other Services from This Provider */}
+          {otherProviderServices.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Other Services
+                </h3>
+                {typeof service?.provider === 'object' && service.provider && (
+                  <Link
+                    href={`/marketplace/providers/${service.provider._id || service.provider.id}`}
+                    className="text-xs text-green-600 hover:text-green-700 font-medium"
+                  >
+                    View All →
+                  </Link>
+                )}
+              </div>
+              
+              {loadingOtherServices ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm text-gray-500">Loading...</div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {otherProviderServices.slice(0, 4).map((otherService) => {
+                    const serviceId = otherService._id || otherService.id;
+                    const imageUrl = otherService.images && Array.isArray(otherService.images) && otherService.images.length > 0
+                      ? (typeof otherService.images[0] === 'string' 
+                          ? otherService.images[0] 
+                          : otherService.images[0].url || otherService.images[0].thumbnail)
+                      : undefined;
+                    const price = otherService.pricing?.basePrice || 0;
+                    const currency = otherService.pricing?.currency || '₱';
+                    const rating = typeof otherService.rating === 'number' 
+                      ? otherService.rating 
+                      : (otherService.rating?.average || 0);
+                    
+                    return (
+                      <Link
+                        key={serviceId}
+                        href={`/marketplace/services/${serviceId}`}
+                        className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 group"
+                      >
+                        {imageUrl && (
+                          <div className="relative w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
+                            <Image
+                              src={imageUrl}
+                              alt={otherService.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform"
+                              sizes="64px"
+                              unoptimized={imageUrl.startsWith('http://localhost') || !imageUrl.startsWith('http')}
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-green-600 transition-colors text-sm">
+                            {otherService.title}
+                          </h4>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-bold text-green-600">
+                                {currency}{price.toLocaleString()}
+                              </span>
+                              {otherService.pricing?.type && (
+                                <span className="text-xs text-gray-500">
+                                  /{otherService.pricing.type === 'hourly' ? 'hr' : 'svc'}
+                                </span>
+                              )}
+                            </div>
+                            {rating > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span className="text-xs font-medium text-gray-700">{rating.toFixed(1)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                  {otherProviderServices.length > 4 && (
+                    <div className="text-xs text-gray-500 text-center pt-2">
+                      +{otherProviderServices.length - 4} more services
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Safety Info */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Safety & Trust</h3>
@@ -1168,203 +1212,6 @@ export default function ServiceDetailPage() {
         </div>
       </div>
 
-      {/* Booking Modal */}
-      {showBookingForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Book Service</h2>
-                <button
-                  onClick={() => setShowBookingForm(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </button>
-              </div>
-
-              <form onSubmit={handleBookingSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date & Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    required
-                    value={bookingForm.bookingDate || (bookingForm.date && bookingForm.time ? `${bookingForm.date}T${bookingForm.time}` : '')}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setBookingForm(prev => ({ ...prev, bookingDate: value }));
-                      // Also update legacy fields for compatibility
-                      if (value) {
-                        const dt = new Date(value);
-                        setBookingForm(prev => ({
-                          ...prev,
-                          date: dt.toISOString().split('T')[0],
-                          time: dt.toTimeString().slice(0, 5)
-                        }));
-                      }
-                    }}
-                    min={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Duration (hours)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={bookingForm.duration}
-                    onChange={(e) => setBookingForm(prev => ({ ...prev, duration: Number(e.target.value) }))}
-                    min={service?.estimatedDuration?.min || 1}
-                    max={service?.estimatedDuration?.max || 24}
-                    step={0.5}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  />
-                  {service?.estimatedDuration && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      Estimated: {service.estimatedDuration.min || 0}-{service.estimatedDuration.max || 0} hours
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Street Address
-                  </label>
-                  <input
-                    type="text"
-                    value={bookingForm.address.street || ''}
-                    onChange={(e) => setBookingForm(prev => ({
-                      ...prev,
-                      address: { ...prev.address, street: e.target.value }
-                    }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="123 Main St"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.address.city || ''}
-                      onChange={(e) => setBookingForm(prev => ({
-                        ...prev,
-                        address: { ...prev.address, city: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.address.state || ''}
-                      onChange={(e) => setBookingForm(prev => ({
-                        ...prev,
-                        address: { ...prev.address, state: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      ZIP Code
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.address.zipCode || ''}
-                      onChange={(e) => setBookingForm(prev => ({
-                        ...prev,
-                        address: { ...prev.address, zipCode: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      value={bookingForm.address.country || ''}
-                      onChange={(e) => setBookingForm(prev => ({
-                        ...prev,
-                        address: { ...prev.address, country: e.target.value }
-                      }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Special Instructions (Optional)
-                  </label>
-                  <textarea
-                    value={bookingForm.specialInstructions || bookingForm.notes || ''}
-                    onChange={(e) => setBookingForm(prev => ({ 
-                      ...prev, 
-                      specialInstructions: e.target.value,
-                      notes: e.target.value // Keep legacy field in sync
-                    }))}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Any special requirements or notes..."
-                  />
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-700">Estimated Total</span>
-                      <span className="text-xl font-bold text-green-600">
-                        {service.pricing?.type === 'hourly' && bookingForm.duration > 0
-                          ? formatPrice((service.pricing.basePrice || 0) * bookingForm.duration, service.pricing?.currency || 'USD')
-                          : formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency || 'USD')}
-                      </span>
-                    </div>
-                    {service.pricing?.type === 'hourly' && bookingForm.duration > 0 && (
-                      <div className="text-sm text-gray-500 text-right">
-                        {formatPrice(service.pricing.basePrice || 0, service.pricing?.currency || 'USD')} per hour × {bookingForm.duration} hour{bookingForm.duration !== 1 ? 's' : ''}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowBookingForm(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={bookingLoading}
-                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  >
-                    {bookingLoading ? "Booking..." : "Confirm Booking"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
