@@ -26,7 +26,8 @@ import {
   ChevronRight,
   Database,
   Target,
-  Monitor
+  Monitor,
+  Crown
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -86,6 +87,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Finance",
       href: "/admin/finance",
       icon: CreditCard,
+    },
+    {
+      name: "Subscriptions",
+      href: "/admin/subscriptions",
+      icon: Crown,
     },
     {
       name: "Communication",
@@ -236,8 +242,9 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 lg:flex-shrink-0 lg:sticky lg:top-0 lg:h-screen border-r border-gray-200
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out border-r border-gray-200
+        lg:translate-x-0 lg:z-30
+        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}

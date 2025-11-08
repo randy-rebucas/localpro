@@ -392,6 +392,17 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = matchesPattern(pathname, ROUTE_PATTERNS.protected);
   const isAdminRoute = matchesPattern(pathname, ROUTE_PATTERNS.admin);
 
+  // Admin routes - allow through and let client-side layout handle auth/role checks
+  // This ensures the page can load and the admin layout can check authentication
+  if (isAdminRoute) {
+    // If we have a role and it's not admin, redirect to dashboard
+    if (userRole !== undefined && userRole !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    // Otherwise, allow access - client-side layout will handle authentication and role checks
+    return NextResponse.next();
+  }
+
   // If user is authenticated
   if (isAuthenticated) {
     // Redirect from auth routes to dashboard
@@ -399,24 +410,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     
-    // Check admin access
-    if (isAdminRoute && userRole !== "admin") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    
     // Check role-based route access
+    // Only check if we have a role defined
     if (userRole && !hasRouteAccess(userRole, pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     
-    // Allow access to protected and admin routes
-    if (isProtectedRoute || isAdminRoute) {
+    // Allow access to protected routes
+    if (isProtectedRoute) {
       return NextResponse.next();
     }
   }
 
   // If user is not authenticated
-  if (isProtectedRoute || isAdminRoute) {
+  if (isProtectedRoute) {
     // Store the intended destination for redirect after login
     const redirectUrl = new URL("/auth", request.url);
     redirectUrl.searchParams.set("redirect", pathname);

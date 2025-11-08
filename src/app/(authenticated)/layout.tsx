@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from "react";
-import ErrorBoundary from "@/components/error-boundary";
 import { Loading } from "@/components/ui/loading";
 import { Error as ErrorComponent } from "@/components/ui/error";
 import { useSession } from "@/hooks/useAuth";
@@ -13,6 +12,10 @@ import { GlobalHeader } from "@/components/global-header";
 import { MarketplaceFooter } from "@/components/marketplace/marketplace-footer";
 import { usePathname } from "next/navigation";
 import { logger } from "@/lib/logger";
+import { Providers } from "@/components/providers";
+import { Toaster } from "react-hot-toast";
+import { MonitoringProviders } from "@/components/monitoring";
+import { UnregisterServiceWorker } from "@/components/unregister-sw";
 
 export default function AuthenticatedLayout({
   children,
@@ -37,7 +40,7 @@ export default function AuthenticatedLayout({
   const [error, setError] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  
+
   // Use the auth redirect hook
   const { redirectToLogin } = useAuthRedirect();
 
@@ -48,14 +51,14 @@ export default function AuthenticatedLayout({
 
   useEffect(() => {
     logger.debug('Authenticated Layout useEffect', { status, hasSession: !!session, hasApiToken: !!getApiToken() });
-    
+
     // Only redirect if we're sure the session is not loading and user is not authenticated
     if (status === "unauthenticated") {
       logger.debug('Redirecting: unauthenticated status');
       redirectToLogin();
       return;
     }
-    
+
     // If we have a session but no API token, redirect to get fresh tokens
     const hasToken = getApiToken();
     if (status === "authenticated" && session && !hasToken) {
@@ -80,27 +83,27 @@ export default function AuthenticatedLayout({
   useEffect(() => {
     const hasToken = getApiToken();
     logger.debug('Main auth effect', { status, hasSession: !!session, hasApiToken: !!hasToken, userId: session?.user?.id });
-    
+
     // Only fetch user data if we have a session AND API token
     if (status === "authenticated" && session?.user?.id && hasToken) {
       const userId = session.user.id;
-      
+
       // Check if we've already fetched this user's data
       if (userFetchedRef.current && fetchedUserIdRef.current === userId && user !== null) {
         logger.debug('User data already fetched, skipping', { userId });
         setLoading(false);
         return;
       }
-      
+
       // Prevent concurrent fetches
       if (fetchInProgressRef.current) {
         logger.debug('User data fetch already in progress, skipping', { userId });
         return;
       }
-      
+
       logger.debug('Fetching user data', { userId });
       fetchInProgressRef.current = true;
-      
+
       const fetchUser = async () => {
         try {
           if (!getApiToken()) {
@@ -109,14 +112,14 @@ export default function AuthenticatedLayout({
             fetchInProgressRef.current = false;
             return;
           }
-          
+
           const endpoint = API_ENDPOINTS.usersById.includes('[id]')
             ? API_ENDPOINTS.usersById.replace('[id]', userId)
             : `${API_ENDPOINTS.usersById}/${userId}`;
           const url = `${API_BASE_URL}${endpoint}`;
-          
+
           const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-          
+
           if (!response.ok) {
             if (response.status === 401) {
               logger.warn('Authentication error, redirecting to login', { userId, status: response.status });
@@ -126,10 +129,10 @@ export default function AuthenticatedLayout({
             }
             throw new Error(`Failed to fetch user data: ${response.status}`);
           }
-          
+
           const result = await response.json();
           const userData = result?.data || result?.user || result;
-          
+
           logger.debug('User data fetched successfully', { userId });
           setUser(userData);
           userFetchedRef.current = true;
@@ -168,7 +171,7 @@ export default function AuthenticatedLayout({
   // Check if we're on a full-page route that doesn't need the standard layout
   // Memoized to prevent unnecessary recalculations
   // This must be defined before any early returns
-  const isFullPageRoute = useMemo(() => 
+  const isFullPageRoute = useMemo(() =>
     pathname?.includes('/dashboard') || pathname === '/dashboard',
     [pathname]
   );
@@ -201,7 +204,7 @@ export default function AuthenticatedLayout({
   }
 
   return (
-    <ErrorBoundary>
+    <Providers>
       <AuthDebug />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         {/* Global Header */}
@@ -244,6 +247,10 @@ export default function AuthenticatedLayout({
         {/* Global Footer */}
         <MarketplaceFooter />
       </div>
-    </ErrorBoundary>
+      <Toaster position="top-right" />
+      <MonitoringProviders />
+      <UnregisterServiceWorker />
+
+    </Providers>
   );
 }

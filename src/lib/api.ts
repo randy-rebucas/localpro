@@ -305,6 +305,10 @@ export const API_ENDPOINTS = {
   localProPlusSettings: "/api/localpro-plus/settings",
   localProPlusUsage: "/api/localpro-plus/usage",
   localProPlusAnalytics: "/api/localpro-plus/analytics",
+  // Admin Manual Subscriptions
+  localProPlusAdminSubscriptions: "/api/localpro-plus/admin/subscriptions",
+  localProPlusAdminSubscriptionByUser: "/api/localpro-plus/admin/subscriptions/user",
+  localProPlusAdminSubscriptionById: "/api/localpro-plus/admin/subscriptions",
   
   // Settings Management
   settings: "/api/settings",

@@ -117,10 +117,39 @@ export interface HistoryEntry {
   amount?: number;
 }
 
+export interface ManualDetails {
+  createdBy?: string | {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  reason?: string;
+  notes?: string;
+}
+
 export interface UserSubscription {
   _id?: string;
-  user: string;
-  plan: string;
+  user: string | {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phoneNumber?: string;
+  };
+  plan: string | {
+    _id?: string;
+    name?: string;
+    description?: string;
+    price?: {
+      monthly?: number;
+      yearly?: number;
+      currency?: string;
+    };
+    features?: FeatureLimit[];
+    limits?: Limits;
+    benefits?: string[];
+  };
   status?: SubscriptionStatus;
   billingCycle?: BillingCycle;
   startDate?: Date;
@@ -134,6 +163,8 @@ export interface UserSubscription {
   features?: Features;
   trial?: Trial;
   history?: HistoryEntry[];
+  isManual?: boolean;
+  manualDetails?: ManualDetails;
   createdAt?: Date;
   updatedAt?: Date;
 }
