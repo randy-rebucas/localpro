@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { Wallet, RefreshCw, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, Clock, Plus, Minus, X, Settings, Receipt } from "lucide-react";
+import { Wallet, RefreshCw, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, Clock, Plus, Minus, X, Settings, Receipt, Upload } from "lucide-react";
+import Image from "next/image";
 import { Wallet as WalletType, TransactionDetails, PaymentMethod } from "@/types/finance";
 
 // Disable static generation for this page
@@ -64,6 +65,11 @@ export default function WalletPage() {
   
   // Form states
   const [addFundsAmount, setAddFundsAmount] = useState("");
+  const [addFundsPaymentMethod, setAddFundsPaymentMethod] = useState<string>("bank_transfer");
+  const [addFundsReceipt, setAddFundsReceipt] = useState<File | null>(null);
+  const [addFundsReference, setAddFundsReference] = useState("");
+  const [addFundsNotes, setAddFundsNotes] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState<PaymentMethod>("bank_transfer");
   const [bankAccount, setBankAccount] = useState({ bankName: "", accountNumber: "", routingNumber: "" });
@@ -400,27 +406,132 @@ export default function WalletPage() {
   const pendingBalance = (overview?.wallet?.pendingBalance && !isNaN(overview.wallet.pendingBalance)) ? overview.wallet.pendingBalance : 0;
   const currency = 'USD'; // Default currency
 
+  const resetTopUpForm = () => {
+    setAddFundsAmount("");
+    setAddFundsPaymentMethod("bank_transfer");
+    setAddFundsReceipt(null);
+    setAddFundsReference("");
+    setAddFundsNotes("");
+    setReceiptPreview(null);
+  };
+
+  const handleReceiptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setAddFundsReceipt(null);
+      setReceiptPreview(null);
+      return;
+    }
+
+    // Validate file type (images only)
+    if (!file.type.startsWith('image/')) {
+      toast.error("Only image files are allowed");
+      e.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      toast.error("Receipt image must be less than 5MB");
+      e.target.value = '';
+      return;
+    }
+
+    setAddFundsReceipt(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setReceiptPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddFunds = async () => {
     const amount = parseFloat(addFundsAmount);
+    
+    // Validate amount
     if (!addFundsAmount || isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
 
+    // Validate minimum amount ($10)
+    if (amount < 10) {
+      toast.error("Minimum top-up amount is $10");
+      return;
+    }
+
+    // Validate payment method
+    if (!addFundsPaymentMethod) {
+      toast.error("Please select a payment method");
+      return;
+    }
+
+    // Validate receipt
+    if (!addFundsReceipt) {
+      toast.error("Receipt image is required");
+      return;
+    }
+
     setProcessing(true);
     try {
-      // Note: This endpoint might need to be created on the backend
-      // For now, we'll show a placeholder implementation
-      toast.success(`Adding ${formatCurrency(amount, currency)} to your wallet...`);
-      setShowAddFundsModal(false);
-      setAddFundsAmount("");
-      // Refresh wallet data
-      setTimeout(() => {
-        fetchWalletData(true);
-      }, 500);
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
+      formData.append('amount', amount.toString());
+      formData.append('paymentMethod', addFundsPaymentMethod);
+      formData.append('receipt', addFundsReceipt);
+      
+      if (addFundsReference.trim()) {
+        formData.append('reference', addFundsReference.trim());
+      }
+      
+      if (addFundsNotes.trim()) {
+        formData.append('notes', addFundsNotes.trim());
+      }
+
+      // Get auth token
+      const token = getApiToken();
+      if (!token) {
+        throw new Error('Please log in to request a top-up');
+      }
+
+      // Make request
+      const url = `${API_BASE_URL}${API_ENDPOINTS.financeTopUp}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error messages from API
+        const errorMessage = data.message || data.error || "Failed to submit top-up request";
+        throw new Error(errorMessage);
+      }
+
+      if (data.success) {
+        toast.success(data.message || "Top-up request submitted successfully. Please wait for admin approval.");
+        // Reset form
+        setShowAddFundsModal(false);
+        resetTopUpForm();
+        
+        // Refresh wallet data
+        setTimeout(() => {
+          fetchWalletData(true);
+        }, 500);
+      } else {
+        throw new Error(data.message || "Failed to submit top-up request");
+      }
     } catch (err) {
-      logger.error('Error adding funds', err instanceof Error ? err : new Error(String(err)));
-      toast.error("Failed to add funds. Please try again.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to submit top-up request. Please try again.";
+      logger.error('Error submitting top-up request', err instanceof Error ? err : new Error(String(err)));
+      toast.error(errorMessage);
     } finally {
       setProcessing(false);
     }
@@ -973,11 +1084,11 @@ export default function WalletPage() {
           onClick={(e) => {
             if (e.target === e.currentTarget && !processing) {
               setShowAddFundsModal(false);
-              setAddFundsAmount("");
+              resetTopUpForm();
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col relative border border-gray-100">
             {processing && (
               <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center">
@@ -986,72 +1097,191 @@ export default function WalletPage() {
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Add Funds</h2>
+            {/* Header - Fixed */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-emerald-50 to-transparent">
+              <h2 className="text-xl font-bold text-gray-900">Request Top-Up</h2>
               <button
                 onClick={() => {
                   setShowAddFundsModal(false);
-                  setAddFundsAmount("");
+                  resetTopUpForm();
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                disabled={processing}
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+            
+            {/* Content - Scrollable */}
+            <div className="overflow-y-auto flex-1 px-6 py-5">
+              <div className="space-y-5 max-w-none">
+                {/* Amount Field */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Amount <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-base">$</span>
+                    <input
+                      type="number"
+                      value={addFundsAmount}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
+                          setAddFundsAmount(value);
+                        }
+                      }}
+                      placeholder="0.00"
+                      min="10"
+                      step="0.01"
+                      max="999999.99"
+                      className="w-full pl-9 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all hover:border-gray-400"
+                      aria-label="Amount to add"
+                      disabled={processing}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1.5 ml-1">Minimum amount: $10.00</p>
+                </div>
+                
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Method <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    value={addFundsPaymentMethod}
+                    onChange={(e) => setAddFundsPaymentMethod(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all hover:border-gray-400 bg-white cursor-pointer"
+                    disabled={processing}
+                  >
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                    <option value="card">Credit/Debit Card</option>
+                    <option value="cash">Cash</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="paymaya">PayMaya</option>
+                  </select>
+                </div>
+
+                {/* Receipt Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Receipt Image <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 hover:border-emerald-200 transition-all relative overflow-hidden group">
+                      {receiptPreview ? (
+                        <div className="relative w-full h-full min-h-[140px] flex items-center justify-center p-2">
+                          <div className="relative max-w-full max-h-[200px]">
+                            <Image 
+                              src={receiptPreview} 
+                              alt="Receipt preview" 
+                              width={400}
+                              height={300}
+                              className="max-w-full max-h-[200px] object-contain rounded"
+                              unoptimized
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAddFundsReceipt(null);
+                              setReceiptPreview(null);
+                            }}
+                            className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors shadow-lg z-10"
+                            disabled={processing}
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-8 px-4">
+                          <Upload className="w-10 h-10 text-gray-400 mb-3" />
+                          <p className="text-sm text-gray-600 mb-1 text-center">
+                            <span className="font-semibold text-emerald-600">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500 text-center">PNG, JPG, GIF up to 5MB</p>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleReceiptChange}
+                        className="hidden"
+                        disabled={processing}
+                      />
+                    </label>
+                    {addFundsReceipt && (
+                      <p className="text-xs text-gray-600 flex items-center gap-1">
+                        <Receipt className="w-3 h-3" />
+                        Selected: {addFundsReceipt.name} ({(addFundsReceipt.size / 1024 / 1024).toFixed(2)} MB)
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Payment Reference */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Reference/Transaction ID 
+                    <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+                  </label>
                   <input
-                    type="number"
-                    value={addFundsAmount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === '' || (!isNaN(parseFloat(value)) && parseFloat(value) >= 0)) {
-                        setAddFundsAmount(value);
-                      }
-                    }}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                    max="999999.99"
-                    className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    aria-label="Amount to add"
+                    type="text"
+                    value={addFundsReference}
+                    onChange={(e) => setAddFundsReference(e.target.value)}
+                    placeholder="e.g., TXN123456789"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all hover:border-gray-400"
+                    disabled={processing}
                   />
                 </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes 
+                    <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+                  </label>
+                  <textarea
+                    value={addFundsNotes}
+                    onChange={(e) => setAddFundsNotes(e.target.value)}
+                    placeholder="Additional notes about this payment..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none transition-all hover:border-gray-400"
+                    disabled={processing}
+                  />
+                </div>
+
+                {/* Info Message */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>Your top-up request will be reviewed by an administrator. You&apos;ll be notified once it&apos;s processed.</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Method
-                </label>
-                <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                  <option value="card">Credit/Debit Card</option>
-                  <option value="paypal">PayPal</option>
-                  <option value="paymaya">PayMaya</option>
-                  <option value="bank_transfer">Bank Transfer</option>
-                </select>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={() => {
-                    setShowAddFundsModal(false);
-                    setAddFundsAmount("");
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddFunds}
-                  disabled={processing || !addFundsAmount}
-                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {processing ? "Processing..." : "Add Funds"}
-                </button>
-              </div>
+            </div>
+            
+            {/* Footer - Fixed */}
+            <div className="flex gap-3 p-6 border-t border-gray-200 flex-shrink-0 bg-gray-50">
+              <button
+                onClick={() => {
+                  setShowAddFundsModal(false);
+                  resetTopUpForm();
+                }}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-100 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                disabled={processing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddFunds}
+                disabled={processing || !addFundsAmount || !addFundsReceipt || parseFloat(addFundsAmount) < 10}
+                className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+              >
+                {processing ? "Submitting..." : "Submit Request"}
+              </button>
             </div>
           </div>
         </div>

@@ -237,6 +237,7 @@ export const API_ENDPOINTS = {
   financeTaxDocuments: "/api/finance/tax-documents",
   financeWalletSettings: "/api/finance/wallet/settings",
   financeWithdrawalsProcess: "/api/finance/withdrawals",
+  financeTopUp: "/api/finance/top-up",
   
   // Google Maps Integration
   maps: "/api/maps",
