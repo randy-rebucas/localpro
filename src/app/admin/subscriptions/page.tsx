@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Search,
@@ -81,9 +81,15 @@ export default function AdminSubscriptionsPage() {
 
   const [cancelReason, setCancelReason] = useState("");
 
+  // Helper function to convert filters for API call
+  const convertFilters = useCallback((f: typeof filters) => ({
+    ...f,
+    isManual: f.isManual === "" ? undefined : f.isManual === "true",
+  }), []);
+
   useEffect(() => {
-    fetchSubscriptions(filters);
-  }, [filters, fetchSubscriptions]);
+    fetchSubscriptions(convertFilters(filters));
+  }, [filters, fetchSubscriptions, convertFilters]);
 
   const handleCreate = async () => {
     try {
@@ -114,7 +120,7 @@ export default function AdminSubscriptionsPage() {
         reason: "",
         notes: "",
       });
-      fetchSubscriptions(filters);
+      fetchSubscriptions(convertFilters(filters));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       showError(errorMessage);
@@ -146,7 +152,7 @@ export default function AdminSubscriptionsPage() {
       success("Subscription updated successfully");
       setShowEditModal(false);
       setSelectedSubscription(null);
-      fetchSubscriptions(filters);
+      fetchSubscriptions(convertFilters(filters));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       showError(errorMessage);
@@ -162,7 +168,7 @@ export default function AdminSubscriptionsPage() {
       setShowCancelModal(false);
       setSelectedSubscription(null);
       setCancelReason("");
-      fetchSubscriptions(filters);
+      fetchSubscriptions(convertFilters(filters));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       showError(errorMessage);
@@ -243,7 +249,7 @@ export default function AdminSubscriptionsPage() {
   }
 
   if (error && subscriptions.length === 0) {
-    return <AdminErrorState error={error} onRetry={() => fetchSubscriptions(filters)} />;
+    return <AdminErrorState error={error} onRetry={() => fetchSubscriptions(convertFilters(filters))} />;
   }
 
   return (
@@ -304,7 +310,7 @@ export default function AdminSubscriptionsPage() {
           <div>
             <Button
               variant="outline"
-              onClick={() => fetchSubscriptions(filters)}
+              onClick={() => fetchSubscriptions(convertFilters(filters))}
               className="w-full"
             >
               <RefreshCw className="w-4 h-4 mr-2" />

@@ -39,12 +39,17 @@ export default function AppSettingsPage() {
       setError(null);
 
       const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-        API_ENDPOINTS.settingsApp,
-        "GET"
+        "settingsApp" as keyof typeof API_ENDPOINTS,
+        { method: "GET" }
       );
 
-      if (response.success && response.data) {
-        setSettings(response.data);
+      if (!response.ok) {
+        throw new Error("Failed to fetch app settings");
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setSettings(result.data);
       } else {
         throw new Error("Failed to fetch app settings");
       }
@@ -66,12 +71,23 @@ export default function AppSettingsPage() {
       setSuccess(false);
 
       const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-        API_ENDPOINTS.settingsAppUpdate,
-        "PUT",
-        settings
+        "settingsAppUpdate" as keyof typeof API_ENDPOINTS,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(settings),
+        }
       );
 
-      if (response.success) {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save app settings");
+      }
+
+      const result = await response.json();
+      if (result.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       } else {
@@ -192,10 +208,10 @@ export default function AppSettingsPage() {
                         <label className="block text-sm font-medium mb-2">Environment</label>
                         <Select
                           value={settings.general?.environment || "production"}
-                          onChange={(e) =>
+                          onValueChange={(value) =>
                             setSettings({
                               ...settings,
-                              general: { ...settings.general, environment: e.target.value as "development" | "staging" | "production" },
+                              general: { ...settings.general, environment: value as "development" | "staging" | "production" },
                             })
                           }
                           options={[

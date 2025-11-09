@@ -1,5 +1,6 @@
 export type AdminRole = "admin" | "manager" | "supervisor";
 export type ProviderStatus = "active" | "inactive" | "suspended" | "pending";
+export type AgencyStatus = "active" | "inactive" | "suspended" | "pending";
 export type BusinessType = "sole_proprietorship" | "partnership" | "corporation" | "llc" | "nonprofit";
 export type ServiceCategory =
   | "cleaning"
@@ -159,11 +160,25 @@ export interface Settings {
   notificationPreferences?: NotificationPreferences;
 }
 
+export interface AgencyLogo {
+  url?: string;
+  publicId?: string;
+  thumbnail?: string;
+}
+
+export interface AgencyRating {
+  average?: number;
+  count?: number;
+}
+
 export interface Agency {
   _id?: string;
   name: string;
   description: string;
   owner: string;
+  logo?: AgencyLogo;
+  status?: AgencyStatus;
+  rating?: AgencyRating;
   admins?: Admin[];
   providers?: Provider[];
   contact: Contact;

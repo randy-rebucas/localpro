@@ -35,7 +35,7 @@ export function useActivity(params: ActivityParams = {}) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<ActivityResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<ActivityResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchActivities = useCallback(async () => {

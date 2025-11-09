@@ -102,8 +102,8 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
                 <div className="mt-2">
                   {filter.type === "select" && filter.options && (
                     <Select
-                      value={values[filter.id] || ""}
-                      onChange={(e) => onChange(filter.id, e.target.value)}
+                      value={values[filter.id] as string || ""}
+                      onValueChange={(value) => onChange(filter.id, value)}
                       options={[
                         { value: "", label: "All" },
                         ...filter.options
@@ -113,23 +113,26 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
 
                   {filter.type === "multiselect" && filter.options && (
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {filter.options.map((option) => (
-                        <label key={option.value} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={(values[filter.id] || []).includes(option.value)}
-                            onChange={(e) => {
-                              const current = values[filter.id] || [];
-                              const newValue = e.target.checked
-                                ? [...current, option.value]
-                                : current.filter((v: string) => v !== option.value);
-                              onChange(filter.id, newValue);
-                            }}
-                            className="rounded"
-                          />
-                          <span className="text-sm">{option.label}</span>
-                        </label>
-                      ))}
+                      {filter.options.map((option) => {
+                        const currentValue = values[filter.id];
+                        const currentArray = Array.isArray(currentValue) ? currentValue as string[] : [];
+                        return (
+                          <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={currentArray.includes(option.value)}
+                              onChange={(e) => {
+                                const newValue = e.target.checked
+                                  ? [...currentArray, option.value]
+                                  : currentArray.filter((v: string) => v !== option.value);
+                                onChange(filter.id, newValue);
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">{option.label}</span>
+                          </label>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -139,11 +142,24 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
                         <Input
                           type="number"
                           placeholder="Min"
-                          value={values[filter.id]?.min || ""}
-                          onChange={(e) => onChange(filter.id, {
-                            ...(values[filter.id] || {}),
-                            min: e.target.value ? Number(e.target.value) : undefined
-                          })}
+                          value={(() => {
+                            const val = values[filter.id];
+                            if (val && typeof val === "object" && val !== null && !Array.isArray(val)) {
+                              const range = val as { min?: number; max?: number };
+                              return range.min !== undefined ? String(range.min) : "";
+                            }
+                            return "";
+                          })()}
+                          onChange={(e) => {
+                            const currentValue = values[filter.id];
+                            const currentRange = (currentValue && typeof currentValue === "object" && currentValue !== null && !Array.isArray(currentValue)) 
+                              ? currentValue as { min?: number; max?: number }
+                              : {};
+                            onChange(filter.id, {
+                              ...currentRange,
+                              min: e.target.value ? Number(e.target.value) : undefined
+                            });
+                          }}
                           min={filter.min}
                           max={filter.max}
                           step={filter.step}
@@ -152,11 +168,24 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
                         <Input
                           type="number"
                           placeholder="Max"
-                          value={values[filter.id]?.max || ""}
-                          onChange={(e) => onChange(filter.id, {
-                            ...(values[filter.id] || {}),
-                            max: e.target.value ? Number(e.target.value) : undefined
-                          })}
+                          value={(() => {
+                            const val = values[filter.id];
+                            if (val && typeof val === "object" && val !== null && !Array.isArray(val)) {
+                              const range = val as { min?: number; max?: number };
+                              return range.max !== undefined ? String(range.max) : "";
+                            }
+                            return "";
+                          })()}
+                          onChange={(e) => {
+                            const currentValue = values[filter.id];
+                            const currentRange = (currentValue && typeof currentValue === "object" && currentValue !== null && !Array.isArray(currentValue)) 
+                              ? currentValue as { min?: number; max?: number }
+                              : {};
+                            onChange(filter.id, {
+                              ...currentRange,
+                              max: e.target.value ? Number(e.target.value) : undefined
+                            });
+                          }}
                           min={filter.min}
                           max={filter.max}
                           step={filter.step}
@@ -169,7 +198,10 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
                     <Input
                       type="text"
                       placeholder={`Search ${filter.label.toLowerCase()}...`}
-                      value={values[filter.id] || ""}
+                      value={(() => {
+                        const val = values[filter.id];
+                        return typeof val === "string" ? val : "";
+                      })()}
                       onChange={(e) => onChange(filter.id, e.target.value)}
                     />
                   )}

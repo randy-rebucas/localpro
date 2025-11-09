@@ -108,16 +108,16 @@ export function JobCard({ job, viewMode = "list", onApply, onFavorite }: JobCard
             )}
           </div>
 
-          {job.skills && job.skills.length > 0 && (
+          {job.requirements?.skills && job.requirements.skills.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
-              {job.skills.slice(0, 3).map((skill, idx) => (
+              {job.requirements.skills.slice(0, 3).map((skill: string, idx: number) => (
                 <span key={idx} className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
                   {skill}
                 </span>
               ))}
-              {job.skills.length > 3 && (
+              {job.requirements.skills.length > 3 && (
                 <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                  +{job.skills.length - 3} more
+                  +{job.requirements.skills.length - 3} more
                 </span>
               )}
             </div>

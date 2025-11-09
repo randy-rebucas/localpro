@@ -33,7 +33,7 @@ export function useAgencies(params: AgenciesParams = {}) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<AgenciesResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<AgenciesResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchAgencies = useCallback(async () => {

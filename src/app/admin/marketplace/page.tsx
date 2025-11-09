@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { 
   Search, 
   Edit, 
@@ -28,7 +29,9 @@ import {
   ServicePricing, 
   ServiceImage,
   PricingType,
-  ServiceType
+  ServiceType,
+  DayOfWeek,
+  ScheduleDay
 } from "@/types/services";
 
 // Type for API service response (raw data from backend)
@@ -98,7 +101,23 @@ const transformServiceData = (apiService: ApiServiceData): Service => {
   };
 
   if (apiService.availability) {
-    service.availability = apiService.availability;
+    const validDayOfWeek = (day: string | undefined): DayOfWeek | undefined => {
+      if (!day) return undefined;
+      const validDays: DayOfWeek[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+      return validDays.includes(day.toLowerCase() as DayOfWeek) ? (day.toLowerCase() as DayOfWeek) : undefined;
+    };
+
+    const transformedSchedule: ScheduleDay[] | undefined = apiService.availability.schedule?.map((scheduleItem) => ({
+      day: validDayOfWeek(scheduleItem.day),
+      startTime: scheduleItem.startTime,
+      endTime: scheduleItem.endTime,
+      isAvailable: scheduleItem.isAvailable,
+    }));
+
+    service.availability = {
+      schedule: transformedSchedule,
+      timezone: apiService.availability.timezone,
+    };
   }
 
   return service;
@@ -782,10 +801,13 @@ export default function MarketplacePage() {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8">
                         {service.images && service.images.length > 0 ? (
-                          <img 
+                          <Image 
                             src={service.images[0].url || service.images[0].thumbnail || ''} 
                             alt={service.title}
+                            width={32}
+                            height={32}
                             className="h-8 w-8 rounded object-cover"
+                            unoptimized
                           />
                         ) : (
                           <div className="h-8 w-8 rounded bg-gray-300 flex items-center justify-center">
@@ -1462,10 +1484,13 @@ function ImageUploadForm({
           <div className="grid grid-cols-3 gap-2">
             {selectedFiles.map((file, index) => (
               <div key={index} className="relative">
-                <img
+                <Image
                   src={URL.createObjectURL(file)}
                   alt={file.name}
+                  width={200}
+                  height={96}
                   className="w-full h-24 object-cover rounded border border-gray-300"
+                  unoptimized
                 />
                 <button
                   onClick={() => removeFile(index)}

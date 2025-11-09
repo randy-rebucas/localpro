@@ -34,7 +34,7 @@ export function useAnnouncements(params: AnnouncementsParams = {}) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<AnnouncementsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<AnnouncementsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchAnnouncements = useCallback(async () => {

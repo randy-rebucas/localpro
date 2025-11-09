@@ -37,7 +37,7 @@ export function useAds(params: AdsParams = {}) {
   const [ads, setAds] = useState<AdCampaign[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<AdsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<AdsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchAds = useCallback(async () => {

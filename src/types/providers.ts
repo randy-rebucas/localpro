@@ -144,6 +144,7 @@ export interface Portfolio {
 }
 
 export interface Verification {
+  isVerified?: boolean;
   identityVerified?: boolean;
   businessVerified?: boolean;
   backgroundCheck?: BackgroundCheck;
@@ -286,11 +287,24 @@ export interface Metadata {
   notes?: string;
 }
 
+export interface ProviderProfile {
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+}
+
+export interface ProviderRating {
+  average?: number;
+  count?: number;
+}
+
 export interface Provider {
   _id?: string;
   userId: string;
   status?: ProviderStatus;
   providerType: ProviderType;
+  profile?: ProviderProfile;
+  rating?: ProviderRating;
   businessInfo?: BusinessInfo;
   professionalInfo?: ProfessionalInfo;
   verification?: Verification;

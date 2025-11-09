@@ -34,7 +34,7 @@ export function useProviders(params: ProvidersParams = {}) {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<ProvidersResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<ProvidersResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchProviders = useCallback(async () => {

@@ -68,9 +68,9 @@ export function AgencyDetail({
             <div className="flex items-start justify-between mb-2">
               <div>
                 <h1 className="text-3xl font-bold">{agency.name}</h1>
-                {agency.businessType && (
+                {agency.business?.type && (
                   <p className="text-lg text-gray-600 mt-1 capitalize">
-                    {agency.businessType.replace("_", " ")}
+                    {agency.business.type.replace("_", " ")}
                   </p>
                 )}
               </div>

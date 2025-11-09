@@ -206,17 +206,41 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
           </Card>
         )}
 
-        {rental.requirements && rental.requirements.length > 0 && (
+        {rental.requirements && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Requirements</h2>
-            <ul className="space-y-2">
-              {rental.requirements.map((requirement, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-500" />
-                  <span>{requirement}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              {rental.requirements.minAge && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Minimum Age</span>
+                  <span className="font-semibold">{rental.requirements.minAge} years</span>
+                </div>
+              )}
+              {rental.requirements.licenseRequired !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">License Required</span>
+                  <span className="font-semibold">{rental.requirements.licenseRequired ? "Yes" : "No"}</span>
+                </div>
+              )}
+              {rental.requirements.licenseType && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">License Type</span>
+                  <span className="font-semibold">{rental.requirements.licenseType}</span>
+                </div>
+              )}
+              {rental.requirements.deposit && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Deposit</span>
+                  <span className="font-semibold">${rental.requirements.deposit}</span>
+                </div>
+              )}
+              {rental.requirements.insuranceRequired !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Insurance Required</span>
+                  <span className="font-semibold">{rental.requirements.insuranceRequired ? "Yes" : "No"}</span>
+                </div>
+              )}
+            </div>
           </Card>
         )}
 
@@ -263,26 +287,26 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Maintenance</h2>
             <div className="space-y-2">
-              {rental.maintenance.lastServiceDate && (
+              {rental.maintenance.lastService && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Last Service</span>
                   <span className="font-semibold">
-                    {new Date(rental.maintenance.lastServiceDate).toLocaleDateString()}
+                    {new Date(rental.maintenance.lastService).toLocaleDateString()}
                   </span>
                 </div>
               )}
-              {rental.maintenance.nextServiceDate && (
+              {rental.maintenance.nextService && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Next Service</span>
                   <span className="font-semibold">
-                    {new Date(rental.maintenance.nextServiceDate).toLocaleDateString()}
+                    {new Date(rental.maintenance.nextService).toLocaleDateString()}
                   </span>
                 </div>
               )}
-              {rental.maintenance.condition && (
+              {rental.specifications?.condition && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Condition</span>
-                  <span className="font-semibold capitalize">{rental.maintenance.condition}</span>
+                  <span className="font-semibold capitalize">{rental.specifications.condition}</span>
                 </div>
               )}
             </div>

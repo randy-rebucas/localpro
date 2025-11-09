@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { 
   BookOpen, 
   Search, 
@@ -501,10 +502,10 @@ export default function AcademyPage() {
           ? (course.instructor as { _id?: string })._id || ""
           : "",
       regularPrice: typeof course.pricing === 'object' ? course.pricing.regularPrice : 0,
-      discountedPrice: typeof course.pricing === 'object' ? course.pricing.discountedPrice : undefined,
+      discountedPrice: typeof course.pricing === 'object' ? (course.pricing.discountedPrice ?? 0) : 0,
       currency: typeof course.pricing === 'object' ? course.pricing.currency || "USD" : "USD",
       hours: typeof course.duration === 'object' ? course.duration.hours : 0,
-      weeks: typeof course.duration === 'object' ? course.duration.weeks : undefined,
+      weeks: typeof course.duration === 'object' ? (course.duration.weeks ?? 0) : 0,
       maxCapacity: course.enrollment?.maxCapacity || 0,
       isActive: course.isActive ?? true,
       tags: course.tags || [],
@@ -685,10 +686,13 @@ export default function AcademyPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {course.thumbnail?.url ? (
-                          <img
+                          <Image
                             src={course.thumbnail.url}
                             alt={course.title}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded object-cover mr-3"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center mr-3">
@@ -1147,10 +1151,13 @@ export default function AcademyPage() {
             />
             {thumbnailFile && (
               <div className="mt-3">
-                <img
+                <Image
                   src={URL.createObjectURL(thumbnailFile)}
                   alt="Preview"
+                  width={800}
+                  height={192}
                   className="w-full h-48 object-cover rounded"
+                  unoptimized
                 />
               </div>
             )}
@@ -1255,10 +1262,13 @@ export default function AcademyPage() {
         {selectedCourse && (
           <div className="space-y-4">
             {selectedCourse.thumbnail?.url && (
-              <img
+              <Image
                 src={selectedCourse.thumbnail.url}
                 alt={selectedCourse.title}
+                width={800}
+                height={192}
                 className="w-full h-48 object-cover rounded"
+                unoptimized
               />
             )}
             <div>

@@ -89,7 +89,10 @@ const transformUserData = (apiUser: ApiUserData): User => {
     tags: apiUser.tags,
     createdAt: apiUser.createdAt ? new Date(apiUser.createdAt) : new Date(),
     updatedAt: apiUser.updatedAt ? new Date(apiUser.updatedAt) : new Date(),
-    lastLoginAt: apiUser.lastLogin || apiUser.lastLoginAt ? new Date(apiUser.lastLogin || apiUser.lastLoginAt) : undefined,
+    lastLoginAt: (() => {
+      const loginDate = apiUser.lastLogin || apiUser.lastLoginAt;
+      return loginDate ? new Date(loginDate) : undefined;
+    })(),
   };
 
   // Handle profile

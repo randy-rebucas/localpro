@@ -41,7 +41,7 @@ export function useSupplies(params: SuppliesParams = {}) {
   const [supplies, setSupplies] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<SuppliesResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<SuppliesResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchSupplies = useCallback(async () => {

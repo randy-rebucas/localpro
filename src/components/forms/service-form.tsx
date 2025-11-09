@@ -70,6 +70,7 @@ export function ServiceForm({ initialData, onSubmit, onCancel, loading = false }
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {

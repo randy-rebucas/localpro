@@ -30,7 +30,7 @@ export function useTrustVerificationRequests(params: TrustVerificationParams = {
   const [requests, setRequests] = useState<VerificationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<TrustVerificationResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<TrustVerificationResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchRequests = useCallback(async () => {

@@ -40,7 +40,7 @@ export function useJobs(params: JobsParams = {}) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<JobsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<JobsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchJobs = useCallback(async () => {

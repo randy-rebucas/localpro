@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { 
   Home, 
   Search, 
@@ -182,7 +183,6 @@ export default function RentalsPage() {
           rentalsData = rentalsResult.data;
         } else if (rentalsResult.data.rentals && Array.isArray(rentalsResult.data.rentals)) {
           rentalsData = rentalsResult.data.rentals;
-          setTotalCount(rentalsResult.data.pagination?.total || rentalsResult.data.rentals.length);
         }
       } else if (Array.isArray(rentalsResult)) {
         rentalsData = rentalsResult;
@@ -676,10 +676,13 @@ export default function RentalsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {rental.images && rental.images.length > 0 && rental.images[0]?.url ? (
-                          <img
+                          <Image
                             src={rental.images[0].url}
                             alt={rental.title}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded object-cover mr-3"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center mr-3">
@@ -1200,10 +1203,13 @@ export default function RentalsPage() {
               <div className="mt-3 grid grid-cols-3 gap-2">
                 {imageFiles.map((file, idx) => (
                   <div key={idx} className="relative">
-                    <img 
+                    <Image 
                       src={URL.createObjectURL(file)} 
                       alt={`Preview ${idx + 1}`}
+                      width={200}
+                      height={80}
                       className="w-full h-20 object-cover rounded"
+                      unoptimized
                     />
                     <button
                       onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
@@ -1223,12 +1229,16 @@ export default function RentalsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Existing Images</label>
               <div className="grid grid-cols-3 gap-2">
                 {selectedRental.images.map((image, idx) => (
-                  <div key={idx} className="relative">
-                    <img 
-                      src={image.url || image.thumbnail} 
-                      alt={`Image ${idx + 1}`}
-                      className="w-full h-20 object-cover rounded"
-                    />
+                  (image.url || image.thumbnail) && (
+                    <div key={idx} className="relative">
+                      <Image 
+                        src={image.url || image.thumbnail || ''} 
+                        alt={`Image ${idx + 1}`}
+                        width={200}
+                        height={80}
+                        className="w-full h-20 object-cover rounded"
+                        unoptimized
+                      />
                     <button
                       onClick={() => selectedRental._id && image._id && handleDeleteImage(selectedRental._id, image._id)}
                       className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
@@ -1236,6 +1246,7 @@ export default function RentalsPage() {
                       <X className="w-3 h-3" />
                     </button>
                   </div>
+                  )
                 ))}
               </div>
             </div>
@@ -1276,14 +1287,19 @@ export default function RentalsPage() {
           <div className="space-y-4">
             {selectedRental.images && selectedRental.images.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
-                {selectedRental.images.slice(0, 4).map((image, idx) => (
-                  <img
-                    key={idx}
-                    src={image.url || image.thumbnail}
-                    alt={`${selectedRental.title} ${idx + 1}`}
-                    className="w-full h-32 object-cover rounded"
-                  />
-                ))}
+                {selectedRental.images.slice(0, 4).map((image, idx) => 
+                  (image.url || image.thumbnail) ? (
+                    <Image
+                      key={idx}
+                      src={image.url || image.thumbnail || ''}
+                      alt={`${selectedRental.title} ${idx + 1}`}
+                      width={300}
+                      height={128}
+                      className="w-full h-32 object-cover rounded"
+                      unoptimized
+                    />
+                  ) : null
+                )}
               </div>
             )}
             <div>

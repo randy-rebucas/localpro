@@ -41,7 +41,7 @@ export function useRentals(params: RentalsParams = {}) {
   const [rentals, setRentals] = useState<RentalItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<RentalsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<RentalsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchRentals = useCallback(async () => {

@@ -29,7 +29,7 @@ interface ProviderDetailProps {
 export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDetailProps) {
   const router = useRouter();
   const { data: session } = useSession();
-  const isOwnProfile = session?.user?.id === provider.user;
+  const isOwnProfile = session?.user?.id === provider.userId;
 
   return (
     <div className="space-y-6">
@@ -97,7 +97,7 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
                 Verified
               </span>
             )}
-            {provider.backgroundCheck?.status === "passed" && (
+            {provider.verification?.backgroundCheck?.status === "passed" && (
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center gap-1">
                 <Award className="w-3 h-3" />
                 Background Checked
@@ -145,7 +145,7 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
             {!isOwnProfile && (
               <Button
                 variant="outline"
-                onClick={() => router.push(`/providers/${provider.user}/services`)}
+                onClick={() => router.push(`/providers/${provider.userId}/services`)}
                 size="lg"
               >
                 View Services
@@ -157,23 +157,23 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
 
       {/* Details Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {provider.contact && (
+        {(provider.businessInfo?.businessEmail || provider.businessInfo?.businessPhone || provider.businessInfo?.website) && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
             <div className="space-y-3">
-              {provider.contact.email && (
+              {provider.businessInfo?.businessEmail && (
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-400" />
-                  <a href={`mailto:${provider.contact.email}`} className="text-blue-600 hover:underline">
-                    {provider.contact.email}
+                  <a href={`mailto:${provider.businessInfo.businessEmail}`} className="text-blue-600 hover:underline">
+                    {provider.businessInfo.businessEmail}
                   </a>
                 </div>
               )}
-              {provider.contact.phone && (
+              {provider.businessInfo?.businessPhone && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-gray-400" />
-                  <a href={`tel:${provider.contact.phone}`} className="text-blue-600 hover:underline">
-                    {provider.contact.phone}
+                  <a href={`tel:${provider.businessInfo.businessPhone}`} className="text-blue-600 hover:underline">
+                    {provider.businessInfo.businessPhone}
                   </a>
                 </div>
               )}
@@ -227,51 +227,56 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
           </Card>
         )}
 
-        {provider.certifications && provider.certifications.length > 0 && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Award className="w-5 h-5" />
-              Certifications
-            </h2>
-            <div className="space-y-2">
-              {provider.certifications.map((cert, index) => (
-                <div key={index} className="border-l-4 border-blue-500 pl-3">
-                  <p className="font-semibold">{cert.name}</p>
-                  {cert.issuer && <p className="text-sm text-gray-600">Issued by: {cert.issuer}</p>}
-                  {cert.dateIssued && (
-                    <p className="text-sm text-gray-600">
-                      Issued: {new Date(cert.dateIssued).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
+        {(() => {
+          const allCertifications = provider.professionalInfo?.specialties?.flatMap(
+            (specialty) => specialty.certifications || []
+          ) || [];
+          return allCertifications.length > 0 ? (
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Certifications
+              </h2>
+              <div className="space-y-2">
+                {allCertifications.map((cert, index) => (
+                  <div key={index} className="border-l-4 border-blue-500 pl-3">
+                    <p className="font-semibold">{cert.name}</p>
+                    {cert.issuer && <p className="text-sm text-gray-600">Issued by: {cert.issuer}</p>}
+                    {cert.dateIssued && (
+                      <p className="text-sm text-gray-600">
+                        Issued: {new Date(cert.dateIssued).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : null;
+        })()}
 
-        {provider.insurance && (
+        {provider.verification?.insurance && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Insurance</h2>
             <div className="space-y-2">
-              {provider.insurance.provider && (
+              {provider.verification.insurance.insuranceProvider && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Provider</span>
-                  <span className="font-semibold">{provider.insurance.provider}</span>
+                  <span className="font-semibold">{provider.verification.insurance.insuranceProvider}</span>
                 </div>
               )}
-              {provider.insurance.coverageAmount && (
+              {provider.verification.insurance.coverageAmount && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Coverage</span>
                   <span className="font-semibold">
-                    ${provider.insurance.coverageAmount.toLocaleString()}
+                    ${provider.verification.insurance.coverageAmount.toLocaleString()}
                   </span>
                 </div>
               )}
-              {provider.insurance.expiryDate && (
+              {provider.verification.insurance.expiryDate && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Expires</span>
                   <span className="font-semibold">
-                    {new Date(provider.insurance.expiryDate).toLocaleDateString()}
+                    {new Date(provider.verification.insurance.expiryDate).toLocaleDateString()}
                   </span>
                 </div>
               )}

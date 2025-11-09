@@ -35,7 +35,7 @@ export function useFacilityCare(params: FacilityCareParams = {}) {
   const [services, setServices] = useState<FacilityCareService[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<FacilityCareResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<FacilityCareResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchServices = useCallback(async () => {

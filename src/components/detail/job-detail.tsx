@@ -250,11 +250,11 @@ export function JobDetail({
           </Card>
         )}
 
-        {job.skills && job.skills.length > 0 && (
+        {job.requirements?.skills && job.requirements.skills.length > 0 && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Required Skills</h2>
             <div className="flex flex-wrap gap-2">
-              {job.skills.map((skill, index) => (
+              {job.requirements.skills.map((skill: string, index: number) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
@@ -266,11 +266,11 @@ export function JobDetail({
           </Card>
         )}
 
-        {job.requirements && job.requirements.length > 0 && (
+        {job.requirements?.other && job.requirements.other.length > 0 && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Requirements</h2>
             <ul className="space-y-2">
-              {job.requirements.map((requirement, index) => (
+              {job.requirements.other.map((requirement: string, index: number) => (
                 <li key={index} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5" />
                   <span>{requirement}</span>
@@ -312,12 +312,10 @@ export function JobDetail({
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Application Process</h2>
             <div className="space-y-2">
-              {job.applicationProcess.steps && job.applicationProcess.steps.length > 0 && (
-                <ol className="list-decimal list-inside space-y-1">
-                  {job.applicationProcess.steps.map((step, index) => (
-                    <li key={index} className="text-gray-700">{step}</li>
-                  ))}
-                </ol>
+              {job.applicationProcess.instructions && (
+                <div className="text-gray-700 whitespace-pre-line">
+                  {job.applicationProcess.instructions}
+                </div>
               )}
               {job.applicationProcess.deadline && (
                 <div className="mt-4 pt-4 border-t">

@@ -36,7 +36,7 @@ export function useCourses(params: CoursesParams = {}) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<CoursesResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<CoursesResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchCourses = useCallback(async () => {

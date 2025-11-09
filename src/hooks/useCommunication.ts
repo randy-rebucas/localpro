@@ -30,7 +30,7 @@ export function useConversations(params: ConversationsParams = {}) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<ConversationsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<ConversationsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchConversations = useCallback(async () => {

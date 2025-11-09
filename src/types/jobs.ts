@@ -178,6 +178,7 @@ export interface Job {
   analytics?: Analytics;
   tags?: string[];
   isActive?: boolean;
+  isRemote?: boolean;
   featured?: Featured;
   promoted?: Promoted;
   createdAt?: Date;

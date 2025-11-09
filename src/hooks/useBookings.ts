@@ -36,7 +36,7 @@ export function useBookings(params: BookingsParams = {}) {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<BookingsResponse["pagination"]>(null);
+  const [pagination, setPagination] = useState<BookingsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
 
   const fetchBookings = useCallback(async () => {
