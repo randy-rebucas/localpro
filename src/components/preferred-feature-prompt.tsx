@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Sparkles, X, CheckCircle2 } from "lucide-react";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
@@ -36,23 +36,60 @@ export function PreferredFeaturePrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
   const [pendingFeature, setPendingFeature] = useState<PreferredFeature | null>(null);
 
+  const handleDismiss = useCallback(() => {
+    if (pendingFeature) {
+      sessionStorage.setItem(`preferred_prompt_${pendingFeature}`, "true");
+      setShowPrompt(false);
+      setPendingFeature(null);
+    }
+  }, [pendingFeature]);
+
+  // Lock body scroll when prompt is shown
+  useEffect(() => {
+    if (showPrompt) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showPrompt]);
+
+  // Handle escape key
+  useEffect(() => {
+    if (!showPrompt) return;
+    
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleDismiss();
+      }
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [showPrompt, handleDismiss]);
+
   useEffect(() => {
     // Only show prompt if:
     // 1. Not loading
     // 2. No preferred feature is set
     // 3. User navigated to a feature route
     // 4. Haven't shown prompt for this route yet
-    if (isLoading || hasPreferredFeature) {
+    if (isLoading || hasPreferredFeature || showPrompt) {
       return;
     }
 
     const featureId = routeToFeatureId[pathname];
-    if (featureId && !showPrompt) {
+    if (featureId) {
       // Check if we've already prompted for this feature in this session
       const promptShown = sessionStorage.getItem(`preferred_prompt_${featureId}`);
       if (!promptShown) {
-        setPendingFeature(featureId);
-        setShowPrompt(true);
+        // Small delay to ensure page is loaded
+        const timer = setTimeout(() => {
+          setPendingFeature(featureId);
+          setShowPrompt(true);
+        }, 500);
+        return () => clearTimeout(timer);
       }
     }
   }, [pathname, hasPreferredFeature, isLoading, showPrompt]);
@@ -60,14 +97,6 @@ export function PreferredFeaturePrompt() {
   const handleSetAsPreferred = () => {
     if (pendingFeature) {
       setPreferredFeature(pendingFeature);
-      sessionStorage.setItem(`preferred_prompt_${pendingFeature}`, "true");
-      setShowPrompt(false);
-      setPendingFeature(null);
-    }
-  };
-
-  const handleDismiss = () => {
-    if (pendingFeature) {
       sessionStorage.setItem(`preferred_prompt_${pendingFeature}`, "true");
       setShowPrompt(false);
       setPendingFeature(null);
