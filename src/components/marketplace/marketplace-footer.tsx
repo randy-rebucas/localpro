@@ -50,10 +50,16 @@ export function MarketplaceFooter() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Download App</h3>
             <div className="space-y-2">
-              <button className="w-full px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+              <button 
+                disabled 
+                className="w-full px-4 py-2 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed opacity-60"
+              >
                 App Store
               </button>
-              <button className="w-full px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+              <button 
+                disabled 
+                className="w-full px-4 py-2 bg-gray-400 text-white rounded-lg text-sm font-medium cursor-not-allowed opacity-60"
+              >
                 Google Play
               </button>
             </div>

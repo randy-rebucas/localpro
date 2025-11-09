@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+
+// Prevent static generation/prerendering of this page
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,7 +88,7 @@ function SignInForm() {
 
   // Auto-focus verification code input
   useEffect(() => {
-    if (step === "code") {
+    if (step === "code" && typeof window !== 'undefined') {
       const codeInput = document.querySelector('input[type="text"]') as HTMLInputElement;
       if (codeInput) {
         setTimeout(() => codeInput.focus(), 100);
@@ -301,7 +305,7 @@ function SignInForm() {
       logger.debug("Verify code response", { result, status: response.status });
       if (response.ok && result.success) {
         // Persist API token client-side to enable direct external API calls
-        if (result.token) {
+        if (result.token && typeof window !== 'undefined') {
           const oneWeek = 60 * 60 * 24 * 7;
           const isProd = process.env.NODE_ENV === 'production';
           const secure = isProd ? '; Secure' : '';
@@ -309,7 +313,7 @@ function SignInForm() {
           document.cookie = `api-token=${result.token}; Path=/; Max-Age=${oneWeek}${sameSite}${secure}`;
         }
         // Optionally cache user locally for quick access
-        if (result.user) {
+        if (result.user && typeof window !== 'undefined') {
           try { localStorage.setItem('user', JSON.stringify(result.user)); } catch {}
         }
         toast.success("Signed in successfully!");

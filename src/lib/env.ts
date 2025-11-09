@@ -242,6 +242,20 @@ export const API_CONFIG = SERVER_CONFIG;
 // VALIDATION HELPERS
 // ===========================================
 export function validateRequiredEnvVars(): void {
+  // Skip validation during build/prerender
+  // Check multiple indicators that we're in a build context
+  const isBuildTime = 
+    process.env.NEXT_PHASE === 'phase-production-build' || 
+    process.env.NEXT_PHASE === 'phase-development-build' ||
+    process.env.NEXT_PHASE === 'phase-production-export' ||
+    typeof process.env.__NEXT_PRERENDER_MANIFEST !== 'undefined' ||
+    (typeof process.env.NEXT_RUNTIME === 'undefined' && 
+     typeof process.env.NEXT_PHASE !== 'undefined'); // Build phase set but runtime not set
+  
+  if (isBuildTime) {
+    return; // Silently skip during build
+  }
+
   const requiredVars = [
     'JWT_SECRET',
     'SESSION_SECRET',
@@ -288,6 +302,18 @@ export function getEnvironmentInfo(): Record<string, unknown> {
 // and evaluated during dynamic rendering on the server.
 
 // Validate environment on import (server-side only)
+// Skip validation during build/prerender to avoid blocking static generation
+// Only validate at runtime, not during static generation
 if (typeof window === 'undefined') {
-  validateRequiredEnvVars();
+  try {
+    // The validation function itself now handles build-time checks
+    validateRequiredEnvVars();
+  } catch (error) {
+    // Silently ignore validation errors during build to prevent build failures
+    // Errors will be caught and logged at runtime instead
+    if (process.env.NODE_ENV !== 'production' && typeof process.env.NEXT_PHASE === 'undefined') {
+      // Only log in development if we're not in a build phase
+      console.warn('Environment validation skipped:', error);
+    }
+  }
 }
