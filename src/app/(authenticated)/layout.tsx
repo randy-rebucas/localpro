@@ -17,6 +17,7 @@ import { MonitoringProviders } from "@/components/monitoring";
 import { UnregisterServiceWorker } from "@/components/unregister-sw";
 import { usePreferredFeature } from "@/hooks/usePreferredFeature";
 import { PreferredFeaturePrompt } from "@/components/preferred-feature-prompt";
+import { FloatingFeatureSelector } from "@/components/floating-feature-selector";
 
 export default function AuthenticatedLayout({
   children,
@@ -294,6 +295,7 @@ export default function AuthenticatedLayout({
       <MonitoringProviders />
       <UnregisterServiceWorker />
       <PreferredFeaturePrompt />
+      <FloatingFeatureSelector />
 
     </Providers>
   );

@@ -221,20 +221,32 @@ export function PreferredFeatureSelector() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
         {featureOptions.map((feature) => {
           const isSelected = selectedFeature === feature.id;
+          const isEnabled = feature.id === "marketplace";
           return (
             <button
               key={feature.id}
-              onClick={() => handleFeatureSelect(feature)}
+              onClick={() => isEnabled && handleFeatureSelect(feature)}
+              disabled={!isEnabled}
               className={`
-                relative p-4 rounded-lg border-2 transition-all duration-200
+                relative p-4 rounded-lg border-2 transition-all duration-200 overflow-hidden
                 ${
                   isSelected
                     ? "border-green-500 bg-green-50 shadow-md"
-                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    : isEnabled
+                    ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                    : "border-gray-100 bg-gray-50 cursor-not-allowed"
                 }
+                ${!isEnabled ? "blur-[0.5px]" : ""}
               `}
             >
-              <div className="flex flex-col items-center text-center space-y-2">
+              {!isEnabled && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/30 backdrop-blur-[2px]">
+                  <div className="bg-white/90 px-3 py-1 rounded-full border border-gray-300 shadow-sm">
+                    <span className="text-xs font-semibold text-gray-700">Coming Soon</span>
+                  </div>
+                </div>
+              )}
+              <div className={`flex flex-col items-center text-center space-y-2 ${!isEnabled ? "opacity-60" : ""}`}>
                 <div
                   className={`
                     w-12 h-12 ${feature.iconBgColor} rounded-lg flex items-center justify-center
@@ -256,7 +268,7 @@ export function PreferredFeatureSelector() {
                   <p className="text-xs text-gray-500">{feature.description}</p>
                 </div>
                 {isSelected && (
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-2 right-2 z-20">
                     <CheckCircle2 className="w-5 h-5 text-green-600" />
                   </div>
                 )}
