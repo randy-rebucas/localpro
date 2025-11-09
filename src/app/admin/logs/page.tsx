@@ -591,7 +591,7 @@ export default function AdminLogsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             System Logs
           </h1>
           <p className="text-gray-600 text-sm">Monitor system activity and performance</p>
@@ -1304,7 +1304,7 @@ export default function AdminLogsPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Dashboard Summary</h3>
             {dashboardSummary ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                <div className="bg-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-blue-100">System Health</p>
@@ -1317,7 +1317,7 @@ export default function AdminLogsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                <div className="bg-green-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-green-100">Performance Score</p>
@@ -1330,7 +1330,7 @@ export default function AdminLogsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                <div className="bg-purple-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-purple-100">Logs Summary</p>

@@ -50,7 +50,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
         <Loading size="xl" text="Loading admin panel..." />
       </div>
     );
@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <Providers>
       <ErrorBoundary>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-slate-50">
+        <div className="min-h-screen bg-slate-50">
           {/* Background Pattern */}
           <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmOWZhZmMiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0YzAtMS4xLS45LTItMi0ySDI2Yy0xLjEgMC0yIC45LTIgMnMwLjkgMiAyIDJoOGMxLjEgMCAyLS45IDItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-40 pointer-events-none"></div>
 
