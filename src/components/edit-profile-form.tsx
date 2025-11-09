@@ -6,12 +6,23 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
-  User, 
+  User as UserIcon, 
   Briefcase, 
   Save,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  Loader2
 } from "lucide-react";
+import type {
+  UserRole,
+  BusinessType,
+  BackgroundCheckStatus,
+  DayOfWeek,
+  AgencyRole,
+  AgencyStatus,
+  Avatar
+} from "@/types/users";
 import toast from "react-hot-toast";
 import { AvatarUpload } from "./avatar-upload";
 import { PortfolioGallery } from "./portfolio-gallery";
@@ -33,13 +44,12 @@ const avatarSchema = z.object({
   thumbnail: z.string().url().optional().or(z.literal("")),
 });
 
-// Enums from User data entity
-const roleEnum = z.enum(['client', 'provider', 'admin', 'supplier', 'instructor', 'agency_owner', 'agency_admin']);
-const businessTypeEnum = z.enum(['individual', 'small_business', 'enterprise', 'franchise']);
-const backgroundCheckStatusEnum = z.enum(['pending', 'approved', 'rejected', 'not_required']);
-const agencyRoleEnum = z.enum(['owner', 'admin', 'manager', 'supervisor', 'provider']);
-const agencyStatusEnum = z.enum(['active', 'inactive', 'suspended', 'pending']);
-const dayEnum = z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']);
+// Enums from User data entity - using types from @/types/users
+const businessTypeEnum = z.enum(['individual', 'small_business', 'enterprise', 'franchise'] satisfies [BusinessType, ...BusinessType[]]);
+const backgroundCheckStatusEnum = z.enum(['pending', 'approved', 'rejected', 'not_required'] satisfies [BackgroundCheckStatus, ...BackgroundCheckStatus[]]);
+const agencyRoleEnum = z.enum(['owner', 'admin', 'manager', 'supervisor', 'provider'] satisfies [AgencyRole, ...AgencyRole[]]);
+const agencyStatusEnum = z.enum(['active', 'inactive', 'suspended', 'pending'] satisfies [AgencyStatus, ...AgencyStatus[]]);
+const dayEnum = z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] satisfies [DayOfWeek, ...DayOfWeek[]]);
 
 const profileImageSchema = z.object({
   url: z.string().url().optional().or(z.literal("")),
@@ -49,11 +59,9 @@ const profileImageSchema = z.object({
 
 const profileSchema = z.object({
   // Basic Information (from User entity)
-  phoneNumber: z.string().min(1, "Phone number is required").optional().or(z.literal("")),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
-  firstName: z.string().optional().or(z.literal("")),
-  lastName: z.string().optional().or(z.literal("")),
-  role: roleEnum.optional().or(z.literal("")),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   isVerified: z.boolean().optional(),
 
   // Legacy flat fields (kept for backward compatibility/rendering)
@@ -61,6 +69,11 @@ const profileSchema = z.object({
   phone: z.string().optional(),
   bio: z.string().optional(),
   location: z.string().optional(),
+  // GeoJSON location field
+  locationPoint: z.object({
+    type: z.literal("Point"),
+    coordinates: z.tuple([z.number(), z.number()]),
+  }).optional(),
   website: z.string().url("Invalid URL").optional().or(z.literal("")),
   skills: z.string().optional(), // comma-separated in form
   experience: z.union([z.string(), z.number()]).optional(),
@@ -83,8 +96,7 @@ const profileSchema = z.object({
               lng: z.number().optional(),
             })
             .optional(),
-        })
-        .optional(),
+        }),
       skills: z.string().optional().or(z.literal("")), // comma-separated in form, array in entity
       experience: z.union([z.number(), z.string()]).optional(),
       rating: z.number().min(0).max(5).optional(),
@@ -202,12 +214,7 @@ const profileSchema = z.object({
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
-interface AvatarObject {
-  url?: string;
-  thumbnail?: string;
-  publicId?: string;
-}
-
+// Using Avatar type from @/types/users instead of AvatarObject
 export interface UserProfile {
   id: string;
   email: string;
@@ -220,14 +227,14 @@ export interface UserProfile {
   website?: string;
   skills?: string[];
   experience?: string;
-  avatar?: string | AvatarObject; // Support both string (legacy) and object formats
+  avatar?: string | Avatar; // Support both string (legacy) and object formats
   portfolio?: string[];
   role: string;
   createdAt: string;
   updatedAt: string;
   isVerified?: boolean;
   profile?: {
-    avatar?: AvatarObject;
+    avatar?: Avatar;
     [key: string]: unknown;
   };
 }
@@ -245,12 +252,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   
   // Role-based visibility helpers
   const isClient = userRole === 'CLIENT' || userRole === 'client';
-  const isProvider = userRole === 'PROVIDER';
-  const isSupplier = userRole === 'SUPPLIER';
-  const isInstructor = userRole === 'INSTRUCTOR';
-  const isAgencyOwner = userRole === 'AGENCY_OWNER';
-  const isAgencyAdmin = userRole === 'AGENCY_ADMIN';
-  const isAdmin = userRole === 'ADMIN';
+  const isProvider = userRole === 'PROVIDER' || userRole === 'provider';
+  const isSupplier = userRole === 'SUPPLIER' || userRole === 'supplier';
+  const isInstructor = userRole === 'INSTRUCTOR' || userRole === 'instructor';
+  const isAgencyOwner = userRole === 'AGENCY_OWNER' || userRole === 'agency_owner';
+  const isAgencyAdmin = userRole === 'AGENCY_ADMIN' || userRole === 'agency_admin';
+  const isAdmin = userRole === 'ADMIN' || userRole === 'admin';
   
   // Business roles (providers, suppliers, instructors, agency roles)
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
@@ -265,6 +272,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [initialValues, setInitialValues] = useState<ProfileForm | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   const {
     register,
@@ -279,9 +287,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     defaultValues: {
       firstName: "",
       lastName: "",
-      role: "",
       email: "",
-      phoneNumber: "",
       profile: {
         avatar: { url: "", publicId: "", thumbnail: "" },
         bio: "",
@@ -345,6 +351,136 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }
   }, [watchedValues, initialValues]);
 
+  // Function to get current location and reverse geocode
+  const getCurrentLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsGettingLocation(true);
+    
+    try {
+      // Get current position
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      });
+
+      const { longitude, latitude } = position.coords;
+      
+      // Set location in GeoJSON Point format: [longitude, latitude]
+      setValue("locationPoint", {
+        type: "Point",
+        coordinates: [longitude, latitude],
+      });
+      
+      // Also update address coordinates for backward compatibility
+      setValue("profile.address.coordinates", {
+        lat: latitude,
+        lng: longitude,
+      });
+
+      // Call reverse geocode API with lat/lng format
+      try {
+        const reverseGeocodePayload = {
+          lat: latitude,
+          lng: longitude,
+        };
+
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.mapsReverseGeocode}`, 
+          createAuthFetchOptions({
+            method: "POST",
+            body: JSON.stringify(reverseGeocodePayload),
+          })
+        );
+
+        if (!response.ok) {
+          throw new Error(`Reverse geocode failed: ${response.status}`);
+        }
+
+        const geocodeData = await response.json();
+        
+        // Parse response and autofill address fields
+        if (geocodeData.success && geocodeData.data) {
+          const addressData = geocodeData.data;
+          const addressComponents = addressData.addressComponents || {};
+          
+          // Autofill address fields from reverse geocode response
+          // Combine street number and route if available
+          const streetParts = [];
+          if (addressComponents.streetNumber) {
+            streetParts.push(addressComponents.streetNumber);
+          }
+          if (addressComponents.street || addressComponents.route) {
+            streetParts.push(addressComponents.street || addressComponents.route);
+          }
+          if (streetParts.length > 0) {
+            setValue("profile.address.street", streetParts.join(" "));
+          }
+          
+          if (addressComponents.city) {
+            setValue("profile.address.city", addressComponents.city);
+          }
+          
+          if (addressComponents.state) {
+            setValue("profile.address.state", addressComponents.state);
+          }
+          
+          if (addressComponents.postalCode) {
+            setValue("profile.address.zipCode", addressComponents.postalCode);
+          }
+          
+          if (addressComponents.country) {
+            setValue("profile.address.country", addressComponents.country);
+          }
+          
+          toast.success(`Location and address set successfully!`);
+        } else {
+          // If reverse geocode fails, still set coordinates
+          toast.success(`Location set: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        }
+      } catch (geocodeError) {
+        logger.warn('Reverse geocode failed', {
+          error: geocodeError instanceof Error ? geocodeError.message : String(geocodeError),
+        });
+        // Still set coordinates even if reverse geocode fails
+        toast.success(`Location set: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} (Address lookup failed)`);
+      }
+    } catch (error) {
+      let errorMessage = "Failed to get your location";
+      // Handle GeolocationPositionError
+      if (error && typeof error === 'object' && 'code' in error) {
+        const geoError = error as { code: number; message?: string };
+        switch (geoError.code) {
+          case 1: // PERMISSION_DENIED
+            errorMessage = "Location access denied. Please enable location permissions.";
+            break;
+          case 2: // POSITION_UNAVAILABLE
+            errorMessage = "Location information unavailable.";
+            break;
+          case 3: // TIMEOUT
+            errorMessage = "Location request timed out.";
+            break;
+          default:
+            errorMessage = geoError.message || "Failed to get your location";
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      toast.error(errorMessage);
+    } finally {
+      setIsGettingLocation(false);
+    }
+  }, [setValue]);
+
   const buildNestedPayload = useCallback((values: ProfileForm) => {
     // Check if user is a client - clients can only update specific fields
     const currentUserRole = session?.user?.role;
@@ -354,12 +490,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     if (isClientUser) {
       const payload: Record<string, unknown> = {};
       
-      // Only include firstName if it has a value
+      // firstName is required
       if (values.firstName && values.firstName.trim()) {
         payload.firstName = values.firstName.trim();
       }
       
-      // Only include lastName if it has a value
+      // lastName is required
       if (values.lastName && values.lastName.trim()) {
         payload.lastName = values.lastName.trim();
       }
@@ -369,38 +505,46 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         payload.email = values.email.trim();
       }
       
-      // Build profile object - only include bio and address for clients
-      const profilePayload: Record<string, unknown> = {};
+      // Include location in GeoJSON Point format if available
+      if (values.locationPoint && values.locationPoint.coordinates && values.locationPoint.coordinates.length === 2) {
+        payload.location = {
+          type: "Point",
+          coordinates: values.locationPoint.coordinates,
+        };
+      }
+      
+      // Build profile object - address is required
+      // Always include these fields as empty objects to prevent undefined values
+      const profilePayload: Record<string, unknown> = {
+        avatar: {},
+        insurance: {},
+        backgroundCheck: {},
+        availability: {},
+      };
       
       const bioValue = values.profile?.bio || values.bio;
       if (bioValue && bioValue.trim()) {
         profilePayload.bio = bioValue.trim();
       }
       
-      // Build address object - only include if it has meaningful data
+      // Build address object - address is required, include even if partially filled
       if (values.profile?.address) {
         const address: Record<string, unknown> = {};
-        let hasAddressData = false;
         
         if (values.profile.address.street && values.profile.address.street.trim()) {
           address.street = values.profile.address.street.trim();
-          hasAddressData = true;
         }
         if (values.profile.address.city && values.profile.address.city.trim()) {
           address.city = values.profile.address.city.trim();
-          hasAddressData = true;
         }
         if (values.profile.address.state && values.profile.address.state.trim()) {
           address.state = values.profile.address.state.trim();
-          hasAddressData = true;
         }
         if (values.profile.address.zipCode && values.profile.address.zipCode.trim()) {
           address.zipCode = values.profile.address.zipCode.trim();
-          hasAddressData = true;
         }
         if (values.profile.address.country && values.profile.address.country.trim()) {
           address.country = values.profile.address.country.trim();
-          hasAddressData = true;
         }
         
         // Include coordinates if they exist
@@ -408,20 +552,17 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           const coords: Record<string, unknown> = {};
           if (typeof values.profile.address.coordinates.lat === 'number' && !isNaN(values.profile.address.coordinates.lat)) {
             coords.lat = values.profile.address.coordinates.lat;
-            hasAddressData = true;
           }
           if (typeof values.profile.address.coordinates.lng === 'number' && !isNaN(values.profile.address.coordinates.lng)) {
             coords.lng = values.profile.address.coordinates.lng;
-            hasAddressData = true;
           }
           if (Object.keys(coords).length > 0) {
             address.coordinates = coords;
           }
         }
         
-        if (hasAddressData) {
-          profilePayload.address = address;
-        }
+        // Address is required - always include it
+        profilePayload.address = address;
       }
       
       // Only include profile if it has any fields
@@ -457,57 +598,63 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     // Build base payload - only include fields from payload interface
     const payload: Record<string, unknown> = {};
     
+    // firstName is required
+    if (values.firstName && values.firstName.trim()) {
+      payload.firstName = values.firstName.trim();
+    }
+    
+    // lastName is required
+    if (values.lastName && values.lastName.trim()) {
+      payload.lastName = values.lastName.trim();
+    }
+    
     // Only include email if it has a value
     if (values.email && values.email.trim()) {
       payload.email = values.email.trim();
     }
     
-    // Only include firstName if it has a value
-    if (values.firstName && values.firstName.trim()) {
-      payload.firstName = values.firstName.trim();
-    }
-    
-    // Only include lastName if it has a value
-    if (values.lastName && values.lastName.trim()) {
-      payload.lastName = values.lastName.trim();
+    // Include location in GeoJSON Point format if available
+    if (values.locationPoint && values.locationPoint.coordinates && values.locationPoint.coordinates.length === 2) {
+      payload.location = {
+        type: "Point",
+        coordinates: values.locationPoint.coordinates,
+      };
     }
     
     // Build profile object - only include fields with values
+    // Note: Avatar, insurance, backgroundCheck, and availability are set as empty objects
+    // to prevent backend from receiving undefined values
     const profilePayload: Record<string, unknown> = {};
     
-    if (values.profile?.avatar) {
-      profilePayload.avatar = values.profile.avatar;
-    }
+    // Always include these fields as empty objects to prevent undefined values
+    profilePayload.avatar = {};
+    profilePayload.insurance = {};
+    profilePayload.backgroundCheck = {};
+    profilePayload.availability = {};
     
     const bioValue = values.profile?.bio || values.bio;
     if (bioValue && bioValue.trim()) {
       profilePayload.bio = bioValue.trim();
     }
     
-    // Build address object - only include if it has meaningful data
+    // Build address object - address is required, always include it
     if (values.profile?.address) {
       const address: Record<string, unknown> = {};
-      let hasAddressData = false;
       
       if (values.profile.address.street && values.profile.address.street.trim()) {
         address.street = values.profile.address.street.trim();
-        hasAddressData = true;
       }
       if (values.profile.address.city && values.profile.address.city.trim()) {
         address.city = values.profile.address.city.trim();
-        hasAddressData = true;
       }
       if (values.profile.address.state && values.profile.address.state.trim()) {
         address.state = values.profile.address.state.trim();
-        hasAddressData = true;
       }
       if (values.profile.address.zipCode && values.profile.address.zipCode.trim()) {
         address.zipCode = values.profile.address.zipCode.trim();
-        hasAddressData = true;
       }
       if (values.profile.address.country && values.profile.address.country.trim()) {
         address.country = values.profile.address.country.trim();
-        hasAddressData = true;
       }
       
       // Include coordinates if they exist
@@ -515,20 +662,17 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         const coords: Record<string, unknown> = {};
         if (typeof values.profile.address.coordinates.lat === 'number' && !isNaN(values.profile.address.coordinates.lat)) {
           coords.lat = values.profile.address.coordinates.lat;
-          hasAddressData = true;
         }
         if (typeof values.profile.address.coordinates.lng === 'number' && !isNaN(values.profile.address.coordinates.lng)) {
           coords.lng = values.profile.address.coordinates.lng;
-          hasAddressData = true;
         }
         if (Object.keys(coords).length > 0) {
           address.coordinates = coords;
         }
       }
       
-      if (hasAddressData) {
-        profilePayload.address = address;
-      }
+      // Address is required - always include it
+      profilePayload.address = address;
     }
     
     if (skillsArray.length > 0) {
@@ -893,9 +1037,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         name: session.user.name || "",
         firstName: session.user.firstName || "",
         lastName: session.user.lastName || "",
-        role: (session.user.role || "") as "" | "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | undefined,
         email: session.user.email || "",
-        phoneNumber: session.user.phone || "",
         phone: session.user.phone || "",
         bio: session.user.bio || "",
         location: session.user.location || "",
@@ -983,6 +1125,51 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         };
         
         setProfile(normalizedProfile);
+        
+        // Parse location from API response (could be GeoJSON Point or string)
+        let locationPoint: { type: "Point"; coordinates: [number, number] } | undefined;
+        if (userData.location) {
+          if (typeof userData.location === 'object' && userData.location.type === 'Point' && Array.isArray(userData.location.coordinates)) {
+            // Already in GeoJSON format
+            locationPoint = {
+              type: "Point",
+              coordinates: userData.location.coordinates as [number, number],
+            };
+          }
+        }
+        
+        // Extract address coordinates from locationPoint or address.coordinates
+        let addressCoordinates: { lat?: number; lng?: number } | undefined;
+        if (locationPoint && locationPoint.coordinates && locationPoint.coordinates.length === 2) {
+          // Extract from locationPoint (GeoJSON format: [lng, lat])
+          addressCoordinates = {
+            lng: locationPoint.coordinates[0],
+            lat: locationPoint.coordinates[1],
+          };
+        } else if (userData.profile?.address?.coordinates) {
+          // Use existing address coordinates if available
+          const coords = userData.profile.address.coordinates;
+          if (typeof coords === 'object' && coords !== null && !Array.isArray(coords)) {
+            addressCoordinates = {
+              lat: typeof (coords as { lat?: number }).lat === 'number' ? (coords as { lat?: number }).lat : undefined,
+              lng: typeof (coords as { lng?: number }).lng === 'number' ? (coords as { lng?: number }).lng : undefined,
+            };
+          }
+        }
+        
+        // Build address object with coordinates
+        const addressData = userData.profile?.address || {
+          street: "",
+          city: "",
+          state: "",
+          zipCode: "",
+          country: "",
+        };
+        const addressWithCoords = {
+          ...addressData,
+          ...(addressCoordinates && { coordinates: addressCoordinates }),
+        };
+        
         const formData: ProfileForm = {
           name: userData.name || "",
           firstName: userData.firstName || "",
@@ -992,7 +1179,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           phoneNumber: userData.phoneNumber || userData.phone || "",
           phone: userData.phone || "",
           bio: userData.profile?.bio || userData.bio || "",
-          location: userData.location || "",
+          location: typeof userData.location === 'string' ? userData.location : "",
+          locationPoint: locationPoint,
           website: userData.website || "",
           skills: Array.isArray(userData.skills)
             ? userData.skills.join(", ")
@@ -1006,13 +1194,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           profile: {
             avatar: userData.profile?.avatar,
             bio: userData.profile?.bio || "",
-            address: userData.profile?.address || {
-              street: "",
-              city: "",
-              state: "",
-              zipCode: "",
-              country: "",
-            },
+            address: addressWithCoords,
             experience: userData.profile?.experience,
             businessName: userData.profile?.businessName || "",
             businessType: userData.profile?.businessType || "",
@@ -1047,12 +1229,79 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         reset(formData);
       setInitialValues(formData); // Set initial values for change detection
     } else {
-      const error = await response.json();
-      toast.error(error.error || "Failed to fetch profile");
+      // Handle error response
+      let errorText = '';
+      let errorData: Record<string, unknown> = {};
+      
+      try {
+        errorText = await response.text();
+        if (errorText) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText };
+          }
+        }
+      } catch (parseError) {
+        logger.warn('Failed to parse error response', {
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+        });
+      }
+      
+      const errorMessage = typeof errorData.error === 'string' 
+        ? errorData.error 
+        : typeof errorData.message === 'string'
+        ? errorData.message
+        : `Failed to fetch profile (${response.status})`;
+      
+      logger.error('Failed to fetch profile', new Error(errorMessage), {
+        status: response.status,
+        statusText: response.statusText,
+        url: `${API_BASE_URL}${API_ENDPOINTS.authMe}`,
+        errorData: errorData,
+        errorText: errorText || undefined,
+      });
+      
+      toast.error(errorMessage);
     }
   } catch (error) {
-    logger.error("Error fetching profile", error instanceof Error ? error : new Error(String(error)));
-    toast.error("Failed to fetch profile");
+    // Enhanced error logging for fetch profile
+    const errorContext = {
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      apiUrl: `${API_BASE_URL}${API_ENDPOINTS.authMe}`,
+      userId: session?.user?.id || session?.user?._id,
+    };
+    
+    logger.error("Error fetching profile", error instanceof Error ? error : new Error(String(error)), errorContext);
+    
+    let errorMessage = "Failed to fetch profile";
+    let errorDetails = "";
+    
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        errorMessage = "Request timeout";
+        errorDetails = "The request took too long. Please check your connection and try again.";
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        errorMessage = "Network error";
+        errorDetails = "Unable to connect to the server. Please check your internet connection and try again.";
+      } else if (error.message.includes('JSON')) {
+        errorMessage = "Data format error";
+        errorDetails = "The server response could not be parsed. Please try again or contact support.";
+      } else {
+        errorMessage = error.message || "An unexpected error occurred";
+        errorDetails = `Error type: ${error.name || 'Unknown'}`;
+      }
+    } else {
+      errorMessage = "An unexpected error occurred";
+      errorDetails = `Error: ${String(error)}`;
+    }
+    
+    const fullErrorMessage = errorDetails ? `${errorMessage}. ${errorDetails}` : errorMessage;
+    toast.error(fullErrorMessage, {
+      duration: 5000,
+    });
   } finally {
     isFetchingRef.current = false;
   }
@@ -1079,17 +1328,69 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       const profileData = (initialProfile as UserProfile & { profile?: Record<string, unknown> }).profile || {};
       const profileDataTyped = profileData as Record<string, unknown>;
       
+      // Parse location from initialProfile (could be GeoJSON Point or string)
+      let locationPoint: { type: "Point"; coordinates: [number, number] } | undefined;
+      const locationData = (initialProfile as UserProfile & { location?: unknown }).location || profileDataTyped.location;
+      if (locationData) {
+        if (typeof locationData === 'object' && locationData !== null && 'type' in locationData && locationData.type === 'Point' && 'coordinates' in locationData && Array.isArray(locationData.coordinates)) {
+          // Already in GeoJSON format
+          locationPoint = {
+            type: "Point",
+            coordinates: locationData.coordinates as [number, number],
+          };
+        }
+      }
+      
+      // Extract address coordinates from locationPoint or address.coordinates
+      let addressCoordinates: { lat?: number; lng?: number } | undefined;
+      if (locationPoint && locationPoint.coordinates && locationPoint.coordinates.length === 2) {
+        // Extract from locationPoint (GeoJSON format: [lng, lat])
+        addressCoordinates = {
+          lng: locationPoint.coordinates[0],
+          lat: locationPoint.coordinates[1],
+        };
+      } else if (profileDataTyped.address && typeof profileDataTyped.address === 'object' && !Array.isArray(profileDataTyped.address)) {
+        const addressObj = profileDataTyped.address as Record<string, unknown>;
+        if (addressObj.coordinates && typeof addressObj.coordinates === 'object' && addressObj.coordinates !== null && !Array.isArray(addressObj.coordinates)) {
+          const coords = addressObj.coordinates as Record<string, unknown>;
+          addressCoordinates = {
+            lat: typeof coords.lat === 'number' ? coords.lat : undefined,
+            lng: typeof coords.lng === 'number' ? coords.lng : undefined,
+          };
+        }
+      }
+      
+      // Build address object with coordinates
+      const addressData = (typeof profileDataTyped.address === 'object' && profileDataTyped.address && !Array.isArray(profileDataTyped.address)
+        ? profileDataTyped.address
+        : {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: "",
+          }) || {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: "",
+          };
+      const addressWithCoords = {
+        ...(addressData as Record<string, unknown>),
+        ...(addressCoordinates && { coordinates: addressCoordinates }),
+      };
+      
       // Build complete form data from initialProfile
       const formData: ProfileForm = {
         name: fullName,
         firstName: initialProfile.firstName || (typeof profileDataTyped.firstName === 'string' ? profileDataTyped.firstName : "") || "",
         lastName: initialProfile.lastName || (typeof profileDataTyped.lastName === 'string' ? profileDataTyped.lastName : "") || "",
-        role: (initialProfile.role || "") as "" | "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | undefined,
         email: initialProfile.email || "",
-        phoneNumber: phoneNumber,
         phone: initialProfile.phone || phoneNumber || "",
         bio: (typeof profileDataTyped.bio === 'string' ? profileDataTyped.bio : "") || (initialProfile.bio || ""),
-        location: (initialProfile.location || "") || (typeof profileDataTyped.location === 'string' ? profileDataTyped.location : ""),
+        location: typeof locationData === 'string' ? locationData : (initialProfile.location || "") || (typeof profileDataTyped.location === 'string' ? profileDataTyped.location : ""),
+        locationPoint: locationPoint,
         website: (initialProfile.website || "") || (typeof profileDataTyped.website === 'string' ? profileDataTyped.website : ""),
         skills: Array.isArray(initialProfile.skills)
           ? initialProfile.skills.join(", ")
@@ -1108,21 +1409,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
               ? profileDataTyped.avatar 
               : undefined)) as unknown as { url?: string; publicId?: string; thumbnail?: string } | undefined,
           bio: (typeof profileDataTyped.bio === 'string' ? profileDataTyped.bio : "") || initialProfile.bio || "",
-          address: ((typeof profileDataTyped.address === 'object' && profileDataTyped.address && !Array.isArray(profileDataTyped.address)
-            ? profileDataTyped.address
-            : {
-                street: "",
-                city: "",
-                state: "",
-                zipCode: "",
-                country: "",
-              }) || {
-                street: "",
-                city: "",
-                state: "",
-                zipCode: "",
-                country: "",
-              }) as { street?: string; city?: string; state?: string; zipCode?: string; country?: string; coordinates?: { lat?: number; lng?: number } } | undefined,
+          address: addressWithCoords as { street?: string; city?: string; state?: string; zipCode?: string; country?: string; coordinates?: { lat?: number; lng?: number } },
           experience: (typeof profileDataTyped.experience !== 'undefined' 
             ? (typeof profileDataTyped.experience === 'number' 
               ? profileDataTyped.experience 
@@ -1242,11 +1529,168 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }
     
     setIsLoading(true);
+    let payloadString: string | undefined;
     try {
       const payload = buildNestedPayload(data);
+      
+      // Clean payload - remove undefined values recursively and set empty objects for excluded fields
+      const cleanPayload = (obj: Record<string, unknown>): Record<string, unknown> => {
+        const cleaned: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(obj)) {
+          // Skip undefined and null values
+          if (value === undefined || value === null) {
+            continue;
+          }
+          
+          // Explicitly exclude phoneNumber - it should not be updated via this endpoint
+          if (key === 'phoneNumber') {
+            continue;
+          }
+          
+          // Handle profile object - set empty objects for excluded fields instead of undefined
+          if (key === 'profile' && typeof value === 'object' && value !== null) {
+            const profileObj = value as Record<string, unknown>;
+            const cleanedProfile: Record<string, unknown> = {};
+            
+            // Fields that should ALWAYS be sent as empty objects instead of undefined
+            const requiredEmptyFields = ['avatar', 'insurance', 'backgroundCheck', 'availability'];
+            
+            // First, always set these fields as empty objects
+            for (const field of requiredEmptyFields) {
+              cleanedProfile[field] = {};
+            }
+            
+            // Then process all other fields
+            for (const [profileKey, profileValue] of Object.entries(profileObj)) {
+              // Skip the required empty fields - we've already set them
+              if (requiredEmptyFields.includes(profileKey)) {
+                // If the field has actual data, use it instead of empty object
+                if (profileValue !== undefined && profileValue !== null && typeof profileValue === 'object' && !Array.isArray(profileValue)) {
+                  const cleanedField = cleanPayload(profileValue as Record<string, unknown>);
+                  // Only replace empty object if there's actual data
+                  if (Object.keys(cleanedField).length > 0) {
+                    cleanedProfile[profileKey] = cleanedField;
+                  }
+                }
+                continue;
+              }
+              
+              if (profileValue === undefined || profileValue === null) {
+                continue;
+              }
+              
+              if (Array.isArray(profileValue)) {
+                const filtered = profileValue.filter(item => item !== undefined && item !== null);
+                if (filtered.length > 0) {
+                  cleanedProfile[profileKey] = filtered;
+                }
+              } else if (typeof profileValue === 'object' && profileValue !== null) {
+                const cleanedNested = cleanPayload(profileValue as Record<string, unknown>);
+                if (Object.keys(cleanedNested).length > 0) {
+                  cleanedProfile[profileKey] = cleanedNested;
+                }
+              } else {
+                cleanedProfile[profileKey] = profileValue;
+              }
+            }
+            
+            // Always include profile - it will always have at least the required empty fields
+            cleaned[key] = cleanedProfile;
+          } else if (Array.isArray(value)) {
+            const filtered = value.filter(item => item !== undefined && item !== null);
+            if (filtered.length > 0) {
+              cleaned[key] = filtered;
+            }
+          } else if (typeof value === 'object' && value !== null) {
+            const cleanedObj = cleanPayload(value as Record<string, unknown>);
+            // Only include if the object has at least one property
+            if (Object.keys(cleanedObj).length > 0) {
+              cleaned[key] = cleanedObj;
+            }
+          } else {
+            cleaned[key] = value;
+          }
+        }
+        return cleaned;
+      };
+      
+      const cleanedPayload = cleanPayload(payload);
+      
+      // Ensure profile object always has the required empty fields
+      if (cleanedPayload.profile && typeof cleanedPayload.profile === 'object' && cleanedPayload.profile !== null) {
+        const profile = cleanedPayload.profile as Record<string, unknown>;
+        const requiredEmptyFields = ['avatar', 'insurance', 'backgroundCheck', 'availability'];
+        for (const field of requiredEmptyFields) {
+          if (!(field in profile) || profile[field] === undefined || profile[field] === null) {
+            profile[field] = {};
+          }
+        }
+      } else if (cleanedPayload.profile === undefined && payload.profile) {
+        // If profile was removed during cleaning but existed in original, recreate it with empty fields
+        cleanedPayload.profile = {
+          avatar: {},
+          insurance: {},
+          backgroundCheck: {},
+          availability: {},
+        };
+      }
+      
+      const cleanedPayloadKeys = Object.keys(cleanedPayload);
+      
+      // Validate payload before sending (after cleaning)
+      if (cleanedPayloadKeys.length === 0) {
+        logger.warn('Empty payload - no changes to save');
+        toast.error("No changes to save");
+        setIsLoading(false);
+        return;
+      }
+      
+      // Validate email format if email is being updated
+      if (cleanedPayload.email && typeof cleanedPayload.email === 'string') {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(cleanedPayload.email)) {
+          logger.error('Invalid email format', new Error('Invalid email'), { email: cleanedPayload.email });
+          toast.error("Please enter a valid email address");
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Log the cleaned payload structure for debugging
+      logger.debug('Cleaned payload structure', {
+        hasProfile: !!cleanedPayload.profile,
+        profileKeys: cleanedPayload.profile && typeof cleanedPayload.profile === 'object' 
+          ? Object.keys(cleanedPayload.profile as Record<string, unknown>)
+          : [],
+        hasAvatar: cleanedPayload.profile && typeof cleanedPayload.profile === 'object'
+          ? 'avatar' in (cleanedPayload.profile as Record<string, unknown>)
+          : false,
+        avatarValue: cleanedPayload.profile && typeof cleanedPayload.profile === 'object'
+          ? (cleanedPayload.profile as Record<string, unknown>).avatar
+          : undefined,
+      });
+      
+      // Validate payload structure - ensure it's serializable
+      try {
+        payloadString = JSON.stringify(cleanedPayload);
+      } catch (serializeError) {
+        logger.error('Failed to serialize payload', serializeError instanceof Error ? serializeError : new Error(String(serializeError)), { payload: cleanedPayload });
+        toast.error("Invalid data format. Please check your input and try again.");
+        setIsLoading(false);
+        return;
+      }
+      
+      if (!payloadString) {
+        logger.error('Payload string is undefined after serialization');
+        toast.error("Failed to prepare data for submission. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+      
       logger.debug('Submitting profile update', { 
         apiUrl: `${API_BASE_URL}${API_ENDPOINTS.authProfile}`,
-        payloadSize: JSON.stringify(payload).length 
+        payloadSize: payloadString.length,
+        payloadKeys: cleanedPayloadKeys
       });
       
       // Add timeout to prevent hanging requests
@@ -1260,7 +1704,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         {
           ...createAuthFetchOptions({
             method: "PUT",
-            body: JSON.stringify(payload),
+            body: payloadString,
             signal: controller.signal,
           })
         }
@@ -1305,6 +1749,50 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           setHasUnsavedChanges(false);
           setInitialValues({ ...data, skills: data.skills || "" });
           
+          // Parse location from updated profile (could be GeoJSON Point or string)
+          let locationPoint: { type: "Point"; coordinates: [number, number] } | undefined;
+          if (updatedProfile.location) {
+            if (typeof updatedProfile.location === 'object' && updatedProfile.location !== null && 'type' in updatedProfile.location && updatedProfile.location.type === 'Point' && 'coordinates' in updatedProfile.location && Array.isArray(updatedProfile.location.coordinates)) {
+              // Already in GeoJSON format
+              locationPoint = {
+                type: "Point",
+                coordinates: updatedProfile.location.coordinates as [number, number],
+              };
+            }
+          }
+          
+          // Extract address coordinates from locationPoint or address.coordinates
+          let addressCoordinates: { lat?: number; lng?: number } | undefined;
+          if (locationPoint && locationPoint.coordinates && locationPoint.coordinates.length === 2) {
+            // Extract from locationPoint (GeoJSON format: [lng, lat])
+            addressCoordinates = {
+              lng: locationPoint.coordinates[0],
+              lat: locationPoint.coordinates[1],
+            };
+          } else if (updatedProfile.profile?.address?.coordinates) {
+            // Use existing address coordinates if available
+            const coords = updatedProfile.profile.address.coordinates;
+            if (typeof coords === 'object' && coords !== null && !Array.isArray(coords)) {
+              addressCoordinates = {
+                lat: typeof (coords as { lat?: number }).lat === 'number' ? (coords as { lat?: number }).lat : undefined,
+                lng: typeof (coords as { lng?: number }).lng === 'number' ? (coords as { lng?: number }).lng : undefined,
+              };
+            }
+          }
+          
+          // Build address object with coordinates
+          const addressData = updatedProfile.profile?.address || {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: "",
+          };
+          const addressWithCoords = {
+            ...addressData,
+            ...(addressCoordinates && { coordinates: addressCoordinates }),
+          };
+          
           // Refresh the form with updated data from API response
           const formData: ProfileForm = {
             name: updatedProfile.name || "",
@@ -1315,7 +1803,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
             phoneNumber: updatedProfile.phoneNumber || updatedProfile.phone || "",
             phone: updatedProfile.phone || "",
             bio: updatedProfile.profile?.bio || updatedProfile.bio || "",
-            location: updatedProfile.location || "",
+            location: typeof updatedProfile.location === 'string' ? updatedProfile.location : "",
+            locationPoint: locationPoint,
             website: updatedProfile.website || "",
             skills: Array.isArray(updatedProfile.skills)
               ? updatedProfile.skills.join(", ")
@@ -1329,13 +1818,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
             profile: {
               avatar: updatedProfile.profile?.avatar,
               bio: updatedProfile.profile?.bio || "",
-              address: updatedProfile.profile?.address || {
-                street: "",
-                city: "",
-                state: "",
-                zipCode: "",
-                country: "",
-              },
+              address: addressWithCoords,
               experience: updatedProfile.profile?.experience,
               businessName: updatedProfile.profile?.businessName || "",
               businessType: updatedProfile.profile?.businessType || "",
@@ -1377,57 +1860,188 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           toast.success("Profile updated successfully!");
         }
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        logger.error('Update error', undefined, {
+        // Try to get error response text first
+        let errorText = '';
+        let errorData: Record<string, unknown> = {};
+        
+        try {
+          errorText = await response.text();
+          if (errorText) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              // If not JSON, use the text as the error message
+              errorData = { message: errorText };
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', {
+            error: parseError instanceof Error ? parseError.message : String(parseError),
+          });
+        }
+        
+        // Create an Error object from the response
+        const errorMessage = typeof errorData.error === 'string' 
+          ? errorData.error 
+          : typeof errorData.message === 'string'
+          ? errorData.message
+          : `Failed to update profile (${response.status})`;
+        
+        const apiError = new Error(errorMessage);
+        
+        // Log the error with full context
+        logger.error('Update error', apiError, {
           status: response.status,
           statusText: response.statusText,
-          hasErrorData: !!errorData
+          url: `${API_BASE_URL}${API_ENDPOINTS.authProfile}`,
+          errorData: errorData,
+          errorText: errorText || undefined,
+          payload: payloadString ? payloadString.substring(0, 500) : 'N/A' // Log first 500 chars of payload for debugging
         });
         
         // Extract detailed validation errors if available
-        let errorMessage = errorData.error || errorData.message || `Failed to update profile (${response.status})`;
+        let userFacingMessage = errorMessage;
         
-        // If there are validation details, append them
+      // Check if error might be related to location field
+      const hasLocation = payloadString?.includes('"location"');
+      const isLocationError = hasLocation && response.status === 500;
+      
+      // If there are validation details, append them
         if (errorData.errors && Array.isArray(errorData.errors)) {
           const validationErrors = errorData.errors.map((e: Record<string, unknown>) => `${e.field || e.path}: ${e.message || e.msg}`).join(', ');
-          errorMessage += ` - ${validationErrors}`;
+          userFacingMessage += ` - ${validationErrors}`;
         } else if (errorData.details && Array.isArray(errorData.details)) {
           const validationErrors = errorData.details.map((d: Record<string, unknown>) => d.message || d.msg).join(', ');
-          errorMessage += ` - ${validationErrors}`;
-        } else if (typeof errorData.validation === 'object') {
+          userFacingMessage += ` - ${validationErrors}`;
+        } else if (typeof errorData.validation === 'object' && errorData.validation !== null) {
           const validationErrors = Object.entries(errorData.validation)
             .map(([field, errors]: [string, unknown]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : String(errors)}`)
             .join('; ');
-          errorMessage += ` - ${validationErrors}`;
+          userFacingMessage += ` - ${validationErrors}`;
         }
         
-        logger.error('Update error message', undefined, { errorMessage });
-        toast.error(errorMessage);
+        // Add helpful message if location might be the issue
+        if (isLocationError) {
+          userFacingMessage += " The server may not support location data in GeoJSON format.";
+          
+          // Store cleaned payload for retry
+          const currentPayload = cleanedPayload;
+          
+          // Show error with option to retry without location
+          toast.error((t) => (
+            <div className="flex flex-col gap-2">
+              <span>{userFacingMessage}</span>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={async () => {
+                    toast.dismiss(t.id);
+                    setIsLoading(true);
+                    // Retry without location
+                    const payloadWithoutLocation = { ...currentPayload };
+                    delete payloadWithoutLocation.location;
+                    const retryPayloadString = JSON.stringify(payloadWithoutLocation);
+                    
+                    try {
+                      const retryResponse = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authProfile}`, 
+                        {
+                          ...createAuthFetchOptions({
+                            method: "PUT",
+                            body: retryPayloadString,
+                          })
+                        }
+                      );
+                      
+                      if (retryResponse.ok) {
+                        const retryResponseText = await retryResponse.text();
+                        const retryResponseData = retryResponseText ? JSON.parse(retryResponseText) : {};
+                        toast.success("Profile updated successfully (without location)");
+                        // Refresh the form data
+                        if (retryResponseData?.data || retryResponseData?.user) {
+                          const updatedProfile = retryResponseData.data || retryResponseData.user;
+                          setProfile(updatedProfile as UserProfile);
+                          // Clear location from form
+                          setValue("locationPoint", undefined);
+                          setHasUnsavedChanges(false);
+                        }
+                        setIsLoading(false);
+                      } else {
+                        const retryErrorText = await retryResponse.text();
+                        const retryErrorData = retryErrorText ? JSON.parse(retryErrorText) : {};
+                        toast.error(retryErrorData.message || "Failed to update profile");
+                        setIsLoading(false);
+                      }
+                    } catch (retryError) {
+                      logger.error("Retry error", retryError instanceof Error ? retryError : new Error(String(retryError)));
+                      toast.error("Failed to retry update");
+                      setIsLoading(false);
+                    }
+                  }}
+                  className="px-3 py-1 text-sm bg-emerald-600 text-white rounded hover:bg-emerald-700"
+                >
+                  Save Without Location
+                </button>
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ), {
+            duration: 10000, // Longer duration for interactive toast
+          });
+        } else {
+          toast.error(userFacingMessage, {
+            duration: 7000, // Longer duration for complex errors
+          });
+        }
       }
     } catch (error) {
-      logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)));
+      // Enhanced error logging with full context
+      const errorContext = {
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined,
+        apiUrl: `${API_BASE_URL}${API_ENDPOINTS.authProfile}`,
+        userId: session?.user?.id || session?.user?._id,
+        hasPayload: !!payloadString,
+        payloadSize: payloadString?.length || 0,
+      };
+      
+      logger.error("Error updating profile", error instanceof Error ? error : new Error(String(error)), errorContext);
       
       let errorMessage = "Failed to update profile";
+      let errorDetails = "";
       
       if (error instanceof Error) {
         // Handle network errors
         if (error.name === 'AbortError') {
-          errorMessage = "Request timeout. Please check your connection and try again.";
+          errorMessage = "Request timeout";
+          errorDetails = "The request took too long. Please check your connection and try again.";
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = "Network error. Please check your internet connection and try again.";
+          errorMessage = "Network error";
+          errorDetails = "Unable to connect to the server. Please check your internet connection and try again.";
+        } else if (error.message.includes('JSON')) {
+          errorMessage = "Data format error";
+          errorDetails = "The server response could not be parsed. Please try again or contact support.";
         } else if (error.message.includes('CORS')) {
-          errorMessage = "CORS error. Please contact support.";
+          errorMessage = "CORS error";
+          errorDetails = "Cross-origin request blocked. Please contact support.";
         } else {
-          errorMessage = error.message || "Failed to update profile";
+          errorMessage = error.message || "An unexpected error occurred";
+          errorDetails = `Error type: ${error.name || 'Unknown'}`;
         }
+      } else {
+        errorMessage = "An unexpected error occurred";
+        errorDetails = `Error: ${String(error)}`;
       }
       
-      logger.error('Full error details', error instanceof Error ? error : new Error(String(error)), {
-        errorMessage,
-        errorName: error instanceof Error ? error.name : 'Unknown'
+      // Show detailed error to user
+      const fullErrorMessage = errorDetails ? `${errorMessage}. ${errorDetails}` : errorMessage;
+      toast.error(fullErrorMessage, {
+        duration: 5000,
       });
-      
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -1463,6 +2077,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
       };
 
+      // Upload avatar using dedicated endpoint: /api/auth/upload-avatar
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authUploadAvatar}`, {
         method: "POST",
         headers,
@@ -1718,7 +2333,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     {/* Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <User className="w-4 h-4 inline mr-2" />
+                        <UserIcon className="w-4 h-4 inline mr-2" />
                         Full Name
                       </label>
                       <input
@@ -1743,14 +2358,22 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                       label="First Name"
                       {...register("firstName")}
                       type="text"
+                      required
                     />
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                    )}
                   </div>
                   <div>
                     <Input
                       label="Last Name"
                       {...register("lastName")}
                       type="text"
+                      required
                     />
+                    {errors.lastName && (
+                      <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                    )}
                   </div>
                   <div>
                     <Input
@@ -1764,8 +2387,14 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
                 {/* Address */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">Address</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 tracking-wide">
+                    Address
+                    <span className="text-red-500 ml-1">*</span>
+                  </h3>
                   <div className="h-px bg-gray-200" />
+                  {errors.profile?.address && (
+                    <p className="text-sm text-red-600">Address is required</p>
+                  )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -1777,7 +2406,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Province</label>
                     <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
@@ -1788,6 +2417,63 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                     <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
                   </div>
+                </div>
+
+                {/* Location Coordinates */}
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                      <MapPin className="w-4 h-4 inline mr-2" />
+                      Location Coordinates
+                    </label>
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      disabled={isGettingLocation}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isGettingLocation ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Getting Location...
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="w-4 h-4" />
+                          Use My Current Location
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={watch("locationPoint")?.coordinates?.[0]?.toFixed(6) || ""}
+                        readOnly
+                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm"
+                        placeholder="Not set"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={watch("locationPoint")?.coordinates?.[1]?.toFixed(6) || ""}
+                        readOnly
+                        className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600 text-sm"
+                        placeholder="Not set"
+                      />
+                    </div>
+                  </div>
+                  {watch("locationPoint")?.coordinates && (
+                    <p className="text-xs text-gray-500">
+                      Location format: GeoJSON Point [longitude, latitude]
+                    </p>
+                  )}
                 </div>
                 </div>
 

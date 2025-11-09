@@ -8,10 +8,11 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   variant?: 'default' | 'error' | 'success';
+  required?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, helperText, leftIcon, rightIcon, variant = 'default', ...props }, ref) => {
+  ({ className, type, label, error, helperText, leftIcon, rightIcon, variant = 'default', required = false, ...props }, ref) => {
     const baseClasses = "w-full px-4 py-3 bg-white border rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none transition-all duration-200 shadow-sm";
     
     const variantClasses = {
@@ -33,6 +34,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label className="block text-sm font-medium text-gray-700">
             {label}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <div className="relative">

@@ -7,7 +7,6 @@ import { useSession } from "@/hooks/useAuth";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
-import { AuthDebug } from "@/components/auth-debug";
 import { GlobalHeader } from "@/components/global-header";
 import { MarketplaceFooter } from "@/components/marketplace/marketplace-footer";
 import { usePathname } from "next/navigation";
@@ -205,7 +204,6 @@ export default function AuthenticatedLayout({
 
   return (
     <Providers>
-      <AuthDebug />
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         {/* Global Header */}
         <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">

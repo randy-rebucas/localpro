@@ -37,8 +37,39 @@ export default function EditProfilePage() {
         );
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || errorData.message || `Failed to fetch profile: ${response.status}`);
+          let errorText = '';
+          let errorData: Record<string, unknown> = {};
+          
+          try {
+            errorText = await response.text();
+            if (errorText) {
+              try {
+                errorData = JSON.parse(errorText);
+              } catch {
+                errorData = { message: errorText };
+              }
+            }
+          } catch (parseError) {
+            logger.warn('Failed to parse error response', {
+              error: parseError instanceof Error ? parseError.message : String(parseError),
+            });
+          }
+          
+          const errorMessage = typeof errorData.error === 'string' 
+            ? errorData.error 
+            : typeof errorData.message === 'string'
+            ? errorData.message
+            : `Failed to fetch profile: ${response.status} ${response.statusText}`;
+          
+          logger.error('Failed to fetch user profile', new Error(errorMessage), {
+            status: response.status,
+            statusText: response.statusText,
+            url: `${API_BASE_URL}${API_ENDPOINTS.authMe}`,
+            errorData: errorData,
+            errorText: errorText || undefined,
+          });
+          
+          throw new Error(errorMessage);
         }
 
         const responseData = await response.json();
@@ -82,10 +113,43 @@ export default function EditProfilePage() {
         logger.debug('Normalized profile', { userId: normalizedProfile.id, hasEmail: !!normalizedProfile.email });
         setProfile(normalizedProfile);
       } catch (err) {
-        logger.error('Error fetching user profile', err instanceof Error ? err : new Error(String(err)));
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch profile";
-        setError(errorMessage);
-        toast.error(errorMessage);
+        // Enhanced error logging
+        const errorContext = {
+          errorName: err instanceof Error ? err.name : 'Unknown',
+          errorMessage: err instanceof Error ? err.message : String(err),
+          errorStack: err instanceof Error ? err.stack : undefined,
+          apiUrl: `${API_BASE_URL}${API_ENDPOINTS.authMe}`,
+        };
+        
+        logger.error('Error fetching user profile', err instanceof Error ? err : new Error(String(err)), errorContext);
+        
+        let errorMessage = "Failed to fetch profile";
+        let errorDetails = "";
+        
+        if (err instanceof Error) {
+          if (err.name === 'AbortError') {
+            errorMessage = "Request timeout";
+            errorDetails = "The request took too long. Please check your connection and try again.";
+          } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            errorMessage = "Network error";
+            errorDetails = "Unable to connect to the server. Please check your internet connection and try again.";
+          } else if (err.message.includes('JSON')) {
+            errorMessage = "Data format error";
+            errorDetails = "The server response could not be parsed. Please try again or contact support.";
+          } else {
+            errorMessage = err.message || "An unexpected error occurred";
+            errorDetails = `Error type: ${err.name || 'Unknown'}`;
+          }
+        } else {
+          errorMessage = "An unexpected error occurred";
+          errorDetails = `Error: ${String(err)}`;
+        }
+        
+        const fullErrorMessage = errorDetails ? `${errorMessage}. ${errorDetails}` : errorMessage;
+        setError(fullErrorMessage);
+        toast.error(fullErrorMessage, {
+          duration: 5000,
+        });
       } finally {
         setLoading(false);
       }
