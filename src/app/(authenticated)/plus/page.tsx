@@ -216,13 +216,13 @@ export default function PlusPage() {
         throw new Error('Please log in to subscribe');
       }
       
-      const url = `${API_BASE_URL}${API_ENDPOINTS.localProPlusSubscribe}`;
+      // API endpoint expects planId in the URL path: /api/localpro-plus/subscribe/:planId
+      const url = `${API_BASE_URL}${API_ENDPOINTS.localProPlusSubscribe}/${planId}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'POST',
         body: JSON.stringify({
-          planId,
-          billingPeriod,
           paymentMethod: 'card',
+          billingCycle: billingPeriod === 'monthly' ? 'monthly' : 'yearly',
         }),
       }));
 
