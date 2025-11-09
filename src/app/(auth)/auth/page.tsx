@@ -1,10 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-
-// Prevent static generation/prerendering of this page
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
