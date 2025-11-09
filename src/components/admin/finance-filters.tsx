@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Filter, Search } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface FinanceFiltersProps {
   onFiltersChange: (filters: FinanceFilters) => void;
@@ -102,7 +103,7 @@ export function FinanceFilters({ onFiltersChange, className = "" }: FinanceFilte
           </select>
 
           <Button
-            onClick={() => console.log('Date range clicked')}
+            onClick={() => logger.debug('Date range clicked')}
             variant="outline"
             className="flex items-center"
           >

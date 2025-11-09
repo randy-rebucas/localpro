@@ -117,8 +117,8 @@ export function AdminHeader({
   };
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-40 backdrop-blur-sm bg-white/95">
-      <div className="flex items-center justify-between px-3 py-2">
+    <header className="bg-white shadow-sm backdrop-blur-sm bg-white/95 w-full">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3">
         {/* Left side */}
         <div className="flex items-center space-x-3">
           <button

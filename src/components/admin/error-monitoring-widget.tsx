@@ -9,6 +9,8 @@ import {
   CheckCircle,
   Activity
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 interface ErrorStats {
   total: number;
@@ -46,7 +48,7 @@ export function ErrorMonitoringWidget({ className = "" }: ErrorMonitoringWidgetP
   const fetchErrorStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/error-monitoring/dashboard/summary');
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.errorMonitoringDashboardSummary}`, createAuthFetchOptions());
       
       if (!response.ok) {
         throw new Error('Failed to fetch error stats');

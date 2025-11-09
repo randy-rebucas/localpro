@@ -2,6 +2,7 @@
 
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { logger } from '@/lib/logger';
 
 export function MonitoringProviders() {
   return (
@@ -34,7 +35,7 @@ export function measurePerformance(name: string, fn: () => void) {
   const end = performance.now();
   const duration = end - start;
   
-  console.log(`Performance: ${name} took ${duration.toFixed(2)}ms`);
+  logger.debug(`Performance: ${name}`, { duration: duration.toFixed(2), unit: 'ms' });
   
   // Send to analytics if available
   trackEvent('performance_metric', {
@@ -48,7 +49,7 @@ export function measurePerformance(name: string, fn: () => void) {
 
 // Web Vitals tracking
 export function trackWebVitals(metric: { name: string; value: number; delta: number; id: string; navigationType: string }) {
-  console.log('Web Vital:', metric);
+  logger.debug('Web Vital', { metricName: metric.name, value: metric.value, delta: metric.delta });
   
   trackEvent('web_vital', {
     name: metric.name,
@@ -61,7 +62,7 @@ export function trackWebVitals(metric: { name: string; value: number; delta: num
 
 // Error tracking
 export function trackError(error: Error, context?: string) {
-  console.error('Error tracked:', error, context);
+  logger.error('Error tracked', error, { context, errorName: error.name });
   
   trackEvent('error', {
     error_message: error.message,

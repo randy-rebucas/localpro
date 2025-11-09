@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientPublicRequest } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 interface HealthMetrics {
   status: string;
@@ -123,13 +126,11 @@ export default function AdminHealthPage() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/admin/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
+      // Health endpoint is public per API documentation
+      const response = await makeClientPublicRequest(
+        'settingsAppHealth' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -151,7 +152,7 @@ export default function AdminHealthPage() {
         setAlerts(generatedAlerts);
         setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching health data:', err);
+      logger.error('Error fetching health data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to load health data');
     } finally {
       setLoading(false);
@@ -167,7 +168,7 @@ export default function AdminHealthPage() {
     try {
       await fetchHealthData();
     } catch (err) {
-      console.error('Error refreshing health data:', err);
+      logger.error('Error refreshing health data', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setRefreshing(false);
     }
@@ -223,7 +224,7 @@ export default function AdminHealthPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             System Health
           </h1>
           <p className="text-gray-600 text-sm">Monitor system performance and health metrics</p>

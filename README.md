@@ -61,8 +61,9 @@ A comprehensive super app platform that integrates multiple professional service
    # Session Management
    SESSION_SECRET=your-super-secret-key-change-this-in-production
    
-   # API Configuration
-   API_BASE_URL=http://localhost:3001
+   # API Configuration (Development uses http://localhost:5000)
+   # Production automatically uses https://localpro-super-app.onrender.com
+   # API_BASE_URL=http://localhost:5000  # Optional: override default
    ```
 
 4. **Start the development server**

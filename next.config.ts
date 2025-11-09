@@ -1,12 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from '@sentry/nextjs';
 
-import withBundleAnalyzer from '@next/bundle-analyzer';
-
-const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-});
-
 const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
@@ -20,6 +14,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'localpro-super-app.onrender.com',
         port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
         pathname: '/**',
       },
       {
@@ -52,11 +52,55 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   
   // Security headers
   async headers() {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    // Build connect-src with conditional localhost for development
+    const connectSrc = [
+      "'self'",
+      "https://*.onrender.com",
+      "https://*.vercel-analytics.com",
+      "https://va.vercel-scripts.com",
+      "https://*.sentry.io",
+      "https://maps.googleapis.com",
+      "https://*.googleapis.com",
+      "https://maps.gstatic.com",
+      ...(isDevelopment ? ["http://localhost:5000", "ws://localhost:5000"] : []),
+    ].join(' ');
+
+    // Build CSP directives
+    const cspDirectives = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com https://maps.googleapis.com https://*.googleapis.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.gstatic.com",
+      `connect-src ${connectSrc}`,
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+      // Only add upgrade-insecure-requests in production to allow localhost in dev
+      ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
+    ];
+
     return [
       {
         source: '/(.*)',
@@ -72,6 +116,23 @@ const nextConfig: NextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(self)',
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains',
+          },
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: cspDirectives.join('; '),
           },
         ],
       },
@@ -106,4 +167,4 @@ const sentryWebpackPluginOptions = {
   // https://github.com/getsentry/sentry-webpack-plugin#options
 };
 
-export default withSentryConfig(bundleAnalyzer(nextConfig), sentryWebpackPluginOptions);
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions);

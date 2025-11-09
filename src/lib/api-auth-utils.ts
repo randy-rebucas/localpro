@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "@/lib/server-session";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 /**
  * Extract session token from request headers or cookies
@@ -37,7 +38,7 @@ export async function getApiTokenFromSession(request: NextRequest): Promise<stri
     // Fallback to session token extraction
     return getSessionTokenFromRequest(request);
   } catch (error) {
-    console.error("Error getting API token from session:", error);
+    logger.error("Error getting API token from session", error instanceof Error ? error : new Error(String(error)));
     return getSessionTokenFromRequest(request);
   }
 }
@@ -78,8 +79,9 @@ export async function makeAuthenticatedRequest(
   options: RequestInit = {}
 ): Promise<Response> {
   const fetchOptions = await createAuthenticatedFetchOptions(request, options);
-  console.log('fetchOptions', fetchOptions);
-  console.log('url', url);
+  if (process.env.NODE_ENV === 'development') {
+    logger.debug('makeAuthenticatedRequest', { url, hasHeaders: !!fetchOptions.headers });
+  }
   return fetch(url, fetchOptions);
 }
 
@@ -242,7 +244,7 @@ export function createErrorResponse(
     details = error instanceof Error ? error.message : String(error);
   }
 
-  console.error(`${context} error:`, error);
+  logger.error(`${context} error`, error instanceof Error ? error : new Error(String(error)), { context });
   
   return {
     error: errorMessage,
@@ -264,7 +266,7 @@ export async function checkApiHealth(): Promise<boolean> {
     });
     return response.ok;
   } catch (error) {
-    console.log('API health check failed:', error instanceof Error ? error.message : 'Unknown error');
+    logger.warn('API health check failed', { error: error instanceof Error ? error.message : 'Unknown error' });
     return false;
   }
 }

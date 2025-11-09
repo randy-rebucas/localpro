@@ -1,6 +1,9 @@
 "use client";
 
 import { isAuthenticated, clearAllAuthData } from "./client-api-utils";
+import { API_BASE_URL, API_ENDPOINTS } from "./api";
+import { createAuthFetchOptions } from "./auth-utils";
+import { logger } from "./logger";
 
 export interface TokenValidationResult {
   isValid: boolean;
@@ -24,13 +27,10 @@ export async function validateToken(): Promise<TokenValidationResult> {
     }
 
     // Try to make a simple authenticated request to validate the token
-    const response = await fetch('/api/auth/me', {
+    const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authMe}`, createAuthFetchOptions({
       method: 'GET',
       credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
+    }));
 
     if (response.ok) {
       return {
@@ -49,7 +49,7 @@ export async function validateToken(): Promise<TokenValidationResult> {
       };
     }
   } catch (error) {
-    console.error("Token validation error:", error);
+    logger.error("Token validation error", error instanceof Error ? error : new Error(String(error)));
     return {
       isValid: false,
       error: error instanceof Error ? error.message : "Unknown error during token validation"
@@ -65,7 +65,7 @@ export async function validateTokenWithFallback(): Promise<boolean> {
   const result = await validateToken();
   
   if (!result.isValid && result.shouldRedirect) {
-    console.warn("Token validation failed, clearing auth data and redirecting to login");
+    logger.warn("Token validation failed, clearing auth data and redirecting to login");
     
     // Clear all authentication data
     clearAllAuthData();

@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Settings, Save, RefreshCw } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 interface WalletSettings {
   currency: string;
@@ -45,13 +48,13 @@ export function FinanceWalletSettings({ onSave, className = "" }: FinanceWalletS
   const loadSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/finance/wallet/settings');
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.financeWalletSettings}`, createAuthFetchOptions());
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
       }
     } catch (error) {
-      console.error('Error loading wallet settings:', error);
+      logger.error('Error loading wallet settings', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -62,7 +65,7 @@ export function FinanceWalletSettings({ onSave, className = "" }: FinanceWalletS
     try {
       await onSave(settings);
     } catch (error) {
-      console.error('Error saving wallet settings:', error);
+      logger.error('Error saving wallet settings', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setSaving(false);
     }

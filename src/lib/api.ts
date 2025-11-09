@@ -40,8 +40,8 @@ export const API_ENDPOINTS = {
   
   // Marketplace Services
   marketplaceServices: "/api/marketplace/services",
-  marketplaceServicesNearby: "/api/marketplace/services/nearby",
   marketplaceServiceById: "/api/marketplace/services",
+  marketplaceServicesCategories: "/api/marketplace/services/categories",
   marketplaceMyServices: "/api/marketplace/my-services",
   marketplaceMyBookings: "/api/marketplace/my-bookings",
   marketplaceBookings: "/api/marketplace/bookings",
@@ -51,6 +51,10 @@ export const API_ENDPOINTS = {
   marketplacePayPalApprove: "/api/marketplace/bookings/paypal/approve",
   marketplacePayPalOrder: "/api/marketplace/bookings/paypal/order",
   marketplaceListings: "/api/marketplace/services",
+  marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
+  marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
+  marketplaceProvidersById: "/api/marketplace/providers/[id]",
+
   
   // Job Board
   jobs: "/api/jobs",
@@ -84,7 +88,7 @@ export const API_ENDPOINTS = {
   academyCoursesThumbnail: "/api/academy/courses/[id]/thumbnail",
   academyCoursesVideosById: "/api/academy/courses/[id]/videos/[videoId]",
   academyCoursesVideos: "/api/academy/courses/[id]/videos",
-  academyCoursesById: "/api/academy/courses/[id]",
+  academyCoursesById: "/api/academy/courses",
   academyStatistics: "/api/academy/statistics",
   academyCourseCreate: "/api/academy/courses",
   academyCourseUpdate: "/api/academy/courses",
@@ -93,15 +97,15 @@ export const API_ENDPOINTS = {
   
   // Supplies & Equipment
   supplies: "/api/supplies",
+  suppliesById: "/api/supplies/[id]",
   suppliesItems: "/api/supplies/items",
   suppliesProducts: "/api/supplies/products",
-  suppliesProductsById: "/api/supplies/products",
+  suppliesProductsById: "/api/supplies/products/[id]",
   suppliesCategories: "/api/supplies/categories",
   suppliesTypes: "/api/supplies/types",
   suppliesStatuses: "/api/supplies/statuses",
   suppliesFeatured: "/api/supplies/featured",
   suppliesNearby: "/api/supplies/nearby",
-  suppliesById: "/api/supplies",
   suppliesMySupplies: "/api/supplies/my-supplies",
   suppliesMyOrders: "/api/supplies/my-orders",
   suppliesImages: "/api/supplies",
@@ -190,6 +194,9 @@ export const API_ENDPOINTS = {
   adsPromote: "/api/ads",
   adsAnalytics: "/api/ads",
   adsStatistics: "/api/ads/statistics",
+  adsPending: "/api/ads/pending",
+  adsApprove: "/api/ads",
+  adsReject: "/api/ads",
   adsEnumValues: "/api/ads/enum-values",
   adsCreate: "/api/ads",
   adsUpdate: "/api/ads",
@@ -233,6 +240,7 @@ export const API_ENDPOINTS = {
   financeTaxDocuments: "/api/finance/tax-documents",
   financeWalletSettings: "/api/finance/wallet/settings",
   financeWithdrawalsProcess: "/api/finance/withdrawals",
+  financeTopUp: "/api/finance/top-up",
   
   // Google Maps Integration
   maps: "/api/maps",
@@ -300,6 +308,10 @@ export const API_ENDPOINTS = {
   localProPlusSettings: "/api/localpro-plus/settings",
   localProPlusUsage: "/api/localpro-plus/usage",
   localProPlusAnalytics: "/api/localpro-plus/analytics",
+  // Admin Manual Subscriptions
+  localProPlusAdminSubscriptions: "/api/localpro-plus/admin/subscriptions",
+  localProPlusAdminSubscriptionByUser: "/api/localpro-plus/admin/subscriptions/user",
+  localProPlusAdminSubscriptionById: "/api/localpro-plus/admin/subscriptions",
   
   // Settings Management
   settings: "/api/settings",
@@ -415,4 +427,6 @@ export const API_ENDPOINTS = {
   usersBadges: "/api/users",
   usersBulk: "/api/users/bulk",
   usersDelete: "/api/users",
+
+  registrationEarlyAccess: "/api/registration/early",
 } as const;

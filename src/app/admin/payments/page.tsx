@@ -25,6 +25,10 @@ import { PaymentTransactionsTable } from "@/components/admin/payment-transaction
 import { PaymentMethodChart } from "@/components/admin/payment-method-chart";
 import { RefundModal, RefundData } from "@/components/admin/refund-modal";
 import { TransactionDetailsModal } from "@/components/admin/transaction-details-modal";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { PaymentStatus, PaymentMethod } from "@/types/subscriptions";
 
 interface PaymentOverview {
   totalTransactions: number;
@@ -43,7 +47,7 @@ interface PaymentOverview {
     id: string;
     amount: number;
     method: string;
-    status: 'completed' | 'pending' | 'failed' | 'refunded';
+    status: PaymentStatus;
     customer: string;
     date: string;
     reference: string;
@@ -75,10 +79,10 @@ interface PaymentOverview {
   netRevenue: number;
 }
 
-interface Transaction {
+interface PaymentTransaction {
   id: string;
   amount: number;
-  method: string;
+  method: PaymentMethod | string;
   status: 'completed' | 'pending' | 'failed' | 'refunded';
   customer: string;
   date: string;
@@ -101,7 +105,7 @@ export default function PaymentProcessingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [overview, setOverview] = useState<PaymentOverview | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<PaymentFilters>({
@@ -116,7 +120,7 @@ export default function PaymentProcessingPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>(undefined);
+  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -132,12 +136,21 @@ export default function PaymentProcessingPage() {
     try {
       setLoading(true);
       const [overviewRes, transactionsRes] = await Promise.all([
-        fetch("/api/admin/payments/overview"),
-        fetch(`/api/admin/payments/transactions?${new URLSearchParams({
-          page: currentPage.toString(),
-          limit: '50',
-          ...filters
-        }).toString()}`)
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeOverview' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeTransactions' as keyof typeof API_ENDPOINTS,
+          {
+            method: 'GET',
+            query: {
+              page: currentPage.toString(),
+              limit: '50',
+              ...filters
+            }
+          }
+        )
       ]);
       
       const overviewResponse = await overviewRes.json();
@@ -159,7 +172,7 @@ export default function PaymentProcessingPage() {
         setTransactions([]);
       }
     } catch (error) {
-      console.error("Error fetching payment data:", error);
+      logger.error("Error fetching payment data", error instanceof Error ? error : new Error(String(error)));
       
       // Return empty data - external API integration needed
       setOverview({
@@ -208,12 +221,12 @@ export default function PaymentProcessingPage() {
     setRefreshing(false);
   };
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction: PaymentTransaction) => {
     setSelectedTransaction(transaction);
     setShowTransactionDetails(true);
   };
 
-  const handleRefundTransaction = (transaction: Transaction) => {
+  const handleRefundTransaction = (transaction: PaymentTransaction) => {
     setSelectedTransaction(transaction);
     setShowRefundModal(true);
   };
@@ -222,16 +235,18 @@ export default function PaymentProcessingPage() {
     if (!selectedTransaction) return;
     
     try {
-      const response = await fetch('/api/admin/payments/refunds', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transactionId: selectedTransaction.id,
-          ...refundData
-        }),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeTransactions' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'refund',
+            transactionId: selectedTransaction.id,
+            ...refundData
+          })
+        }
+      );
 
       if (response.ok) {
         fetchPaymentData();
@@ -240,13 +255,13 @@ export default function PaymentProcessingPage() {
         throw new Error('Failed to process refund');
       }
     } catch (error) {
-      console.error('Error processing refund:', error);
+      logger.error('Error processing refund', error instanceof Error ? error : new Error(String(error)), { transactionId: selectedTransaction?.id });
       throw error;
     }
   }, [selectedTransaction, fetchPaymentData]);
 
   const handleExportData = useCallback(() => {
-    console.log('Export payment data');
+    logger.debug('Export payment data');
     // Implement data export
   }, []);
 
@@ -291,7 +306,7 @@ export default function PaymentProcessingPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Payment Processing Dashboard
           </h1>
           <p className="text-gray-600 text-sm">Monitor and manage all payment transactions</p>

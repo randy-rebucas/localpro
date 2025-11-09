@@ -1,485 +1,816 @@
 "use client";
 
-import { useSession } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Loading } from "@/components/ui/loading";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { 
   BookOpen, 
-  Plus, 
   Search, 
-  Filter, 
   Edit, 
   Trash2, 
-  Eye,
-  Users,
-  Play,
-  Star,
-  Clock,
-  TrendingUp,
+  Plus,
   RefreshCw,
-  X,
-  CheckCircle,
+  Image as ImageIcon,
   Video,
-  FileText,
-  ChevronLeft,
-  ChevronRight
+  BarChart3,
+  Users,
+  TrendingUp,
+  Eye
 } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
+import { Modal } from "@/components/ui/modal";
+import { FileUpload } from "@/components/ui/file-upload";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+import toast from "react-hot-toast";
+import { Course, CourseCategory, CourseLevel } from "@/types/academy";
 
-interface Instructor {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  profile?: {
-    bio: string;
-  };
+interface CourseStatistics {
+  totalCourses: number;
+  activeCourses: number;
+  totalEnrollments: number;
+  totalRevenue: number;
+  averageRating: number;
+  coursesByCategory: Array<{ category: string; count: number }>;
+  coursesByLevel: Array<{ level: string; count: number }>;
+  recentCourses: number;
 }
 
-interface Duration {
-  hours: number;
-  weeks: number;
-}
-
-interface Pricing {
-  regularPrice: number;
-  currency: string;
-}
-
-interface Lesson {
-  title: string;
-  description: string;
-  duration: number;
-  type: string;
-  isFree: boolean;
-  _id: string;
-}
-
-interface Module {
-  module: string;
-  lessons: Lesson[];
-  _id: string;
-}
-
-interface Certification {
-  isAvailable: boolean;
-  name: string;
-  issuer: string;
-  requirements: string[];
-}
-
-interface Enrollment {
-  current: number;
-  isOpen: boolean;
-}
-
-interface Rating {
-  average: number;
-  count: number;
-}
-
-interface Course {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  instructor: Instructor;
-  level: string;
-  duration: Duration;
-  pricing: Pricing;
-  curriculum: Module[];
-  prerequisites: string[];
-  learningOutcomes: string[];
-  certification: Certification;
-  enrollment: Enrollment;
-  schedule: {
-    sessions: {
-      id: string;
-      title: string;
-      startTime: string;
-      endTime: string;
-      instructor: string;
-      location: string;
-      maxParticipants: number;
-      enrolledCount: number;
-    }[];
-  };
-  rating: Rating;
-  isActive: boolean;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-
-export default function AcademyAdmin() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default function AcademyPage() {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [stats, setStats] = useState<CourseStatistics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCategory, setFilterCategory] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [levelFilter, setLevelFilter] = useState<string>("all");
+  const [currentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [thumbnailModalOpen, setThumbnailModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [showCurriculumModal, setShowCurriculumModal] = useState(false);
-  const [pagination, setPagination] = useState({
-    count: 0,
-    total: 0,
-    page: 1,
-    pages: 1
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form states
+  const [courseFormData, setCourseFormData] = useState({
+    title: "",
+    description: "",
+    category: "cleaning" as CourseCategory,
+    level: "beginner" as CourseLevel,
+    instructor: "",
+    regularPrice: 0,
+    discountedPrice: 0,
+    currency: "USD",
+    hours: 0,
+    weeks: 0,
+    maxCapacity: 0,
+    isActive: true,
+    tags: [] as string[],
+    prerequisites: [] as string[],
+    learningOutcomes: [] as string[]
   });
-  const [, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "loading") return;
-    if (!session) {
-      router.push("/auth/signin");
-    }
-  }, [session, status, router]);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoDuration, setVideoDuration] = useState(0);
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  const fetchCourses = async (page = 1) => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/academy/courses?page=${page}`);
-      const result = await response.json();
-      
-      if (result.success) {
-        setCourses(result.data);
-        setPagination({
-          count: result.count || 0,
-          total: result.total || 0,
-          page: result.page || 1,
-          pages: result.pages || 1
-        });
-        setError(null);
-      } else {
-        // console.error("Failed to fetch courses:", result);
-        setCourses([]);
-        setError("Failed to load courses. Please try again.");
+      setError(null);
+
+      if (!getApiToken()) {
+        logger.warn('No API token found, cannot fetch courses');
+        setError('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-      setCourses([]);
-      setError("Network error. Please check your connection and try again.");
+
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.set('page', currentPage.toString());
+      queryParams.set('limit', itemsPerPage.toString());
+      if (searchTerm) queryParams.set('search', searchTerm);
+      if (categoryFilter !== 'all') queryParams.set('category', categoryFilter);
+      if (levelFilter !== 'all') queryParams.set('level', levelFilter);
+
+      const coursesUrl = `${API_BASE_URL}${API_ENDPOINTS.academyCourses}?${queryParams.toString()}`;
+      const statsUrl = `${API_BASE_URL}${API_ENDPOINTS.academyStatistics}`;
+
+      const [coursesResponse, statsResponse] = await Promise.all([
+        fetch(coursesUrl, createAuthFetchOptions({ method: 'GET' })),
+        fetch(statsUrl, createAuthFetchOptions({ method: 'GET' }))
+      ]);
+
+      if (!coursesResponse.ok) {
+        const errorData = await coursesResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${coursesResponse.status}: Failed to fetch courses`);
+      }
+
+      const coursesResult = await coursesResponse.json();
+      
+      // Handle stats response
+      let statsData = null;
+      if (statsResponse.ok) {
+        try {
+          const statsResult = await statsResponse.json();
+          statsData = statsResult.data || statsResult;
+        } catch (err) {
+          logger.warn('Failed to parse stats response', { 
+            error: err instanceof Error ? err.message : String(err)
+          });
+        }
+      }
+
+      // Transform courses data
+      let coursesData: Course[] = [];
+      if (coursesResult.success && coursesResult.data) {
+        if (Array.isArray(coursesResult.data)) {
+          coursesData = coursesResult.data;
+        } else if (coursesResult.data.courses && Array.isArray(coursesResult.data.courses)) {
+          coursesData = coursesResult.data.courses;
+        }
+      } else if (Array.isArray(coursesResult)) {
+        coursesData = coursesResult;
+      }
+
+      setCourses(coursesData);
+      setStats(statsData);
+      setLastUpdated(new Date());
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching academy data', error);
+      setError(error.message);
+      toast.error(`Failed to load courses: ${error.message}`);
     } finally {
       setLoading(false);
     }
+  }, [currentPage, searchTerm, categoryFilter, levelFilter]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refreshData = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
+
+  const handleCreateCourse = async () => {
+    try {
+      setSubmitting(true);
+
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const courseData = {
+        title: courseFormData.title,
+        description: courseFormData.description,
+        category: courseFormData.category,
+        level: courseFormData.level,
+        instructor: courseFormData.instructor || undefined,
+        pricing: {
+          regularPrice: courseFormData.regularPrice,
+          discountedPrice: courseFormData.discountedPrice || undefined,
+          currency: courseFormData.currency
+        },
+        duration: {
+          hours: courseFormData.hours,
+          weeks: courseFormData.weeks || undefined
+        },
+        enrollment: {
+          maxCapacity: courseFormData.maxCapacity || undefined,
+          isOpen: true
+        },
+        isActive: courseFormData.isActive,
+        tags: courseFormData.tags,
+        prerequisites: courseFormData.prerequisites,
+        learningOutcomes: courseFormData.learningOutcomes
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCourseCreate}`,
+        createAuthFetchOptions({
+          method: 'POST',
+          body: JSON.stringify(courseData)
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create course');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Course created successfully');
+        setCreateModalOpen(false);
+        resetForm();
+        await refreshData();
+      } else {
+        throw new Error(result.error || 'Failed to create course');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error creating course', error);
+      toast.error(`Failed to create course: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (status === "loading" || loading) {
-    return <Loading text="Loading academy" fullScreen />;
-  }
+  const handleUpdateCourse = async () => {
+    if (!selectedCourse?._id) return;
 
-  if (!session) {
-    return null;
-  }
+    try {
+      setSubmitting(true);
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor?.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === "all" || course.category === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
 
-  // Calculate stats from real data
-  const totalEnrollments = courses.reduce((sum, course) => sum + (course.enrollment?.current || 0), 0);
-  const activeStudents = courses.filter(course => course.isActive).length;
-  const completionRate = courses.length > 0 ? Math.round((activeStudents / courses.length) * 100) : 0;
+      const courseData = {
+        title: courseFormData.title,
+        description: courseFormData.description,
+        category: courseFormData.category,
+        level: courseFormData.level,
+        instructor: courseFormData.instructor || undefined,
+        pricing: {
+          regularPrice: courseFormData.regularPrice,
+          discountedPrice: courseFormData.discountedPrice || undefined,
+          currency: courseFormData.currency
+        },
+        duration: {
+          hours: courseFormData.hours,
+          weeks: courseFormData.weeks || undefined
+        },
+        enrollment: {
+          maxCapacity: courseFormData.maxCapacity || undefined,
+          isOpen: true
+        },
+        isActive: courseFormData.isActive,
+        tags: courseFormData.tags,
+        prerequisites: courseFormData.prerequisites,
+        learningOutcomes: courseFormData.learningOutcomes
+      };
 
-  const handleViewCurriculum = (course: Course) => {
-    setSelectedCourse(course);
-    setShowCurriculumModal(true);
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCourseUpdate}/${selectedCourse._id}`,
+        createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify(courseData)
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update course');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Course updated successfully');
+        setEditModalOpen(false);
+        resetForm();
+        await refreshData();
+      } else {
+        throw new Error(result.error || 'Failed to update course');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error updating course', error);
+      toast.error(`Failed to update course: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const closeCurriculumModal = () => {
-    setShowCurriculumModal(false);
+  const handleDeleteCourse = async (courseId: string) => {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+
+    try {
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCourseDelete}/${courseId}`,
+        createAuthFetchOptions({
+          method: 'DELETE'
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete course');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Course deleted successfully');
+        await refreshData();
+      } else {
+        throw new Error(result.error || 'Failed to delete course');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error deleting course', error);
+      toast.error(`Failed to delete course: ${error.message}`);
+    }
+  };
+
+  const handleUploadThumbnail = async () => {
+    if (!selectedCourse?._id || !thumbnailFile) return;
+
+    try {
+      setSubmitting(true);
+
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const formData = new FormData();
+      formData.append('thumbnail', thumbnailFile);
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCoursesThumbnail.replace('[id]', selectedCourse._id)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getApiToken()}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload thumbnail');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Thumbnail uploaded successfully');
+        setThumbnailModalOpen(false);
+        setThumbnailFile(null);
+        await refreshData();
+      } else {
+        throw new Error(result.error || 'Failed to upload thumbnail');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error uploading thumbnail', error);
+      toast.error(`Failed to upload thumbnail: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUploadVideo = async () => {
+    if (!selectedCourse?._id || !videoFile) return;
+
+    try {
+      setSubmitting(true);
+
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      if (videoTitle) formData.append('title', videoTitle);
+      if (videoDuration) formData.append('duration', videoDuration.toString());
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCoursesVideos.replace('[id]', selectedCourse._id)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${getApiToken()}`
+          },
+          body: formData
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload video');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Video uploaded successfully');
+        setVideoModalOpen(false);
+        setVideoFile(null);
+        setVideoTitle("");
+        setVideoDuration(0);
+        await refreshData();
+      } else {
+        throw new Error(result.error || 'Failed to upload video');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error uploading video', error);
+      toast.error(`Failed to upload video: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // TODO: Implement video deletion functionality when needed
+  // const handleDeleteVideo = async (courseId: string, videoId: string) => {
+  //   if (!confirm('Are you sure you want to delete this video?')) return;
+  //
+  //   try {
+  //     if (!getApiToken()) {
+  //       throw new Error('Authentication required');
+  //     }
+  //
+  //     const response = await fetch(
+  //       `${API_BASE_URL}${API_ENDPOINTS.academyCoursesVideosById.replace('[id]', courseId).replace('[videoId]', videoId)}`,
+  //       createAuthFetchOptions({
+  //         method: 'DELETE'
+  //       })
+  //     );
+  //
+  //     if (!response.ok) {
+  //       const errorData = await response.json().catch(() => ({}));
+  //       throw new Error(errorData.error || 'Failed to delete video');
+  //     }
+  //
+  //     const result = await response.json();
+  //     
+  //     if (result.success) {
+  //       toast.success('Video deleted successfully');
+  //       await refreshData();
+  //     } else {
+  //       throw new Error(result.error || 'Failed to delete video');
+  //     }
+  //   } catch (err) {
+  //     const error = err instanceof Error ? err : new Error(String(err));
+  //     logger.error('Error deleting video', error);
+  //     toast.error(`Failed to delete video: ${error.message}`);
+  //   }
+  // };
+
+  const resetForm = () => {
+    setCourseFormData({
+      title: "",
+      description: "",
+      category: "cleaning",
+      level: "beginner",
+      instructor: "",
+      regularPrice: 0,
+      discountedPrice: 0,
+      currency: "USD",
+      hours: 0,
+      weeks: 0,
+      maxCapacity: 0,
+      isActive: true,
+      tags: [],
+      prerequisites: [],
+      learningOutcomes: []
+    });
     setSelectedCourse(null);
   };
+
+  const openEditModal = (course: Course) => {
+    setSelectedCourse(course);
+    setCourseFormData({
+      title: course.title,
+      description: course.description,
+      category: course.category,
+      level: course.level,
+      instructor: typeof course.instructor === 'string' 
+        ? course.instructor 
+        : (typeof course.instructor === 'object' && course.instructor !== null && '_id' in course.instructor)
+          ? (course.instructor as { _id?: string })._id || ""
+          : "",
+      regularPrice: typeof course.pricing === 'object' ? course.pricing.regularPrice : 0,
+      discountedPrice: typeof course.pricing === 'object' ? (course.pricing.discountedPrice ?? 0) : 0,
+      currency: typeof course.pricing === 'object' ? course.pricing.currency || "USD" : "USD",
+      hours: typeof course.duration === 'object' ? course.duration.hours : 0,
+      weeks: typeof course.duration === 'object' ? (course.duration.weeks ?? 0) : 0,
+      maxCapacity: course.enrollment?.maxCapacity || 0,
+      isActive: course.isActive ?? true,
+      tags: course.tags || [],
+      prerequisites: course.prerequisites || [],
+      learningOutcomes: course.learningOutcomes || []
+    });
+    setEditModalOpen(true);
+  };
+
+  if (loading && !refreshing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading size="xl" text="Loading academy courses..." />
+      </div>
+    );
+  }
+
+  if (error && !courses.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={refreshData}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const categories: CourseCategory[] = ['cleaning', 'plumbing', 'electrical', 'moving', 'business', 'safety', 'certification'];
+  const levels: CourseLevel[] = ['beginner', 'intermediate', 'advanced', 'expert'];
 
   return (
     <div className="space-y-4">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Academy Management
-          </h1>
-          <p className="text-gray-600 text-sm">Manage courses, enrollments, and learning progress</p>
+          <h1 className="text-2xl font-bold text-gray-900">Academy Management</h1>
+          <p className="text-gray-600 text-sm">Manage courses, content, and enrollments</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-          <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200 hover:shadow-md">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Course
+          {lastUpdated && (
+            <p className="text-xs text-gray-500">
+              Updated: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
+          <button
+            onClick={refreshData}
+            disabled={refreshing}
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+          >
+            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => {
+              resetForm();
+              setCreateModalOpen(true);
+            }}
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Add Course
           </button>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Courses</p>
-                <p className="text-lg font-bold text-gray-900">{courses.length}</p>
-                <p className="text-xs text-gray-500">Available courses</p>
-              </div>
-              <BookOpen className="w-5 h-5 text-purple-600" />
-            </div>
-          </div>
-          
+      {/* Statistics Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-500">Enrollments</p>
-                <p className="text-lg font-bold text-gray-900">{totalEnrollments.toLocaleString()}</p>
-                <p className="text-xs text-gray-500">Total students</p>
+                <p className="text-xs font-medium text-gray-500">Total Courses</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalCourses || 0}</p>
               </div>
-              <Users className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
+                <BookOpen className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </div>
-          
           <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Courses</p>
-                <p className="text-lg font-bold text-gray-900">{activeStudents}</p>
-                <p className="text-xs text-gray-500">Currently active</p>
+                <p className="text-lg font-bold text-gray-900">{stats.activeCourses || 0}</p>
               </div>
-              <Play className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              </div>
             </div>
           </div>
-          
+          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Total Enrollments</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalEnrollments || 0}</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
+                <Users className="w-5 h-5 text-purple-600" />
+              </div>
+            </div>
+          </div>
           <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-gray-500">Active Rate</p>
-                <p className="text-lg font-bold text-gray-900">{completionRate}%</p>
-                <p className="text-xs text-gray-500">Active courses</p>
+                <p className="text-xs font-medium text-gray-500">Average Rating</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
+                </p>
               </div>
-              <TrendingUp className="w-5 h-5 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-
-        {/* Filters and Search */}
-        <div className="bg-white rounded shadow">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
-              <div className="flex items-center space-x-2">
-                <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <Filter className="w-3 h-3 mr-1" />
-                  Show Filters
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="technical">Technical</option>
-                  <option value="business">Business</option>
-                  <option value="safety">Safety</option>
-                  <option value="certification">Certification</option>
-                </select>
+              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
+                <BarChart3 className="w-5 h-5 text-yellow-600" />
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Courses Table */}
-        <div className="bg-white rounded shadow overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Courses</h3>
-              <div className="flex items-center space-x-2">
-                <button 
-                  onClick={() => fetchCourses(pagination.page)}
-                  className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Refresh
-                </button>
+      {/* Search and Filters */}
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+          </div>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
               </div>
             </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Levels</option>
+                {levels.map(level => (
+                  <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        </div>
+      </div>
+
+      {/* Courses Table */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Courses</h3>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {courses.length === 0 ? (
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Course
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Instructor
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Duration
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Enrollments
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCourses.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-3 py-8 text-center">
-                    <div className="text-center">
-                      <BookOpen className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <h3 className="text-sm font-medium text-gray-900 mb-1">No courses found</h3>
-                      <p className="text-xs text-gray-500">Try adjusting your search or filters.</p>
-                    </div>
+                  <td colSpan={6} className="px-3 py-2 text-center text-xs text-gray-500">
+                    No courses found
                   </td>
                 </tr>
               ) : (
-                filteredCourses.map((course, index) => (
-                  <tr key={course._id || index} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                courses.map((course) => (
+                  <tr key={course._id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="h-8 w-8 flex-shrink-0">
-                          <div className="h-8 w-8 rounded bg-gray-200 flex items-center justify-center">
-                            <BookOpen className="w-4 h-4 text-gray-500" />
+                        {course.thumbnail?.url ? (
+                          <Image
+                            src={course.thumbnail.url}
+                            alt={course.title}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded object-cover mr-2"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center mr-2">
+                            <BookOpen className="w-4 h-4 text-gray-400" />
                           </div>
-                        </div>
-                        <div className="ml-3">
-                          <div className="text-xs font-medium text-gray-900">
-                            {course.title}
-                          </div>
-                          <div className="text-xs text-gray-500 max-w-xs truncate">
-                            {course.description}
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-purple-600 bg-purple-100">
-                              {course.category}
-                            </span>
-                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
-                              {course.level}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div>
-                        <div className="text-xs font-medium text-gray-900">
-                          {course.instructor?.firstName} {course.instructor?.lastName}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          Instructor
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div className="flex items-center">
-                        <Clock className="w-3 h-3 text-gray-400 mr-1" />
-                        <div>
-                          <div className="text-xs font-medium">
-                            {course.duration?.hours}h
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {course.duration?.weeks} weeks
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div>
-                        <div className="text-xs font-medium text-gray-900">
-                          ${course.pricing?.regularPrice}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {course.pricing?.currency}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div>
-                        <div className="text-xs font-medium text-gray-900">
-                          {course.enrollment?.current || 0}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {course.enrollment?.isOpen ? 'Open' : 'Closed'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div className="flex items-center">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-xs text-gray-500">
-                          {course.rating?.average || 0}
-                        </span>
-                        <span className="ml-1 text-xs text-gray-400">
-                          ({course.rating?.count || 0})
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div className="flex flex-col space-y-1">
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                          course.isActive 
-                            ? 'text-green-600 bg-green-100' 
-                            : 'text-red-600 bg-red-100'
-                        }`}>
-                          {course.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                        {course.certification?.isAvailable && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-blue-600 bg-blue-100">
-                            Certificate
-                          </span>
                         )}
+                        <div>
+                          <div className="text-xs font-semibold text-gray-900">{course.title}</div>
+                          <div className="text-xs text-gray-600 truncate max-w-xs">{course.description}</div>
+                        </div>
                       </div>
                     </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {course.category}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {course.level}
+                      </span>
+                    </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div className="flex space-x-1">
-                        <button 
-                          onClick={() => handleViewCurriculum(course)}
-                          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          title="View Curriculum"
+                      {typeof course.pricing === 'object' ? (
+                        <>
+                          {course.pricing.discountedPrice ? (
+                            <>
+                              <span className="line-through text-gray-400">${course.pricing.regularPrice}</span>
+                              <span className="ml-2 text-green-600 font-medium">${course.pricing.discountedPrice}</span>
+                            </>
+                          ) : (
+                            `$${course.pricing.regularPrice}`
+                          )}
+                        </>
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                        course.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {course.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setViewModalOpen(true);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="View course details"
                         >
                           <Eye className="w-3 h-3" />
                         </button>
-                        <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button
+                          onClick={() => openEditModal(course)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Edit course"
+                        >
                           <Edit className="w-3 h-3" />
                         </button>
-                        <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <button
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setThumbnailModalOpen(true);
+                          }}
+                          className="text-purple-600 hover:text-purple-900"
+                          title="Upload Thumbnail"
+                        >
+                          <ImageIcon className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setVideoModalOpen(true);
+                          }}
+                          className="text-green-600 hover:text-green-900"
+                          title="Upload Video"
+                        >
+                          <Video className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => course._id && handleDeleteCourse(course._id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete"
+                        >
                           <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
@@ -487,208 +818,561 @@ export default function AcademyAdmin() {
                   </tr>
                 ))
               )}
-              </tbody>
-            </table>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create Course Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          resetForm();
+        }}
+        title="Create New Course"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <input
+              type="text"
+              value={courseFormData.title}
+              onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
           </div>
-          
-          {/* Pagination Controls */}
-          {pagination.pages > 1 && (
-            <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-700">
-                  <span>
-                    Showing {pagination.count} of {pagination.total} courses
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => fetchCourses(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-3 h-3 mr-1" />
-                    Previous
-                  </button>
-                  
-                  <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                      const pageNum = Math.max(1, Math.min(pagination.pages - 4, pagination.page - 2)) + i;
-                      if (pageNum > pagination.pages) return null;
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => fetchCourses(pageNum)}
-                          className={`px-2 py-1 text-xs font-medium rounded ${
-                            pageNum === pagination.page
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <button
-                    onClick={() => fetchCourses(pagination.page + 1)}
-                    disabled={pagination.page >= pagination.pages}
-                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                    <ChevronRight className="w-3 h-3 ml-1" />
-                  </button>
-                </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <textarea
+              value={courseFormData.description}
+              onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <select
+                value={courseFormData.category}
+                onChange={(e) => setCourseFormData({ ...courseFormData, category: e.target.value as CourseCategory })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Level *</label>
+              <select
+                value={courseFormData.level}
+                onChange={(e) => setCourseFormData({ ...courseFormData, level: e.target.value as CourseLevel })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                {levels.map(level => (
+                  <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor ID</label>
+            <input
+              type="text"
+              value={courseFormData.instructor}
+              onChange={(e) => setCourseFormData({ ...courseFormData, instructor: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="User ID of instructor"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Regular Price *</label>
+              <input
+                type="number"
+                value={courseFormData.regularPrice}
+                onChange={(e) => setCourseFormData({ ...courseFormData, regularPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+              <input
+                type="number"
+                value={courseFormData.discountedPrice}
+                onChange={(e) => setCourseFormData({ ...courseFormData, discountedPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+              <input
+                type="text"
+                value={courseFormData.currency}
+                onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="USD"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Hours) *</label>
+              <input
+                type="number"
+                value={courseFormData.hours}
+                onChange={(e) => setCourseFormData({ ...courseFormData, hours: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Weeks</label>
+              <input
+                type="number"
+                value={courseFormData.weeks}
+                onChange={(e) => setCourseFormData({ ...courseFormData, weeks: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Capacity</label>
+            <input
+              type="number"
+              value={courseFormData.maxCapacity}
+              onChange={(e) => setCourseFormData({ ...courseFormData, maxCapacity: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={courseFormData.isActive}
+              onChange={(e) => setCourseFormData({ ...courseFormData, isActive: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label className="ml-2 block text-sm text-gray-700">Active</label>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <button
+              onClick={() => {
+                setCreateModalOpen(false);
+                resetForm();
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateCourse}
+              disabled={submitting || !courseFormData.title || !courseFormData.description}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Creating...' : 'Create Course'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit Course Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          resetForm();
+        }}
+        title="Edit Course"
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <input
+              type="text"
+              value={courseFormData.title}
+              onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <textarea
+              value={courseFormData.description}
+              onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+              <select
+                value={courseFormData.category}
+                onChange={(e) => setCourseFormData({ ...courseFormData, category: e.target.value as CourseCategory })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Level *</label>
+              <select
+                value={courseFormData.level}
+                onChange={(e) => setCourseFormData({ ...courseFormData, level: e.target.value as CourseLevel })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                required
+              >
+                {levels.map(level => (
+                  <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor ID</label>
+            <input
+              type="text"
+              value={courseFormData.instructor}
+              onChange={(e) => setCourseFormData({ ...courseFormData, instructor: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="User ID of instructor"
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Regular Price *</label>
+              <input
+                type="number"
+                value={courseFormData.regularPrice}
+                onChange={(e) => setCourseFormData({ ...courseFormData, regularPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Discounted Price</label>
+              <input
+                type="number"
+                value={courseFormData.discountedPrice}
+                onChange={(e) => setCourseFormData({ ...courseFormData, discountedPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+              <input
+                type="text"
+                value={courseFormData.currency}
+                onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="USD"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration (Hours) *</label>
+              <input
+                type="number"
+                value={courseFormData.hours}
+                onChange={(e) => setCourseFormData({ ...courseFormData, hours: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Weeks</label>
+              <input
+                type="number"
+                value={courseFormData.weeks}
+                onChange={(e) => setCourseFormData({ ...courseFormData, weeks: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Capacity</label>
+            <input
+              type="number"
+              value={courseFormData.maxCapacity}
+              onChange={(e) => setCourseFormData({ ...courseFormData, maxCapacity: parseInt(e.target.value) || 0 })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+            />
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={courseFormData.isActive}
+              onChange={(e) => setCourseFormData({ ...courseFormData, isActive: e.target.checked })}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label className="ml-2 block text-sm text-gray-700">Active</label>
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <button
+              onClick={() => {
+                setEditModalOpen(false);
+                resetForm();
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateCourse}
+              disabled={submitting || !courseFormData.title || !courseFormData.description}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Updating...' : 'Update Course'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Upload Thumbnail Modal */}
+      <Modal
+        isOpen={thumbnailModalOpen}
+        onClose={() => {
+          setThumbnailModalOpen(false);
+          setThumbnailFile(null);
+        }}
+        title={`Upload Thumbnail - ${selectedCourse?.title || ''}`}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail Image</label>
+            <FileUpload
+              accept="image/*"
+              files={thumbnailFile ? [thumbnailFile] : []}
+              onFilesSelected={(files) => setThumbnailFile(files[0] || null)}
+              onRemove={() => setThumbnailFile(null)}
+              maxSize={10}
+            />
+            {thumbnailFile && (
+              <div className="mt-3">
+                <Image
+                  src={URL.createObjectURL(thumbnailFile)}
+                  alt="Preview"
+                  width={800}
+                  height={192}
+                  className="w-full h-48 object-cover rounded"
+                  unoptimized
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <button
+              onClick={() => {
+                setThumbnailModalOpen(false);
+                setThumbnailFile(null);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUploadThumbnail}
+              disabled={submitting || !thumbnailFile}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Uploading...' : 'Upload Thumbnail'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Upload Video Modal */}
+      <Modal
+        isOpen={videoModalOpen}
+        onClose={() => {
+          setVideoModalOpen(false);
+          setVideoFile(null);
+          setVideoTitle("");
+          setVideoDuration(0);
+        }}
+        title={`Upload Video - ${selectedCourse?.title || ''}`}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Video Title</label>
+            <input
+              type="text"
+              value={videoTitle}
+              onChange={(e) => setVideoTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Lesson title"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+            <input
+              type="number"
+              value={videoDuration}
+              onChange={(e) => setVideoDuration(parseInt(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              min="0"
+              placeholder="90"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Video File</label>
+            <FileUpload
+              accept="video/*"
+              files={videoFile ? [videoFile] : []}
+              onFilesSelected={(files) => setVideoFile(files[0] || null)}
+              onRemove={() => setVideoFile(null)}
+              maxSize={500}
+            />
+          </div>
+          <div className="flex justify-end space-x-2 pt-4">
+            <button
+              onClick={() => {
+                setVideoModalOpen(false);
+                setVideoFile(null);
+                setVideoTitle("");
+                setVideoDuration(0);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUploadVideo}
+              disabled={submitting || !videoFile}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Uploading...' : 'Upload Video'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Course Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedCourse(null);
+        }}
+        title={selectedCourse?.title || 'Course Details'}
+        size="lg"
+      >
+        {selectedCourse && (
+          <div className="space-y-4">
+            {selectedCourse.thumbnail?.url && (
+              <Image
+                src={selectedCourse.thumbnail.url}
+                alt={selectedCourse.title}
+                width={800}
+                height={192}
+                className="w-full h-48 object-cover rounded"
+                unoptimized
+              />
+            )}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Description</h3>
+              <p className="mt-1 text-sm text-gray-900">{selectedCourse.description}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Category</h3>
+                <p className="mt-1 text-sm text-gray-900">{selectedCourse.category}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Level</h3>
+                <p className="mt-1 text-sm text-gray-900">{selectedCourse.level}</p>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Curriculum Modal */}
-        {showCurriculumModal && selectedCourse && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Course Curriculum: {selectedCourse.title}
-                </h3>
-                <button
-                  onClick={closeCurriculumModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              
-              <div className="p-4 overflow-y-auto max-h-[calc(90vh-120px)]">
-                {/* Course Overview */}
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700">Instructor</h4>
-                      <p className="text-sm text-gray-900">
-                        {selectedCourse.instructor?.firstName} {selectedCourse.instructor?.lastName}
-                      </p>
-                      {selectedCourse.instructor?.profile?.bio && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          {selectedCourse.instructor.profile.bio}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700">Duration</h4>
-                      <p className="text-sm text-gray-900">
-                        {selectedCourse.duration?.hours} hours over {selectedCourse.duration?.weeks} weeks
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-700">Level</h4>
-                      <p className="text-sm text-gray-900 capitalize">{selectedCourse.level}</p>
-                    </div>
-                  </div>
-                  
-                  {selectedCourse.learningOutcomes && selectedCourse.learningOutcomes.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Learning Outcomes</h4>
-                      <ul className="text-sm text-gray-900 space-y-1">
-                        {selectedCourse.learningOutcomes.map((outcome, index) => (
-                          <li key={index} className="flex items-start">
-                            <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                            {outcome}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Curriculum Modules */}
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Curriculum</h4>
-                  {selectedCourse.curriculum && selectedCourse.curriculum.length > 0 ? (
-                    <div className="space-y-4">
-                      {selectedCourse.curriculum.map((module, moduleIndex) => (
-                        <div key={module._id} className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h5 className="text-md font-medium text-gray-900">
-                              Module {moduleIndex + 1}: {module.module}
-                            </h5>
-                            <span className="text-xs text-gray-500">
-                              {module.lessons.length} lesson{module.lessons.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {module.lessons.map((lesson) => (
-                              <div key={lesson._id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                <div className="flex items-center">
-                                  {lesson.type === 'video' ? (
-                                    <Video className="w-4 h-4 text-blue-500 mr-2" />
-                                  ) : (
-                                    <FileText className="w-4 h-4 text-gray-500 mr-2" />
-                                  )}
-                                  <div>
-                                    <p className="text-sm font-medium text-gray-900">{lesson.title}</p>
-                                    <p className="text-xs text-gray-500">{lesson.description}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs text-gray-500">
-                                    {lesson.duration} min
-                                  </span>
-                                  {lesson.isFree && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium text-green-600 bg-green-100">
-                                      Free
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-8">No curriculum available for this course.</p>
-                  )}
-                </div>
-
-                {/* Certification Info */}
-                {selectedCourse.certification?.isAvailable && (
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="text-md font-medium text-blue-900 mb-2">Certification Available</h4>
-                    <p className="text-sm text-blue-800">
-                      <strong>{selectedCourse.certification.name}</strong> by {selectedCourse.certification.issuer}
-                    </p>
-                    {selectedCourse.certification.requirements && selectedCourse.certification.requirements.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium text-blue-900">Requirements:</p>
-                        <ul className="text-sm text-blue-800 mt-1">
-                          {selectedCourse.certification.requirements.map((req, index) => (
-                            <li key={index} className="flex items-start">
-                              <CheckCircle className="w-3 h-3 text-blue-600 mr-1 mt-0.5 flex-shrink-0" />
-                              {req}
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Pricing</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                {typeof selectedCourse.pricing === 'object' ? (
+                  <>
+                    Regular: ${selectedCourse.pricing.regularPrice}
+                    {selectedCourse.pricing.discountedPrice && (
+                      <> | Discounted: ${selectedCourse.pricing.discountedPrice}</>
+                    )}
+                  </>
+                ) : (
+                  'N/A'
+                )}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Duration</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                {typeof selectedCourse.duration === 'object' 
+                  ? `${selectedCourse.duration.hours} hours${selectedCourse.duration.weeks ? `, ${selectedCourse.duration.weeks} weeks` : ''}`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Status</h3>
+              <p className="mt-1 text-sm text-gray-900">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  selectedCourse.isActive 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {selectedCourse.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </p>
+            </div>
+            {selectedCourse.curriculum && selectedCourse.curriculum.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Curriculum</h3>
+                <div className="space-y-2">
+                  {selectedCourse.curriculum.map((module, idx) => (
+                    <div key={idx} className="border-l-2 border-blue-500 pl-3">
+                      <p className="text-sm font-medium text-gray-900">{module.module}</p>
+                      {module.lessons && module.lessons.length > 0 && (
+                        <ul className="mt-1 space-y-1">
+                          {module.lessons.map((lesson, lessonIdx) => (
+                            <li key={lessonIdx} className="text-xs text-gray-600">
+                              • {lesson.title || 'Untitled Lesson'}
+                              {lesson.duration && ` (${lesson.duration} min)`}
                             </li>
                           ))}
                         </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-              
-              <div className="flex justify-end p-4 border-t border-gray-200">
-                <button
-                  onClick={closeCurriculumModal}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+            )}
           </div>
         )}
+      </Modal>
     </div>
   );
 }
+

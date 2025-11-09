@@ -1,398 +1,318 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Store,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  Star,
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
+import Image from "next/image";
+import { 
+  Search, 
+  Edit, 
+  Trash2, 
   RefreshCw,
   Filter,
   Download,
+  Plus,
+  Eye,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Image as ImageIcon,
+  X,
+  DollarSign
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { Modal } from "@/components/ui/modal";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+import toast from "react-hot-toast";
+import { 
+  Service, 
+  ServiceCategory, 
+  ServicePricing, 
+  ServiceImage,
+  PricingType,
+  ServiceType,
+  DayOfWeek,
+  ScheduleDay
+} from "@/types/services";
 
-interface MarketplaceService {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  subcategory: string;
-  provider: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    profile: {
-      rating: number;
-    };
-  };
-  pricing: {
-    type: 'hourly' | 'fixed' | 'package';
-    basePrice: number;
-    currency: string;
-  };
-  serviceType: 'one_time' | 'recurring' | 'subscription';
-  estimatedDuration: {
-    min: number;
-    max: number;
-  };
-  teamSize: number;
-  equipmentProvided: boolean;
-  materialsIncluded: boolean;
-  warranty: {
-    hasWarranty: boolean;
-    duration: number;
-    description: string;
-  };
-  insurance: {
-    covered: boolean;
-    coverageAmount: number;
-  };
-  emergencyService: {
-    available: boolean;
-    surcharge: number;
-    responseTime: string;
-  };
-  servicePackages: Array<{
-    _id: string;
-    name: string;
-    description: string;
-    price: number;
-    features: string[];
-    duration: number;
-  }>;
-  addOns: Array<{
-    _id: string;
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-  }>;
-  features: string[];
-  requirements: string[];
-  serviceArea: string[];
-  availability: {
-    timezone: string;
-    schedule: {
-      day: string;
-      startTime: string;
-      endTime: string;
-      isAvailable: boolean;
-    }[];
-  };
-  isActive: boolean;
-  rating: {
-    average: number;
-    count: number;
-  };
-  images: string[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
-
-interface MarketplaceStats {
-  totalServices: number;
-  activeServices: number;
-  pendingServices: number;
-  rejectedServices: number;
-  totalBookings: number;
-  totalRevenue: number;
-  averageRating: number;
-  topCategory: string;
-  growthRate: number;
-  todayCount: number;
-  weekCount: number;
-  monthCount: number;
-  trends: {
-    daily: Array<{ date: string; count: number }>;
-    weekly: Array<{ week: string; count: number }>;
-    monthly: Array<{ month: string; count: number }>;
-  };
-  topServices: Array<{ id: string; name: string; bookings: number; revenue: number; rating: number }>;
-  categoryStats: Array<{ category: string; count: number }>;
-  performanceMetrics: {
-    averageBookings: number;
-    averageRevenue: number;
-    conversionRate: number;
-  };
-}
-
-// Data mapping function to transform API response
-const mapServiceData = (apiService: {
+// Type for API service response (raw data from backend)
+interface ApiServiceData {
   _id?: string;
   title?: string;
   description?: string;
   category?: string;
   subcategory?: string;
-  price?: number;
-  provider?: {
-    _id?: string;
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    profile?: {
-      rating?: number;
-    };
-  };
-  status?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  bookings?: number;
-  revenue?: number;
-  rating?: {
-    average?: number;
-    count?: number;
-  };
+  provider?: string | { _id?: string; id?: string };
+  pricing?: ServicePricing;
+  serviceArea?: string[];
+  images?: ServiceImage[];
   features?: string[];
   requirements?: string[];
-  serviceArea?: string[];
-  availability?: {
-    timezone?: string;
-    schedule?: Array<{
-      day: string;
-      startTime: string;
-      endTime: string;
-      isAvailable: boolean;
-    }>;
-  };
-  isActive?: boolean;
-  images?: string[];
-  pricing?: {
-    type?: string;
-    basePrice?: number;
-    currency?: string;
-  };
-  serviceType?: string;
-  estimatedDuration?: {
-    min?: number;
-    max?: number;
-  };
+  serviceType?: ServiceType;
+  estimatedDuration?: { min?: number; max?: number };
   teamSize?: number;
   equipmentProvided?: boolean;
   materialsIncluded?: boolean;
-  warranty?: {
-    hasWarranty?: boolean;
-    duration?: number;
-    description?: string;
-  };
-  insurance?: {
-    covered?: boolean;
-    coverageAmount?: number;
-  };
-  emergencyService?: {
-    available?: boolean;
-    surcharge?: number;
-    responseTime?: string;
-  };
-  servicePackages?: Array<{
-    _id?: string;
-    name?: string;
-    description?: string;
-    price?: number;
-    features?: string[];
-    duration?: number;
-  }>;
-  addOns?: Array<{
-    _id?: string;
-    name?: string;
-    description?: string;
-    price?: number;
-    category?: string;
-  }>;
-  __v?: number;
-}): MarketplaceService => {
-  return {
-    _id: apiService._id || '',
+  warranty?: { hasWarranty?: boolean; duration?: number; description?: string };
+  insurance?: { covered?: boolean; coverageAmount?: number };
+  emergencyService?: { available?: boolean; surcharge?: number; responseTime?: string };
+  servicePackages?: Array<{ name?: string; description?: string; price?: number; features?: string[]; duration?: number }>;
+  addOns?: Array<{ name?: string; description?: string; price?: number; category?: string }>;
+  isActive?: boolean;
+  rating?: { average?: number; count?: number };
+  availability?: { schedule?: Array<{ day?: string; startTime?: string; endTime?: string; isAvailable?: boolean }>; timezone?: string };
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+// Helper function to transform API service data to frontend format
+const transformServiceData = (apiService: ApiServiceData): Service => {
+  const service: Service = {
+    _id: apiService._id,
     title: apiService.title || '',
     description: apiService.description || '',
-    category: apiService.category || '',
+    category: apiService.category as ServiceCategory || 'other',
     subcategory: apiService.subcategory || '',
-    provider: {
-      _id: apiService.provider?._id || '',
-      firstName: apiService.provider?.firstName || '',
-      lastName: apiService.provider?.lastName || '',
-      profile: {
-        rating: apiService.provider?.profile?.rating || 0
-      }
+    provider: typeof apiService.provider === 'string' 
+      ? apiService.provider 
+      : apiService.provider?._id || apiService.provider?.id || '',
+    pricing: apiService.pricing || {
+      type: 'fixed' as PricingType,
+      basePrice: 0,
+      currency: 'USD'
     },
-    pricing: {
-      type: (apiService.pricing?.type as 'fixed' | 'hourly' | 'package') || 'fixed',
-      basePrice: apiService.pricing?.basePrice || 0,
-      currency: apiService.pricing?.currency || 'USD'
-    },
-    serviceType: (apiService.serviceType as 'subscription' | 'one_time' | 'recurring') || 'one_time',
-    estimatedDuration: {
-      min: apiService.estimatedDuration?.min || 0,
-      max: apiService.estimatedDuration?.max || 0
-    },
-    teamSize: apiService.teamSize || 1,
-    equipmentProvided: apiService.equipmentProvided || false,
-    materialsIncluded: apiService.materialsIncluded || false,
-    warranty: {
-      hasWarranty: apiService.warranty?.hasWarranty || false,
-      duration: apiService.warranty?.duration || 0,
-      description: apiService.warranty?.description || ''
-    },
-    insurance: {
-      covered: apiService.insurance?.covered || false,
-      coverageAmount: apiService.insurance?.coverageAmount || 0
-    },
-    emergencyService: {
-      available: apiService.emergencyService?.available || false,
-      surcharge: apiService.emergencyService?.surcharge || 0,
-      responseTime: apiService.emergencyService?.responseTime || ''
-    },
-    servicePackages: (apiService.servicePackages as Array<{
-      _id: string;
-      name: string;
-      description: string;
-      price: number;
-      features: string[];
-      duration: number;
-    }>) || [],
-    addOns: (apiService.addOns as Array<{
-      _id: string;
-      name: string;
-      description: string;
-      price: number;
-      category: string;
-    }>) || [],
+    serviceArea: apiService.serviceArea || [],
+    images: apiService.images || [],
     features: apiService.features || [],
     requirements: apiService.requirements || [],
-    serviceArea: apiService.serviceArea || [],
-    availability: {
-      timezone: apiService.availability?.timezone || 'UTC',
-      schedule: apiService.availability?.schedule || []
-    },
-    isActive: apiService.isActive || false,
-    rating: {
-      average: apiService.rating?.average || 0,
-      count: apiService.rating?.count || 0
-    },
-    images: apiService.images || [],
-    createdAt: apiService.createdAt || '',
-    updatedAt: apiService.updatedAt || '',
-    __v: apiService.__v || 0,
+    serviceType: apiService.serviceType,
+    estimatedDuration: apiService.estimatedDuration,
+    teamSize: apiService.teamSize,
+    equipmentProvided: apiService.equipmentProvided,
+    materialsIncluded: apiService.materialsIncluded,
+    warranty: apiService.warranty,
+    insurance: apiService.insurance,
+    emergencyService: apiService.emergencyService,
+    servicePackages: apiService.servicePackages,
+    addOns: apiService.addOns,
+    isActive: apiService.isActive !== undefined ? apiService.isActive : true,
+    rating: apiService.rating,
+    createdAt: apiService.createdAt ? new Date(apiService.createdAt) : new Date(),
+    updatedAt: apiService.updatedAt ? new Date(apiService.updatedAt) : new Date(),
   };
+
+  if (apiService.availability) {
+    const validDayOfWeek = (day: string | undefined): DayOfWeek | undefined => {
+      if (!day) return undefined;
+      const validDays: DayOfWeek[] = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+      return validDays.includes(day.toLowerCase() as DayOfWeek) ? (day.toLowerCase() as DayOfWeek) : undefined;
+    };
+
+    const transformedSchedule: ScheduleDay[] | undefined = apiService.availability.schedule?.map((scheduleItem) => ({
+      day: validDayOfWeek(scheduleItem.day),
+      startTime: scheduleItem.startTime,
+      endTime: scheduleItem.endTime,
+      isAvailable: scheduleItem.isAvailable,
+    }));
+
+    service.availability = {
+      schedule: transformedSchedule,
+      timezone: apiService.availability.timezone,
+    };
+  }
+
+  return service;
 };
 
 export default function MarketplacePage() {
-  const [services, setServices] = useState<MarketplaceService[]>([]);
-  const [stats, setStats] = useState<MarketplaceStats | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [totalCount, setTotalCount] = useState(0);
+  const [slowRequest, setSlowRequest] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'title' | 'status' | 'createdAt' | 'price' | 'rating' | 'bookings'>('createdAt');
+  const [sortBy, setSortBy] = useState<'title' | 'category' | 'createdAt' | 'price'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage] = useState(1);
   const [itemsPerPage] = useState(50);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all"); // "all", "active", "inactive"
+
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [imageUploadModalOpen, setImageUploadModalOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedServiceDetails, setSelectedServiceDetails] = useState<Service | null>(null);
+  const [loadingServiceDetails, setLoadingServiceDetails] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  
+  // Form data states
+  const [createFormData, setCreateFormData] = useState({
+    title: '',
+    description: '',
+    category: 'other' as ServiceCategory,
+    subcategory: '',
+    pricingType: 'fixed' as PricingType,
+    basePrice: '',
+    currency: 'USD',
+    serviceArea: '',
+    serviceType: 'one_time' as ServiceType,
+    isActive: true
+  });
+
+  const [editFormData, setEditFormData] = useState({
+    title: '',
+    description: '',
+    category: 'other' as ServiceCategory,
+    subcategory: '',
+    pricingType: 'fixed' as PricingType,
+    basePrice: '',
+    currency: 'USD',
+    serviceArea: '',
+    serviceType: 'one_time' as ServiceType,
+    isActive: true
+  });
 
   const fetchData = useCallback(async () => {
+    let slowRequestTimer: NodeJS.Timeout | null = null;
+    let servicesUrl = '';
+    
     try {
       setLoading(true);
       setError(null);
+      setSlowRequest(false);
 
-      // Build query parameters for marketplace data
+      // Set a timer to show slow request warning
+      slowRequestTimer = setTimeout(() => {
+        setSlowRequest(true);
+      }, 10000);
+
+      // Build query parameters
       const queryParams = new URLSearchParams();
-      queryParams.set('type', 'listings'); // This is crucial - we need listings, not overview
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
       if (searchTerm) queryParams.set('search', searchTerm);
       if (categoryFilter !== 'all') queryParams.set('category', categoryFilter);
-      if (statusFilter !== 'all') queryParams.set('status', statusFilter);
+      if (statusFilter !== 'all') queryParams.set('isActive', statusFilter === 'active' ? 'true' : 'false');
       queryParams.set('sortBy', sortBy);
       queryParams.set('sortOrder', sortOrder);
 
-      const [dataResponse, statsResponse] = await Promise.all([
-        fetch(`/api/admin/marketplace?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }),
-        fetch('/api/admin/marketplace/stats?period=week', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        })
-      ]);
+      if (!getApiToken()) {
+        logger.warn('No API token found, cannot fetch services');
+        setError('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const servicesQuery = new URLSearchParams(Object.fromEntries(queryParams)).toString();
+      servicesUrl = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}${servicesQuery ? `?${servicesQuery}` : ''}`;
+      
+      logger.debug('Fetching services', { 
+        servicesUrl, 
+        queryParams: Object.fromEntries(queryParams),
+        apiBaseUrl: API_BASE_URL,
+        endpoint: API_ENDPOINTS.marketplaceServices
+      });
+      
+      const dataResponse = await fetch(servicesUrl, createAuthFetchOptions({ method: 'GET' }));
 
       if (!dataResponse.ok) {
-        const errorData = await dataResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch marketplace data');
-      }
-
-      if (!statsResponse.ok) {
-        const errorData = await statsResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch marketplace statistics');
+        const errorText = await dataResponse.text().catch(() => '');
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || `HTTP ${dataResponse.status}: ${dataResponse.statusText}` };
+        }
+        logger.error('Failed to fetch services', new Error(errorData.error || errorData.message || 'Failed to fetch services data'), {
+          status: dataResponse.status,
+          statusText: dataResponse.statusText,
+          url: servicesUrl,
+          errorData
+        });
+        throw new Error(errorData.error || errorData.message || `HTTP ${dataResponse.status}: Failed to fetch services data`);
       }
 
       const dataResult = await dataResponse.json();
-      const statsResult = await statsResponse.json();
 
-      // Handle the API response structure
+      // Log the response for debugging
+      logger.debug('Services API response', { 
+        hasSuccess: !!dataResult.success,
+        hasData: !!dataResult.data,
+        dataType: Array.isArray(dataResult.data) ? 'array' : typeof dataResult.data,
+        dataKeys: dataResult.data ? Object.keys(dataResult.data) : []
+      });
+
+      // Transform the API response data
+      let servicesData: Service[] = [];
+      let totalCount = 0;
+
+      // Handle different response structures
       if (dataResult.success && dataResult.data) {
-        // Ensure data is an array before mapping
-        if (Array.isArray(dataResult.data)) {
-          const mappedServices = dataResult.data.map(mapServiceData);
-          setServices(mappedServices);
-          setTotalCount(dataResult.pagination?.total || dataResult.data.length);
-        } else {
-          console.warn('Expected array data but received:', typeof dataResult.data, dataResult.data);
-          setServices([]);
-          setTotalCount(0);
+        if (dataResult.data.services && Array.isArray(dataResult.data.services)) {
+          servicesData = dataResult.data.services.map(transformServiceData);
+          totalCount = dataResult.data.pagination?.total || dataResult.data.services.length;
+        } else if (Array.isArray(dataResult.data)) {
+          servicesData = dataResult.data.map(transformServiceData);
+          totalCount = dataResult.total || dataResult.data.length;
         }
-      } else {
-        setServices([]);
-        setTotalCount(0);
+      } else if (Array.isArray(dataResult)) {
+        servicesData = dataResult.map(transformServiceData);
+        totalCount = dataResult.length;
+      } else if (dataResult.data) {
+        if (Array.isArray(dataResult.data)) {
+          servicesData = dataResult.data.map(transformServiceData);
+          totalCount = dataResult.total || dataResult.data.length;
+        } else if (dataResult.data.services && Array.isArray(dataResult.data.services)) {
+          servicesData = dataResult.data.services.map(transformServiceData);
+          totalCount = dataResult.data.pagination?.total || dataResult.data.services.length;
+        }
+      } else if (Array.isArray(dataResult.services)) {
+        servicesData = dataResult.services.map(transformServiceData);
+        totalCount = dataResult.pagination?.total || dataResult.services.length;
       }
-      
-      // Handle stats response - it should be an object, not an array
-      const statsData = statsResult.data || statsResult;
-      if (Array.isArray(statsData)) {
-        // If it's an array, create a default stats object
-        setStats({
-          totalServices: 0,
-          activeServices: 0,
-          pendingServices: 0,
-          rejectedServices: 0,
-          totalBookings: 0,
-          totalRevenue: 0,
-          averageRating: 0,
-          topCategory: 'N/A',
-          growthRate: 0,
-          todayCount: 0,
-          weekCount: 0,
-          monthCount: 0,
-          trends: { daily: [], weekly: [], monthly: [] },
-          topServices: [],
-          categoryStats: [],
-          performanceMetrics: { averageBookings: 0, averageRevenue: 0, conversionRate: 0 }
-        });
-      } else {
-        setStats(statsData);
-      }
+
+      setServices(servicesData);
+      setTotalCount(totalCount);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching marketplace data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load marketplace data');
+      logger.error('Error fetching services data', err instanceof Error ? err : new Error(String(err)), {
+        url: servicesUrl,
+        error: err instanceof Error ? err.message : String(err)
+      });
+      let errorMessage = 'Failed to load services data';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('timed out')) {
+          errorMessage = 'Request timed out. The server may be slow. Please try again.';
+        } else if (err.message.includes('aborted')) {
+          errorMessage = 'Request was cancelled. Please try again.';
+        } else if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          errorMessage = 'Unauthorized. Please check your authentication.';
+        } else if (err.message.includes('403') || err.message.includes('Forbidden')) {
+          errorMessage = 'Access forbidden. You may not have permission to view services.';
+        } else if (err.message.includes('404')) {
+          errorMessage = 'Services endpoint not found. Please check the API configuration.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
+      setError(errorMessage);
+      setServices([]);
+      setTotalCount(0);
     } finally {
+      if (slowRequestTimer) {
+        clearTimeout(slowRequestTimer);
+      }
       setLoading(false);
+      setSlowRequest(false);
     }
   }, [currentPage, itemsPerPage, searchTerm, categoryFilter, statusFilter, sortBy, sortOrder]);
 
@@ -405,14 +325,14 @@ export default function MarketplacePage() {
     try {
       await fetchData();
     } catch (err) {
-      console.error('Error refreshing data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to refresh marketplace data');
+      logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
+      toast.error('Failed to refresh services data');
     } finally {
       setRefreshing(false);
     }
   };
 
-  const handleSort = (field: 'title' | 'status' | 'createdAt' | 'price' | 'rating' | 'bookings') => {
+  const handleSort = (field: 'title' | 'category' | 'createdAt' | 'price') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -421,58 +341,274 @@ export default function MarketplacePage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleViewService = async (serviceId: string) => {
+    try {
+      setLoadingServiceDetails(true);
+      if (!getApiToken()) return;
+      
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch service details');
+      }
+
+      const result = await response.json();
+      const serviceData = result.data || result;
+      setSelectedServiceDetails(transformServiceData(serviceData));
+      setViewModalOpen(true);
+    } catch (err) {
+      logger.error('Error fetching service details', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch service details');
+    } finally {
+      setLoadingServiceDetails(false);
+    }
+  };
+
+  const handleCreateService = async () => {
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      if (!createFormData.title || !createFormData.description) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const formData = {
+        title: createFormData.title,
+        description: createFormData.description,
+        category: createFormData.category,
+        subcategory: createFormData.subcategory,
+        pricing: {
+          type: createFormData.pricingType,
+          basePrice: parseFloat(createFormData.basePrice) || 0,
+          currency: createFormData.currency
+        },
+        serviceArea: createFormData.serviceArea ? createFormData.serviceArea.split(',').map(s => s.trim()).filter(s => s) : [],
+        serviceType: createFormData.serviceType,
+        isActive: createFormData.isActive
+      };
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServices}`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'POST',
+        body: JSON.stringify(formData)
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create service');
+      }
+
+      toast.success('Service created successfully');
+      setCreateModalOpen(false);
+      setCreateFormData({
+        title: '',
+        description: '',
+        category: 'other',
+        subcategory: '',
+        pricingType: 'fixed',
+        basePrice: '',
+        currency: 'USD',
+        serviceArea: '',
+        serviceType: 'one_time',
+        isActive: true
+      });
+      await fetchData();
+    } catch (err) {
+      logger.error('Error creating service', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to create service');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateService = async () => {
+    if (!selectedService?._id) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      if (!editFormData.title || !editFormData.description) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const formData = {
+        title: editFormData.title,
+        description: editFormData.description,
+        category: editFormData.category,
+        subcategory: editFormData.subcategory,
+        pricing: {
+          type: editFormData.pricingType,
+          basePrice: parseFloat(editFormData.basePrice) || 0,
+          currency: editFormData.currency
+        },
+        serviceArea: editFormData.serviceArea ? editFormData.serviceArea.split(',').map(s => s.trim()).filter(s => s) : [],
+        serviceType: editFormData.serviceType,
+        isActive: editFormData.isActive
+      };
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${selectedService._id}`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'PUT',
+        body: JSON.stringify(formData)
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update service');
+      }
+
+      toast.success('Service updated successfully');
+      setEditModalOpen(false);
+      setSelectedService(null);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error updating service', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to update service');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteService = async () => {
+    if (!selectedService?._id) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${selectedService._id}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'DELETE' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete service');
+      }
+
+      toast.success('Service deleted successfully');
+      setDeleteModalOpen(false);
+      setSelectedService(null);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error deleting service', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to delete service');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUploadImages = async () => {
+    if (!selectedService?._id || !selectedFiles || selectedFiles.length === 0) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${selectedService._id}/images`;
+      const token = getApiToken();
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+      // Don't set Content-Type for FormData - browser will set it with boundary
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload images');
+      }
+
+      toast.success(`Successfully uploaded ${selectedFiles.length} image(s)`);
+      setImageUploadModalOpen(false);
+      setSelectedService(null);
+      setSelectedFiles([]);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error uploading images', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to upload images');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'cleaning': return 'bg-blue-100 text-blue-800';
-      case 'plumbing': return 'bg-green-100 text-green-800';
-      case 'electrical': return 'bg-yellow-100 text-yellow-800';
-      case 'moving': return 'bg-purple-100 text-purple-800';
-      case 'landscaping': return 'bg-emerald-100 text-emerald-800';
-      case 'maintenance': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+    const colors: Record<string, string> = {
+      cleaning: 'bg-blue-100 text-blue-800',
+      plumbing: 'bg-green-100 text-green-800',
+      electrical: 'bg-yellow-100 text-yellow-800',
+      moving: 'bg-purple-100 text-purple-800',
+      landscaping: 'bg-emerald-100 text-emerald-800',
+      painting: 'bg-pink-100 text-pink-800',
+      carpentry: 'bg-orange-100 text-orange-800',
+      flooring: 'bg-amber-100 text-amber-800',
+      roofing: 'bg-red-100 text-red-800',
+      hvac: 'bg-cyan-100 text-cyan-800',
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusColor = (isActive: boolean | undefined) => {
+    return isActive ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100';
   };
 
   if (loading) {
     return (
-      <Loading
-        size="xl"
-        text="Loading marketplace data..."
-        fullScreen={true}
-        variant="default"
-      />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loading size="xl" text="Loading services data..." />
+          {slowRequest && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm">
+                <strong>Slow Response:</strong> The request is taking longer than usual. 
+                This might be due to a large dataset or slow external API. Please wait...
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AdminErrorState
-        error={error}
-        onRetry={() => window.location.reload()}
-        retryText="Try Again"
-      />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
+          <p className="text-gray-600">{error}</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            Marketplace Management
+          <h1 className="text-2xl font-bold text-gray-900">
+            Marketplace Services
           </h1>
-          <p className="text-gray-600 text-sm">Manage services, bookings, and reviews</p>
+          <p className="text-gray-600 text-sm">Manage marketplace services and listings</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           {lastUpdated && (
@@ -480,6 +616,13 @@ export default function MarketplacePage() {
               Updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Add Service
+          </button>
           <button
             onClick={refreshData}
             disabled={refreshing}
@@ -490,124 +633,6 @@ export default function MarketplacePage() {
           </button>
         </div>
       </div>
-
-      {/* Stats Overview */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Services</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {Number(stats?.totalServices || 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats?.todayCount || 0} today
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <Store className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Active Services</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {Number(stats?.activeServices || 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Currently active
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <Store className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Pending Services</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {Number(stats?.pendingServices || 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Awaiting approval
-                </p>
-              </div>
-              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
-                <Calendar className="w-5 h-5 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Revenue</p>
-                <p className="text-lg font-bold text-gray-900">
-                  ${Number(stats?.totalRevenue || 0).toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  All time
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
-                <DollarSign className="w-5 h-5 text-purple-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Additional Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-700">{Number(stats?.averageRating || 0).toFixed(1)}</p>
-              </div>
-              <div className="flex items-center">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Top Category</p>
-                <p className="text-2xl font-bold text-gray-700">{stats?.topCategory || 'N/A'}</p>
-              </div>
-              <div className="flex items-center">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Growth Rate</p>
-                <p className="text-2xl font-bold text-gray-700">+{stats?.growthRate || 0}%</p>
-              </div>
-              <div className="flex items-center">
-                {(stats?.growthRate || 0) >= 0 ? (
-                  <TrendingUp className="w-5 h-5 text-green-500" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-red-500" />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Filters and Controls */}
       <div className="bg-white rounded shadow">
@@ -660,7 +685,23 @@ export default function MarketplacePage() {
                   <option value="electrical">Electrical</option>
                   <option value="moving">Moving</option>
                   <option value="landscaping">Landscaping</option>
-                  <option value="maintenance">Maintenance</option>
+                  <option value="painting">Painting</option>
+                  <option value="carpentry">Carpentry</option>
+                  <option value="flooring">Flooring</option>
+                  <option value="roofing">Roofing</option>
+                  <option value="hvac">HVAC</option>
+                  <option value="appliance_repair">Appliance Repair</option>
+                  <option value="locksmith">Locksmith</option>
+                  <option value="handyman">Handyman</option>
+                  <option value="home_security">Home Security</option>
+                  <option value="pool_maintenance">Pool Maintenance</option>
+                  <option value="pest_control">Pest Control</option>
+                  <option value="carpet_cleaning">Carpet Cleaning</option>
+                  <option value="window_cleaning">Window Cleaning</option>
+                  <option value="gutter_cleaning">Gutter Cleaning</option>
+                  <option value="power_washing">Power Washing</option>
+                  <option value="snow_removal">Snow Removal</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
@@ -690,177 +731,780 @@ export default function MarketplacePage() {
                 Clear all filters
               </button>
               <div className="text-xs text-gray-500">
-                {totalCount} services found
+                {totalCount > 0 ? `${totalCount} services found` : `${services.length} services found`}
               </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Data Table */}
-        <div className="bg-white rounded shadow overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-gray-900">Marketplace Services</h3>
-              <div className="flex items-center space-x-1">
-                <span className="text-xs text-gray-500">Sort:</span>
-                <button
-                  onClick={() => handleSort('title')}
-                  className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                  Title
-                  {sortBy === 'title' && (
-                    sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort('status')}
-                  className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'status' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                  Status
-                  {sortBy === 'status' && (
-                    sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort('createdAt')}
-                  className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                  Date
-                  {sortBy === 'createdAt' && (
-                    sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleSort('price')}
-                  className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'price' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                >
-                  Price
-                  {sortBy === 'price' && (
-                    sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                  )}
-                </button>
-              </div>
+      {/* Data Table */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Services</h3>
+            <div className="flex items-center space-x-1">
+              <span className="text-xs text-gray-500">Sort:</span>
+              <button
+                onClick={() => handleSort('title')}
+                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                  sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Title
+                {sortBy === 'title' && (
+                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleSort('category')}
+                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                  sortBy === 'category' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Category
+                {sortBy === 'category' && (
+                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                )}
+              </button>
+              <button
+                onClick={() => handleSort('createdAt')}
+                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                Date
+                {sortBy === 'createdAt' && (
+                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                )}
+              </button>
             </div>
           </div>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Provider</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {services.map((service) => (
-                  <tr key={service._id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div>
-                        <div className="text-xs font-medium text-gray-900">{service.title || 'N/A'}</div>
-                        <div className="text-xs text-gray-500 truncate max-w-xs">{service.description || 'No description'}</div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {service.subcategory && (
-                            <span className="bg-gray-100 px-1 py-0.5 rounded text-xs">{service.subcategory}</span>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-xs text-gray-900">
-                        {service.provider?.firstName} {service.provider?.lastName}
-                      </div>
-                      <div className="text-xs text-gray-500">ID: {service.provider?._id || 'N/A'}</div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getCategoryColor(service.category || 'other')}`}>
-                        {service.category || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      <div>
-                        <div className="font-medium">
-                          ${Number(service.pricing?.basePrice || 0).toFixed(2)}
-                        </div>
-                        <div className="text-gray-500 text-xs">
-                          {service.pricing?.type === 'hourly' ? '/hour' : service.pricing?.type === 'package' ? '/package' : 'fixed'}
-                        </div>
-                        {service.servicePackages?.length > 0 && (
-                          <div className="text-xs text-blue-600">
-                            {service.servicePackages.length} packages
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {services.map((service) => (
+                <tr key={service._id} className="hover:bg-gray-50">
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-8 w-8">
+                        {service.images && service.images.length > 0 ? (
+                          <Image 
+                            src={service.images[0].url || service.images[0].thumbnail || ''} 
+                            alt={service.title}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded bg-gray-300 flex items-center justify-center">
+                            <ImageIcon className="w-4 h-4 text-gray-600" />
                           </div>
                         )}
                       </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-xs text-gray-900">{Number(service.rating?.average || 0).toFixed(1)}</span>
-                        <span className="ml-1 text-xs text-gray-500">({service.rating?.count || 0})</span>
+                      <div className="ml-3">
+                        <div className="text-xs font-semibold text-gray-900">
+                          {service.title || 'Untitled Service'}
+                        </div>
+                        <div className="text-xs text-gray-600 line-clamp-1">
+                          {service.description || 'No description'}
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(service.isActive ? 'active' : 'inactive')}`}>
-                        {service.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(service.category)}`}>
+                      {service.category.replace('_', ' ').toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
+                    <div className="flex items-center">
+                      <DollarSign className="w-3 h-3 mr-1 text-gray-500" />
+                      <span>
+                        {service.pricing?.basePrice?.toLocaleString() || '0'} {service.pricing?.currency || 'USD'}
+                        {service.pricing?.type && ` / ${service.pricing.type}`}
                       </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
-                      <div className="space-y-1">
-                        <div className="flex items-center">
-                          <span className="text-xs">Duration: {service.estimatedDuration?.min}-{service.estimatedDuration?.max}h</span>
-                        </div>
-                        <div className="flex items-center">
-                          <span className="text-xs">Team: {service.teamSize} people</span>
-                        </div>
-                        {service.equipmentProvided && (
-                          <div className="text-xs text-green-600">Equipment included</div>
-                        )}
-                        {service.insurance?.covered && (
-                          <div className="text-xs text-blue-600">Insured</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button className="text-blue-600 hover:text-blue-900" title="View Details">
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button className="text-green-600 hover:text-green-900" title="Edit Service">
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button className="text-red-600 hover:text-red-900" title="Delete Service">
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {services.length === 0 && !loading && (
-            <div className="text-center py-8">
-              <Store className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <h3 className="text-sm font-medium text-gray-900 mb-1">No services found</h3>
-              <p className="text-xs text-gray-500">
-                {searchTerm || categoryFilter !== 'all' || statusFilter !== 'all'
-                  ? 'Try adjusting your filters or search criteria.'
-                  : 'No marketplace services have been created yet.'}
-              </p>
-            </div>
-          )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(service.isActive)}`}>
+                      {service.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
+                    {service.createdAt ? new Date(service.createdAt).toLocaleDateString() : 'N/A'}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                    <div className="flex items-center space-x-2">
+                      {service._id && (
+                        <>
+                          <button 
+                            onClick={() => handleViewService(service._id!)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="View service details"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </button>
+                          <button 
+                          onClick={() => {
+                            setSelectedService(service);
+                            setEditFormData({
+                              title: service.title || '',
+                              description: service.description || '',
+                              category: service.category || 'other',
+                              subcategory: service.subcategory || '',
+                              pricingType: service.pricing?.type || 'fixed',
+                              basePrice: service.pricing?.basePrice?.toString() || '',
+                              currency: service.pricing?.currency || 'USD',
+                              serviceArea: service.serviceArea?.join(', ') || '',
+                              serviceType: service.serviceType || 'one_time',
+                              isActive: service.isActive !== undefined ? service.isActive : true
+                            });
+                            setEditModalOpen(true);
+                          }}
+                            className="text-green-600 hover:text-green-900"
+                            title="Edit service"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedService(service);
+                              setImageUploadModalOpen(true);
+                            }}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Upload images"
+                          >
+                            <ImageIcon className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedService(service);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete service"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+
+        {services.length === 0 && (
+          <div className="text-center py-8">
+            <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No services found</h3>
+            <p className="text-xs text-gray-500">Try adjusting your filters or search criteria.</p>
+          </div>
+        )}
+      </div>
+
+      {/* View Service Modal - Will be implemented in next chunk */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedServiceDetails(null);
+        }}
+        title="Service Details"
+        size="xl"
+      >
+        {loadingServiceDetails ? (
+          <div className="flex justify-center py-8">
+            <Loading size="md" />
+          </div>
+        ) : selectedServiceDetails ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Title</label>
+                <p className="text-sm font-semibold">{selectedServiceDetails.title || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Category</label>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedServiceDetails.category)}`}>
+                  {selectedServiceDetails.category.replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-medium text-gray-500">Description</label>
+                <p className="text-sm">{selectedServiceDetails.description || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Price</label>
+                <p className="text-sm">
+                  {selectedServiceDetails.pricing?.basePrice?.toLocaleString() || '0'} {selectedServiceDetails.pricing?.currency || 'USD'}
+                  {selectedServiceDetails.pricing?.type && ` / ${selectedServiceDetails.pricing.type}`}
+                </p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Status</label>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedServiceDetails.isActive)}`}>
+                  {selectedServiceDetails.isActive ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
+
+      {/* Create Service Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Create New Service"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setCreateModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateService}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Creating...' : 'Create Service'}
+            </button>
+          </div>
+        }
+      >
+        <CreateServiceForm 
+          formData={createFormData}
+          setFormData={setCreateFormData}
+        />
+      </Modal>
+
+      {/* Edit Service Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedService(null);
+        }}
+        title="Edit Service"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setEditModalOpen(false);
+                setSelectedService(null);
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateService}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Updating...' : 'Update Service'}
+            </button>
+          </div>
+        }
+      >
+        {selectedService && (
+          <EditServiceForm 
+            formData={editFormData}
+            setFormData={setEditFormData}
+          />
+        )}
+      </Modal>
+
+      {/* Delete Service Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedService(null);
+        }}
+        title="Delete Service"
+        size="md"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setSelectedService(null);
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeleteService}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              {submitting ? 'Deleting...' : 'Delete Service'}
+            </button>
+          </div>
+        }
+      >
+        {selectedService && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete the service <strong>{selectedService.title}</strong>? 
+              This action cannot be undone.
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      {/* Image Upload Modal */}
+      <Modal
+        isOpen={imageUploadModalOpen}
+        onClose={() => {
+          setImageUploadModalOpen(false);
+          setSelectedService(null);
+          setSelectedFiles([]);
+        }}
+        title="Upload Service Images"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setImageUploadModalOpen(false);
+                setSelectedService(null);
+                setSelectedFiles([]);
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUploadImages}
+              disabled={submitting || !selectedFiles || selectedFiles.length === 0}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Uploading...' : 'Upload Images'}
+            </button>
+          </div>
+        }
+      >
+        {selectedService && (
+          <ImageUploadForm 
+            service={selectedService}
+            onFilesChange={setSelectedFiles}
+            selectedFiles={selectedFiles || []}
+          />
+        )}
+      </Modal>
+    </div>
+  );
+}
+
+// Create Service Form Component
+function CreateServiceForm({ 
+  formData, 
+  setFormData 
+}: { 
+  formData: {
+    title: string;
+    description: string;
+    category: ServiceCategory;
+    subcategory: string;
+    pricingType: PricingType;
+    basePrice: string;
+    currency: string;
+    serviceArea: string;
+    serviceType: ServiceType;
+    isActive: boolean;
+  };
+  setFormData: React.Dispatch<React.SetStateAction<{
+    title: string;
+    description: string;
+    category: ServiceCategory;
+    subcategory: string;
+    pricingType: PricingType;
+    basePrice: string;
+    currency: string;
+    serviceArea: string;
+    serviceType: ServiceType;
+    isActive: boolean;
+  }>>;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="cleaning">Cleaning</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="electrical">Electrical</option>
+            <option value="moving">Moving</option>
+            <option value="landscaping">Landscaping</option>
+            <option value="painting">Painting</option>
+            <option value="carpentry">Carpentry</option>
+            <option value="flooring">Flooring</option>
+            <option value="roofing">Roofing</option>
+            <option value="hvac">HVAC</option>
+            <option value="appliance_repair">Appliance Repair</option>
+            <option value="locksmith">Locksmith</option>
+            <option value="handyman">Handyman</option>
+            <option value="home_security">Home Security</option>
+            <option value="pool_maintenance">Pool Maintenance</option>
+            <option value="pest_control">Pest Control</option>
+            <option value="carpet_cleaning">Carpet Cleaning</option>
+            <option value="window_cleaning">Window Cleaning</option>
+            <option value="gutter_cleaning">Gutter Cleaning</option>
+            <option value="power_washing">Power Washing</option>
+            <option value="snow_removal">Snow Removal</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+          <input
+            type="text"
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Type *</label>
+          <select
+            value={formData.pricingType}
+            onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="fixed">Fixed</option>
+            <option value="hourly">Hourly</option>
+            <option value="per_sqft">Per Square Foot</option>
+            <option value="per_item">Per Item</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.basePrice}
+            onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <select
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="USD">USD</option>
+            <option value="PHP">PHP</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={4}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+        <select
+          value={formData.serviceType}
+          onChange={(e) => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="one_time">One Time</option>
+          <option value="recurring">Recurring</option>
+          <option value="emergency">Emergency</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="installation">Installation</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Service Area (comma-separated)</label>
+        <input
+          type="text"
+          value={formData.serviceArea}
+          onChange={(e) => setFormData({ ...formData, serviceArea: e.target.value })}
+          placeholder="e.g., New York, Los Angeles"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
     </div>
   );
 }
+
+// Edit Service Form Component
+function EditServiceForm({ 
+  formData, 
+  setFormData 
+}: { 
+  formData: {
+    title: string;
+    description: string;
+    category: ServiceCategory;
+    subcategory: string;
+    pricingType: PricingType;
+    basePrice: string;
+    currency: string;
+    serviceArea: string;
+    serviceType: ServiceType;
+    isActive: boolean;
+  };
+  setFormData: React.Dispatch<React.SetStateAction<{
+    title: string;
+    description: string;
+    category: ServiceCategory;
+    subcategory: string;
+    pricingType: PricingType;
+    basePrice: string;
+    currency: string;
+    serviceArea: string;
+    serviceType: ServiceType;
+    isActive: boolean;
+  }>>;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="cleaning">Cleaning</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="electrical">Electrical</option>
+            <option value="moving">Moving</option>
+            <option value="landscaping">Landscaping</option>
+            <option value="painting">Painting</option>
+            <option value="carpentry">Carpentry</option>
+            <option value="flooring">Flooring</option>
+            <option value="roofing">Roofing</option>
+            <option value="hvac">HVAC</option>
+            <option value="appliance_repair">Appliance Repair</option>
+            <option value="locksmith">Locksmith</option>
+            <option value="handyman">Handyman</option>
+            <option value="home_security">Home Security</option>
+            <option value="pool_maintenance">Pool Maintenance</option>
+            <option value="pest_control">Pest Control</option>
+            <option value="carpet_cleaning">Carpet Cleaning</option>
+            <option value="window_cleaning">Window Cleaning</option>
+            <option value="gutter_cleaning">Gutter Cleaning</option>
+            <option value="power_washing">Power Washing</option>
+            <option value="snow_removal">Snow Removal</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+          <input
+            type="text"
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Type *</label>
+          <select
+            value={formData.pricingType}
+            onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="fixed">Fixed</option>
+            <option value="hourly">Hourly</option>
+            <option value="per_sqft">Per Square Foot</option>
+            <option value="per_item">Per Item</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.basePrice}
+            onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <select
+            value={formData.currency}
+            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="USD">USD</option>
+            <option value="PHP">PHP</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          rows={4}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+        <select
+          value={formData.serviceType}
+          onChange={(e) => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="one_time">One Time</option>
+          <option value="recurring">Recurring</option>
+          <option value="emergency">Emergency</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="installation">Installation</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Service Area (comma-separated)</label>
+        <input
+          type="text"
+          value={formData.serviceArea}
+          onChange={(e) => setFormData({ ...formData, serviceArea: e.target.value })}
+          placeholder="e.g., New York, Los Angeles"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={formData.isActive}
+            onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700">Active</span>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+// Image Upload Form Component
+function ImageUploadForm({ 
+  onFilesChange, 
+  selectedFiles 
+}: { 
+  service: Service; 
+  onFilesChange: (files: File[]) => void;
+  selectedFiles: File[];
+}) {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      onFilesChange([...selectedFiles, ...filesArray]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    onFilesChange(selectedFiles.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Select Images</label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleFileChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 mt-1">You can select multiple images</p>
+      </div>
+      {selectedFiles.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Selected Images ({selectedFiles.length})</label>
+          <div className="grid grid-cols-3 gap-2">
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="relative">
+                <Image
+                  src={URL.createObjectURL(file)}
+                  alt={file.name}
+                  width={200}
+                  height={96}
+                  className="w-full h-24 object-cover rounded border border-gray-300"
+                  unoptimized
+                />
+                <button
+                  onClick={() => removeFile(index)}
+                  className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                <p className="text-xs text-gray-600 truncate mt-1">{file.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

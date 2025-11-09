@@ -45,11 +45,15 @@ A comprehensive Next.js application that serves as a proxy layer to an external 
 The application follows a modern architecture pattern:
 
 ```
-Client (Browser) → Next.js API Route → External API (https://localpro-super-app.onrender.com) → Response
-   ↓                    ↓                    ↓
-Session Token    API Constants      Bearer Token
-Extraction       Type Safety        Forwarding
+Client (Browser) → External API (https://localpro-super-app.onrender.com) → Response
+   ↓                                ↓
+API Constants                Bearer Token
+Type Safety                  (stored in client cookie)
 ```
+
+Notes:
+- For Authentication, the client now calls the External API directly for send-code and verify-code. On successful verification, a non-httpOnly `api-token` cookie is set client-side to authorize subsequent requests directly to the External API.
+- Legacy Next.js API routes may still exist for other features; auth no longer depends on them.
 
 ### Key Components
 - **Frontend**: Next.js 14 with App Router
@@ -62,7 +66,7 @@ Extraction       Type Safety        Forwarding
 ```
 src/
 ├── app/
-│   ├── (dashboard)/          # Dashboard pages
+│   ├── (authenticated)/      # Authenticated user pages (formerly dashboard)
 │   ├── admin/               # Admin panel pages
 │   ├── api/                 # API routes (176+ endpoints)
 │   └── auth/                # Authentication pages

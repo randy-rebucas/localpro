@@ -1,8 +1,10 @@
 import { createAuthFetchOptions } from './auth-utils';
+import { API_BASE_URL, API_ENDPOINTS } from './api';
+import { logger } from './logger';
 
 // Communication API utility functions
 export class CommunicationAPI {
-  private static baseUrl = '/api/communication';
+  private static baseUrl = `${API_BASE_URL}${API_ENDPOINTS.communicationConversations.replace('/conversations', '')}`;
 
   // Conversation Management
   static async getConversations(params?: { page?: number; limit?: number; search?: string }) {
@@ -195,19 +197,19 @@ export class RealtimeCommunication {
       this.eventSource.close();
     }
 
-    this.eventSource = new EventSource('/api/communication/events');
+    this.eventSource = new EventSource(`${API_BASE_URL}${API_ENDPOINTS.communicationEvents}`);
     
     this.eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         this.emit(data.type, data);
       } catch (err) {
-        console.error('Error parsing event data:', err);
+        logger.error('Error parsing event data', err instanceof Error ? err : new Error(String(err)));
       }
     };
 
     this.eventSource.onerror = (err) => {
-      console.error('EventSource error:', err);
+      logger.error('EventSource error', err instanceof Error ? err : new Error(String(err)));
       // Attempt to reconnect after 5 seconds
       setTimeout(() => {
         if (this.eventSource?.readyState === EventSource.CLOSED) {
@@ -253,7 +255,7 @@ export class RealtimeCommunication {
     try {
       await CommunicationAPI.sendTypingEvent(conversationId, type);
     } catch (err) {
-      console.error('Error sending typing event:', err);
+      logger.error('Error sending typing event', err instanceof Error ? err : new Error(String(err)), { conversationId, type });
     }
   }
 }

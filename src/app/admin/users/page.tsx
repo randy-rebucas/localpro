@@ -17,42 +17,35 @@ import {
   Plus,
   Eye,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Award,
+  CheckCircle2,
+  Save
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-// Define types locally
-interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+import { Modal } from "@/components/ui/modal";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+import toast from "react-hot-toast";
+import { User, UserRole, UserStatus, UserBadge, Verification, Profile, BadgeType } from "@/types/users";
+
+// Type for API user response (raw data from backend)
+interface ApiUserData {
+  _id?: string;
   phoneNumber?: string;
-  role: 'client' | 'provider' | 'admin' | 'supplier' | 'instructor' | 'agency_owner' | 'agency_admin';
-  status: 'active' | 'inactive' | 'suspended' | 'pending_verification' | 'banned';
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
-  profileCompleteness?: number;
-  verificationStatus?: 'verified' | 'pending' | 'rejected';
-  // Additional fields from API response
-  profile?: {
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zipCode?: string;
-      country?: string;
-    };
-    bio?: string;
-    businessName?: string;
-    businessType?: string;
-    serviceAreas?: string[];
-    specialties?: string[];
-    rating?: number;
-    totalReviews?: number;
-  };
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  status?: string;
+  isVerified?: boolean;
+  trustScore?: number;
+  completionRate?: number;
+  cancellationRate?: number;
+  loginCount?: number;
+  tags?: string[];
+  profile?: Profile;
   verification?: {
     phoneVerified?: boolean;
     emailVerified?: boolean;
@@ -60,109 +53,85 @@ interface User {
     businessVerified?: boolean;
     addressVerified?: boolean;
     bankAccountVerified?: boolean;
-    verifiedAt?: string;
+    verifiedAt?: string | Date;
   };
-  subscription?: {
-    type?: string;
-    isActive?: boolean;
-    startDate?: string;
-    endDate?: string;
-  };
-  trustScore?: number;
   badges?: Array<{
-    type: string;
-    description: string;
-    earnedAt: string;
+    type?: string;
+    description?: string;
+    earnedAt?: string | Date;
   }>;
-  completionRate?: number;
-  cancellationRate?: number;
-  loginCount?: number;
-  tags?: string[];
-  notes?: string[];
+  notes?: Array<string | {
+    note?: string;
+    addedBy?: string;
+    addedAt?: string | Date;
+  }>;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  lastLogin?: string | Date;
+  lastLoginAt?: string | Date;
 }
 
 // Helper function to transform API user data to frontend format
-const transformUserData = (apiUser: {
-  _id: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phoneNumber?: string;
-  role?: string;
-  status?: string;
-  isActive?: boolean;
-  isVerified?: boolean;
-  profilePicture?: string;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-  preferences?: {
-    notifications?: boolean;
-    marketing?: boolean;
-    language?: string;
-    timezone?: string;
-  };
-  joinedAt?: string;
-  lastActive?: string;
-  totalSpent?: number;
-  orderCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-  lastLogin?: string;
-  profileCompleteness?: number;
-  verification?: {
-    phoneVerified?: boolean;
-    emailVerified?: boolean;
-  };
-  profile?: Record<string, unknown>;
-  subscription?: Record<string, unknown>;
-  trustScore?: number;
-  badges?: Array<{
-    type: string;
-    description: string;
-    earnedAt: string;
-  }>;
-  completionRate?: number;
-  cancellationRate?: number;
-  loginCount?: number;
-  tags?: string[];
-  notes?: string[];
-}): User => {
-  return {
+const transformUserData = (apiUser: ApiUserData): User => {
+  const user: User = {
     _id: apiUser._id,
-    firstName: apiUser.firstName || '',
-    lastName: apiUser.lastName || '',
-    email: apiUser.email || '',
-    phoneNumber: apiUser.phoneNumber,
-    role: (apiUser.role as 'client' | 'admin' | 'provider' | 'agency_owner' | 'agency_admin' | 'supplier' | 'instructor') || 'client',
-    status: (apiUser.status as 'active' | 'suspended' | 'inactive' | 'pending_verification' | 'banned') || 'pending_verification',
-    isActive: apiUser.isActive || false,
+    phoneNumber: apiUser.phoneNumber || '',
+    email: apiUser.email,
+    firstName: apiUser.firstName,
+    lastName: apiUser.lastName,
+    role: apiUser.role as UserRole || 'client',
+    status: apiUser.status as UserStatus || 'pending_verification',
     isVerified: apiUser.isVerified || false,
-    createdAt: apiUser.createdAt || new Date().toISOString(),
-    updatedAt: apiUser.updatedAt || new Date().toISOString(),
-    lastLogin: apiUser.lastLogin,
-    profileCompleteness: apiUser.profileCompleteness || 0,
-    verificationStatus: apiUser.verification?.phoneVerified && 
-                       apiUser.verification?.emailVerified ? 'verified' : 'pending',
-    profile: apiUser.profile,
-    verification: apiUser.verification,
-    subscription: apiUser.subscription,
     trustScore: apiUser.trustScore,
-    badges: apiUser.badges ? apiUser.badges.map(badge => ({
-      type: typeof badge === 'string' ? badge : badge.type || 'unknown',
-      description: typeof badge === 'string' ? `${badge} badge` : badge.description || 'No description',
-      earnedAt: typeof badge === 'string' ? new Date().toISOString() : badge.earnedAt || new Date().toISOString()
-    })) : undefined,
     completionRate: apiUser.completionRate,
     cancellationRate: apiUser.cancellationRate,
     loginCount: apiUser.loginCount,
     tags: apiUser.tags,
-    notes: apiUser.notes
+    createdAt: apiUser.createdAt ? new Date(apiUser.createdAt) : new Date(),
+    updatedAt: apiUser.updatedAt ? new Date(apiUser.updatedAt) : new Date(),
+    lastLoginAt: (() => {
+      const loginDate = apiUser.lastLogin || apiUser.lastLoginAt;
+      return loginDate ? new Date(loginDate) : undefined;
+    })(),
   };
+
+  // Handle profile
+  if (apiUser.profile) {
+    user.profile = apiUser.profile as Profile;
+  }
+
+  // Handle verification
+  if (apiUser.verification) {
+    user.verification = {
+      phoneVerified: apiUser.verification.phoneVerified,
+      emailVerified: apiUser.verification.emailVerified,
+      identityVerified: apiUser.verification.identityVerified,
+      businessVerified: apiUser.verification.businessVerified,
+      addressVerified: apiUser.verification.addressVerified,
+      bankAccountVerified: apiUser.verification.bankAccountVerified,
+      verifiedAt: apiUser.verification.verifiedAt ? new Date(apiUser.verification.verifiedAt) : undefined,
+    } as Verification;
+  }
+
+  // Handle badges
+  if (apiUser.badges && Array.isArray(apiUser.badges)) {
+    user.badges = apiUser.badges.map((badge): UserBadge => ({
+      type: badge.type as BadgeType,
+      description: badge.description,
+      earnedAt: badge.earnedAt ? new Date(badge.earnedAt) : new Date(),
+    }));
+  }
+
+  // Handle notes
+  if (apiUser.notes && Array.isArray(apiUser.notes)) {
+    user.notes = apiUser.notes.map((note) => ({
+      note: typeof note === 'string' ? note : note.note,
+      addedBy: typeof note === 'string' ? undefined : note.addedBy,
+      addedAt: typeof note === 'string' ? new Date() : (note.addedAt ? new Date(note.addedAt) : new Date()),
+    }));
+  }
+
+  return user;
 };
 
 interface UserStats {
@@ -204,30 +173,63 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [isActiveFilter, setIsActiveFilter] = useState<string>("all"); // "all", "true", "false"
+  const [isVerifiedFilter, setIsVerifiedFilter] = useState<string>("all"); // "all", "true", "false"
 
-  // Helper function to add timeout to fetch requests
-  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-  };
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [verificationModalOpen, setVerificationModalOpen] = useState(false);
+  const [badgeModalOpen, setBadgeModalOpen] = useState(false);
+  const [bulkUpdateModalOpen, setBulkUpdateModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<User | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form states
+  const [createFormData, setCreateFormData] = useState({
+    phoneNumber: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "client" as UserRole,
+    agencyId: "",
+    agencyRole: ""
+  });
+
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    role: "client" as UserRole
+  });
+
+  const [verificationFormData, setVerificationFormData] = useState({
+    phoneVerified: false,
+    emailVerified: false,
+    identityVerified: false,
+    businessVerified: false,
+    addressVerified: false,
+    bankAccountVerified: false
+  });
+
+  const [badgeFormData, setBadgeFormData] = useState({
+    type: "",
+    description: ""
+  });
+
+  const [bulkUpdateFormData, setBulkUpdateFormData] = useState({
+    isActive: true,
+    status: "active" as UserStatus
+  });
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
+    let usersUrl = '';
     
     try {
       setLoading(true);
@@ -246,107 +248,136 @@ export default function UsersPage() {
       if (searchTerm) queryParams.set('search', searchTerm);
       if (roleFilter !== 'all') queryParams.set('role', roleFilter);
       if (statusFilter !== 'all') queryParams.set('status', statusFilter);
+      if (isActiveFilter !== 'all') queryParams.set('isActive', isActiveFilter);
+      if (isVerifiedFilter !== 'all') queryParams.set('isVerified', isVerifiedFilter);
       queryParams.set('sortBy', sortBy);
       queryParams.set('sortOrder', sortOrder);
 
+      if (!getApiToken()) {
+        logger.warn('No API token found, cannot fetch users');
+        setError('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      
+      const usersQuery = new URLSearchParams(Object.fromEntries(queryParams)).toString();
+      usersUrl = `${API_BASE_URL}${API_ENDPOINTS.users}${usersQuery ? `?${usersQuery}` : ''}`;
+      const statsUrl = `${API_BASE_URL}${API_ENDPOINTS.usersStats}?period=week`;
+      
+      logger.debug('Fetching users', { 
+        usersUrl, 
+        statsUrl, 
+        queryParams: Object.fromEntries(queryParams),
+        apiBaseUrl: API_BASE_URL,
+        endpoint: API_ENDPOINTS.users
+      });
+      
       const [dataResponse, statsResponse] = await Promise.all([
-        fetchWithTimeout(`/api/admin/users?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 20000), // 20 second timeout for users data
-        fetchWithTimeout('/api/admin/users/stats?period=week', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 10000).catch(err => { // 10 second timeout for stats
-          console.warn('Failed to fetch stats, using fallback:', err);
-          return {
-            ok: true,
-            json: () => Promise.resolve({
-              totalUsers: 0,
-              activeUsers: 0,
-              pendingUsers: 0,
-              suspendedUsers: 0,
-              newUsersToday: 0,
-              newUsersWeek: 0,
-              newUsersMonth: 0,
-              trends: { daily: [], weekly: [], monthly: [] },
-              topRoles: [],
-              statusStats: [],
-              performanceMetrics: {
-                averageRegistrationTime: 0,
-                medianRegistrationTime: 0,
-                p95RegistrationTime: 0
-              }
-            })
-          };
-        })
+        fetch(usersUrl, createAuthFetchOptions({ method: 'GET' })),
+        fetch(statsUrl, createAuthFetchOptions({ method: 'GET' }))
       ]);
 
       if (!dataResponse.ok) {
-        const errorData = await dataResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch users data');
-      }
-
-      if (!statsResponse.ok) {
-        const errorData = await statsResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch users statistics');
+        const errorText = await dataResponse.text().catch(() => '');
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || `HTTP ${dataResponse.status}: ${dataResponse.statusText}` };
+        }
+        logger.error('Failed to fetch users', new Error(errorData.error || errorData.message || 'Failed to fetch users data'), {
+          status: dataResponse.status,
+          statusText: dataResponse.statusText,
+          url: usersUrl,
+          errorData
+        });
+        throw new Error(errorData.error || errorData.message || `HTTP ${dataResponse.status}: Failed to fetch users data`);
       }
 
       const dataResult = await dataResponse.json();
-      const statsResult = await statsResponse.json();
+      
+      // Handle stats response - only process if successful
+      let statsData = null;
+      if (statsResponse.ok) {
+        try {
+          const statsResult = await statsResponse.json();
+          statsData = statsResult.data || statsResult;
+        } catch (err) {
+          logger.warn('Failed to parse stats response', { 
+            error: err instanceof Error ? err.message : String(err)
+          });
+        }
+      } else {
+        logger.warn('Failed to fetch stats', { 
+          status: statsResponse.status,
+          statusText: statsResponse.statusText
+        });
+      }
+
+      // Log the response for debugging
+      logger.debug('Users API response', { 
+        hasSuccess: !!dataResult.success,
+        hasData: !!dataResult.data,
+        dataType: Array.isArray(dataResult.data) ? 'array' : typeof dataResult.data,
+        dataKeys: dataResult.data ? Object.keys(dataResult.data) : [],
+        fullResponse: dataResult
+      });
 
       // Transform the API response data to match frontend expectations
       let usersData: User[] = [];
       let totalCount = 0;
 
+      // Handle different response structures
       if (dataResult.success && dataResult.data) {
-        // Handle the new API response structure
+        // Handle the new API response structure: { success: true, data: { users: [], pagination: {} } }
         if (dataResult.data.users && Array.isArray(dataResult.data.users)) {
           usersData = dataResult.data.users.map(transformUserData);
           totalCount = dataResult.data.pagination?.total || dataResult.data.users.length;
-        } else if (Array.isArray(dataResult.data)) {
-          // Fallback for old structure
+        } 
+        // Handle: { success: true, data: [] }
+        else if (Array.isArray(dataResult.data)) {
           usersData = dataResult.data.map(transformUserData);
           totalCount = dataResult.total || dataResult.data.length;
         }
-      } else if (Array.isArray(dataResult.data)) {
-        // Fallback for direct array response
-        usersData = dataResult.data.map(transformUserData);
-        totalCount = dataResult.total || dataResult.data.length;
+      } 
+      // Handle direct array response: []
+      else if (Array.isArray(dataResult)) {
+        usersData = dataResult.map(transformUserData);
+        totalCount = dataResult.length;
+      }
+      // Handle: { data: [] } or { data: { users: [] } }
+      else if (dataResult.data) {
+        if (Array.isArray(dataResult.data)) {
+          usersData = dataResult.data.map(transformUserData);
+          totalCount = dataResult.total || dataResult.data.length;
+        } else if (dataResult.data.users && Array.isArray(dataResult.data.users)) {
+          usersData = dataResult.data.users.map(transformUserData);
+          totalCount = dataResult.data.pagination?.total || dataResult.data.users.length;
+        }
+      }
+      // Handle direct users array in root
+      else if (Array.isArray(dataResult.users)) {
+        usersData = dataResult.users.map(transformUserData);
+        totalCount = dataResult.pagination?.total || dataResult.users.length;
       }
 
+      // No fallback - just use empty array if no users found
       setUsers(usersData);
       setTotalCount(totalCount);
       
-      // Handle stats response - it should be an object, not an array
-      const statsData = statsResult.data || statsResult;
-      if (Array.isArray(statsData)) {
-        // If it's an array, create a default stats object
-        setStats({
-          totalUsers: 0,
-          activeUsers: 0,
-          pendingUsers: 0,
-          suspendedUsers: 0,
-          newUsersToday: 0,
-          newUsersWeek: 0,
-          newUsersMonth: 0,
-          trends: { daily: [], weekly: [], monthly: [] },
-          topRoles: [],
-          statusStats: [],
-          performanceMetrics: {
-            averageRegistrationTime: 0,
-            medianRegistrationTime: 0,
-            p95RegistrationTime: 0
-          }
-        });
-      } else {
+      // Handle stats response - only set if we have valid data
+      if (statsData && !Array.isArray(statsData) && typeof statsData === 'object') {
         setStats(statsData);
+      } else {
+        // Set to null if no valid stats data
+        setStats(null);
       }
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching users data:', err);
+      logger.error('Error fetching users data', err instanceof Error ? err : new Error(String(err)), {
+        url: usersUrl,
+        error: err instanceof Error ? err.message : String(err)
+      });
       let errorMessage = 'Failed to load users data';
       
       if (err instanceof Error) {
@@ -354,12 +385,20 @@ export default function UsersPage() {
           errorMessage = 'Request timed out. The server may be slow. Please try again.';
         } else if (err.message.includes('aborted')) {
           errorMessage = 'Request was cancelled. Please try again.';
+        } else if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+          errorMessage = 'Unauthorized. Please check your authentication.';
+        } else if (err.message.includes('403') || err.message.includes('Forbidden')) {
+          errorMessage = 'Access forbidden. You may not have permission to view users.';
+        } else if (err.message.includes('404')) {
+          errorMessage = 'Users endpoint not found. Please check the API configuration.';
         } else {
           errorMessage = err.message;
         }
       }
       
       setError(errorMessage);
+      setUsers([]);
+      setTotalCount(0);
     } finally {
       if (slowRequestTimer) {
         clearTimeout(slowRequestTimer);
@@ -367,7 +406,7 @@ export default function UsersPage() {
       setLoading(false);
       setSlowRequest(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter, isActiveFilter, isVerifiedFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchData();
@@ -378,7 +417,7 @@ export default function UsersPage() {
     try {
       await fetchData();
     } catch (err) {
-      console.error('Error refreshing data:', err);
+      logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
       let errorMessage = 'Failed to refresh users data';
       
       if (err instanceof Error) {
@@ -406,75 +445,281 @@ export default function UsersPage() {
     }
   };
 
-  const handleViewUser = (userId: string) => {
-    // TODO: Implement user view modal or navigation
-    console.log('View user:', userId);
+  const handleViewUser = async (userId: string) => {
+    try {
+      setLoadingUserDetails(true);
+      if (!getApiToken()) return;
+      
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}/${userId}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch user details');
+      }
+
+      const result = await response.json();
+      const userData = result.data || result;
+      setSelectedUserDetails(transformUserData(userData));
+      setViewModalOpen(true);
+    } catch (err) {
+      logger.error('Error fetching user details', err instanceof Error ? err : new Error(String(err)), { userId });
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch user details');
+    } finally {
+      setLoadingUserDetails(false);
+    }
   };
 
-  const handleEditUser = (userId: string) => {
-    // TODO: Implement user edit modal or navigation
-    console.log('Edit user:', userId);
+  const handleEditUser = (user: User) => {
+    setSelectedUser(user);
+    setEditFormData({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      phoneNumber: user.phoneNumber || "",
+      role: user.role || 'client'
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleOpenVerificationModal = (user: User) => {
+    setSelectedUser(user);
+    setVerificationFormData({
+      phoneVerified: user.verification?.phoneVerified || false,
+      emailVerified: user.verification?.emailVerified || false,
+      identityVerified: user.verification?.identityVerified || false,
+      businessVerified: user.verification?.businessVerified || false,
+      addressVerified: user.verification?.addressVerified || false,
+      bankAccountVerified: user.verification?.bankAccountVerified || false
+    });
+    setVerificationModalOpen(true);
+  };
+
+  const handleOpenBadgeModal = (user: User) => {
+    setSelectedUser(user);
+    setBadgeFormData({ type: "", description: "" });
+    setBadgeModalOpen(true);
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersCreate}`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'POST',
+        body: JSON.stringify(createFormData)
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create user');
+      }
+
+      toast.success('User created successfully');
+      setCreateModalOpen(false);
+      setCreateFormData({
+        phoneNumber: "",
+        email: "",
+        firstName: "",
+        lastName: "",
+        role: "client",
+        agencyId: "",
+        agencyRole: ""
+      });
+      await fetchData();
+    } catch (err) {
+      logger.error('Error creating user', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to create user');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersUpdate}/${selectedUser._id}`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'PUT',
+        body: JSON.stringify(editFormData)
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update user');
+      }
+
+      toast.success('User updated successfully');
+      setEditModalOpen(false);
+      setSelectedUser(null);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error updating user', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to update user');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateVerification = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersVerification}/${selectedUser._id}/verification`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'PATCH',
+        body: JSON.stringify({
+          verification: verificationFormData
+        })
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update verification');
+      }
+
+      toast.success('Verification updated successfully');
+      setVerificationModalOpen(false);
+      setSelectedUser(null);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error updating verification', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to update verification');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAddBadge = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersBadges}/${selectedUser._id}/badges`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'POST',
+        body: JSON.stringify(badgeFormData)
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to add badge');
+      }
+
+      toast.success('Badge added successfully');
+      setBadgeModalOpen(false);
+      setSelectedUser(null);
+      setBadgeFormData({ type: "", description: "" });
+      await fetchData();
+    } catch (err) {
+      logger.error('Error adding badge', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to add badge');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (selectedUserIds.length === 0) {
+      toast.error('Please select at least one user');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersBulk}`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'PATCH',
+        body: JSON.stringify({
+          userIds: selectedUserIds,
+          updateData: bulkUpdateFormData
+        })
+      }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to bulk update users');
+      }
+
+      toast.success(`Successfully updated ${selectedUserIds.length} user(s)`);
+      setBulkUpdateModalOpen(false);
+      setSelectedUserIds([]);
+      await fetchData();
+    } catch (err) {
+      logger.error('Error bulk updating users', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to bulk update users');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUserIds(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
+        if (!getApiToken()) return;
+        
+        const url = `${API_BASE_URL}${API_ENDPOINTS.usersDelete}/${userId}`;
+        const response = await fetch(url, createAuthFetchOptions({ method: 'DELETE' }));
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error || 'Failed to delete user');
         }
 
-        await fetchData(); // Refresh the data
+        toast.success('User deleted successfully');
+        await fetchData();
       } catch (err) {
-        console.error('Error deleting user:', err);
-        setError(err instanceof Error ? err.message : 'Failed to delete user');
+        logger.error('Error deleting user', err instanceof Error ? err : new Error(String(err)), { userId });
+        toast.error(err instanceof Error ? err.message : 'Failed to delete user');
       }
     }
   };
 
-  const handleSuspendUser = async (userId: string) => {
+  const handleUpdateStatus = async (userId: string, isActive: boolean, status: UserStatus) => {
     try {
-      const response = await fetch(`/api/admin/users/${userId}/suspend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      if (!getApiToken()) return;
+      
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersStatus}/${userId}/status`;
+      const response = await fetch(url, createAuthFetchOptions({
+        method: 'PATCH',
+        body: JSON.stringify({
+          isActive,
+          status,
+          reason: isActive ? 'User account activated' : 'User account deactivated'
+        })
+      }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to suspend user');
+        throw new Error(errorData.error || `Failed to ${isActive ? 'activate' : 'deactivate'} user`);
       }
 
-      await fetchData(); // Refresh the data
+      toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
+      await fetchData();
     } catch (err) {
-      console.error('Error suspending user:', err);
-      setError(err instanceof Error ? err.message : 'Failed to suspend user');
-    }
-  };
-
-  const handleActivateUser = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/activate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to activate user');
-      }
-
-      await fetchData(); // Refresh the data
-    } catch (err) {
-      console.error('Error activating user:', err);
-      setError(err instanceof Error ? err.message : 'Failed to activate user');
+      logger.error(`Error ${isActive ? 'activating' : 'deactivating'} user`, err instanceof Error ? err : new Error(String(err)), { userId });
+      toast.error(err instanceof Error ? err.message : `Failed to ${isActive ? 'activate' : 'deactivate'} user`);
     }
   };
 
@@ -543,7 +788,7 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             User Management
           </h1>
           <p className="text-gray-600 text-sm">Manage user accounts, roles, and permissions</p>
@@ -555,12 +800,21 @@ export default function UsersPage() {
             </p>
           )}
           <button
-            onClick={() => console.log('Create new user')}
+            onClick={() => setCreateModalOpen(true)}
             className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
             Add User
           </button>
+          {selectedUserIds.length > 0 && (
+            <button
+              onClick={() => setBulkUpdateModalOpen(true)}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200"
+            >
+              <Save className="w-3 h-3 mr-1" />
+              Bulk Update ({selectedUserIds.length})
+            </button>
+          )}
           <button
             onClick={refreshData}
             disabled={refreshing}
@@ -717,6 +971,32 @@ export default function UsersPage() {
                   <option value="banned">Banned</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Active Status</label>
+                <select
+                  value={isActiveFilter}
+                  onChange={(e) => setIsActiveFilter(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">All</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Verification Status</label>
+                <select
+                  value={isVerifiedFilter}
+                  onChange={(e) => setIsVerifiedFilter(e.target.value)}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="all">All</option>
+                  <option value="true">Verified</option>
+                  <option value="false">Not Verified</option>
+                </select>
+              </div>
             </div>
 
             <div className="mt-3 flex items-center justify-between">
@@ -725,6 +1005,8 @@ export default function UsersPage() {
                   setSearchTerm('');
                   setRoleFilter('all');
                   setStatusFilter('all');
+                  setIsActiveFilter('all');
+                  setIsVerifiedFilter('all');
                 }}
                 className="text-xs text-gray-600 hover:text-gray-800"
               >
@@ -797,6 +1079,20 @@ export default function UsersPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <input
+                    type="checkbox"
+                    checked={selectedUserIds.length === users.length && users.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedUserIds(users.map(u => u._id).filter((id): id is string => !!id));
+                      } else {
+                        setSelectedUserIds([]);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -809,6 +1105,16 @@ export default function UsersPage() {
               {users.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50">
                   <td className="px-3 py-2 whitespace-nowrap">
+                    {user._id && (
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.includes(user._id)}
+                        onChange={() => toggleUserSelection(user._id!)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    )}
+                  </td>
+                  <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8">
                         <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
@@ -817,20 +1123,20 @@ export default function UsersPage() {
                       </div>
                       <div className="ml-3">
                         <div className="text-xs font-semibold text-gray-900">
-                          {user.firstName} {user.lastName}
+                          {user.firstName || ''} {user.lastName || ''}
                         </div>
-                        <div className="text-xs text-gray-600">{user.email}</div>
+                        <div className="text-xs text-gray-600">{user.email || 'N/A'}</div>
                       </div>
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                      {user.role.replace('_', ' ').toUpperCase()}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role || 'client')}`}>
+                      {(user.role || 'client').replace('_', ' ').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                      {user.status.toUpperCase()}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status || 'pending_verification')}`}>
+                      {(user.status || 'pending_verification').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
@@ -852,48 +1158,66 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
+                    {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never'}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <div className="flex items-center space-x-2">
-                      <button 
-                        onClick={() => handleViewUser(user._id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View user details"
-                      >
-                        <Eye className="w-3 h-3" />
-                      </button>
-                      <button 
-                        onClick={() => handleEditUser(user._id)}
-                        className="text-green-600 hover:text-green-900"
-                        title="Edit user"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </button>
-                      {user.status === 'active' ? (
-                        <button 
-                          onClick={() => handleSuspendUser(user._id)}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Suspend user"
-                        >
-                          <UserX className="w-3 h-3" />
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleActivateUser(user._id)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Activate user"
-                        >
-                          <UserCheck className="w-3 h-3" />
-                        </button>
+                      {user._id && (
+                        <>
+                          <button 
+                            onClick={() => handleViewUser(user._id!)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="View user details"
+                          >
+                            <Eye className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => handleEditUser(user)}
+                            className="text-green-600 hover:text-green-900"
+                            title="Edit user"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                          {(user.status || 'pending_verification') === 'active' ? (
+                            <button 
+                              onClick={() => handleUpdateStatus(user._id!, false, 'suspended')}
+                              className="text-yellow-600 hover:text-yellow-900"
+                              title="Suspend user"
+                            >
+                              <UserX className="w-3 h-3" />
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleUpdateStatus(user._id!, true, 'active')}
+                              className="text-green-600 hover:text-green-900"
+                              title="Activate user"
+                            >
+                              <UserCheck className="w-3 h-3" />
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => handleOpenVerificationModal(user)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="Update verification"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => handleOpenBadgeModal(user)}
+                            className="text-amber-600 hover:text-amber-900"
+                            title="Add badge"
+                          >
+                            <Award className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(user._id!)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Delete user"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </>
                       )}
-                      <button 
-                        onClick={() => handleDeleteUser(user._id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete user"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -910,6 +1234,408 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {/* View User Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedUserDetails(null);
+        }}
+        title="User Details"
+        size="xl"
+      >
+        {loadingUserDetails ? (
+          <div className="flex justify-center py-8">
+            <Loading size="md" />
+          </div>
+        ) : selectedUserDetails ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-gray-500">Name</label>
+                <p className="text-sm font-semibold">{selectedUserDetails.firstName || ''} {selectedUserDetails.lastName || ''}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Email</label>
+                <p className="text-sm">{selectedUserDetails.email || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Phone</label>
+                <p className="text-sm">{selectedUserDetails.phoneNumber || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Role</label>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(selectedUserDetails.role || 'client')}`}>
+                  {(selectedUserDetails.role || 'client').replace('_', ' ').toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Status</label>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedUserDetails.status || 'pending_verification')}`}>
+                  {(selectedUserDetails.status || 'pending_verification').toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Verified</label>
+                <p className="text-sm">{selectedUserDetails.isVerified ? 'Yes' : 'No'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Created At</label>
+                <p className="text-sm">{selectedUserDetails.createdAt ? new Date(selectedUserDetails.createdAt).toLocaleString() : 'N/A'}</p>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-500">Last Login</label>
+                <p className="text-sm">{selectedUserDetails.lastLoginAt ? new Date(selectedUserDetails.lastLoginAt).toLocaleString() : 'Never'}</p>
+              </div>
+            </div>
+            {selectedUserDetails.badges && selectedUserDetails.badges.length > 0 && (
+              <div>
+                <label className="text-xs font-medium text-gray-500">Badges</label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {selectedUserDetails.badges.map((badge, idx) => (
+                    <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-800">
+                      <Award className="w-3 h-3 mr-1" />
+                      {badge.type || 'Unknown'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </Modal>
+
+      {/* Create User Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setCreateFormData({
+            phoneNumber: "",
+            email: "",
+            firstName: "",
+            lastName: "",
+            role: "client",
+            agencyId: "",
+            agencyRole: ""
+          });
+        }}
+        title="Create New User"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setCreateModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreateUser}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Creating...' : 'Create User'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+              <input
+                type="text"
+                value={createFormData.firstName}
+                onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+              <input
+                type="text"
+                value={createFormData.lastName}
+                onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <input
+                type="email"
+                value={createFormData.email}
+                onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <input
+                type="tel"
+                value={createFormData.phoneNumber}
+                onChange={(e) => setCreateFormData({ ...createFormData, phoneNumber: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
+              <select
+                value={createFormData.role}
+                onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as UserRole })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="client">Client</option>
+                <option value="provider">Provider</option>
+                <option value="supplier">Supplier</option>
+                <option value="instructor">Instructor</option>
+                <option value="agency_owner">Agency Owner</option>
+                <option value="agency_admin">Agency Admin</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Edit User"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setEditModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateUser}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Updating...' : 'Update User'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <input
+                type="text"
+                value={editFormData.firstName}
+                onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <input
+                type="text"
+                value={editFormData.lastName}
+                onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input
+                type="tel"
+                value={editFormData.phoneNumber}
+                onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select
+                value={editFormData.role}
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as UserRole })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="client">Client</option>
+                <option value="provider">Provider</option>
+                <option value="supplier">Supplier</option>
+                <option value="instructor">Instructor</option>
+                <option value="agency_owner">Agency Owner</option>
+                <option value="agency_admin">Agency Admin</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Verification Modal */}
+      <Modal
+        isOpen={verificationModalOpen}
+        onClose={() => {
+          setVerificationModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Update Verification Status"
+        size="md"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setVerificationModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateVerification}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Updating...' : 'Update Verification'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-3">
+          {Object.entries(verificationFormData).map(([key, value]) => (
+            <label key={key} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={value}
+                onChange={(e) => setVerificationFormData({ ...verificationFormData, [key]: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+            </label>
+          ))}
+        </div>
+      </Modal>
+
+      {/* Badge Modal */}
+      <Modal
+        isOpen={badgeModalOpen}
+        onClose={() => {
+          setBadgeModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Add Badge"
+        size="md"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setBadgeModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddBadge}
+              disabled={submitting || !badgeFormData.type}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? 'Adding...' : 'Add Badge'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Badge Type *</label>
+            <input
+              type="text"
+              value={badgeFormData.type}
+              onChange={(e) => setBadgeFormData({ ...badgeFormData, type: e.target.value })}
+              placeholder="e.g., top_rated, verified_provider"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={badgeFormData.description}
+              onChange={(e) => setBadgeFormData({ ...badgeFormData, description: e.target.value })}
+              placeholder="Badge description"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Update Modal */}
+      <Modal
+        isOpen={bulkUpdateModalOpen}
+        onClose={() => {
+          setBulkUpdateModalOpen(false);
+        }}
+        title={`Bulk Update (${selectedUserIds.length} users)`}
+        size="md"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => setBulkUpdateModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBulkUpdate}
+              disabled={submitting}
+              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+            >
+              {submitting ? 'Updating...' : 'Update Users'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={bulkUpdateFormData.status}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: e.target.value as UserStatus })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="suspended">Suspended</option>
+              <option value="pending_verification">Pending Verification</option>
+              <option value="banned">Banned</option>
+            </select>
+          </div>
+          <div>
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={bulkUpdateFormData.isActive}
+                onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Is Active</span>
+            </label>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

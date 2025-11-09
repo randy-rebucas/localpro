@@ -19,19 +19,14 @@ import {
 // Import finance components
 import { AddExpenseModal, ExpenseData } from "@/components/admin/add-expense-modal";
 import { WithdrawalRequestModal, WithdrawalData } from "@/components/admin/withdrawal-request-modal";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { Transaction, TransactionType, TransactionStatus, TransactionCategory, Wallet } from "@/types/finance";
 
 interface FinanceOverview {
-  wallet: {
-    balance: number;
-    pendingBalance: number;
+  wallet: Omit<Wallet, 'lastUpdated'> & {
     lastUpdated: string;
-    autoWithdraw: boolean;
-    minBalance: number;
-    notificationSettings: {
-      lowBalance: boolean;
-      withdrawal: boolean;
-      payment: boolean;
-    };
   };
   monthlyEarnings: {
     totalEarnings: number;
@@ -45,16 +40,19 @@ interface FinanceOverview {
     totalEarnings: number;
     count: number;
   };
-  recentTransactions: Transaction[];
+  recentTransactions: TransactionWithDetails[];
 }
 
-interface Transaction {
-  type: 'income' | 'expense';
+// Extended Transaction interface for admin page
+interface TransactionWithDetails extends Omit<Transaction, 'type' | 'status' | 'paymentMethod' | 'reference' | 'createdAt' | 'updatedAt'> {
+  id?: string;
+  _id?: string;
+  type: TransactionType | 'income' | 'expense';
   amount: number;
-  category: string;
+  category: TransactionCategory | string;
   description: string;
   paymentMethod: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: TransactionStatus | 'completed' | 'pending' | 'failed';
   timestamp: string;
   reference?: string;
 }
@@ -72,7 +70,7 @@ export default function FinanceAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FinanceFilters>({
     search: '',
@@ -97,12 +95,14 @@ export default function FinanceAdmin() {
     try {
       setLoading(true);
       const [overviewRes, transactionsRes] = await Promise.all([
-        fetch("/api/finance/overview"),
-        fetch(`/api/finance/transactions?${new URLSearchParams({
-          page: '1',
-          limit: '50',
-          ...filters
-        }).toString()}`)
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeOverview' as keyof typeof API_ENDPOINTS,
+          { method: 'GET' }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'financeTransactions' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { page: '1', limit: '50', ...filters } }
+        )
       ]);
       
       const overviewResponse = await overviewRes.json();
@@ -123,7 +123,7 @@ export default function FinanceAdmin() {
         setTransactions([]);
       }
     } catch (error) {
-      console.error("Error fetching finance data:", error);
+      logger.error("Error fetching finance data", error instanceof Error ? error : new Error(String(error)));
       
       // Set mock data for development based on actual API structure
       setOverview({
@@ -192,13 +192,10 @@ export default function FinanceAdmin() {
 
   const handleAddExpense = async (expenseData: ExpenseData) => {
     try {
-      const response = await fetch('/api/finance/expenses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(expenseData),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeExpenses' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(expenseData) }
+      );
 
       if (response.ok) {
         // Refresh data
@@ -208,20 +205,17 @@ export default function FinanceAdmin() {
         throw new Error('Failed to add expense');
       }
     } catch (error) {
-      console.error('Error adding expense:', error);
+      logger.error('Error adding expense', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   };
 
   const handleWithdrawalRequest = async (withdrawalData: WithdrawalData) => {
     try {
-      const response = await fetch('/api/finance/withdraw', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(withdrawalData),
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeWithdraw' as keyof typeof API_ENDPOINTS,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(withdrawalData) }
+      );
 
       if (response.ok) {
         // Refresh data
@@ -231,18 +225,18 @@ export default function FinanceAdmin() {
         throw new Error('Failed to request withdrawal');
       }
     } catch (error) {
-      console.error('Error requesting withdrawal:', error);
+      logger.error('Error requesting withdrawal', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   };
 
-  const handleViewTransaction = (transaction: Transaction) => {
-    console.log('View transaction:', transaction);
+  const handleViewTransaction = (transaction: TransactionWithDetails) => {
+    logger.debug('View transaction', { transactionId: transaction.id || transaction._id || 'unknown', amount: transaction.amount });
     // Implement transaction detail view
   };
 
   const handleExportData = () => {
-    console.log('Export finance data');
+    logger.debug('Export finance data');
     // Implement data export
   };
 
@@ -259,7 +253,7 @@ export default function FinanceAdmin() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Finance Management
           </h1>
           <p className="text-gray-600 text-sm">Monitor revenue, expenses, and financial performance</p>

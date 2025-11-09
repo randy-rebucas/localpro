@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decrypt } from "@/lib/session";
+import { logger } from "@/lib/logger";
 
 // Cache for authentication checks to improve performance
 const authCache = new Map<string, { 
   isValid: boolean; 
   userRole?: string; 
+  userId?: string;
+  apiToken?: string;
   timestamp: number 
 }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
@@ -24,57 +27,130 @@ setInterval(() => {
 async function checkAuth(request: NextRequest): Promise<{ 
   isAuthenticated: boolean; 
   userRole?: string; 
-  userId?: string 
+  userId?: string;
+  apiToken?: string;
 }> {
   // First, try to get Bearer token from Authorization header
   const authHeader = request.headers.get("authorization");
   let sessionToken: string | null = null;
+  let apiToken: string | null = null;
+  
+  // Get cookies
+  const cookieHeader = request.headers.get("cookie") || "";
+  const cookies = cookieHeader.split(';').map(c => c.trim());
   
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    sessionToken = authHeader.substring(7);
+    // Bearer token can be either api-token or session token
+    const bearerToken = authHeader.substring(7);
+    sessionToken = bearerToken;
+    apiToken = bearerToken;
   } else {
-    // Fallback to session cookie
-    const cookieHeader = request.headers.get("cookie") || "";
-    sessionToken = cookieHeader
-      .split(';')
-      .find(c => c.trim().startsWith('session='))
-      ?.split('=')[1] || null;
+    // Check for api-token cookie first (stored directly as cookie from external API)
+    const apiTokenCookie = cookies.find(c => c.startsWith('api-token='));
+    if (apiTokenCookie) {
+      apiToken = apiTokenCookie.split('=')[1];
+    }
+    
+    // Get session cookie for user info
+    const sessionCookie = cookies.find(c => c.startsWith('session='));
+    sessionToken = sessionCookie?.split('=')[1] || null;
   }
 
-  if (!sessionToken) {
+  // If we have api-token but no session, allow authentication based on api-token
+  // The api-token is a JWT from external API, so we consider it valid authentication
+  if (!sessionToken && apiToken) {
+    const cacheKey = `api-token-${apiToken}`;
+    
+    // Check cache first
+    const cached = authCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return { 
+        isAuthenticated: cached.isValid, 
+        userRole: cached.userRole,
+        userId: cached.userId,
+        apiToken: cached.apiToken
+      };
+    }
+
+    // Allow authentication with api-token (user info will be fetched client-side)
+    authCache.set(cacheKey, {
+      isValid: true,
+      userRole: undefined, // Will be fetched client-side
+      userId: undefined, // Will be fetched client-side
+      apiToken: apiToken,
+      timestamp: Date.now(),
+    });
+
+    return { 
+      isAuthenticated: true, 
+      userRole: undefined,
+      userId: undefined,
+      apiToken: apiToken
+    };
+  }
+
+  // Need at least session token or api-token for authentication check
+  if (!sessionToken && !apiToken) {
     return { isAuthenticated: false };
   }
 
-  const cacheKey = sessionToken;
+  const cacheKey = `${sessionToken || 'no-session'}-${apiToken || 'no-api-token'}`;
   
   // Check cache first
   const cached = authCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return { 
       isAuthenticated: cached.isValid, 
-      userRole: cached.userRole 
+      userRole: cached.userRole,
+      userId: cached.userId,
+      apiToken: cached.apiToken
     };
   }
 
   try {
-    // Decrypt and validate session
-    const session = await decrypt(sessionToken);
-    const isValid = Boolean(session !== null && session.userId);
-    
-    // Cache the result
-    authCache.set(cacheKey, {
-      isValid,
-      userRole: session?.role,
-      timestamp: Date.now(),
-    });
+    // Decrypt and validate session cookie to get user info
+    if (sessionToken) {
+      const session = await decrypt(sessionToken);
+      const isValid = Boolean(session !== null && session.userId);
+      
+      // Prioritize api-token cookie, fallback to apiToken from session
+      const finalApiToken = apiToken || session?.apiToken || undefined;
+      
+      // Cache the result
+      authCache.set(cacheKey, {
+        isValid,
+        userRole: session?.role,
+        userId: session?.userId,
+        apiToken: finalApiToken,
+        timestamp: Date.now(),
+      });
 
-    return { 
-      isAuthenticated: isValid, 
-      userRole: session?.role,
-      userId: session?.userId
-    };
+      return { 
+        isAuthenticated: isValid, 
+        userRole: session?.role,
+        userId: session?.userId,
+        apiToken: finalApiToken
+      };
+    }
+    
+    // If we only have api-token (already handled above, but keeping as fallback)
+    if (apiToken) {
+      return { 
+        isAuthenticated: true, 
+        apiToken: apiToken
+      };
+    }
+    
+    return { isAuthenticated: false };
   } catch (error) {
-    console.error("Auth check failed:", error);
+    logger.error("Auth check failed", error instanceof Error ? error : new Error(String(error)), { hasApiToken: !!apiToken });
+    // If session decryption fails but we have api-token, still allow
+    if (apiToken) {
+      return { 
+        isAuthenticated: true, 
+        apiToken: apiToken
+      };
+    }
     return { isAuthenticated: false };
   }
 }
@@ -226,12 +302,18 @@ function isStaticOrInternal(pathname: string): boolean {
     pathname.startsWith("/sitemap.xml") ||
     pathname.startsWith("/api/health") ||
     pathname.startsWith("/api/test") ||
-    pathname.includes(".") // Files with extensions
+    // Match files with common static file extensions
+    /\.(css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map)$/i.test(pathname)
   );
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Block service worker requests - return 404
+  if (pathname === '/sw.js' || pathname.startsWith('/sw.js')) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   // Skip middleware for static files and Next.js internal routes
   if (isStaticOrInternal(pathname)) {
@@ -310,6 +392,17 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = matchesPattern(pathname, ROUTE_PATTERNS.protected);
   const isAdminRoute = matchesPattern(pathname, ROUTE_PATTERNS.admin);
 
+  // Admin routes - allow through and let client-side layout handle auth/role checks
+  // This ensures the page can load and the admin layout can check authentication
+  if (isAdminRoute) {
+    // If we have a role and it's not admin, redirect to dashboard
+    if (userRole !== undefined && userRole !== "admin") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    // Otherwise, allow access - client-side layout will handle authentication and role checks
+    return NextResponse.next();
+  }
+
   // If user is authenticated
   if (isAuthenticated) {
     // Redirect from auth routes to dashboard
@@ -317,24 +410,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     
-    // Check admin access
-    if (isAdminRoute && userRole !== "admin") {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    }
-    
     // Check role-based route access
+    // Only check if we have a role defined
     if (userRole && !hasRouteAccess(userRole, pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     
-    // Allow access to protected and admin routes
-    if (isProtectedRoute || isAdminRoute) {
+    // Allow access to protected routes
+    if (isProtectedRoute) {
       return NextResponse.next();
     }
   }
 
   // If user is not authenticated
-  if (isProtectedRoute || isAdminRoute) {
+  if (isProtectedRoute) {
     // Store the intended destination for redirect after login
     const redirectUrl = new URL("/auth", request.url);
     redirectUrl.searchParams.set("redirect", pathname);
@@ -354,12 +443,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
+     * - _next/static (static files including CSS)
      * - _next/image (image optimization files)
      * - favicon.ico, robots.txt, sitemap.xml (metadata files)
-     * - files with extensions (images, etc.)
+     * - files with extensions (images, CSS, JS, etc.)
      * - public folder
      */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\..*|public).*)",
+    "/((?!_next/static|_next/image|_next/css|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)|public).*)",
   ],
 };

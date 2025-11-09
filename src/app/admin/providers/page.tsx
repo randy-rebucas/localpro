@@ -23,24 +23,28 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { Provider } from "@/types/providers";
 
-// Define types locally
-interface Provider {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+// Extended Provider interface for admin page (includes user fields populated)
+interface ProviderWithUser extends Omit<Provider, 'createdAt' | 'updatedAt' | 'profile' | 'subscription'> {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   phoneNumber?: string;
-  status: 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected';
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   lastLogin?: string;
   profileCompleteness?: number;
   verificationStatus?: 'verified' | 'pending' | 'rejected';
-  // Provider-specific fields
   profile?: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
     businessName?: string;
     businessType?: string;
     serviceAreas?: string[];
@@ -55,23 +59,6 @@ interface Provider {
       country?: string;
     };
     bio?: string;
-  };
-  verification?: {
-    phoneVerified?: boolean;
-    emailVerified?: boolean;
-    identityVerified?: boolean;
-    businessVerified?: boolean;
-    addressVerified?: boolean;
-    bankAccountVerified?: boolean;
-    verifiedAt?: string;
-  };
-  performance?: {
-    completionRate?: number;
-    cancellationRate?: number;
-    averageRating?: number;
-    totalBookings?: number;
-    totalEarnings?: number;
-    responseTime?: number;
   };
   subscription?: {
     type?: string;
@@ -173,20 +160,22 @@ const transformProviderData = (apiProvider: {
     earnedAt: string;
   }>;
   tags?: string[];
-}): Provider => {
+}): ProviderWithUser => {
   return {
     _id: apiProvider._id,
-    firstName: apiProvider.firstName || '',
-    lastName: apiProvider.lastName || '',
-    email: apiProvider.email || '',
-    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
+    userId: apiProvider._id, // Use _id as userId fallback
+    providerType: 'individual', // Default provider type
     status: (apiProvider.status as 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected') || 'pending',
-    isActive: apiProvider.isActive || false,
-    isVerified: apiProvider.isVerified || false,
-    createdAt: apiProvider.createdAt || new Date().toISOString(),
-    updatedAt: apiProvider.updatedAt || new Date().toISOString(),
+    firstName: apiProvider.firstName,
+    lastName: apiProvider.lastName,
+    email: apiProvider.email,
+    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
+    isActive: apiProvider.isActive,
+    isVerified: apiProvider.isVerified,
+    createdAt: apiProvider.createdAt,
+    updatedAt: apiProvider.updatedAt,
     lastLogin: apiProvider.lastLogin,
-    profileCompleteness: apiProvider.profileCompleteness || 0,
+    profileCompleteness: apiProvider.profileCompleteness,
     verificationStatus: apiProvider.verification?.phoneVerified && 
                        apiProvider.verification?.emailVerified ? 'verified' : 'pending',
     profile: apiProvider.profile,
@@ -225,7 +214,7 @@ interface ProviderStats {
 }
 
 export default function ProvidersPage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<ProviderWithUser[]>([]);
   const [stats, setStats] = useState<ProviderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -241,26 +230,7 @@ export default function ProvidersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
 
-  // Helper function to add timeout to fetch requests
-  const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number = 10000) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    
-    try {
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please try again.');
-      }
-      throw error;
-    }
-  };
+  //
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -287,17 +257,15 @@ export default function ProvidersPage() {
       queryParams.set('sortOrder', sortOrder);
 
       const [dataResponse, statsResponse] = await Promise.all([
-        fetchWithTimeout(`/api/admin/providers?${queryParams}`, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 20000), // 20 second timeout for providers data
-        fetchWithTimeout('/api/admin/providers?type=overview', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        }, 10000).catch(err => { // 10 second timeout for stats
-          console.warn('Failed to fetch stats, using fallback:', err);
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'providersAdminAll' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: Object.fromEntries(queryParams) }
+        ),
+        makeClientAuthenticatedRequestWithEndpointSafe(
+          'providersAdminAll' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { stats: 'true' } }
+        ).catch(err => { // fallback
+          logger.warn('Failed to fetch stats, using fallback', { error: err instanceof Error ? err.message : String(err) });
           return {
             ok: true,
             json: () => Promise.resolve({
@@ -337,7 +305,7 @@ export default function ProvidersPage() {
       const statsResult = await statsResponse.json();
 
       // Transform the API response data to match frontend expectations
-      let providersData: Provider[] = [];
+      let providersData: ProviderWithUser[] = [];
 
       if (dataResult.success && dataResult.data) {
         // Handle the new API response structure
@@ -382,7 +350,7 @@ export default function ProvidersPage() {
       }
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching providers data:', err);
+      logger.error('Error fetching providers data', err instanceof Error ? err : new Error(String(err)));
       let errorMessage = 'Failed to load providers data';
       
       if (err instanceof Error) {
@@ -414,7 +382,7 @@ export default function ProvidersPage() {
     try {
       await fetchData();
     } catch (err) {
-      console.error('Error refreshing data:', err);
+      logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
       let errorMessage = 'Failed to refresh providers data';
       
       if (err instanceof Error) {
@@ -444,22 +412,23 @@ export default function ProvidersPage() {
 
   const handleViewProvider = (providerId: string) => {
     // TODO: Implement provider view modal or navigation
-    console.log('View provider:', providerId);
+    logger.debug('View provider', { providerId });
   };
 
   const handleEditProvider = (providerId: string) => {
     // TODO: Implement provider edit modal or navigation
-    console.log('Edit provider:', providerId);
+    logger.debug('Edit provider', { providerId });
   };
 
   const handleDeleteProvider = async (providerId: string) => {
     if (window.confirm('Are you sure you want to delete this provider?')) {
       try {
-        const response = await fetch(`/api/admin/providers/${providerId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
+        const response = await makeClientAuthenticatedRequestWithPathSafe(
+          'providersById' as keyof typeof API_ENDPOINTS,
+          [providerId],
+          {},
+          { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+        );
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -468,7 +437,7 @@ export default function ProvidersPage() {
 
         await fetchData(); // Refresh the data
       } catch (err) {
-        console.error('Error deleting provider:', err);
+        logger.error('Error deleting provider', err instanceof Error ? err : new Error(String(err)), { providerId });
         setError(err instanceof Error ? err.message : 'Failed to delete provider');
       }
     }
@@ -476,12 +445,12 @@ export default function ProvidersPage() {
 
   const handleUpdateProviderStatus = async (providerId: string, status: string, reason?: string) => {
     try {
-      const response = await fetch(`/api/admin/providers/${providerId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status, reason })
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'providersAdminStatus' as keyof typeof API_ENDPOINTS,
+        [providerId, 'status'],
+        {},
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status, reason }) }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -490,7 +459,7 @@ export default function ProvidersPage() {
 
       await fetchData(); // Refresh the data
     } catch (err) {
-      console.error('Error updating provider status:', err);
+      logger.error('Error updating provider status', err instanceof Error ? err : new Error(String(err)), { providerId, status });
       setError(err instanceof Error ? err.message : 'Failed to update provider status');
     }
   };
@@ -543,7 +512,7 @@ export default function ProvidersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Provider Management
           </h1>
           <p className="text-gray-600 text-sm">Manage service providers, verification, and performance</p>
@@ -555,7 +524,7 @@ export default function ProvidersPage() {
             </p>
           )}
           <button
-            onClick={() => console.log('Create new provider')}
+            onClick={() => logger.debug('Create new provider')}
             className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
@@ -824,13 +793,13 @@ export default function ProvidersPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
-                      {provider.status.toUpperCase()}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status || 'pending')}`}>
+                      {(provider.status || 'pending').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center space-x-1">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getVerificationColor(provider.isVerified)}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getVerificationColor(provider.isVerified || false)}`}>
                         {provider.isVerified ? 'VERIFIED' : 'PENDING'}
                       </span>
                       {provider.trustScore && (
@@ -877,14 +846,14 @@ export default function ProvidersPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        onClick={() => handleViewProvider(provider._id)}
+                        onClick={() => provider._id && handleViewProvider(provider._id)}
                         className="text-blue-600 hover:text-blue-900"
                         title="View provider details"
                       >
                         <Eye className="w-3 h-3" />
                       </button>
                       <button 
-                        onClick={() => handleEditProvider(provider._id)}
+                        onClick={() => provider._id && handleEditProvider(provider._id)}
                         className="text-green-600 hover:text-green-900"
                         title="Edit provider"
                       >
@@ -892,7 +861,7 @@ export default function ProvidersPage() {
                       </button>
                       {provider.status === 'active' ? (
                         <button 
-                          onClick={() => handleUpdateProviderStatus(provider._id, 'suspended', 'Admin action')}
+                          onClick={() => provider._id && handleUpdateProviderStatus(provider._id, 'suspended', 'Admin action')}
                           className="text-yellow-600 hover:text-yellow-900"
                           title="Suspend provider"
                         >
@@ -900,7 +869,7 @@ export default function ProvidersPage() {
                         </button>
                       ) : (
                         <button 
-                          onClick={() => handleUpdateProviderStatus(provider._id, 'active')}
+                          onClick={() => provider._id && handleUpdateProviderStatus(provider._id, 'active')}
                           className="text-green-600 hover:text-green-900"
                           title="Activate provider"
                         >
@@ -908,7 +877,7 @@ export default function ProvidersPage() {
                         </button>
                       )}
                       <button 
-                        onClick={() => handleDeleteProvider(provider._id)}
+                        onClick={() => provider._id && handleDeleteProvider(provider._id)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete provider"
                       >

@@ -40,8 +40,8 @@ export function RoleBasedNavigation() {
 
   const navigationItems: NavigationItem[] = [
     {
-      name: "Dashboard",
-      href: "/dashboard",
+      name: "Home",
+      href: "/marketplace",
       icon: Home,
     },
     {

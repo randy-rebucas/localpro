@@ -5,6 +5,7 @@
  * 
  * @see https://nextjs.org/docs/app/guides/environment-variables
  */
+import { logger } from './logger';
 
 // Environment variable validation helpers
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -31,7 +32,7 @@ function getNumberEnvVar(key: string, defaultValue: number): number {
   if (value === undefined) return defaultValue;
   const parsed = parseInt(value, 10);
   if (isNaN(parsed)) {
-    console.warn(`Invalid number for ${key}: ${value}, using default: ${defaultValue}`);
+    logger.warn(`Invalid number for ${key}`, { value, defaultValue });
     return defaultValue;
   }
   return parsed;
@@ -47,7 +48,7 @@ function getApiBaseUrl(): string {
   const nodeEnv = process.env.NODE_ENV;
   return nodeEnv === 'production' 
     ? 'https://localpro-super-app.onrender.com' 
-    : ''; // Empty string for relative paths in development
+    : 'http://localhost:5000'; // Empty string for relative paths in development
 }
 
 // Helper to get server-only environment variables
@@ -77,7 +78,7 @@ export const CLIENT_CONFIG = {
   apiTimeout: getNumberEnvVar('NEXT_PUBLIC_API_TIMEOUT', 10000),
   
   // External services (public keys only)
-  googleMapsApiKey: getOptionalEnvVar('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY'),
+  googleMapsApiKey: getOptionalEnvVar('NEXT_PUBLIC_GOOGLE_MAPS_API_KEY', ''),
  
   // Analytics (public)
   googleAnalyticsId: getOptionalEnvVar('NEXT_PUBLIC_GA_ID'),
@@ -249,9 +250,10 @@ export function validateRequiredEnvVars(): void {
   const missingVars = requiredVars.filter(varName => !process.env[varName]);
   
   if (missingVars.length > 0) {
-    console.error('Missing required environment variables:', missingVars);
-    console.error('Please check your .env.local file and ensure all required variables are set.');
-    console.error('See: https://nextjs.org/docs/pages/guides/environment-variables');
+    logger.error('Missing required environment variables', undefined, { missingVars });
+    logger.error('Please check your .env.local file and ensure all required variables are set', undefined, { 
+      documentationUrl: 'https://nextjs.org/docs/pages/guides/environment-variables' 
+    });
   }
 }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, Mail, MessageSquare, X, Check, Trash2 } from 'lucide-react';
 import { CommunicationAPI, NotificationUtils } from '@/lib/communication-utils';
+import { logger } from '@/lib/logger';
 
 interface Notification {
   id: string;
@@ -42,7 +43,7 @@ export default function NotificationCenter({
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      logger.error('Error fetching notifications', error instanceof Error ? error : new Error(String(error)));
     } finally {
       setLoading(false);
     }
@@ -56,7 +57,7 @@ export default function NotificationCenter({
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read', error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -66,7 +67,7 @@ export default function NotificationCenter({
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      logger.error('Error marking all notifications as read', error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -76,7 +77,7 @@ export default function NotificationCenter({
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      logger.error('Error deleting notification', error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 

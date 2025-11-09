@@ -10,14 +10,23 @@ import {
   canPerformAction,
   UserRole 
 } from "@/lib/role-utils";
+import type { SessionData } from "@/lib/session";
 
 // Helper function to convert Session to SessionData format for role-utils
-function convertSessionToSessionData(session: Session | null) {
+function convertSessionToSessionData(session: Session | null): SessionData | null {
   if (!session?.user) return null;
+  
+  // Extract userId from various possible fields (id, _id, userId)
+  const userId = session.user.id || session.user._id || session.user.userId;
+  
+  // SessionData requires userId to be a string, so return null if it's missing
+  if (!userId || typeof userId !== 'string') {
+    return null;
+  }
   
   return {
     sessionId: '', // Not available in Session type
-    userId: session.user.id,
+    userId,
     email: session.user.email,
     name: session.user.name,
     role: session.user.role,

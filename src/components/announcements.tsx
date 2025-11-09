@@ -13,6 +13,9 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
 
 export interface Announcement {
   id: string;
@@ -100,7 +103,7 @@ export default function Announcements({
     const fetchAnnouncements = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/announcements');
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.announcements}`, createAuthFetchOptions());
         
         if (!response.ok) {
           throw new Error('Failed to fetch announcements');
@@ -109,7 +112,7 @@ export default function Announcements({
         const data = await response.json();
         setAnnouncements(data.announcements || []);
       } catch (err) {
-        console.error('Error fetching announcements:', err);
+        logger.error('Error fetching announcements', err instanceof Error ? err : new Error(String(err)));
         setError('Failed to load announcements');
         
         // Fallback to mock data for development
@@ -169,14 +172,11 @@ export default function Announcements({
       setDismissedIds(prev => new Set([...prev, id]));
       
       // Call API to mark as dismissed
-      await fetch(`/api/announcements/${id}/dismiss`, {
+      await fetch(`${API_BASE_URL}${API_ENDPOINTS.announcementsAcknowledge}/${id}/dismiss`, createAuthFetchOptions({
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      }));
     } catch (error) {
-      console.error('Error dismissing announcement:', error);
+      logger.error('Error dismissing announcement', error instanceof Error ? error : new Error(String(error)));
       // Revert optimistic update on error
       setDismissedIds(prev => {
         const newSet = new Set(prev);

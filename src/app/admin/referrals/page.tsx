@@ -20,9 +20,15 @@ import {
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { Referral, ReferralStatus, ReferralType, RewardStatus } from "@/types/referrals";
 
-interface ReferralData {
+// Extended Referral interface for admin page
+interface ReferralData extends Omit<Referral, 'referrer' | 'referee' | 'status' | 'referralType' | 'createdAt' | 'updatedAt'> {
   id: string;
+  _id?: string;
   referrerId: string;
   referrerName: string;
   referrerEmail: string;
@@ -31,9 +37,10 @@ interface ReferralData {
   referredUserEmail: string;
   referredUserPhone?: string;
   referredUserLocation?: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: ReferralStatus | 'pending' | 'completed' | 'cancelled';
+  referralType?: ReferralType;
   rewardAmount: number;
-  rewardStatus: 'pending' | 'paid' | 'cancelled';
+  rewardStatus: RewardStatus | 'pending' | 'paid' | 'cancelled';
   createdAt: string;
   completedAt?: string;
   notes?: string;
@@ -102,7 +109,10 @@ export default function AdminReferralsPage() {
         sortOrder
       });
 
-      const response = await fetch(`/api/admin/referrals?${queryParams}`);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsAnalytics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to fetch referrals: ${response.status}`);
@@ -110,12 +120,12 @@ export default function AdminReferralsPage() {
 
       const data = await response.json();
       
-      console.log('Referrals API response:', data);
+      logger.debug('Referrals API response', { hasData: !!data, success: data.success });
       
       if (data.success) {
         // Ensure data is always an array
         const referralsData = Array.isArray(data.data) ? data.data : [];
-        console.log('Processed referrals data:', referralsData);
+        logger.debug('Processed referrals data', { count: referralsData.length });
         setReferrals(referralsData);
         setPagination(data.pagination);
         // Check if we're using real data or fallback
@@ -126,18 +136,21 @@ export default function AdminReferralsPage() {
         throw new Error(data.error || 'Failed to fetch referrals');
       }
     } catch (err) {
-      console.error('Error fetching referrals:', err);
+      logger.error('Error fetching referrals', err instanceof Error ? err : new Error(String(err)));
       // Don't set error state immediately, let the API handle fallback
-      console.log('Referrals fetch error, will use fallback data');
+      logger.debug('Referrals fetch error, will use fallback data');
     } finally {
       setLoading(false);
     }
   }, [currentPage, filters, sortBy, sortOrder]);
 
   // Fetch stats data
-  const fetchStats = async () => {
+    const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/referrals?type=overview');
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsAnalytics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { type: 'overview' } }
+      );
       
       if (!response.ok) {
         throw new Error(`Failed to fetch stats: ${response.status}`);
@@ -152,12 +165,12 @@ export default function AdminReferralsPage() {
         const isFallbackData = data.data && data.data.totalReferrals > 0;
         setIsUsingFallbackData(isFallbackData);
       } else {
-        console.warn('Stats API returned error:', data.error);
+        logger.warn('Stats API returned error', { error: data.error });
         setIsUsingFallbackData(true);
         // Don't throw error here, just log it - the API will provide fallback data
       }
     } catch (err) {
-      console.error('Error fetching stats:', err);
+      logger.error('Error fetching stats', err instanceof Error ? err : new Error(String(err)));
       // Don't set error state here, let the API handle fallback
     }
   };
@@ -296,7 +309,7 @@ export default function AdminReferralsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Referrals Management
           </h1>
           <p className="text-gray-600 text-sm">Manage and track referral programs</p>

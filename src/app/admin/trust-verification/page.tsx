@@ -21,8 +21,13 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
+import { VerificationRequest, VerificationType, VerificationStatus, VerificationDocument } from "@/types/trust-verification";
 
-interface TrustVerificationRequest {
+// Extended VerificationRequest interface for admin page
+interface TrustVerificationRequest extends Omit<VerificationRequest, 'user' | 'type' | 'status' | 'documents' | 'createdAt' | 'updatedAt' | 'submittedAt' | 'expiresAt'> {
   _id: string;
   user: {
     _id: string;
@@ -32,12 +37,10 @@ interface TrustVerificationRequest {
       rating: number;
     };
   };
-  type: 'identity_verification' | 'business_verification' | 'professional_verification' | 'education_verification';
-  status: 'pending' | 'approved' | 'rejected' | 'under_review';
-  documents: Array<{
+  type: VerificationType | 'identity_verification' | 'business_verification' | 'professional_verification' | 'education_verification';
+  status: VerificationStatus | 'pending' | 'approved' | 'rejected' | 'under_review';
+  documents: Array<VerificationDocument & {
     _id: string;
-    type: string;
-    url: string;
     isVerified: boolean;
     uploadedAt: string;
   }>;
@@ -103,7 +106,10 @@ export default function AdminTrustVerificationPage() {
       setError(null);
 
       // Fetch statistics
-      const statsResponse = await fetch('/api/trust-verification/statistics');
+      const statsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationStatistics' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setStats(statsData.data);
@@ -121,7 +127,10 @@ export default function AdminTrustVerificationPage() {
         sortOrder
       });
 
-      const requestsResponse = await fetch(`/api/trust-verification/requests?${queryParams}`);
+      const requestsResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationRequests' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
       if (requestsResponse.ok) {
         const requestsData = await requestsResponse.json();
         if (requestsData.success) {
@@ -140,7 +149,7 @@ export default function AdminTrustVerificationPage() {
         throw new Error('Failed to fetch verification requests');
       }
     } catch (err) {
-      console.error('Error fetching trust verification data:', err);
+      logger.error('Error fetching trust verification data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setLoading(false);
@@ -153,11 +162,12 @@ export default function AdminTrustVerificationPage() {
 
   const handleStatusChange = async (requestId: string, newStatus: string, notes?: string) => {
     try {
-      const response = await fetch(`/api/trust-verification/requests/${requestId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus, notes })
-      });
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'trustVerificationRequestById' as keyof typeof API_ENDPOINTS,
+        [requestId],
+        {},
+        { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus, notes }) }
+      );
 
       if (response.ok) {
         await fetchData(); // Refresh data
@@ -165,7 +175,7 @@ export default function AdminTrustVerificationPage() {
         throw new Error('Failed to update request status');
       }
     } catch (err) {
-      console.error('Error updating request status:', err);
+      logger.error('Error updating request status', err instanceof Error ? err : new Error(String(err)), { requestId, status });
       setError(err instanceof Error ? err.message : 'Failed to update status');
     }
   };
@@ -174,14 +184,14 @@ export default function AdminTrustVerificationPage() {
     if (!bulkAction || selectedRequests.length === 0) return;
 
     try {
-      const response = await fetch('/api/trust-verification/requests/bulk', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requestIds: selectedRequests,
-          action: bulkAction
-        })
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'trustVerificationRequests' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ requestIds: selectedRequests, action: bulkAction })
+        }
+      );
 
       if (response.ok) {
         setSelectedRequests([]);
@@ -191,7 +201,7 @@ export default function AdminTrustVerificationPage() {
         throw new Error('Failed to perform bulk action');
       }
     } catch (err) {
-      console.error('Error performing bulk action:', err);
+      logger.error('Error performing bulk action', err instanceof Error ? err : new Error(String(err)), { action: bulkAction, requestCount: selectedRequests.length });
       setError(err instanceof Error ? err.message : 'Failed to perform bulk action');
     }
   };
@@ -248,7 +258,7 @@ export default function AdminTrustVerificationPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Trust Verification
           </h1>
           <p className="text-gray-600 text-sm">Manage user verification requests and trust badges</p>

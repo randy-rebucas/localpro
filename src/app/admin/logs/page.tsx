@@ -28,15 +28,21 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+import { Log, LogLevel, LogCategory, LogSource } from "@/types/logs";
 
-interface SystemLog {
+// Extended Log interface for admin page
+interface SystemLog extends Omit<Log, 'level' | 'category' | 'source' | 'logId' | 'timestamp' | 'createdAt' | 'updatedAt'> {
   id: string;
+  logId?: string;
   timestamp: string;
-  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-  category: 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity';
+  level: LogLevel | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+  category: LogCategory | 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity';
   message: string;
   details: string;
-  source: string;
+  source: LogSource | string;
   userId?: string;
   userName?: string;
   userEmail?: string;
@@ -171,6 +177,16 @@ export default function AdminLogsPage() {
       let logsData, statsData, errorTrendsData, performanceData, dashboardData;
 
       try {
+        if (!getApiToken()) {
+          throw new Error('Authentication required');
+        }
+
+        const logsUrl = `${API_BASE_URL}${API_ENDPOINTS.logs}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+        const statsUrl = `${API_BASE_URL}${API_ENDPOINTS.logsStats}`;
+        const errorTrendsUrl = `${API_BASE_URL}${API_ENDPOINTS.logsAnalyticsErrorTrends}`;
+        const performanceUrl = `${API_BASE_URL}${API_ENDPOINTS.logsAnalyticsPerformance}`;
+        const dashboardUrl = `${API_BASE_URL}${API_ENDPOINTS.logsDashboardSummary}`;
+
         const [
           logsResponse, 
           statsResponse, 
@@ -178,36 +194,16 @@ export default function AdminLogsPage() {
           performanceResponse, 
           dashboardResponse
         ] = await Promise.all([
-          fetch(`/api/admin/logs?${queryParams}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/stats', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/analytics/error-trends', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/analytics/performance', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/logs/dashboard/summary', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          })
+          fetch(logsUrl, createAuthFetchOptions({ method: 'GET' })),
+          fetch(statsUrl, createAuthFetchOptions({ method: 'GET' })),
+          fetch(errorTrendsUrl, createAuthFetchOptions({ method: 'GET' })),
+          fetch(performanceUrl, createAuthFetchOptions({ method: 'GET' })),
+          fetch(dashboardUrl, createAuthFetchOptions({ method: 'GET' }))
         ]);
 
         // Handle logs response
         if (!logsResponse.ok) {
-          console.warn('Logs API not available');
+          logger.warn('Logs API not available');
           logsData = { logs: [] };
         } else {
           logsData = await logsResponse.json();
@@ -215,7 +211,7 @@ export default function AdminLogsPage() {
 
         // Handle stats response
         if (!statsResponse.ok) {
-          console.warn('Stats API not available');
+          logger.warn('Stats API not available');
           statsData = {
             totalLogs: 0,
             todayLogs: 0,
@@ -235,7 +231,7 @@ export default function AdminLogsPage() {
 
         // Handle error trends response
         if (!errorTrendsResponse.ok) {
-          console.warn('Error trends API not available, using mock data');
+          logger.warn('Error trends API not available, using mock data');
           errorTrendsData = {
             period: '7d',
             trends: [],
@@ -247,7 +243,7 @@ export default function AdminLogsPage() {
 
         // Handle performance response
         if (!performanceResponse.ok) {
-          console.warn('Performance API not available, using mock data');
+          logger.warn('Performance API not available, using mock data');
           performanceData = {
             avgResponseTime: 245,
             maxResponseTime: 1000,
@@ -265,7 +261,7 @@ export default function AdminLogsPage() {
 
         // Handle dashboard response
         if (!dashboardResponse.ok) {
-          console.warn('Dashboard API not available, using mock data');
+          logger.warn('Dashboard API not available, using mock data');
           dashboardData = {
             totalLogs: 15420,
             errorCount: 12,
@@ -280,7 +276,7 @@ export default function AdminLogsPage() {
           dashboardData = await dashboardResponse.json();
         }
       } catch (apiError) {
-        console.error('API calls failed:', apiError);
+        logger.error('API calls failed', apiError instanceof Error ? apiError : new Error(String(apiError)));
         // Return empty data - external API integration needed
         logsData = { logs: [] };
         statsData = {
@@ -351,7 +347,7 @@ export default function AdminLogsPage() {
       setDashboardSummary(dashboardData);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Error fetching logs data:', err);
+      logger.error('Error fetching logs data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to load logs data');
     } finally {
       setLoading(false);
@@ -367,7 +363,7 @@ export default function AdminLogsPage() {
     try {
       await fetchLogsData();
     } catch (err) {
-      console.error('Error refreshing data:', err);
+      logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to refresh logs data');
     } finally {
       setRefreshing(false);
@@ -388,44 +384,48 @@ export default function AdminLogsPage() {
       if (filters.source) queryParams.set('source', filters.source);
       if (filters.search) queryParams.set('search', filters.search);
 
-      const response = await fetch(`/api/admin/logs/export/data?${queryParams}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.logsExportData}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
       if (!response.ok) {
         throw new Error('Failed to export data');
       }
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = `system-logs-${new Date().toISOString().split('T')[0]}.${format}`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
     } catch (err) {
-      console.error('Error exporting data:', err);
+      logger.error('Error exporting data', err instanceof Error ? err : new Error(String(err)), { format });
       setError(err instanceof Error ? err.message : 'Failed to export data');
     }
   };
 
   const cleanupLogs = async () => {
     try {
-      const response = await fetch('/api/admin/logs/cleanup', {
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.logsCleanup}`;
+      const response = await fetch(url, createAuthFetchOptions({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           olderThanDays: 30,
           level: 'debug',
           category: 'system',
           dryRun: false
         })
-      });
+      }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -440,7 +440,7 @@ export default function AdminLogsPage() {
         throw new Error(result.error || 'Cleanup failed');
       }
     } catch (err) {
-      console.error('Error cleaning up logs:', err);
+      logger.error('Error cleaning up logs', err instanceof Error ? err : new Error(String(err)));
       const errorMessage = err instanceof Error ? err.message : 'Failed to cleanup logs';
       
       // Show user-friendly error message
@@ -462,15 +462,18 @@ export default function AdminLogsPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/logs/flush', {
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.logsFlush}`;
+      const response = await fetch(url, createAuthFetchOptions({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           confirm: true,
           backup: true
         })
-      });
+      }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -485,7 +488,7 @@ export default function AdminLogsPage() {
         throw new Error(result.error || 'Flush failed');
       }
     } catch (err) {
-      console.error('Error flushing logs:', err);
+      logger.error('Error flushing logs', err instanceof Error ? err : new Error(String(err)));
       const errorMessage = err instanceof Error ? err.message : 'Failed to flush logs';
       
       // Show user-friendly error message
@@ -591,7 +594,7 @@ export default function AdminLogsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             System Logs
           </h1>
           <p className="text-gray-600 text-sm">Monitor system activity and performance</p>
@@ -1304,7 +1307,7 @@ export default function AdminLogsPage() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Dashboard Summary</h3>
             {dashboardSummary ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-4 rounded-lg text-white">
+                <div className="bg-blue-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-blue-100">System Health</p>
@@ -1317,7 +1320,7 @@ export default function AdminLogsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-lg text-white">
+                <div className="bg-green-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-green-100">Performance Score</p>
@@ -1330,7 +1333,7 @@ export default function AdminLogsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 rounded-lg text-white">
+                <div className="bg-purple-600 p-4 rounded-lg text-white">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-purple-100">Logs Summary</p>

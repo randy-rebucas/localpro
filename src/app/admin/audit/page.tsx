@@ -26,6 +26,9 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 interface AuditLog {
   id: string;
@@ -131,21 +134,19 @@ export default function AdminAuditPage() {
 
       try {
         const [logsResponse, statsResponse] = await Promise.all([
-          fetch(`/api/admin/audit-logs?${queryParams}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          }),
-          fetch('/api/admin/audit-logs/stats', {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-          })
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'adminAuditLogs' as keyof typeof API_ENDPOINTS,
+            { method: 'GET', query: Object.fromEntries(queryParams) }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'adminAuditLogsStats' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          )
         ]);
 
         // Handle logs response
         if (!logsResponse.ok) {
-          console.warn('Logs API not available');
+          logger.warn('Logs API not available');
           logsData = { logs: [] };
         } else {
           logsData = await logsResponse.json();
@@ -153,7 +154,7 @@ export default function AdminAuditPage() {
 
         // Handle stats response
         if (!statsResponse.ok) {
-          console.warn('Stats API not available');
+          logger.warn('Stats API not available');
           statsData = {
             totalLogs: 0,
             todayLogs: 0,
@@ -172,7 +173,7 @@ export default function AdminAuditPage() {
           statsData = await statsResponse.json();
         }
       } catch (apiError) {
-        console.error('API calls failed:', apiError);
+        logger.error('API calls failed', apiError instanceof Error ? apiError : new Error(String(apiError)));
         // Return empty data - external API integration needed
         logsData = { logs: [] };
         statsData = {
@@ -218,13 +219,13 @@ export default function AdminAuditPage() {
         setStats(statsData);
         setLastUpdated(new Date());
       } catch (err) {
-        console.error('Error fetching audit data:', err);
+        logger.error('Error fetching audit data', err instanceof Error ? err : new Error(String(err)));
         setError(err instanceof Error ? err.message : 'Failed to load audit data');
       } finally {
         setLoading(false);
       }
     } catch (err) {
-      console.error('Error fetching audit data:', err);
+      logger.error('Error fetching audit data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to load audit data');
     } finally {
       setLoading(false);
@@ -240,7 +241,7 @@ export default function AdminAuditPage() {
     try {
       await fetchAuditData();
     } catch (err) {
-      console.error('Error refreshing data:', err);
+      logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to refresh audit data');
     } finally {
       setRefreshing(false);
@@ -262,11 +263,10 @@ export default function AdminAuditPage() {
       if (filters.status) queryParams.set('status', filters.status);
       if (filters.search) queryParams.set('search', filters.search);
 
-      const response = await fetch(`/api/admin/audit-logs/export/data?${queryParams}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'adminAuditLogsExportData' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');
@@ -282,7 +282,7 @@ export default function AdminAuditPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err) {
-      console.error('Error exporting data:', err);
+      logger.error('Error exporting data', err instanceof Error ? err : new Error(String(err)), { format });
       setError(err instanceof Error ? err.message : 'Failed to export data');
     }
   };
@@ -384,7 +384,7 @@ export default function AdminAuditPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-bold text-gray-900">
             Audit Logs
           </h1>
           <p className="text-gray-600 text-sm">Monitor system activity and security events</p>

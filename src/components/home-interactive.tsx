@@ -20,11 +20,11 @@ export function HomeInteractive({ variant = "hero" }: HomeInteractiveProps) {
           <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
         <Link
-          href="/dashboard"
+          href="/marketplace"
           className="group border border-white/30 text-white hover:border-[#34A853] hover:text-[#34A853] font-medium py-2 px-4 rounded-lg transition-all duration-300 hover:shadow-lg flex items-center focus:outline-none focus:ring-2 focus:ring-[#34A853]/50 drop-shadow-sm"
-          aria-label="Explore the LocalPro dashboard"
+          aria-label="Explore the LocalPro marketplace"
         >
-          Explore Dashboard
+          Explore Marketplace
           <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
@@ -41,7 +41,7 @@ export function HomeInteractive({ variant = "hero" }: HomeInteractiveProps) {
         <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </Link>
       <Link
-        href="/dashboard"
+        href="/marketplace"
         className="text-[#34A853] hover:text-[#1A5276] font-medium flex items-center drop-shadow-sm"
       >
         View Demo

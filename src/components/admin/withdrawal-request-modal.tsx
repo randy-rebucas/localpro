@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, DollarSign } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface WithdrawalRequestModalProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export function WithdrawalRequestModal({
       });
       onClose();
     } catch (error) {
-      console.error('Error submitting withdrawal:', error);
+      logger.error('Error submitting withdrawal', error instanceof Error ? error : new Error(String(error)), { amount: formData.amount, method: formData.method });
     } finally {
       setLoading(false);
     }

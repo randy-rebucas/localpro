@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { LucideIcon, BarChart3, Wrench, Activity, Megaphone, Search, Settings, RefreshCw } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface EmptyStateAction {
   type: "link" | "button";
@@ -125,7 +126,7 @@ export function DashboardEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
         {
           type: "button" as const,
           label: "Get Started",
-          onClick: () => console.log("Get started clicked"),
+          onClick: () => logger.debug("Get started clicked"),
           variant: "primary" as const,
           icon: BarChart3
         },
@@ -176,8 +177,8 @@ export function ActivityEmptyState({ onRefresh }: SpecializedEmptyStateProps) {
       actions={[
         {
           type: "link",
-          href: "/dashboard",
-          label: "Go to Dashboard",
+          href: "/marketplace",
+          label: "Go to Marketplace",
           variant: "primary" as const,
           icon: Activity
         },
@@ -243,8 +244,8 @@ export function SettingsEmptyState() {
       actions={[
         {
           type: "link",
-          href: "/dashboard",
-          label: "Back to Dashboard",
+          href: "/marketplace",
+          label: "Back to Marketplace",
           variant: "primary" as const,
           icon: Settings
         }

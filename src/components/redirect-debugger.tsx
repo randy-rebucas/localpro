@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { isAuthenticated, redirectToLogin } from "@/lib/client-api-utils";
 import { useSession } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
 
 /**
  * Debug component to test redirect functionality
@@ -37,27 +38,27 @@ export function RedirectDebugger() {
     };
     
     setDebugInfo(info);
-    console.log("Redirect Debug Info:", info);
+    logger.debug("Redirect Debug Info", info);
 
     // Test redirect conditions
     if (status === "unauthenticated") {
-      console.log("🔴 Status: unauthenticated - should redirect");
+      logger.debug("Status: unauthenticated - should redirect");
     } else if (status === "authenticated" && !isAuthenticated()) {
-      console.log("🔴 Status: authenticated but no API token - should redirect");
+      logger.warn("Status: authenticated but no API token - should redirect");
     } else if (status === "authenticated" && isAuthenticated()) {
-      console.log("🟢 Status: authenticated with API token - should stay");
+      logger.debug("Status: authenticated with API token - should stay");
     } else {
-      console.log("🟡 Status: loading or unknown - waiting");
+      logger.debug("Status: loading or unknown - waiting");
     }
   }, [session, status]);
 
   const testRedirect = () => {
-    console.log("🧪 Testing redirect...");
+    logger.debug("Testing redirect");
     redirectToLogin();
   };
 
   const testWindowRedirect = () => {
-    console.log("🧪 Testing window.location redirect...");
+    logger.debug("Testing window.location redirect");
     if (typeof window !== 'undefined') {
       window.location.href = '/auth';
     }

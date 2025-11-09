@@ -1,6 +1,7 @@
 import { serialize } from 'cookie';
 import { SignJWT, jwtVerify, JWTPayload } from 'jose';
 import { AUTH_CONFIG } from './env';
+import { logger } from './logger';
 
 const secret = new TextEncoder().encode(AUTH_CONFIG.sessionSecret);
 
@@ -225,14 +226,14 @@ export async function decrypt(session: string | undefined = ''): Promise<Session
   } catch (error) {
     // Enhanced error logging for debugging
     if (error instanceof Error) {
-      console.error('Session decryption failed:', {
+      logger.error('Session decryption failed', error, {
         message: error.message,
         name: error.name,
         code: (error as Error & { code?: string }).code,
         stack: error.stack
       });
     } else {
-      console.error('Session decryption failed:', error);
+      logger.error('Session decryption failed', new Error(String(error)));
     }
     return null;
   }

@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ENDPOINTS } from './api';
+import { logger } from './logger';
 
 /**
  * Client-side API utilities for frontend components
@@ -30,7 +31,7 @@ export function clearApiToken(): void {
 function getAuthHeaders(): HeadersInit | null {
   // Debug: Log all cookies in development
   if (process.env.NODE_ENV === 'development') {
-    console.log('All cookies:', document.cookie);
+    logger.debug('All cookies', { cookieCount: document.cookie.split(';').filter(c => c.trim()).length });
   }
 
   // Get API token cookie from browser (non-httpOnly cookie)
@@ -103,9 +104,7 @@ export async function makeClientAuthenticatedRequestWithPath(
   
   // Debug logging for development
   if (process.env.NODE_ENV === 'development') {
-    console.log('🌐 Making authenticated request to:', url);
-    console.log('🔑 Auth headers:', authHeaders);
-    console.log('📡 API_BASE_URL:', API_BASE_URL);
+    logger.debug('Making authenticated request', { url, hasAuthHeaders: !!authHeaders, apiBaseUrl: API_BASE_URL });
   }
   
   return fetch(url, {
@@ -196,7 +195,7 @@ export function handleClientApiError(error: unknown, context: string = "API requ
     details = error instanceof Error ? error.message : String(error);
   }
 
-  console.error(`${context} error:`, error);
+  logger.error(`${context} error`, error instanceof Error ? error : new Error(String(error)), { statusCode, isAuthError });
   
   return {
     error: errorMessage,
@@ -231,18 +230,19 @@ export async function handleClientApiRoute<T = unknown>(
  * Reliable redirect function that works in all contexts
  */
 export function redirectToLogin(): void {
-  console.log("🔄 redirectToLogin() called");
-  console.log("🔄 Current URL:", typeof window !== 'undefined' ? window.location.href : 'N/A');
-  console.log("🔄 Current pathname:", typeof window !== 'undefined' ? window.location.pathname : 'N/A');
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : 'N/A';
+  const currentPathname = typeof window !== 'undefined' ? window.location.pathname : 'N/A';
+  
+  logger.debug("redirectToLogin() called", { currentUrl, currentPathname });
   
   if (typeof window !== 'undefined') {
     // Check if we're already on the auth page to prevent loops
     if (window.location.pathname === '/auth') {
-      console.log("🔄 Already on auth page, skipping redirect");
+      logger.debug("Already on auth page, skipping redirect");
       return;
     }
     
-    console.log("🔄 Using window.location.href redirect");
+    logger.debug("Using window.location.href redirect");
     
     // Add a small delay to prevent rapid redirects
     setTimeout(() => {
@@ -251,7 +251,7 @@ export function redirectToLogin(): void {
       }
     }, 100);
   } else {
-    console.log("🔄 Window not available, cannot redirect");
+    logger.warn("Window not available, cannot redirect");
   }
 }
 
@@ -259,7 +259,7 @@ export function redirectToLogin(): void {
  * Comprehensive function to clear all authentication and session data
  */
 export function clearAllAuthData(): void {
-  console.log("🧹 Clearing all authentication and session data");
+  logger.debug("Clearing all authentication and session data");
   
   if (typeof window !== 'undefined') {
     // Clear API token first
@@ -295,7 +295,7 @@ export function clearAllAuthData(): void {
       document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=." + window.location.hostname;
     });
     
-    console.log("✅ All auth data cleared from localStorage, sessionStorage, and cookies");
+    logger.debug("All auth data cleared from localStorage, sessionStorage, and cookies");
   }
 }
 
@@ -303,7 +303,7 @@ export function clearAllAuthData(): void {
  * Handle expired token by clearing auth data and redirecting to login
  */
 export function handleExpiredToken(): void {
-  console.warn("Token expired - clearing auth data and redirecting to login");
+  logger.warn("Token expired - clearing auth data and redirecting to login");
   
   // Clear all authentication data
   clearAllAuthData();
@@ -321,13 +321,65 @@ export function isExpiredTokenResponse(response: Response): boolean {
 
 /**
  * Enhanced authenticated request with automatic token expiry handling
+ * Supports query parameters via options.query (custom extension to RequestInit)
  */
 export async function makeClientAuthenticatedRequestWithEndpointSafe(
   endpoint: keyof typeof API_ENDPOINTS,
-  options: RequestInit = {}
+  options: RequestInit & { query?: Record<string, string> } = {}
 ): Promise<Response> {
+  const { query, ...fetchOptions } = options;
+  
+  // Validate API_BASE_URL
+  if (!API_BASE_URL || typeof API_BASE_URL !== 'string' || API_BASE_URL.trim() === '') {
+    logger.error('API_BASE_URL is not configured', undefined, { apiBaseUrl: API_BASE_URL });
+    throw new Error('API base URL is not configured. Please check your environment variables.');
+  }
+  
+  // Validate endpoint exists
+  if (!API_ENDPOINTS[endpoint]) {
+    logger.error('Invalid endpoint', undefined, { endpoint: String(endpoint) });
+    throw new Error(`Invalid API endpoint: ${String(endpoint)}`);
+  }
+  
+  // Build URL with query parameters if provided
+  let url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  if (query && Object.keys(query).length > 0) {
+    const queryString = new URLSearchParams(query).toString();
+    url += `?${queryString}`;
+  }
+
+  // Validate URL is properly formed
   try {
-    const response = await makeClientAuthenticatedRequestWithEndpoint(endpoint, options);
+    new URL(url);
+  } catch {
+    logger.error('Invalid URL constructed', undefined, { url });
+    throw new Error(`Invalid API URL: ${url}. Please check API_BASE_URL configuration.`);
+  }
+
+  try {
+    const authHeaders = getAuthHeaders();
+    
+    if (!authHeaders) {
+      throw new Error("No authentication token found - please log in");
+    }
+    
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('Making authenticated request', {
+        url,
+        endpoint: String(endpoint),
+        method: fetchOptions.method || 'GET',
+        hasAuth: !!authHeaders
+      });
+    }
+    
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers: {
+        ...authHeaders,
+        ...fetchOptions.headers,
+      },
+    });
     
     // Check if token is expired
     if (isExpiredTokenResponse(response)) {
@@ -337,6 +389,24 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
     
     return response;
   } catch (error) {
+    // Enhance error message for network failures
+    if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Failed to fetch'))) {
+      const enhancedError = new Error(
+        `Network error: Unable to connect to API at ${url}. ` +
+        `This could be due to: 1) Server is not running, 2) CORS configuration issue, 3) Network connectivity problem. ` +
+        `Please check if the API server is running and accessible.`
+      );
+      // Preserve original error for debugging
+      (enhancedError as Error & { originalError?: Error }).originalError = error;
+      logger.error('Network request failed', enhancedError, {
+        url,
+        endpoint: String(endpoint),
+        apiBaseUrl: API_BASE_URL,
+        errorMessage: enhancedError.message
+      });
+      throw enhancedError;
+    }
+    
     // If it's an auth error, handle it
     if (error instanceof Error && (error.message.includes("401") || error.message.includes("Unauthorized"))) {
       handleExpiredToken();
