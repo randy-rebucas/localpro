@@ -559,9 +559,9 @@ export default function AcademyPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
@@ -569,153 +569,180 @@ export default function AcademyPage() {
               resetForm();
               setCreateModalOpen(true);
             }}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Course
+            <Plus className="w-3 h-3 mr-1" />
+            Add Course
           </button>
         </div>
       </div>
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalCourses || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalCourses || 0}</p>
               </div>
-              <BookOpen className="w-8 h-8 text-blue-600" />
+              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
+                <BookOpen className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Courses</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeCourses || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.activeCourses || 0}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-green-600" />
+              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Enrollments</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalEnrollments || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalEnrollments || 0}</p>
               </div>
-              <Users className="w-8 h-8 text-purple-600" />
+              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
+                <Users className="w-5 h-5 text-purple-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-lg font-bold text-gray-900">
                   {stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
                 </p>
               </div>
-              <BarChart3 className="w-8 h-8 text-yellow-600" />
+              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
+                <BarChart3 className="w-5 h-5 text-yellow-600" />
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 sm:space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search courses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
           </div>
-          <div className="flex items-center space-x-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-              ))}
-            </select>
-            <select
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Levels</option>
-              {levels.map(level => (
-                <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
-              ))}
-            </select>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Levels</option>
+                {levels.map(level => (
+                  <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Courses Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Courses</h3>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {courses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={6} className="px-3 py-2 text-center text-xs text-gray-500">
                     No courses found
                   </td>
                 </tr>
               ) : (
                 courses.map((course) => (
                   <tr key={course._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {course.thumbnail?.url ? (
                           <Image
                             src={course.thumbnail.url}
                             alt={course.title}
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 rounded object-cover mr-3"
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded object-cover mr-2"
                             unoptimized
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center mr-3">
-                            <BookOpen className="w-5 h-5 text-gray-400" />
+                          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center mr-2">
+                            <BookOpen className="w-4 h-4 text-gray-400" />
                           </div>
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{course.title}</div>
-                          <div className="text-xs text-gray-500 truncate max-w-xs">{course.description}</div>
+                          <div className="text-xs font-semibold text-gray-900">{course.title}</div>
+                          <div className="text-xs text-gray-600 truncate max-w-xs">{course.description}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {course.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {course.level}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       {typeof course.pricing === 'object' ? (
                         <>
                           {course.pricing.discountedPrice ? (
@@ -731,8 +758,8 @@ export default function AcademyPage() {
                         'N/A'
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                         course.isActive 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-gray-100 text-gray-800'
@@ -740,7 +767,7 @@ export default function AcademyPage() {
                         {course.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => {
@@ -748,16 +775,16 @@ export default function AcademyPage() {
                             setViewModalOpen(true);
                           }}
                           className="text-blue-600 hover:text-blue-900"
-                          title="View"
+                          title="View course details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openEditModal(course)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                          title="Edit"
+                          className="text-green-600 hover:text-green-900"
+                          title="Edit course"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => {
@@ -767,7 +794,7 @@ export default function AcademyPage() {
                           className="text-purple-600 hover:text-purple-900"
                           title="Upload Thumbnail"
                         >
-                          <ImageIcon className="w-4 h-4" />
+                          <ImageIcon className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => {
@@ -777,14 +804,14 @@ export default function AcademyPage() {
                           className="text-green-600 hover:text-green-900"
                           title="Upload Video"
                         >
-                          <Video className="w-4 h-4" />
+                          <Video className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => course._id && handleDeleteCourse(course._id)}
                           className="text-red-600 hover:text-red-900"
                           title="Delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </td>

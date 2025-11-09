@@ -22,19 +22,11 @@ import { WithdrawalRequestModal, WithdrawalData } from "@/components/admin/withd
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { Transaction, TransactionType, TransactionStatus, TransactionCategory, Wallet } from "@/types/finance";
 
 interface FinanceOverview {
-  wallet: {
-    balance: number;
-    pendingBalance: number;
+  wallet: Omit<Wallet, 'lastUpdated'> & {
     lastUpdated: string;
-    autoWithdraw: boolean;
-    minBalance: number;
-    notificationSettings: {
-      lowBalance: boolean;
-      withdrawal: boolean;
-      payment: boolean;
-    };
   };
   monthlyEarnings: {
     totalEarnings: number;
@@ -48,18 +40,19 @@ interface FinanceOverview {
     totalEarnings: number;
     count: number;
   };
-  recentTransactions: Transaction[];
+  recentTransactions: TransactionWithDetails[];
 }
 
-interface Transaction {
+// Extended Transaction interface for admin page
+interface TransactionWithDetails extends Omit<Transaction, 'type' | 'status' | 'paymentMethod' | 'reference' | 'createdAt' | 'updatedAt'> {
   id?: string;
   _id?: string;
-  type: 'income' | 'expense';
+  type: TransactionType | 'income' | 'expense';
   amount: number;
-  category: string;
+  category: TransactionCategory | string;
   description: string;
   paymentMethod: string;
-  status: 'completed' | 'pending' | 'failed';
+  status: TransactionStatus | 'completed' | 'pending' | 'failed';
   timestamp: string;
   reference?: string;
 }
@@ -77,7 +70,7 @@ export default function FinanceAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FinanceFilters>({
     search: '',
@@ -237,7 +230,7 @@ export default function FinanceAdmin() {
     }
   };
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction: TransactionWithDetails) => {
     logger.debug('View transaction', { transactionId: transaction.id || transaction._id || 'unknown', amount: transaction.amount });
     // Implement transaction detail view
   };

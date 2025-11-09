@@ -28,6 +28,7 @@ import { TransactionDetailsModal } from "@/components/admin/transaction-details-
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { PaymentStatus, PaymentMethod } from "@/types/subscriptions";
 
 interface PaymentOverview {
   totalTransactions: number;
@@ -46,7 +47,7 @@ interface PaymentOverview {
     id: string;
     amount: number;
     method: string;
-    status: 'completed' | 'pending' | 'failed' | 'refunded';
+    status: PaymentStatus;
     customer: string;
     date: string;
     reference: string;
@@ -78,10 +79,10 @@ interface PaymentOverview {
   netRevenue: number;
 }
 
-interface Transaction {
+interface PaymentTransaction {
   id: string;
   amount: number;
-  method: string;
+  method: PaymentMethod | string;
   status: 'completed' | 'pending' | 'failed' | 'refunded';
   customer: string;
   date: string;
@@ -104,7 +105,7 @@ export default function PaymentProcessingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [overview, setOverview] = useState<PaymentOverview | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [filters, setFilters] = useState<PaymentFilters>({
@@ -119,7 +120,7 @@ export default function PaymentProcessingPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | undefined>(undefined);
+  const [selectedTransaction, setSelectedTransaction] = useState<PaymentTransaction | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -220,12 +221,12 @@ export default function PaymentProcessingPage() {
     setRefreshing(false);
   };
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction: PaymentTransaction) => {
     setSelectedTransaction(transaction);
     setShowTransactionDetails(true);
   };
 
-  const handleRefundTransaction = (transaction: Transaction) => {
+  const handleRefundTransaction = (transaction: PaymentTransaction) => {
     setSelectedTransaction(transaction);
     setShowRefundModal(true);
   };

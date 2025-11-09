@@ -23,9 +23,12 @@ import {
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { Referral, ReferralStatus, ReferralType, RewardStatus } from "@/types/referrals";
 
-interface ReferralData {
+// Extended Referral interface for admin page
+interface ReferralData extends Omit<Referral, 'referrer' | 'referee' | 'status' | 'referralType' | 'createdAt' | 'updatedAt'> {
   id: string;
+  _id?: string;
   referrerId: string;
   referrerName: string;
   referrerEmail: string;
@@ -34,9 +37,10 @@ interface ReferralData {
   referredUserEmail: string;
   referredUserPhone?: string;
   referredUserLocation?: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: ReferralStatus | 'pending' | 'completed' | 'cancelled';
+  referralType?: ReferralType;
   rewardAmount: number;
-  rewardStatus: 'pending' | 'paid' | 'cancelled';
+  rewardStatus: RewardStatus | 'pending' | 'paid' | 'cancelled';
   createdAt: string;
   completedAt?: string;
   notes?: string;

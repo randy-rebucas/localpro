@@ -23,54 +23,37 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
+import {
+  RentalItem,
+  Image as RentalImage,
+  Document,
+  RentalCategory
+} from "@/types/rentals";
 
-interface RentalImage {
-  url?: string;
-  publicId?: string;
-  thumbnail?: string;
-  _id?: string;
-}
-
-interface Rental {
-  _id?: string;
-  title: string;
-  description: string;
-  category: string;
-  type: string;
-  price: {
+// Extended Rental interface for admin page (includes owner/provider populated)
+interface Rental extends Omit<RentalItem, 'owner' | 'name' | 'createdAt' | 'updatedAt'> {
+  name?: string;
+  type?: string;
+  price?: {
     daily?: number;
     weekly?: number;
     monthly?: number;
     currency?: string;
   };
-  location: {
-    address?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    coordinates?: {
-      lat?: number;
-      lng?: number;
-    };
+  owner?: string | {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
   };
-  availability: {
-    isAvailable?: boolean;
-    startDate?: string;
-    endDate?: string;
-  };
-  specifications?: Record<string, unknown>;
-  images?: RentalImage[];
   provider?: string | {
     _id?: string;
     firstName?: string;
     lastName?: string;
     email?: string;
   };
-  rating?: {
-    average?: number;
-    count?: number;
-  };
-  isActive?: boolean;
+  images?: (RentalImage & { _id?: string })[];
+  documents?: Document[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -109,21 +92,56 @@ export default function RentalsPage() {
 
   // Form states
   const [rentalFormData, setRentalFormData] = useState({
+    name: "",
     title: "",
     description: "",
     category: "",
+    subcategory: "",
     type: "",
+    // Pricing
+    hourlyPrice: 0,
     dailyPrice: 0,
     weeklyPrice: 0,
     monthlyPrice: 0,
     currency: "USD",
-    address: "",
+    // Location
+    street: "",
     city: "",
     state: "",
     zipCode: "",
+    country: "",
+    lat: "",
+    lng: "",
+    pickupRequired: true,
+    deliveryAvailable: false,
+    deliveryFee: 0,
+    // Specifications
+    brand: "",
+    model: "",
+    year: "",
+    condition: "good" as "excellent" | "good" | "fair" | "poor",
+    features: [] as string[],
+    length: "",
+    width: "",
+    height: "",
+    dimensionUnit: "inches",
+    weight: "",
+    weightUnit: "lbs",
+    // Requirements
+    minAge: "",
+    licenseRequired: false,
+    licenseType: "",
+    deposit: 0,
+    insuranceRequired: false,
+    // Status
     isAvailable: true,
     isActive: true,
-    provider: ""
+    isFeatured: false,
+    // Owner/Provider
+    owner: "",
+    provider: "",
+    // Tags
+    tags: "" as string | string[]
   });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -219,29 +237,92 @@ export default function RentalsPage() {
         throw new Error('Authentication required');
       }
 
-      const rentalData = {
+      // Build pricing object
+      const pricing: Rental['pricing'] = {
+        currency: rentalFormData.currency
+      };
+      if (rentalFormData.hourlyPrice > 0) pricing.hourly = rentalFormData.hourlyPrice;
+      if (rentalFormData.dailyPrice > 0) pricing.daily = rentalFormData.dailyPrice;
+      if (rentalFormData.weeklyPrice > 0) pricing.weekly = rentalFormData.weeklyPrice;
+      if (rentalFormData.monthlyPrice > 0) pricing.monthly = rentalFormData.monthlyPrice;
+
+      // Build location object
+      const location: Rental['location'] = {
+        address: {},
+        pickupRequired: rentalFormData.pickupRequired,
+        deliveryAvailable: rentalFormData.deliveryAvailable
+      };
+      if (rentalFormData.street) location.address!.street = rentalFormData.street;
+      if (rentalFormData.city) location.address!.city = rentalFormData.city;
+      if (rentalFormData.state) location.address!.state = rentalFormData.state;
+      if (rentalFormData.zipCode) location.address!.zipCode = rentalFormData.zipCode;
+      if (rentalFormData.country) location.address!.country = rentalFormData.country;
+      if (rentalFormData.lat && rentalFormData.lng) {
+        location.coordinates = {
+          lat: parseFloat(rentalFormData.lat),
+          lng: parseFloat(rentalFormData.lng)
+        };
+      }
+      if (rentalFormData.deliveryAvailable && rentalFormData.deliveryFee > 0) {
+        location.deliveryFee = rentalFormData.deliveryFee;
+      }
+
+      // Build specifications object
+      const specifications: Partial<Rental['specifications']> = {};
+      if (rentalFormData.brand) specifications.brand = rentalFormData.brand;
+      if (rentalFormData.model) specifications.model = rentalFormData.model;
+      if (rentalFormData.year) specifications.year = parseInt(rentalFormData.year);
+      if (rentalFormData.condition) specifications.condition = rentalFormData.condition;
+      if (rentalFormData.features.length > 0) specifications.features = rentalFormData.features;
+      if (rentalFormData.length || rentalFormData.width || rentalFormData.height) {
+        specifications.dimensions = {};
+        if (rentalFormData.length) specifications.dimensions!.length = parseFloat(rentalFormData.length);
+        if (rentalFormData.width) specifications.dimensions!.width = parseFloat(rentalFormData.width);
+        if (rentalFormData.height) specifications.dimensions!.height = parseFloat(rentalFormData.height);
+        if (rentalFormData.dimensionUnit) specifications.dimensions!.unit = rentalFormData.dimensionUnit;
+      }
+      if (rentalFormData.weight) {
+        specifications.weight = {
+          value: parseFloat(rentalFormData.weight),
+          unit: rentalFormData.weightUnit || 'lbs'
+        };
+      }
+
+      // Build requirements object
+      const requirements: Partial<Rental['requirements']> = {};
+      if (rentalFormData.minAge) requirements.minAge = parseInt(rentalFormData.minAge);
+      if (rentalFormData.licenseRequired) {
+        requirements.licenseRequired = true;
+        if (rentalFormData.licenseType) requirements.licenseType = rentalFormData.licenseType;
+      }
+      if (rentalFormData.deposit > 0) requirements.deposit = rentalFormData.deposit;
+      if (rentalFormData.insuranceRequired) requirements.insuranceRequired = true;
+
+      // Build tags array
+      const tags = typeof rentalFormData.tags === 'string' 
+        ? rentalFormData.tags.split(',').map(t => t.trim()).filter(t => t)
+        : rentalFormData.tags;
+
+      const rentalData: Partial<Rental> = {
+        name: rentalFormData.name || rentalFormData.title,
         title: rentalFormData.title,
         description: rentalFormData.description,
-        category: rentalFormData.category,
-        type: rentalFormData.type,
-        price: {
-          daily: rentalFormData.dailyPrice || undefined,
-          weekly: rentalFormData.weeklyPrice || undefined,
-          monthly: rentalFormData.monthlyPrice || undefined,
-          currency: rentalFormData.currency
-        },
-        location: {
-          address: rentalFormData.address || undefined,
-          city: rentalFormData.city || undefined,
-          state: rentalFormData.state || undefined,
-          zipCode: rentalFormData.zipCode || undefined
-        },
+        category: rentalFormData.category as RentalCategory,
+        subcategory: rentalFormData.subcategory || undefined,
+        pricing,
+        location,
         availability: {
           isAvailable: rentalFormData.isAvailable
         },
-        provider: rentalFormData.provider || undefined,
-        isActive: rentalFormData.isActive
+        isActive: rentalFormData.isActive,
+        isFeatured: rentalFormData.isFeatured
       };
+
+      if (Object.keys(specifications).length > 0) rentalData.specifications = specifications;
+      if (Object.keys(requirements).length > 0) rentalData.requirements = requirements;
+      if (tags && tags.length > 0) rentalData.tags = tags;
+      if (rentalFormData.owner) rentalData.owner = rentalFormData.owner;
+      if (rentalFormData.provider) rentalData.owner = rentalFormData.provider; // Use provider as owner if provided
 
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.rentalsCreate}`,
@@ -253,18 +334,18 @@ export default function RentalsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create rental');
+        throw new Error(errorData.error || errorData.message || 'Failed to create rental');
       }
 
       const result = await response.json();
       
-      if (result.success) {
+      if (result.success || result.data) {
         toast.success('Rental created successfully');
         setCreateModalOpen(false);
         resetForm();
         await refreshData();
       } else {
-        throw new Error(result.error || 'Failed to create rental');
+        throw new Error(result.error || result.message || 'Failed to create rental');
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -285,29 +366,92 @@ export default function RentalsPage() {
         throw new Error('Authentication required');
       }
 
-      const rentalData = {
+      // Build pricing object (same as create)
+      const pricing: Rental['pricing'] = {
+        currency: rentalFormData.currency
+      };
+      if (rentalFormData.hourlyPrice > 0) pricing.hourly = rentalFormData.hourlyPrice;
+      if (rentalFormData.dailyPrice > 0) pricing.daily = rentalFormData.dailyPrice;
+      if (rentalFormData.weeklyPrice > 0) pricing.weekly = rentalFormData.weeklyPrice;
+      if (rentalFormData.monthlyPrice > 0) pricing.monthly = rentalFormData.monthlyPrice;
+
+      // Build location object
+      const location: Rental['location'] = {
+        address: {},
+        pickupRequired: rentalFormData.pickupRequired,
+        deliveryAvailable: rentalFormData.deliveryAvailable
+      };
+      if (rentalFormData.street) location.address!.street = rentalFormData.street;
+      if (rentalFormData.city) location.address!.city = rentalFormData.city;
+      if (rentalFormData.state) location.address!.state = rentalFormData.state;
+      if (rentalFormData.zipCode) location.address!.zipCode = rentalFormData.zipCode;
+      if (rentalFormData.country) location.address!.country = rentalFormData.country;
+      if (rentalFormData.lat && rentalFormData.lng) {
+        location.coordinates = {
+          lat: parseFloat(rentalFormData.lat),
+          lng: parseFloat(rentalFormData.lng)
+        };
+      }
+      if (rentalFormData.deliveryAvailable && rentalFormData.deliveryFee > 0) {
+        location.deliveryFee = rentalFormData.deliveryFee;
+      }
+
+      // Build specifications object
+      const specifications: Partial<Rental['specifications']> = {};
+      if (rentalFormData.brand) specifications.brand = rentalFormData.brand;
+      if (rentalFormData.model) specifications.model = rentalFormData.model;
+      if (rentalFormData.year) specifications.year = parseInt(rentalFormData.year);
+      if (rentalFormData.condition) specifications.condition = rentalFormData.condition;
+      if (rentalFormData.features.length > 0) specifications.features = rentalFormData.features;
+      if (rentalFormData.length || rentalFormData.width || rentalFormData.height) {
+        specifications.dimensions = {};
+        if (rentalFormData.length) specifications.dimensions!.length = parseFloat(rentalFormData.length);
+        if (rentalFormData.width) specifications.dimensions!.width = parseFloat(rentalFormData.width);
+        if (rentalFormData.height) specifications.dimensions!.height = parseFloat(rentalFormData.height);
+        if (rentalFormData.dimensionUnit) specifications.dimensions!.unit = rentalFormData.dimensionUnit;
+      }
+      if (rentalFormData.weight) {
+        specifications.weight = {
+          value: parseFloat(rentalFormData.weight),
+          unit: rentalFormData.weightUnit || 'lbs'
+        };
+      }
+
+      // Build requirements object
+      const requirements: Partial<Rental['requirements']> = {};
+      if (rentalFormData.minAge) requirements.minAge = parseInt(rentalFormData.minAge);
+      if (rentalFormData.licenseRequired) {
+        requirements.licenseRequired = true;
+        if (rentalFormData.licenseType) requirements.licenseType = rentalFormData.licenseType;
+      }
+      if (rentalFormData.deposit > 0) requirements.deposit = rentalFormData.deposit;
+      if (rentalFormData.insuranceRequired) requirements.insuranceRequired = true;
+
+      // Build tags array
+      const tags = typeof rentalFormData.tags === 'string' 
+        ? rentalFormData.tags.split(',').map(t => t.trim()).filter(t => t)
+        : rentalFormData.tags;
+
+      const rentalData: Partial<Rental> = {
+        name: rentalFormData.name || rentalFormData.title,
         title: rentalFormData.title,
         description: rentalFormData.description,
-        category: rentalFormData.category,
-        type: rentalFormData.type,
-        price: {
-          daily: rentalFormData.dailyPrice || undefined,
-          weekly: rentalFormData.weeklyPrice || undefined,
-          monthly: rentalFormData.monthlyPrice || undefined,
-          currency: rentalFormData.currency
-        },
-        location: {
-          address: rentalFormData.address || undefined,
-          city: rentalFormData.city || undefined,
-          state: rentalFormData.state || undefined,
-          zipCode: rentalFormData.zipCode || undefined
-        },
+        category: rentalFormData.category as RentalCategory,
+        subcategory: rentalFormData.subcategory || undefined,
+        pricing,
+        location,
         availability: {
           isAvailable: rentalFormData.isAvailable
         },
-        provider: rentalFormData.provider || undefined,
-        isActive: rentalFormData.isActive
+        isActive: rentalFormData.isActive,
+        isFeatured: rentalFormData.isFeatured
       };
+
+      if (Object.keys(specifications).length > 0) rentalData.specifications = specifications;
+      if (Object.keys(requirements).length > 0) rentalData.requirements = requirements;
+      if (tags && tags.length > 0) rentalData.tags = tags;
+      if (rentalFormData.owner) rentalData.owner = rentalFormData.owner;
+      if (rentalFormData.provider) rentalData.owner = rentalFormData.provider;
 
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.rentalsUpdate}/${selectedRental._id}`,
@@ -319,18 +463,18 @@ export default function RentalsPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update rental');
+        throw new Error(errorData.error || errorData.message || 'Failed to update rental');
       }
 
       const result = await response.json();
       
-      if (result.success) {
+      if (result.success || result.data) {
         toast.success('Rental updated successfully');
         setEditModalOpen(false);
         resetForm();
         await refreshData();
       } else {
-        throw new Error(result.error || 'Failed to update rental');
+        throw new Error(result.error || result.message || 'Failed to update rental');
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -462,43 +606,105 @@ export default function RentalsPage() {
 
   const resetForm = () => {
     setRentalFormData({
+      name: "",
       title: "",
       description: "",
       category: "",
+      subcategory: "",
       type: "",
+      hourlyPrice: 0,
       dailyPrice: 0,
       weeklyPrice: 0,
       monthlyPrice: 0,
       currency: "USD",
-      address: "",
+      street: "",
       city: "",
       state: "",
       zipCode: "",
+      country: "",
+      lat: "",
+      lng: "",
+      pickupRequired: true,
+      deliveryAvailable: false,
+      deliveryFee: 0,
+      brand: "",
+      model: "",
+      year: "",
+      condition: "good",
+      features: [],
+      length: "",
+      width: "",
+      height: "",
+      dimensionUnit: "inches",
+      weight: "",
+      weightUnit: "lbs",
+      minAge: "",
+      licenseRequired: false,
+      licenseType: "",
+      deposit: 0,
+      insuranceRequired: false,
       isAvailable: true,
       isActive: true,
-      provider: ""
+      isFeatured: false,
+      owner: "",
+      provider: "",
+      tags: ""
     });
     setSelectedRental(null);
   };
 
   const openEditModal = (rental: Rental) => {
     setSelectedRental(rental);
+    const pricing = rental.pricing || rental.price;
+    const location = rental.location;
+    const address = location?.address;
+    const specs = rental.specifications || {};
+    const reqs = rental.requirements || {};
+    
     setRentalFormData({
+      name: rental.name || rental.title,
       title: rental.title,
       description: rental.description,
       category: rental.category || "",
+      subcategory: rental.subcategory || "",
       type: rental.type || "",
-      dailyPrice: rental.price?.daily || 0,
-      weeklyPrice: rental.price?.weekly || 0,
-      monthlyPrice: rental.price?.monthly || 0,
-      currency: rental.price?.currency || "USD",
-      address: rental.location?.address || "",
-      city: rental.location?.city || "",
-      state: rental.location?.state || "",
-      zipCode: rental.location?.zipCode || "",
+      hourlyPrice: (rental.pricing && 'hourly' in rental.pricing && typeof rental.pricing.hourly === 'number') ? rental.pricing.hourly : 0,
+      dailyPrice: pricing?.daily || 0,
+      weeklyPrice: pricing?.weekly || 0,
+      monthlyPrice: pricing?.monthly || 0,
+      currency: pricing?.currency || "USD",
+      street: address?.street || "",
+      city: address?.city || "",
+      state: address?.state || "",
+      zipCode: address?.zipCode || "",
+      country: address?.country || "",
+      lat: location?.coordinates?.lat?.toString() || "",
+      lng: location?.coordinates?.lng?.toString() || "",
+      pickupRequired: location?.pickupRequired ?? true,
+      deliveryAvailable: location?.deliveryAvailable ?? false,
+      deliveryFee: location?.deliveryFee || 0,
+      brand: specs.brand || "",
+      model: specs.model || "",
+      year: specs.year?.toString() || "",
+      condition: specs.condition || "good",
+      features: specs.features || [],
+      length: specs.dimensions?.length?.toString() || "",
+      width: specs.dimensions?.width?.toString() || "",
+      height: specs.dimensions?.height?.toString() || "",
+      dimensionUnit: specs.dimensions?.unit || "inches",
+      weight: specs.weight?.value?.toString() || "",
+      weightUnit: specs.weight?.unit || "lbs",
+      minAge: reqs.minAge?.toString() || "",
+      licenseRequired: reqs.licenseRequired || false,
+      licenseType: reqs.licenseType || "",
+      deposit: reqs.deposit || 0,
+      insuranceRequired: reqs.insuranceRequired || false,
       isAvailable: rental.availability?.isAvailable ?? true,
       isActive: rental.isActive ?? true,
-      provider: typeof rental.provider === 'string' ? rental.provider : rental.provider?._id || ""
+      isFeatured: rental.isFeatured ?? false,
+      owner: typeof rental.owner === 'string' ? rental.owner : rental.owner?._id || "",
+      provider: typeof rental.provider === 'string' ? rental.provider : rental.provider?._id || "",
+      tags: Array.isArray(rental.tags) ? rental.tags.join(', ') : rental.tags || ""
     });
     setEditModalOpen(true);
   };
@@ -528,8 +734,8 @@ export default function RentalsPage() {
   }
 
   // Common categories and types - these should match your API
-  const categories = ['equipment', 'tools', 'vehicles', 'machinery', 'furniture', 'electronics', 'other'];
-  const types = ['daily', 'weekly', 'monthly', 'long-term'];
+  const categories = ['tools', 'vehicles', 'equipment', 'machinery'];
+  const types = ['hourly', 'daily', 'weekly', 'monthly'];
 
   return (
     <div className="space-y-4">
@@ -548,9 +754,9 @@ export default function RentalsPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
@@ -558,171 +764,205 @@ export default function RentalsPage() {
               resetForm();
               setCreateModalOpen(true);
             }}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Rental
+            <Plus className="w-3 h-3 mr-1" />
+            Add Rental
           </button>
         </div>
       </div>
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Rentals</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalRentals || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalRentals || 0}</p>
               </div>
-              <Home className="w-8 h-8 text-blue-600" />
+              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
+                <Home className="w-5 h-5 text-blue-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Rentals</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeRentals || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.activeRentals || 0}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-green-600" />
+              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Bookings</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalBookings || 0}</p>
+                <p className="text-lg font-bold text-gray-900">{stats.totalBookings || 0}</p>
               </div>
-              <Package className="w-8 h-8 text-purple-600" />
+              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
+                <Package className="w-5 h-5 text-purple-600" />
+              </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-lg font-bold text-gray-900">
                   ${stats.totalRevenue ? stats.totalRevenue.toLocaleString() : '0'}
                 </p>
               </div>
-              <DollarSign className="w-8 h-8 text-yellow-600" />
+              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
+                <DollarSign className="w-5 h-5 text-yellow-600" />
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0 sm:space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search rentals..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
           </div>
-          <div className="flex items-center space-x-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-              ))}
-            </select>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Types</option>
-              {types.map(type => (
-                <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-              ))}
-            </select>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="text"
+                  placeholder="Search rentals..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Types</option>
+                {types.map(type => (
+                  <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Rentals Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Rentals</h3>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rental</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rental</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {rentals.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-3 py-2 text-center text-xs text-gray-500">
                     No rentals found
                   </td>
                 </tr>
               ) : (
                 rentals.map((rental) => (
                   <tr key={rental._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       <div className="flex items-center">
                         {rental.images && rental.images.length > 0 && rental.images[0]?.url ? (
                           <Image
                             src={rental.images[0].url}
                             alt={rental.title}
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 rounded object-cover mr-3"
+                            width={32}
+                            height={32}
+                            className="w-8 h-8 rounded object-cover mr-2"
                             unoptimized
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-gray-200 flex items-center justify-center mr-3">
-                            <Home className="w-5 h-5 text-gray-400" />
+                          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center mr-2">
+                            <Home className="w-4 h-4 text-gray-400" />
                           </div>
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{rental.title}</div>
-                          <div className="text-xs text-gray-500 truncate max-w-xs">{rental.description}</div>
+                          <div className="text-xs font-semibold text-gray-900">{rental.title}</div>
+                          <div className="text-xs text-gray-600 truncate max-w-xs">{rental.description}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {rental.category || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         {rental.type || 'N/A'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {rental.price ? (
-                        <>
-                          {rental.price.daily && <div>Daily: ${rental.price.daily}</div>}
-                          {rental.price.weekly && <div>Weekly: ${rental.price.weekly}</div>}
-                          {rental.price.monthly && <div>Monthly: ${rental.price.monthly}</div>}
-                        </>
-                      ) : (
-                        'N/A'
-                      )}
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      {(() => {
+                        const pricing = rental.pricing || rental.price;
+                        if (!pricing) return 'N/A';
+                        const prices: string[] = [];
+                        if ('hourly' in pricing && pricing.hourly) prices.push(`Hourly: $${pricing.hourly}`);
+                        if (pricing.daily) prices.push(`Daily: $${pricing.daily}`);
+                        if (pricing.weekly) prices.push(`Weekly: $${pricing.weekly}`);
+                        if (pricing.monthly) prices.push(`Monthly: $${pricing.monthly}`);
+                        return prices.length > 0 ? prices.map((p, i) => <div key={i} className="text-xs">{p}</div>) : 'N/A';
+                      })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {rental.location?.city && rental.location?.state 
-                        ? `${rental.location.city}, ${rental.location.state}`
-                        : rental.location?.address || 'N/A'}
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
+                      {(() => {
+                        const location = rental.location;
+                        const address = location?.address;
+                        if (address?.city && address?.state) {
+                          return `${address.city}, ${address.state}`;
+                        }
+                        if (address?.street) return address.street;
+                        return 'N/A';
+                      })()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                         rental.isActive && rental.availability?.isAvailable
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-gray-100 text-gray-800'
@@ -730,7 +970,7 @@ export default function RentalsPage() {
                         {rental.isActive && rental.availability?.isAvailable ? 'Available' : 'Unavailable'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => {
@@ -738,16 +978,16 @@ export default function RentalsPage() {
                             setViewModalOpen(true);
                           }}
                           className="text-blue-600 hover:text-blue-900"
-                          title="View"
+                          title="View rental details"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openEditModal(rental)}
-                          className="text-indigo-600 hover:text-indigo-900"
-                          title="Edit"
+                          className="text-green-600 hover:text-green-900"
+                          title="Edit rental"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => {
@@ -757,14 +997,14 @@ export default function RentalsPage() {
                           className="text-purple-600 hover:text-purple-900"
                           title="Manage Images"
                         >
-                          <ImageIcon className="w-4 h-4" />
+                          <ImageIcon className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => rental._id && handleDeleteRental(rental._id)}
                           className="text-red-600 hover:text-red-900"
                           title="Delete"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </td>
@@ -786,8 +1026,11 @@ export default function RentalsPage() {
         title="Create New Rental"
         size="lg"
       >
-        <div className="space-y-4">
-          <div>
+        <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
+          {/* Basic Information */}
+          <div className="space-y-4 border-b pb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+            <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
             <input
               type="text"
@@ -897,8 +1140,8 @@ export default function RentalsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input
                 type="text"
-                value={rentalFormData.address}
-                onChange={(e) => setRentalFormData({ ...rentalFormData, address: e.target.value })}
+                value={rentalFormData.street}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, street: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Street address"
               />
@@ -956,7 +1199,8 @@ export default function RentalsPage() {
               <label className="ml-2 block text-sm text-gray-700">Active</label>
             </div>
           </div>
-          <div className="flex justify-end space-x-2 pt-4">
+        </div>
+        <div className="flex justify-end space-x-2 pt-4">
             <button
               onClick={() => {
                 setCreateModalOpen(false);
@@ -1098,8 +1342,8 @@ export default function RentalsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input
                 type="text"
-                value={rentalFormData.address}
-                onChange={(e) => setRentalFormData({ ...rentalFormData, address: e.target.value })}
+                value={rentalFormData.street}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, street: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Street address"
               />
@@ -1333,14 +1577,31 @@ export default function RentalsPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Location</h3>
-              <p className="mt-1 text-sm text-gray-900">
-                {selectedRental.location?.address && <div>{selectedRental.location.address}</div>}
-                {selectedRental.location?.city && selectedRental.location?.state && (
-                  <div>{selectedRental.location.city}, {selectedRental.location.state}</div>
+              <div className="mt-1 text-sm text-gray-900">
+                {selectedRental.location ? (
+                  <>
+                    {(() => {
+                      const address = selectedRental.location?.address;
+                      if (address?.street) {
+                        return <div>{address.street}</div>;
+                      }
+                      if (address?.city && address?.state) {
+                        return <div>{address.city}, {address.state}</div>;
+                      }
+                      return 'N/A';
+                    })()}
+                    {selectedRental.location.address?.city && selectedRental.location.address?.state && (
+                      <div>{selectedRental.location.address.city}, {selectedRental.location.address.state}</div>
+                    )}
+                    {selectedRental.location.address?.zipCode && <div>{selectedRental.location.address.zipCode}</div>}
+                    {selectedRental.location.address?.country && (
+                      <div>{selectedRental.location.address.country}</div>
+                    )}
+                  </>
+                ) : (
+                  'N/A'
                 )}
-                {selectedRental.location?.zipCode && <div>{selectedRental.location.zipCode}</div>}
-                {!selectedRental.location?.address && !selectedRental.location?.city && 'N/A'}
-              </p>
+              </div>
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-500">Status</h3>

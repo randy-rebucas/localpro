@@ -17,7 +17,6 @@ import {
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
@@ -220,15 +219,15 @@ export default function AdminSubscriptionsPage() {
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "active":
-        return <CheckCircle2 className="w-4 h-4" />;
+        return <CheckCircle2 className="w-3 h-3" />;
       case "cancelled":
-        return <XCircle className="w-4 h-4" />;
+        return <XCircle className="w-3 h-3" />;
       case "expired":
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="w-3 h-3" />;
       case "suspended":
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle className="w-3 h-3" />;
       default:
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="w-3 h-3" />;
     }
   };
 
@@ -253,101 +252,118 @@ export default function AdminSubscriptionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <ToastContainer toasts={toasts} onClose={removeToast} />
       
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Manual Subscriptions</h1>
-          <p className="text-gray-600">Manage LocalPro Plus manual subscriptions</p>
+          <h1 className="text-2xl font-bold text-gray-900">Manual Subscriptions</h1>
+          <p className="text-gray-600 text-sm">Manage LocalPro Plus manual subscriptions</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Manual Subscription
-        </Button>
+        <div className="mt-2 sm:mt-0">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Create Manual Subscription
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="md:col-span-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                placeholder="Search by user email, name, or subscription ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by user email, name, or subscription ID..."
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="expired">Expired</option>
+                <option value="suspended">Suspended</option>
+                <option value="pending">Pending</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+              <select
+                value={filters.isManual}
+                onChange={(e) => setFilters({ ...filters, isManual: e.target.value, page: 1 })}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">All Types</option>
+                <option value="true">Manual Only</option>
+                <option value="false">Regular Only</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
+              <button
+                onClick={() => fetchSubscriptions(convertFilters(filters))}
+                className="w-full inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" />
+                Refresh
+              </button>
             </div>
           </div>
-          <div>
-            <Select
-              value={filters.status}
-              onValueChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
-              options={[
-                { value: "", label: "All Statuses" },
-                { value: "active", label: "Active" },
-                { value: "cancelled", label: "Cancelled" },
-                { value: "expired", label: "Expired" },
-                { value: "suspended", label: "Suspended" },
-                { value: "pending", label: "Pending" },
-              ]}
-            />
-          </div>
-          <div>
-            <Select
-              value={filters.isManual}
-              onValueChange={(value) => setFilters({ ...filters, isManual: value, page: 1 })}
-              options={[
-                { value: "", label: "All Types" },
-                { value: "true", label: "Manual Only" },
-                { value: "false", label: "Regular Only" },
-              ]}
-            />
-          </div>
-          <div>
-            <Button
-              variant="outline"
-              onClick={() => fetchSubscriptions(convertFilters(filters))}
-              className="w-full"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
         </div>
-      </Card>
+      </div>
 
       {/* Subscriptions Table */}
-      <Card className="p-0">
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h3 className="text-sm font-medium text-gray-900">Subscriptions</h3>
+        </div>
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Plan
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Billing Cycle
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Start Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   End Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -355,7 +371,7 @@ export default function AdminSubscriptionsPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredSubscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-3 py-8 text-center text-gray-500 text-xs">
                     No subscriptions found
                   </td>
                 </tr>
@@ -366,27 +382,31 @@ export default function AdminSubscriptionsPage() {
                   
                   return (
                     <tr key={subscription._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center">
-                          <User className="w-5 h-5 text-gray-400 mr-2" />
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
+                          <div className="flex-shrink-0 h-8 w-8">
+                            <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                              <User className="w-4 h-4 text-gray-600" />
+                            </div>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-xs font-semibold text-gray-900">
                               {user?.firstName && user?.lastName
                                 ? `${user.firstName} ${user.lastName}`
                                 : user?.email || "Unknown User"}
                             </div>
-                            <div className="text-sm text-gray-500">{user?.email}</div>
+                            <div className="text-xs text-gray-600">{user?.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <div className="text-xs font-medium text-gray-900">
                           {plan?.name || "Unknown Plan"}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
                             subscription.status
                           )}`}
                         >
@@ -394,38 +414,38 @@ export default function AdminSubscriptionsPage() {
                           {subscription.status || "Unknown"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                         {subscription.billingCycle || "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                         {subscription.startDate
                           ? new Date(subscription.startDate).toLocaleDateString()
                           : "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                         {subscription.endDate
                           ? new Date(subscription.endDate).toLocaleDateString()
                           : "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         {subscription.isManual ? (
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
                             Manual
                           </span>
                         ) : (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
                             Regular
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                        <div className="flex items-center space-x-2">
                           <button
                             onClick={() => openViewModal(subscription)}
                             className="text-blue-600 hover:text-blue-900"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3" />
                           </button>
                           {subscription.isManual && (
                             <>
@@ -434,14 +454,14 @@ export default function AdminSubscriptionsPage() {
                                 className="text-green-600 hover:text-green-900"
                                 title="Edit"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Edit className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => openCancelModal(subscription)}
                                 className="text-red-600 hover:text-red-900"
                                 title="Cancel"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3 h-3" />
                               </button>
                             </>
                           )}
@@ -457,7 +477,7 @@ export default function AdminSubscriptionsPage() {
 
         {/* Pagination */}
         {pagination.pages > 1 && (
-          <div className="px-6 py-4 border-t">
+          <div className="px-4 py-3 border-t">
             <Pagination
               currentPage={pagination.page}
               totalPages={pagination.pages}
@@ -465,7 +485,7 @@ export default function AdminSubscriptionsPage() {
             />
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Create Modal */}
       <Modal

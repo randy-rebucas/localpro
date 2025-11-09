@@ -4,259 +4,255 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
-  Users, 
-  DollarSign, 
-  Activity, 
-  Eye, 
-  Clock,
-  Download,
+  Activity,
   RefreshCw,
-  AlertTriangle,
-  XCircle,
-  Zap
+  Download,
+  Filter,
+  Calendar,
+  Search,
+  X
 } from 'lucide-react';
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { AnalyticsEvent, AnalyticsEventType } from "@/types/analytics";
 
-interface AnalyticsData {
-  overview: {
-    totalUsers: number;
-    activeUsers: number;
-    totalRevenue: number;
-    conversionRate: number;
-    avgSessionDuration: number;
-    bounceRate: number;
-    pageViews: number;
-    newUsers: number;
+// Extended AnalyticsEvent interface for admin page
+interface AnalyticsEventWithUser extends Omit<AnalyticsEvent, 'userId' | 'timestamp'> {
+  _id: string;
+  userId: string | {
+    _id: string;
+    name?: string;
+    email?: string;
   };
-  realTime: {
-    currentUsers: number;
-    pageViews: number;
-    events: number;
-    topPages: Array<{ page: string; views: number }>;
-    topCountries: Array<{ country: string; users: number }>;
-    topDevices: Array<{ device: string; users: number }>;
-  };
-  performance: {
-    avgLoadTime: number;
-    slowestPages: Array<{ page: string; loadTime: number }>;
-    errorRate: number;
-    uptime: number;
-    coreWebVitals: {
-      lcp: number;
-      fid: number;
-      cls: number;
-    };
-  };
-  userBehavior: {
-    sessionDuration: Array<{ duration: string; count: number }>;
-    userFlow: Array<{ step: string; users: number; dropoff: number }>;
-    deviceBreakdown: Array<{ device: string; percentage: number }>;
-    browserBreakdown: Array<{ browser: string; percentage: number }>;
-  };
-  revenue: {
-    totalRevenue: number;
-    monthlyRevenue: Array<{ month: string; revenue: number }>;
-    revenueBySource: Array<{ source: string; revenue: number }>;
-    averageOrderValue: number;
-    revenueGrowth: number;
-  };
-  conversion: {
-    overallRate: number;
-    funnelSteps: Array<{ step: string; users: number; conversion: number }>;
-    topConvertingPages: Array<{ page: string; rate: number }>;
-    conversionByDevice: Array<{ device: string; rate: number }>;
-  };
-  trends: Array<{
-    date: string;
-    users: number;
-    revenue: number;
-    sessions: number;
-  }>;
+  eventType: AnalyticsEventType;
+  timestamp: string | Date;
+}
+
+interface CustomAnalyticsResponse {
+  success: boolean;
+  count: number;
+  data: AnalyticsEventWithUser[];
 }
 
 interface AnalyticsStats {
-  totalUsers: number;
-  activeUsers: number;
-  totalRevenue: number;
-  conversionRate: number;
-  avgSessionDuration: number;
-  bounceRate: number;
-  pageViews: number;
-  newUsers: number;
-  currentUsers: number;
-  avgLoadTime: number;
-  errorRate: number;
-  uptime: number;
+  totalEvents: number;
+  uniqueUsers: number;
+  eventsByType: Record<string, number>;
+  eventsByDevice: Record<string, number>;
+  eventsByModule: Record<string, number>;
 }
 
-export default function AnalyticsPage() {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+export default function AdminAnalyticsPage() {
+  const [events, setEvents] = useState<AnalyticsEventWithUser[]>([]);
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPeriod, setSelectedPeriod] = useState('7d');
-  const [selectedType, setSelectedType] = useState('overview');
   const [refreshing, setRefreshing] = useState(false);
-  const [slowRequest, setSlowRequest] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  // Filters
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all');
+  const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
-  const periods = [
-    { value: '1h', label: 'Last Hour' },
-    { value: '24h', label: 'Last 24 Hours' },
-    { value: '7d', label: 'Last 7 Days' },
-    { value: '30d', label: 'Last 30 Days' },
-    { value: '90d', label: 'Last 90 Days' }
+  const eventTypes: AnalyticsEventType[] = [
+    'page_view',
+    'service_view',
+    'booking_created',
+    'booking_completed',
+    'job_view',
+    'job_application',
+    'course_enrollment',
+    'product_purchase',
+    'referral_click',
+    'referral_completed',
+    'subscription_upgrade',
+    'payment_completed',
+    'search_performed',
+    'filter_applied',
+    'user_registration',
+    'user_login',
+    'profile_update'
   ];
 
-  const analyticsTypes = [
-    { value: 'overview', label: 'Overview', icon: BarChart3 },
-    { value: 'realtime', label: 'Real-time', icon: Activity },
-    { value: 'performance', label: 'Performance', icon: Zap },
-    { value: 'user-behavior', label: 'User Behavior', icon: Users },
-    { value: 'revenue', label: 'Revenue', icon: DollarSign },
-    { value: 'conversion', label: 'Conversion', icon: TrendingUp }
+  const modules = [
+    'marketplace',
+    'jobs',
+    'academy',
+    'supplies',
+    'rentals',
+    'facility-care',
+    'referrals',
+    'agencies',
+    'ads',
+    'communication'
   ];
 
-  const fetchAnalyticsData = useCallback(async (type: string = selectedType, period: string = selectedPeriod) => {
+  const fetchCustomAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      setSlowRequest(false);
 
-      const startTime = Date.now();
-      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-        'analyticsDashboard' as keyof typeof API_ENDPOINTS,
-        { method: 'GET', query: { type, period } }
-      );
-      const duration = Date.now() - startTime;
-
-      if (duration > 5000) {
-        setSlowRequest(true);
+      const queryParams: Record<string, string> = {};
+      if (eventTypeFilter !== 'all') {
+        queryParams.eventType = eventTypeFilter;
       }
+      if (moduleFilter !== 'all') {
+        queryParams.module = moduleFilter;
+      }
+      if (startDate) {
+        queryParams.startDate = new Date(startDate).toISOString();
+      }
+      if (endDate) {
+        queryParams.endDate = new Date(endDate).toISOString();
+      }
+
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'analyticsCustom' as keyof typeof API_ENDPOINTS,
+        { 
+          method: 'GET',
+          query: queryParams
+        }
+      );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to fetch analytics data');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Failed to fetch analytics (${response.status})`);
       }
 
-      const result = await response.json();
+      const result: CustomAnalyticsResponse = await response.json();
       
       if (result.success && result.data) {
-        setAnalyticsData(result.data);
+        setEvents(result.data || []);
         
-        // Extract stats for the stats cards
-        if (result.data.overview) {
-          setStats({
-            totalUsers: result.data.overview.totalUsers || 0,
-            activeUsers: result.data.overview.activeUsers || 0,
-            totalRevenue: result.data.overview.totalRevenue || 0,
-            conversionRate: result.data.overview.conversionRate || 0,
-            avgSessionDuration: result.data.overview.avgSessionDuration || 0,
-            bounceRate: result.data.overview.bounceRate || 0,
-            pageViews: result.data.overview.pageViews || 0,
-            newUsers: result.data.overview.newUsers || 0,
-            currentUsers: result.data.realTime?.currentUsers || 0,
-            avgLoadTime: result.data.performance?.avgLoadTime || 0,
-            errorRate: result.data.performance?.errorRate || 0,
-            uptime: result.data.performance?.uptime || 0
-          });
-        }
+        // Calculate stats
+        const uniqueUserIds = new Set<string>();
+        const eventsByType: Record<string, number> = {};
+        const eventsByDevice: Record<string, number> = {};
+        const eventsByModule: Record<string, number> = {};
+
+        result.data.forEach(event => {
+          // Count unique users
+          const userId = typeof event.userId === 'string' ? event.userId : event.userId._id;
+          uniqueUserIds.add(userId);
+
+          // Count by event type
+          eventsByType[event.eventType] = (eventsByType[event.eventType] || 0) + 1;
+
+          // Count by device type
+          const deviceType = event.metadata?.deviceType || 'unknown';
+          eventsByDevice[deviceType] = (eventsByDevice[deviceType] || 0) + 1;
+
+          // Count by module (extract from eventData or metadata)
+          const moduleName = (event.eventData?.module as string) || 'unknown';
+          eventsByModule[moduleName] = (eventsByModule[moduleName] || 0) + 1;
+        });
+
+        setStats({
+          totalEvents: result.count || result.data.length,
+          uniqueUsers: uniqueUserIds.size,
+          eventsByType,
+          eventsByDevice,
+          eventsByModule
+        });
       } else {
         throw new Error('Invalid response format');
       }
     } catch (err) {
-      logger.error('Error fetching analytics data', err instanceof Error ? err : new Error(String(err)));
-      setError(err instanceof Error ? err.message : 'Failed to fetch analytics data');
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching custom analytics', error);
+      setError(error.message);
+      setEvents([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [selectedType, selectedPeriod]);
+  }, [eventTypeFilter, moduleFilter, startDate, endDate]);
 
-  const handleRefresh = async () => {
+  const refreshData = useCallback(async () => {
     setRefreshing(true);
-    await fetchAnalyticsData();
-    setRefreshing(false);
-  };
-
-  const handleExport = async (format: string = 'json') => {
-    try {
-      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-        'analyticsCustom' as keyof typeof API_ENDPOINTS,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'export_data',
-            data: { format, filters: { period: selectedPeriod, type: selectedType } }
-          })
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to export data');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `analytics-${selectedType}-${selectedPeriod}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      logger.error('Export failed', err instanceof Error ? err : new Error(String(err)), { format, type: selectedType, period: selectedPeriod });
-      setError('Failed to export data');
-    }
-  };
+    await fetchCustomAnalytics();
+    setLastUpdated(new Date());
+  }, [fetchCustomAnalytics]);
 
   useEffect(() => {
-    fetchAnalyticsData();
-  }, [fetchAnalyticsData]);
+    fetchCustomAnalytics();
+  }, [fetchCustomAnalytics]);
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
+  // Filter events by search term
+  const filteredEvents = events.filter(event => {
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const eventType = event.eventType.toLowerCase();
+    const userId = typeof event.userId === 'string' 
+      ? event.userId 
+      : (event.userId.name || event.userId.email || event.userId._id || '').toLowerCase();
+    const metadata = JSON.stringify(event.metadata || {}).toLowerCase();
+    const eventData = JSON.stringify(event.eventData || {}).toLowerCase();
+    
+    return eventType.includes(searchLower) || 
+           userId.includes(searchLower) ||
+           metadata.includes(searchLower) ||
+           eventData.includes(searchLower);
+  });
+
+  const formatDate = (date: string | Date) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    return d.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+  const formatEventType = (type: string) => {
+    return type.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
   };
 
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  const getUserDisplay = (userId: string | { _id: string; name?: string; email?: string }) => {
+    if (typeof userId === 'string') {
+      return userId.substring(0, 8) + '...';
+    }
+    return userId.name || userId.email || userId._id.substring(0, 8) + '...';
   };
 
-  const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
+  const clearFilters = () => {
+    setEventTypeFilter('all');
+    setModuleFilter('all');
+    setStartDate('');
+    setEndDate('');
+    setSearchTerm('');
   };
 
-  if (loading) {
+  const hasActiveFilters = eventTypeFilter !== 'all' || 
+                          moduleFilter !== 'all' || 
+                          startDate || 
+                          endDate || 
+                          searchTerm;
+
+  if (loading && !refreshing) {
     return (
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-gray-600">Comprehensive analytics and insights</p>
+            <h1 className="text-2xl font-bold text-gray-900">Custom Analytics</h1>
+            <p className="text-gray-600 text-sm">Query and analyze analytics events</p>
           </div>
         </div>
-
-        {/* Loading State */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded shadow p-3 border-l-4 border-gray-300">
               <div className="animate-pulse">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
               </div>
             </div>
           ))}
@@ -265,21 +261,18 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (error) {
+  if (error && !events.length) {
     return (
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p className="text-gray-600">Comprehensive analytics and insights</p>
+            <h1 className="text-2xl font-bold text-gray-900">Custom Analytics</h1>
+            <p className="text-gray-600 text-sm">Query and analyze analytics events</p>
           </div>
         </div>
-
-        {/* Error State */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div className="bg-red-50 border border-red-200 rounded shadow p-4">
           <div className="flex items-center">
-            <XCircle className="h-5 w-5 text-red-400 mr-3" />
+            <X className="h-5 w-5 text-red-400 mr-3" />
             <div>
               <h3 className="text-sm font-medium text-red-800">Error loading analytics</h3>
               <p className="text-sm text-red-700 mt-1">{error}</p>
@@ -287,8 +280,8 @@ export default function AnalyticsPage() {
           </div>
           <div className="mt-4">
             <button
-              onClick={() => fetchAnalyticsData()}
-              className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
+              onClick={fetchCustomAnalytics}
+              className="px-4 py-2 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
             >
               Try Again
             </button>
@@ -299,335 +292,298 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
-          <p className="text-gray-600">Comprehensive analytics and insights</p>
+          <h1 className="text-2xl font-bold text-gray-900">Custom Analytics</h1>
+          <p className="text-gray-600 text-sm">Query and analyze analytics events</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+          {lastUpdated && (
+            <p className="text-xs text-gray-500">
+              Updated: {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
           <button
-            onClick={handleRefresh}
+            onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
-          </button>
-          <button
-            onClick={() => handleExport('json')}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export
           </button>
         </div>
       </div>
 
-      {/* Slow Request Warning */}
-      {slowRequest && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-yellow-400 mr-3" />
-            <div>
-              <h3 className="text-sm font-medium text-yellow-800">Slow Response</h3>
-              <p className="text-sm text-yellow-700">Analytics data is taking longer than usual to load. This may be due to high server load.</p>
+      {/* Stats Overview */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Total Events</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {stats.totalEvents.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">All events</p>
+              </div>
+              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
+                <Activity className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Unique Users</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {stats.uniqueUsers.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">Active users</p>
+              </div>
+              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Event Types</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {Object.keys(stats.eventsByType).length}
+                </p>
+                <p className="text-xs text-gray-500">Different types</p>
+              </div>
+              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded shadow p-3 border-l-4 border-orange-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Filtered</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {filteredEvents.length.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">Showing results</p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-lg flex-shrink-0 ml-4">
+                <Filter className="w-5 h-5 text-orange-600" />
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Analytics Type</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
-              {analyticsTypes.map((type) => {
-                const Icon = type.icon;
-                return (
-                  <button
-                    key={type.value}
-                    onClick={() => {
-                      setSelectedType(type.value);
-                      fetchAnalyticsData(type.value, selectedPeriod);
-                    }}
-                    className={`flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border ${
-                      selectedType === type.value
-                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                        : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {type.label}
-                  </button>
-                );
-              })}
+      <div className="bg-white rounded shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="text-xs text-gray-600 hover:text-gray-800 flex items-center"
+              >
+                <X className="w-3 h-3 mr-1" />
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="p-4 border-b border-gray-200">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search events..."
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Event Type</label>
+              <select
+                value={eventTypeFilter}
+                onChange={(e) => setEventTypeFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Types</option>
+                {eventTypes.map(type => (
+                  <option key={type} value={type}>
+                    {formatEventType(type)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Module</label>
+              <select
+                value={moduleFilter}
+                onChange={(e) => setModuleFilter(e.target.value)}
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="all">All Modules</option>
+                {modules.map(module => (
+                  <option key={module} value={module}>
+                    {module.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
-          <div className="sm:w-48">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
-            <select
-              value={selectedPeriod}
-              onChange={(e) => {
-                setSelectedPeriod(e.target.value);
-                fetchAnalyticsData(selectedType, e.target.value);
-              }}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              onClick={fetchCustomAnalytics}
+              className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              {periods.map((period) => (
-                <option key={period.value} value={period.value}>
-                  {period.label}
-                </option>
-              ))}
-            </select>
+              Apply Filters
+            </button>
+            <div className="text-xs text-gray-500">
+              {filteredEvents.length} of {events.length} events
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Users className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Users</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats.totalUsers)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Activity className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Users</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats.activeUsers)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <DollarSign className="h-8 w-8 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatCurrency(stats.totalRevenue)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Conversion Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatPercentage(stats.conversionRate)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Clock className="h-8 w-8 text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Avg Session</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatDuration(stats.avgSessionDuration)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Eye className="h-8 w-8 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Bounce Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatPercentage(stats.bounceRate)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <BarChart3 className="h-8 w-8 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Page Views</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatNumber(stats.pageViews)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Zap className="h-8 w-8 text-teal-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Uptime</p>
-                <p className="text-2xl font-semibold text-gray-900">{formatPercentage(stats.uptime)}</p>
-              </div>
-            </div>
+      {/* Events Table */}
+      <div className="bg-white rounded shadow overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Analytics Events</h3>
+            <button
+              onClick={() => {
+                const dataStr = JSON.stringify(filteredEvents, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `analytics-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+              }}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Export
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Analytics Content */}
-      {analyticsData && (
-        <div className="space-y-6">
-          {selectedType === 'realtime' && analyticsData.realTime && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Current Activity</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Current Users</span>
-                    <span className="text-2xl font-semibold text-green-600">{analyticsData.realTime.currentUsers}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Page Views</span>
-                    <span className="text-2xl font-semibold text-blue-600">{analyticsData.realTime.pageViews}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Events</span>
-                    <span className="text-2xl font-semibold text-purple-600">{analyticsData.realTime.events}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Top Pages</h3>
-                <div className="space-y-2">
-                  {analyticsData.realTime.topPages?.map((page, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 truncate">{page.page}</span>
-                      <span className="text-sm font-medium text-gray-900">{page.views}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedType === 'performance' && analyticsData.performance && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg Load Time</span>
-                    <span className="text-2xl font-semibold text-blue-600">{analyticsData.performance.avgLoadTime}ms</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Error Rate</span>
-                    <span className="text-2xl font-semibold text-red-600">{formatPercentage(analyticsData.performance.errorRate)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Uptime</span>
-                    <span className="text-2xl font-semibold text-green-600">{formatPercentage(analyticsData.performance.uptime)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Core Web Vitals</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">LCP</span>
-                    <span className="text-sm font-medium text-gray-900">{analyticsData.performance.coreWebVitals.lcp}ms</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">FID</span>
-                    <span className="text-sm font-medium text-gray-900">{analyticsData.performance.coreWebVitals.fid}ms</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">CLS</span>
-                    <span className="text-sm font-medium text-gray-900">{analyticsData.performance.coreWebVitals.cls}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedType === 'revenue' && analyticsData.revenue && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue Overview</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Revenue</span>
-                    <span className="text-2xl font-semibold text-green-600">{formatCurrency(analyticsData.revenue.totalRevenue)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg Order Value</span>
-                    <span className="text-2xl font-semibold text-blue-600">{formatCurrency(analyticsData.revenue.averageOrderValue)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Growth Rate</span>
-                    <span className="text-2xl font-semibold text-purple-600">{formatPercentage(analyticsData.revenue.revenueGrowth)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Revenue by Source</h3>
-                <div className="space-y-2">
-                  {analyticsData.revenue.revenueBySource?.map((source, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">{source.source}</span>
-                      <span className="text-sm font-medium text-gray-900">{formatCurrency(source.revenue)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedType === 'conversion' && analyticsData.conversion && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Conversion Overview</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Overall Rate</span>
-                    <span className="text-2xl font-semibold text-green-600">{formatPercentage(analyticsData.conversion.overallRate)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Funnel Steps</h3>
-                <div className="space-y-2">
-                  {analyticsData.conversion.funnelSteps?.map((step, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600">{step.step}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">{step.users}</span>
-                        <span className="text-xs text-gray-500">({formatPercentage(step.conversion)})</span>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Device</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-8 text-center text-sm text-gray-500">
+                    {loading ? 'Loading events...' : 'No events found'}
+                  </td>
+                </tr>
+              ) : (
+                filteredEvents.map((event) => (
+                  <tr key={event._id} className="hover:bg-gray-50">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      {formatDate(event.timestamp)}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                        {formatEventType(event.eventType)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                      {getUserDisplay(event.userId)}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                      <div className="flex flex-col">
+                        <span>{event.metadata?.deviceType || 'Unknown'}</span>
+                        {event.metadata?.browser && (
+                          <span className="text-gray-400">{event.metadata.browser}</span>
+                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+                    </td>
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-600">
+                      {event.metadata?.location ? (
+                        <div className="flex flex-col">
+                          {event.metadata.location.city && (
+                            <span>{event.metadata.location.city}</span>
+                          )}
+                          {event.metadata.location.country && (
+                            <span className="text-gray-400">{event.metadata.location.country}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">N/A</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-gray-600">
+                      <details className="cursor-pointer">
+                        <summary className="text-blue-600 hover:text-blue-800">View</summary>
+                        <pre className="mt-2 p-2 bg-gray-50 rounded text-xs overflow-auto max-h-32">
+                          {JSON.stringify({ 
+                            eventData: event.eventData, 
+                            metadata: event.metadata 
+                          }, null, 2)}
+                        </pre>
+                      </details>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 }

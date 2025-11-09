@@ -26,24 +26,25 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { Provider } from "@/types/providers";
 
-// Define types locally
-interface Provider {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
+// Extended Provider interface for admin page (includes user fields populated)
+interface ProviderWithUser extends Omit<Provider, 'createdAt' | 'updatedAt' | 'profile' | 'subscription'> {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
   phoneNumber?: string;
-  status: 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected';
-  isActive: boolean;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   lastLogin?: string;
   profileCompleteness?: number;
   verificationStatus?: 'verified' | 'pending' | 'rejected';
-  // Provider-specific fields
   profile?: {
+    firstName?: string;
+    lastName?: string;
+    name?: string;
     businessName?: string;
     businessType?: string;
     serviceAreas?: string[];
@@ -58,23 +59,6 @@ interface Provider {
       country?: string;
     };
     bio?: string;
-  };
-  verification?: {
-    phoneVerified?: boolean;
-    emailVerified?: boolean;
-    identityVerified?: boolean;
-    businessVerified?: boolean;
-    addressVerified?: boolean;
-    bankAccountVerified?: boolean;
-    verifiedAt?: string;
-  };
-  performance?: {
-    completionRate?: number;
-    cancellationRate?: number;
-    averageRating?: number;
-    totalBookings?: number;
-    totalEarnings?: number;
-    responseTime?: number;
   };
   subscription?: {
     type?: string;
@@ -176,20 +160,22 @@ const transformProviderData = (apiProvider: {
     earnedAt: string;
   }>;
   tags?: string[];
-}): Provider => {
+}): ProviderWithUser => {
   return {
     _id: apiProvider._id,
-    firstName: apiProvider.firstName || '',
-    lastName: apiProvider.lastName || '',
-    email: apiProvider.email || '',
-    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
+    userId: apiProvider._id, // Use _id as userId fallback
+    providerType: 'individual', // Default provider type
     status: (apiProvider.status as 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected') || 'pending',
-    isActive: apiProvider.isActive || false,
-    isVerified: apiProvider.isVerified || false,
-    createdAt: apiProvider.createdAt || new Date().toISOString(),
-    updatedAt: apiProvider.updatedAt || new Date().toISOString(),
+    firstName: apiProvider.firstName,
+    lastName: apiProvider.lastName,
+    email: apiProvider.email,
+    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
+    isActive: apiProvider.isActive,
+    isVerified: apiProvider.isVerified,
+    createdAt: apiProvider.createdAt,
+    updatedAt: apiProvider.updatedAt,
     lastLogin: apiProvider.lastLogin,
-    profileCompleteness: apiProvider.profileCompleteness || 0,
+    profileCompleteness: apiProvider.profileCompleteness,
     verificationStatus: apiProvider.verification?.phoneVerified && 
                        apiProvider.verification?.emailVerified ? 'verified' : 'pending',
     profile: apiProvider.profile,
@@ -228,7 +214,7 @@ interface ProviderStats {
 }
 
 export default function ProvidersPage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<ProviderWithUser[]>([]);
   const [stats, setStats] = useState<ProviderStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -272,12 +258,12 @@ export default function ProvidersPage() {
 
       const [dataResponse, statsResponse] = await Promise.all([
         makeClientAuthenticatedRequestWithEndpointSafe(
-          'providersAdmin' as keyof typeof API_ENDPOINTS,
+          'providersAdminAll' as keyof typeof API_ENDPOINTS,
           { method: 'GET', query: Object.fromEntries(queryParams) }
         ),
         makeClientAuthenticatedRequestWithEndpointSafe(
-          'providersAdminOverview' as keyof typeof API_ENDPOINTS,
-          { method: 'GET' }
+          'providersAdminAll' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { stats: 'true' } }
         ).catch(err => { // fallback
           logger.warn('Failed to fetch stats, using fallback', { error: err instanceof Error ? err.message : String(err) });
           return {
@@ -319,7 +305,7 @@ export default function ProvidersPage() {
       const statsResult = await statsResponse.json();
 
       // Transform the API response data to match frontend expectations
-      let providersData: Provider[] = [];
+      let providersData: ProviderWithUser[] = [];
 
       if (dataResult.success && dataResult.data) {
         // Handle the new API response structure
@@ -438,7 +424,7 @@ export default function ProvidersPage() {
     if (window.confirm('Are you sure you want to delete this provider?')) {
       try {
         const response = await makeClientAuthenticatedRequestWithPathSafe(
-          'providersAdminDelete' as keyof typeof API_ENDPOINTS,
+          'providersById' as keyof typeof API_ENDPOINTS,
           [providerId],
           {},
           { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
@@ -807,13 +793,13 @@ export default function ProvidersPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status)}`}>
-                      {provider.status.toUpperCase()}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(provider.status || 'pending')}`}>
+                      {(provider.status || 'pending').toUpperCase()}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center space-x-1">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getVerificationColor(provider.isVerified)}`}>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getVerificationColor(provider.isVerified || false)}`}>
                         {provider.isVerified ? 'VERIFIED' : 'PENDING'}
                       </span>
                       {provider.trustScore && (
@@ -860,14 +846,14 @@ export default function ProvidersPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <div className="flex items-center space-x-2">
                       <button 
-                        onClick={() => handleViewProvider(provider._id)}
+                        onClick={() => provider._id && handleViewProvider(provider._id)}
                         className="text-blue-600 hover:text-blue-900"
                         title="View provider details"
                       >
                         <Eye className="w-3 h-3" />
                       </button>
                       <button 
-                        onClick={() => handleEditProvider(provider._id)}
+                        onClick={() => provider._id && handleEditProvider(provider._id)}
                         className="text-green-600 hover:text-green-900"
                         title="Edit provider"
                       >
@@ -875,7 +861,7 @@ export default function ProvidersPage() {
                       </button>
                       {provider.status === 'active' ? (
                         <button 
-                          onClick={() => handleUpdateProviderStatus(provider._id, 'suspended', 'Admin action')}
+                          onClick={() => provider._id && handleUpdateProviderStatus(provider._id, 'suspended', 'Admin action')}
                           className="text-yellow-600 hover:text-yellow-900"
                           title="Suspend provider"
                         >
@@ -883,7 +869,7 @@ export default function ProvidersPage() {
                         </button>
                       ) : (
                         <button 
-                          onClick={() => handleUpdateProviderStatus(provider._id, 'active')}
+                          onClick={() => provider._id && handleUpdateProviderStatus(provider._id, 'active')}
                           className="text-green-600 hover:text-green-900"
                           title="Activate provider"
                         >
@@ -891,7 +877,7 @@ export default function ProvidersPage() {
                         </button>
                       )}
                       <button 
-                        onClick={() => handleDeleteProvider(provider._id)}
+                        onClick={() => provider._id && handleDeleteProvider(provider._id)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete provider"
                       >

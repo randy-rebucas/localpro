@@ -94,9 +94,9 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | GET | `/api/ads/pending` | **admin** | Get pending ads |
 | PUT | `/api/ads/:id/approve` | **admin** | Approve ad |
 | PUT | `/api/ads/:id/reject` | **admin** | Reject ad |
+| GET | `/api/ads/statistics` | **admin** | Get ad statistics |
 | GET | `/api/ads/:id/analytics` | AUTHENTICATED | Get ad analytics |
 | GET | `/api/ads/my-ads` | AUTHENTICATED | Get my ads |
-| GET | `/api/ads/statistics` | **admin** | Get ad statistics |
 
 ---
 
@@ -112,11 +112,11 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | DELETE | `/api/jobs/:id` | **provider, admin** | Delete job |
 | POST | `/api/jobs/:id/logo` | **provider, admin** | Upload company logo |
 | GET | `/api/jobs/:id/stats` | **provider, admin** | Get job stats |
-| POST | `/api/jobs/:id/apply` | AUTHENTICATED | Apply for job |
-| GET | `/api/jobs/my-applications` | AUTHENTICATED | Get my applications |
 | GET | `/api/jobs/my-jobs` | **provider, admin** | Get my jobs |
 | GET | `/api/jobs/:id/applications` | **provider, admin** | Get job applications |
 | PUT | `/api/jobs/:id/applications/:applicationId/status` | **provider, admin** | Update application status |
+| POST | `/api/jobs/:id/apply` | AUTHENTICATED | Apply for job |
+| GET | `/api/jobs/my-applications` | AUTHENTICATED | Get my applications |
 
 ---
 

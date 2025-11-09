@@ -24,8 +24,10 @@ import { Loading } from "@/components/ui/loading";
 import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { VerificationRequest, VerificationType, VerificationStatus, VerificationDocument } from "@/types/trust-verification";
 
-interface TrustVerificationRequest {
+// Extended VerificationRequest interface for admin page
+interface TrustVerificationRequest extends Omit<VerificationRequest, 'user' | 'type' | 'status' | 'documents' | 'createdAt' | 'updatedAt' | 'submittedAt' | 'expiresAt'> {
   _id: string;
   user: {
     _id: string;
@@ -35,12 +37,10 @@ interface TrustVerificationRequest {
       rating: number;
     };
   };
-  type: 'identity_verification' | 'business_verification' | 'professional_verification' | 'education_verification';
-  status: 'pending' | 'approved' | 'rejected' | 'under_review';
-  documents: Array<{
+  type: VerificationType | 'identity_verification' | 'business_verification' | 'professional_verification' | 'education_verification';
+  status: VerificationStatus | 'pending' | 'approved' | 'rejected' | 'under_review';
+  documents: Array<VerificationDocument & {
     _id: string;
-    type: string;
-    url: string;
     isVerified: boolean;
     uploadedAt: string;
   }>;

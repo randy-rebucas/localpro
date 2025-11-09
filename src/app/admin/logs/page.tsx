@@ -31,15 +31,18 @@ import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { Log, LogLevel, LogCategory, LogSource } from "@/types/logs";
 
-interface SystemLog {
+// Extended Log interface for admin page
+interface SystemLog extends Omit<Log, 'level' | 'category' | 'source' | 'logId' | 'timestamp' | 'createdAt' | 'updatedAt'> {
   id: string;
+  logId?: string;
   timestamp: string;
-  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-  category: 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity';
+  level: LogLevel | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+  category: LogCategory | 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity';
   message: string;
   details: string;
-  source: string;
+  source: LogSource | string;
   userId?: string;
   userName?: string;
   userEmail?: string;
