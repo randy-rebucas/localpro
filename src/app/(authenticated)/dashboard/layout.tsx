@@ -3,26 +3,20 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { 
   HeaderLoadingState, 
   ServicesLoadingState, 
-  ActivityLoadingState, 
-  AnnouncementsLoadingState 
 } from "@/components/ui/loading-state";
 import { LayoutDashboardIcon } from "lucide-react";
 
 export default function DashboardLayout({
   children,
   services,
-  activity,
   header,
-  announcements,
 }: {
   children: React.ReactNode;
   services: React.ReactNode;
-  activity: React.ReactNode;
   header: React.ReactNode;
-  announcements: React.ReactNode;
 }) {
   // Check if we have any content to display
-  const hasContent = header || services || announcements || activity || children;
+  const hasContent = header || services || children;
   
   // If no content is available, show the empty state
   if (!hasContent) {
@@ -53,21 +47,7 @@ export default function DashboardLayout({
             <div key="dashboard-services">{services}</div>
           </Suspense>
         )}
-        
-        {/* 2-Column Section: Announcements and Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {announcements && (
-            <Suspense fallback={<AnnouncementsLoadingState />}>
-              <div key="dashboard-announcements">{announcements}</div>
-            </Suspense>
-          )}
-          {activity && (
-            <Suspense fallback={<ActivityLoadingState />}>
-              <div key="dashboard-activity">{activity}</div>
-            </Suspense>
-          )}
-        </div>
-        
+    
         {/* Main Content (children) - for any additional content */}
         {children && (
           <Suspense fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse" />}>

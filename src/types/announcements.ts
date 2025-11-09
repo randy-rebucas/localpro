@@ -33,7 +33,8 @@ export interface Attachment {
 
 export interface Acknowledgment {
   user?: string;
-  acknowledgedAt?: Date;
+  // Date from API will be a string (ISO8601), Date when used internally
+  acknowledgedAt?: Date | string;
 }
 
 export interface CommentLike {
@@ -44,9 +45,10 @@ export interface CommentReply {
   user?: string;
   userName?: string;
   content?: string;
-  createdAt?: Date;
+  // Dates from API will be strings (ISO8601), Date when used internally
+  createdAt?: Date | string;
   isEdited?: boolean;
-  editedAt?: Date;
+  editedAt?: Date | string;
   likes?: CommentLike[];
 }
 
@@ -54,9 +56,10 @@ export interface Comment {
   user?: string;
   userName?: string;
   content?: string;
-  createdAt?: Date;
+  // Dates from API will be strings (ISO8601), Date when used internally
+  createdAt?: Date | string;
   isEdited?: boolean;
-  editedAt?: Date;
+  editedAt?: Date | string;
   likes?: CommentLike[];
   replies?: CommentReply[];
 }
@@ -71,10 +74,11 @@ export interface Analytics {
 
 export interface Metadata {
   lastModifiedBy?: string;
-  lastModifiedAt?: Date;
+  // Dates from API will be strings (ISO8601), Date when used internally
+  lastModifiedAt?: Date | string;
   version?: number;
   isDeleted?: boolean;
-  deletedAt?: Date;
+  deletedAt?: Date | string;
   deletedBy?: string;
 }
 
@@ -90,9 +94,10 @@ export interface Announcement {
   targetRoles?: TargetRole[];
   targetLocations?: string[];
   targetCategories?: string[];
-  scheduledAt?: Date;
-  publishedAt?: Date;
-  expiresAt?: Date;
+  // Dates from API will be strings (ISO8601), Date when used internally
+  scheduledAt?: Date | string;
+  publishedAt?: Date | string;
+  expiresAt?: Date | string;
   isSticky?: boolean;
   allowComments?: boolean;
   requireAcknowledgment?: boolean;
@@ -106,6 +111,6 @@ export interface Announcement {
   comments?: Comment[];
   analytics?: Analytics;
   metadata?: Metadata;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }

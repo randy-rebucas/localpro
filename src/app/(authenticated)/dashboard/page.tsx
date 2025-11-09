@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import ErrorBoundary from "@/components/error-boundary";
+import { AnnouncementCard } from "@/components/announcement-card";
 
 function DashboardLoading() {
   return (
@@ -70,11 +71,13 @@ function DashboardLoading() {
   );
 }
 
+
 export default function DashboardPage() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<DashboardLoading />}>
         {/* Dashboard content handled by parallel routes in layout.tsx */}
+        <AnnouncementCard />
       </Suspense>
     </ErrorBoundary>
   );

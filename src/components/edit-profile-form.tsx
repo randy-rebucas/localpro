@@ -15,7 +15,6 @@ import {
   Loader2
 } from "lucide-react";
 import type {
-  UserRole,
   BusinessType,
   BackgroundCheckStatus,
   DayOfWeek,

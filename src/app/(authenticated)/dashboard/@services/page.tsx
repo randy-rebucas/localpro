@@ -60,10 +60,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Cleaning supplies", "Tools", "Subscription kits"],
     route: "/supplies",
     category: "Resources",
-    status: "active",
+    status: "coming-soon",
     users: 0,
-    lastUpdated: "Active", 
-    featured: true
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "academy",
@@ -74,10 +74,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Partner with TES", "Run courses", "Certification"],
     route: "/academy",
     category: "Education",
-    status: "active",
+    status: "coming-soon",
     users: 0,
-    lastUpdated: "Active",
-    featured: true
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "rentals",
@@ -88,10 +88,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Tool and vehicle rentals"],
     route: "/rentals",
     category: "Resources",
-    status: "active",
+    status: "coming-soon",
     users: 0,
-    lastUpdated: "Active",
-    featured: true
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "plus",
@@ -102,10 +102,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Premium subscriptions", "Providers", "Clients"],
     route: "/plus",
     category: "Premium",
-    status: "active",
+    status: "coming-soon",
     users: 0,
-    lastUpdated: "Active", 
-    featured: true
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "facility",
@@ -130,10 +130,10 @@ const serviceModules: ServiceModule[] = [
     services: ["Advertising for hardware stores", "Suppliers", "Training schools"],
     route: "/ads",
     category: "Marketing",
-    status: "active",
+    status: "coming-soon",
     users: 0,
-    lastUpdated: "Active", 
-    featured: true
+    lastUpdated: "Coming soon",
+    featured: false
   },
   {
     id: "finance",

@@ -1,0 +1,134 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Sparkles, X, CheckCircle2 } from "lucide-react";
+import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
+
+// Feature route to ID mapping
+const routeToFeatureId: Record<string, PreferredFeature> = {
+  "/marketplace": "marketplace",
+  "/academy": "academy",
+  "/ads": "ads",
+  "/supplies": "supplies",
+  "/rentals": "rentals",
+  "/finance": "finance",
+  "/facility-care": "facility",
+  "/facility": "facility",
+  "/plus": "plus",
+};
+
+// Feature names for display
+const featureNames: Record<Exclude<PreferredFeature, null>, string> = {
+  marketplace: "Marketplace",
+  academy: "Academy",
+  ads: "Ads",
+  supplies: "Supplies",
+  rentals: "Rentals",
+  finance: "Finance",
+  facility: "FacilityCare",
+  plus: "LocalPro Plus",
+};
+
+export function PreferredFeaturePrompt() {
+  const pathname = usePathname();
+  const { setPreferredFeature, hasPreferredFeature, isLoading } = usePreferredFeature();
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [pendingFeature, setPendingFeature] = useState<PreferredFeature | null>(null);
+
+  useEffect(() => {
+    // Only show prompt if:
+    // 1. Not loading
+    // 2. No preferred feature is set
+    // 3. User navigated to a feature route
+    // 4. Haven't shown prompt for this route yet
+    if (isLoading || hasPreferredFeature) {
+      return;
+    }
+
+    const featureId = routeToFeatureId[pathname];
+    if (featureId && !showPrompt) {
+      // Check if we've already prompted for this feature in this session
+      const promptShown = sessionStorage.getItem(`preferred_prompt_${featureId}`);
+      if (!promptShown) {
+        setPendingFeature(featureId);
+        setShowPrompt(true);
+      }
+    }
+  }, [pathname, hasPreferredFeature, isLoading, showPrompt]);
+
+  const handleSetAsPreferred = () => {
+    if (pendingFeature) {
+      setPreferredFeature(pendingFeature);
+      sessionStorage.setItem(`preferred_prompt_${pendingFeature}`, "true");
+      setShowPrompt(false);
+      setPendingFeature(null);
+    }
+  };
+
+  const handleDismiss = () => {
+    if (pendingFeature) {
+      sessionStorage.setItem(`preferred_prompt_${pendingFeature}`, "true");
+      setShowPrompt(false);
+      setPendingFeature(null);
+    }
+  };
+
+  if (!showPrompt || !pendingFeature) {
+    return null;
+  }
+
+  const featureName = featureNames[pendingFeature];
+
+  return (
+    <div className="fixed inset-0 z-[99998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div 
+        className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={handleDismiss}
+          className="absolute top-4 right-4 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Content */}
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            Set {featureName} as Your Preferred Feature?
+          </h3>
+          
+          <p className="text-sm text-gray-600 mb-6">
+            Would you like to set <span className="font-semibold text-gray-900">{featureName}</span> as your preferred feature? 
+            This will help us redirect you here when you open the app.
+          </p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleDismiss}
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Not Now
+            </button>
+            <button
+              onClick={handleSetAsPreferred}
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              Yes, Set as Preferred
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

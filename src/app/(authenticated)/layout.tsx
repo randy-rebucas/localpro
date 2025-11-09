@@ -9,12 +9,14 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { GlobalHeader } from "@/components/global-header";
 import { MarketplaceFooter } from "@/components/marketplace/marketplace-footer";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { Providers } from "@/components/providers";
 import { Toaster } from "react-hot-toast";
 import { MonitoringProviders } from "@/components/monitoring";
 import { UnregisterServiceWorker } from "@/components/unregister-sw";
+import { usePreferredFeature } from "@/hooks/usePreferredFeature";
+import { PreferredFeaturePrompt } from "@/components/preferred-feature-prompt";
 
 export default function AuthenticatedLayout({
   children,
@@ -39,6 +41,8 @@ export default function AuthenticatedLayout({
   const [error, setError] = useState<string | null>(null);
   const { data: session, status } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
+  const { preferredFeature } = usePreferredFeature();
 
   // Use the auth redirect hook
   const { redirectToLogin } = useAuthRedirect();
@@ -47,6 +51,7 @@ export default function AuthenticatedLayout({
   const userFetchedRef = useRef(false);
   const fetchedUserIdRef = useRef<string | null>(null);
   const fetchInProgressRef = useRef(false);
+  const preferredFeatureRedirectedRef = useRef(false);
 
   useEffect(() => {
     logger.debug('Authenticated Layout useEffect', { status, hasSession: !!session, hasApiToken: !!getApiToken() });
@@ -167,6 +172,46 @@ export default function AuthenticatedLayout({
     }
   }, [status, session?.user?.id, redirectToLogin, session, user]);
 
+  // Redirect to preferred feature if selected and on home/dashboard
+  useEffect(() => {
+    // Only redirect if:
+    // 1. User is authenticated and loaded
+    // 2. Has a preferred feature
+    // 3. Is on home page (/) or dashboard
+    // 4. Haven't redirected yet in this session
+    if (
+      status === "authenticated" &&
+      session &&
+      !loading &&
+      preferredFeature &&
+      !preferredFeatureRedirectedRef.current
+    ) {
+      // Feature route mapping
+      const featureRoutes: Record<string, string> = {
+        marketplace: "/marketplace",
+        academy: "/academy",
+        ads: "/ads",
+        supplies: "/supplies",
+        rentals: "/rentals",
+        finance: "/finance",
+        facility: "/facility-care",
+        plus: "/plus",
+      };
+      const isHomePage = pathname === "/" || pathname === "/dashboard";
+      const featureRoute = featureRoutes[preferredFeature];
+
+      if (isHomePage && featureRoute && pathname !== featureRoute) {
+        logger.debug("Redirecting to preferred feature", {
+          preferredFeature,
+          featureRoute,
+          currentPath: pathname,
+        });
+        preferredFeatureRedirectedRef.current = true;
+        router.push(featureRoute);
+      }
+    }
+  }, [status, session, loading, preferredFeature, pathname, router]);
+
   // Check if we're on a full-page route that doesn't need the standard layout
   // Memoized to prevent unnecessary recalculations
   // This must be defined before any early returns
@@ -248,6 +293,7 @@ export default function AuthenticatedLayout({
       <Toaster position="top-right" />
       <MonitoringProviders />
       <UnregisterServiceWorker />
+      <PreferredFeaturePrompt />
 
     </Providers>
   );
