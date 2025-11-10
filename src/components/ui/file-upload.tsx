@@ -3,33 +3,61 @@
 import React, { useRef, useState } from "react";
 import { Upload, X, File, Image as ImageIcon } from "lucide-react";
 import { Card } from "./card";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import {
+  getMaxFileSizeMB,
+  getAllowedImageTypes,
+  getAllowedDocumentTypes,
+  getMaxImagesPerUpload,
+} from "@/lib/settings-utils";
 
 interface FileUploadProps {
   accept?: string;
   multiple?: boolean;
-  maxSize?: number; // in MB
+  maxSize?: number; // in MB, overrides app settings
   onFilesSelected?: (files: File[]) => void;
   files?: File[];
   onRemove?: (index: number) => void;
   label?: string;
   className?: string;
   disabled?: boolean;
+  type?: "image" | "document" | "all"; // Type of files to accept
 }
 
 export function FileUpload({
-  accept = "*/*",
+  accept,
   multiple = false,
-  maxSize = 10,
+  maxSize,
   onFilesSelected,
   files = [],
   onRemove,
   label = "Upload files",
   className = "",
   disabled = false,
+  type = "all",
 }: FileUploadProps) {
+  const { settings: appSettings } = useAppSettings();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Get settings from app settings
+  const maxFileSizeMB = maxSize || getMaxFileSizeMB(appSettings);
+  const allowedImageTypes = getAllowedImageTypes(appSettings);
+  const allowedDocumentTypes = getAllowedDocumentTypes(appSettings);
+  const maxImages = getMaxImagesPerUpload(appSettings);
+
+  // Determine accept string based on type
+  const acceptString = accept || (() => {
+    switch (type) {
+      case "image":
+        return allowedImageTypes.join(",");
+      case "document":
+        return allowedDocumentTypes.join(",");
+      default:
+        return "*/*";
+    }
+  })();
 
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList) return;
@@ -38,12 +66,34 @@ export function FileUpload({
     const validFiles: File[] = [];
     const errors: string[] = [];
 
-    newFiles.forEach((file) => {
-      if (file.size > maxSize * 1024 * 1024) {
-        errors.push(`${file.name} exceeds maximum size of ${maxSize}MB`);
-      } else {
-        validFiles.push(file);
+    // Check file count for images
+    if (type === "image" && multiple) {
+      const totalFiles = files.length + newFiles.length;
+      if (totalFiles > maxImages) {
+        errors.push(`Maximum ${maxImages} images allowed per upload`);
+        return;
       }
+    }
+
+    newFiles.forEach((file) => {
+      // Check file size
+      if (file.size > maxFileSizeMB * 1024 * 1024) {
+        errors.push(`${file.name} exceeds maximum size of ${maxFileSizeMB}MB`);
+        return;
+      }
+
+      // Check file type
+      if (type === "image" && !allowedImageTypes.includes(file.type)) {
+        errors.push(`${file.name} is not an allowed image type. Allowed: ${allowedImageTypes.join(", ")}`);
+        return;
+      }
+
+      if (type === "document" && !allowedDocumentTypes.includes(file.type)) {
+        errors.push(`${file.name} is not an allowed document type. Allowed: ${allowedDocumentTypes.join(", ")}`);
+        return;
+      }
+
+      validFiles.push(file);
     });
 
     if (errors.length > 0) {
@@ -116,7 +166,7 @@ export function FileUpload({
         <input
           ref={fileInputRef}
           type="file"
-          accept={accept}
+          accept={acceptString}
           multiple={multiple}
           onChange={handleInputChange}
           className="hidden"
@@ -128,7 +178,8 @@ export function FileUpload({
           Drag and drop files here, or click to select
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          Max size: {maxSize}MB
+          Max size: {maxFileSizeMB}MB
+          {type === "image" && multiple && ` • Max ${maxImages} images`}
         </p>
         {error && (
           <p className="text-xs text-red-600 mt-2">{error}</p>

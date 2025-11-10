@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { getEnabledPaymentMethods, getDefaultCurrency, calculateTransactionFee, getMinimumPayout, formatPayoutSchedule, getNextPayoutDate } from "@/lib/settings-utils";
+import { getUserPreferredCurrency } from "@/lib/user-settings-utils";
+import { formatCurrency as formatCurrencyUtil, getCurrencySymbol } from "@/lib/currency-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { Wallet, RefreshCw, AlertCircle, ArrowUpRight, ArrowDownRight, TrendingUp, DollarSign, Clock, Plus, Minus, X, Settings, Receipt, Upload } from "lucide-react";
@@ -49,6 +54,8 @@ interface ExpenseData {
 }
 
 export default function WalletPage() {
+  const { settings: appSettings } = useAppSettings();
+  const { settings: userSettings } = useUserSettings();
   const [mounted, setMounted] = useState(false);
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
   const [transactions, setTransactions] = useState<TransactionDetails[]>([]);
@@ -349,13 +356,17 @@ export default function WalletPage() {
     fetchWalletData(true, currentPage);
   }, [fetchWalletData, currentPage]);
 
-  const formatCurrency = (amount: number | undefined | null, currency: string = 'USD') => {
+  // Get default currency - prefer user settings, fallback to app settings
+  const userCurrency = getUserPreferredCurrency(userSettings);
+  const appCurrency = getDefaultCurrency(appSettings);
+  const defaultCurrency = userCurrency || appCurrency;
+  
+  const formatCurrency = (amount: number | undefined | null, currency?: string) => {
     const safeAmount = amount && !isNaN(amount) ? amount : 0;
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-    }).format(safeAmount);
+    const currencyCode = currency || defaultCurrency;
+    return formatCurrencyUtil(safeAmount, currencyCode, {
+      appSettings,
+    });
   };
 
   const formatDate = (date: Date | string | undefined) => {
@@ -404,7 +415,20 @@ export default function WalletPage() {
 
   const balance = (overview?.wallet?.balance && !isNaN(overview.wallet.balance)) ? overview.wallet.balance : 0;
   const pendingBalance = (overview?.wallet?.pendingBalance && !isNaN(overview.wallet.pendingBalance)) ? overview.wallet.pendingBalance : 0;
-  const currency = 'USD'; // Default currency
+  const currency = defaultCurrency; // Use default currency from app settings
+  const currencySymbol = getCurrencySymbol(currency);
+
+  // Calculate transaction fees for top-up and withdrawal
+  const topUpAmount = parseFloat(addFundsAmount) || 0;
+  const topUpFee = topUpAmount > 0 ? calculateTransactionFee(topUpAmount, appSettings) : 0;
+  const topUpTotal = topUpAmount + topUpFee;
+
+  const withdrawAmountValue = parseFloat(withdrawAmount) || 0;
+  const withdrawFee = withdrawAmountValue > 0 ? calculateTransactionFee(withdrawAmountValue, appSettings) : 0;
+  const withdrawTotal = withdrawAmountValue - withdrawFee; // Fee is deducted from withdrawal
+  const minPayout = getMinimumPayout(appSettings);
+  const payoutSchedule = formatPayoutSchedule(appSettings);
+  const nextPayoutDate = getNextPayoutDate(appSettings);
 
   const resetTopUpForm = () => {
     setAddFundsAmount("");
@@ -457,9 +481,10 @@ export default function WalletPage() {
       return;
     }
 
-    // Validate minimum amount ($10)
-    if (amount < 10) {
-      toast.error("Minimum top-up amount is $10");
+    // Validate minimum amount (10 in default currency)
+    const minAmount = 10;
+    if (amount < minAmount) {
+      toast.error(`Minimum top-up amount is ${formatCurrency(minAmount)}`);
       return;
     }
 
@@ -544,8 +569,10 @@ export default function WalletPage() {
       return;
     }
 
-    if (amount < 100) {
-      toast.error("Minimum withdrawal amount is $100");
+    // Validate minimum payout amount from app settings
+    const minPayout = getMinimumPayout(appSettings);
+    if (minPayout > 0 && amount < minPayout) {
+      toast.error(`Minimum withdrawal amount is ${formatCurrency(minPayout)}`);
       return;
     }
 
@@ -743,7 +770,7 @@ export default function WalletPage() {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
             title="Add expense"
           >
-            <Receipt className="w-4 h-4" />
+            <span className="text-base font-semibold">{currencySymbol}</span>
             Add Expense
           </button>
           <button
@@ -799,10 +826,10 @@ export default function WalletPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <p className="text-emerald-100 text-sm mb-2">Available Balance</p>
-                <p className="text-4xl font-bold">{formatCurrency(balance, currency)}</p>
+                <p className="text-4xl font-bold">{formatCurrency(balance)}</p>
                 {pendingBalance > 0 && (
                   <p className="text-emerald-100 text-sm mt-2">
-                    {formatCurrency(pendingBalance, currency)} pending
+                    {formatCurrency(pendingBalance)} pending
                   </p>
                 )}
               </div>
@@ -845,8 +872,7 @@ export default function WalletPage() {
                   {formatCurrency(
                     (overview?.monthlyEarnings?.totalEarnings && !isNaN(overview.monthlyEarnings.totalEarnings))
                       ? overview.monthlyEarnings.totalEarnings
-                      : 0,
-                    currency
+                      : 0
                   )}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -861,7 +887,7 @@ export default function WalletPage() {
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-purple-600" />
+                  <span className="text-lg font-semibold text-purple-600">{currencySymbol}</span>
                 </div>
               </div>
               <div>
@@ -870,8 +896,7 @@ export default function WalletPage() {
                   {formatCurrency(
                     (overview?.referralEarnings?.totalEarnings && !isNaN(overview.referralEarnings.totalEarnings))
                       ? overview.referralEarnings.totalEarnings
-                      : 0,
-                    currency
+                      : 0
                   )}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -891,7 +916,22 @@ export default function WalletPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Pending Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(pendingBalance, currency)}</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(pendingBalance)}</p>
+                {payoutSchedule && (
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 mb-1">Payout Schedule</p>
+                    <p className="text-xs font-medium text-gray-700">{payoutSchedule}</p>
+                    {nextPayoutDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Next payout: {nextPayoutDate.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -917,8 +957,7 @@ export default function WalletPage() {
                         ? earnings.totalEarnings 
                         : (earnings.total && !isNaN(earnings.total)) 
                           ? earnings.total 
-                          : 0, 
-                      currency
+                          : 0
                     )}
                   </span>
                 </div>
@@ -947,7 +986,7 @@ export default function WalletPage() {
                         <p className="text-xs text-gray-500">{expense.category}</p>
                       </div>
                       <span className="font-semibold text-red-600">
-                        {formatCurrency(expenseAmount, currency)}
+                        {formatCurrency(expenseAmount)}
                       </span>
                     </div>
                   );
@@ -1028,8 +1067,7 @@ export default function WalletPage() {
                             {formatCurrency(
                               (transaction.amount && !isNaN(transaction.amount)) 
                                 ? Math.abs(transaction.amount) 
-                                : 0, 
-                              currency
+                                : 0
                             )}
                           </p>
                           <p className={`text-xs mt-1 px-2 py-1 rounded-full inline-block ${
@@ -1121,7 +1159,7 @@ export default function WalletPage() {
                     Amount <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-base">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-base">{currencySymbol}</span>
                     <input
                       type="number"
                       value={addFundsAmount}
@@ -1140,7 +1178,25 @@ export default function WalletPage() {
                       disabled={processing}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1.5 ml-1">Minimum amount: $10.00</p>
+                  <p className="text-xs text-gray-500 mt-1.5 ml-1">Minimum amount: {formatCurrency(10)}</p>
+                  {topUpAmount > 0 && topUpFee > 0 && (
+                    <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Amount:</span>
+                          <span className="text-gray-900 font-medium">{formatCurrency(topUpAmount)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Transaction Fee:</span>
+                          <span className="text-gray-700">{formatCurrency(topUpFee)}</span>
+                        </div>
+                        <div className="flex justify-between pt-1 border-t border-gray-300">
+                          <span className="text-gray-900 font-semibold">Total to Pay:</span>
+                          <span className="text-emerald-600 font-bold">{formatCurrency(topUpTotal)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Payment Method */}
@@ -1154,12 +1210,25 @@ export default function WalletPage() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all hover:border-gray-400 bg-white cursor-pointer"
                     disabled={processing}
                   >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="mobile_money">Mobile Money</option>
-                    <option value="card">Credit/Debit Card</option>
-                    <option value="cash">Cash</option>
-                    <option value="paypal">PayPal</option>
-                    <option value="paymaya">PayMaya</option>
+                    {(() => {
+                      const enabledMethods = getEnabledPaymentMethods(appSettings);
+                      const methodLabels: Record<string, string> = {
+                        paypal: "PayPal",
+                        paymaya: "PayMaya",
+                        gcash: "GCash",
+                        bank_transfer: "Bank Transfer",
+                        cash: "Cash",
+                        mobile_money: "Mobile Money",
+                        card: "Credit/Debit Card"
+                      };
+                      // Include enabled methods plus mobile_money and card for add funds
+                      const allMethods = [...enabledMethods, "mobile_money", "card"].filter((v, i, a) => a.indexOf(v) === i);
+                      return allMethods.map(method => (
+                        <option key={method} value={method}>
+                          {methodLabels[method] || method}
+                        </option>
+                      ));
+                    })()}
                   </select>
                 </div>
 
@@ -1327,7 +1396,7 @@ export default function WalletPage() {
                   Amount
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{currencySymbol}</span>
                   <input
                     type="number"
                     value={withdrawAmount}
@@ -1346,8 +1415,31 @@ export default function WalletPage() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Available: {formatCurrency(balance, currency)}
+                  Available: {formatCurrency(balance)}
+                  {minPayout > 0 && (
+                    <span className="ml-2">• Minimum: {formatCurrency(minPayout)}</span>
+                  )}
                 </p>
+                {withdrawAmountValue > 0 && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Withdrawal Amount:</span>
+                        <span className="text-gray-900 font-medium">{formatCurrency(withdrawAmountValue)}</span>
+                      </div>
+                      {withdrawFee > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Transaction Fee:</span>
+                          <span className="text-red-600">-{formatCurrency(withdrawFee)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1 border-t border-gray-300">
+                        <span className="text-gray-900 font-semibold">You&apos;ll Receive:</span>
+                        <span className="text-emerald-600 font-bold">{formatCurrency(Math.max(0, withdrawTotal))}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1404,6 +1496,24 @@ export default function WalletPage() {
                   </div>
                 </>
               )}
+              {minPayout > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                  <p className="text-xs text-blue-700">
+                    <strong>Minimum withdrawal:</strong> {formatCurrency(minPayout)}
+                  </p>
+                  {payoutSchedule && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Payouts are processed {payoutSchedule.toLowerCase()}
+                      {nextPayoutDate && (
+                        <span>. Next payout: {nextPayoutDate.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}</span>
+                      )}
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => {
@@ -1417,7 +1527,7 @@ export default function WalletPage() {
                 </button>
                 <button
                   onClick={handleWithdraw}
-                  disabled={processing || !withdrawAmount}
+                  disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > balance || (minPayout > 0 && parseFloat(withdrawAmount) < minPayout)}
                   className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {processing ? "Processing..." : "Request Withdrawal"}
@@ -1466,7 +1576,7 @@ export default function WalletPage() {
                   Amount *
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{currencySymbol}</span>
                   <input
                     type="number"
                     value={expenseData.amount}
@@ -1601,7 +1711,7 @@ export default function WalletPage() {
                   Minimum Balance
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{currencySymbol}</span>
                   <input
                     type="number"
                     value={walletSettings.minBalance}

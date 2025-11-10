@@ -48,6 +48,8 @@ export function slugify(text: string) {
 }
 
 // Number utilities
+// Note: For currency formatting, use formatCurrency from @/lib/currency-utils instead
+// This function is kept for backward compatibility but defaults to USD
 export function formatCurrency(amount: number, currency = 'USD') {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',

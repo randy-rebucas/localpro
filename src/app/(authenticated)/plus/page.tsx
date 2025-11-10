@@ -5,6 +5,8 @@ import { Star, Check, Crown, Zap, Shield, Users, TrendingUp, Clock, Phone, Arrow
 import { Card } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { formatCurrency } from '@/lib/currency-utils';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { getDefaultCurrency } from '@/lib/settings-utils';
 import { UserSettings } from '@/types/user-settings';
 import { API_ENDPOINTS, API_BASE_URL } from '@/lib/api';
 import { createAuthFetchOptions, getApiToken } from '@/lib/auth-utils';
@@ -150,11 +152,12 @@ const premiumFeatures = [
 ];
 
 export default function PlusPage() {
+  const { settings: appSettings } = useAppSettings();
   const [stats, setStats] = useState<PlusStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [, setUserSettings] = useState<UserSettings | null>(null);
-  const [currency, setCurrency] = useState<string>('PHP');
+  const [currency, setCurrency] = useState<string>(getDefaultCurrency(appSettings));
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 
   useEffect(() => {
@@ -168,7 +171,7 @@ export default function PlusPage() {
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
           setUserSettings(settingsData);
-          setCurrency(settingsData.communication?.currency || 'PHP');
+          setCurrency(settingsData.communication?.currency || getDefaultCurrency(appSettings));
         }
 
         // Try to fetch real stats from API, fallback to default values
@@ -206,7 +209,7 @@ export default function PlusPage() {
     };
 
     loadData();
-  }, []);
+  }, [appSettings]);
 
   const handleSubscribe = async (planId: string) => {
     setSelectedPlan(planId);
@@ -317,7 +320,7 @@ export default function PlusPage() {
               <div>
                 <p className="text-xs font-medium text-gray-600">Monthly Revenue</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(stats.monthlyRevenue, currency)}
+                  {formatCurrency(stats.monthlyRevenue, currency, { appSettings })}
                 </p>
               </div>
               <Star className="w-6 h-6 text-yellow-600" />
@@ -413,7 +416,8 @@ export default function PlusPage() {
                     <span className="text-3xl font-bold text-gray-900">
                       {formatCurrency(
                         billingPeriod === 'monthly' ? plan.monthlyPrice : plan.annualPrice, 
-                        currency
+                        currency,
+                        { appSettings }
                       )}
                     </span>
                     <span className="text-gray-600 ml-1 text-sm">
@@ -422,7 +426,7 @@ export default function PlusPage() {
                   </div>
                   {billingPeriod === 'annual' && (
                     <div className="text-xs text-green-600 font-medium mt-1">
-                      Save {formatCurrency(plan.monthlyPrice * 12 - plan.annualPrice, currency)} per year
+                      Save {formatCurrency(plan.monthlyPrice * 12 - plan.annualPrice, currency, { appSettings })} per year
                     </div>
                   )}
                   {plan.targetAudience && (

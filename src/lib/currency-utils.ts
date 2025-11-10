@@ -1,3 +1,5 @@
+import type { AppSettings } from "@/types/app-settings";
+
 // Currency formatting utilities
 export interface CurrencyConfig {
   code: string;
@@ -60,17 +62,22 @@ export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
 
 /**
  * Format a number as currency using the specified currency code
+ * If currencyCode is not provided, will use default from app settings if available
  */
 export function formatCurrency(
   amount: number, 
-  currencyCode: string = 'PHP', 
+  currencyCode?: string | null, 
   options?: {
     showSymbol?: boolean;
     showCode?: boolean;
     locale?: string;
+    appSettings?: AppSettings | null;
   }
 ): string {
-  const config = CURRENCY_CONFIGS[currencyCode] || CURRENCY_CONFIGS.PHP;
+  // Use app settings default currency if not provided
+  const defaultCurrency = options?.appSettings?.payments?.defaultCurrency || 'PHP';
+  const code = currencyCode || defaultCurrency;
+  const config = CURRENCY_CONFIGS[code] || CURRENCY_CONFIGS.PHP;
   const { showSymbol = true, showCode = false, locale } = options || {};
   
   try {

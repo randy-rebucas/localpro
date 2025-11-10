@@ -17,10 +17,12 @@ import {
   ChevronUp,
   LucideIcon
 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
-import { apiRequest, API_ENDPOINTS } from "@/lib/api";
+import { useState, useEffect, useCallback } from "react";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getEnabledPaymentMethods } from "@/lib/settings-utils";
 import { logger } from "@/lib/logger";
 import { Checkbox } from "@/components/ui/checkbox";
 import Breadcrumbs from "@/components/ui/breadcrumbs";
@@ -79,8 +81,9 @@ function SettingsSection({
 }
 
 export default function SettingsPage() {
+  const { settings: fetchedSettings, loading, updateSettings: updateUserSettings } = useUserSettings();
+  const { settings: appSettings } = useAppSettings();
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -96,32 +99,20 @@ export default function SettingsPage() {
   });
   const { data: session } = useSession();
 
+  // Sync fetched settings to local state
+  useEffect(() => {
+    if (fetchedSettings) {
+      setSettings(fetchedSettings);
+      setHasChanges(false);
+    }
+  }, [fetchedSettings]);
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
-
-  useEffect(() => {
-    let isMounted = true;
-    async function load() {
-      try {
-        const data = await apiRequest<UserSettings>(API_ENDPOINTS.settingsUser, { method: "GET" });
-        if (!isMounted) return;
-        setSettings(mergeWithDefaults(data));
-        setHasChanges(false);
-      } catch {
-        if (!isMounted) return;
-        setSettings(defaultUserSettings);
-      } finally {
-        if (!isMounted) return;
-        setLoading(false);
-      }
-    }
-    load();
-    return () => { isMounted = false; };
-  }, []);
 
   const userRole = session?.user?.role;
   // Normalize role format (handle both uppercase and lowercase)
@@ -136,97 +127,12 @@ export default function SettingsPage() {
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
 
-  function mergeWithDefaults(incoming: Partial<UserSettings>): UserSettings {
-    return {
-      ...defaultUserSettings,
-      ...incoming,
-      privacy: { ...defaultUserSettings.privacy, ...(incoming.privacy || {}) },
-      notifications: {
-        push: { ...defaultUserSettings.notifications.push, ...(incoming.notifications?.push || {}) },
-        email: { ...defaultUserSettings.notifications.email, ...(incoming.notifications?.email || {}) },
-        sms: { ...defaultUserSettings.notifications.sms, ...(incoming.notifications?.sms || {}) },
-      },
-      communication: {
-        ...defaultUserSettings.communication,
-        ...(incoming.communication || {}),
-        autoReply: {
-          ...defaultUserSettings.communication.autoReply,
-          ...(incoming.communication?.autoReply || {}),
-        },
-      },
-      service: {
-        ...defaultUserSettings.service,
-        ...(incoming.service || {}),
-        workingHours: {
-          ...defaultUserSettings.service.workingHours,
-          ...(incoming.service?.workingHours || {}),
-        },
-        emergencyService: {
-          ...defaultUserSettings.service.emergencyService,
-          ...(incoming.service?.emergencyService || {}),
-        },
-      },
-      payment: {
-        ...defaultUserSettings.payment,
-        ...(incoming.payment || {}),
-        autoWithdraw: {
-          ...defaultUserSettings.payment.autoWithdraw,
-          ...(incoming.payment?.autoWithdraw || {}),
-        },
-        invoiceSettings: {
-          ...defaultUserSettings.payment.invoiceSettings,
-          ...(incoming.payment?.invoiceSettings || {}),
-        },
-      },
-      security: {
-        ...defaultUserSettings.security,
-        ...(incoming.security || {}),
-        twoFactorAuth: {
-          ...defaultUserSettings.security.twoFactorAuth,
-          ...(incoming.security?.twoFactorAuth || {}),
-        },
-        loginAlerts: {
-          ...defaultUserSettings.security.loginAlerts,
-          ...(incoming.security?.loginAlerts || {}),
-        },
-        passwordChangeReminder: {
-          ...defaultUserSettings.security.passwordChangeReminder,
-          ...(incoming.security?.passwordChangeReminder || {}),
-        },
-      },
-      app: {
-        ...defaultUserSettings.app,
-        ...(incoming.app || {}),
-        soundEffects: {
-          ...defaultUserSettings.app.soundEffects,
-          ...(incoming.app?.soundEffects || {}),
-        },
-        hapticFeedback: {
-          ...defaultUserSettings.app.hapticFeedback,
-          ...(incoming.app?.hapticFeedback || {}),
-        },
-        autoSave: {
-          ...defaultUserSettings.app.autoSave,
-          ...(incoming.app?.autoSave || {}),
-        },
-        dataUsage: {
-          ...defaultUserSettings.app.dataUsage,
-          ...(incoming.app?.dataUsage || {}),
-        },
-      },
-      analytics: { ...defaultUserSettings.analytics, ...(incoming.analytics || {}) },
-    };
-  }
-
   const handleSave = useCallback(async () => {
     if (!settings || saving) return;
     
     setSaving(true);
     try {
-      await apiRequest<UserSettings>(API_ENDPOINTS.settingsUser, {
-        method: "PUT",
-        body: JSON.stringify(settings),
-      });
+      await updateUserSettings(settings);
       setHasChanges(false);
       setLastSaved(new Date());
       toast.success("Settings saved successfully!");
@@ -236,7 +142,7 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
-  }, [settings, saving]);
+  }, [settings, saving, updateUserSettings]);
 
   function onToggle(path: string) {
     return (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,7 +220,10 @@ export default function SettingsPage() {
     return output;
   }
 
-  if (loading || !settings) {
+  // Use fetched settings if local state is not set yet
+  const currentSettings = settings || fetchedSettings || defaultUserSettings;
+
+  if (loading || !currentSettings) {
     return <Loading variant="dashboard" fullScreen text="Loading Settings" subtitle="Preparing your account settings..." />;
   }
 
@@ -382,7 +291,7 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <RowSelect
                 label="Profile visibility"
-                value={settings.privacy.profileVisibility}
+                value={currentSettings.privacy.profileVisibility}
                 onChange={(value) => onInput("privacy.profileVisibility", (v) => v)({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "public", label: "Public" },
@@ -404,7 +313,7 @@ export default function SettingsPage() {
                   // Non-client only: Referral requests (business roles)
                   ...(isBusinessRole && !isClient ? [["Allow referral requests", "privacy.allowReferralRequests"]] : []),
                 ].map(([label, path]) => (
-                  <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
+                  <ToggleRow key={path as string} label={label as string} checked={getAtPath(currentSettings, path as string) as boolean} onChange={onToggle(path as string)} />
                 ))}
               </div>
             </div>
@@ -497,7 +406,7 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <RowSelect
                 label="Preferred language"
-                value={settings.communication.preferredLanguage}
+                value={currentSettings.communication.preferredLanguage}
                 onChange={(value) => onInput("communication.preferredLanguage")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "en", label: "English" },
@@ -510,13 +419,13 @@ export default function SettingsPage() {
               />
               <RowInput
                 label="Timezone"
-                value={settings.communication.timezone}
+                value={currentSettings.communication.timezone}
                 onChange={onInput("communication.timezone")}
                 placeholder="Asia/Manila"
               />
               <RowSelect
                 label="Date format"
-                value={settings.communication.dateFormat}
+                value={currentSettings.communication.dateFormat}
                 onChange={(value) => onInput("communication.dateFormat")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
@@ -526,7 +435,7 @@ export default function SettingsPage() {
               />
               <RowSelect
                 label="Time format"
-                value={settings.communication.timeFormat}
+                value={currentSettings.communication.timeFormat}
                 onChange={(value) => onInput("communication.timeFormat")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "12h", label: "12-hour" },
@@ -535,7 +444,7 @@ export default function SettingsPage() {
               />
               <RowSelect
                 label="Currency"
-                value={settings.communication.currency}
+                value={currentSettings.communication.currency}
                 onChange={(value) => onInput("communication.currency")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "PHP", label: "PHP (Philippine Peso)" },
@@ -552,12 +461,12 @@ export default function SettingsPage() {
             {isBusinessRole && !isClient && (
               <div className="mt-5 pt-5 border-t border-gray-100">
                 <div className="space-y-1">
-                  <ToggleRow label="Auto-reply enabled" checked={settings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
-                  {settings.communication.autoReply.enabled && (
+                  <ToggleRow label="Auto-reply enabled" checked={currentSettings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
+                  {currentSettings.communication.autoReply.enabled && (
                     <RowTextarea
                       label="Auto-reply message"
                       rows={3}
-                      value={settings.communication.autoReply.message}
+                      value={currentSettings.communication.autoReply.message}
                       onChange={onInput("communication.autoReply.message")}
                       placeholder="Thank you for your message. I will get back to you soon."
                     />
@@ -577,11 +486,11 @@ export default function SettingsPage() {
               onToggle={() => toggleSection('service')}
             >
               <div className="space-y-1">
-                <RowNumberInput label="Service radius (km)" value={settings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={1} max={100} />
-                <ToggleRow label="Auto-accept jobs" checked={settings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
+                <RowNumberInput label="Service radius (km)" value={currentSettings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={1} max={100} />
+                <ToggleRow label="Auto-accept jobs" checked={currentSettings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
                 <div className="pt-3 border-t border-gray-100 space-y-1">
-                  <RowNumberInput label="Minimum job value" value={settings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
-                  <RowNumberInput label="Maximum job value" value={settings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
+                  <RowNumberInput label="Minimum job value" value={currentSettings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
+                  <RowNumberInput label="Maximum job value" value={currentSettings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
                 </div>
                 <div className="pt-3 border-t border-gray-100">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Preferred job types</label>
@@ -590,7 +499,7 @@ export default function SettingsPage() {
                       <Checkbox
                         key={jobType}
                         label={jobType.charAt(0).toUpperCase() + jobType.slice(1)}
-                        checked={settings.service.preferredJobTypes.includes(jobType)}
+                        checked={currentSettings.service.preferredJobTypes.includes(jobType)}
                         onChange={onArrayToggle("service.preferredJobTypes", jobType)}
                       />
                     ))}
@@ -600,13 +509,13 @@ export default function SettingsPage() {
                   <RowInput
                     label="Working hours start"
                     type="time"
-                    value={settings.service.workingHours.start}
+                    value={currentSettings.service.workingHours.start}
                     onChange={onInput("service.workingHours.start")}
                   />
                   <RowInput
                     label="Working hours end"
                     type="time"
-                    value={settings.service.workingHours.end}
+                    value={currentSettings.service.workingHours.end}
                     onChange={onInput("service.workingHours.end")}
                   />
                   <div className="flex items-start gap-4 py-2">
@@ -616,7 +525,7 @@ export default function SettingsPage() {
                         <Checkbox
                           key={d}
                           label={d.charAt(0).toUpperCase() + d.slice(1).substring(0, 3)}
-                          checked={settings.service.workingHours.days.includes(d)}
+                          checked={currentSettings.service.workingHours.days.includes(d)}
                           onChange={onArrayToggle("service.workingHours.days", d)}
                         />
                       ))}
@@ -624,8 +533,8 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="pt-3 border-t border-gray-100 space-y-1">
-                  <ToggleRow label="Emergency service" checked={settings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
-                  <RowNumberInput label="Emergency surcharge (%)" value={settings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
+                  <ToggleRow label="Emergency service" checked={currentSettings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
+                  <RowNumberInput label="Emergency surcharge (%)" value={currentSettings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
                 </div>
               </div>
             </SettingsSection>
@@ -642,28 +551,35 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <RowSelect
                 label="Preferred payment method"
-                value={settings.payment.preferredPaymentMethod}
+                value={currentSettings.payment.preferredPaymentMethod}
                 onChange={(value) => onInput("payment.preferredPaymentMethod")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
-                options={[
-                  { value: "paypal", label: "PayPal" },
-                  { value: "paymaya", label: "PayMaya" },
-                  { value: "gcash", label: "GCash" },
-                  { value: "bank_transfer", label: "Bank Transfer" },
-                  { value: "cash", label: "Cash" }
-                ]}
+                options={(() => {
+                  const enabledMethods = getEnabledPaymentMethods(appSettings);
+                  const methodLabels: Record<string, string> = {
+                    paypal: "PayPal",
+                    paymaya: "PayMaya",
+                    gcash: "GCash",
+                    bank_transfer: "Bank Transfer",
+                    cash: "Cash"
+                  };
+                  return enabledMethods.map(method => ({
+                    value: method,
+                    label: methodLabels[method] || method
+                  }));
+                })()}
               />
               {/* Auto-withdrawal and Invoice settings: Non-client only (business roles) */}
               {isBusinessRole && !isClient && (
                 <>
                   <div className="pt-3 border-t border-gray-100 space-y-1">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Auto-Withdrawal</p>
-                    <ToggleRow label="Enable auto-withdraw" checked={settings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
-                    {settings.payment.autoWithdraw.enabled && (
+                    <ToggleRow label="Enable auto-withdraw" checked={currentSettings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
+                    {currentSettings.payment.autoWithdraw.enabled && (
                       <>
-                        <RowNumberInput label="Threshold amount" value={settings.payment.autoWithdraw.threshold} onChange={onInput("payment.autoWithdraw.threshold", (v) => Number(v))} min={0} />
+                        <RowNumberInput label="Threshold amount" value={currentSettings.payment.autoWithdraw.threshold} onChange={onInput("payment.autoWithdraw.threshold", (v) => Number(v))} min={0} />
                         <RowSelect
                           label="Frequency"
-                          value={settings.payment.autoWithdraw.frequency}
+                          value={currentSettings.payment.autoWithdraw.frequency}
                           onChange={(value) => onInput("payment.autoWithdraw.frequency")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                           options={[
                             { value: "daily", label: "Daily" },
@@ -676,11 +592,11 @@ export default function SettingsPage() {
                   </div>
                   <div className="pt-3 border-t border-gray-100 space-y-1">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Invoice Settings</p>
-                    <ToggleRow label="Include tax" checked={settings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
-                    <RowNumberInput label="Tax rate (%)" value={settings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} max={100} />
+                    <ToggleRow label="Include tax" checked={currentSettings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
+                    <RowNumberInput label="Tax rate (%)" value={currentSettings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} max={100} />
                     <RowSelect
                       label="Invoice template"
-                      value={settings.payment.invoiceSettings.invoiceTemplate}
+                      value={currentSettings.payment.invoiceSettings.invoiceTemplate}
                       onChange={(value) => onInput("payment.invoiceSettings.invoiceTemplate")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                       options={[
                         { value: "standard", label: "Standard" },
@@ -703,11 +619,11 @@ export default function SettingsPage() {
             onToggle={() => toggleSection('security')}
           >
             <div className="space-y-1">
-              <ToggleRow label="Two-factor authentication" checked={settings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
-              {settings.security.twoFactorAuth.enabled && (
+              <ToggleRow label="Two-factor authentication" checked={currentSettings.security.twoFactorAuth.enabled} onChange={onToggle("security.twoFactorAuth.enabled")} />
+              {currentSettings.security.twoFactorAuth.enabled && (
                 <RowSelect
                   label="2FA method"
-                  value={settings.security.twoFactorAuth.method}
+                  value={currentSettings.security.twoFactorAuth.method}
                   onChange={(value) => onInput("security.twoFactorAuth.method")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                   options={[
                     { value: "sms", label: "SMS" },
@@ -718,15 +634,15 @@ export default function SettingsPage() {
               )}
               <div className="pt-3 border-t border-gray-100 space-y-1">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Login Alerts</p>
-                <ToggleRow label="Enable login alerts" checked={settings.security.loginAlerts.enabled} onChange={onToggle("security.loginAlerts.enabled")} />
-                <ToggleRow label="Alert on new device" checked={settings.security.loginAlerts.newDevice} onChange={onToggle("security.loginAlerts.newDevice")} />
-                <ToggleRow label="Alert on suspicious activity" checked={settings.security.loginAlerts.suspiciousActivity} onChange={onToggle("security.loginAlerts.suspiciousActivity")} />
+                <ToggleRow label="Enable login alerts" checked={currentSettings.security.loginAlerts.enabled} onChange={onToggle("security.loginAlerts.enabled")} />
+                <ToggleRow label="Alert on new device" checked={currentSettings.security.loginAlerts.newDevice} onChange={onToggle("security.loginAlerts.newDevice")} />
+                <ToggleRow label="Alert on suspicious activity" checked={currentSettings.security.loginAlerts.suspiciousActivity} onChange={onToggle("security.loginAlerts.suspiciousActivity")} />
               </div>
               <div className="pt-3 border-t border-gray-100 space-y-1">
-                <RowNumberInput label="Session timeout (hours)" value={settings.security.sessionTimeout} onChange={onInput("security.sessionTimeout", (v) => Number(v))} min={1} max={168} />
-                <ToggleRow label="Password change reminder" checked={settings.security.passwordChangeReminder.enabled} onChange={onToggle("security.passwordChangeReminder.enabled")} />
-                {settings.security.passwordChangeReminder.enabled && (
-                  <RowNumberInput label="Reminder frequency (days)" value={settings.security.passwordChangeReminder.frequency} onChange={onInput("security.passwordChangeReminder.frequency", (v) => Number(v))} min={30} max={365} />
+                <RowNumberInput label="Session timeout (hours)" value={currentSettings.security.sessionTimeout} onChange={onInput("security.sessionTimeout", (v) => Number(v))} min={1} max={168} />
+                <ToggleRow label="Password change reminder" checked={currentSettings.security.passwordChangeReminder.enabled} onChange={onToggle("security.passwordChangeReminder.enabled")} />
+                {currentSettings.security.passwordChangeReminder.enabled && (
+                  <RowNumberInput label="Reminder frequency (days)" value={currentSettings.security.passwordChangeReminder.frequency} onChange={onInput("security.passwordChangeReminder.frequency", (v) => Number(v))} min={30} max={365} />
                 )}
               </div>
             </div>
@@ -743,7 +659,7 @@ export default function SettingsPage() {
             <div className="space-y-1">
               <RowSelect
                 label="Theme"
-                value={settings.app.theme}
+                value={currentSettings.app.theme}
                 onChange={(value) => onInput("app.theme")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "auto", label: "Auto" },
@@ -753,7 +669,7 @@ export default function SettingsPage() {
               />
               <RowSelect
                 label="Font size"
-                value={settings.app.fontSize}
+                value={currentSettings.app.fontSize}
                 onChange={(value) => onInput("app.fontSize")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: "small", label: "Small" },
@@ -762,8 +678,8 @@ export default function SettingsPage() {
                 ]}
               />
               <div className="pt-3 border-t border-gray-100 space-y-1">
-                <ToggleRow label="Sound effects" checked={settings.app.soundEffects.enabled} onChange={onToggle("app.soundEffects.enabled")} />
-                {settings.app.soundEffects.enabled && (
+                <ToggleRow label="Sound effects" checked={currentSettings.app.soundEffects.enabled} onChange={onToggle("app.soundEffects.enabled")} />
+                {currentSettings.app.soundEffects.enabled && (
                   <div className="flex items-center gap-4 py-2">
                     <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">Sound volume</label>
                     <div className="flex items-center gap-3 flex-1">
@@ -772,24 +688,24 @@ export default function SettingsPage() {
                         min={0} 
                         max={100} 
                         className="flex-1 accent-green-600" 
-                        value={settings.app.soundEffects.volume} 
+                        value={currentSettings.app.soundEffects.volume} 
                         onChange={onInput("app.soundEffects.volume", (v) => Number(v))} 
                       />
-                      <span className="text-sm text-gray-600 w-12 text-right">{settings.app.soundEffects.volume}%</span>
+                      <span className="text-sm text-gray-600 w-12 text-right">{currentSettings.app.soundEffects.volume}%</span>
                     </div>
                   </div>
                 )}
-                <ToggleRow label="Haptic feedback" checked={settings.app.hapticFeedback.enabled} onChange={onToggle("app.hapticFeedback.enabled")} />
-                <ToggleRow label="Auto-save" checked={settings.app.autoSave.enabled} onChange={onToggle("app.autoSave.enabled")} />
-                {settings.app.autoSave.enabled && (
-                  <RowNumberInput label="Auto-save interval (sec)" value={settings.app.autoSave.interval} onChange={onInput("app.autoSave.interval", (v) => Number(v))} min={10} max={300} />
+                <ToggleRow label="Haptic feedback" checked={currentSettings.app.hapticFeedback.enabled} onChange={onToggle("app.hapticFeedback.enabled")} />
+                <ToggleRow label="Auto-save" checked={currentSettings.app.autoSave.enabled} onChange={onToggle("app.autoSave.enabled")} />
+                {currentSettings.app.autoSave.enabled && (
+                  <RowNumberInput label="Auto-save interval (sec)" value={currentSettings.app.autoSave.interval} onChange={onInput("app.autoSave.interval", (v) => Number(v))} min={10} max={300} />
                 )}
               </div>
               <div className="pt-3 border-t border-gray-100 space-y-1">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Data Usage</p>
                 <RowSelect
                   label="Image quality"
-                  value={settings.app.dataUsage.imageQuality}
+                  value={currentSettings.app.dataUsage.imageQuality}
                   onChange={(value) => onInput("app.dataUsage.imageQuality")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                   options={[
                     { value: "low", label: "Low" },
@@ -799,7 +715,7 @@ export default function SettingsPage() {
                 />
                 <RowSelect
                   label="Video quality"
-                  value={settings.app.dataUsage.videoQuality}
+                  value={currentSettings.app.dataUsage.videoQuality}
                   onChange={(value) => onInput("app.dataUsage.videoQuality")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                   options={[
                     { value: "low", label: "Low" },
@@ -807,7 +723,7 @@ export default function SettingsPage() {
                     { value: "high", label: "High" }
                   ]}
                 />
-                <ToggleRow label="Auto-download media" checked={settings.app.dataUsage.autoDownload} onChange={onToggle("app.dataUsage.autoDownload")} />
+                <ToggleRow label="Auto-download media" checked={currentSettings.app.dataUsage.autoDownload} onChange={onToggle("app.dataUsage.autoDownload")} />
               </div>
             </div>
           </SettingsSection>
