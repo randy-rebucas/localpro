@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +24,7 @@ import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useSession } from "@/hooks/useAuth";
+import { SessionContext } from "@/contexts/session-context";
 
 // Schema for basic onboarding information
 const onboardingSchema = z.object({
@@ -86,6 +87,9 @@ const steps = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  // Get session context for refreshing session data (may be undefined if not in provider)
+  const sessionContext = useContext(SessionContext);
+  const sessionContextRefetch = sessionContext?.refetch;
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -244,6 +248,14 @@ export default function OnboardingPage() {
       const result = await response.json();
 
       if (response.ok && result.success) {
+        // Refresh session data to reflect updated user information
+        if (sessionContextRefetch) {
+          sessionContextRefetch().catch((error) => {
+            logger.warn('Failed to refresh session after onboarding completion', {
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+        }
         toast.success("Profile setup complete! Welcome to LocalPro!");
         setIsRedirecting(true);
         setTimeout(() => {

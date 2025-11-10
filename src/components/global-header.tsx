@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "@/hooks/useAuth";
@@ -70,17 +70,59 @@ export function GlobalHeader({
   const router = useRouter();
   const pathname = usePathname();
   const {
-    isServiceProvider,
-    isSupplier,
-    isInstructor,
-    isAgencyOwner,
-    isAgencyAdmin,
     isAdmin,
     isBusinessRole,
   } = useRoleAccess();
 
-  // Check if user has multiple roles (business role users can also act as clients)
-  const hasMultipleRoles = isBusinessRole;
+  // Get user roles and determine available role views
+  const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
+  
+  // Show switcher if user has multiple roles (client + at least one business role, or multiple business roles)
+  const hasMultipleRoles = userRoles.length > 1;
+  const shouldShowSwitcher = hasMultipleRoles && session;
+
+  // Role view state - persist in localStorage, default to first available role
+  const [roleView, setRoleView] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('roleView');
+      // If we have user roles and saved value is valid, use it
+      if (saved && userRoles.length > 0 && userRoles.includes(saved)) {
+        return saved;
+      }
+    }
+    // Default to first role (usually 'client')
+    return userRoles.length > 0 ? userRoles[0] : 'client';
+  });
+
+  // Update roleView when userRoles change (e.g., after login)
+  useEffect(() => {
+    if (userRoles.length > 0) {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('roleView');
+        // If saved value is valid, use it; otherwise use first role
+        if (saved && userRoles.includes(saved)) {
+          setRoleView(saved);
+        } else {
+          // Check current roleView, if invalid, set to first role
+          setRoleView((currentView) => {
+            return userRoles.includes(currentView) ? currentView : userRoles[0];
+          });
+        }
+      } else {
+        // Check current roleView, if invalid, set to first role
+        setRoleView((currentView) => {
+          return userRoles.includes(currentView) ? currentView : userRoles[0];
+        });
+      }
+    }
+  }, [userRoles]); // Only depend on userRoles
+
+  // Save roleView to localStorage when it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && userRoles.includes(roleView)) {
+      localStorage.setItem('roleView', roleView);
+    }
+  }, [roleView, userRoles]);
 
   // State management
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -95,7 +137,6 @@ export function GlobalHeader({
   const [_favoritesCount, _setFavoritesCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
-  const [roleView, setRoleView] = useState<'client' | 'provider'>('client');
 
   // Refs for click outside detection
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -412,10 +453,11 @@ export function GlobalHeader({
               </button>
             )}
 
-            {/* Role-based Navigation Icons */}
-            {showRoleNavigation && session && (
+            {/* Role-based Navigation Icons - Only show when not in client view */}
+            {showRoleNavigation && session && roleView !== 'client' && (
               <div className="hidden sm:flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
-                {isServiceProvider && (
+                {/* Marketplace/Store - Show if in provider view and user has provider role */}
+                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
                   <Link
                     href="/marketplace"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
@@ -429,7 +471,8 @@ export function GlobalHeader({
                     <Store className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {isSupplier && (
+                {/* Supplies - Show if in supplier view and user has supplier role */}
+                {roleView === 'supplier' && userRoles.includes('supplier') && (
                   <Link
                     href="/supplies"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/supplies")
@@ -443,7 +486,8 @@ export function GlobalHeader({
                     <Package className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {isInstructor && (
+                {/* Academy - Show if in instructor view and user has instructor role */}
+                {roleView === 'instructor' && userRoles.includes('instructor') && (
                   <Link
                     href="/academy"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/academy")
@@ -457,7 +501,8 @@ export function GlobalHeader({
                     <GraduationCap className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {isServiceProvider && (
+                {/* Rentals - Show if in provider view and user has provider role */}
+                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
                   <Link
                     href="/rentals"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/rentals")
@@ -471,7 +516,8 @@ export function GlobalHeader({
                     <Car className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {isServiceProvider && (
+                {/* Jobs - Show if in provider view and user has provider role */}
+                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
                   <Link
                     href="/marketplace/jobs"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace/jobs")
@@ -485,7 +531,8 @@ export function GlobalHeader({
                     <Briefcase className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
+                {/* Analytics - Show if in any business role view (not client) */}
+                {roleView !== 'client' && isBusinessRole && userRoles.includes(roleView) && (
                   <Link
                     href="/analytics"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/analytics")
@@ -499,7 +546,8 @@ export function GlobalHeader({
                     <BarChart3 className="w-5 h-5" aria-hidden="true" />
                   </Link>
                 )}
-                {(isServiceProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin) && (
+                {/* Finance - Show if in any business role view (not client) */}
+                {roleView !== 'client' && isBusinessRole && userRoles.includes(roleView) && (
                   <Link
                     href="/finance"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/finance")
@@ -626,28 +674,47 @@ export function GlobalHeader({
               </Link>
             )}
 
-            {/* Role Toggle (Client View / Provider View) - Only show if user has multiple roles */}
-            {hasMultipleRoles && session && (
+            {/* Role Toggle - Show options based on user's actual roles, hide if only client */}
+            {shouldShowSwitcher && (
               <div className="hidden sm:flex items-center border-r border-gray-300 pr-3 mr-1">
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setRoleView('client')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${roleView === 'client'
-                        ? 'bg-white text-green-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    Client View
-                  </button>
-                  <button
-                    onClick={() => setRoleView('provider')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${roleView === 'provider'
-                        ? 'bg-white text-green-700 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    Provider View
-                  </button>
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+                  {userRoles.map((role) => {
+                    const roleLabels: Record<string, string> = {
+                      'client': 'Client',
+                      'provider': 'Provider',
+                      'supplier': 'Supplier',
+                      'instructor': 'Instructor',
+                      'agency_owner': 'Agency Owner',
+                      'agency_admin': 'Agency Admin',
+                      'admin': 'Admin',
+                    };
+                    
+                    return (
+                      <button
+                        key={role}
+                        onClick={() => {
+                          setRoleView(role);
+                          // Dispatch custom event for other components to listen
+                          if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('roleViewChanged', { detail: { roleView: role } }));
+                          }
+                          // Refresh page if on dashboard to update view
+                          if (pathname?.startsWith('/dashboard')) {
+                            router.refresh();
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
+                          roleView === role
+                            ? 'bg-white text-green-700 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title={`Switch to ${roleLabels[role] || role} view`}
+                        aria-label={`Switch to ${roleLabels[role] || role} view`}
+                      >
+                        {roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

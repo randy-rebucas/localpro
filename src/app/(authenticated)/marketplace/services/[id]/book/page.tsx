@@ -323,7 +323,7 @@ export default function BookServicePage() {
 
       // Create booking payload
       const bookingPayload = {
-        service: serviceId,
+        serviceId: serviceId,
         provider: providerId,
         bookingDate: bookingDateValue,
         duration: formData.duration,

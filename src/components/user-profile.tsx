@@ -469,6 +469,66 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
   const profileFetchedRef = useRef(false);
   const fetchInProgressRef = useRef(false);
   
+  // Get user roles for conditional rendering
+  const userRoles = useMemo(() => session?.user?.roles || profile?.roles || ['client'], [session?.user?.roles, profile?.roles]);
+  
+  // Get current role view from localStorage
+  const [roleView, setRoleView] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('roleView');
+      if (saved && userRoles.includes(saved)) {
+        return saved;
+      }
+    }
+    return userRoles.length > 0 ? userRoles[0] : 'client';
+  });
+
+  // Update roleView when userRoles change
+  useEffect(() => {
+    if (userRoles.length > 0) {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('roleView');
+        if (saved && userRoles.includes(saved)) {
+          setRoleView(saved);
+        } else if (!userRoles.includes(roleView)) {
+          setRoleView(userRoles[0]);
+        }
+      } else if (!userRoles.includes(roleView)) {
+        setRoleView(userRoles[0]);
+      }
+    }
+  }, [userRoles, roleView]);
+
+  // Listen for roleView changes from localStorage and custom events (when switcher changes)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('roleView');
+      if (saved && userRoles.includes(saved)) {
+        setRoleView(saved);
+      }
+    };
+
+    const handleRoleViewChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ roleView: string }>;
+      if (customEvent.detail?.roleView && userRoles.includes(customEvent.detail.roleView)) {
+        setRoleView(customEvent.detail.roleView);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('roleViewChanged', handleRoleViewChange);
+    // Also check periodically in case of same-tab updates
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('roleViewChanged', handleRoleViewChange);
+      clearInterval(interval);
+    };
+  }, [userRoles]);
+  
   // Fetch full user profile
   useEffect(() => {
     // Skip if already fetched or fetch in progress
@@ -547,23 +607,23 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     fetchProfile();
   }, [session?.user?.id, session?.user, initialProfile]);
   
-  // Get user roles for conditional rendering
-  const userRoles = session?.user?.roles || profile?.roles || ['client'];
-  const primaryRole = userRoles[0] || 'client'; // Use first role as primary
+  // Role-based visibility helpers - based on current role view, not just user roles
+  const isClientView = roleView === 'client';
+  const isProviderView = roleView === 'provider';
+  const isSupplierView = roleView === 'supplier';
+  const isInstructorView = roleView === 'instructor';
+  const isAgencyOwnerView = roleView === 'agency_owner';
+  const isAgencyAdminView = roleView === 'agency_admin';
+  const isAdminView = roleView === 'admin';
   
-  // Role-based visibility helpers (check if user has specific roles)
-  const isClient = userRoles.includes('client');
-  const isProvider = userRoles.includes('provider');
-  const isSupplier = userRoles.includes('supplier');
-  const isInstructor = userRoles.includes('instructor');
-  const isAgencyOwner = userRoles.includes('agency_owner');
-  const isAgencyAdmin = userRoles.includes('agency_admin');
-  const isAdmin = userRoles.includes('admin');
+  // Use role view for display purposes
+  const primaryRole = roleView || userRoles[0] || 'client';
   
-  // Business roles (user has any business role)
-  const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
-  const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
-  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
+  // Business roles based on current view
+  const isBusinessRole = isProviderView || isSupplierView || isInstructorView || isAgencyOwnerView || isAgencyAdminView || isAdminView;
+  const isServiceProvider = isProviderView || isAgencyOwnerView || isAgencyAdminView || isAdminView;
+  const isAdministrative = isAgencyOwnerView || isAgencyAdminView || isAdminView;
+  
 
   // Prefetch edit route
   useEffect(() => {
@@ -797,7 +857,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Business Information - Only for non-client roles */}
-              {!isClient && isBusinessRole && profile?.profile?.businessName && (
+              {!isClientView && isBusinessRole && profile?.profile?.businessName && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
@@ -825,7 +885,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Skills - Only for non-client roles */}
-              {!isClient && profile?.profile?.skills && profile.profile.skills.length > 0 && (
+              {!isClientView && profile?.profile?.skills && profile.profile.skills.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Briefcase className="w-4 h-4 inline mr-2" />
@@ -845,7 +905,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Specialties - Only for non-client roles */}
-              {!isClient && isServiceProvider && profile?.profile?.specialties && profile.profile.specialties.length > 0 && (
+              {!isClientView && isServiceProvider && profile?.profile?.specialties && profile.profile.specialties.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <Target className="w-4 h-4 inline mr-2" />
@@ -865,7 +925,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Service Areas - Only for non-client roles */}
-              {!isClient && isServiceProvider && profile?.profile?.serviceAreas && profile.profile.serviceAreas.length > 0 && (
+              {!isClientView && isServiceProvider && profile?.profile?.serviceAreas && profile.profile.serviceAreas.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <MapPin className="w-4 h-4 inline mr-2" />
@@ -885,17 +945,17 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Experience - Only for non-client roles */}
-              {!isClient && isBusinessRole && profile?.profile?.experience !== undefined && (
+              {!isClientView && isBusinessRole && profile?.profile?.experience !== undefined && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
+                    {isServiceProvider ? "Service Experience" : isInstructorView ? "Teaching Experience" : "Professional Experience"}
                   </label>
                   <p className="text-gray-700 py-2">{profile.profile.experience} years</p>
                 </div>
               )}
 
               {/* Rating and Reviews - Only for non-client roles */}
-              {!isClient && (profile?.profile?.rating !== undefined || profile?.profile?.totalReviews !== undefined) && (
+              {!isClientView && (profile?.profile?.rating !== undefined || profile?.profile?.totalReviews !== undefined) && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
                   {profile.profile.rating !== undefined && (
                     <div>
@@ -923,7 +983,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Certifications - Only for non-client roles */}
-              {!isClient && profile?.profile?.certifications && profile.profile.certifications.length > 0 && (
+              {!isClientView && profile?.profile?.certifications && profile.profile.certifications.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -956,7 +1016,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Insurance - Only for non-client roles */}
-              {!isClient && isBusinessRole && profile?.profile?.insurance && (
+              {!isClientView && isBusinessRole && profile?.profile?.insurance && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -994,7 +1054,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Background Check - Only for non-client roles */}
-              {!isClient && isBusinessRole && profile?.profile?.backgroundCheck && (
+              {!isClientView && isBusinessRole && profile?.profile?.backgroundCheck && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -1025,11 +1085,11 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Portfolio Gallery - Only for non-client roles */}
-              {!isClient && isBusinessRole && profile?.profile?.portfolio && profile.profile.portfolio.length > 0 && (
+              {!isClientView && isBusinessRole && profile?.profile?.portfolio && profile.profile.portfolio.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Briefcase className="w-4 h-4" />
-                    {isServiceProvider ? "Service Portfolio" : isInstructor ? "Teaching Portfolio" : "Professional Portfolio"}
+                    {isServiceProvider ? "Service Portfolio" : isInstructorView ? "Teaching Portfolio" : "Professional Portfolio"}
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {profile.profile.portfolio.map((item, index) => {
@@ -1053,7 +1113,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Verification Levels - Only for non-client roles */}
-              {!isClient && profile?.verification && Object.values(profile.verification).some(v => v === true) && (
+              {!isClientView && profile?.verification && Object.values(profile.verification).some(v => v === true) && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Shield className="w-4 h-4" />
@@ -1088,7 +1148,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Badges - Only for non-client roles */}
-              {!isClient && profile?.badges && profile.badges.length > 0 && (
+              {!isClientView && profile?.badges && profile.badges.length > 0 && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <Award className="w-4 h-4" />
@@ -1113,7 +1173,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               )}
 
               {/* Performance Metrics - Only for non-client roles */}
-              {!isClient && (profile?.responseTime?.average !== undefined || profile?.completionRate !== undefined || profile?.cancellationRate !== undefined) && (
+              {!isClientView && (profile?.responseTime?.average !== undefined || profile?.completionRate !== undefined || profile?.cancellationRate !== undefined) && (
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -1177,10 +1237,10 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             />
 
             {/* Wallet - Only for non-client roles */}
-            {!isClient && isBusinessRole && <WalletInfo profile={profile} />}
+            {!isClientView && isBusinessRole && <WalletInfo profile={profile} />}
 
             {/* Agency Information - Only for non-client roles */}
-            {!isClient && <AgencyInfo profile={profile} />}
+            {!isClientView && <AgencyInfo profile={profile} />}
 
             {/* Referral Information */}
             {/* <ReferralInfo profile={profile} /> */}
@@ -1192,8 +1252,8 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
             <QuickActions
               isBusinessRole={isBusinessRole}
               isServiceProvider={isServiceProvider}
-              isSupplier={isSupplier}
-              isInstructor={isInstructor}
+              isSupplier={isSupplierView}
+              isInstructor={isInstructorView}
               isAdministrative={isAdministrative}
             />
           </div>

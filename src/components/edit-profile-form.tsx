@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useContext, useMemo } from "react";
 import { useSession } from "@/hooks/useAuth";
+import { SessionContext } from "@/contexts/session-context";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -244,28 +245,96 @@ interface EditProfileFormProps {
 
 export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const { data: session } = useSession();
+  // Get session context for refreshing session data (may be undefined if not in provider)
+  const sessionContext = useContext(SessionContext);
+  const sessionContextRefetch = sessionContext?.refetch;
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile || null);
   
   // Get user roles for conditional rendering
-  const userRoles = session?.user?.roles || [];
+  const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
   
-  // Role-based visibility helpers
-  const isClient = userRoles.includes('client') || userRoles.includes('CLIENT');
-  const isProvider = userRoles.includes('provider') || userRoles.includes('PROVIDER');
-  const isSupplier = userRoles.includes('supplier') || userRoles.includes('SUPPLIER');
-  const isInstructor = userRoles.includes('instructor') || userRoles.includes('INSTRUCTOR');
-  const isAgencyOwner = userRoles.includes('agency_owner') || userRoles.includes('AGENCY_OWNER');
-  const isAgencyAdmin = userRoles.includes('agency_admin') || userRoles.includes('AGENCY_ADMIN');
-  const isAdmin = userRoles.includes('admin') || userRoles.includes('ADMIN');
+  // Get current role view from localStorage
+  const [roleView, setRoleView] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('roleView');
+      if (saved && userRoles.includes(saved)) {
+        return saved;
+      }
+    }
+    return userRoles.length > 0 ? userRoles[0] : 'client';
+  });
+
+  // Update roleView when userRoles change
+  useEffect(() => {
+    if (userRoles.length > 0) {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('roleView');
+        if (saved && userRoles.includes(saved)) {
+          setRoleView(saved);
+        } else if (!userRoles.includes(roleView)) {
+          setRoleView(userRoles[0]);
+        }
+      } else if (!userRoles.includes(roleView)) {
+        setRoleView(userRoles[0]);
+      }
+    }
+  }, [userRoles, roleView]);
+
+  // Listen for roleView changes from localStorage and custom events (when switcher changes)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('roleView');
+      if (saved && userRoles.includes(saved)) {
+        setRoleView(saved);
+      }
+    };
+
+    const handleRoleViewChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ roleView: string }>;
+      if (customEvent.detail?.roleView && userRoles.includes(customEvent.detail.roleView)) {
+        setRoleView(customEvent.detail.roleView);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('roleViewChanged', handleRoleViewChange);
+    // Also check periodically in case of same-tab updates
+    const interval = setInterval(handleStorageChange, 500);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('roleViewChanged', handleRoleViewChange);
+      clearInterval(interval);
+    };
+  }, [userRoles]);
   
-  // Business roles (providers, suppliers, instructors, agency roles)
-  const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
+  // Role-based visibility helpers - based on current role view, not just user roles
+  const isClientView = roleView === 'client';
+  const isProviderView = roleView === 'provider';
+  const isInstructorView = roleView === 'instructor';
   
-  // Service provider roles (providers, agency roles)
-  const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
+  // Check if user has these roles
+  const hasProviderRole = userRoles.includes('provider') || userRoles.includes('PROVIDER');
+  const hasSupplierRole = userRoles.includes('supplier') || userRoles.includes('SUPPLIER');
+  const hasInstructorRole = userRoles.includes('instructor') || userRoles.includes('INSTRUCTOR');
+  const hasAgencyOwnerRole = userRoles.includes('agency_owner') || userRoles.includes('AGENCY_OWNER');
+  const hasAgencyAdminRole = userRoles.includes('agency_admin') || userRoles.includes('AGENCY_ADMIN');
+  const hasAdminRole = userRoles.includes('admin') || userRoles.includes('ADMIN');
+  
+  // Business roles visibility - only show if in business role view
+  const isBusinessRole = !isClientView && (hasProviderRole || hasSupplierRole || hasInstructorRole || hasAgencyOwnerRole || hasAgencyAdminRole || hasAdminRole);
+  
+  // Service provider visibility - only show if in provider view and has provider role
+  const isServiceProvider = isProviderView && (hasProviderRole || hasAgencyOwnerRole || hasAgencyAdminRole || hasAdminRole);
   
   // Administrative roles
-  const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
+  const isAdministrative = hasAgencyOwnerRole || hasAgencyAdminRole || hasAdminRole;
+  
+  // For backward compatibility with existing checks
+  const isClient = isClientView;
+  const isInstructor = isInstructorView && hasInstructorRole;
   const [isLoading, setIsLoading] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -971,6 +1040,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           setLastSaved(new Date());
           setHasUnsavedChanges(false);
           setInitialValues({ ...(watchedValues as ProfileForm) }); // Update initial values to current
+          // Refresh session data to reflect updated user information
+          if (sessionContextRefetch) {
+            sessionContextRefetch().catch((error) => {
+              logger.warn('Failed to refresh session after auto-save', { error: error instanceof Error ? error : new Error(String(error)) });
+            });
+          }
           setTimeout(() => setAutoSaveStatus('idle'), 2000);
         } else {
           setAutoSaveStatus('error');
@@ -984,7 +1059,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }, 3000); // Auto-save after 3 seconds of inactivity
 
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, session?.user?.id, session?.user?._id, hasUnsavedChanges, autoSaveStatus, buildNestedPayload, profile]);
+  }, [watchedValues, session?.user?.id, session?.user?._id, hasUnsavedChanges, autoSaveStatus, buildNestedPayload, profile, sessionContextRefetch]);
 
   // Use a ref to track if we're currently fetching to prevent multiple simultaneous requests
   const isFetchingRef = useRef(false);
@@ -1851,9 +1926,22 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           reset(formData);
           setInitialValues(formData);
           
+          // Refresh session data to reflect updated user information
+          if (sessionContextRefetch) {
+            sessionContextRefetch().catch((error) => {
+              logger.warn('Failed to refresh session after profile update', { error: error instanceof Error ? error : new Error(String(error)) });
+            });
+          }
+          
           toast.success(responseData.message || "Profile updated successfully!");
         } else {
           logger.warn('Updated profile is empty or invalid');
+          // Still refresh session even if response data is empty
+          if (sessionContextRefetch) {
+            sessionContextRefetch().catch((error) => {
+              logger.warn('Failed to refresh session after profile update', { error: error instanceof Error ? error : new Error(String(error)) });
+            });
+          }
           toast.success("Profile updated successfully!");
         }
       } else {
@@ -1959,6 +2047,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                           // Clear location from form
                           setValue("locationPoint", undefined);
                           setHasUnsavedChanges(false);
+                        }
+                        // Refresh session data to reflect updated user information
+                        if (sessionContextRefetch) {
+                          sessionContextRefetch().catch((error) => {
+                            logger.warn('Failed to refresh session after retry update', { error: error instanceof Error ? error : new Error(String(error)) });
+                          });
                         }
                         setIsLoading(false);
                       } else {
@@ -2124,6 +2218,13 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         // Refresh profile data from server to ensure consistency
         await fetchProfile();
         
+        // Refresh session data to reflect updated user information
+        if (sessionContextRefetch) {
+          sessionContextRefetch().catch((error) => {
+            logger.warn('Failed to refresh session after avatar upload', { error: error instanceof Error ? error : new Error(String(error)) });
+          });
+        }
+        
         toast.success(data.message || "Avatar uploaded successfully!");
       } else {
         throw new Error("Invalid response format");
@@ -2178,6 +2279,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       const portfolioData = data.data?.portfolio || data.portfolio;
       if (portfolioData) {
         setProfile(prev => prev ? { ...prev, portfolio: portfolioData } : null);
+        // Refresh session data to reflect updated user information
+        if (sessionContextRefetch) {
+          sessionContextRefetch().catch((error) => {
+            logger.warn('Failed to refresh session after portfolio upload', { error: error instanceof Error ? error : new Error(String(error)) });
+          });
+        }
         toast.success(data.message || "Portfolio uploaded successfully!");
       } else {
         throw new Error("Invalid response format");
@@ -2210,6 +2317,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
       
       if (response.ok) {
         setProfile(prev => prev ? { ...prev, portfolio: updatedPortfolio } : null);
+        // Refresh session data to reflect updated user information
+        if (sessionContextRefetch) {
+          sessionContextRefetch().catch((error) => {
+            logger.warn('Failed to refresh session after portfolio delete', { error: error instanceof Error ? error : new Error(String(error)) });
+          });
+        }
         toast.success("Portfolio image removed successfully!");
       } else {
         toast.error("Failed to remove portfolio image");
