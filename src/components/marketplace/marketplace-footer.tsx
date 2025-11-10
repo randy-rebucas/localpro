@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 export function MarketplaceFooter() {
   return (
@@ -11,19 +12,19 @@ export function MarketplaceFooter() {
             <h3 className="font-semibold text-gray-900 mb-4">About</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/about" className="hover:text-green-600 transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/terms" className="hover:text-green-600 transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/privacy" className="hover:text-green-600 transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -31,19 +32,19 @@ export function MarketplaceFooter() {
             <h3 className="font-semibold text-gray-900 mb-4">Help</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/help-center" className="hover:text-green-600 transition-colors">
                   Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/contact" className="hover:text-green-600 transition-colors">
                   Contact Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-green-600 transition-colors">
+                <Link href="/help-center#faqs" className="hover:text-green-600 transition-colors">
                   FAQs
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

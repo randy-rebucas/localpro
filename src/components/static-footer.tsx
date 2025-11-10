@@ -56,9 +56,9 @@ const footerSections: FooterSection[] = [
     title: "Support",
     links: [
       { href: "/help-center", label: "Help Center", color: "bg-blue-500" },
-      { href: "/community", label: "Community", color: "bg-emerald-500" },
-      { href: "/contact", label: "Contact Us", color: "bg-purple-500" },
-      { href: "/blog", label: "Blog", color: "bg-orange-500" }
+      { href: "/contact", label: "Contact Us", color: "bg-emerald-500" },
+      { href: "/help-center#faqs", label: "FAQs", color: "bg-purple-500" },
+      { href: "/community", label: "Community", color: "bg-orange-500" }
     ]
   },
   {

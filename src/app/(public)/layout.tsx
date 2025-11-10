@@ -241,12 +241,12 @@ export default function PublicLayout({
         <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="col-span-1 md:col-span-2">
+              <div>
                 <Link href="/" className="flex items-center space-x-2 mb-4">
                   <Logo className="h-8 w-8 text-green-600" />
                   <span className="text-xl font-bold text-gray-900">LocalPro</span>
                 </Link>
-                <p className="text-gray-600 text-sm max-w-md">
+                <p className="text-gray-600 text-sm">
                   Your all-in-one platform for professional services, supplies, education, and more.
                 </p>
               </div>
@@ -255,7 +255,7 @@ export default function PublicLayout({
                 <ul className="space-y-2">
                   <li>
                     <Link href="/about" className="text-sm text-gray-600 hover:text-green-600">
-                      About
+                      About Us
                     </Link>
                   </li>
                   <li>
@@ -271,16 +271,36 @@ export default function PublicLayout({
                 </ul>
               </div>
               <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-4">Support</h3>
+                <ul className="space-y-2">
+                  <li>
+                    <Link href="/help-center" className="text-sm text-gray-600 hover:text-green-600">
+                      Help Center
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/contact" className="text-sm text-gray-600 hover:text-green-600">
+                      Contact Us
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/help-center#faqs" className="text-sm text-gray-600 hover:text-green-600">
+                      FAQs
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+              <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Legal</h3>
                 <ul className="space-y-2">
                   <li>
                     <Link href="/privacy" className="text-sm text-gray-600 hover:text-green-600">
-                      Privacy
+                      Privacy Policy
                     </Link>
                   </li>
                   <li>
                     <Link href="/terms" className="text-sm text-gray-600 hover:text-green-600">
-                      Terms
+                      Terms of Service
                     </Link>
                   </li>
                   <li>

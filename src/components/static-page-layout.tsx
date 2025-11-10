@@ -1,6 +1,4 @@
 import { ReactNode } from "react";
-import { StaticHeader } from "./static-header";
-import { StaticFooter } from "./static-footer";
 
 interface StaticPageLayoutProps {
   children: ReactNode;
@@ -10,9 +8,8 @@ interface StaticPageLayoutProps {
 export function StaticPageLayout({ children, className = "" }: StaticPageLayoutProps) {
   return (
     <div className={`min-h-screen bg-white dark:bg-slate-900 ${className}`}>
-      <StaticHeader />
+      {/* Header and Footer are handled by PublicLayout */}
       {children}
-      <StaticFooter />
     </div>
   );
 }
