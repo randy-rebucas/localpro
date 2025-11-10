@@ -88,6 +88,7 @@ export default function OnboardingPage() {
   const { data: session } = useSession();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const {
     register,
@@ -205,6 +206,15 @@ export default function OnboardingPage() {
       if (formData.wantsToBeSupplier) roles.push("supplier");
       if (formData.wantsToBeInstructor) roles.push("instructor");
       
+      // Build profile object with optional fields
+      const profile: Record<string, unknown> = {};
+      if (formData.bio) {
+        profile.bio = formData.bio;
+      }
+      if (address) {
+        profile.address = address;
+      }
+      
       // Build payload matching the expected structure
       const payload: Record<string, unknown> = {
         firstName: formData.firstName,
@@ -216,13 +226,12 @@ export default function OnboardingPage() {
         payload.email = formData.email;
       }
       
-      if (formData.bio) {
-        payload.bio = formData.bio;
+      // Only include profile if it has any fields
+      if (Object.keys(profile).length > 0) {
+        payload.profile = profile;
       }
       
-      if (address) {
-        payload.address = address;
-      }
+      logger.debug("Onboarding payload", { payload });
       
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.authCompleteOnboarding}`,
@@ -236,14 +245,16 @@ export default function OnboardingPage() {
 
       if (response.ok && result.success) {
         toast.success("Profile setup complete! Welcome to LocalPro!");
+        setIsRedirecting(true);
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
       } else {
         toast.error(result.error || result.message || "Failed to complete onboarding");
-        logger.error("Onboarding completion failed", new Error(result.error || "Unknown error"), {
+        logger.error("Onboarding completion failed", new Error(result.error || result.message || "Unknown error"), {
           status: response.status,
           result,
+          payload,
         });
       }
     } catch (error) {
@@ -266,7 +277,19 @@ export default function OnboardingPage() {
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4 relative">
+      {/* Loading Overlay for Redirect */}
+      {isRedirecting && (
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">Setup Complete!</h3>
+              <p className="text-sm text-gray-600">Redirecting to your dashboard...</p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
