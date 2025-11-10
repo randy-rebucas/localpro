@@ -2,18 +2,23 @@
 
 import { Wallet as WalletIcon } from "lucide-react";
 import { UserProfileData } from "./user-profile";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getDefaultCurrency } from "@/lib/settings-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface WalletInfoProps {
   profile: UserProfileData | null;
 }
 
 export function WalletInfo({ profile }: WalletInfoProps) {
+  const { settings: appSettings } = useAppSettings();
+  
   if (!profile?.wallet) {
     return null;
   }
 
   const balance = profile.wallet.balance || 0;
-  const currency = profile.wallet.currency || 'PHP';
+  const currency = profile.wallet.currency || getDefaultCurrency(appSettings);
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -25,7 +30,7 @@ export function WalletInfo({ profile }: WalletInfoProps) {
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Balance</span>
           <span className="text-lg font-semibold text-gray-700">
-            {currency} {balance.toLocaleString()}
+            {formatCurrency(balance, currency, { appSettings })}
           </span>
         </div>
       </div>

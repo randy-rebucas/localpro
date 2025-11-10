@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,6 +19,11 @@ import {
 } from "lucide-react";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { isPaymentMethodEnabled, getDefaultCurrency, calculateTransactionFee } from "@/lib/settings-utils";
+import { getPreferredPaymentMethod } from "@/lib/user-settings-utils";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 import { logger } from "@/lib/logger";
 
 interface Service {
@@ -65,7 +70,7 @@ interface BookingFormData {
   specialInstructions: string;
   
   // Step 3 & 4
-  paymentMethod: 'paypal' | 'paymaya' | 'wallet' | '';
+  paymentMethod: 'paypal' | 'paymaya' | 'wallet' | 'gcash' | '';
   totalAmount: number;
 }
 
@@ -81,6 +86,8 @@ export default function BookServicePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serviceIdFromUrl = params.id as string;
+  const { settings: appSettings } = useAppSettings();
+  const { settings: userSettings } = useUserSettings();
   
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [service, setService] = useState<Service | null>(null);
@@ -89,6 +96,9 @@ export default function BookServicePage() {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  
+  // Get preferred payment method from user settings
+  const preferredPaymentMethod = getPreferredPaymentMethod(userSettings);
   
   const [formData, setFormData] = useState<BookingFormData>({
     bookingDate: '',
@@ -103,9 +113,22 @@ export default function BookServicePage() {
       country: 'Philippines'
     },
     specialInstructions: '',
-    paymentMethod: '',
+    paymentMethod: preferredPaymentMethod as 'paypal' | 'paymaya' | 'wallet' | '' || '',
     totalAmount: 0
   });
+
+  // Get default currency from app settings
+  const defaultCurrency = getDefaultCurrency(appSettings);
+  
+  // Calculate transaction fee and total with fee
+  const calculateTotalWithFee = useCallback((baseAmount: number) => {
+    const transactionFee = calculateTransactionFee(baseAmount, appSettings);
+    return {
+      baseAmount,
+      transactionFee,
+      totalAmount: baseAmount + transactionFee
+    };
+  }, [appSettings]);
 
   // Fetch service details
   const fetchService = useCallback(async () => {
@@ -143,16 +166,20 @@ export default function BookServicePage() {
       
       setService(serviceData);
       
-      // Set default duration and calculate initial total
+      // Set default duration and calculate initial total (including transaction fee)
       const defaultDuration = serviceData.estimatedDuration?.min || 2;
-      const total = serviceData.pricing?.type === 'hourly' && defaultDuration > 0
+      const baseAmount = serviceData.pricing?.type === 'hourly' && defaultDuration > 0
         ? (serviceData.pricing?.basePrice || 0) * defaultDuration
         : (serviceData.pricing?.basePrice || 0);
+      
+      // Calculate total with transaction fee
+      const transactionFee = calculateTransactionFee(baseAmount, appSettings);
+      const totalWithFee = baseAmount + transactionFee;
       
       setFormData(prev => ({
         ...prev,
         duration: defaultDuration,
-        totalAmount: total
+        totalAmount: totalWithFee
       }));
     } catch (error) {
       logger.error("Error fetching service", error instanceof Error ? error : new Error(String(error)), { serviceId: serviceIdFromUrl });
@@ -160,7 +187,7 @@ export default function BookServicePage() {
     } finally {
       setLoading(false);
     }
-  }, [serviceIdFromUrl]);
+  }, [serviceIdFromUrl, appSettings]);
 
   // Fetch wallet balance
   const fetchWallet = useCallback(async () => {
@@ -190,15 +217,16 @@ export default function BookServicePage() {
     }
   }, [serviceIdFromUrl, fetchService, fetchWallet]);
 
-  // Update total when duration changes
+  // Update total when duration changes (including transaction fee)
   useEffect(() => {
     if (service && formData.duration > 0) {
-      const total = service.pricing.type === 'hourly'
+      const baseAmount = service.pricing.type === 'hourly'
         ? service.pricing.basePrice * formData.duration
         : service.pricing.basePrice;
-      setFormData(prev => ({ ...prev, totalAmount: total }));
+      const breakdown = calculateTotalWithFee(baseAmount);
+      setFormData(prev => ({ ...prev, totalAmount: breakdown.totalAmount }));
     }
-  }, [formData.duration, service]);
+  }, [formData.duration, service, calculateTotalWithFee]);
 
   // Handle step navigation
   const nextStep = () => {
@@ -284,7 +312,7 @@ export default function BookServicePage() {
       // Check wallet balance if using wallet payment
       if (formData.paymentMethod === 'wallet') {
         if (!wallet || wallet.balance < formData.totalAmount) {
-          throw new Error(`Insufficient wallet balance. You have ${wallet?.currency || 'PHP'} ${wallet?.balance?.toLocaleString() || 0}, but need ${service.pricing?.currency || 'PHP'} ${formData.totalAmount.toLocaleString()}`);
+          throw new Error(`Insufficient wallet balance. You have ${formatPrice(wallet?.balance || 0, wallet?.currency)}, but need ${formatPrice(formData.totalAmount, service.pricing?.currency)}`);
         }
       }
 
@@ -303,9 +331,10 @@ export default function BookServicePage() {
         specialInstructions: formData.specialInstructions || undefined,
         pricing: {
           basePrice: service.pricing.basePrice,
-          currency: service.pricing.currency || 'USD',
+          currency: service.pricing.currency || defaultCurrency,
           type: service.pricing.type,
-          totalAmount: formData.totalAmount
+          totalAmount: formData.totalAmount,
+          transactionFee: pricingBreakdown?.transactionFee || 0
         },
         payment: {
           method: formData.paymentMethod
@@ -349,7 +378,8 @@ export default function BookServicePage() {
           body: JSON.stringify({
             bookingId: createdBookingId,
             amount: formData.totalAmount,
-            currency: service.pricing.currency || 'USD'
+            currency: service.pricing.currency || defaultCurrency,
+            transactionFee: pricingBreakdown?.transactionFee || 0
           })
         }));
 
@@ -369,7 +399,8 @@ export default function BookServicePage() {
           body: JSON.stringify({
             bookingId: createdBookingId,
             amount: formData.totalAmount,
-            currency: service.pricing.currency || 'PHP'
+            currency: service.pricing.currency || defaultCurrency,
+            transactionFee: pricingBreakdown?.transactionFee || 0
           })
         }));
 
@@ -458,6 +489,15 @@ export default function BookServicePage() {
     }
   }, [searchParams, serviceIdFromUrl, router]);
 
+  // Calculate pricing breakdown (must be before any conditional returns)
+  const pricingBreakdown = useMemo(() => {
+    if (!service) return null;
+    const baseAmount = service.pricing.type === 'hourly'
+      ? service.pricing.basePrice * formData.duration
+      : service.pricing.basePrice;
+    return calculateTotalWithFee(baseAmount);
+  }, [service, formData.duration, calculateTotalWithFee]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -485,14 +525,14 @@ export default function BookServicePage() {
     );
   }
 
-  if (!service) return null;
-
-  const formatPrice = (price: number, currency: string = 'PHP') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency === 'PHP' ? 'PHP' : currency
-    }).format(price);
+  const formatPrice = (price: number, currency?: string) => {
+    const currencyCode = currency || defaultCurrency;
+    return formatCurrencyUtil(price, currencyCode, {
+      appSettings,
+    });
   };
+
+  if (!service || !pricingBreakdown) return null;
 
   const imageUrl = service.images && Array.isArray(service.images) && service.images.length > 0
     ? (typeof service.images[0] === 'string'
@@ -861,18 +901,24 @@ export default function BookServicePage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Base Price</span>
-                    <span className="text-gray-900">{formatPrice(service.pricing.basePrice, service.pricing.currency || 'PHP')}</span>
+                    <span className="text-gray-900">{formatPrice(service.pricing.basePrice, service.pricing.currency)}</span>
                   </div>
                   {service.pricing.type === 'hourly' && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">× {formData.duration} hour{formData.duration !== 1 ? 's' : ''}</span>
-                      <span className="text-gray-900">{formatPrice(service.pricing.basePrice * formData.duration, service.pricing.currency || 'PHP')}</span>
+                      <span className="text-gray-900">{formatPrice(service.pricing.basePrice * formData.duration, service.pricing.currency)}</span>
+                    </div>
+                  )}
+                  {pricingBreakdown && pricingBreakdown.transactionFee > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Transaction Fee</span>
+                      <span className="text-gray-900">{formatPrice(pricingBreakdown.transactionFee, service.pricing.currency)}</span>
                     </div>
                   )}
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex justify-between font-semibold">
                       <span className="text-gray-900">Total</span>
-                      <span className="text-green-600 text-lg">{formatPrice(formData.totalAmount, service.pricing.currency || 'PHP')}</span>
+                      <span className="text-green-600 text-lg">{formatPrice(formData.totalAmount, service.pricing.currency)}</span>
                     </div>
                   </div>
                 </div>
@@ -906,44 +952,83 @@ export default function BookServicePage() {
 
             <div className="space-y-4">
               <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-900">Total Amount</h3>
-                  <span className="text-2xl font-bold text-green-600">
-                    {formatPrice(formData.totalAmount, service.pricing.currency || 'PHP')}
-                  </span>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900">Subtotal</h3>
+                    <span className="text-lg text-gray-900">
+                      {formatPrice(pricingBreakdown?.baseAmount || 0, service.pricing.currency)}
+                    </span>
+                  </div>
+                  {pricingBreakdown && pricingBreakdown.transactionFee > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Transaction Fee</span>
+                      <span className="text-gray-700">
+                        {formatPrice(pricingBreakdown.transactionFee, service.pricing.currency)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-200 pt-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">Total Amount</h3>
+                      <span className="text-2xl font-bold text-green-600">
+                        {formatPrice(formData.totalAmount, service.pricing.currency)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="paypal"
-                    checked={formData.paymentMethod === 'paypal'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paypal' }))}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">PayPal</div>
-                    <div className="text-sm text-gray-600">Pay securely with PayPal</div>
-                  </div>
-                </label>
+                {isPaymentMethodEnabled('paypal', appSettings) && (
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="paypal"
+                      checked={formData.paymentMethod === 'paypal'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paypal' }))}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">PayPal</div>
+                      <div className="text-sm text-gray-600">Pay securely with PayPal</div>
+                    </div>
+                  </label>
+                )}
 
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="paymaya"
-                    checked={formData.paymentMethod === 'paymaya'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paymaya' }))}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">PayMaya</div>
-                    <div className="text-sm text-gray-600">Pay with PayMaya wallet or card</div>
-                  </div>
-                </label>
+                {isPaymentMethodEnabled('paymaya', appSettings) && (
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="paymaya"
+                      checked={formData.paymentMethod === 'paymaya'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paymaya' }))}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">PayMaya</div>
+                      <div className="text-sm text-gray-600">Pay with PayMaya wallet or card</div>
+                    </div>
+                  </label>
+                )}
+
+                {isPaymentMethodEnabled('gcash', appSettings) && (
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="gcash"
+                      checked={formData.paymentMethod === 'gcash'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'gcash' }))}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">GCash</div>
+                      <div className="text-sm text-gray-600">Pay with GCash wallet</div>
+                    </div>
+                  </label>
+                )}
 
                 {wallet && (
                   <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
