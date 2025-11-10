@@ -488,7 +488,9 @@ export default function AdminDashboard() {
             <div className="bg-white p-3 rounded border border-yellow-200">
               <h4 className="text-sm font-medium text-gray-900 mb-1">User Info</h4>
               <div className="text-xs text-gray-600 space-y-1">
-                <p><strong>Role:</strong> {session?.user?.role || 'Not set'}</p>
+                <p><strong>Roles:</strong> {session?.user?.roles && session.user.roles.length > 0 
+                  ? session.user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
+                  : 'Not set'}</p>
                 <p><strong>Admin Access:</strong> {roleAccess?.isAdmin ? 'Yes' : 'No'}</p>
               </div>
             </div>

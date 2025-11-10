@@ -18,7 +18,7 @@ interface AdminHeaderProps {
   user: {
     name: string;
     email: string;
-    role: string;
+    roles: string[];
     avatar?: string;
   };
   onSearch?: (query: string) => void;
@@ -267,7 +267,9 @@ export function AdminHeader({
               </div>
               <div className="hidden md:block text-left min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate max-w-20">{user.name}</p>
-                <p className="text-xs font-medium text-gray-600 truncate max-w-20">{user.role}</p>
+                <p className="text-xs font-medium text-gray-600 truncate max-w-20">
+                  {user.roles && user.roles.length > 0 ? user.roles[0] : 'User'}
+                </p>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 ${
                 showUserMenu ? 'rotate-180' : ''
@@ -280,7 +282,11 @@ export function AdminHeader({
                   <div className="px-3 py-2 border-b">
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                     <p className="text-xs font-medium text-gray-600">{user.email}</p>
-                    <p className="text-xs text-blue-600 font-medium mt-1">{user.role}</p>
+                    <p className="text-xs text-blue-600 font-medium mt-1">
+                      {user.roles && user.roles.length > 0 
+                        ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
+                        : 'User'}
+                    </p>
                   </div>
                   <button 
                     onClick={() => {

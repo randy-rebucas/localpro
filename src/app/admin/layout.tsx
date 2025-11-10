@@ -31,18 +31,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       return;
     }
     
-    const userRole = session?.user?.role;
-    const isUserAdmin = userRole === 'admin' || roleAccess.isAdmin;
+    const userRoles = session?.user?.roles || [];
+    const isUserAdmin = userRoles.includes('admin') || roleAccess.isAdmin;
     
     logger.debug("Admin Layout Debug", {
       hasSession: !!session,
-      userRole: userRole,
+      userRoles: userRoles,
       isAdmin: roleAccess.isAdmin,
       isUserAdmin: isUserAdmin
     });
     
     if (!isUserAdmin) {
-      logger.debug("Redirecting to marketplace - user is not admin", { userRole: userRole });
+      logger.debug("Redirecting to marketplace - user is not admin", { userRoles: userRoles });
       router.push("/marketplace");
       return;
     }
@@ -57,8 +57,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   // Check if user is admin
-  const userRole = session?.user?.role;
-  const isUserAdmin = userRole === 'admin' || roleAccess.isAdmin;
+  const userRoles = session?.user?.roles || [];
+  const isUserAdmin = userRoles.includes('admin') || roleAccess.isAdmin;
   
   if (!session || !isUserAdmin) {
     return null;

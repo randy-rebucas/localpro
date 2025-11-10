@@ -21,7 +21,7 @@ export interface SessionData extends JWTPayload {
   userId: string;
   email: string;
   name: string;
-  role: string;
+  roles: string[]; // Multi-role support (array of roles)
   phone: string;
   firstName?: string;
   lastName?: string;
@@ -62,7 +62,7 @@ export async function createSession(
     userId: string;
     email: string;
     name: string;
-    role: string;
+    roles: string[]; // Multi-role support
     phone: string;
     firstName?: string;
     lastName?: string;

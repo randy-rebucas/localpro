@@ -212,7 +212,7 @@ export interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
-  role?: UserRole;
+  roles: string[]; // Multi-role support (array of roles)
   isVerified?: boolean;
   verificationCode?: string;
   lastVerificationSent?: Date;

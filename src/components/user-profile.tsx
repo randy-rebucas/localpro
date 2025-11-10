@@ -213,7 +213,7 @@ export interface UserProfileData {
   email?: string;
   firstName?: string;
   lastName?: string;
-  role?: UserRole;
+  roles: string[]; // Multi-role support (array of roles)
   isVerified?: boolean;
   profile?: {
     avatar?: Avatar;
@@ -271,7 +271,7 @@ const normalizeUser = (user: Record<string, unknown>): UserProfileData => {
     return {
       id: 'unknown',
       name: 'User',
-      role: 'client',
+      roles: ['client'], // Multi-role support
       email: '',
       isVerified: false,
       trustScore: 0,
@@ -330,7 +330,10 @@ const normalizeUser = (user: Record<string, unknown>): UserProfileData => {
   // Extract and type-check other fields
   const phone = typeof user.phone === 'string' ? user.phone : undefined;
   const phoneNumber = typeof user.phoneNumber === 'string' ? user.phoneNumber : undefined;
-  const role = typeof user.role === 'string' ? user.role as UserRole : 'client';
+  // Extract roles array, default to ['client'] if not provided
+  const roles = Array.isArray(user.roles) && user.roles.length > 0 
+    ? user.roles as string[]
+    : ['client'];
   const isVerified = typeof user.isVerified === 'boolean' ? user.isVerified : false;
   const trustScore = typeof user.trustScore === 'number' ? user.trustScore : 0;
   const completionRate = typeof user.completionRate === 'number' ? user.completionRate : 0;
@@ -390,7 +393,7 @@ const normalizeUser = (user: Record<string, unknown>): UserProfileData => {
     phone: phone || phoneNumber || undefined,
     phoneNumber: phoneNumber || phone || undefined,
     location: location || undefined,
-    role,
+    roles, // Multi-role support
     isVerified,
     trustScore,
     completionRate,
@@ -544,20 +547,20 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     fetchProfile();
   }, [session?.user?.id, session?.user, initialProfile]);
   
-  // Get user role for conditional rendering
-  const userRole = session?.user?.role || profile?.role;
+  // Get user roles for conditional rendering
+  const userRoles = session?.user?.roles || profile?.roles || ['client'];
+  const primaryRole = userRoles[0] || 'client'; // Use first role as primary
   
-  // Role-based visibility helpers (normalize role format)
-  const normalizedRole = userRole?.toUpperCase();
-  const isClient = normalizedRole === 'CLIENT' || profile?.role === 'client';
-  const isProvider = normalizedRole === 'PROVIDER' || profile?.role === 'provider';
-  const isSupplier = normalizedRole === 'SUPPLIER' || profile?.role === 'supplier';
-  const isInstructor = normalizedRole === 'INSTRUCTOR' || profile?.role === 'instructor';
-  const isAgencyOwner = normalizedRole === 'AGENCY_OWNER' || profile?.role === 'agency_owner';
-  const isAgencyAdmin = normalizedRole === 'AGENCY_ADMIN' || profile?.role === 'agency_admin';
-  const isAdmin = normalizedRole === 'ADMIN' || profile?.role === 'admin';
+  // Role-based visibility helpers (check if user has specific roles)
+  const isClient = userRoles.includes('client');
+  const isProvider = userRoles.includes('provider');
+  const isSupplier = userRoles.includes('supplier');
+  const isInstructor = userRoles.includes('instructor');
+  const isAgencyOwner = userRoles.includes('agency_owner');
+  const isAgencyAdmin = userRoles.includes('agency_admin');
+  const isAdmin = userRoles.includes('admin');
   
-  // Business roles
+  // Business roles (user has any business role)
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isAdministrative = isAgencyOwner || isAgencyAdmin || isAdmin;
@@ -688,7 +691,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <h3 className="text-xl font-semibold text-gray-700">{profile?.name || "User"}</h3>
                   {getVerificationBadge(profile?.verification)}
                 </div>
-                <p className="text-gray-600 capitalize mt-1">{profile?.role || "User"}</p>
+                <p className="text-gray-600 capitalize mt-1">{primaryRole || "User"}</p>
                 {profile?.isVerified && (
                   <div className="flex items-center justify-center sm:justify-start mt-1">
                     <CheckCircle className="w-4 h-4 text-green-600 mr-1" />

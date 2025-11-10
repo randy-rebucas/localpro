@@ -8,7 +8,7 @@ export interface ServerSession {
     id: string;
     email: string;
     name: string;
-    role: string;
+    roles: string[]; // Multi-role support (array of roles)
     phone: string;
     firstName?: string;
     lastName?: string;
@@ -60,7 +60,7 @@ export async function getServerSession(request: NextRequest): Promise<ServerSess
         id: session.userId,
         email: session.email,
         name: session.name,
-        role: session.role,
+        roles: session.roles, // Multi-role support
         phone: session.phone,
         firstName: session.firstName,
         lastName: session.lastName,

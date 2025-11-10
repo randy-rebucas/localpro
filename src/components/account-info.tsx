@@ -23,9 +23,11 @@ export function AccountInfo({ profile, formattedCreatedAt }: AccountInfoProps) {
         </div>
         
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">Role</span>
+          <span className="text-sm text-gray-600">Roles</span>
           <span className="text-sm font-medium text-gray-700 capitalize">
-            {profile?.role || "User"}
+            {profile?.roles && profile.roles.length > 0
+              ? profile.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' ')).join(', ')
+              : "User"}
           </span>
         </div>
         

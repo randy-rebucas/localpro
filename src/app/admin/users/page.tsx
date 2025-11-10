@@ -28,7 +28,7 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { User, UserRole, UserStatus, UserBadge, Verification, Profile, BadgeType } from "@/types/users";
+import { User, UserStatus, UserBadge, Verification, Profile, BadgeType } from "@/types/users";
 
 // Type for API user response (raw data from backend)
 interface ApiUserData {
@@ -37,7 +37,8 @@ interface ApiUserData {
   email?: string;
   firstName?: string;
   lastName?: string;
-  role?: string;
+  role?: string; // Legacy field from API (for backward compatibility)
+  roles?: string[]; // Multi-role support
   status?: string;
   isVerified?: boolean;
   trustScore?: number;
@@ -73,13 +74,18 @@ interface ApiUserData {
 
 // Helper function to transform API user data to frontend format
 const transformUserData = (apiUser: ApiUserData): User => {
+  // Convert role/roles to roles array
+  const roles = apiUser.roles && apiUser.roles.length > 0
+    ? apiUser.roles
+    : (apiUser.role ? [apiUser.role] : ['client']);
+  
   const user: User = {
     _id: apiUser._id,
     phoneNumber: apiUser.phoneNumber || '',
     email: apiUser.email,
     firstName: apiUser.firstName,
     lastName: apiUser.lastName,
-    role: apiUser.role as UserRole || 'client',
+    roles: roles,
     status: apiUser.status as UserStatus || 'pending_verification',
     isVerified: apiUser.isVerified || false,
     trustScore: apiUser.trustScore,
@@ -195,7 +201,7 @@ export default function UsersPage() {
     email: "",
     firstName: "",
     lastName: "",
-    role: "client" as UserRole,
+    roles: ["client"] as string[],
     agencyId: "",
     agencyRole: ""
   });
@@ -205,7 +211,7 @@ export default function UsersPage() {
     lastName: "",
     email: "",
     phoneNumber: "",
-    role: "client" as UserRole
+    roles: ["client"] as string[]
   });
 
   const [verificationFormData, setVerificationFormData] = useState({
@@ -477,7 +483,7 @@ export default function UsersPage() {
       lastName: user.lastName || "",
       email: user.email || "",
       phoneNumber: user.phoneNumber || "",
-      role: user.role || 'client'
+      roles: user.roles || ['client']
     });
     setEditModalOpen(true);
   };
@@ -506,10 +512,18 @@ export default function UsersPage() {
       setSubmitting(true);
       if (!getApiToken()) return;
 
+      // Ensure client role is always included
+      const rolesToSend = createFormData.roles.includes('client')
+        ? createFormData.roles
+        : ['client', ...createFormData.roles];
+
       const url = `${API_BASE_URL}${API_ENDPOINTS.usersCreate}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'POST',
-        body: JSON.stringify(createFormData)
+        body: JSON.stringify({
+          ...createFormData,
+          roles: rolesToSend
+        })
       }));
 
       if (!response.ok) {
@@ -524,7 +538,7 @@ export default function UsersPage() {
         email: "",
         firstName: "",
         lastName: "",
-        role: "client",
+        roles: ["client"],
         agencyId: "",
         agencyRole: ""
       });
@@ -544,10 +558,18 @@ export default function UsersPage() {
       setSubmitting(true);
       if (!getApiToken()) return;
 
+      // Ensure client role is always included
+      const rolesToSend = editFormData.roles.includes('client')
+        ? editFormData.roles
+        : ['client', ...editFormData.roles];
+
       const url = `${API_BASE_URL}${API_ENDPOINTS.usersUpdate}/${selectedUser._id}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'PUT',
-        body: JSON.stringify(editFormData)
+        body: JSON.stringify({
+          ...editFormData,
+          roles: rolesToSend
+        })
       }));
 
       if (!response.ok) {
@@ -1094,7 +1116,7 @@ export default function UsersPage() {
                   />
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roles</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Login</th>
@@ -1130,8 +1152,10 @@ export default function UsersPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role || 'client')}`}>
-                      {(user.role || 'client').replace('_', ' ').toUpperCase()}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.roles?.[0] || 'client')}`}>
+                      {user.roles && user.roles.length > 0
+                        ? user.roles.map(r => r.replace('_', ' ').toUpperCase()).join(', ')
+                        : 'CLIENT'}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
@@ -1265,10 +1289,18 @@ export default function UsersPage() {
                 <p className="text-sm">{selectedUserDetails.phoneNumber || 'N/A'}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-gray-500">Role</label>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(selectedUserDetails.role || 'client')}`}>
-                  {(selectedUserDetails.role || 'client').replace('_', ' ').toUpperCase()}
-                </span>
+                <label className="text-xs font-medium text-gray-500">Roles</label>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {selectedUserDetails.roles && selectedUserDetails.roles.length > 0
+                    ? selectedUserDetails.roles.map((role, idx) => (
+                        <span key={idx} className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(role)}`}>
+                          {role.replace('_', ' ').toUpperCase()}
+                        </span>
+                      ))
+                    : <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getRoleColor('client')}`}>
+                        CLIENT
+                      </span>}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500">Status</label>
@@ -1316,7 +1348,7 @@ export default function UsersPage() {
             email: "",
             firstName: "",
             lastName: "",
-            role: "client",
+            roles: ["client"],
             agencyId: "",
             agencyRole: ""
           });
@@ -1384,20 +1416,38 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role *</label>
-              <select
-                value={createFormData.role}
-                onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as UserRole })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="client">Client</option>
-                <option value="provider">Provider</option>
-                <option value="supplier">Supplier</option>
-                <option value="instructor">Instructor</option>
-                <option value="agency_owner">Agency Owner</option>
-                <option value="agency_admin">Agency Admin</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Roles *</label>
+              <p className="text-xs text-gray-500 mb-2">Select all that apply. Client role is always included.</p>
+              <div className="space-y-2 border border-gray-300 rounded-md p-3">
+                {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
+                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={createFormData.roles.includes(role)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setCreateFormData({
+                            ...createFormData,
+                            roles: [...createFormData.roles, role]
+                          });
+                        } else {
+                          // Don't allow removing client if it's the only role
+                          if (role === 'client' && createFormData.roles.length === 1) {
+                            return;
+                          }
+                          setCreateFormData({
+                            ...createFormData,
+                            roles: createFormData.roles.filter(r => r !== role)
+                          });
+                        }
+                      }}
+                      disabled={role === 'client' && createFormData.roles.length === 1}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">{role.replace('_', ' ')}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1469,20 +1519,38 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                value={editFormData.role}
-                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as UserRole })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="client">Client</option>
-                <option value="provider">Provider</option>
-                <option value="supplier">Supplier</option>
-                <option value="instructor">Instructor</option>
-                <option value="agency_owner">Agency Owner</option>
-                <option value="agency_admin">Agency Admin</option>
-                <option value="admin">Admin</option>
-              </select>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
+              <p className="text-xs text-gray-500 mb-2">Select all that apply. Client role is always included.</p>
+              <div className="space-y-2 border border-gray-300 rounded-md p-3">
+                {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
+                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editFormData.roles.includes(role)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setEditFormData({
+                            ...editFormData,
+                            roles: [...editFormData.roles, role]
+                          });
+                        } else {
+                          // Don't allow removing client if it's the only role
+                          if (role === 'client' && editFormData.roles.length === 1) {
+                            return;
+                          }
+                          setEditFormData({
+                            ...editFormData,
+                            roles: editFormData.roles.filter(r => r !== role)
+                          });
+                        }
+                      }}
+                      disabled={role === 'client' && editFormData.roles.length === 1}
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-700 capitalize">{role.replace('_', ' ')}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         </div>

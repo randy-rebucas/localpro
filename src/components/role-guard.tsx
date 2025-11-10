@@ -3,7 +3,7 @@
 import { useSession, Session } from "@/hooks/useAuth";
 import { ReactNode } from "react";
 import { 
-  hasRole, 
+  hasRole,
   isServiceProvider, 
   isBusinessRole, 
   isAdministrative,
@@ -29,7 +29,7 @@ function convertSessionToSessionData(session: Session | null): SessionData | nul
     userId,
     email: session.user.email,
     name: session.user.name,
-    role: session.user.role,
+    roles: session.user.roles, // Multi-role support
     phone: session.user.phone,
     firstName: session.user.firstName,
     lastName: session.user.lastName,

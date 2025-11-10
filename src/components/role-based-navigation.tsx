@@ -277,7 +277,8 @@ export function RoleBasedNavigation() {
   const isItemVisible = (item: NavigationItem): boolean => {
     // Check role-based visibility
     if (item.roles && item.roles.length > 0) {
-      if (!session?.user?.role || !item.roles.includes(session.user.role)) {
+      const userRoles = session?.user?.roles || [];
+      if (userRoles.length === 0 || !item.roles.some(role => userRoles.includes(role))) {
         return false;
       }
     }

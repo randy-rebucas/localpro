@@ -228,7 +228,7 @@ export interface UserProfile {
   experience?: string;
   avatar?: string | Avatar; // Support both string (legacy) and object formats
   portfolio?: string[];
-  role: string;
+  roles: string[]; // Multi-role support (array of roles)
   createdAt: string;
   updatedAt: string;
   isVerified?: boolean;
@@ -246,17 +246,17 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   const { data: session } = useSession();
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile || null);
   
-  // Get user role for conditional rendering
-  const userRole = session?.user?.role;
+  // Get user roles for conditional rendering
+  const userRoles = session?.user?.roles || [];
   
   // Role-based visibility helpers
-  const isClient = userRole === 'CLIENT' || userRole === 'client';
-  const isProvider = userRole === 'PROVIDER' || userRole === 'provider';
-  const isSupplier = userRole === 'SUPPLIER' || userRole === 'supplier';
-  const isInstructor = userRole === 'INSTRUCTOR' || userRole === 'instructor';
-  const isAgencyOwner = userRole === 'AGENCY_OWNER' || userRole === 'agency_owner';
-  const isAgencyAdmin = userRole === 'AGENCY_ADMIN' || userRole === 'agency_admin';
-  const isAdmin = userRole === 'ADMIN' || userRole === 'admin';
+  const isClient = userRoles.includes('client') || userRoles.includes('CLIENT');
+  const isProvider = userRoles.includes('provider') || userRoles.includes('PROVIDER');
+  const isSupplier = userRoles.includes('supplier') || userRoles.includes('SUPPLIER');
+  const isInstructor = userRoles.includes('instructor') || userRoles.includes('INSTRUCTOR');
+  const isAgencyOwner = userRoles.includes('agency_owner') || userRoles.includes('AGENCY_OWNER');
+  const isAgencyAdmin = userRoles.includes('agency_admin') || userRoles.includes('AGENCY_ADMIN');
+  const isAdmin = userRoles.includes('admin') || userRoles.includes('ADMIN');
   
   // Business roles (providers, suppliers, instructors, agency roles)
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
@@ -482,8 +482,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
 
   const buildNestedPayload = useCallback((values: ProfileForm) => {
     // Check if user is a client - clients can only update specific fields
-    const currentUserRole = session?.user?.role;
-    const isClientUser = currentUserRole === 'CLIENT' || currentUserRole === 'client';
+    const currentUserRoles = session?.user?.roles || [];
+    const isClientUser = currentUserRoles.includes('client') || currentUserRoles.includes('CLIENT');
     
     // For clients, only include allowed fields
     if (isClientUser) {
@@ -946,7 +946,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     }
     
     return payload;
-  }, [session?.user?.role]);
+  }, [session?.user?.roles]);
 
   // Auto-save functionality - only when there are actual changes
   useEffect(() => {
@@ -1011,7 +1011,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
         id: sessionUserId,
         name: session.user.name || '',
         email: session.user.email || '',
-        role: session.user.role || '',
+        roles: session.user.roles || ['client'],
         phone: session.user.phone || '',
         firstName: session.user.firstName,
         lastName: session.user.lastName,
@@ -1173,7 +1173,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
           name: userData.name || "",
           firstName: userData.firstName || "",
           lastName: userData.lastName || "",
-          role: userData.role || "",
           email: userData.email || "",
           phoneNumber: userData.phoneNumber || userData.phone || "",
           phone: userData.phone || "",
@@ -1797,7 +1796,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
             name: updatedProfile.name || "",
             firstName: updatedProfile.firstName || "",
             lastName: updatedProfile.lastName || "",
-            role: (updatedProfile.role || "") as "" | "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | undefined,
             email: updatedProfile.email || "",
             phoneNumber: updatedProfile.phoneNumber || updatedProfile.phone || "",
             phone: updatedProfile.phone || "",
@@ -2312,7 +2310,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                 />
                 <div>
                   <h3 className="text-lg font-semibold text-gray-700">{profile?.name || "User"}</h3>
-                  <p className="text-gray-600 capitalize">{profile?.role || "User"}</p>
+                  <p className="text-gray-600 capitalize">{(profile?.roles && profile.roles.length > 0) ? profile.roles[0] : "User"}</p>
                   {profile?.isVerified && (
                     <div className="flex items-center mt-1">
                       <CheckCircle className="w-4 h-4 text-green-600 mr-1" />

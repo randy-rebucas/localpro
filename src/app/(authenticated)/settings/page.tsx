@@ -114,16 +114,17 @@ export default function SettingsPage() {
     }));
   };
 
-  const userRole = session?.user?.role;
-  // Normalize role format (handle both uppercase and lowercase)
-  const normalizedRole = userRole?.toUpperCase();
-  const isClient = normalizedRole === 'CLIENT' || userRole === 'client';
-  const isProvider = normalizedRole === 'PROVIDER' || userRole === 'provider';
-  const isSupplier = normalizedRole === 'SUPPLIER' || userRole === 'supplier';
-  const isInstructor = normalizedRole === 'INSTRUCTOR' || userRole === 'instructor';
-  const isAgencyOwner = normalizedRole === 'AGENCY_OWNER' || userRole === 'agency_owner';
-  const isAgencyAdmin = normalizedRole === 'AGENCY_ADMIN' || userRole === 'agency_admin';
-  const isAdmin = normalizedRole === 'ADMIN' || userRole === 'admin';
+  // Get user roles
+  const userRoles = session?.user?.roles || ['client'];
+  
+  // Role-based visibility helpers (check if user has specific roles)
+  const isClient = userRoles.includes('client');
+  const isProvider = userRoles.includes('provider');
+  const isSupplier = userRoles.includes('supplier');
+  const isInstructor = userRoles.includes('instructor');
+  const isAgencyOwner = userRoles.includes('agency_owner');
+  const isAgencyAdmin = userRoles.includes('agency_admin');
+  const isAdmin = userRoles.includes('admin');
   const isBusinessRole = isProvider || isSupplier || isInstructor || isAgencyOwner || isAgencyAdmin || isAdmin;
   const isServiceProvider = isProvider || isAgencyOwner || isAgencyAdmin || isAdmin;
 

@@ -103,7 +103,7 @@ export default function EditProfilePage() {
           experience: userData.experience || userData.profile?.experience?.toString() || '',
           avatar: userData.profile?.avatar || userData.avatar || undefined,
           portfolio: userData.profile?.portfolio || userData.portfolio || [],
-          role: userData.role || '',
+          roles: userData.roles || ['client'],
           createdAt: userData.createdAt || new Date().toISOString(),
           updatedAt: userData.updatedAt || new Date().toISOString(),
           isVerified: userData.isVerified || false,

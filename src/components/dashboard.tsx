@@ -112,7 +112,7 @@ const serviceModules: ServiceModule[] = [
 export function Dashboard() {
   const [user, setUser] = useState<{ 
     name?: string; 
-    role?: string; 
+    roles?: string[]; 
     phone?: string; 
     firstName?: string; 
     lastName?: string;
@@ -137,7 +137,7 @@ export function Dashboard() {
       userId: session?.user?.id,
       userEmail: session?.user?.email,
       userName: session?.user?.name,
-      userRole: session?.user?.role,
+      userRoles: session?.user?.roles || [],
       userPhone: session?.user?.phone,
       userFirstName: session?.user?.firstName,
       userLastName: session?.user?.lastName
@@ -329,10 +329,12 @@ export function Dashboard() {
                   <CheckCircle className="w-4 h-4 text-blue-500" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-700 mb-1">
-                  User Role
+                  User Roles
                 </h3>
                 <p className="text-2xl font-bold text-blue-600 mb-1 capitalize">
-                  {user?.role || "User"}
+                  {user?.roles && user.roles.length > 0
+                    ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' ')).join(', ')
+                    : "User"}
                 </p>
                 <p className="text-sm text-gray-500">Account type</p>
               </div>

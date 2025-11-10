@@ -313,9 +313,13 @@ function SignInForm() {
           try { localStorage.setItem('user', JSON.stringify(result.user)); } catch {}
         }
         toast.success("Signed in successfully!");
-        // Redirect to intended destination or dashboard
+        // Redirect to onboarding if new user, otherwise to intended destination
         setTimeout(() => {
-          router.push(redirectTo);
+          if (result.isNewUser === true) {
+            router.push('/onboarding');
+          } else {
+            router.push(redirectTo);
+          }
         }, 1000);
       } else {
         if (response.status === 400) {

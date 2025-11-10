@@ -34,18 +34,49 @@ export interface RoleCapabilities {
 }
 
 /**
+ * Get user roles array from session
+ */
+export function getUserRoles(session: SessionData | null): string[] {
+  if (!session) return [];
+  
+  // Return roles array, default to ['client'] if empty
+  if (session.roles && Array.isArray(session.roles) && session.roles.length > 0) {
+    return session.roles;
+  }
+  
+  // Default to client role if no roles specified
+  return ['client'];
+}
+
+/**
  * Check if user has a specific role
  */
 export function hasRole(session: SessionData | null, role: UserRole): boolean {
-  return session?.role === role;
+  const roles = getUserRoles(session);
+  return roles.includes(role);
+}
+
+/**
+ * Check if user has any of the specified roles
+ */
+export function hasAnyRole(session: SessionData | null, rolesToCheck: UserRole[]): boolean {
+  const userRoles = getUserRoles(session);
+  return rolesToCheck.some(role => userRoles.includes(role));
+}
+
+/**
+ * Check if user has all of the specified roles
+ */
+export function hasAllRoles(session: SessionData | null, rolesToCheck: UserRole[]): boolean {
+  const userRoles = getUserRoles(session);
+  return rolesToCheck.every(role => userRoles.includes(role));
 }
 
 /**
  * Check if user is a service provider (Provider, Agency Owner, Agency Admin, Admin)
  */
 export function isServiceProvider(session: SessionData | null): boolean {
-  if (!session) return false;
-  return ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(session.role);
+  return hasAnyRole(session, ['provider', 'agency_owner', 'agency_admin', 'admin']);
 }
 
 /**
@@ -87,20 +118,18 @@ export function isAdmin(session: SessionData | null): boolean {
  * Check if user has business role (Provider, Supplier, Instructor, Agency roles, Admin)
  */
 export function isBusinessRole(session: SessionData | null): boolean {
-  if (!session) return false;
-  return ['provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].includes(session.role);
+  return hasAnyRole(session, ['provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin']);
 }
 
 /**
  * Check if user has administrative privileges (Agency Owner, Agency Admin, Admin)
  */
 export function isAdministrative(session: SessionData | null): boolean {
-  if (!session) return false;
-  return ['agency_owner', 'agency_admin', 'admin'].includes(session.role);
+  return hasAnyRole(session, ['agency_owner', 'agency_admin', 'admin']);
 }
 
 /**
- * Get role-based permissions for a user
+ * Get role-based permissions for a user (supports multi-role)
  */
 export function getRolePermissions(session: SessionData | null): RolePermissions {
   if (!session) {
@@ -118,121 +147,77 @@ export function getRolePermissions(session: SessionData | null): RolePermissions
     };
   }
 
-  const role = session.role as UserRole;
+  const userRoles = getUserRoles(session);
+  
+  // Initialize permissions
+  const permissions: RolePermissions = {
+    canCreateServices: false,
+    canCreateJobs: false,
+    canCreateSupplies: false,
+    canCreateCourses: false,
+    canCreateRentals: false,
+    canManageAgency: false,
+    canAccessAdmin: false,
+    canViewAnalytics: false,
+    canManageUsers: false,
+    canManagePlatform: false,
+  };
 
-  switch (role) {
-    case 'client':
-      return {
-        canCreateServices: false,
-        canCreateJobs: false,
-        canCreateSupplies: false,
-        canCreateCourses: false,
-        canCreateRentals: false,
-        canManageAgency: false,
-        canAccessAdmin: false,
-        canViewAnalytics: false,
-        canManageUsers: false,
-        canManagePlatform: false,
-      };
+  // Aggregate permissions from all roles (OR logic - if any role has permission, grant it)
+  userRoles.forEach(role => {
+    switch (role) {
+      case 'provider':
+        permissions.canCreateServices = true;
+        permissions.canCreateJobs = true;
+        permissions.canCreateRentals = true;
+        permissions.canViewAnalytics = true;
+        break;
 
-    case 'provider':
-      return {
-        canCreateServices: true,
-        canCreateJobs: true,
-        canCreateSupplies: false,
-        canCreateCourses: false,
-        canCreateRentals: true,
-        canManageAgency: false,
-        canAccessAdmin: false,
-        canViewAnalytics: true,
-        canManageUsers: false,
-        canManagePlatform: false,
-      };
+      case 'supplier':
+        permissions.canCreateSupplies = true;
+        permissions.canViewAnalytics = true;
+        break;
 
-    case 'supplier':
-      return {
-        canCreateServices: false,
-        canCreateJobs: false,
-        canCreateSupplies: true,
-        canCreateCourses: false,
-        canCreateRentals: false,
-        canManageAgency: false,
-        canAccessAdmin: false,
-        canViewAnalytics: true,
-        canManageUsers: false,
-        canManagePlatform: false,
-      };
+      case 'instructor':
+        permissions.canCreateCourses = true;
+        permissions.canViewAnalytics = true;
+        break;
 
-    case 'instructor':
-      return {
-        canCreateServices: false,
-        canCreateJobs: false,
-        canCreateSupplies: false,
-        canCreateCourses: true,
-        canCreateRentals: false,
-        canManageAgency: false,
-        canAccessAdmin: false,
-        canViewAnalytics: true,
-        canManageUsers: false,
-        canManagePlatform: false,
-      };
+      case 'agency_owner':
+        permissions.canCreateServices = true;
+        permissions.canCreateJobs = true;
+        permissions.canCreateRentals = true;
+        permissions.canManageAgency = true;
+        permissions.canViewAnalytics = true;
+        permissions.canManageUsers = true;
+        break;
 
-    case 'agency_owner':
-      return {
-        canCreateServices: true,
-        canCreateJobs: true,
-        canCreateSupplies: false,
-        canCreateCourses: false,
-        canCreateRentals: true,
-        canManageAgency: true,
-        canAccessAdmin: false,
-        canViewAnalytics: true,
-        canManageUsers: true,
-        canManagePlatform: false,
-      };
+      case 'agency_admin':
+        permissions.canCreateServices = true;
+        permissions.canCreateJobs = true;
+        permissions.canCreateRentals = true;
+        permissions.canManageAgency = true;
+        permissions.canViewAnalytics = true;
+        permissions.canManageUsers = true;
+        break;
 
-    case 'agency_admin':
-      return {
-        canCreateServices: true,
-        canCreateJobs: true,
-        canCreateSupplies: false,
-        canCreateCourses: false,
-        canCreateRentals: true,
-        canManageAgency: true,
-        canAccessAdmin: false,
-        canViewAnalytics: true,
-        canManageUsers: true,
-        canManagePlatform: false,
-      };
+      case 'admin':
+        // Admin has all permissions
+        permissions.canCreateServices = true;
+        permissions.canCreateJobs = true;
+        permissions.canCreateSupplies = true;
+        permissions.canCreateCourses = true;
+        permissions.canCreateRentals = true;
+        permissions.canManageAgency = true;
+        permissions.canAccessAdmin = true;
+        permissions.canViewAnalytics = true;
+        permissions.canManageUsers = true;
+        permissions.canManagePlatform = true;
+        break;
+    }
+  });
 
-    case 'admin':
-      return {
-        canCreateServices: true,
-        canCreateJobs: true,
-        canCreateSupplies: true,
-        canCreateCourses: true,
-        canCreateRentals: true,
-        canManageAgency: true,
-        canAccessAdmin: true,
-        canViewAnalytics: true,
-        canManageUsers: true,
-        canManagePlatform: true,
-      };
-
-    default:
-      return {
-        canCreateServices: false,
-        canCreateJobs: false,
-        canCreateSupplies: false,
-        canCreateCourses: false,
-        canCreateRentals: false,
-        canManageAgency: false,
-        canAccessAdmin: false,
-        canViewAnalytics: false,
-        canManageUsers: false,
-        canManagePlatform: false,
-      };
-  }
+  return permissions;
 }
 
 /**

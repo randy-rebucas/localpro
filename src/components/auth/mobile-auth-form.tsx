@@ -180,7 +180,12 @@ export function MobileAuthForm() {
         }
         toast.success("Signed in successfully!");
         setTimeout(() => {
-          window.location.reload();
+          // Redirect to onboarding if new user, otherwise reload to current page
+          if (result.isNewUser === true) {
+            window.location.href = '/onboarding';
+          } else {
+            window.location.reload();
+          }
         }, 1000);
       } else {
         if (response.status === 400) {

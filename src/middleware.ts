@@ -6,7 +6,7 @@ import { logger } from "@/lib/logger";
 // Cache for authentication checks to improve performance
 const authCache = new Map<string, { 
   isValid: boolean; 
-  userRole?: string; 
+  userRoles?: string[]; 
   userId?: string;
   apiToken?: string;
   timestamp: number 
@@ -23,10 +23,10 @@ setInterval(() => {
   }
 }, CACHE_DURATION);
 
-// Helper function to check authentication and get user role
+// Helper function to check authentication and get user roles
 async function checkAuth(request: NextRequest): Promise<{ 
   isAuthenticated: boolean; 
-  userRole?: string; 
+  userRoles?: string[]; 
   userId?: string;
   apiToken?: string;
 }> {
@@ -66,7 +66,7 @@ async function checkAuth(request: NextRequest): Promise<{
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
       return { 
         isAuthenticated: cached.isValid, 
-        userRole: cached.userRole,
+        userRoles: cached.userRoles,
         userId: cached.userId,
         apiToken: cached.apiToken
       };
@@ -75,7 +75,7 @@ async function checkAuth(request: NextRequest): Promise<{
     // Allow authentication with api-token (user info will be fetched client-side)
     authCache.set(cacheKey, {
       isValid: true,
-      userRole: undefined, // Will be fetched client-side
+      userRoles: undefined, // Will be fetched client-side
       userId: undefined, // Will be fetched client-side
       apiToken: apiToken,
       timestamp: Date.now(),
@@ -83,7 +83,7 @@ async function checkAuth(request: NextRequest): Promise<{
 
     return { 
       isAuthenticated: true, 
-      userRole: undefined,
+      userRoles: undefined,
       userId: undefined,
       apiToken: apiToken
     };
@@ -99,9 +99,9 @@ async function checkAuth(request: NextRequest): Promise<{
   // Check cache first
   const cached = authCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return { 
-      isAuthenticated: cached.isValid, 
-      userRole: cached.userRole,
+    return {
+      isAuthenticated: cached.isValid,
+      userRoles: cached.userRoles,
       userId: cached.userId,
       apiToken: cached.apiToken
     };
@@ -116,10 +116,15 @@ async function checkAuth(request: NextRequest): Promise<{
       // Prioritize api-token cookie, fallback to apiToken from session
       const finalApiToken = apiToken || session?.apiToken || undefined;
       
+      // Extract roles from session, handling both new roles array and legacy role field
+      const roles = session?.roles 
+        ? (Array.isArray(session.roles) ? session.roles.filter((r): r is string => typeof r === 'string') : undefined)
+        : (session?.role && typeof session.role === 'string' ? [session.role] : undefined);
+      
       // Cache the result
       authCache.set(cacheKey, {
         isValid,
-        userRole: session?.role,
+        userRoles: roles,
         userId: session?.userId,
         apiToken: finalApiToken,
         timestamp: Date.now(),
@@ -127,7 +132,7 @@ async function checkAuth(request: NextRequest): Promise<{
 
       return { 
         isAuthenticated: isValid, 
-        userRole: session?.role,
+        userRoles: roles,
         userId: session?.userId,
         apiToken: finalApiToken
       };
@@ -242,51 +247,51 @@ function hasBearerToken(request: NextRequest): boolean {
   return authHeader !== null && authHeader.startsWith("Bearer ");
 }
 
-// Helper function to check if user role has access to a specific route
-function hasRouteAccess(userRole: string, pathname: string): boolean {
+// Helper function to check if user roles have access to a specific route
+function hasRouteAccess(userRoles: string[], pathname: string): boolean {
   // Admin routes - only admin role
   if (pathname.startsWith("/admin")) {
-    return userRole === "admin";
+    return userRoles.includes("admin");
   }
 
   // Service creation routes - service providers only
   if (pathname.includes("/create-service") || pathname.includes("/my-services")) {
-    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["provider", "agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Job creation routes - service providers only
   if (pathname.includes("/create-job") || pathname.includes("/my-jobs")) {
-    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["provider", "agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Supply creation routes - suppliers only
   if (pathname.includes("/create-supply") || pathname.includes("/my-supplies")) {
-    return ["supplier", "admin"].includes(userRole);
+    return userRoles.some(role => ["supplier", "admin"].includes(role));
   }
 
   // Course creation routes - instructors only
   if (pathname.includes("/create-course") || pathname.includes("/my-created-courses")) {
-    return ["instructor", "admin"].includes(userRole);
+    return userRoles.some(role => ["instructor", "admin"].includes(role));
   }
 
   // Rental creation routes - service providers only
   if (pathname.includes("/create-rental") || pathname.includes("/my-rentals")) {
-    return ["provider", "agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["provider", "agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Analytics routes - business roles only
   if (pathname.includes("/analytics")) {
-    return ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Finance routes - business roles only
   if (pathname.includes("/finance")) {
-    return ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["provider", "supplier", "instructor", "agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Agency management routes - agency roles only
   if (pathname.includes("/agency")) {
-    return ["agency_owner", "agency_admin", "admin"].includes(userRole);
+    return userRoles.some(role => ["agency_owner", "agency_admin", "admin"].includes(role));
   }
 
   // Default: allow access
@@ -321,7 +326,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Get authentication status
-  const { isAuthenticated, userRole } = await checkAuth(request);
+  const { isAuthenticated, userRoles } = await checkAuth(request);
 
   // Handle API routes
   if (pathname.startsWith("/api/")) {
@@ -374,7 +379,7 @@ export async function middleware(request: NextRequest) {
           { status: 401 }
         );
       }
-      if (userRole !== "admin") {
+      if (!userRoles || !userRoles.includes("admin")) {
         return NextResponse.json(
           { error: "Admin access required" },
           { status: 403 }
@@ -395,8 +400,8 @@ export async function middleware(request: NextRequest) {
   // Admin routes - allow through and let client-side layout handle auth/role checks
   // This ensures the page can load and the admin layout can check authentication
   if (isAdminRoute) {
-    // If we have a role and it's not admin, redirect to dashboard
-    if (userRole !== undefined && userRole !== "admin") {
+    // If we have roles and none of them is admin, redirect to dashboard
+    if (userRoles && !userRoles.includes("admin")) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     // Otherwise, allow access - client-side layout will handle authentication and role checks
@@ -411,8 +416,8 @@ export async function middleware(request: NextRequest) {
     }
     
     // Check role-based route access
-    // Only check if we have a role defined
-    if (userRole && !hasRouteAccess(userRole, pathname)) {
+    // Only check if we have roles defined
+    if (userRoles && userRoles.length > 0 && !hasRouteAccess(userRoles, pathname)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     

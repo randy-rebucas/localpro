@@ -12,7 +12,7 @@ export interface User {
   userId?: string; // Alternative ID field
   email: string;
   name: string;
-  role: string;
+  roles: string[]; // Multi-role support (array of roles)
   phone: string;
   firstName?: string;
   lastName?: string;
