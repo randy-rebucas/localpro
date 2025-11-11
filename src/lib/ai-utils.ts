@@ -339,6 +339,7 @@ export interface ServiceMatchParams {
   };
   // Legacy format support
   description?: string;
+  location?: string;
   lat?: number;
   lng?: number;
   budget?: number;
@@ -365,6 +366,9 @@ export interface ServiceMatch {
   reasons?: string[];
   estimatedPrice?: number;
   estimatedDuration?: number;
+  // Metadata for component access
+  _count?: number;
+  _empty?: boolean;
 }
 
 export async function matchService(

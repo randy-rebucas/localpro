@@ -444,4 +444,10 @@ export const API_ENDPOINTS = {
   usersDelete: "/api/users",
 
   registrationEarlyAccess: "/api/registration/early",
+  
+  // Monitoring Endpoints
+  monitoringMetricsJson: "/api/monitoring/metrics/json",
+  monitoringSystem: "/api/monitoring/system",
+  monitoringHealth: "/api/monitoring/health",
+  monitoringPerformance: "/api/monitoring/performance",
 } as const;

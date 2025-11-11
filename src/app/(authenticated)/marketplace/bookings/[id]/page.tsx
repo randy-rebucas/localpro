@@ -793,10 +793,10 @@ export default function BookingDetailPage() {
         <h2 className="text-xl font-semibold text-gray-700 mb-2">Booking Not Found</h2>
         <p className="text-gray-600 mb-6">{error || "The booking you're looking for doesn't exist."}</p>
         <Link
-          href="/marketplace/bookings"
+          href="/marketplace/my-bookings"
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
-          Back to Bookings
+          Back to My Bookings
         </Link>
       </div>
     );
@@ -807,11 +807,11 @@ export default function BookingDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/marketplace/bookings"
+          href="/marketplace/my-bookings"
           className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Bookings
+          Back to My Bookings
         </Link>
       </div>
 
