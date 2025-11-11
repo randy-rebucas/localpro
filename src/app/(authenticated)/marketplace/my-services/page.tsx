@@ -34,12 +34,35 @@ interface Service {
   updatedAt: string;
 }
 
+interface ServiceStats {
+  totalServices: number;
+  activeServices: number;
+  inactiveServices: number;
+  averageRating: number;
+  totalBookings: number;
+}
+
+interface ApiResponse {
+  success?: boolean;
+  data?: {
+    services?: Service[];
+    pagination?: {
+      current: number;
+      pages: number;
+      total: number;
+      limit: number;
+    };
+    stats?: ServiceStats;
+  };
+  services?: Service[]; // Legacy support
+}
 
 export default function MyServicesPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [stats, setStats] = useState<ServiceStats | null>(null);
 
   const fetchServices = useCallback(async () => {
     try {
@@ -66,9 +89,39 @@ export default function MyServicesPage() {
         throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
-      logger.debug("Services API response", { hasData: !!data, isArray: Array.isArray(data) });
-      setServices(Array.isArray(data) ? data : data.services || []);
+      const data: ApiResponse | Service[] = await response.json();
+      logger.debug("Services API response", { 
+        hasData: !!data, 
+        isArray: Array.isArray(data),
+        hasSuccess: !Array.isArray(data) && 'success' in data,
+        hasDataProperty: !Array.isArray(data) && 'data' in data
+      });
+      
+      // Handle different response structures
+      let servicesData: Service[] = [];
+      let statsData: ServiceStats | null = null;
+      
+      if (Array.isArray(data)) {
+        // Direct array response (legacy)
+        servicesData = data;
+      } else if (data.success && data.data) {
+        // New structure: { success: true, data: { services: [], pagination: {}, stats: {} } }
+        servicesData = data.data.services || [];
+        statsData = data.data.stats || null;
+      } else if (data.services) {
+        // Legacy structure: { services: [] }
+        servicesData = Array.isArray(data.services) ? data.services : [];
+      } else {
+        logger.warn("Unexpected API response structure", { 
+          hasData: !!data,
+          properties: data ? Object.keys(data) : []
+        });
+        servicesData = [];
+      }
+      
+      logger.debug("Services extracted", { count: servicesData.length, hasStats: !!statsData });
+      setServices(servicesData);
+      setStats(statsData);
     } catch (error) {
       logger.error("Error fetching services", error instanceof Error ? error : new Error(String(error)));
       setError(error instanceof Error ? error.message : "Failed to load services. Please try again.");
@@ -288,6 +341,34 @@ export default function MyServicesPage() {
         ]}
       />
 
+
+      {/* Stats Summary */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="text-2xl font-bold text-gray-700">{stats.totalServices}</div>
+            <div className="text-sm text-gray-500">Total Services</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="text-2xl font-bold text-green-600">{stats.activeServices}</div>
+            <div className="text-sm text-gray-500">Active</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="text-2xl font-bold text-gray-600">{stats.inactiveServices}</div>
+            <div className="text-sm text-gray-500">Inactive</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="text-2xl font-bold text-blue-600">{stats.totalBookings}</div>
+            <div className="text-sm text-gray-500">Total Bookings</div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm p-4">
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}
+            </div>
+            <div className="text-sm text-gray-500">Avg Rating</div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4">

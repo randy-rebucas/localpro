@@ -6,6 +6,8 @@ import { ServiceCard } from "./service-card";
 import { MarketplaceService } from "@/hooks/useCategoryServices";
 import { ServiceCategory } from "./categories-carousel";
 import { CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface Pagination {
   current: number;
@@ -37,10 +39,13 @@ export function ServiceGrid({
   viewMode = 'grid',
   selectedCategory = null,
 }: ServiceGridProps) {
+  const { settings: appSettings } = useAppSettings();
+  const defaultCurrencyCode = getDefaultCurrency(appSettings);
+  
   // Helper function to normalize currency to currency code
   // Converts currency symbols to their corresponding codes
   const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    if (!currency) return 'PHP';
+    if (!currency) return defaultCurrencyCode;
     
     // If it's already a valid currency code, return it
     if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
@@ -72,8 +77,8 @@ export function ServiceGrid({
       }
     }
     
-    // Default to PHP if not found
-    return 'PHP';
+    // Default to app settings currency if not found
+    return defaultCurrencyCode;
   };
 
   // Transform services to match ServiceCard props

@@ -54,6 +54,21 @@ export const API_ENDPOINTS = {
   marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
   marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
   marketplaceProvidersById: "/api/marketplace/providers/[id]",
+  
+  // AI Features
+  aiNaturalLanguageSearch: "/api/ai/marketplace/natural-language-search",
+  aiServiceRecommendations: "/api/ai/marketplace/recommendations",
+  aiPriceEstimator: "/api/ai/marketplace/price-estimator",
+  aiServiceMatcher: "/api/ai/marketplace/service-matcher",
+  aiReviewSentiment: "/api/ai/marketplace/review-sentiment",
+  aiBookingAssistant: "/api/ai/marketplace/booking-assistant",
+  aiDescriptionGenerator: "/api/ai/marketplace/description-generator",
+  aiPricingOptimizer: "/api/ai/marketplace/pricing-optimizer",
+  aiDemandForecast: "/api/ai/marketplace/demand-forecast",
+  aiReviewInsights: "/api/ai/marketplace/review-insights",
+  aiResponseAssistant: "/api/ai/marketplace/response-assistant",
+  aiListingOptimizer: "/api/ai/marketplace/listing-optimizer",
+  aiSchedulingAssistant: "/api/ai/marketplace/scheduling-assistant",
 
   
   // Job Board
@@ -429,4 +444,10 @@ export const API_ENDPOINTS = {
   usersDelete: "/api/users",
 
   registrationEarlyAccess: "/api/registration/early",
+  
+  // Monitoring Endpoints
+  monitoringMetricsJson: "/api/monitoring/metrics/json",
+  monitoringSystem: "/api/monitoring/system",
+  monitoringHealth: "/api/monitoring/health",
+  monitoringPerformance: "/api/monitoring/performance",
 } as const;
