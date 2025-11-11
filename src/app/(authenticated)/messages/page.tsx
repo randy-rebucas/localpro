@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Send, Check, Edit, Trash2, MessageSquare, MoreVertical, Paperclip, Smile, Phone, Video } from "lucide-react";
 import { CLIENT_CONFIG } from "@/lib/env";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
@@ -350,6 +351,7 @@ const normalizeConversation = (conversation: Record<string, unknown>, currentUse
 };
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1046,9 +1048,40 @@ export default function MessagesPage() {
   // Set initial active conversation when conversations are loaded
   useEffect(() => {
     if (conversations.length > 0 && !activeConversation) {
-      setActiveConversation(conversations[0]);
+      // Check if there's a conversationId in the URL query params
+      const conversationIdFromUrl = searchParams?.get('conversationId');
+      if (conversationIdFromUrl) {
+        // Find the conversation by ID
+        const foundConversation = conversations.find(
+          conv => (conv._id === conversationIdFromUrl || conv.id === conversationIdFromUrl)
+        );
+        if (foundConversation) {
+          setActiveConversation(foundConversation);
+          // Fetch full conversation details
+          fetchConversation(conversationIdFromUrl).then(data => {
+            if (data) {
+              setActiveConversation(data);
+            }
+          }).catch(err => {
+            logger.error('Error fetching conversation from URL', err instanceof Error ? err : new Error(String(err)));
+          });
+        } else {
+          // Conversation not in list yet, try to fetch it directly
+          fetchConversation(conversationIdFromUrl).then(data => {
+            if (data) {
+              setActiveConversation(data);
+            }
+          }).catch(err => {
+            logger.error('Error fetching conversation from URL', err instanceof Error ? err : new Error(String(err)));
+            // Fallback to first conversation
+            setActiveConversation(conversations[0]);
+          });
+        }
+      } else {
+        setActiveConversation(conversations[0]);
+      }
     }
-  }, [conversations, activeConversation]);
+  }, [conversations, activeConversation, searchParams, fetchConversation]);
 
   useEffect(() => {
     scrollToBottom();

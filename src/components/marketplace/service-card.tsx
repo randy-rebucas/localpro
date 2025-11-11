@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
+import { getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
 
 interface ServiceCardProps {
   id: number;
@@ -49,6 +50,32 @@ export function ServiceCard({
 }: ServiceCardProps) {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = React.useState(false);
+  
+  // Normalize currency - ensure it's a symbol (convert code to symbol if needed)
+  const normalizeCurrencyToSymbol = (curr: string): string => {
+    // If it's already a symbol, return it
+    const symbolMap: Record<string, string> = {
+      '₱': '₱', '$': '$', '€': '€', '£': '£', '¥': '¥', 'A$': 'A$', 'C$': 'C$', 'S$': 'S$'
+    };
+    if (symbolMap[curr]) return curr;
+    
+    // If it's a currency code, convert to symbol
+    if (CURRENCY_CONFIGS[curr.toUpperCase()]) {
+      return getCurrencySymbol(curr.toUpperCase());
+    }
+    
+    // Try to find by symbol in configs
+    for (const [, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === curr) {
+        return curr;
+      }
+    }
+    
+    // Default to PHP symbol
+    return '₱';
+  };
+  
+  const currencySymbol = normalizeCurrencyToSymbol(currency);
   
   // Format pricing type for display
   const pricingTypeLabel = pricingType === 'hourly' ? 'hr' : pricingType === 'fixed' ? 'service' : pricingType;
@@ -174,7 +201,7 @@ export function ServiceCard({
             <div>
               <div className="flex items-baseline gap-1">
                 <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-green-600`}>
-                  {currency}{price.toLocaleString()}
+                  {currencySymbol}{price.toLocaleString()}
                 </span>
                 <span className="text-xs text-gray-500">/{pricingTypeLabel}</span>
               </div>

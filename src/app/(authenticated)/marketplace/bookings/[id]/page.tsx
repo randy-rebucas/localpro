@@ -18,14 +18,17 @@ import {
   MessageCircle,
   Star,
   CreditCard,
-  Download
+  Download,
+  BarChart3
 } from "lucide-react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getDefaultCurrency } from "@/lib/settings-utils";
-import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
+import { formatCurrency as formatCurrencyUtil, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { useRoleAccess } from "@/components/role-guard";
+import { CommunicationAPI } from "@/lib/communication-utils";
 
 interface Booking {
   _id?: string;
@@ -112,10 +115,12 @@ export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { settings: appSettings } = useAppSettings();
+  const { isServiceProvider, isAdmin } = useRoleAccess();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [messaging, setMessaging] = useState(false);
 
   const fetchBooking = useCallback(async () => {
     try {
@@ -175,13 +180,55 @@ export default function BookingDetailPage() {
   };
 
   const formatPrice = useCallback((price: number, currency?: string) => {
+    // Normalize currency to ensure it's a currency code (not symbol)
+    const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+      if (!currency) return getDefaultCurrency(appSettings);
+      
+      // If it's already a valid currency code, return it
+      if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+        return currency.toUpperCase();
+      }
+      
+      // Map currency symbols to codes
+      const symbolToCode: Record<string, string> = {
+        '₱': 'PHP',
+        '$': 'USD',
+        '€': 'EUR',
+        '£': 'GBP',
+        '¥': 'JPY',
+        'A$': 'AUD',
+        'C$': 'CAD',
+        'S$': 'SGD',
+        '±': 'PHP', // Fallback for unrecognized symbols
+      };
+      
+      // Check if it's a symbol
+      const normalized = currency.trim();
+      if (symbolToCode[normalized]) {
+        return symbolToCode[normalized];
+      }
+      
+      // Try to find by symbol in configs
+      for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+        if (config.symbol === normalized) {
+          return code;
+        }
+      }
+      
+      // Default to app settings currency
+      return getDefaultCurrency(appSettings);
+    };
+    
     // Priority: 1. Provided currency, 2. Booking pricing currency, 3. Service pricing currency, 4. App settings default
-    const currencyCode = currency || 
+    const rawCurrency = currency || 
       booking?.pricing?.currency || 
       (typeof booking?.service?.pricing === 'object' ? booking.service.pricing.currency : undefined) ||
       getDefaultCurrency(appSettings);
+    
+    const currencyCode = normalizeCurrencyCode(rawCurrency);
     return formatCurrencyUtil(price, currencyCode, {
       appSettings,
+      showSymbol: true,
     });
   }, [booking, appSettings]);
 
@@ -211,18 +258,86 @@ export default function BookingDetailPage() {
       
       const bookingId = booking._id || booking.id || params.id;
       const serviceName = booking.service?.name || booking.service?.title || 'Service';
-      const bookingDate = booking.date ? formatDate(booking.date) : booking.bookingDate ? formatDate(booking.bookingDate) : 'N/A';
-      const bookingTime = booking.time ? formatTime(booking.time) : booking.bookingDate ? new Date(booking.bookingDate).toLocaleTimeString() : 'N/A';
+      // Format booking date and time properly for PDF
+      let bookingDate = 'N/A';
+      let bookingTime = 'N/A';
+      
+      if (booking.date) {
+        // Format date without weekday for PDF (more compact)
+        const date = new Date(booking.date);
+        bookingDate = date.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      } else if (booking.bookingDate) {
+        const date = new Date(booking.bookingDate);
+        bookingDate = date.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+      
+      if (booking.time) {
+        bookingTime = formatTime(booking.time);
+      } else if (booking.bookingDate) {
+        const bookingDateTime = new Date(booking.bookingDate);
+        bookingTime = bookingDateTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+      }
       const totalAmount = booking.totalPrice || booking.pricing?.totalAmount || 0;
       const servicePrice = booking.service?.price || booking.pricing?.basePrice || 0;
       const platformFee = totalAmount - servicePrice;
-      const currency = booking.pricing?.currency || booking.service?.pricing?.currency || getDefaultCurrency(appSettings);
+      
+      // Normalize currency to ensure it's a currency code (not symbol)
+      const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+        if (!currency) return getDefaultCurrency(appSettings);
+        
+        // If it's already a valid currency code, return it
+        if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+          return currency.toUpperCase();
+        }
+        
+        // Map currency symbols to codes
+        const symbolToCode: Record<string, string> = {
+          '₱': 'PHP',
+          '$': 'USD',
+          '€': 'EUR',
+          '£': 'GBP',
+          '¥': 'JPY',
+          'A$': 'AUD',
+          'C$': 'CAD',
+          'S$': 'SGD',
+        };
+        
+        // Check if it's a symbol
+        const normalized = currency.trim();
+        if (symbolToCode[normalized]) {
+          return symbolToCode[normalized];
+        }
+        
+        // Try to find by symbol in configs
+        for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+          if (config.symbol === normalized) {
+            return code;
+          }
+        }
+        
+        // Default to app settings currency
+        return getDefaultCurrency(appSettings);
+      };
+      
+      const rawCurrency = booking.pricing?.currency || booking.service?.pricing?.currency;
+      const currency = normalizeCurrencyCode(rawCurrency);
       const formattedTotal = formatPrice(totalAmount, currency);
       const formattedServicePrice = formatPrice(servicePrice, currency);
       const formattedPlatformFee = formatPrice(platformFee, currency);
       const paymentMethod = booking.paymentMethod || booking.payment?.method || 'N/A';
       const paymentStatus = booking.paymentStatus || booking.payment?.status || 'PENDING';
-      const bookingStatus = booking.status || 'PENDING';
       const providerName = booking.provider?.name || 
         (booking.provider?.firstName && booking.provider?.lastName ? `${booking.provider.firstName} ${booking.provider.lastName}` : 
         booking.provider?.firstName || booking.provider?.lastName || 'Provider');
@@ -249,29 +364,45 @@ export default function BookingDetailPage() {
         doc.setFont('helvetica', fontStyle);
         doc.setTextColor(color[0], color[1], color[2]);
         
-        const textMaxWidth = maxWidth || (pageWidth - (x * 2));
+        // Calculate proper maxWidth based on alignment
+        let textMaxWidth: number;
+        if (maxWidth) {
+          textMaxWidth = maxWidth;
+        } else if (align === 'center') {
+          // For centered text, use full page width minus margins
+          textMaxWidth = pageWidth - (margin * 2);
+        } else if (align === 'right') {
+          // For right-aligned text, calculate from x to margin
+          textMaxWidth = x - margin;
+        } else {
+          // For left-aligned text, calculate from x to right margin
+          textMaxWidth = pageWidth - x - margin;
+        }
+        
+        // Only split text if it actually needs to be split
+        // For short single words (like "INVOICE"), don't split
+        if (!text.includes(' ') && text.length <= 15) {
+          // Check if text fits without splitting
+          const textWidth = doc.getTextWidth(text);
+          if (textWidth <= textMaxWidth) {
+            // Single word that fits - render directly without splitting
+            doc.text(text, x, y, { align });
+            return fontSize * 0.35 + 2;
+          }
+        }
+        
+        // Split text for longer content or multi-word text
         const lines = doc.splitTextToSize(text, textMaxWidth);
         doc.text(lines, x, y, { align });
         return lines.length * (fontSize * 0.35) + 2;
       };
 
-      // Helper to draw status badge with yellow background
-      const drawStatusBadge = (text: string, x: number, y: number) => {
-        doc.setFillColor(255, 243, 205); // Light yellow background #FFF3CD
-        doc.setTextColor(133, 100, 4); // Dark yellow text #856404
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        const textWidth = doc.getTextWidth(text);
-        const padding = 5;
-        const badgeHeight = 8;
-        doc.roundedRect(x, y - badgeHeight, textWidth + (padding * 2), badgeHeight + 2, 1.5, 1.5, 'F');
-        doc.text(text, x + padding, y - 1);
-        return textWidth + (padding * 2) + 3;
-      };
-
-      // Load and add logo at top center
+      // Load and add logo at top left
       let logoAdded = false;
-      let logoHeight = 0;
+      const logoHeight = 20; // Default height
+      const logoWidth = 20;
+      const logoY = yPos;
+      
       try {
         const logoResponse = await fetch('/logo-only.svg');
         if (logoResponse.ok) {
@@ -291,10 +422,8 @@ export default function BookingDetailPage() {
                   ctx.drawImage(img, 0, 0, 100, 100);
                   const imgData = canvas.toDataURL('image/png');
                   
-                  // Add logo to PDF at top center
-                  const logoWidth = 30;
-                  logoHeight = 30;
-                  doc.addImage(imgData, 'PNG', (pageWidth - logoWidth) / 2, yPos, logoWidth, logoHeight);
+                  // Add logo to PDF at top left
+                  doc.addImage(imgData, 'PNG', margin, logoY, logoWidth, logoHeight);
                   logoAdded = true;
                 }
                 URL.revokeObjectURL(url);
@@ -315,149 +444,188 @@ export default function BookingDetailPage() {
         logger.debug('Logo loading failed', { error: logoError });
       }
       
-      // Fallback logo
+      // Fallback logo - positioned on left
       if (!logoAdded) {
         doc.setFillColor(76, 175, 80);
-        doc.roundedRect((pageWidth - 30) / 2, yPos, 30, 30, 3, 3, 'F');
+        doc.roundedRect(margin, logoY, logoWidth, logoHeight, 3, 3, 'F');
         doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('LP', pageWidth / 2, yPos + 18, { align: 'center' });
-        logoHeight = 30;
+        doc.text('LP', margin + 10, logoY + 12, { align: 'center' });
       }
 
-      yPos += logoHeight + 10;
+      // Invoice Header - positioned to the right of logo, aligned with logo top
+      const invoiceTitleX = margin + logoWidth + 8;
+      const invoiceTitleY = logoY + (logoHeight / 2) - 4; // Center align with logo
+      addText('INVOICE', invoiceTitleX, invoiceTitleY, { fontSize: 22, fontStyle: 'bold', color: [0, 0, 0] });
+      
+      yPos += logoHeight + 8;
 
-      // Header Section - "Booking Receipt" title (centered, green, large)
-      yPos += addText('Booking Receipt', pageWidth / 2, yPos, { fontSize: 24, fontStyle: 'bold', align: 'center', color: [76, 175, 80] });
+      // Invoice details in two columns
+      const leftX = margin;
+      const rightX = pageWidth / 2 + 20; // Start right column from middle of page
+      
+      // Left side - Invoice number and date - improved readability
+      addText('Invoice #:', leftX, yPos, { fontSize: 10, color: [60, 60, 60] });
+      addText(String(bookingId || 'N/A'), leftX + 30, yPos, { fontSize: 10, fontStyle: 'bold', color: [0, 0, 0] });
       yPos += 5;
       
-      // Receipt number
-      yPos += addText(`Receipt #${bookingId}`, pageWidth / 2, yPos, { fontSize: 11, align: 'center', color: [0, 0, 0] });
-      yPos += 8;
+      const invoiceDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      addText('Date:', leftX, yPos, { fontSize: 10, color: [60, 60, 60] });
+      addText(invoiceDate, leftX + 30, yPos, { fontSize: 10, color: [0, 0, 0] });
       
-      // Green horizontal line (2px border-bottom equivalent)
-      doc.setDrawColor(76, 175, 80);
-      doc.setLineWidth(0.7);
+      // Right side - Booking details - compressed and improved
+      const bookingDateLabelX = rightX;
+      const bookingDateValueX = pageWidth - margin - 5; // Right align to page edge
+      
+      // Booking Date - single line, right aligned
+      addText('Booking Date:', bookingDateLabelX, yPos - 5, { fontSize: 10, color: [60, 60, 60] });
+      // Truncate if too long and ensure it fits
+      const bookingDateText = bookingDate.length > 25 ? bookingDate.substring(0, 22) + '...' : bookingDate;
+      addText(bookingDateText, bookingDateValueX, yPos - 5, { fontSize: 10, color: [0, 0, 0], align: 'right' });
+      
+      // Time - single line, right aligned
+      addText('Time:', bookingDateLabelX, yPos, { fontSize: 10, color: [60, 60, 60] });
+      addText(bookingTime, bookingDateValueX, yPos, { fontSize: 10, color: [0, 0, 0], align: 'right' });
+      
+      yPos += 10;
+
+      // Horizontal line separator
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 12;
+      yPos += 8;
 
-      // Two-column grid layout (matching HTML grid)
-      const columnWidth = (pageWidth - (margin * 3)) / 2;
-      const leftX = margin;
-      const rightX = margin + columnWidth + margin;
-      const columnStartY = yPos;
+      // Bill To / Service Information section
+      const sectionWidth = (pageWidth - (margin * 3)) / 2;
+      const billToX = margin;
+      const serviceInfoX = margin + sectionWidth + margin;
 
-      // Left Column: Booking Details
-      // Section header (h3 style: gray, uppercase, 14px equivalent)
-      yPos += addText('BOOKING DETAILS', leftX, yPos, { fontSize: 10, fontStyle: 'bold', color: [102, 102, 102] });
+      // Bill To section - improved readability
+      yPos += addText('Bill To', billToX, yPos, { fontSize: 11, fontStyle: 'bold', color: [0, 0, 0] });
+      yPos += 5;
+      const customerName = booking.contactEmail || 'Customer';
+      yPos += addText(customerName, billToX, yPos, { fontSize: 10, color: [0, 0, 0] });
+      if (booking.contactPhone) {
+        yPos += addText(booking.contactPhone, billToX, yPos, { fontSize: 10, color: [0, 0, 0] });
+      }
+      if (address && address !== 'N/A') {
+        yPos += addText(address, billToX, yPos, { fontSize: 10, color: [0, 0, 0], maxWidth: sectionWidth });
+      }
+      
+      // Service Information section - improved readability
+      // Calculate starting Y position based on Bill To content
+      const billToLines = 1 + (booking.contactPhone ? 1 : 0) + (address && address !== 'N/A' ? 1 : 0);
+      let serviceInfoY = yPos - (billToLines * 5);
+      serviceInfoY += addText('Service Information', serviceInfoX, serviceInfoY, { fontSize: 11, fontStyle: 'bold', color: [0, 0, 0] });
+      serviceInfoY += 5;
+      serviceInfoY += addText(serviceName, serviceInfoX, serviceInfoY, { fontSize: 10, color: [0, 0, 0], maxWidth: sectionWidth });
+      serviceInfoY += 4;
+      const providerLabelY = serviceInfoY;
+      addText('Provider:', serviceInfoX, providerLabelY, { fontSize: 10, color: [60, 60, 60] });
+      addText(providerName, serviceInfoX + 25, providerLabelY, { fontSize: 10, fontStyle: 'bold', color: [0, 0, 0] });
+      serviceInfoY += 4;
+      const durationLabelY = serviceInfoY;
+      addText('Duration:', serviceInfoX, durationLabelY, { fontSize: 10, color: [60, 60, 60] });
+      addText(`${booking.duration} ${booking.duration === 1 ? 'hour' : 'hours'}`, serviceInfoX + 25, durationLabelY, { fontSize: 10, color: [0, 0, 0] });
+      serviceInfoY += 4;
+      
+      yPos = Math.max(yPos, serviceInfoY) + 10;
+
+      // Items Table - Simple and clean
+      // Table header
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      const tableHeaderY = yPos;
+      doc.line(margin, tableHeaderY, pageWidth - margin, tableHeaderY);
       yPos += 6;
       
-      // Info paragraphs (16px font equivalent)
-      yPos += addText(`Service: ${serviceName}`, leftX, yPos, { fontSize: 12 });
-      yPos += addText(`Date: ${bookingDate}`, leftX, yPos, { fontSize: 12 });
-      yPos += addText(`Time: ${bookingTime}`, leftX, yPos, { fontSize: 12 });
-      yPos += addText(`Duration: ${booking.duration} ${booking.duration === 1 ? 'hour' : 'hours'}`, leftX, yPos, { fontSize: 12 });
+      // Header text - improved readability
+      addText('Description', margin + 5, yPos, { fontSize: 11, fontStyle: 'bold', color: [0, 0, 0] });
+      addText('Amount', pageWidth - margin - 5, yPos, { fontSize: 11, fontStyle: 'bold', align: 'right', color: [0, 0, 0] });
+      yPos += 6;
       
-      // Status badge - inline with "Status:" label
-      const statusLabelY = yPos + 3;
-      addText('Status: ', leftX, statusLabelY, { fontSize: 12 });
-      const statusText = bookingStatus.toLowerCase();
-      const statusLabelWidth = doc.getTextWidth('Status: ');
-      drawStatusBadge(statusText, leftX + statusLabelWidth, statusLabelY);
-      yPos += 8;
-
-      // Right Column: Payment Information
-      let rightY = columnStartY;
-      // Section header
-      rightY += addText('PAYMENT INFORMATION', rightX, rightY, { fontSize: 10, fontStyle: 'bold', color: [102, 102, 102] });
-      rightY += 6;
-      
-      // Info paragraphs
-      rightY += addText(`Payment Method: ${paymentMethod}`, rightX, rightY, { fontSize: 12 });
-      
-      // Payment status badge - inline with "Payment Status:" label
-      const paymentStatusLabelY = rightY + 3;
-      addText('Payment Status: ', rightX, paymentStatusLabelY, { fontSize: 12 });
-      const paymentStatusText = paymentStatus.toLowerCase();
-      const paymentStatusLabelWidth = doc.getTextWidth('Payment Status: ');
-      drawStatusBadge(paymentStatusText, rightX + paymentStatusLabelWidth, paymentStatusLabelY);
-      rightY += 8;
-      
-      rightY += addText(`Provider: ${providerName}`, rightX, rightY, { fontSize: 12 });
-      rightY += addText(`Location: ${address}`, rightX, rightY, { fontSize: 12, maxWidth: columnWidth });
-
-      // Use the maximum Y position from both columns
-      yPos = Math.max(yPos, rightY) + 12;
-
-      // Pricing Table (no section header, just the table)
-      // Table header with gray background (#f5f5f5)
-      const tableHeaderY = yPos;
-      doc.setFillColor(245, 245, 245);
-      doc.rect(margin, tableHeaderY - 6, pageWidth - (margin * 2), 8, 'F');
-      yPos += addText('Description', margin + 3, yPos, { fontSize: 11, fontStyle: 'bold' });
-      addText('Amount', pageWidth - margin - 3, yPos, { fontSize: 11, fontStyle: 'bold', align: 'right' });
-      yPos += 8;
-
-      // Service Fee row
-      yPos += addText('Service Fee', margin + 3, yPos, { fontSize: 11 });
-      addText(formattedServicePrice, pageWidth - margin - 3, yPos, { fontSize: 11, align: 'right' });
+      // Line under header
+      doc.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 7;
 
-      // Platform Fee row
+      // Service Fee row - improved readability
+      yPos += addText('Service Fee', margin + 5, yPos, { fontSize: 11, color: [0, 0, 0] });
+      addText(formattedServicePrice, pageWidth - margin - 5, yPos - 7, { fontSize: 11, fontStyle: 'bold', align: 'right', color: [0, 0, 0] });
+      yPos += 4;
+
+      // Platform Fee row - improved readability
       if (platformFee > 0) {
-        yPos += addText('Platform Fee', margin + 3, yPos, { fontSize: 11 });
-        addText(formattedPlatformFee, pageWidth - margin - 3, yPos, { fontSize: 11, align: 'right' });
-        yPos += 7;
+        yPos += addText('Platform Fee', margin + 5, yPos, { fontSize: 11, color: [0, 0, 0] });
+        addText(formattedPlatformFee, pageWidth - margin - 5, yPos - 7, { fontSize: 11, fontStyle: 'bold', align: 'right', color: [0, 0, 0] });
+        yPos += 4;
       }
 
-      // Total row with highlighted background (#f9f9f9) and larger font (18px equivalent)
-      const totalRowY = yPos;
-      doc.setFillColor(249, 249, 249);
-      doc.rect(margin, totalRowY - 2, pageWidth - (margin * 2), 10, 'F');
-      yPos += addText('Total', margin + 3, yPos, { fontSize: 13, fontStyle: 'bold' });
-      addText(formattedTotal, pageWidth - margin - 3, yPos, { fontSize: 13, fontStyle: 'bold', align: 'right' });
-      yPos += 15;
+      // Total section - clean separator
+      yPos += 2;
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 7;
+      
+      // Total row
+      addText('Total', margin + 5, yPos, { fontSize: 13, fontStyle: 'bold' });
+      addText(formattedTotal, pageWidth - margin - 5, yPos, { fontSize: 13, fontStyle: 'bold', align: 'right' });
+      yPos += 10;
+      
+      // Payment information below total - improved readability
+      yPos += 5;
+      addText('Payment Information', margin + 5, yPos, { fontSize: 11, fontStyle: 'bold', color: [0, 0, 0] });
+      yPos += 6;
+      addText(`Payment Method:`, margin + 5, yPos, { fontSize: 10, color: [60, 60, 60] });
+      addText(paymentMethod, margin + 5 + 45, yPos, { fontSize: 10, fontStyle: 'bold', color: [0, 0, 0] });
+      yPos += 6;
+      addText(`Payment Status:`, margin + 5, yPos, { fontSize: 10, color: [60, 60, 60] });
+      addText(paymentStatus.toUpperCase(), margin + 5 + 45, yPos, { fontSize: 10, fontStyle: 'bold', color: [0, 0, 0] });
+      yPos += 10;
 
-      // Special Instructions (if available)
+      // Notes section (if available) - improved readability
       if (booking.notes) {
         if (yPos > pageHeight - 50) {
           doc.addPage();
           yPos = margin;
         }
-        yPos += addText('SPECIAL INSTRUCTIONS', margin, yPos, { fontSize: 11, fontStyle: 'bold' });
-        yPos += 6;
-        yPos += addText(booking.notes, margin, yPos, { fontSize: 11, maxWidth: pageWidth - (margin * 2) });
-        yPos += 12;
+        yPos += 7;
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.line(margin, yPos, pageWidth - margin, yPos);
+        yPos += 7;
+        addText('Notes', margin + 5, yPos, { fontSize: 11, fontStyle: 'bold', color: [0, 0, 0] });
+        yPos += 5;
+        yPos += addText(booking.notes, margin + 5, yPos, { fontSize: 10, color: [0, 0, 0], maxWidth: pageWidth - (margin * 2) - 10 });
+        yPos += 8;
       }
 
-      // Footer section (matching HTML footer style)
-      if (yPos > pageHeight - 40) {
+      // Footer section - Simple and minimal
+      if (yPos > pageHeight - 30) {
         doc.addPage();
         yPos = margin;
       }
       
-      // Footer top border (1px solid #ddd)
-      doc.setDrawColor(221, 221, 221);
+      // Footer separator
+      doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(0.3);
       doc.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 10;
+      yPos += 7;
       
-      // Footer text (12px, gray #666, centered)
-      addText(`Generated on ${new Date().toLocaleString()}`, pageWidth / 2, yPos, { fontSize: 9, align: 'center', color: [102, 102, 102] });
-      yPos += 5;
-      addText('Thank you for using our service!', pageWidth / 2, yPos, { fontSize: 9, align: 'center', color: [102, 102, 102] });
+      // Footer text - improved readability
+      addText(`Invoice generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, yPos, { fontSize: 9, align: 'center', color: [100, 100, 100] });
 
       // Save PDF
-      const fileName = `booking-receipt-${bookingId}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `invoice-${bookingId}-${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
-      logger.debug('PDF receipt downloaded', { bookingId });
+      logger.debug('PDF invoice downloaded', { bookingId });
     } catch (error) {
       logger.error('Error generating PDF receipt', error instanceof Error ? error : new Error(String(error)), { bookingId: booking._id || booking.id });
       alert('Failed to generate PDF. Please ensure jspdf is installed: npm install jspdf');
     }
-  }, [booking, params.id, appSettings, formatPrice, formatDate, formatTime]);
+  }, [booking, params.id, appSettings, formatPrice, formatTime]);
 
   const handleViewService = useCallback(() => {
     if (!booking) return;
@@ -467,6 +635,69 @@ export default function BookingDetailPage() {
       router.push(`/marketplace/services/${serviceId}`);
     }
   }, [booking, router]);
+
+  const handleMessage = useCallback(async () => {
+    if (!booking || messaging) return;
+
+    // Get provider from top-level booking.provider or booking.service.provider
+    const provider = booking.provider || (typeof booking.service?.provider === 'object' ? booking.service.provider : null);
+    
+    if (!provider || typeof provider === 'string') {
+      alert('Provider information is not available.');
+      return;
+    }
+
+    const providerId = provider._id || provider.id;
+    if (!providerId) {
+      alert('Provider ID is not available.');
+      return;
+    }
+
+    try {
+      setMessaging(true);
+      // Get or create conversation with the provider
+      const response = await CommunicationAPI.getConversationWithUser(providerId);
+      const conversation = response?.data?.conversation || response?.conversation || response?.data || response;
+      const conversationId = conversation?._id || conversation?.id;
+
+      if (conversationId) {
+        // Navigate to messages page with conversation ID
+        router.push(`/messages?conversationId=${conversationId}`);
+      } else {
+        throw new Error('Failed to get conversation ID from response');
+      }
+    } catch (error) {
+      logger.error('Error opening conversation', error instanceof Error ? error : new Error(String(error)), { providerId: provider._id || provider.id });
+      alert('Failed to open conversation. Please try again.');
+    } finally {
+      setMessaging(false);
+    }
+  }, [booking, messaging, router]);
+
+  const handleCall = useCallback(() => {
+    if (!booking) return;
+
+    // Get provider from top-level booking.provider or booking.service.provider
+    const provider = booking.provider || (typeof booking.service?.provider === 'object' ? booking.service.provider : null);
+    
+    if (!provider || typeof provider === 'string') {
+      alert('Provider phone number is not available.');
+      return;
+    }
+
+    const phoneNumber = provider.phone || provider.phoneNumber;
+    if (!phoneNumber || phoneNumber === 'N/A') {
+      alert('Provider phone number is not available.');
+      return;
+    }
+
+    // Format phone number for tel: protocol
+    // Remove spaces, dashes, and parentheses, but keep + if present
+    const formattedPhone = phoneNumber.replace(/[\s\-()]/g, '');
+    
+    // Open phone dialer
+    window.location.href = `tel:${formattedPhone}`;
+  }, [booking]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -656,27 +887,27 @@ export default function BookingDetailPage() {
           </div>
 
           {/* Payment Information */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Payment Information</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Service Fee</span>
-                <span className="font-medium">{formatPrice(booking.service?.price || 0)}</span>
+          <div className="bg-white rounded-lg shadow-sm p-5">
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">Payment Information</h2>
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-gray-600 text-sm">Service Fee</span>
+                <span className="font-semibold text-gray-900 text-sm">{formatPrice(booking.service?.price || booking.pricing?.basePrice || 0, booking.pricing?.currency || booking.service?.pricing?.currency)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Platform Fee</span>
-                <span className="font-medium">{formatPrice((booking.totalPrice || 0) - (booking.service?.price || 0))}</span>
+              <div className="flex justify-between items-center py-0.5">
+                <span className="text-gray-600 text-sm">Platform Fee</span>
+                <span className="font-semibold text-gray-900 text-sm">{formatPrice((booking.totalPrice || booking.pricing?.totalAmount || 0) - (booking.service?.price || booking.pricing?.basePrice || 0), booking.pricing?.currency || booking.service?.pricing?.currency)}</span>
               </div>
-              <div className="border-t border-gray-200 pt-4">
+              <div className="border-t border-gray-200 pt-2 mt-1.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-700">Total</span>
-                  <span className="text-lg font-bold text-green-600">{formatPrice(booking.totalPrice || booking.pricing?.totalAmount || 0)}</span>
+                  <span className="text-base font-semibold text-gray-700">Total</span>
+                  <span className="text-base font-bold text-green-600">{formatPrice(booking.totalPrice || booking.pricing?.totalAmount || 0, booking.pricing?.currency || booking.service?.pricing?.currency)}</span>
                 </div>
               </div>
               {(booking.paymentMethod || booking.payment?.method) && (
-                <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    Payment Method: {booking.paymentMethod || booking.payment?.method}
+                <div className="pt-2 mt-1.5 border-t border-gray-200">
+                  <p className="text-xs text-gray-600">
+                    Payment Method: <span className="font-medium text-gray-900">{booking.paymentMethod || booking.payment?.method}</span>
                   </p>
                 </div>
               )}
@@ -751,11 +982,19 @@ export default function BookingDetailPage() {
                   )}
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button 
+                    onClick={handleMessage}
+                    disabled={messaging}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <MessageCircle className="w-4 h-4" />
-                    Message
+                    {messaging ? 'Opening...' : 'Message'}
                   </button>
-                  <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  <button 
+                    onClick={handleCall}
+                    disabled={!providerPhone || providerPhone === 'N/A'}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Phone className="w-4 h-4" />
                     Call
                   </button>
@@ -791,7 +1030,7 @@ export default function BookingDetailPage() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Download Receipt
+                Download Invoice
               </button>
 
               {(booking.service?.id || booking.service?._id) && (
@@ -802,6 +1041,31 @@ export default function BookingDetailPage() {
                   View Service
                 </button>
               )}
+
+              {/* Quick Navigation Links */}
+              <div className="pt-3 border-t border-gray-200">
+                <h4 className="text-sm font-medium text-gray-500 mb-3">Quick Links</h4>
+                
+                {/* My Bookings - All authenticated users can access */}
+                <Link
+                  href="/marketplace/my-bookings"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors mb-2"
+                >
+                  <Calendar className="w-4 h-4" />
+                  My Bookings
+                </Link>
+
+                {/* My Services - Only service providers and admins can access */}
+                {(isServiceProvider || isAdmin) && (
+                  <Link
+                    href="/marketplace/my-services"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    My Services
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
 

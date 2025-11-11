@@ -6,16 +6,19 @@ import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
 import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
 import { ServiceGrid } from "@/components/marketplace/service-grid";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
-import { Navigation, MapPin, Grid3x3, List, Loader2, Sparkles, X } from "lucide-react";
+import { Navigation, MapPin, Grid3x3, List, Loader2, Sparkles, X, Calendar, BarChart3 } from "lucide-react";
 import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
 import { useCategories } from "@/hooks/useCategories";
 import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { PreferredFeatureSelector } from "@/components/preferred-feature-selector";
+import { useRoleAccess } from "@/components/role-guard";
+import Link from "next/link";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
+  const { isServiceProvider, isAdmin } = useRoleAccess();
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
@@ -237,6 +240,26 @@ export default function MarketplacePage() {
 
             {/* Main Content Area */}
             <div className="flex-1 min-w-0">
+              {/* Quick Links Section */}
+              <div className="mb-4 flex items-center gap-2 flex-wrap">
+                <Link
+                  href="/marketplace/my-bookings"
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors text-sm font-medium shadow-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  My Bookings
+                </Link>
+                {(isServiceProvider || isAdmin) && (
+                  <Link
+                    href="/marketplace/my-services"
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 hover:border-green-400 transition-colors text-sm font-medium shadow-sm"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    My Services
+                  </Link>
+                )}
+              </div>
+
               {/* Controls Bar - Location on Left, View/Sort Controls on Right */}
               <div className="mb-6 bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-gray-200">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

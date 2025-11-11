@@ -5,6 +5,7 @@ import { Loader2, ChevronLeft, ChevronRight, Search, FilterX, Package } from "lu
 import { ServiceCard } from "./service-card";
 import { MarketplaceService } from "@/hooks/useCategoryServices";
 import { ServiceCategory } from "./categories-carousel";
+import { CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
 
 interface Pagination {
   current: number;
@@ -36,6 +37,45 @@ export function ServiceGrid({
   viewMode = 'grid',
   selectedCategory = null,
 }: ServiceGridProps) {
+  // Helper function to normalize currency to currency code
+  // Converts currency symbols to their corresponding codes
+  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+    if (!currency) return 'PHP';
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to PHP if not found
+    return 'PHP';
+  };
+
   // Transform services to match ServiceCard props
   const transformService = (service: MarketplaceService, index: number) => {
     const serviceId = service._id || service.id || `service-${index}`;
@@ -68,10 +108,14 @@ export function ServiceGrid({
       ? `${service.provider.firstName || ''} ${service.provider.lastName || ''}`.trim() || service.provider.name
       : null;
     
-    // Get pricing info
+    // Get pricing info - ensure currency is normalized to code for conversion base
     const pricing = service.pricing || {};
     const price = pricing.basePrice || service.basePrice || service.price || 0;
-    const currency = pricing.currency || service.currency || '₱';
+    // Normalize currency to ensure it's a currency code (not symbol) for proper conversion base
+    const rawCurrency = pricing.currency || service.currency;
+    const currencyCode = normalizeCurrencyCode(rawCurrency);
+    // Convert currency code to symbol for display
+    const currency = getCurrencySymbol(currencyCode);
     const pricingType = pricing.type || 'service';
     
     // Get service area/location

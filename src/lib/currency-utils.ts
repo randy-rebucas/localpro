@@ -80,28 +80,18 @@ export function formatCurrency(
   const config = CURRENCY_CONFIGS[code] || CURRENCY_CONFIGS.PHP;
   const { showSymbol = true, showCode = false, locale } = options || {};
   
-  try {
-    // Use Intl.NumberFormat for proper currency formatting
-    const formatter = new Intl.NumberFormat(locale || config.locale, {
-      style: 'currency',
-      currency: config.code,
-      minimumFractionDigits: config.decimalPlaces,
-      maximumFractionDigits: config.decimalPlaces,
-    });
-    
-    const formatted = formatter.format(amount);
-    
-    if (showCode && !formatted.includes(config.code)) {
-      return `${formatted} ${config.code}`;
-    }
-    
-    return formatted;
-  } catch {
-    // Fallback to simple formatting if Intl.NumberFormat fails
-    const symbol = showSymbol ? config.symbol : '';
-    const code = showCode ? ` ${config.code}` : '';
-    return `${symbol}${amount.toFixed(config.decimalPlaces)}${code}`;
-  }
+  // Always use currency symbol for display instead of Intl.NumberFormat
+  // This ensures consistent symbol-based formatting across the application
+  const symbol = showSymbol ? config.symbol : '';
+  const codeDisplay = showCode ? ` ${config.code}` : '';
+  
+  // Format number with proper locale formatting (thousand separators, etc.)
+  const formattedAmount = new Intl.NumberFormat(locale || config.locale, {
+    minimumFractionDigits: config.decimalPlaces,
+    maximumFractionDigits: config.decimalPlaces,
+  }).format(amount);
+  
+  return `${symbol}${formattedAmount}${codeDisplay}`;
 }
 
 /**

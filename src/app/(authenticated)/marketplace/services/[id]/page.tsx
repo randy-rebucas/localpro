@@ -23,6 +23,7 @@ import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
 
 // Service Image Interface
 interface ServiceImage {
@@ -438,11 +439,49 @@ export default function ServiceDetailPage() {
   }, [service, fetchOtherProviderServices]);
 
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency
-    }).format(price);
+  // Normalize currency to code for conversion base, then format with symbol
+  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+    if (!currency) return 'PHP';
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to PHP if not found
+    return 'PHP';
+  };
+
+  const formatPrice = (price: number, currency: string | undefined = 'PHP') => {
+    // Normalize currency to code for conversion base
+    const currencyCode = normalizeCurrencyCode(currency);
+    // Use formatCurrency which now uses symbols
+    return formatCurrency(price, currencyCode);
   };
 
   const handleToggleFavorite = useCallback(() => {
@@ -599,30 +638,30 @@ export default function ServiceDetailPage() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
               onClick={handleShare}
-              className="relative p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors group"
+              className="relative p-3 rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all hover:scale-110 group"
               title="Share service"
             >
-              <Share2 className="w-4 h-4" />
+              <Share2 className="w-5 h-5" />
               {shareFeedback && (
-                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
                   {shareFeedback}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                 </div>
               )}
             </button>
             <button 
               onClick={handleToggleFavorite}
-              className={`p-2 border rounded-lg transition-colors ${
+              className={`p-3 rounded-full transition-all hover:scale-110 ${
                 isFavorited 
-                  ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100' 
-                  : 'border-gray-300 hover:bg-gray-50'
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-600'
               }`}
               title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
@@ -682,7 +721,7 @@ export default function ServiceDetailPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="text-3xl font-bold text-green-600">
-              {formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency || 'USD')}
+              {formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency)}
             </div>
             <div className="text-sm text-gray-500">
               {service.pricing?.type === 'hourly' 
@@ -755,7 +794,7 @@ export default function ServiceDetailPage() {
                     <p className="text-sm text-gray-600 mb-3">{pkg.description || 'No description available'}</p>
                     <div className="flex justify-between items-center mb-3">
                       <span className="text-lg font-bold text-green-600">
-                        {formatPrice(pkg.price || 0, service.pricing?.currency || 'USD')}
+                        {formatPrice(pkg.price || 0, service.pricing?.currency)}
                       </span>
                       <span className="text-sm text-gray-500">{pkg.duration || 0} hours</span>
                     </div>
@@ -783,7 +822,7 @@ export default function ServiceDetailPage() {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold text-gray-700">{addon.name || 'Add-on'}</h3>
                       <span className="text-lg font-bold text-green-600">
-                        {formatPrice(addon.price || 0, service.pricing?.currency || 'USD')}
+                        {formatPrice(addon.price || 0, service.pricing?.currency)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{addon.description || 'No description available'}</p>
@@ -889,7 +928,7 @@ export default function ServiceDetailPage() {
                 <h3 className="font-medium text-gray-700 mb-1">Insurance</h3>
                 <p className="text-sm text-gray-600">
                   {service.insurance?.covered 
-                    ? `Covered up to ${formatPrice(service.insurance.coverageAmount || 0, service.pricing?.currency || 'USD')}`
+                    ? `Covered up to ${formatPrice(service.insurance.coverageAmount || 0, service.pricing?.currency)}`
                     : 'Not covered'
                   }
                 </p>
@@ -899,7 +938,7 @@ export default function ServiceDetailPage() {
                 <h3 className="font-medium text-gray-700 mb-1">Emergency Service</h3>
                 <p className="text-sm text-gray-600">
                   {service.emergencyService?.available 
-                    ? `${service.emergencyService.responseTime || 'Not specified'} (+${formatPrice(service.emergencyService.surcharge || 0, service.pricing?.currency || 'USD')})`
+                    ? `${service.emergencyService.responseTime || 'Not specified'} (+${formatPrice(service.emergencyService.surcharge || 0, service.pricing?.currency)})`
                     : 'Not available'
                   }
                 </p>
@@ -1132,7 +1171,10 @@ export default function ServiceDetailPage() {
                           : otherService.images[0].url || otherService.images[0].thumbnail)
                       : undefined;
                     const price = otherService.pricing?.basePrice || 0;
-                    const currency = otherService.pricing?.currency || '₱';
+                    const rawCurrency = otherService.pricing?.currency || 'PHP';
+                    // Normalize currency to code, then get symbol for display
+                    const currencyCode = normalizeCurrencyCode(rawCurrency);
+                    const currencySymbol = getCurrencySymbol(currencyCode);
                     const rating = typeof otherService.rating === 'number' 
                       ? otherService.rating 
                       : (otherService.rating?.average || 0);
@@ -1162,7 +1204,7 @@ export default function ServiceDetailPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1">
                               <span className="text-sm font-bold text-green-600">
-                                {currency}{price.toLocaleString()}
+                                {currencySymbol}{price.toLocaleString()}
                               </span>
                               {otherService.pricing?.type && (
                                 <span className="text-xs text-gray-500">
