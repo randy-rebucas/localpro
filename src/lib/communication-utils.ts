@@ -142,21 +142,91 @@ export class CommunicationAPI {
   }
 
   // Communication Channels
-  static async sendEmailNotification(recipient: string, subject: string, content: string, template?: string) {
+  /**
+   * Send email notification
+   * @param to - Recipient email address
+   * @param subject - Email subject
+   * @param template - Email template name (optional)
+   * @param data - Template data object (optional) - will be used as content if template is not provided
+   * @param content - Plain text content (optional) - used if template is not provided and data is not an object
+   */
+  static async sendEmailNotification(
+    to: string, 
+    subject: string, 
+    template?: string, 
+    data?: Record<string, unknown> | string
+  ) {
+    // Build request body according to API spec: { to, subject, template, data }
+    const body: {
+      to: string;
+      subject: string;
+      template?: string;
+      data?: Record<string, unknown> | string;
+    } = {
+      to,
+      subject
+    };
+
+    if (template) {
+      body.template = template;
+    }
+
+    // If data is provided, use it; otherwise if content was passed as string, use it as data
+    if (data !== undefined) {
+      body.data = data;
+    }
+
     const response = await fetch(`${this.baseUrl}/notifications/email`, createAuthFetchOptions({
       method: 'POST',
-      body: JSON.stringify({ recipient, subject, content, template })
+      body: JSON.stringify(body)
     }));
-    if (!response.ok) throw new Error(`Failed to send email notification: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Failed to send email notification: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      } catch {
+        // If response is not JSON, use status text
+        errorMessage = `Failed to send email notification: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
     return response.json();
   }
 
-  static async sendSmsNotification(phoneNumber: string, message: string, template?: string) {
+  /**
+   * Send SMS notification
+   * @param to - Recipient phone number
+   * @param message - SMS message content
+   */
+  static async sendSmsNotification(to: string, message: string) {
+    // Build request body according to API spec: { to, message }
+    const body = {
+      to,
+      message
+    };
+
     const response = await fetch(`${this.baseUrl}/notifications/sms`, createAuthFetchOptions({
       method: 'POST',
-      body: JSON.stringify({ phoneNumber, message, template })
+      body: JSON.stringify(body)
     }));
-    if (!response.ok) throw new Error(`Failed to send SMS notification: ${response.status}`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `Failed to send SMS notification: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData?.message || errorData?.error || errorMessage;
+      } catch {
+        // If response is not JSON, use status text
+        errorMessage = `Failed to send SMS notification: ${response.status} ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+    
     return response.json();
   }
 

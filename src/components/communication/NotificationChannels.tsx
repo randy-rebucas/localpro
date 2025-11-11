@@ -26,21 +26,20 @@ export default function NotificationChannels({
 
   // Email form state
   const [emailData, setEmailData] = useState({
-    recipient: recipient?.email || '',
+    to: recipient?.email || '',
     subject: '',
     content: '',
-    template: 'default'
+    template: ''
   });
 
   // SMS form state
   const [smsData, setSmsData] = useState({
-    phoneNumber: recipient?.phone || '',
-    message: '',
-    template: 'default'
+    to: recipient?.phone || '',
+    message: ''
   });
 
   const handleEmailSend = useCallback(async () => {
-    if (!emailData.recipient || !emailData.subject || !emailData.content) {
+    if (!emailData.to || !emailData.subject || !emailData.content) {
       setError('Please fill in all email fields');
       return;
     }
@@ -49,11 +48,13 @@ export default function NotificationChannels({
     setError(null);
 
     try {
+      // API expects: { to, subject, template, data }
+      // If template is provided, use it; otherwise use content as data
       await CommunicationAPI.sendEmailNotification(
-        emailData.recipient,
+        emailData.to,
         emailData.subject,
-        emailData.content,
-        emailData.template
+        emailData.template || undefined,
+        emailData.content // Pass content as data
       );
       setSuccess(true);
       setTimeout(() => {
@@ -68,7 +69,7 @@ export default function NotificationChannels({
   }, [emailData, onClose]);
 
   const handleSmsSend = useCallback(async () => {
-    if (!smsData.phoneNumber || !smsData.message) {
+    if (!smsData.to || !smsData.message) {
       setError('Please fill in all SMS fields');
       return;
     }
@@ -77,10 +78,10 @@ export default function NotificationChannels({
     setError(null);
 
     try {
+      // API expects: { to, message }
       await CommunicationAPI.sendSmsNotification(
-        smsData.phoneNumber,
-        smsData.message,
-        smsData.template
+        smsData.to,
+        smsData.message
       );
       setSuccess(true);
       setTimeout(() => {
@@ -96,15 +97,14 @@ export default function NotificationChannels({
 
   const resetForm = useCallback(() => {
     setEmailData({
-      recipient: recipient?.email || '',
+      to: recipient?.email || '',
       subject: '',
       content: '',
-      template: 'default'
+      template: ''
     });
     setSmsData({
-      phoneNumber: recipient?.phone || '',
-      message: '',
-      template: 'default'
+      to: recipient?.phone || '',
+      message: ''
     });
     setError(null);
     setSuccess(false);
@@ -166,8 +166,8 @@ export default function NotificationChannels({
                 </label>
                 <input
                   type="email"
-                  value={emailData.recipient}
-                  onChange={(e) => setEmailData(prev => ({ ...prev, recipient: e.target.value }))}
+                  value={emailData.to}
+                  onChange={(e) => setEmailData(prev => ({ ...prev, to: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                   placeholder="user@example.com"
                 />
@@ -201,13 +201,14 @@ export default function NotificationChannels({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Template
+                  Template (Optional)
                 </label>
                 <select
                   value={emailData.template}
                   onChange={(e) => setEmailData(prev => ({ ...prev, template: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                 >
+                  <option value="">No Template (Plain Text)</option>
                   <option value="default">Default Template</option>
                   <option value="booking">Booking Notification</option>
                   <option value="payment">Payment Notification</option>
@@ -223,8 +224,8 @@ export default function NotificationChannels({
                 </label>
                 <input
                   type="tel"
-                  value={smsData.phoneNumber}
-                  onChange={(e) => setSmsData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  value={smsData.to}
+                  onChange={(e) => setSmsData(prev => ({ ...prev, to: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
                   placeholder="+1234567890"
                 />
@@ -247,21 +248,6 @@ export default function NotificationChannels({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Template
-                </label>
-                <select
-                  value={smsData.template}
-                  onChange={(e) => setSmsData(prev => ({ ...prev, template: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="default">Default Template</option>
-                  <option value="booking">Booking Notification</option>
-                  <option value="payment">Payment Notification</option>
-                  <option value="system">System Alert</option>
-                </select>
-              </div>
             </div>
           )}
 

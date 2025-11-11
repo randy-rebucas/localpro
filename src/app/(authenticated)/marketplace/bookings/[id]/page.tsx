@@ -655,10 +655,55 @@ export default function BookingDetailPage() {
 
     try {
       setMessaging(true);
-      // Get or create conversation with the provider
-      const response = await CommunicationAPI.getConversationWithUser(providerId);
-      const conversation = response?.data?.conversation || response?.conversation || response?.data || response;
-      const conversationId = conversation?._id || conversation?.id;
+      let conversationId: string | undefined;
+      
+      // Try to get existing conversation
+      try {
+        const response = await CommunicationAPI.getConversationWithUser(providerId);
+        const conversation = response?.data?.conversation || response?.conversation || response?.data || response;
+        conversationId = conversation?._id || conversation?.id;
+      } catch (error) {
+        // If conversation doesn't exist (404), create a new one
+        if (error instanceof Error && error.message.includes('404')) {
+          logger.debug('Conversation not found, creating new one', { providerId });
+          
+          // Create conversation with booking context
+          const bookingId = booking._id || booking.id;
+          const serviceName = booking.service?.name || booking.service?.title || 'Service';
+          const conversationData: {
+            participants: string[];
+            type: string;
+            subject: string;
+            context?: { bookingId: string };
+          } = {
+            participants: [providerId],
+            type: 'booking',
+            subject: `Booking: ${serviceName}`
+          };
+          
+          if (bookingId) {
+            conversationData.context = { bookingId };
+          }
+          
+          const createResponse = await fetch(
+            `${API_BASE_URL}${API_ENDPOINTS.communicationConversations}`,
+            createAuthFetchOptions({
+              method: 'POST',
+              body: JSON.stringify(conversationData)
+            })
+          );
+          
+          if (!createResponse.ok) {
+            throw new Error(`Failed to create conversation: ${createResponse.status}`);
+          }
+          
+          const createData = await createResponse.json();
+          const newConversation = createData?.data?.conversation || createData?.conversation || createData?.data || createData;
+          conversationId = newConversation?._id || newConversation?.id;
+        } else {
+          throw error;
+        }
+      }
 
       if (conversationId) {
         // Navigate to messages page with conversation ID

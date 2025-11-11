@@ -252,7 +252,7 @@ export default function AuthenticatedLayout({
     <Providers>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         {/* Global Header */}
-        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+        <div className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-sm relative z-50">
           <GlobalHeader
             showRoleNavigation={true}
             showFavorites={true}
