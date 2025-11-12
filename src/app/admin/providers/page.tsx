@@ -247,7 +247,7 @@ export default function ProvidersPage() {
 
       // Build query parameters for providers data
       const queryParams = new URLSearchParams();
-      queryParams.set('type', 'providers');
+      queryParams.set('role', 'provider');
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
       if (searchTerm) queryParams.set('search', searchTerm);
@@ -258,12 +258,12 @@ export default function ProvidersPage() {
 
       const [dataResponse, statsResponse] = await Promise.all([
         makeClientAuthenticatedRequestWithEndpointSafe(
-          'providersAdminAll' as keyof typeof API_ENDPOINTS,
+          'users' as keyof typeof API_ENDPOINTS,
           { method: 'GET', query: Object.fromEntries(queryParams) }
         ),
         makeClientAuthenticatedRequestWithEndpointSafe(
-          'providersAdminAll' as keyof typeof API_ENDPOINTS,
-          { method: 'GET', query: { stats: 'true' } }
+          'usersStats' as keyof typeof API_ENDPOINTS,
+          { method: 'GET', query: { hasrole: 'provider' } }
         ).catch(err => { // fallback
           logger.warn('Failed to fetch stats, using fallback', { error: err instanceof Error ? err.message : String(err) });
           return {

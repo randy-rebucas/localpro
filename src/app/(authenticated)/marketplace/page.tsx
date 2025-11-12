@@ -6,15 +6,13 @@ import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
 import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
 import { ServiceGrid } from "@/components/marketplace/service-grid";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
-import { Navigation, MapPin, Grid3x3, List, Loader2, Sparkles, X, Calendar, BarChart3 } from "lucide-react";
+import { Navigation, MapPin, Grid3x3, List, Loader2, Sparkles, X } from "lucide-react";
 import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
 import { useCategories } from "@/hooks/useCategories";
 import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { PreferredFeatureSelector } from "@/components/preferred-feature-selector";
-import { useRoleAccess } from "@/components/role-guard";
-import Link from "next/link";
 import { AINaturalLanguageSearch } from "@/components/marketplace/ai-natural-language-search";
 import { AIServiceRecommendations } from "@/components/marketplace/ai-service-recommendations";
 import { AIPriceEstimator } from "@/components/marketplace/ai-price-estimator";
@@ -22,7 +20,6 @@ import { AIServiceMatcher } from "@/components/marketplace/ai-service-matcher";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
-  const { isServiceProvider, isAdmin } = useRoleAccess();
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
@@ -221,7 +218,7 @@ export default function MarketplacePage() {
         {/* Hero / Header Section */}
         <div className="bg-white border-b border-gray-200 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-            {/* Top Bar with Greeting and Quick Actions */}
+            {/* Top Bar with Greeting */}
             <div className="flex items-start justify-between mb-6 lg:mb-8">
               {/* Welcome Text */}
               <div className="flex-1">
@@ -229,25 +226,6 @@ export default function MarketplacePage() {
                   Hi {getUserName()}, what service do you need today?
                 </h1>
                 <p className="text-sm sm:text-base text-gray-600">Find the perfect service provider for your needs</p>
-              </div>
-              {/* Quick Action Buttons - Top Right */}
-              <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                <Link
-                  href="/marketplace/my-bookings"
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 border-2 border-blue-200 text-blue-700 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all text-sm font-semibold shadow-sm hover:shadow-md group whitespace-nowrap"
-                >
-                  <Calendar className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>My Bookings</span>
-                </Link>
-                {(isServiceProvider || isAdmin) && (
-                  <Link
-                    href="/marketplace/my-services"
-                    className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 border-2 border-purple-200 text-purple-700 rounded-lg hover:bg-purple-100 hover:border-purple-300 transition-all text-sm font-semibold shadow-sm hover:shadow-md group whitespace-nowrap"
-                  >
-                    <BarChart3 className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                    <span>My Services</span>
-                  </Link>
-                )}
               </div>
             </div>
             <MarketplaceHero

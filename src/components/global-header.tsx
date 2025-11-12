@@ -32,6 +32,7 @@ import {
   HelpCircle,
   Filter,
   Wallet,
+  Calendar,
 } from "lucide-react";
 
 interface GlobalHeaderProps {
@@ -72,6 +73,7 @@ export function GlobalHeader({
   const {
     isAdmin,
     isBusinessRole,
+    isServiceProvider,
   } = useRoleAccess();
 
   // Get user roles and determine available role views
@@ -128,6 +130,7 @@ export function GlobalHeader({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);
@@ -141,6 +144,7 @@ export function GlobalHeader({
   // Refs for click outside detection
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const quickActionsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLFormElement>(null);
 
   // Determine logo href - always links to homepage per requirements
@@ -277,6 +281,9 @@ export function GlobalHeader({
       }
       if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
         setShowNotifications(false);
+      }
+      if (quickActionsRef.current && !quickActionsRef.current.contains(event.target as Node)) {
+        setShowQuickActions(false);
       }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearchSuggestions(false);
@@ -453,11 +460,63 @@ export function GlobalHeader({
               </button>
             )}
 
+            {/* Marketplace with Quick Actions Submenu - Always visible for authenticated users */}
+            {session && (
+              <div className="hidden sm:flex items-center border-r border-gray-300 pr-2 mr-2">
+                <div className="relative" ref={quickActionsRef}>
+                  <button
+                    onClick={() => setShowQuickActions(!showQuickActions)}
+                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace") || showQuickActions
+                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                    title="Marketplace"
+                    aria-label="Marketplace Menu"
+                    aria-expanded={showQuickActions}
+                  >
+                    <Store className="w-5 h-5" aria-hidden="true" />
+                  </button>
+                  
+                  {showQuickActions && (
+                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 py-2 z-[9999]">
+                      <Link
+                        href="/marketplace"
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors group"
+                        onClick={() => setShowQuickActions(false)}
+                      >
+                        <Store className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="font-medium">Marketplace</span>
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <Link
+                        href="/marketplace/my-bookings"
+                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors group"
+                        onClick={() => setShowQuickActions(false)}
+                      >
+                        <Calendar className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                        <span className="font-medium">My Bookings</span>
+                      </Link>
+                      {(isServiceProvider || isAdmin) && (
+                        <Link
+                          href="/marketplace/my-services"
+                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors group"
+                          onClick={() => setShowQuickActions(false)}
+                        >
+                          <BarChart3 className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">My Services</span>
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Role-based Navigation Icons - Only show when not in client view */}
             {showRoleNavigation && session && roleView !== 'client' && (
               <div className="hidden sm:flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
                 {/* Marketplace/Store - Show if in provider view and user has provider role */}
-                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
+                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && !pathname?.startsWith("/marketplace") && (
                   <Link
                     href="/marketplace"
                     className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
@@ -658,6 +717,7 @@ export function GlobalHeader({
                 <MessageSquare className="w-5 h-5" aria-hidden="true" />
               </Link>
             )}
+
 
             {/* Favorites */}
             {showFavorites && session && (

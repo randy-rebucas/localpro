@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { 
   Server, 
+  Database, 
   CheckCircle, 
   XCircle, 
   AlertTriangle, 
@@ -10,7 +11,7 @@ import {
   Activity,
   AlertCircle,
   TrendingUp,
-  Gauge
+  Package
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -18,39 +19,61 @@ import { makeClientPublicRequest } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
 
-// Types based on the provided JSON responses
-interface MetricsData {
-  timestamp: string;
-  summary: {
-    totalRequests: number;
-    averageResponseTime: number;
-    totalErrors: number;
-    memoryUsage: {
-      rss: number;
-      heapUsed: number;
-      heapTotal: number;
-    };
-  };
-  metrics: Array<{
-    help: string;
-    name: string;
-    type: string;
-    values: Array<{
-      value: number;
-      labels?: Record<string, string>;
-      metricName?: string;
-    }>;
-    aggregator: string;
-  }>;
-}
-
-interface HealthData {
+// Types based on the system-health endpoint response
+interface SystemHealthData {
   status: string;
   timestamp: string;
   uptime: number;
-  database: {
-    status: string;
-    state: number;
+  uptimeFormatted: string;
+  version: string;
+  environment: string;
+  services: {
+    database: {
+      status: string;
+      state: string;
+      host: string;
+      port: number;
+      name: string;
+      queryTest: boolean;
+      collections: number;
+    };
+    external_apis: {
+      [key: string]: {
+        status: string;
+        response_time: number | null;
+      };
+    };
+    app: {
+      status: string;
+      version: string;
+      environment: string;
+      maintenanceMode: boolean;
+      features: {
+        marketplace: boolean;
+        academy: boolean;
+        jobBoard: boolean;
+        referrals: boolean;
+        analytics: boolean;
+      };
+    };
+  };
+  system: {
+    memory: {
+      rss: number;
+      heapUsed: number;
+      heapTotal: number;
+      external: number;
+      unit: string;
+    };
+    cpu: {
+      user: number;
+      system: number;
+      unit: string;
+    };
+    platform: string;
+    nodeVersion: string;
+    pid: number;
+    arch: string;
   };
   metrics: {
     httpRequests: number;
@@ -65,395 +88,313 @@ interface HealthData {
       };
     }>;
     cpuUsage: number;
+    totalErrors: number;
   };
-}
-
-interface SystemData {
-  timestamp: string;
-  cpu: {
-    manufacturer: string;
-    brand: string;
-    cores: number;
-    physicalCores: number;
-    speed: number;
-  };
-  memory: {
-    total: number;
-    free: number;
-    used: number;
-    available: number;
-  };
-  disk: Array<{
-    fs: string;
-    type: string;
-    size: number;
-    used: number;
-    available: number;
-    use: number;
-  }>;
-  network: Array<{
-    iface: string;
-    type: string;
-    ip4: string;
-    ip6: string;
-  }>;
+  requestId?: string;
 }
 
 interface AnalysisResult {
-  performance: {
-    averageResponseTime: number;
-    totalRequests: number;
-    errorRate: number;
-    status: 'excellent' | 'good' | 'warning' | 'critical';
+  overall: {
+    status: 'healthy' | 'warning' | 'critical';
+    score: number;
     insights: string[];
   };
-  health: {
-    overallStatus: string;
-    databaseStatus: string;
-    uptime: number;
+  database: {
     status: 'healthy' | 'warning' | 'critical';
     insights: string[];
   };
   system: {
-    cpuUsage: number;
-    memoryUsage: number;
-    diskUsage: number;
     status: 'excellent' | 'good' | 'warning' | 'critical';
+    memoryUsage: number;
     insights: string[];
   };
-  metrics: {
-    memoryPressure: number;
-    eventLoopLag: number;
-    gcDuration: number;
-    activeConnections: number;
+  performance: {
     status: 'excellent' | 'good' | 'warning' | 'critical';
+    errorRate: number;
+    insights: string[];
+  };
+  services: {
+    status: 'healthy' | 'warning' | 'critical';
     insights: string[];
   };
 }
 
 // Analysis functions
-function analyzePerformance(metricsData: MetricsData): AnalysisResult['performance'] {
+function analyzeOverall(data: SystemHealthData): AnalysisResult['overall'] {
   const insights: string[] = [];
-  let status: 'excellent' | 'good' | 'warning' | 'critical' = 'excellent';
-  
-  const avgResponseTime = metricsData.summary.averageResponseTime;
-  const totalRequests = metricsData.summary.totalRequests;
-  const totalErrors = metricsData.summary.totalErrors;
-  const errorRate = totalRequests > 0 ? (totalErrors / totalRequests) * 100 : 0;
+  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+  let score = 100;
 
-  // Analyze response times
-  if (avgResponseTime < 0.1) {
-    insights.push("Response times are excellent (< 100ms)");
-  } else if (avgResponseTime < 0.3) {
-    insights.push("Response times are good (< 300ms)");
-    status = 'good';
-  } else if (avgResponseTime < 0.5) {
-    insights.push("Response times are acceptable but could be improved (< 500ms)");
-    status = 'warning';
+  // Check main status
+  if (data.status === 'healthy') {
+    insights.push("System is operating normally");
   } else {
-    insights.push("Response times are slow (> 500ms) - performance optimization needed");
+    insights.push(`System status: ${data.status}`);
+    status = 'critical';
+    score -= 50;
+  }
+
+  // Check database
+  if (data.services.database.status !== 'healthy') {
+    insights.push(`Database status: ${data.services.database.status}`);
+    status = 'critical';
+    score -= 30;
+  }
+
+  // Check app status
+  if (data.services.app.status !== 'healthy') {
+    insights.push(`Application status: ${data.services.app.status}`);
+    status = status === 'healthy' ? 'warning' : 'critical';
+    score -= 20;
+  }
+
+  // Check memory usage
+  const memoryPercent = (data.system.memory.heapUsed / data.system.memory.heapTotal) * 100;
+  if (memoryPercent > 90) {
+    insights.push(`High memory usage (${memoryPercent.toFixed(1)}%)`);
+    status = 'critical';
+    score -= 20;
+  } else if (memoryPercent > 80) {
+    insights.push(`Memory usage is elevated (${memoryPercent.toFixed(1)}%)`);
+    if (status === 'healthy') status = 'warning';
+    score -= 10;
+  }
+
+  // Check errors
+  if (data.metrics.totalErrors > 0) {
+    insights.push(`${data.metrics.totalErrors} error(s) detected`);
+    if (data.metrics.totalErrors > 10) {
+      status = 'critical';
+      score -= 15;
+    } else {
+      if (status === 'healthy') status = 'warning';
+      score -= 5;
+    }
+  }
+
+  return { status, score: Math.max(0, score), insights };
+}
+
+function analyzeDatabase(data: SystemHealthData): AnalysisResult['database'] {
+  const insights: string[] = [];
+  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+
+  const db = data.services.database;
+
+  if (db.status === 'healthy' && db.state === 'connected') {
+    insights.push("Database connection is healthy");
+    insights.push(`Connected to ${db.host}:${db.port}`);
+    insights.push(`Database: ${db.name} (${db.collections} collections)`);
+    if (db.queryTest) {
+      insights.push("Query test passed successfully");
+    }
+  } else {
+    insights.push(`Database status: ${db.status}`);
+    insights.push(`Connection state: ${db.state}`);
     status = 'critical';
   }
 
-  // Analyze error rate
+  return { status, insights };
+}
+
+function analyzeSystem(data: SystemHealthData): AnalysisResult['system'] {
+  const insights: string[] = [];
+  let status: 'excellent' | 'good' | 'warning' | 'critical' = 'excellent';
+
+  const memory = data.system.memory;
+  const memoryPercent = (memory.heapUsed / memory.heapTotal) * 100;
+
+  // Memory analysis
+  if (memoryPercent > 90) {
+    insights.push(`Memory usage is critical (${memoryPercent.toFixed(1)}%)`);
+    status = 'critical';
+  } else if (memoryPercent > 80) {
+    insights.push(`Memory usage is high (${memoryPercent.toFixed(1)}%)`);
+    status = 'warning';
+  } else {
+    insights.push(`Memory usage is healthy (${memoryPercent.toFixed(1)}%)`);
+  }
+
+  insights.push(`RSS: ${memory.rss}${memory.unit}, Heap: ${memory.heapUsed}${memory.unit}/${memory.heapTotal}${memory.unit}`);
+  insights.push(`External memory: ${memory.external}${memory.unit}`);
+
+  // CPU analysis
+  const cpuTotal = data.system.cpu.user + data.system.cpu.system;
+  const cpuSeconds = cpuTotal / 1000000; // Convert microseconds to seconds
+  insights.push(`CPU time: ${cpuSeconds.toFixed(2)}s (user: ${(data.system.cpu.user / 1000000).toFixed(2)}s, system: ${(data.system.cpu.system / 1000000).toFixed(2)}s)`);
+
+  // Platform info
+  insights.push(`Platform: ${data.system.platform} (${data.system.arch})`);
+  insights.push(`Node.js: ${data.system.nodeVersion}`);
+  insights.push(`Process ID: ${data.system.pid}`);
+
+  return { status, memoryUsage: memoryPercent, insights };
+}
+
+function analyzePerformance(data: SystemHealthData): AnalysisResult['performance'] {
+  const insights: string[] = [];
+  let status: 'excellent' | 'good' | 'warning' | 'critical' = 'excellent';
+
+  const metrics = data.metrics;
+
+  // Error rate analysis
+  const errorRate = metrics.httpRequests > 0 
+    ? (metrics.totalErrors / metrics.httpRequests) * 100 
+    : 0;
+
   if (errorRate === 0) {
     insights.push("No errors detected - system is stable");
   } else if (errorRate < 1) {
     insights.push(`Low error rate (${errorRate.toFixed(2)}%) - within acceptable range`);
-    if (status === 'excellent') status = 'good';
+    status = 'good';
   } else if (errorRate < 5) {
     insights.push(`Moderate error rate (${errorRate.toFixed(2)}%) - monitoring recommended`);
-    status = status === 'excellent' ? 'warning' : status;
+    status = 'warning';
   } else {
     insights.push(`High error rate (${errorRate.toFixed(2)}%) - immediate attention required`);
     status = 'critical';
   }
 
-  // Analyze request volume
-  if (totalRequests > 1000) {
-    insights.push(`High request volume (${totalRequests}) - system handling load well`);
-  } else if (totalRequests < 10) {
-    insights.push(`Low request volume (${totalRequests}) - may indicate low traffic`);
-  }
-
-  return {
-    averageResponseTime: avgResponseTime,
-    totalRequests,
-    errorRate,
-    status,
-    insights
-  };
-}
-
-function analyzeHealth(healthData: HealthData): AnalysisResult['health'] {
-  const insights: string[] = [];
-  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
-
-  // Check overall status
-  if (healthData.status === 'OK') {
-    insights.push("System health status is OK");
+  // Request volume
+  if (metrics.httpRequests > 1000) {
+    insights.push(`High request volume (${metrics.httpRequests}) - system handling load well`);
+  } else if (metrics.httpRequests > 100) {
+    insights.push(`Moderate request volume (${metrics.httpRequests})`);
   } else {
-    insights.push(`System health status: ${healthData.status}`);
-    status = 'critical';
-  }
-
-  // Check database
-  if (healthData.database.status === 'connected' && healthData.database.state === 1) {
-    insights.push("Database connection is healthy");
-  } else {
-    insights.push(`Database status: ${healthData.database.status} (state: ${healthData.database.state})`);
-    status = 'critical';
-  }
-
-  // Check uptime
-  const uptimeHours = healthData.uptime / 3600;
-  if (uptimeHours > 24) {
-    insights.push(`System uptime: ${uptimeHours.toFixed(1)} hours - stable operation`);
-  } else if (uptimeHours > 1) {
-    insights.push(`System uptime: ${uptimeHours.toFixed(1)} hours - recently restarted`);
-    if (status === 'healthy') status = 'warning';
-  } else {
-    insights.push(`System uptime: ${uptimeHours.toFixed(1)} hours - very recent restart`);
-    status = 'warning';
-  }
-
-  // Check memory usage
-  const memoryUsage = healthData.metrics.memoryUsage;
-  const heapUsed = memoryUsage.find(m => m.labels.type === 'heapUsed')?.value || 0;
-  const heapTotal = memoryUsage.find(m => m.labels.type === 'heapTotal')?.value || 0;
-  if (heapTotal > 0) {
-    const memoryPercent = (heapUsed / heapTotal) * 100;
-    if (memoryPercent > 90) {
-      insights.push(`Memory usage is critical (${memoryPercent.toFixed(1)}%)`);
-      status = 'critical';
-    } else if (memoryPercent > 80) {
-      insights.push(`Memory usage is high (${memoryPercent.toFixed(1)}%)`);
-      if (status === 'healthy') status = 'warning';
-    } else {
-      insights.push(`Memory usage is healthy (${memoryPercent.toFixed(1)}%)`);
-    }
-  }
-
-  // Check CPU usage
-  if (healthData.metrics.cpuUsage > 90) {
-    insights.push(`CPU usage is critical (${healthData.metrics.cpuUsage}%)`);
-    status = 'critical';
-  } else if (healthData.metrics.cpuUsage > 70) {
-    insights.push(`CPU usage is high (${healthData.metrics.cpuUsage}%)`);
-    if (status === 'healthy') status = 'warning';
-  } else {
-    insights.push(`CPU usage is normal (${healthData.metrics.cpuUsage}%)`);
-  }
-
-  return {
-    overallStatus: healthData.status,
-    databaseStatus: healthData.database.status,
-    uptime: healthData.uptime,
-    status,
-    insights
-  };
-}
-
-function analyzeSystem(systemData: SystemData): AnalysisResult['system'] {
-  const insights: string[] = [];
-  let status: 'excellent' | 'good' | 'warning' | 'critical' = 'excellent';
-
-  // Calculate CPU usage (approximate)
-  const cpuUsage = 0; // CPU usage not directly available, would need to calculate from process metrics
-  insights.push(`CPU: ${systemData.cpu.brand} (${systemData.cpu.cores} cores @ ${systemData.cpu.speed}GHz)`);
-
-  // Analyze memory
-  const memoryUsage = (systemData.memory.used / systemData.memory.total) * 100;
-  if (memoryUsage > 90) {
-    insights.push(`Memory usage is critical (${memoryUsage.toFixed(1)}%)`);
-    status = 'critical';
-  } else if (memoryUsage > 80) {
-    insights.push(`Memory usage is high (${memoryUsage.toFixed(1)}%)`);
-    status = 'warning';
-  } else {
-    insights.push(`Memory usage is healthy (${memoryUsage.toFixed(1)}%)`);
-  }
-  insights.push(`Memory: ${(systemData.memory.used / 1024 / 1024 / 1024).toFixed(2)}GB used / ${(systemData.memory.total / 1024 / 1024 / 1024).toFixed(2)}GB total`);
-
-  // Analyze disk
-  if (systemData.disk.length > 0) {
-    const disk = systemData.disk[0];
-    if (disk.use > 90) {
-      insights.push(`Disk usage is critical (${disk.use.toFixed(1)}%) on ${disk.fs}`);
-      status = 'critical';
-    } else if (disk.use > 80) {
-      insights.push(`Disk usage is high (${disk.use.toFixed(1)}%) on ${disk.fs}`);
-      if (status === 'excellent') status = 'warning';
-    } else {
-      insights.push(`Disk usage is healthy (${disk.use.toFixed(1)}%) on ${disk.fs}`);
-    }
-    insights.push(`Disk: ${(disk.used / 1024 / 1024 / 1024).toFixed(2)}GB used / ${(disk.size / 1024 / 1024 / 1024).toFixed(2)}GB total`);
-  }
-
-  // Network info
-  const networkInterfaces = systemData.network.filter(n => n.type === 'wired' || n.ip4 !== '127.0.0.1');
-  if (networkInterfaces.length > 0) {
-    insights.push(`Network: ${networkInterfaces.length} active interface(s)`);
-  }
-
-  return {
-    cpuUsage,
-    memoryUsage,
-    diskUsage: systemData.disk.length > 0 ? systemData.disk[0].use : 0,
-    status,
-    insights
-  };
-}
-
-function analyzeMetrics(metricsData: MetricsData): AnalysisResult['metrics'] {
-  const insights: string[] = [];
-  let status: 'excellent' | 'good' | 'warning' | 'critical' = 'excellent';
-
-  // Analyze memory pressure
-  const memoryUsage = metricsData.summary.memoryUsage;
-  const memoryPressure = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-  if (memoryPressure > 90) {
-    insights.push(`Memory pressure is critical (${memoryPressure.toFixed(1)}%)`);
-    status = 'critical';
-  } else if (memoryPressure > 80) {
-    insights.push(`Memory pressure is high (${memoryPressure.toFixed(1)}%)`);
-    status = 'warning';
-  } else {
-    insights.push(`Memory pressure is healthy (${memoryPressure.toFixed(1)}%)`);
-  }
-
-  // Analyze event loop lag
-  const eventLoopLagMetric = metricsData.metrics.find(m => m.name === 'nodejs_eventloop_lag_seconds');
-  if (eventLoopLagMetric && eventLoopLagMetric.values.length > 0) {
-    const eventLoopLag = eventLoopLagMetric.values[0].value;
-    if (eventLoopLag > 0.1) {
-      insights.push(`Event loop lag is high (${(eventLoopLag * 1000).toFixed(2)}ms) - performance degradation`);
-      status = 'critical';
-    } else if (eventLoopLag > 0.05) {
-      insights.push(`Event loop lag is moderate (${(eventLoopLag * 1000).toFixed(2)}ms)`);
-      if (status === 'excellent') status = 'warning';
-    } else {
-      insights.push(`Event loop lag is normal (${(eventLoopLag * 1000).toFixed(2)}ms)`);
-    }
-  }
-
-  // Analyze GC duration
-  const gcMetric = metricsData.metrics.find(m => m.name === 'nodejs_gc_duration_seconds');
-  if (gcMetric) {
-    const gcSum = gcMetric.values.find(v => v.metricName === 'nodejs_gc_duration_seconds_sum');
-    const gcCount = gcMetric.values.find(v => v.metricName === 'nodejs_gc_duration_seconds_count');
-    if (gcSum && gcCount && gcCount.value > 0) {
-      const avgGcDuration = gcSum.value / gcCount.value;
-      if (avgGcDuration > 0.1) {
-        insights.push(`Average GC duration is high (${(avgGcDuration * 1000).toFixed(2)}ms)`);
-        if (status === 'excellent') status = 'warning';
-      } else {
-        insights.push(`GC performance is good (avg ${(avgGcDuration * 1000).toFixed(2)}ms)`);
-      }
-    }
+    insights.push(`Low request volume (${metrics.httpRequests}) - may indicate low traffic`);
   }
 
   // Active connections
-  const activeConnectionsMetric = metricsData.metrics.find(m => m.name === 'active_connections');
-  const activeConnections = activeConnectionsMetric?.values[0]?.value || 0;
-  insights.push(`Active connections: ${activeConnections}`);
+  insights.push(`Active connections: ${metrics.activeConnections}`);
 
-  // HTTP requests
-  const httpRequestsMetric = metricsData.metrics.find(m => m.name === 'http_requests_total');
-  if (httpRequestsMetric) {
-    const totalRequests = httpRequestsMetric.values.reduce((sum, v) => sum + v.value, 0);
-    insights.push(`Total HTTP requests: ${totalRequests}`);
+  // CPU usage
+  if (metrics.cpuUsage > 90) {
+    insights.push(`CPU usage is critical (${metrics.cpuUsage}%)`);
+    status = status === 'excellent' ? 'critical' : status;
+  } else if (metrics.cpuUsage > 70) {
+    insights.push(`CPU usage is high (${metrics.cpuUsage}%)`);
+    if (status === 'excellent') status = 'warning';
+  } else {
+    insights.push(`CPU usage is normal (${metrics.cpuUsage}%)`);
   }
 
-  return {
-    memoryPressure,
-    eventLoopLag: eventLoopLagMetric?.values[0]?.value || 0,
-    gcDuration: 0, // Will be calculated if available
-    activeConnections,
-    status,
-    insights
-  };
+  return { status, errorRate, insights };
+}
+
+function analyzeServices(data: SystemHealthData): AnalysisResult['services'] {
+  const insights: string[] = [];
+  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
+
+  // App service
+  const app = data.services.app;
+  if (app.status === 'healthy') {
+    insights.push(`Application is healthy (v${app.version}, ${app.environment})`);
+    if (app.maintenanceMode) {
+      insights.push("⚠️ Maintenance mode is enabled");
+      status = 'warning';
+    }
+    const enabledFeatures = Object.entries(app.features)
+      .filter(([, enabled]) => enabled)
+      .map(([name]) => name);
+    insights.push(`Enabled features: ${enabledFeatures.join(', ')}`);
+  } else {
+    insights.push(`Application status: ${app.status}`);
+    status = 'critical';
+  }
+
+  // External APIs
+  const externalApis = data.services.external_apis;
+  const apiEntries = Object.entries(externalApis);
+  
+  if (apiEntries.length > 0) {
+    insights.push(`External APIs configured: ${apiEntries.length}`);
+    apiEntries.forEach(([name, api]) => {
+      if (api.status === 'configured') {
+        insights.push(`✓ ${name}: ${api.status}`);
+      } else {
+        insights.push(`✗ ${name}: ${api.status}`);
+        status = status === 'healthy' ? 'warning' : 'critical';
+      }
+    });
+  }
+
+  return { status, insights };
 }
 
 export default function AdminHealthPage() {
-  const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
-  const [healthData, setHealthData] = useState<HealthData | null>(null);
-  const [systemData, setSystemData] = useState<SystemData | null>(null);
+  const [healthData, setHealthData] = useState<SystemHealthData | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const fetchAllMonitoringData = useCallback(async () => {
+  const fetchSystemHealth = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all monitoring endpoints in parallel
-      const [metricsRes, healthRes, systemRes] = await Promise.allSettled([
-        makeClientPublicRequest('monitoringMetricsJson' as keyof typeof API_ENDPOINTS, { method: 'GET' }),
-        makeClientPublicRequest('monitoringHealth' as keyof typeof API_ENDPOINTS, { method: 'GET' }),
-        makeClientPublicRequest('monitoringSystem' as keyof typeof API_ENDPOINTS, { method: 'GET' }),
-      ]);
+      const response = await makeClientPublicRequest(
+        'monitoringSystemHealth' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
 
-      let metrics: MetricsData | null = null;
-      let health: HealthData | null = null;
-      let system: SystemData | null = null;
-
-      // Process metrics
-      if (metricsRes.status === 'fulfilled' && metricsRes.value.ok) {
-        const metricsResult = await metricsRes.value.json();
-        metrics = metricsResult.data || metricsResult;
-        setMetricsData(metrics);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch system health`);
       }
 
-      // Process health
-      if (healthRes.status === 'fulfilled' && healthRes.value.ok) {
-        const healthResult = await healthRes.value.json();
-        health = healthResult.data || healthResult;
-        setHealthData(health);
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load system health data');
       }
 
-      // Process system
-      if (systemRes.status === 'fulfilled' && systemRes.value.ok) {
-        const systemResult = await systemRes.value.json();
-        system = systemResult.data || systemResult;
-        setSystemData(system);
-      }
+      const data = result.data as SystemHealthData;
+      setHealthData(data);
 
-      // Analyze the data if we have all required data
-      if (metrics && health && system) {
-        const analysisResult: AnalysisResult = {
-          performance: analyzePerformance(metrics),
-          health: analyzeHealth(health),
-          system: analyzeSystem(system),
-          metrics: analyzeMetrics(metrics),
-        };
-        setAnalysis(analysisResult);
-      }
+      // Analyze the data
+      const analysisResult: AnalysisResult = {
+        overall: analyzeOverall(data),
+        database: analyzeDatabase(data),
+        system: analyzeSystem(data),
+        performance: analyzePerformance(data),
+        services: analyzeServices(data),
+      };
+      setAnalysis(analysisResult);
 
       setLastUpdated(new Date());
     } catch (err) {
-      logger.error('Error fetching monitoring data', err instanceof Error ? err : new Error(String(err)));
-      setError(err instanceof Error ? err.message : 'Failed to load monitoring data');
+      logger.error('Error fetching system health', err instanceof Error ? err : new Error(String(err)));
+      setError(err instanceof Error ? err.message : 'Failed to load system health data');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAllMonitoringData();
-  }, [fetchAllMonitoringData]);
+    fetchSystemHealth();
+  }, [fetchSystemHealth]);
 
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      await fetchAllMonitoringData();
+      await fetchSystemHealth();
     } catch (err) {
-      logger.error('Error refreshing monitoring data', err instanceof Error ? err : new Error(String(err)));
+      logger.error('Error refreshing system health', err instanceof Error ? err : new Error(String(err)));
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'excellent':
+      case 'healthy': return 'text-green-600 bg-green-100';
+      case 'good': return 'text-blue-600 bg-blue-100';
+      case 'warning': return 'text-yellow-600 bg-yellow-100';
+      case 'critical': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -494,7 +435,7 @@ export default function AdminHealthPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             System Health & Performance
           </h1>
-          <p className="text-gray-600 text-sm">Comprehensive monitoring and analysis</p>
+          <p className="text-gray-600 text-sm">Comprehensive system monitoring and analysis</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           {lastUpdated && (
@@ -514,124 +455,98 @@ export default function AdminHealthPage() {
       </div>
 
       {/* Overall Status Summary */}
-      {analysis && (
+      {analysis && healthData && (
         <div className="bg-white rounded shadow p-4">
-          <h2 className="text-sm font-medium text-gray-900 mb-3">Overall Status</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Performance</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{analysis.performance.status}</p>
-                </div>
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-              </div>
-            </div>
-            <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Health</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{analysis.health.status}</p>
-                </div>
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-            <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">System</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{analysis.system.status}</p>
-                </div>
-                <Server className="w-5 h-5 text-purple-600" />
-              </div>
-            </div>
-            <div className="bg-white rounded shadow p-3 border-l-4 border-cyan-500">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Metrics</p>
-                  <p className="text-lg font-bold text-gray-900 capitalize">{analysis.metrics.status}</p>
-                </div>
-                <Gauge className="w-5 h-5 text-cyan-600" />
-              </div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-medium text-gray-900">Overall System Status</h2>
+            <div className="flex items-center space-x-2">
+              {getStatusIcon(analysis.overall.status)}
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(analysis.overall.status)}`}>
+                {analysis.overall.status.toUpperCase()}
+              </span>
             </div>
           </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="bg-gray-50 rounded p-3">
+              <p className="text-xs font-medium text-gray-500">Health Score</p>
+              <p className="text-2xl font-bold text-gray-900">{analysis.overall.score}</p>
+              <p className="text-xs text-gray-500">out of 100</p>
+            </div>
+            <div className="bg-gray-50 rounded p-3">
+              <p className="text-xs font-medium text-gray-500">Uptime</p>
+              <p className="text-lg font-bold text-gray-900">{healthData.uptimeFormatted}</p>
+              <p className="text-xs text-gray-500">{healthData.uptime}s total</p>
+            </div>
+            <div className="bg-gray-50 rounded p-3">
+              <p className="text-xs font-medium text-gray-500">Version</p>
+              <p className="text-lg font-bold text-gray-900">{healthData.version}</p>
+              <p className="text-xs text-gray-500">{healthData.environment}</p>
+            </div>
+            <div className="bg-gray-50 rounded p-3">
+              <p className="text-xs font-medium text-gray-500">HTTP Requests</p>
+              <p className="text-lg font-bold text-gray-900">{healthData.metrics.httpRequests}</p>
+              <p className="text-xs text-gray-500">Total requests</p>
+            </div>
+            <div className="bg-gray-50 rounded p-3">
+              <p className="text-xs font-medium text-gray-500">Errors</p>
+              <p className={`text-lg font-bold ${healthData.metrics.totalErrors > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                {healthData.metrics.totalErrors}
+              </p>
+              <p className="text-xs text-gray-500">Total errors</p>
+            </div>
+          </div>
+          {analysis.overall.insights.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs font-medium text-gray-700 mb-2">Key Insights:</p>
+              <div className="space-y-1">
+                {analysis.overall.insights.map((insight, idx) => (
+                  <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
+                    <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                    <span>{insight}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Performance Analysis */}
-      {analysis && (
-        <div className="bg-white rounded shadow overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
-                <h3 className="text-sm font-medium text-gray-900">Performance Analysis</h3>
-              </div>
-              {getStatusIcon(analysis.performance.status)}
-            </div>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Avg Response Time</p>
-                <p className="text-lg font-bold text-gray-900">{(analysis.performance.averageResponseTime * 1000).toFixed(2)}ms</p>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Total Requests</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.performance.totalRequests}</p>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Error Rate</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.performance.errorRate.toFixed(2)}%</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">Insights:</p>
-              {analysis.performance.insights.map((insight, idx) => (
-                <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
-                  <span>{insight}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Health Analysis */}
+      {/* Database Health */}
       {analysis && healthData && (
         <div className="bg-white rounded shadow overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <h3 className="text-sm font-medium text-gray-900">Health Status</h3>
+                <Database className="w-5 h-5 text-green-600" />
+                <h3 className="text-sm font-medium text-gray-900">Database</h3>
               </div>
-              {getStatusIcon(analysis.health.status)}
+              {getStatusIcon(analysis.database.status)}
             </div>
           </div>
           <div className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-gray-50 rounded p-3">
                 <p className="text-xs font-medium text-gray-500">Status</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.health.overallStatus}</p>
+                <p className="text-lg font-bold text-gray-900 capitalize">{healthData.services.database.status}</p>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500">Host</p>
+                <p className="text-sm font-bold text-gray-900 truncate" title={healthData.services.database.host}>
+                  {healthData.services.database.host}
+                </p>
               </div>
               <div className="bg-gray-50 rounded p-3">
                 <p className="text-xs font-medium text-gray-500">Database</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.health.databaseStatus}</p>
+                <p className="text-lg font-bold text-gray-900">{healthData.services.database.name}</p>
               </div>
               <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Uptime</p>
-                <p className="text-lg font-bold text-gray-900">{(analysis.health.uptime / 3600).toFixed(1)}h</p>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Active Connections</p>
-                <p className="text-lg font-bold text-gray-900">{healthData.metrics.activeConnections}</p>
+                <p className="text-xs font-medium text-gray-500">Collections</p>
+                <p className="text-lg font-bold text-gray-900">{healthData.services.database.collections}</p>
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">Insights:</p>
-              {analysis.health.insights.map((insight, idx) => (
+              <p className="text-xs font-medium text-gray-700">Details:</p>
+              {analysis.database.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
                   <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
                   <span>{insight}</span>
@@ -642,8 +557,8 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* System Analysis */}
-      {analysis && systemData && (
+      {/* System Resources */}
+      {analysis && healthData && (
         <div className="bg-white rounded shadow overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -655,41 +570,43 @@ export default function AdminHealthPage() {
             </div>
           </div>
           <div className="p-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">CPU</p>
-                <p className="text-sm font-bold text-gray-900">{systemData.cpu.brand}</p>
-                <p className="text-xs text-gray-500">{systemData.cpu.cores} cores</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-gray-50 rounded p-3">
                 <p className="text-xs font-medium text-gray-500">Memory Usage</p>
                 <p className="text-lg font-bold text-gray-900">{analysis.system.memoryUsage.toFixed(1)}%</p>
-                <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
                   <div 
-                    className={`h-1 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
                       analysis.system.memoryUsage > 90 ? 'bg-red-500' : 
                       analysis.system.memoryUsage > 80 ? 'bg-yellow-500' : 'bg-green-500'
                     }`}
                     style={{ width: `${analysis.system.memoryUsage}%` }}
                   ></div>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {healthData.system.memory.heapUsed}{healthData.system.memory.unit} / {healthData.system.memory.heapTotal}{healthData.system.memory.unit}
+                </p>
               </div>
               <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Disk Usage</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.system.diskUsage.toFixed(1)}%</p>
-                <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
-                  <div 
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      analysis.system.diskUsage > 90 ? 'bg-red-500' : 
-                      analysis.system.diskUsage > 80 ? 'bg-yellow-500' : 'bg-green-500'
-                    }`}
-                    style={{ width: `${analysis.system.diskUsage}%` }}
-                  ></div>
-                </div>
+                <p className="text-xs font-medium text-gray-500">RSS Memory</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {healthData.system.memory.rss}{healthData.system.memory.unit}
+                </p>
+                <p className="text-xs text-gray-500">Resident set size</p>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500">CPU Usage</p>
+                <p className="text-lg font-bold text-gray-900">{healthData.metrics.cpuUsage}%</p>
+                <p className="text-xs text-gray-500">Current usage</p>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500">Platform</p>
+                <p className="text-sm font-bold text-gray-900">{healthData.system.platform}</p>
+                <p className="text-xs text-gray-500">{healthData.system.arch}</p>
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">Insights:</p>
+              <p className="text-xs font-medium text-gray-700">System Information:</p>
               {analysis.system.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
                   <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
@@ -701,42 +618,116 @@ export default function AdminHealthPage() {
         </div>
       )}
 
-      {/* Metrics Analysis */}
-      {analysis && metricsData && (
+      {/* Performance Metrics */}
+      {analysis && healthData && (
         <div className="bg-white rounded shadow overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Gauge className="w-5 h-5 text-cyan-600" />
-                <h3 className="text-sm font-medium text-gray-900">Detailed Metrics</h3>
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <h3 className="text-sm font-medium text-gray-900">Performance Metrics</h3>
               </div>
-              {getStatusIcon(analysis.metrics.status)}
+              {getStatusIcon(analysis.performance.status)}
             </div>
           </div>
           <div className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Memory Pressure</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.metrics.memoryPressure.toFixed(1)}%</p>
-              </div>
-              <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Event Loop Lag</p>
-                <p className="text-lg font-bold text-gray-900">{(analysis.metrics.eventLoopLag * 1000).toFixed(2)}ms</p>
+                <p className="text-xs font-medium text-gray-500">Error Rate</p>
+                <p className={`text-lg font-bold ${analysis.performance.errorRate > 5 ? 'text-red-600' : analysis.performance.errorRate > 1 ? 'text-yellow-600' : 'text-gray-900'}`}>
+                  {analysis.performance.errorRate.toFixed(2)}%
+                </p>
+                <p className="text-xs text-gray-500">
+                  {healthData.metrics.totalErrors} errors / {healthData.metrics.httpRequests} requests
+                </p>
               </div>
               <div className="bg-gray-50 rounded p-3">
                 <p className="text-xs font-medium text-gray-500">Active Connections</p>
-                <p className="text-lg font-bold text-gray-900">{analysis.metrics.activeConnections}</p>
+                <p className="text-lg font-bold text-gray-900">{healthData.metrics.activeConnections}</p>
+                <p className="text-xs text-gray-500">Current connections</p>
               </div>
               <div className="bg-gray-50 rounded p-3">
-                <p className="text-xs font-medium text-gray-500">Heap Used</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {metricsData.summary.memoryUsage ? Math.round(metricsData.summary.memoryUsage.heapUsed / 1024 / 1024) : 0}MB
-                </p>
+                <p className="text-xs font-medium text-gray-500">HTTP Requests</p>
+                <p className="text-lg font-bold text-gray-900">{healthData.metrics.httpRequests}</p>
+                <p className="text-xs text-gray-500">Total requests</p>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500">Node.js Version</p>
+                <p className="text-sm font-bold text-gray-900">{healthData.system.nodeVersion}</p>
+                <p className="text-xs text-gray-500">Runtime version</p>
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">Insights:</p>
-              {analysis.metrics.insights.map((insight, idx) => (
+              <p className="text-xs font-medium text-gray-700">Performance Insights:</p>
+              {analysis.performance.insights.map((insight, idx) => (
+                <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
+                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <span>{insight}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Services Status */}
+      {analysis && healthData && (
+        <div className="bg-white rounded shadow overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Package className="w-5 h-5 text-cyan-600" />
+                <h3 className="text-sm font-medium text-gray-900">Services & Features</h3>
+              </div>
+              {getStatusIcon(analysis.services.status)}
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500 mb-2">Application</p>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Status:</span>
+                    <span className={`text-xs font-medium capitalize ${getStatusColor(healthData.services.app.status)} px-2 py-0.5 rounded`}>
+                      {healthData.services.app.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Version:</span>
+                    <span className="text-xs font-medium text-gray-900">{healthData.services.app.version}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Environment:</span>
+                    <span className="text-xs font-medium text-gray-900">{healthData.services.app.environment}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-600">Maintenance Mode:</span>
+                    <span className={`text-xs font-medium ${healthData.services.app.maintenanceMode ? 'text-yellow-600' : 'text-green-600'}`}>
+                      {healthData.services.app.maintenanceMode ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded p-3">
+                <p className="text-xs font-medium text-gray-500 mb-2">Features</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(healthData.services.app.features).map(([feature, enabled]) => (
+                    <div key={feature} className="flex items-center space-x-1">
+                      {enabled ? (
+                        <CheckCircle className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <XCircle className="w-3 h-3 text-gray-400" />
+                      )}
+                      <span className="text-xs text-gray-600 capitalize">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-gray-700">Service Details:</p>
+              {analysis.services.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
                   <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
                   <span>{insight}</span>
