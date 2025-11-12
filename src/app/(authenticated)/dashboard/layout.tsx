@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { Suspense } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { 
@@ -5,6 +6,13 @@ import {
   ServicesLoadingState, 
 } from "@/components/ui/loading-state";
 import { LayoutDashboardIcon } from "lucide-react";
+import { generateMetadata as genMeta } from "@/lib/metadata";
+
+export const metadata: Metadata = genMeta({
+  title: "Dashboard",
+  description: "Access your LocalPro dashboard to manage services, view analytics, and connect with professionals.",
+  keywords: ["dashboard", "analytics", "services", "management"],
+});
 
 export default function DashboardLayout({
   children,

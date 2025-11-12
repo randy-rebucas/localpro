@@ -67,6 +67,7 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | POST | `/api/marketplace/services/:id/images` | **provider, admin** | Upload service images |
 | POST | `/api/marketplace/bookings` | AUTHENTICATED | Create booking |
 | GET | `/api/marketplace/bookings` | AUTHENTICATED | Get bookings |
+| GET | `/api/marketplace/bookings/:id` | AUTHENTICATED | Get booking details |
 | PUT | `/api/marketplace/bookings/:id/status` | AUTHENTICATED | Update booking status |
 | POST | `/api/marketplace/bookings/:id/photos` | AUTHENTICATED | Upload booking photos |
 | POST | `/api/marketplace/bookings/:id/review` | AUTHENTICATED | Add review |
@@ -617,6 +618,25 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 
 ---
 
+## AI Marketplace (`/api/ai/marketplace`)
+
+| Method | Endpoint | Roles | Description |
+|--------|----------|-------|-------------|
+| POST | `/api/ai/marketplace/recommendations` | AUTHENTICATED | Natural language search for marketplace |
+| POST | `/api/ai/marketplace/price-estimator` | AUTHENTICATED | AI price estimation |
+| POST | `/api/ai/marketplace/service-matcher` | AUTHENTICATED | AI service matching |
+| POST | `/api/ai/marketplace/review-sentiment` | AUTHENTICATED | Review sentiment analysis |
+| POST | `/api/ai/marketplace/booking-assistant` | AUTHENTICATED | Booking assistant |
+| POST | `/api/ai/marketplace/scheduling-assistant` | AUTHENTICATED | Scheduling assistant |
+| POST | `/api/ai/marketplace/description-generator` | **provider, admin** | Generate service description |
+| POST | `/api/ai/marketplace/pricing-optimizer` | **provider, admin** | Pricing optimization |
+| POST | `/api/ai/marketplace/demand-forecast` | **provider, admin** | Demand forecasting |
+| POST | `/api/ai/marketplace/review-insights` | **provider, admin** | Review insights analysis |
+| POST | `/api/ai/marketplace/response-assistant` | **provider, admin** | Response assistant for reviews/messages |
+| POST | `/api/ai/marketplace/listing-optimizer` | **provider, admin** | Listing optimization |
+
+---
+
 ## Alerts (`/api/monitoring/alerts`)
 
 | Method | Endpoint | Roles | Description |
@@ -632,20 +652,22 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 
 ## Summary Statistics
 
-- **Total Endpoints**: ~400+
-- **Public Endpoints**: ~81
-- **Authenticated Endpoints**: ~250+
+- **Total Endpoints**: ~420+
+- **Public Endpoints**: ~90
+- **Authenticated Endpoints**: ~260+
 - **Admin-Only Endpoints**: ~70
-- **Role-Specific Endpoints**: ~50+
-  - Provider: ~30
+- **Role-Specific Endpoints**: ~60+
+  - Provider: ~40
   - Supplier: ~10
   - Instructor: ~10
   - Agency Admin/Owner: ~15
 
 ### Recent Updates
 
+- **AI Marketplace**: Added 12 new AI-powered endpoints for marketplace intelligence and automation
 - **Provider Lookup Enhancement**: Provider endpoints now accept both User ID and Provider ID, querying Users collection first for extended user data
 - **System Health Endpoint**: New comprehensive `/api/monitoring/system-health` endpoint added for complete system diagnostics
+- **Marketplace Bookings**: Added GET endpoint for individual booking details
 
 ---
 

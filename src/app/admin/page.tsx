@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { 
   BarChart3, 
@@ -70,10 +72,25 @@ interface SystemAlert {
   resolved: boolean;
 }
 
+interface ModuleStats {
+  supplies: number;
+  academy: number;
+  rentals: number;
+  ads: number;
+  communication: number;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
+  const [moduleStats, setModuleStats] = useState<ModuleStats>({
+    supplies: 0,
+    academy: 0,
+    rentals: 0,
+    ads: 0,
+    communication: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -81,6 +98,50 @@ export default function AdminDashboard() {
   const [showDevTools, setShowDevTools] = useState(false);
   const roleAccess = useRoleAccess();
   const { data: session } = useSession();
+  const router = useRouter();
+
+  // Fetch module stats
+  const fetchModuleStats = useCallback(async () => {
+    try {
+      if (!getApiToken()) return;
+
+      // Fetch stats for each module in parallel
+      const [suppliesRes, academyRes, rentalsRes, adsRes, communicationRes] = await Promise.allSettled([
+        fetch(`${API_BASE_URL}/api/supplies?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+        fetch(`${API_BASE_URL}/api/academy/courses?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+        fetch(`${API_BASE_URL}/api/rentals?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+        fetch(`${API_BASE_URL}/api/ads?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+        fetch(`${API_BASE_URL}/api/communication/messages?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+      ]);
+
+      const parseCount = (result: PromiseSettledResult<Response>) => {
+        if (result.status === 'fulfilled' && result.value.ok) {
+          return result.value.headers.get('x-total-count') || 
+                 result.value.json().then((data: any) => data?.total || data?.count || 0).catch(() => 0);
+        }
+        return Promise.resolve(0);
+      };
+
+      const [suppliesCount, academyCount, rentalsCount, adsCount, communicationCount] = await Promise.all([
+        parseCount(suppliesRes),
+        parseCount(academyRes),
+        parseCount(rentalsRes),
+        parseCount(adsRes),
+        parseCount(communicationRes),
+      ]);
+
+      setModuleStats({
+        supplies: typeof suppliesCount === 'number' ? suppliesCount : 0,
+        academy: typeof academyCount === 'number' ? academyCount : 0,
+        rentals: typeof rentalsCount === 'number' ? rentalsCount : 0,
+        ads: typeof adsCount === 'number' ? adsCount : 0,
+        communication: typeof communicationCount === 'number' ? communicationCount : 0,
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.warn('Error fetching module stats', { errorMessage: error.message, errorName: error.name });
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -93,80 +154,104 @@ export default function AdminDashboard() {
           throw new Error('Authentication required');
         }
         
-        // Try analyticsDashboard endpoint first
-        let url = `${API_BASE_URL}${API_ENDPOINTS.analyticsDashboard}`;
-        let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+        // Fetch dashboard data and module stats in parallel
+        const [dashboardPromise] = await Promise.all([
+          (async () => {
+            // Try analyticsDashboard endpoint first
+            let url = `${API_BASE_URL}${API_ENDPOINTS.analyticsDashboard}`;
+            let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
-        // If dashboard endpoint doesn't exist (404), fall back to analyticsOverview
-        if (response.status === 404) {
-          logger.warn('Analytics dashboard endpoint not available, falling back to overview endpoint');
-          url = `${API_BASE_URL}${API_ENDPOINTS.analyticsOverview}`;
-          response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-          
-          if (!response.ok) {
-            // If overview also fails, use default data
-            logger.warn('Analytics overview endpoint also unavailable, using default data');
-            setStats({
-              totalUsers: 0,
-              activeServices: 0,
-              totalRevenue: 0,
-              growthRate: 0,
-              pendingApprovals: 0,
-              systemHealth: 'Unknown',
-              newUsersToday: 0,
-              activeBookings: 0,
-              conversionRate: 0,
-              avgResponseTime: 0,
-              serverUptime: 0,
-              errorRate: 0
-            });
-            setRecentActivity([]);
-            setSystemAlerts([]);
-            setLastUpdated(new Date());
-            return;
-          }
+            // If dashboard endpoint doesn't exist (404), fall back to analyticsOverview
+            if (response.status === 404) {
+              logger.warn('Analytics dashboard endpoint not available, falling back to overview endpoint');
+              url = `${API_BASE_URL}${API_ENDPOINTS.analyticsOverview}`;
+              response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+              
+              if (!response.ok) {
+                // If overview also fails, use default data
+                logger.warn('Analytics overview endpoint also unavailable, using default data');
+                return {
+                  stats: {
+                    totalUsers: 0,
+                    activeServices: 0,
+                    totalRevenue: 0,
+                    growthRate: 0,
+                    pendingApprovals: 0,
+                    systemHealth: 'Unknown',
+                    newUsersToday: 0,
+                    activeBookings: 0,
+                    conversionRate: 0,
+                    avgResponseTime: 0,
+                    serverUptime: 0,
+                    errorRate: 0
+                  },
+                  recentActivity: [],
+                  systemAlerts: []
+                };
+              }
 
-          // Transform overview data to dashboard format
-          const overviewResult = await response.json();
-          if (overviewResult.success && overviewResult.data?.overview) {
-            const overview = overviewResult.data.overview;
-            setStats({
-              totalUsers: overview.totalUsers || 0,
-              activeServices: overview.totalServices || 0,
-              totalRevenue: 0, // Revenue not in overview
-              growthRate: 0,
-              pendingApprovals: 0,
-              systemHealth: 'Healthy',
-              newUsersToday: 0,
-              activeBookings: 0,
-              conversionRate: 0,
-              avgResponseTime: 0,
-              serverUptime: 100,
-              errorRate: 0
-            });
-            setRecentActivity([]);
-            setSystemAlerts([]);
-            setLastUpdated(new Date());
-            return;
-          }
-        }
+              // Transform overview data to dashboard format
+              const overviewResult = await response.json();
+              if (overviewResult.success && overviewResult.data?.overview) {
+                const overview = overviewResult.data.overview;
+                return {
+                  stats: {
+                    totalUsers: overview.totalUsers || 0,
+                    activeServices: overview.totalServices || 0,
+                    totalRevenue: 0,
+                    growthRate: 0,
+                    pendingApprovals: 0,
+                    systemHealth: 'Healthy',
+                    newUsersToday: 0,
+                    activeBookings: 0,
+                    conversionRate: 0,
+                    avgResponseTime: 0,
+                    serverUptime: 100,
+                    errorRate: 0
+                  },
+                  recentActivity: [],
+                  systemAlerts: []
+                };
+              }
+            }
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch dashboard data`);
-        }
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch dashboard data`);
+            }
 
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to load dashboard data');
-        }
+            const result = await response.json();
+            
+            if (!result.success) {
+              throw new Error(result.error || 'Failed to load dashboard data');
+            }
 
-        const { stats: apiStats, recentActivity: apiActivity, systemAlerts: apiAlerts } = result.data;
+            return {
+              stats: result.data.stats || {
+                totalUsers: 0,
+                activeServices: 0,
+                totalRevenue: 0,
+                growthRate: 0,
+                pendingApprovals: 0,
+                systemHealth: 'Unknown',
+                newUsersToday: 0,
+                activeBookings: 0,
+                conversionRate: 0,
+                avgResponseTime: 0,
+                serverUptime: 0,
+                errorRate: 0
+              },
+              recentActivity: result.data.recentActivity || [],
+              systemAlerts: result.data.systemAlerts || []
+            };
+          })(),
+          fetchModuleStats()
+        ]);
 
-        setStats(apiStats);
-        setRecentActivity(apiActivity || []);
-        setSystemAlerts(apiAlerts || []);
+        const dashboardData = await dashboardPromise;
+        setStats(dashboardData.stats);
+        setRecentActivity(dashboardData.recentActivity);
+        setSystemAlerts(dashboardData.systemAlerts);
         setLastUpdated(new Date());
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -195,7 +280,7 @@ export default function AdminDashboard() {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [fetchModuleStats]);
 
   const refreshData = useCallback(async () => {
     setRefreshing(true);
@@ -280,6 +365,9 @@ export default function AdminDashboard() {
       setRecentActivity(apiActivity || []);
       setSystemAlerts(apiAlerts || []);
       setLastUpdated(new Date());
+      
+      // Refresh module stats
+      await fetchModuleStats();
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       logger.warn('Error refreshing admin dashboard data, using default values', { errorMessage: error.message, errorName: error.name });
@@ -304,7 +392,7 @@ export default function AdminDashboard() {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchModuleStats]);
 
   // Memoize modules array to prevent unnecessary recalculations
   const modules = useMemo(() => [
@@ -330,7 +418,7 @@ export default function AdminDashboard() {
       icon: Package,
       href: "/admin/supplies",
       color: "bg-purple-500",
-      stats: "567 products"
+      stats: moduleStats.supplies > 0 ? `${moduleStats.supplies.toLocaleString()} products` : "View products"
     },
     {
       name: "Academy",
@@ -338,7 +426,7 @@ export default function AdminDashboard() {
       icon: BookOpen,
       href: "/admin/academy",
       color: "bg-indigo-500",
-      stats: "89 courses"
+      stats: moduleStats.academy > 0 ? `${moduleStats.academy.toLocaleString()} courses` : "View courses"
     },
     {
       name: "Finance",
@@ -354,7 +442,7 @@ export default function AdminDashboard() {
       icon: Home,
       href: "/admin/rentals",
       color: "bg-orange-500",
-      stats: "234 rentals"
+      stats: moduleStats.rentals > 0 ? `${moduleStats.rentals.toLocaleString()} rentals` : "View rentals"
     },
     {
       name: "Ads",
@@ -362,7 +450,7 @@ export default function AdminDashboard() {
       icon: Megaphone,
       href: "/admin/ads",
       color: "bg-pink-500",
-      stats: "45 active ads"
+      stats: moduleStats.ads > 0 ? `${moduleStats.ads.toLocaleString()} active ads` : "View ads"
     },
     {
       name: "Communication",
@@ -370,7 +458,7 @@ export default function AdminDashboard() {
       icon: MessageSquare,
       href: "/admin/communication",
       color: "bg-cyan-500",
-      stats: "1,234 messages"
+      stats: moduleStats.communication > 0 ? `${moduleStats.communication.toLocaleString()} messages` : "View messages"
     },
     {
       name: "Analytics",
@@ -386,17 +474,17 @@ export default function AdminDashboard() {
       icon: Crown,
       href: "/admin/plus",
       color: "bg-yellow-500",
-      stats: stats ? `${stats.totalRevenue.toLocaleString()} revenue` : "Loading..."
+      stats: stats ? `$${stats.totalRevenue.toLocaleString()} revenue` : "Loading..."
     },
     {
       name: "System",
       description: "System settings and monitoring",
       icon: Settings,
-      href: "/admin/system",
+      href: "/admin/settings",
       color: "bg-gray-500",
       stats: stats ? stats.systemHealth : "Loading..."
     }
-  ], [stats]);
+  ], [stats, moduleStats]);
 
   // Memoize helper functions to prevent recreating on every render
   // These must be defined before any early returns
@@ -773,49 +861,61 @@ export default function AdminDashboard() {
           </div>
           <div className="p-4">
             <div className="space-y-2">
-              <button className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors group">
+              <Link 
+                href="/admin/users"
+                className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors group block"
+              >
                 <div className="flex items-center">
                   <Users className="w-4 h-4 text-blue-600 mr-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">Manage Users</p>
                     <p className="text-xs text-gray-500">View and edit accounts</p>
                   </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400" />
+                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors" />
                 </div>
-              </button>
+              </Link>
               
-              <button className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors group">
+              <Link 
+                href="/admin/settings"
+                className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors group block"
+              >
                 <div className="flex items-center">
                   <Settings className="w-4 h-4 text-green-600 mr-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">System Settings</p>
                     <p className="text-xs text-gray-500">Configure platform</p>
                   </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400" />
+                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
                 </div>
-              </button>
+              </Link>
               
-              <button className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors group">
+              <Link 
+                href="/admin/analytics"
+                className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors group block"
+              >
                 <div className="flex items-center">
                   <BarChart3 className="w-4 h-4 text-purple-600 mr-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">View Analytics</p>
                     <p className="text-xs text-gray-500">Performance metrics</p>
                   </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400" />
+                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-purple-600 transition-colors" />
                 </div>
-              </button>
+              </Link>
 
-              <button className="w-full text-left px-3 py-2 bg-red-50 hover:bg-red-100 rounded transition-colors group">
+              <Link 
+                href="/admin/errors"
+                className="w-full text-left px-3 py-2 bg-red-50 hover:bg-red-100 rounded transition-colors group block"
+              >
                 <div className="flex items-center">
                   <AlertTriangle className="w-4 h-4 text-red-600 mr-2" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-900">Review Alerts</p>
                     <p className="text-xs text-gray-500">System warnings</p>
                   </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400" />
+                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-red-600 transition-colors" />
                 </div>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -890,7 +990,7 @@ export default function AdminDashboard() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {modules.map((module) => (
-            <a
+            <Link
               key={module.name}
               href={module.href}
               className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-200 p-4 group border border-gray-200 hover:border-blue-300 hover:-translate-y-0.5"
@@ -913,7 +1013,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       </div>

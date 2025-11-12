@@ -82,6 +82,7 @@ export const CLIENT_CONFIG = {
  
   // Analytics (public)
   googleAnalyticsId: getOptionalEnvVar('NEXT_PUBLIC_GA_ID'),
+  googleTagManagerId: getOptionalEnvVar('NEXT_PUBLIC_GTM_ID'),
 } as const;
 
 // ===========================================
