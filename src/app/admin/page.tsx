@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { 
   BarChart3, 
@@ -98,7 +97,6 @@ export default function AdminDashboard() {
   const [showDevTools, setShowDevTools] = useState(false);
   const roleAccess = useRoleAccess();
   const { data: session } = useSession();
-  const router = useRouter();
 
   // Fetch module stats
   const fetchModuleStats = useCallback(async () => {
@@ -117,7 +115,7 @@ export default function AdminDashboard() {
       const parseCount = (result: PromiseSettledResult<Response>) => {
         if (result.status === 'fulfilled' && result.value.ok) {
           return result.value.headers.get('x-total-count') || 
-                 result.value.json().then((data: any) => data?.total || data?.count || 0).catch(() => 0);
+                 result.value.json().then((data: { total?: number; count?: number }) => data?.total || data?.count || 0).catch(() => 0);
         }
         return Promise.resolve(0);
       };
