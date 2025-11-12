@@ -13,10 +13,13 @@ import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { PreferredFeatureSelector } from "@/components/preferred-feature-selector";
-import { AINaturalLanguageSearch } from "@/components/marketplace/ai-natural-language-search";
-import { AIServiceRecommendations } from "@/components/marketplace/ai-service-recommendations";
-import { AIPriceEstimator } from "@/components/marketplace/ai-price-estimator";
-import { AIServiceMatcher } from "@/components/marketplace/ai-service-matcher";
+// Lazy load AI components - only load when user enables AI features
+import {
+  LazyAINaturalLanguageSearch,
+  LazyAIServiceRecommendations,
+  LazyAIPriceEstimator,
+  LazyAIServiceMatcher
+} from "@/lib/lazy-components";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
@@ -249,7 +252,7 @@ export default function MarketplacePage() {
                 <Sparkles className="w-4 h-4 inline mr-1 text-green-600" />
                 Discover Services
               </label>
-              <AINaturalLanguageSearch
+              <LazyAINaturalLanguageSearch
                 onSearchResult={(filters) => {
                   if (filters.category) setCategoryKey(filters.category);
                   if (filters.subcategory) setSubcategory(filters.subcategory);
@@ -419,7 +422,7 @@ export default function MarketplacePage() {
               {/* AI Service Recommendations */}
               {showAIFeatures.recommendations && (
                 <div className="mb-6">
-                  <AIServiceRecommendations
+                  <LazyAIServiceRecommendations
                     location={location}
                     lat={locationCoordinates?.lat}
                     lng={locationCoordinates?.lng}
@@ -431,7 +434,7 @@ export default function MarketplacePage() {
               {/* AI Service Matcher */}
               {showAIFeatures.serviceMatcher && (
                 <div className="mb-6">
-                  <AIServiceMatcher
+                  <LazyAIServiceMatcher
                     location={location}
                     lat={locationCoordinates?.lat}
                     lng={locationCoordinates?.lng}
@@ -459,7 +462,7 @@ export default function MarketplacePage() {
       {/* Floating AI Price Estimator */}
       {showAIFeatures.priceEstimator && (
         <div className="fixed bottom-6 left-6 z-[9999] max-w-sm w-96">
-          <AIPriceEstimator />
+          <LazyAIPriceEstimator />
         </div>
       )}
       

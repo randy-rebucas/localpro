@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { preloadRoute } from "@/lib/route-splitting";
 import { 
   X,
   Home,
@@ -187,6 +188,8 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="flex items-center">
           <Link
             href={item.href}
+            onMouseEnter={() => preloadRoute(item.href)}
+            onFocus={() => preloadRoute(item.href)}
             className={`flex items-center px-2 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex-1 ${
               isActive
                 ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-l-4 border-blue-500 shadow-sm'

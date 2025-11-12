@@ -132,4 +132,8 @@ export const webVitals = {
   trackTTFB: (value: number) => {
     analytics.trackPerformance('TTFB', value);
   },
+  
+  trackINP: (value: number) => {
+    analytics.trackPerformance('INP', value);
+  },
 };

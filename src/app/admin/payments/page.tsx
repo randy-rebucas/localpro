@@ -21,10 +21,14 @@ import {
 
 // Import payment components
 import { PaymentStatsCard } from "@/components/admin/payment-stats-card";
-import { PaymentTransactionsTable } from "@/components/admin/payment-transactions-table";
-import { PaymentMethodChart } from "@/components/admin/payment-method-chart";
-import { RefundModal, RefundData } from "@/components/admin/refund-modal";
-import { TransactionDetailsModal } from "@/components/admin/transaction-details-modal";
+// Lazy load heavy components
+import { 
+  LazyPaymentMethodChart, 
+  LazyRefundModal, 
+  LazyTransactionDetailsModal,
+  LazyPaymentTransactionsTable
+} from "@/lib/lazy-components";
+import type { RefundData } from "@/components/admin/refund-modal";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
@@ -411,7 +415,7 @@ export default function PaymentProcessingPage() {
       {/* Payment Methods Chart */}
       {overview && overview.paymentMethods.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PaymentMethodChart
+          <LazyPaymentMethodChart
             data={overview.paymentMethods}
             title="Payment Methods Distribution"
           />
@@ -543,8 +547,8 @@ export default function PaymentProcessingPage() {
         )}
       </div>
 
-      {/* Transactions Table */}
-      <PaymentTransactionsTable
+      {/* Transactions Table - Lazy loaded for better performance */}
+      <LazyPaymentTransactionsTable
         transactions={paginatedTransactions}
         loading={loading}
         onViewTransaction={handleViewTransaction}
@@ -554,26 +558,30 @@ export default function PaymentProcessingPage() {
         onPageChange={setCurrentPage}
       />
 
-      {/* Modals */}
-      <RefundModal
-        isOpen={showRefundModal}
-        onClose={() => {
-          setShowRefundModal(false);
-          setSelectedTransaction(undefined);
-        }}
-        onSubmit={handleRefund}
-        transaction={selectedTransaction}
-      />
+      {/* Modals - Lazy loaded for better performance */}
+      {showRefundModal && selectedTransaction && (
+        <LazyRefundModal
+          isOpen={showRefundModal}
+          onClose={() => {
+            setShowRefundModal(false);
+            setSelectedTransaction(undefined);
+          }}
+          onSubmit={handleRefund}
+          transaction={selectedTransaction}
+        />
+      )}
 
-      <TransactionDetailsModal
-        isOpen={showTransactionDetails}
-        onClose={() => {
-          setShowTransactionDetails(false);
-          setSelectedTransaction(undefined);
-        }}
-        transaction={selectedTransaction}
-        onRefund={handleRefundTransaction}
-      />
+      {showTransactionDetails && selectedTransaction && (
+        <LazyTransactionDetailsModal
+          isOpen={showTransactionDetails}
+          onClose={() => {
+            setShowTransactionDetails(false);
+            setSelectedTransaction(undefined);
+          }}
+          transaction={selectedTransaction}
+          onRefund={handleRefundTransaction}
+        />
+      )}
     </div>
   );
 }

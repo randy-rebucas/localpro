@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import { PreferredFeatureModal } from "@/components/preferred-feature-modal";
+import { LazyPreferredFeatureModal } from "@/lib/lazy-components";
 import { usePreferredFeature } from "@/hooks/usePreferredFeature";
 
 export function FloatingFeatureSelector() {
@@ -24,11 +24,13 @@ export function FloatingFeatureSelector() {
         )}
       </button>
 
-      {/* Modal */}
-      <PreferredFeatureModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      />
+      {/* Modal - Lazy loaded for better performance */}
+      {isOpen && (
+        <LazyPreferredFeatureModal
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+        />
+      )}
     </>
   );
 }

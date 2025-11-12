@@ -16,9 +16,10 @@ import {
   Plus
 } from "lucide-react";
 
-// Import finance components
-import { AddExpenseModal, ExpenseData } from "@/components/admin/add-expense-modal";
-import { WithdrawalRequestModal, WithdrawalData } from "@/components/admin/withdrawal-request-modal";
+// Import finance components - Lazy load modals for better performance
+import { LazyAddExpenseModal, LazyWithdrawalRequestModal } from "@/lib/lazy-components";
+import type { ExpenseData } from "@/components/admin/add-expense-modal";
+import type { WithdrawalData } from "@/components/admin/withdrawal-request-modal";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
@@ -558,19 +559,23 @@ export default function FinanceAdmin() {
         )}
       </div>
 
-      {/* Modals */}
-      <AddExpenseModal
-        isOpen={showAddExpense}
-        onClose={() => setShowAddExpense(false)}
-        onSubmit={handleAddExpense}
-      />
+      {/* Modals - Lazy loaded for better performance */}
+      {showAddExpense && (
+        <LazyAddExpenseModal
+          isOpen={showAddExpense}
+          onClose={() => setShowAddExpense(false)}
+          onSubmit={handleAddExpense}
+        />
+      )}
 
-      <WithdrawalRequestModal
-        isOpen={showWithdrawal}
-        onClose={() => setShowWithdrawal(false)}
-        onSubmit={handleWithdrawalRequest}
-        availableBalance={overview?.wallet?.balance || 0}
-      />
+      {showWithdrawal && (
+        <LazyWithdrawalRequestModal
+          isOpen={showWithdrawal}
+          onClose={() => setShowWithdrawal(false)}
+          onSubmit={handleWithdrawalRequest}
+          availableBalance={overview?.wallet?.balance || 0}
+        />
+      )}
     </div>
   );
 }

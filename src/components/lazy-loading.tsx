@@ -1,23 +1,23 @@
 "use client";
 
-import React, { Suspense, lazy, ComponentType } from 'react';
+import React, { ComponentType } from 'react';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/skeleton';
 
-// Generic lazy loading wrapper
+/**
+ * Generic lazy loading wrapper using next/dynamic
+ * 
+ * @deprecated Use next/dynamic directly or import from @/lib/lazy-components
+ * This function is kept for backward compatibility
+ */
 export function withLazyLoading<T extends object>(
   Component: ComponentType<T>,
   fallback?: React.ReactNode
 ) {
-  const LazyComponent = lazy(() => Promise.resolve({ default: Component }));
-  
-  return function LazyWrapper(props: T) {
-    return (
-      <Suspense fallback={fallback || <Skeleton />}>
-        <LazyComponent {...props} />
-      </Suspense>
-    );
-  };
+  return dynamic(() => Promise.resolve({ default: Component }), {
+    loading: () => (fallback || <Skeleton />) as React.ReactElement,
+  });
 }
 
 // Lazy load heavy components - these would need to be created or have default exports

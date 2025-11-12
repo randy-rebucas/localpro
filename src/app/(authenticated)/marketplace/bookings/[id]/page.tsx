@@ -253,7 +253,7 @@ export default function BookingDetailPage() {
     if (!booking) return;
 
     try {
-      // Dynamically import jsPDF
+      // Dynamically import jsPDF - already optimized with dynamic import
       const { default: jsPDF } = await import('jspdf');
       
       const bookingId = booking._id || booking.id || params.id;

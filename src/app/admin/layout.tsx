@@ -4,7 +4,8 @@ import { useSession } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loading } from "@/components/ui/loading";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+// Lazy load admin sidebar for better initial load performance
+import { LazyAdminSidebar } from "@/lib/lazy-components";
 import { AdminHeader } from "@/components/admin/admin-header";
 import { useRoleAccess } from "@/components/role-guard";
 import { logger } from "@/lib/logger";
@@ -73,8 +74,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Main Container */}
           <div className="relative flex h-screen overflow-hidden">
-            {/* Sidebar */}
-            <AdminSidebar 
+            {/* Sidebar - Lazy loaded for better initial load performance */}
+            <LazyAdminSidebar 
               isOpen={sidebarOpen} 
               onClose={() => setSidebarOpen(false)} 
             />

@@ -4,8 +4,21 @@ import { withSentryConfig } from '@sentry/nextjs';
 const nextConfig: NextConfig = {
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-slot',
+      'recharts', // Optimize recharts imports (only load used components)
+    ],
   },
+  
+  // Compress output
+  compress: true,
+  
+  // Production source maps (disable for smaller bundles, enable for debugging)
+  productionBrowserSourceMaps: false,
   
   // Image optimization
   images: {

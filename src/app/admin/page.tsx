@@ -31,7 +31,8 @@ import {
   Crown
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
-import { AdminErrorState } from "@/components/admin/admin-error-state";
+// Lazy load admin error state
+import { LazyAdminErrorState } from "@/lib/lazy-components";
 import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
@@ -516,7 +517,7 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <AdminErrorState 
+      <LazyAdminErrorState 
         error={error}
         onRetry={refreshData}
         retryText="Try Again"

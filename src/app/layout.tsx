@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppSettingsProvider } from "@/components/app-settings-provider";
+import { ResourceHints } from "@/components/resource-hints";
+import { WebVitalsReporter } from "@/components/web-vitals";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { CLIENT_CONFIG } from "@/lib/env";
 
@@ -40,6 +42,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <ResourceHints />
+        <WebVitalsReporter />
         <AppSettingsProvider />
         {children}
         {CLIENT_CONFIG.googleTagManagerId && (
