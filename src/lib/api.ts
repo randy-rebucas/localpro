@@ -424,12 +424,12 @@ export const API_ENDPOINTS = {
   adminAuditLogsMetadataCategories: "/api/admin/audit-logs/metadata/categories",
   
   // Error Monitoring
-  errorMonitoring: "/api/admin/error-monitoring",
-  errorMonitoringStats: "/api/admin/error-monitoring/stats",
-  errorMonitoringUnresolved: "/api/admin/error-monitoring/unresolved",
-  errorMonitoringById: "/api/admin/error-monitoring",
-  errorMonitoringResolve: "/api/admin/error-monitoring",
-  errorMonitoringDashboardSummary: "/api/admin/error-monitoring/dashboard/summary",
+  errorMonitoring: "/api/error-monitoring",
+  errorMonitoringStats: "/api/error-monitoring/stats",
+  errorMonitoringUnresolved: "/api/error-monitoring/unresolved",
+  errorMonitoringById: "/api/error-monitoring",
+  errorMonitoringResolve: "/api/error-monitoring",
+  errorMonitoringDashboardSummary: "/api/error-monitoring/dashboard/summary",
 
   // User Management
   users: "/api/users",

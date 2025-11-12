@@ -85,11 +85,21 @@ interface DashboardSummary {
   topErrors?: ErrorTracking[];
 }
 
+interface ErrorMonitoringInfo {
+  service?: string;
+  status?: string;
+  enabled?: boolean;
+  version?: string;
+  features?: string[];
+  [key: string]: unknown;
+}
+
 export default function ErrorMonitoringPage() {
   const [errors, setErrors] = useState<ErrorTracking[]>([]);
   const [filteredErrors, setFilteredErrors] = useState<ErrorTracking[]>([]);
   const [stats, setStats] = useState<ErrorStats>({});
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary>({});
+  const [monitoringInfo, setMonitoringInfo] = useState<ErrorMonitoringInfo>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedError, setSelectedError] = useState<ErrorTracking | null>(null);
@@ -105,6 +115,35 @@ export default function ErrorMonitoringPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+
+  // Fetch error monitoring info (public endpoint)
+  const fetchMonitoringInfo = useCallback(async () => {
+    try {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.errorMonitoring}`;
+      const response = await fetch(url, { method: "GET" });
+
+      if (!response.ok) {
+        // Handle 404 gracefully - endpoint might not be implemented
+        if (response.status === 404) {
+          logger.warn("Error monitoring info endpoint not found");
+          return;
+        }
+        logger.warn("Error monitoring info endpoint not available", { status: response.status });
+        return;
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setMonitoringInfo(result.data);
+      } else if (result.enabled !== undefined || result.status) {
+        // Handle case where data is at root level
+        setMonitoringInfo(result);
+      }
+    } catch (err) {
+      // Silently handle errors for monitoring info - it's not critical
+      logger.warn("Error fetching monitoring info", { error: err instanceof Error ? err.message : String(err) });
+    }
+  }, []);
 
   // Fetch dashboard summary
   const fetchDashboardSummary = useCallback(async () => {
@@ -177,19 +216,10 @@ export default function ErrorMonitoringPage() {
         throw new Error("Authentication required");
       }
 
-      // Try admin endpoint first, then fallback to non-admin if 404
-      let url = `${API_BASE_URL}${API_ENDPOINTS.errorMonitoringUnresolved}`;
-      let response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
-
-      // If 404, try the non-admin endpoint path
-      if (response.status === 404) {
-        logger.warn("Admin error monitoring endpoint not found, trying non-admin path");
-        url = `${API_BASE_URL}/api/error-monitoring/unresolved`;
-        response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
-      }
+      const url = `${API_BASE_URL}${API_ENDPOINTS.errorMonitoringUnresolved}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
 
       if (!response.ok) {
-        // Handle 404 - endpoint not found
         if (response.status === 404) {
           logger.warn("Error monitoring endpoint not found - backend route may not be implemented yet");
           setErrors([]);
@@ -212,7 +242,6 @@ export default function ErrorMonitoringPage() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      // Only log as error if it's not a 404 (which we handle above)
       if (!errorMessage.includes("404") && !errorMessage.includes("not found")) {
         logger.error("Error fetching unresolved errors", err instanceof Error ? err : new Error(errorMessage));
         setError(errorMessage);
@@ -279,7 +308,7 @@ export default function ErrorMonitoringPage() {
         setShowResolveModal(false);
         setResolutionNote("");
         setSelectedError(null);
-        await Promise.all([fetchUnresolvedErrors(), fetchStats(), fetchDashboardSummary()]);
+        await Promise.all([fetchUnresolvedErrors(), fetchStats(), fetchDashboardSummary(), fetchMonitoringInfo()]);
       } else {
         throw new Error(result.message || "Failed to resolve error");
       }
@@ -290,7 +319,7 @@ export default function ErrorMonitoringPage() {
     } finally {
       setResolving(false);
     }
-  }, [fetchUnresolvedErrors, fetchStats, fetchDashboardSummary]);
+  }, [fetchUnresolvedErrors, fetchStats, fetchDashboardSummary, fetchMonitoringInfo]);
 
   // Fetch all data
   const fetchAllData = useCallback(async () => {
@@ -298,8 +327,9 @@ export default function ErrorMonitoringPage() {
       fetchUnresolvedErrors(),
       fetchStats(),
       fetchDashboardSummary(),
+      fetchMonitoringInfo(),
     ]);
-  }, [fetchUnresolvedErrors, fetchStats, fetchDashboardSummary]);
+  }, [fetchUnresolvedErrors, fetchStats, fetchDashboardSummary, fetchMonitoringInfo]);
 
   useEffect(() => {
     fetchAllData();
@@ -445,6 +475,17 @@ export default function ErrorMonitoringPage() {
           <p className="text-gray-600 text-sm">Monitor and manage application errors</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+          {monitoringInfo.status && (
+            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+              monitoringInfo.status === 'active' || monitoringInfo.status === 'enabled' 
+                ? 'bg-green-100 text-green-800' 
+                : monitoringInfo.status === 'inactive' || monitoringInfo.status === 'disabled'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-gray-100 text-gray-800'
+            }`}>
+              {monitoringInfo.status.charAt(0).toUpperCase() + monitoringInfo.status.slice(1)}
+            </span>
+          )}
           <button
             onClick={fetchAllData}
             disabled={loading}
@@ -455,6 +496,53 @@ export default function ErrorMonitoringPage() {
           </button>
         </div>
       </div>
+
+      {/* Monitoring Info Banner */}
+      {(monitoringInfo.service || monitoringInfo.status || monitoringInfo.enabled !== undefined || monitoringInfo.version || Object.keys(monitoringInfo).length > 0) && (
+        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-xs font-medium text-blue-900 mb-1">
+                {monitoringInfo.service || "Error Monitoring System"}
+              </h3>
+              <div className="flex flex-wrap gap-3 text-xs text-blue-700">
+                {monitoringInfo.status && (
+                  <span className="flex items-center">
+                    Status: <span className={`ml-1 font-medium ${
+                      monitoringInfo.status === 'active' || monitoringInfo.status === 'enabled' 
+                        ? 'text-green-700' 
+                        : monitoringInfo.status === 'inactive' || monitoringInfo.status === 'disabled'
+                        ? 'text-red-700'
+                        : 'text-blue-700'
+                    }`}>
+                      {monitoringInfo.status.charAt(0).toUpperCase() + monitoringInfo.status.slice(1)}
+                    </span>
+                  </span>
+                )}
+                {monitoringInfo.enabled !== undefined && !monitoringInfo.status && (
+                  <span className="flex items-center">
+                    Status: <span className={`ml-1 font-medium ${monitoringInfo.enabled ? 'text-green-700' : 'text-red-700'}`}>
+                      {monitoringInfo.enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </span>
+                )}
+                {monitoringInfo.version && (
+                  <span>Version: {monitoringInfo.version}</span>
+                )}
+              </div>
+              {monitoringInfo.features && monitoringInfo.features.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {monitoringInfo.features.map((feature, idx) => (
+                    <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dashboard Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -514,6 +602,75 @@ export default function ErrorMonitoringPage() {
           </div>
         </div>
       </div>
+
+      {/* Recent Errors & Top Errors from Dashboard Summary */}
+      {((dashboardSummary.recentErrors && dashboardSummary.recentErrors.length > 0) || 
+        (dashboardSummary.topErrors && dashboardSummary.topErrors.length > 0)) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {dashboardSummary.recentErrors && dashboardSummary.recentErrors.length > 0 && (
+            <div className="bg-white rounded shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900">Recent Errors</h3>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {dashboardSummary.recentErrors.slice(0, 5).map((error) => (
+                  <div
+                    key={error.errorId}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewDetails(error)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-900 truncate">{error.message}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(error.severity)}`}>
+                            {error.severity.toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-500">{formatTimestamp(error.lastOccurred)}</span>
+                        </div>
+                      </div>
+                      <Eye className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {dashboardSummary.topErrors && dashboardSummary.topErrors.length > 0 && (
+            <div className="bg-white rounded shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900">Top Errors by Occurrences</h3>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {dashboardSummary.topErrors.slice(0, 5).map((error) => (
+                  <div
+                    key={error.errorId}
+                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleViewDetails(error)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-900 truncate">{error.message}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium border ${getSeverityColor(error.severity)}`}>
+                            {error.severity.toUpperCase()}
+                          </span>
+                          <span className="text-xs text-gray-700 font-medium">
+                            <BarChart3 className="w-3 h-3 inline mr-1" />
+                            {error.occurrences} occurrences
+                          </span>
+                        </div>
+                      </div>
+                      <Eye className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters and Controls */}
       <div className="bg-white rounded shadow">

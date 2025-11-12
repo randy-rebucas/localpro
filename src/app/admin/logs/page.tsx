@@ -28,21 +28,46 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { API_ENDPOINTS } from "@/lib/api";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { logger } from "@/lib/logger";
-import { Log, LogLevel, LogCategory, LogSource } from "@/types/logs";
 
-// Extended Log interface for admin page
-interface SystemLog extends Omit<Log, 'level' | 'category' | 'source' | 'logId' | 'timestamp' | 'createdAt' | 'updatedAt'> {
-  id: string;
-  logId?: string;
-  timestamp: string;
-  level: LogLevel | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
-  category: LogCategory | 'system' | 'database' | 'api' | 'auth' | 'security' | 'performance' | 'user_activity';
+// Log interface matching API response structure
+interface SystemLog {
+  _id?: string;
+  logId: string;
+  level: 'debug' | 'info' | 'warn' | 'error' | 'fatal';
   message: string;
-  details: string;
-  source: LogSource | string;
+  category: string;
+  source: string;
+  request?: {
+    method?: string;
+    url?: string;
+    ip?: string;
+    userAgent?: string;
+    userId?: string;
+    [key: string]: unknown;
+  };
+  response?: {
+    statusCode?: number;
+    responseTime?: number;
+    success?: boolean;
+    [key: string]: unknown;
+  };
+  error?: {
+    name?: string;
+    message?: string;
+    stack?: string;
+    code?: string;
+    [key: string]: unknown;
+  };
+  environment?: string;
+  timestamp: string;
+  retentionDate?: string;
+  // Legacy/compatibility fields
+  id?: string;
+  details?: string;
+  
   userId?: string;
   userName?: string;
   userEmail?: string;
@@ -55,7 +80,7 @@ interface SystemLog extends Omit<Log, 'level' | 'category' | 'source' | 'logId' 
   memoryUsage?: number;
   cpuUsage?: number;
   stackTrace?: string;
-  metadata?: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, unknown>;
 }
 
 interface LogStats {
@@ -136,11 +161,12 @@ export default function AdminLogsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<'logs' | 'analytics' | 'performance' | 'dashboard'>('logs');
   const [sortBy, setSortBy] = useState<'timestamp' | 'level' | 'category' | 'source'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(50);
+  const [cleaning, setCleaning] = useState(false);
+  const [flushing, setFlushing] = useState(false);
   
   const [filters, setFilters] = useState<FilterOptions>({
     dateRange: {
@@ -154,39 +180,109 @@ export default function AdminLogsPage() {
     search: ''
   });
 
+  // Fetch log details
+  const fetchLogDetails = useCallback(async (logId: string): Promise<SystemLog | null> => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'logsById' as keyof typeof API_ENDPOINTS,
+        [logId],
+        {},
+        { method: 'GET' }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          return result.data as SystemLog;
+        }
+      }
+      return null;
+    } catch (err) {
+      logger.warn('Error fetching log details', { error: err instanceof Error ? err.message : String(err) });
+      return null;
+    }
+  }, []);
+
+
+
+  // Cleanup expired logs
+  const cleanupLogs = useCallback(async (fetchAllDataFn: () => Promise<void>) => {
+    try {
+      setCleaning(true);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsCleanup' as keyof typeof API_ENDPOINTS,
+        { method: 'POST' }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          await fetchAllDataFn();
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      logger.error('Error cleaning up logs', err instanceof Error ? err : new Error(String(err)));
+      return false;
+    } finally {
+      setCleaning(false);
+    }
+  }, []);
+
+  // Flush logs
+  const flushLogs = useCallback(async (type: 'all' | 'database' | 'files' = 'all', fetchAllDataFn: () => Promise<void>) => {
+    try {
+      setFlushing(true);
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsFlush' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type })
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          await fetchAllDataFn();
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      logger.error('Error flushing logs', err instanceof Error ? err : new Error(String(err)));
+      return false;
+    } finally {
+      setFlushing(false);
+    }
+  }, []);
+
   const fetchLogsData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const queryParams = new URLSearchParams();
-      queryParams.set('startDate', filters.dateRange.start);
-      queryParams.set('endDate', filters.dateRange.end);
-      queryParams.set('sortBy', sortBy);
-      queryParams.set('sortOrder', sortOrder);
-      queryParams.set('page', currentPage.toString());
-      queryParams.set('limit', itemsPerPage.toString());
+      const queryParams: Record<string, string> = {
+        startDate: filters.dateRange.start,
+        endDate: filters.dateRange.end,
+        sortBy,
+        sortOrder,
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+      };
       
       // Add other filters
-      if (filters.level) queryParams.set('level', filters.level);
-      if (filters.category) queryParams.set('category', filters.category);
-      if (filters.user) queryParams.set('user', filters.user);
-      if (filters.source) queryParams.set('source', filters.source);
-      if (filters.search) queryParams.set('search', filters.search);
+      if (filters.level) queryParams.level = filters.level;
+      if (filters.category) queryParams.category = filters.category;
+      if (filters.user) queryParams.user = filters.user;
+      if (filters.source) queryParams.source = filters.source;
+      if (filters.search) queryParams.search = filters.search;
 
       let logsData, statsData, errorTrendsData, performanceData, dashboardData;
 
       try {
-        if (!getApiToken()) {
-          throw new Error('Authentication required');
-        }
-
-        const logsUrl = `${API_BASE_URL}${API_ENDPOINTS.logs}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-        const statsUrl = `${API_BASE_URL}${API_ENDPOINTS.logsStats}`;
-        const errorTrendsUrl = `${API_BASE_URL}${API_ENDPOINTS.logsAnalyticsErrorTrends}`;
-        const performanceUrl = `${API_BASE_URL}${API_ENDPOINTS.logsAnalyticsPerformance}`;
-        const dashboardUrl = `${API_BASE_URL}${API_ENDPOINTS.logsDashboardSummary}`;
-
         const [
           logsResponse, 
           statsResponse, 
@@ -194,19 +290,35 @@ export default function AdminLogsPage() {
           performanceResponse, 
           dashboardResponse
         ] = await Promise.all([
-          fetch(logsUrl, createAuthFetchOptions({ method: 'GET' })),
-          fetch(statsUrl, createAuthFetchOptions({ method: 'GET' })),
-          fetch(errorTrendsUrl, createAuthFetchOptions({ method: 'GET' })),
-          fetch(performanceUrl, createAuthFetchOptions({ method: 'GET' })),
-          fetch(dashboardUrl, createAuthFetchOptions({ method: 'GET' }))
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logs' as keyof typeof API_ENDPOINTS,
+            { method: 'GET', query: queryParams }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsStats' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsAnalyticsErrorTrends' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsAnalyticsPerformance' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          ),
+          makeClientAuthenticatedRequestWithEndpointSafe(
+            'logsDashboardSummary' as keyof typeof API_ENDPOINTS,
+            { method: 'GET' }
+          )
         ]);
 
         // Handle logs response
         if (!logsResponse.ok) {
           logger.warn('Logs API not available');
-          logsData = { logs: [] };
+          logsData = { data: [] };
         } else {
-          logsData = await logsResponse.json();
+          const result = await logsResponse.json();
+          logsData = result.success ? result : { data: result.data || result.logs || [] };
         }
 
         // Handle stats response
@@ -226,59 +338,63 @@ export default function AdminLogsPage() {
             errorRate: 0
           };
         } else {
-          statsData = await statsResponse.json();
+          const result = await statsResponse.json();
+          statsData = result.success ? result.data : result;
         }
 
         // Handle error trends response
         if (!errorTrendsResponse.ok) {
-          logger.warn('Error trends API not available, using mock data');
+          logger.warn('Error trends API not available');
           errorTrendsData = {
             period: '7d',
             trends: [],
             topErrors: []
           };
         } else {
-          errorTrendsData = await errorTrendsResponse.json();
+          const result = await errorTrendsResponse.json();
+          errorTrendsData = result.success ? result.data : result;
         }
 
         // Handle performance response
         if (!performanceResponse.ok) {
-          logger.warn('Performance API not available, using mock data');
+          logger.warn('Performance API not available');
           performanceData = {
-            avgResponseTime: 245,
-            maxResponseTime: 1000,
-            minResponseTime: 50,
-            throughput: 150,
-            errorRate: 2.8,
-            memoryUsage: 65,
-            cpuUsage: 45,
-            activeConnections: 25,
-            requestsPerSecond: 12
+            avgResponseTime: 0,
+            maxResponseTime: 0,
+            minResponseTime: 0,
+            throughput: 0,
+            errorRate: 0,
+            memoryUsage: 0,
+            cpuUsage: 0,
+            activeConnections: 0,
+            requestsPerSecond: 0
           };
         } else {
-          performanceData = await performanceResponse.json();
+          const result = await performanceResponse.json();
+          performanceData = result.success ? result.data : result;
         }
 
         // Handle dashboard response
         if (!dashboardResponse.ok) {
-          logger.warn('Dashboard API not available, using mock data');
+          logger.warn('Dashboard API not available');
           dashboardData = {
-            totalLogs: 15420,
-            errorCount: 12,
-            warningCount: 45,
-            systemHealth: 'Good',
-            uptime: 99.9,
+            totalLogs: 0,
+            errorCount: 0,
+            warningCount: 0,
+            systemHealth: 'Unknown',
+            uptime: 0,
             lastUpdated: new Date().toISOString(),
             criticalIssues: 0,
-            performanceScore: 85
+            performanceScore: 0
           };
         } else {
-          dashboardData = await dashboardResponse.json();
+          const result = await dashboardResponse.json();
+          dashboardData = result.success ? result.data : result;
         }
       } catch (apiError) {
         logger.error('API calls failed', apiError instanceof Error ? apiError : new Error(String(apiError)));
         // Return empty data - external API integration needed
-        logsData = { logs: [] };
+        logsData = { data: [] };
         statsData = {
           totalLogs: 0,
           todayLogs: 0,
@@ -317,28 +433,33 @@ export default function AdminLogsPage() {
       }
 
       // Transform the data to match our interface
-      const transformedLogs = (logsData.logs || []).map((log: Record<string, unknown>) => ({
-        id: log.id || Math.random().toString(36).substr(2, 9),
-        timestamp: log.timestamp || new Date().toISOString(),
-        level: log.level || 'info',
-        category: log.category || 'system',
-        message: log.message || 'No message',
-        details: log.details || 'No details available',
-        source: log.source || 'unknown',
-        userId: log.userId,
-        userName: log.userName,
-        userEmail: log.userEmail,
-        userRole: log.userRole,
-        ipAddress: log.ipAddress,
-        userAgent: log.userAgent,
-        sessionId: log.sessionId,
-        requestId: log.requestId,
-        duration: log.duration,
-        memoryUsage: log.memoryUsage,
-        cpuUsage: log.cpuUsage,
-        stackTrace: log.stackTrace,
-        metadata: log.metadata || {}
-      }));
+      const logsArray = logsData.data || logsData.logs || [];
+      const transformedLogs = logsArray.map((log: SystemLog | Record<string, unknown>) => {
+        const systemLog: SystemLog = {
+          _id: (log as SystemLog)._id,
+          logId: (log as SystemLog).logId || (log as Record<string, unknown>).id as string || `LOG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          level: (log as SystemLog).level || (log as Record<string, unknown>).level as SystemLog['level'] || 'info',
+          message: (log as SystemLog).message || (log as Record<string, unknown>).message as string || 'No message',
+          category: (log as SystemLog).category || (log as Record<string, unknown>).category as string || 'system',
+          source: (log as SystemLog).source || (log as Record<string, unknown>).source as string || 'unknown',
+          timestamp: (log as SystemLog).timestamp || (log as Record<string, unknown>).timestamp as string || new Date().toISOString(),
+          request: (log as SystemLog).request,
+          response: (log as SystemLog).response,
+          error: (log as SystemLog).error,
+          environment: (log as SystemLog).environment,
+          retentionDate: (log as SystemLog).retentionDate,
+          // Legacy compatibility
+          id: (log as SystemLog).logId || (log as Record<string, unknown>).id as string,
+          details: (log as SystemLog).message || (log as Record<string, unknown>).details as string,
+          userId: (log as SystemLog).request?.userId || (log as Record<string, unknown>).userId as string,
+          ipAddress: (log as SystemLog).request?.ip || (log as Record<string, unknown>).ipAddress as string,
+          userAgent: (log as SystemLog).request?.userAgent || (log as Record<string, unknown>).userAgent as string,
+          duration: (log as SystemLog).response?.responseTime || (log as Record<string, unknown>).duration as number,
+          stackTrace: (log as SystemLog).error?.stack || (log as Record<string, unknown>).stackTrace as string,
+          metadata: (log as SystemLog).metadata || (log as Record<string, unknown>).metadata as Record<string, unknown>
+        };
+        return systemLog;
+      });
 
       setLogs(transformedLogs);
       setStats(statsData);
@@ -353,6 +474,37 @@ export default function AdminLogsPage() {
       setLoading(false);
     }
   }, [filters, sortBy, sortOrder, currentPage, itemsPerPage]);
+
+  // Fetch all data
+  const fetchAllData = useCallback(async () => {
+    await fetchLogsData();
+  }, [fetchLogsData]);
+
+  const handleCleanup = async () => {
+    if (confirm('Are you sure you want to cleanup expired logs? This action cannot be undone.')) {
+      const success = await cleanupLogs(fetchAllData);
+      if (success) {
+        alert('Logs cleaned up successfully');
+      } else {
+        alert('Failed to cleanup logs');
+      }
+    }
+  };
+
+  const handleFlush = async (type: 'all' | 'database' | 'files' = 'all') => {
+    const confirmMessage = type === 'all' 
+      ? 'Are you sure you want to flush ALL logs? This action cannot be undone!'
+      : `Are you sure you want to flush ${type} logs? This action cannot be undone!`;
+    
+    if (confirm(confirmMessage)) {
+      const success = await flushLogs(type, fetchAllData);
+      if (success) {
+        alert('Logs flushed successfully');
+      } else {
+        alert('Failed to flush logs');
+      }
+    }
+  };
 
   useEffect(() => {
     fetchLogsData();
@@ -370,26 +522,37 @@ export default function AdminLogsPage() {
     }
   };
 
+  const handleViewLogDetails = async (log: SystemLog) => {
+    setSelectedLog(log);
+    // Fetch full details
+    const logId = log.logId || log.id || log._id;
+    if (logId) {
+      const fullDetails = await fetchLogDetails(logId);
+      if (fullDetails) {
+        setSelectedLog(fullDetails);
+      }
+    }
+  };
+
   const exportData = async (format: 'csv' | 'json') => {
     try {
-      const queryParams = new URLSearchParams();
-      queryParams.set('startDate', filters.dateRange.start);
-      queryParams.set('endDate', filters.dateRange.end);
-      queryParams.set('format', format);
+      const queryParams: Record<string, string> = {
+        startDate: filters.dateRange.start,
+        endDate: filters.dateRange.end,
+        format,
+      };
       
       // Add other filters
-      if (filters.level) queryParams.set('level', filters.level);
-      if (filters.category) queryParams.set('category', filters.category);
-      if (filters.user) queryParams.set('user', filters.user);
-      if (filters.source) queryParams.set('source', filters.source);
-      if (filters.search) queryParams.set('search', filters.search);
+      if (filters.level) queryParams.level = filters.level;
+      if (filters.category) queryParams.category = filters.category;
+      if (filters.user) queryParams.user = filters.user;
+      if (filters.source) queryParams.source = filters.source;
+      if (filters.search) queryParams.search = filters.search;
 
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
-      }
-
-      const url = `${API_BASE_URL}${API_ENDPOINTS.logsExportData}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'logsExportData' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: queryParams }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to export data');
@@ -405,102 +568,8 @@ export default function AdminLogsPage() {
       window.URL.revokeObjectURL(blobUrl);
       document.body.removeChild(a);
     } catch (err) {
-      logger.error('Error exporting data', err instanceof Error ? err : new Error(String(err)), { format });
+      logger.error('Error exporting data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to export data');
-    }
-  };
-
-  const cleanupLogs = async () => {
-    try {
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
-      }
-
-      const url = `${API_BASE_URL}${API_ENDPOINTS.logsCleanup}`;
-      const response = await fetch(url, createAuthFetchOptions({
-        method: 'POST',
-        body: JSON.stringify({
-          olderThanDays: 30,
-          level: 'debug',
-          category: 'system',
-          dryRun: false
-        })
-      }));
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to cleanup logs: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        alert('Logs cleanup completed successfully');
-        await fetchLogsData(); // Refresh data
-      } else {
-        throw new Error(result.error || 'Cleanup failed');
-      }
-    } catch (err) {
-      logger.error('Error cleaning up logs', err instanceof Error ? err : new Error(String(err)));
-      const errorMessage = err instanceof Error ? err.message : 'Failed to cleanup logs';
-      
-      // Show user-friendly error message
-      if (errorMessage.includes('404')) {
-        setError('Logs cleanup feature is not available on the external API. This is normal in development mode.');
-      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
-        setError('You do not have permission to cleanup logs. Please contact an administrator.');
-      } else if (errorMessage.includes('500')) {
-        setError('Server error occurred while cleaning up logs. Please try again later.');
-      } else {
-        setError(errorMessage);
-      }
-    }
-  };
-
-  const flushLogs = async () => {
-    if (!confirm('Are you sure you want to flush all logs? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
-      }
-
-      const url = `${API_BASE_URL}${API_ENDPOINTS.logsFlush}`;
-      const response = await fetch(url, createAuthFetchOptions({
-        method: 'POST',
-        body: JSON.stringify({
-          confirm: true,
-          backup: true
-        })
-      }));
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to flush logs: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      if (result.success) {
-        alert('Logs flushed successfully');
-        await fetchLogsData(); // Refresh data
-      } else {
-        throw new Error(result.error || 'Flush failed');
-      }
-    } catch (err) {
-      logger.error('Error flushing logs', err instanceof Error ? err : new Error(String(err)));
-      const errorMessage = err instanceof Error ? err.message : 'Failed to flush logs';
-      
-      // Show user-friendly error message
-      if (errorMessage.includes('404')) {
-        setError('Logs flush feature is not available on the external API. This is normal in development mode.');
-      } else if (errorMessage.includes('401') || errorMessage.includes('403')) {
-        setError('You do not have permission to flush logs. Please contact an administrator.');
-      } else if (errorMessage.includes('500')) {
-        setError('Server error occurred while flushing logs. Please try again later.');
-      } else {
-        setError(errorMessage);
-      }
     }
   };
 
@@ -616,36 +685,8 @@ export default function AdminLogsPage() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="bg-white rounded shadow">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-4">
-            {[
-              { id: 'logs', name: 'Logs', icon: FileText },
-              { id: 'analytics', name: 'Analytics', icon: TrendingUp },
-              { id: 'performance', name: 'Performance', icon: Zap },
-              { id: 'dashboard', name: 'Dashboard', icon: Monitor }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as 'logs' | 'analytics' | 'performance' | 'dashboard')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <tab.icon className="w-4 h-4 inline mr-1" />
-                {tab.name}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'logs' && (
-        <>
+      {/* Content */}
+      <>
           {/* Stats Overview */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
@@ -785,18 +826,22 @@ export default function AdminLogsPage() {
                 JSON
               </button>
               <button
-                onClick={cleanupLogs}
-                className="inline-flex items-center px-2 py-1 border border-yellow-300 shadow-sm text-xs font-medium rounded text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                onClick={handleCleanup}
+                disabled={cleaning}
+                className="inline-flex items-center px-2 py-1 border border-yellow-300 shadow-sm text-xs font-medium rounded text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50"
+                title="Cleanup expired logs"
               >
-                <Trash2 className="w-3 h-3 mr-1" />
-                Cleanup
+                <Trash2 className={`w-3 h-3 mr-1 ${cleaning ? 'animate-spin' : ''}`} />
+                {cleaning ? 'Cleaning...' : 'Cleanup'}
               </button>
               <button
-                onClick={flushLogs}
-                className="inline-flex items-center px-2 py-1 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                onClick={() => handleFlush('all')}
+                disabled={flushing}
+                className="inline-flex items-center px-2 py-1 border border-red-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+                title="Flush all logs"
               >
-                <XCircle className="w-3 h-3 mr-1" />
-                Flush
+                <XCircle className={`w-3 h-3 mr-1 ${flushing ? 'animate-spin' : ''}`} />
+                {flushing ? 'Flushing...' : 'Flush'}
               </button>
             </div>
           </div>
@@ -1025,8 +1070,9 @@ export default function AdminLogsPage() {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <button
-                      onClick={() => setSelectedLog(log)}
+                      onClick={() => handleViewLogDetails(log)}
                       className="text-blue-600 hover:text-blue-900"
+                      title="View Details"
                     >
                       <Eye className="w-3 h-3" />
                     </button>
@@ -1091,42 +1137,96 @@ export default function AdminLogsPage() {
                   <p className="text-xs text-gray-900">{selectedLog.message}</p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">Details</label>
-                  <p className="text-xs text-gray-900">{selectedLog.details}</p>
-                </div>
-
-                {selectedLog.userName && (
+                {selectedLog.request && (
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">User</label>
-                    <div className="mt-1">
-                      <p className="text-xs text-gray-900">{selectedLog.userName} ({selectedLog.userEmail})</p>
-                      <p className="text-xs text-gray-500">Role: {selectedLog.userRole}</p>
+                    <label className="block text-xs font-medium text-gray-700">Request</label>
+                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                      {selectedLog.request.method && selectedLog.request.url && (
+                        <p><span className="font-medium">{selectedLog.request.method}</span> {selectedLog.request.url}</p>
+                      )}
+                      {selectedLog.request.ip && (
+                        <p>IP: {selectedLog.request.ip}</p>
+                      )}
+                      {selectedLog.request.userId && (
+                        <p>User ID: {selectedLog.request.userId}</p>
+                      )}
                     </div>
+                  </div>
+                )}
+
+                {selectedLog.response && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Response</label>
+                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                      <p>Status: {selectedLog.response.statusCode || 'N/A'}</p>
+                      {selectedLog.response.responseTime && (
+                        <p>Response Time: {selectedLog.response.responseTime}ms</p>
+                      )}
+                      {selectedLog.response.success !== undefined && (
+                        <p>Success: {selectedLog.response.success ? 'Yes' : 'No'}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedLog.error && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Error</label>
+                    <div className="mt-1 text-xs text-gray-900 bg-red-50 p-2 rounded">
+                      {selectedLog.error.name && (
+                        <p className="font-medium text-red-800">Name: {selectedLog.error.name}</p>
+                      )}
+                      {selectedLog.error.message && (
+                        <p className="text-red-700">Message: {selectedLog.error.message}</p>
+                      )}
+                      {selectedLog.error.code && (
+                        <p className="text-red-600">Code: {selectedLog.error.code}</p>
+                      )}
+                      {selectedLog.error.stack && (
+                        <pre className="mt-2 text-xs bg-red-100 p-2 rounded overflow-x-auto max-h-48">
+                          {selectedLog.error.stack}
+                        </pre>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedLog.request?.userId && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">User ID</label>
+                    <p className="text-xs text-gray-900">{selectedLog.request.userId}</p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700">IP Address</label>
-                    <p className="text-xs text-gray-900">{selectedLog.ipAddress || 'N/A'}</p>
+                    <p className="text-xs text-gray-900">{selectedLog.request?.ip || selectedLog.ipAddress || 'N/A'}</p>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700">Session ID</label>
-                    <p className="text-xs text-gray-900 font-mono">{selectedLog.sessionId || 'N/A'}</p>
+                    <label className="block text-xs font-medium text-gray-700">User Agent</label>
+                    <p className="text-xs text-gray-900 break-all">{selectedLog.request?.userAgent || selectedLog.userAgent || 'N/A'}</p>
                   </div>
                 </div>
 
-                {selectedLog.duration && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Duration</label>
-                      <p className="text-xs text-gray-900">{selectedLog.duration}ms</p>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700">Request ID</label>
-                      <p className="text-xs text-gray-900 font-mono">{selectedLog.requestId || 'N/A'}</p>
-                    </div>
+                {selectedLog.response?.responseTime && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Response Time</label>
+                    <p className="text-xs text-gray-900">{selectedLog.response.responseTime}ms</p>
+                  </div>
+                )}
+
+                {selectedLog.environment && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Environment</label>
+                    <p className="text-xs text-gray-900">{selectedLog.environment}</p>
+                  </div>
+                )}
+
+                {selectedLog.retentionDate && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Retention Date</label>
+                    <p className="text-xs text-gray-900">{new Date(selectedLog.retentionDate).toLocaleString()}</p>
                   </div>
                 )}
 
@@ -1143,14 +1243,6 @@ export default function AdminLogsPage() {
                   </div>
                 )}
 
-                {selectedLog.stackTrace && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Stack Trace</label>
-                    <pre className="text-xs text-gray-900 bg-gray-50 p-2 rounded mt-1 overflow-x-auto">
-                      {selectedLog.stackTrace}
-                    </pre>
-                  </div>
-                )}
 
                 {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                   <div>
@@ -1161,10 +1253,6 @@ export default function AdminLogsPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">User Agent</label>
-                  <p className="text-xs text-gray-900 break-all">{selectedLog.userAgent || 'N/A'}</p>
-                </div>
               </div>
 
               <div className="mt-4 flex justify-end">
@@ -1179,13 +1267,10 @@ export default function AdminLogsPage() {
           </div>
         </div>
       )}
-        </>
-      )}
 
-      {/* Analytics Tab */}
-      {activeTab === 'analytics' && (
-        <div className="space-y-4">
-          <div className="bg-white rounded shadow p-4">
+      {/* Analytics Section */}
+      <div className="space-y-4">
+        <div className="bg-white rounded shadow p-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Error Trends</h3>
             {errorTrends ? (
               <div className="space-y-4">
@@ -1193,7 +1278,7 @@ export default function AdminLogsPage() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Period: {errorTrends.period}</h4>
                     <div className="space-y-2">
-                      {errorTrends.trends.slice(0, 5).map((trend, index) => (
+                      {(errorTrends.trends || []).slice(0, 5).map((trend, index) => (
                         <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-600">{trend.date}</span>
                           <div className="flex space-x-2">
@@ -1208,7 +1293,7 @@ export default function AdminLogsPage() {
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Top Errors</h4>
                     <div className="space-y-2">
-                      {errorTrends.topErrors.slice(0, 5).map((error, index) => (
+                      {(errorTrends.topErrors || []).slice(0, 5).map((error, index) => (
                         <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                           <span className="text-sm text-gray-600 truncate">{error.message}</span>
                           <div className="flex items-center space-x-2">
@@ -1231,13 +1316,11 @@ export default function AdminLogsPage() {
               <p className="text-gray-500 text-center py-4">No analytics data available</p>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Performance Tab */}
-      {activeTab === 'performance' && (
-        <div className="space-y-4">
-          <div className="bg-white rounded shadow p-4">
+      {/* Performance Section */}
+      <div className="space-y-4">
+        <div className="bg-white rounded shadow p-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Metrics</h3>
             {performanceMetrics ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1297,13 +1380,11 @@ export default function AdminLogsPage() {
               <p className="text-gray-500 text-center py-4">No performance data available</p>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
-      {/* Dashboard Tab */}
-      {activeTab === 'dashboard' && (
-        <div className="space-y-4">
-          <div className="bg-white rounded shadow p-4">
+      {/* Dashboard Section */}
+      <div className="space-y-4">
+        <div className="bg-white rounded shadow p-4">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Dashboard Summary</h3>
             {dashboardSummary ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1311,9 +1392,9 @@ export default function AdminLogsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-blue-100">System Health</p>
-                      <p className="text-2xl font-bold">{dashboardSummary.systemHealth}</p>
+                      <p className="text-2xl font-bold">{dashboardSummary.systemHealth ?? 'Unknown'}</p>
                       <p className="text-xs text-blue-100">
-                        Uptime: {dashboardSummary.uptime}%
+                        Uptime: {dashboardSummary.uptime ?? 0}%
                       </p>
                     </div>
                     <CheckCircle className="w-8 h-8 text-blue-100" />
@@ -1324,9 +1405,9 @@ export default function AdminLogsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-green-100">Performance Score</p>
-                      <p className="text-2xl font-bold">{dashboardSummary.performanceScore}/100</p>
+                      <p className="text-2xl font-bold">{dashboardSummary.performanceScore ?? 0}/100</p>
                       <p className="text-xs text-green-100">
-                        Critical Issues: {dashboardSummary.criticalIssues}
+                        Critical Issues: {dashboardSummary.criticalIssues ?? 0}
                       </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-green-100" />
@@ -1337,9 +1418,9 @@ export default function AdminLogsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-purple-100">Logs Summary</p>
-                      <p className="text-2xl font-bold">{dashboardSummary.totalLogs.toLocaleString()}</p>
+                      <p className="text-2xl font-bold">{(dashboardSummary.totalLogs ?? 0).toLocaleString()}</p>
                       <p className="text-xs text-purple-100">
-                        Errors: {dashboardSummary.errorCount} | Warnings: {dashboardSummary.warningCount}
+                        Errors: {dashboardSummary.errorCount ?? 0} | Warnings: {dashboardSummary.warningCount ?? 0}
                       </p>
                     </div>
                     <FileText className="w-8 h-8 text-purple-100" />
@@ -1350,8 +1431,8 @@ export default function AdminLogsPage() {
               <p className="text-gray-500 text-center py-4">No dashboard data available</p>
             )}
           </div>
-        </div>
-      )}
+      </div>
+    </>
     </div>
   );
 }

@@ -26,33 +26,68 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
+import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
 
 interface AuditLog {
-  id: string;
+  _id?: string;
+  auditId: string;
+  action: string;
+  category: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  description: string;
+  actor: {
+    userId: string;
+    email: string;
+    role: string;
+    ip?: string;
+    userAgent?: string;
+    sessionId?: string;
+  };
+  target?: {
+    type: string;
+    id: string;
+    name?: string;
+    description?: string;
+  };
+  changes?: {
+    fields?: string[];
+    [key: string]: unknown;
+  };
+  metadata?: {
+    source?: string;
+    reason?: string;
+    [key: string]: unknown;
+  };
+  request?: {
+    method?: string;
+    url?: string;
+    params?: Record<string, unknown>;
+    query?: Record<string, unknown>;
+  };
+  response?: {
+    statusCode?: number;
+    message?: string;
+    success?: boolean;
+  };
+  environment?: string;
   timestamp: string;
-  user: {
+  retentionDate?: string;
+  // Legacy fields for backward compatibility
+  id?: string;
+  user?: {
     id: string;
     name: string;
     email: string;
     role: string;
   };
-  action: string;
-  resource: string;
-  details: string;
-  ipAddress: string;
-  userAgent: string;
-  status: 'success' | 'warning' | 'error' | 'info';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  category: 'authentication' | 'authorization' | 'data_access' | 'data_modification' | 'system' | 'security';
-  sessionId: string;
-  changes?: {
-    field: string;
-    oldValue: string | number | boolean | null;
-    newValue: string | number | boolean | null;
-  }[];
+  resource?: string;
+  details?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  status?: 'success' | 'warning' | 'error' | 'info';
+  sessionId?: string;
 }
 
 interface AuditStats {
@@ -63,6 +98,26 @@ interface AuditStats {
   topActions: { action: string; count: number }[];
   categoryBreakdown: { category: string; count: number }[];
   severityBreakdown: { severity: string; count: number }[];
+}
+
+interface DashboardSummary {
+  totalLogs?: number;
+  todayLogs?: number;
+  criticalAlerts?: number;
+  uniqueUsers?: number;
+  recentLogs?: AuditLog[];
+  topActions?: { action: string; count: number }[];
+  categoryBreakdown?: { category: string; count: number }[];
+  severityBreakdown?: { severity: string; count: number }[];
+  trends?: Array<{ date: string; count: number }>;
+}
+
+interface MetadataCategories {
+  categories?: string[];
+  actions?: string[];
+  resources?: string[];
+  severities?: string[];
+  statuses?: string[];
 }
 
 interface FilterOptions {
@@ -83,6 +138,8 @@ interface FilterOptions {
 export default function AdminAuditPage() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [stats, setStats] = useState<AuditStats | null>(null);
+  const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary>({});
+  const [metadataCategories, setMetadataCategories] = useState<MetadataCategories>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -106,6 +163,73 @@ export default function AdminAuditPage() {
     status: '',
     search: ''
   });
+
+
+  // Fetch metadata categories
+  const fetchMetadataCategories = useCallback(async () => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'auditLogsMetadataCategories' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setMetadataCategories(result.data);
+        } else if (result.categories) {
+          setMetadataCategories(result);
+        }
+      }
+    } catch (err) {
+      logger.warn('Error fetching metadata categories', { error: err instanceof Error ? err.message : String(err) });
+    }
+  }, []);
+
+  // Fetch dashboard summary
+  const fetchDashboardSummary = useCallback(async () => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'auditLogsDashboardSummary' as keyof typeof API_ENDPOINTS,
+        { method: 'GET' }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          setDashboardSummary(result.data);
+        } else if (result.totalLogs !== undefined) {
+          setDashboardSummary(result);
+        }
+      }
+    } catch (err) {
+      logger.warn('Error fetching dashboard summary', { error: err instanceof Error ? err.message : String(err) });
+    }
+  }, []);
+
+  // Fetch audit log details
+  const fetchLogDetails = useCallback(async (auditId: string): Promise<AuditLog | null> => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'auditLogsById' as keyof typeof API_ENDPOINTS,
+        [auditId],
+        {},
+        { method: 'GET' }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data) {
+          return result.data as AuditLog;
+        }
+      }
+      return null;
+    } catch (err) {
+      logger.warn('Error fetching log details', { error: err instanceof Error ? err.message : String(err) });
+      return null;
+    }
+  }, []);
+
 
 
   const fetchAuditData = useCallback(async () => {
@@ -135,11 +259,11 @@ export default function AdminAuditPage() {
       try {
         const [logsResponse, statsResponse] = await Promise.all([
           makeClientAuthenticatedRequestWithEndpointSafe(
-            'adminAuditLogs' as keyof typeof API_ENDPOINTS,
+            'auditLogs' as keyof typeof API_ENDPOINTS,
             { method: 'GET', query: Object.fromEntries(queryParams) }
           ),
           makeClientAuthenticatedRequestWithEndpointSafe(
-            'adminAuditLogsStats' as keyof typeof API_ENDPOINTS,
+            'auditLogsStats' as keyof typeof API_ENDPOINTS,
             { method: 'GET' }
           )
         ]);
@@ -194,26 +318,48 @@ export default function AdminAuditPage() {
 
       try {
         // Transform the data to match our interface
-        const transformedLogs = (logsData.logs || []).map((log: Record<string, unknown>) => ({
-          id: log.id || Math.random().toString(36).substr(2, 9),
-          timestamp: log.timestamp || new Date().toISOString(),
-          user: {
-            id: log.userId || 'unknown',
-            name: log.userName || 'Unknown User',
-            email: log.userEmail || 'unknown@example.com',
-            role: log.userRole || 'unknown'
-          },
-          action: log.action || 'Unknown Action',
-          resource: log.resource || 'Unknown Resource',
-          details: log.details || 'No details available',
-          ipAddress: log.ipAddress || 'Unknown',
-          userAgent: log.userAgent || 'Unknown',
-          status: log.status || 'info',
-          severity: log.severity || 'low',
-          category: log.category || 'system',
-          sessionId: log.sessionId || 'unknown',
-          changes: log.changes || []
-        }));
+        const transformedLogs = (logsData.data || logsData.logs || []).map((log: AuditLog) => {
+          // Use new structure if available, otherwise fall back to legacy
+          const auditLog: AuditLog = {
+            _id: log._id,
+            auditId: log.auditId || log.id || `AUD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            action: log.action || 'Unknown Action',
+            category: log.category || 'system',
+            severity: log.severity || 'low',
+            description: log.description || log.details || 'No details available',
+            timestamp: log.timestamp || new Date().toISOString(),
+            actor: log.actor || {
+              userId: (log.user?.id || 'unknown') as string,
+              email: (log.user?.email || 'unknown@example.com') as string,
+              role: (log.user?.role || 'unknown') as string,
+              ip: log.ipAddress || 'Unknown',
+              userAgent: log.userAgent || 'Unknown',
+              sessionId: log.sessionId || 'unknown'
+            },
+            target: log.target,
+            changes: log.changes,
+            metadata: log.metadata,
+            request: log.request,
+            response: log.response,
+            environment: log.environment,
+            retentionDate: log.retentionDate,
+            // Legacy compatibility
+            id: log.auditId || log.id,
+            resource: log.target?.name || log.resource || log.target?.type || 'Unknown Resource',
+            details: log.description || log.details,
+            ipAddress: log.actor?.ip || log.ipAddress,
+            userAgent: log.actor?.userAgent || log.userAgent,
+            status: log.response?.success ? 'success' : (log.response?.statusCode && log.response.statusCode >= 400 ? 'error' : log.status || 'info'),
+            sessionId: log.actor?.sessionId || log.sessionId,
+            user: log.user || {
+              id: log.actor?.userId || 'unknown',
+              name: log.target?.name || log.actor?.email?.split('@')[0] || 'Unknown User',
+              email: log.actor?.email || 'unknown@example.com',
+              role: log.actor?.role || 'unknown'
+            }
+          };
+          return auditLog;
+        });
 
         setAuditLogs(transformedLogs);
         setStats(statsData);
@@ -232,14 +378,23 @@ export default function AdminAuditPage() {
     }
   }, [filters, sortBy, sortOrder, currentPage, itemsPerPage]);
 
+  // Fetch all data including metadata and dashboard summary
+  const fetchAllData = useCallback(async () => {
+    await Promise.all([
+      fetchAuditData(),
+      fetchMetadataCategories(),
+      fetchDashboardSummary(),
+    ]);
+  }, [fetchAuditData, fetchMetadataCategories, fetchDashboardSummary]);
+
   useEffect(() => {
-    fetchAuditData();
-  }, [fetchAuditData]);
+    fetchAllData();
+  }, [fetchAllData]);
 
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      await fetchAuditData();
+      await fetchAllData();
     } catch (err) {
       logger.error('Error refreshing data', err instanceof Error ? err : new Error(String(err)));
       setError(err instanceof Error ? err.message : 'Failed to refresh audit data');
@@ -247,6 +402,20 @@ export default function AdminAuditPage() {
       setRefreshing(false);
     }
   };
+
+  const handleViewLogDetails = async (log: AuditLog) => {
+    setSelectedLog(log);
+    // Fetch full details
+    const logId = log.auditId || log.id || log._id;
+    if (logId) {
+      const fullDetails = await fetchLogDetails(logId);
+      if (fullDetails) {
+        setSelectedLog(fullDetails);
+      }
+    }
+  };
+
+
 
   const exportData = async (format: 'csv' | 'json') => {
     try {
@@ -264,7 +433,7 @@ export default function AdminAuditPage() {
       if (filters.search) queryParams.set('search', filters.search);
 
       const response = await makeClientAuthenticatedRequestWithEndpointSafe(
-        'adminAuditLogsExportData' as keyof typeof API_ENDPOINTS,
+        'auditLogsExportData' as keyof typeof API_ENDPOINTS,
         { method: 'GET', query: Object.fromEntries(queryParams) }
       );
 
@@ -406,6 +575,37 @@ export default function AdminAuditPage() {
         </div>
       </div>
 
+      {/* Dashboard Summary - Recent Logs */}
+      {dashboardSummary.recentLogs && dashboardSummary.recentLogs.length > 0 && (
+        <div className="bg-white rounded shadow">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900">Recent Activity</h3>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {dashboardSummary.recentLogs.slice(0, 5).map((log) => (
+              <div
+                key={log.id}
+                className="px-4 py-2 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleViewLogDetails(log)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-900 truncate">{log.action} - {log.resource}</p>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(log.severity)}`}>
+                        {log.severity}
+                      </span>
+                      <span className="text-xs text-gray-500">{new Date(log.timestamp).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <Eye className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
@@ -413,10 +613,10 @@ export default function AdminAuditPage() {
             <div>
               <p className="text-xs font-medium text-gray-500">Total Logs</p>
               <p className="text-lg font-bold text-gray-900">
-                {stats?.totalLogs?.toLocaleString() || '0'}
+                {dashboardSummary.totalLogs?.toLocaleString() || stats?.totalLogs?.toLocaleString() || '0'}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.todayLogs || 0} today
+                {dashboardSummary.todayLogs || stats?.todayLogs || 0} today
               </p>
             </div>
             <FileText className="w-5 h-5 text-blue-600" />
@@ -551,12 +751,14 @@ export default function AdminAuditPage() {
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">All Categories</option>
-                  <option value="authentication">Authentication</option>
-                  <option value="authorization">Authorization</option>
-                  <option value="data_access">Data Access</option>
-                  <option value="data_modification">Data Modification</option>
-                  <option value="system">System</option>
-                  <option value="security">Security</option>
+                  {(metadataCategories.categories && metadataCategories.categories.length > 0
+                    ? metadataCategories.categories
+                    : ['authentication', 'authorization', 'data_access', 'data_modification', 'system', 'security']
+                  ).map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -706,9 +908,11 @@ export default function AdminAuditPage() {
                         </div>
                       </div>
                       <div className="ml-2">
-                        <div className="text-xs font-medium text-gray-900">{log.user.name}</div>
-                        <div className="text-xs text-gray-500">{log.user.email}</div>
-                        <div className="text-xs text-gray-400">{log.user.role}</div>
+                        <div className="text-xs font-medium text-gray-900">
+                          {log.user?.name || log.target?.name || log.actor?.email?.split('@')[0] || 'Unknown User'}
+                        </div>
+                        <div className="text-xs text-gray-500">{log.user?.email || log.actor?.email || 'N/A'}</div>
+                        <div className="text-xs text-gray-400">{log.user?.role || log.actor?.role || 'N/A'}</div>
                       </div>
                     </div>
                   </td>
@@ -719,7 +923,7 @@ export default function AdminAuditPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                    {log.resource}
+                    {log.target?.name || log.target?.type || log.resource || 'N/A'}
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center">
@@ -733,14 +937,17 @@ export default function AdminAuditPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(log.status)}`}>
-                      {log.status}
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                      log.status || (log.response?.success ? 'success' : (log.response?.statusCode && log.response.statusCode >= 400 ? 'error' : 'info'))
+                    )}`}>
+                      {log.status || (log.response?.success ? 'success' : (log.response?.statusCode && log.response.statusCode >= 400 ? 'error' : 'info'))}
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <button
-                      onClick={() => setSelectedLog(log)}
+                      onClick={() => handleViewLogDetails(log)}
                       className="text-blue-600 hover:text-blue-900"
+                      title="View Details"
                     >
                       <Eye className="w-3 h-3" />
                     </button>
@@ -790,10 +997,16 @@ export default function AdminAuditPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700">User</label>
+                  <label className="block text-xs font-medium text-gray-700">Actor</label>
                   <div className="mt-1">
-                    <p className="text-xs text-gray-900">{selectedLog.user.name} ({selectedLog.user.email})</p>
-                    <p className="text-xs text-gray-500">Role: {selectedLog.user.role}</p>
+                    <p className="text-xs text-gray-900">
+                      {selectedLog.user?.name || selectedLog.target?.name || selectedLog.actor?.email?.split('@')[0] || 'Unknown'} 
+                      ({selectedLog.user?.email || selectedLog.actor?.email || 'N/A'})
+                    </p>
+                    <p className="text-xs text-gray-500">Role: {selectedLog.user?.role || selectedLog.actor?.role || 'N/A'}</p>
+                    {selectedLog.actor?.ip && (
+                      <p className="text-xs text-gray-500">IP: {selectedLog.actor.ip}</p>
+                    )}
                   </div>
                 </div>
 
@@ -802,50 +1015,109 @@ export default function AdminAuditPage() {
                   <p className="text-xs text-gray-900">{selectedLog.action}</p>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">Resource</label>
-                  <p className="text-xs text-gray-900">{selectedLog.resource}</p>
-                </div>
+                {selectedLog.target && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Target</label>
+                    <div className="mt-1">
+                      <p className="text-xs text-gray-900">
+                        {selectedLog.target.type} - {selectedLog.target.name || selectedLog.target.id}
+                      </p>
+                      {selectedLog.target.description && (
+                        <p className="text-xs text-gray-500">{selectedLog.target.description}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700">Details</label>
-                  <p className="text-xs text-gray-900">{selectedLog.details}</p>
+                  <label className="block text-xs font-medium text-gray-700">Description</label>
+                  <p className="text-xs text-gray-900">{selectedLog.description || selectedLog.details || 'No description'}</p>
                 </div>
+
+                {selectedLog.request && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Request</label>
+                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                      <p><span className="font-medium">{selectedLog.request.method || 'N/A'}</span> {selectedLog.request.url || 'N/A'}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedLog.response && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Response</label>
+                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                      <p>Status: {selectedLog.response.statusCode || 'N/A'}</p>
+                      {selectedLog.response.message && (
+                        <p>Message: {selectedLog.response.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Metadata</label>
+                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32">
+                      {JSON.stringify(selectedLog.metadata, null, 2)}
+                    </pre>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700">IP Address</label>
-                    <p className="text-xs text-gray-900">{selectedLog.ipAddress}</p>
+                    <p className="text-xs text-gray-900">{selectedLog.actor?.ip || selectedLog.ipAddress || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Session ID</label>
-                    <p className="text-xs text-gray-900 font-mono">{selectedLog.sessionId}</p>
+                    <p className="text-xs text-gray-900 font-mono">{selectedLog.actor?.sessionId || selectedLog.sessionId || 'N/A'}</p>
                   </div>
                 </div>
 
-                {selectedLog.changes && selectedLog.changes.length > 0 && (
+                {selectedLog.changes && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700">Changes</label>
-                    <div className="mt-1 space-y-1">
-                      {selectedLog.changes.map((change, index) => (
-                        <div key={index} className="bg-gray-50 p-2 rounded">
-                          <div className="text-xs">
-                            <span className="font-medium">{change.field}:</span>
-                            <div className="mt-1">
-                              <div className="text-red-600">- {JSON.stringify(change.oldValue)}</div>
-                              <div className="text-green-600">+ {JSON.stringify(change.newValue)}</div>
-                            </div>
+                    <div className="mt-1">
+                      {selectedLog.changes.fields && Array.isArray(selectedLog.changes.fields) && (
+                        <div className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                          <p className="font-medium">Modified Fields:</p>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {selectedLog.changes.fields.map((field: string, index: number) => (
+                              <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                                {field}
+                              </span>
+                            ))}
                           </div>
                         </div>
-                      ))}
+                      )}
+                      {Object.keys(selectedLog.changes).filter(key => key !== 'fields').length > 0 && (
+                        <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32 mt-2">
+                          {JSON.stringify(selectedLog.changes, null, 2)}
+                        </pre>
+                      )}
                     </div>
                   </div>
                 )}
 
                 <div>
                   <label className="block text-xs font-medium text-gray-700">User Agent</label>
-                  <p className="text-xs text-gray-900 break-all">{selectedLog.userAgent}</p>
+                  <p className="text-xs text-gray-900 break-all">{selectedLog.actor?.userAgent || selectedLog.userAgent || 'N/A'}</p>
                 </div>
+
+                {selectedLog.environment && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Environment</label>
+                    <p className="text-xs text-gray-900">{selectedLog.environment}</p>
+                  </div>
+                )}
+
+                {selectedLog.retentionDate && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700">Retention Date</label>
+                    <p className="text-xs text-gray-900">{new Date(selectedLog.retentionDate).toLocaleString()}</p>
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 flex justify-end">

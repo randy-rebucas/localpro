@@ -18,7 +18,9 @@ import {
   MapPin,
   MoreHorizontal,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Play,
+  TrendingUp
 } from "lucide-react";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
@@ -66,6 +68,30 @@ interface ReferralStats {
   }>;
 }
 
+interface ReferralAnalytics {
+  trends?: Array<{
+    date: string;
+    count: number;
+    completed: number;
+    conversionRate: number;
+  }>;
+  referralTypes?: Array<{
+    type: string;
+    count: number;
+    percentage: number;
+  }>;
+  conversionRate?: number;
+  summary?: {
+    totalReferrals: number;
+    completedReferrals: number;
+    pendingReferrals: number;
+    totalRewards: number;
+    averageReward: number;
+  };
+  timeRange?: string;
+  groupBy?: string;
+}
+
 interface Pagination {
   page: number;
   limit: number;
@@ -76,6 +102,7 @@ interface Pagination {
 export default function AdminReferralsPage() {
   const [referrals, setReferrals] = useState<ReferralData[]>([]);
   const [stats, setStats] = useState<ReferralStats | null>(null);
+  const [analytics, setAnalytics] = useState<ReferralAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -91,6 +118,7 @@ export default function AdminReferralsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isUsingFallbackData, setIsUsingFallbackData] = useState(false);
+  const [processingReferral, setProcessingReferral] = useState<string | null>(null);
 
   // Fetch referrals data
   const fetchReferrals = useCallback(async () => {
@@ -144,12 +172,56 @@ export default function AdminReferralsPage() {
     }
   }, [currentPage, filters, sortBy, sortOrder]);
 
-  // Fetch stats data
-    const fetchStats = async () => {
+  // Fetch analytics data
+  const fetchAnalytics = useCallback(async () => {
     try {
+      const timeRange = filters.dateRange !== 'all' ? filters.dateRange : 'month';
       const response = await makeClientAuthenticatedRequestWithEndpointSafe(
         'referralsAnalytics' as keyof typeof API_ENDPOINTS,
-        { method: 'GET', query: { type: 'overview' } }
+        { 
+          method: 'GET', 
+          query: { 
+            timeRange,
+            groupBy: 'day'
+          } 
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch analytics: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setAnalytics(data.data);
+        // Also update stats from analytics summary if available
+        if (data.data.summary) {
+          setStats({
+            totalReferrals: data.data.summary.totalReferrals || 0,
+            pendingReferrals: data.data.summary.pendingReferrals || 0,
+            completedReferrals: data.data.summary.completedReferrals || 0,
+            totalRewards: data.data.summary.totalRewards || 0,
+            paidRewards: 0, // Not in summary
+            pendingRewards: 0, // Not in summary
+            conversionRate: data.data.conversionRate || 0,
+            topReferrers: []
+          });
+        }
+      } else {
+        logger.warn('Analytics API returned error', { error: data.error });
+      }
+    } catch (err) {
+      logger.error('Error fetching analytics', err instanceof Error ? err : new Error(String(err)));
+    }
+  }, [filters.dateRange]);
+
+  // Fetch stats data (legacy/fallback)
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsStats' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: { timeRange: filters.dateRange !== 'all' ? filters.dateRange : 'month' } }
       );
       
       if (!response.ok) {
@@ -158,27 +230,65 @@ export default function AdminReferralsPage() {
 
       const data = await response.json();
       
-      if (data.success) {
-        setStats(data.data);
-        // Check if we're using real data or fallback based on data structure
-        // Real API returns 0 values, fallback has demo values
-        const isFallbackData = data.data && data.data.totalReferrals > 0;
-        setIsUsingFallbackData(isFallbackData);
-      } else {
-        logger.warn('Stats API returned error', { error: data.error });
-        setIsUsingFallbackData(true);
-        // Don't throw error here, just log it - the API will provide fallback data
+      if (data.success && data.data) {
+        // Merge with existing stats if analytics didn't provide summary
+        setStats(prev => ({
+          ...prev,
+          ...data.data,
+          conversionRate: prev?.conversionRate || data.data.conversionRate || 0
+        }));
       }
     } catch (err) {
       logger.error('Error fetching stats', err instanceof Error ? err : new Error(String(err)));
-      // Don't set error state here, let the API handle fallback
+    }
+  }, [filters.dateRange]);
+
+  // Process referral completion
+  const handleProcessReferral = async (referralId: string, triggerAction?: string) => {
+    try {
+      setProcessingReferral(referralId);
+      setError(null);
+
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'referralsProcess' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referralId,
+            triggerAction: triggerAction || 'manual_completion'
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to process referral');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Refresh data after processing
+        await fetchReferrals();
+        await fetchAnalytics();
+        await fetchStats();
+      } else {
+        throw new Error(data.message || 'Failed to process referral');
+      }
+    } catch (err) {
+      logger.error('Error processing referral', err instanceof Error ? err : new Error(String(err)));
+      setError(err instanceof Error ? err.message : 'Failed to process referral');
+    } finally {
+      setProcessingReferral(null);
     }
   };
 
   useEffect(() => {
     fetchReferrals();
+    fetchAnalytics();
     fetchStats();
-  }, [fetchReferrals]);
+  }, [fetchReferrals, fetchAnalytics, fetchStats]);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -328,6 +438,60 @@ export default function AdminReferralsPage() {
           </button>
         </div>
       </div>
+
+      {/* Analytics Section */}
+      {analytics && ((analytics.trends && analytics.trends.length > 0) || (analytics.referralTypes && analytics.referralTypes.length > 0)) && (
+        <div className="bg-white rounded shadow p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center">
+              <TrendingUp className="w-4 h-4 mr-2 text-blue-600" />
+              Referral Analytics
+            </h3>
+            {analytics.conversionRate !== undefined && (
+              <div className="text-sm text-gray-600">
+                Conversion Rate: <span className="font-semibold text-gray-900">{(analytics.conversionRate * 100).toFixed(1)}%</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {analytics.referralTypes && analytics.referralTypes.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Referrals by Type</h4>
+                <div className="space-y-2">
+                  {analytics.referralTypes.map((type, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600 capitalize">{type.type.replace('_', ' ')}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-medium text-gray-900">{type.count}</span>
+                        <span className="text-xs text-gray-500">({type.percentage.toFixed(1)}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {analytics.trends && analytics.trends.length > 0 && (
+              <div>
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Recent Trends (Last {analytics.trends.length} days)</h4>
+                <div className="space-y-2">
+                  {analytics.trends.slice(-7).map((trend, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">{new Date(trend.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      <div className="flex items-center space-x-3">
+                        <span className="text-xs text-gray-600">{trend.count} total</span>
+                        <span className="text-xs text-green-600">{trend.completed} completed</span>
+                        <span className="text-xs text-blue-600">{(trend.conversionRate * 100).toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Stats Overview */}
       {stats && (
@@ -488,196 +652,247 @@ export default function AdminReferralsPage() {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedReferrals.length === referrals.length && referrals.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Referrer
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Referred User
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Reward
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Source
-                </th>
-                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {Array.isArray(referrals) ? referrals.map((referral) => (
-                <tr key={referral.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedReferrals.includes(referral.id)}
-                      onChange={() => handleSelectReferral(referral.id)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-blue-600" />
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {referral.referrerName}
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center">
-                          <Mail className="w-3 h-3 mr-1" />
-                          {referral.referrerEmail}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="flex items-center">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-green-600" />
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900">
-                          {referral.referredUserName}
-                        </div>
-                        <div className="text-xs text-gray-500 flex items-center">
-                          <Mail className="w-3 h-3 mr-1" />
-                          {referral.referredUserEmail}
-                        </div>
-                        {referral.referredUserPhone && (
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <Phone className="w-3 h-3 mr-1" />
-                            {referral.referredUserPhone}
-                          </div>
-                        )}
-                        {referral.referredUserLocation && (
-                          <div className="text-xs text-gray-500 flex items-center">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {referral.referredUserLocation}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="space-y-1">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(referral.status)}`}>
-                        {referral.status}
-                      </span>
-                      <div className="text-xs text-gray-500">
-                        {referral.completedAt ? `Completed ${formatDate(referral.completedAt)}` : 'In progress'}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(referral.rewardAmount)}
-                      </div>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRewardStatusColor(referral.rewardStatus)}`}>
-                        {referral.rewardStatus}
-                      </span>
-                    </div>
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900">
-                      {formatDate(referral.createdAt)}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {referral.source}
-                    </div>
-                    {referral.campaign && (
-                      <div className="text-xs text-blue-600">
-                        {referral.campaign}
-                      </div>
-                    )}
-                  </td>
-                  
-                  <td className="px-4 py-3">
-                    <div className="text-sm text-gray-900">
-                      {referral.source}
-                    </div>
-                    {referral.campaign && (
-                      <div className="text-xs text-blue-600">
-                        {referral.campaign}
-                      </div>
-                    )}
-                  </td>
-                  
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end space-x-1">
-                      <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
-                    No referrals found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination */}
-        {pagination && pagination.pages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
-              </div>
-              <div className="flex items-center space-x-2">
+        {!loading && (!Array.isArray(referrals) || referrals.length === 0) ? (
+          <div className="p-6 text-center">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Target className="w-6 h-6 text-blue-600" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900 mb-1">No Referrals Found</h3>
+            <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+              {filters.status !== 'all' || filters.rewardStatus !== 'all' || filters.search || filters.dateRange !== 'all'
+                ? "No referrals match your current filters. Try adjusting your search criteria or clearing filters to see more results."
+                : "There are no referrals at this time. New referrals will appear here as users refer others to the platform."}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              {filters.status !== 'all' || filters.rewardStatus !== 'all' || filters.search || filters.dateRange !== 'all' ? (
                 <button
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  onClick={() => {
+                    setFilters({ status: 'all', rewardStatus: 'all', search: '', dateRange: 'all' });
+                    setCurrentPage(1);
+                  }}
+                  className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors inline-flex items-center justify-center gap-2"
                 >
-                  Previous
+                  <Filter className="w-4 h-4" />
+                  Clear Filters
                 </button>
-                <span className="text-sm text-gray-700">
-                  Page {currentPage} of {pagination.pages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
-                  disabled={currentPage === pagination.pages}
-                  className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                >
-                  Next
-                </button>
-              </div>
+              ) : null}
+              <button
+                onClick={fetchReferrals}
+                className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors inline-flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </button>
             </div>
           </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedReferrals.length === referrals.length && referrals.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Referrer
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Referred User
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Reward
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Source
+                    </th>
+                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {Array.isArray(referrals) && referrals.length > 0 ? referrals.map((referral) => (
+                    <tr key={referral.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedReferrals.includes(referral.id)}
+                          onChange={() => handleSelectReferral(referral.id)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">
+                              {referral.referrerName}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Mail className="w-3 h-3 mr-1" />
+                              {referral.referrerEmail}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <User className="w-4 h-4 text-green-600" />
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">
+                              {referral.referredUserName}
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center">
+                              <Mail className="w-3 h-3 mr-1" />
+                              {referral.referredUserEmail}
+                            </div>
+                            {referral.referredUserPhone && (
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <Phone className="w-3 h-3 mr-1" />
+                                {referral.referredUserPhone}
+                              </div>
+                            )}
+                            {referral.referredUserLocation && (
+                              <div className="text-xs text-gray-500 flex items-center">
+                                <MapPin className="w-3 h-3 mr-1" />
+                                {referral.referredUserLocation}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(referral.status)}`}>
+                            {referral.status}
+                          </span>
+                          <div className="text-xs text-gray-500">
+                            {referral.completedAt ? `Completed ${formatDate(referral.completedAt)}` : 'In progress'}
+                          </div>
+                        </div>
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatCurrency(referral.rewardAmount)}
+                          </div>
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getRewardStatusColor(referral.rewardStatus)}`}>
+                            {referral.rewardStatus}
+                          </span>
+                        </div>
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-900">
+                          {formatDate(referral.createdAt)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {referral.source}
+                        </div>
+                        {referral.campaign && (
+                          <div className="text-xs text-blue-600">
+                            {referral.campaign}
+                          </div>
+                        )}
+                      </td>
+                      
+                      <td className="px-4 py-3">
+                        <div className="text-sm text-gray-900">
+                          {referral.source}
+                        </div>
+                        {referral.campaign && (
+                          <div className="text-xs text-blue-600">
+                            {referral.campaign}
+                          </div>
+                        )}
+                      </td>
+                      
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          <button 
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {referral.status === 'pending' && (
+                            <button
+                              onClick={() => handleProcessReferral(referral.id || referral._id || '', 'manual_completion')}
+                              disabled={processingReferral === (referral.id || referral._id || '')}
+                              className="p-1 text-green-600 hover:text-green-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Process Referral"
+                            >
+                              {processingReferral === (referral.id || referral._id || '') ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Play className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
+                          <button 
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            title="More Options"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : null}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Pagination */}
+            {pagination && pagination.pages > 1 && (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-700">
+                    Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-gray-700">
+                      Page {currentPage} of {pagination.pages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
+                      disabled={currentPage === pagination.pages}
+                      className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
