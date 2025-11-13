@@ -164,6 +164,7 @@ export default function ServiceDetailPage() {
   const [loadingOtherServices, setLoadingOtherServices] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   // Normalize service data from API response
   const normalizeService = useCallback((serviceData: Partial<Service> & Record<string, unknown>): Service => {
@@ -667,7 +668,21 @@ export default function ServiceDetailPage() {
         </div>
 
       {/* Service Images */}
-      {service.images && service.images.length > 0 && (() => {
+      {(() => {
+        // If no images array or empty, show placeholder
+        if (!service.images || service.images.length === 0) {
+          return (
+            <div className="mb-6">
+              <div className="relative w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No images available</p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
         // Get image URL (handle both formats)
         const getImageUrl = (img: ServiceImage | string) => {
           return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
@@ -678,40 +693,94 @@ export default function ServiceDetailPage() {
             : (img.alt || `${service.title} ${index + 1}`);
         };
         
+        // Filter out images with empty or invalid URLs, keeping track of original indices
+        const validImagesWithIndices = service.images
+          .map((img, index) => ({ img, originalIndex: index }))
+          .filter(({ img, originalIndex }) => {
+            const url = getImageUrl(img);
+            return url && url.trim() !== '' && !imageErrors.has(originalIndex);
+          });
+        
+        // If no valid images, show placeholder
+        if (validImagesWithIndices.length === 0) {
+          return (
+            <div className="mb-6">
+              <div className="relative w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No images available</p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
+        // Find the current image based on selectedImageIndex
+        const currentImageEntry = validImagesWithIndices.find(
+          ({ originalIndex }) => originalIndex === selectedImageIndex
+        ) || validImagesWithIndices[0];
+        
+        const currentImage = currentImageEntry.img;
+        const currentImageUrl = getImageUrl(currentImage);
+        
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="md:col-span-2">
-              <div className="relative group overflow-hidden rounded-lg">
-                <Image
-                  src={getImageUrl(service.images[selectedImageIndex])}
-                  alt={getImageAlt(service.images[selectedImageIndex], selectedImageIndex)}
-                  width={400}
-                  height={256}
-                  className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+              <div className="relative group overflow-hidden rounded-lg bg-gray-200 w-full h-64">
+                {currentImageUrl ? (
+                  <Image
+                    src={currentImageUrl}
+                    alt={getImageAlt(currentImage, currentImageEntry.originalIndex)}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 66vw"
+                    priority
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    onError={() => {
+                      setImageErrors(prev => new Set(prev).add(currentImageEntry.originalIndex));
+                    }}
+                    unoptimized={currentImageUrl.startsWith('http://localhost') || currentImageUrl.startsWith('http://127.0.0.1') || !currentImageUrl.startsWith('http')}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                    <Briefcase className="w-16 h-16 text-gray-400" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {service.images.slice(0, 4).map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`h-20 rounded-lg overflow-hidden transition-all duration-200 ${
-                    selectedImageIndex === index 
-                      ? 'ring-2 ring-green-500 shadow-lg scale-105' 
-                      : 'hover:shadow-md hover:scale-102'
-                  }`}
-                >
-                  <Image
-                    src={getImageUrl(image)}
-                    alt={getImageAlt(image, index)}
-                    width={100}
-                    height={100}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+              {validImagesWithIndices.slice(0, 4).map(({ img, originalIndex }) => {
+                const imageUrl = getImageUrl(img);
+                return (
+                  <button
+                    key={originalIndex}
+                    onClick={() => setSelectedImageIndex(originalIndex)}
+                    className={`relative h-20 rounded-lg overflow-hidden transition-all duration-200 bg-gray-200 ${
+                      selectedImageIndex === originalIndex 
+                        ? 'ring-2 ring-green-500 shadow-lg scale-105' 
+                        : 'hover:shadow-md hover:scale-102'
+                    }`}
+                  >
+                    {imageUrl ? (
+                      <Image
+                        src={imageUrl}
+                        alt={getImageAlt(img, originalIndex)}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 16vw"
+                        className="object-cover"
+                        onError={() => {
+                          setImageErrors(prev => new Set(prev).add(originalIndex));
+                        }}
+                        unoptimized={imageUrl.startsWith('http://localhost') || imageUrl.startsWith('http://127.0.0.1') || !imageUrl.startsWith('http')}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-300">
+                        <Briefcase className="w-6 h-6 text-gray-500" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         );
@@ -956,14 +1025,14 @@ export default function ServiceDetailPage() {
                 {reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                      <div className="relative w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
                         {review.user.avatar ? (
                           <Image
                             src={review.user.avatar}
                             alt={review.user.name}
-                            width={40}
-                            height={40}
-                            className="w-10 h-10 rounded-full object-cover"
+                            fill
+                            sizes="40px"
+                            className="rounded-full object-cover"
                           />
                         ) : (
                           <span className="text-sm font-medium text-gray-600">

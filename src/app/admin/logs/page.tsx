@@ -147,8 +147,6 @@ interface FilterOptions {
   search: string;
 }
 
-// Mock data generation functions
-
 export default function AdminLogsPage() {
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [stats, setStats] = useState<LogStats | null>(null);

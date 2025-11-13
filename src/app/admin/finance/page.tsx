@@ -13,7 +13,8 @@ import {
   Download,
   Filter,
   Eye,
-  Plus
+  Plus,
+  X
 } from "lucide-react";
 
 // Import finance components - Lazy load modals for better performance
@@ -73,6 +74,7 @@ export default function FinanceAdmin() {
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
   const [transactions, setTransactions] = useState<TransactionWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<FinanceFilters>({
     search: '',
     type: 'all',
@@ -95,6 +97,7 @@ export default function FinanceAdmin() {
   const fetchFinanceData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [overviewRes, transactionsRes] = await Promise.all([
         makeClientAuthenticatedRequestWithEndpointSafe(
           'financeOverview' as keyof typeof API_ENDPOINTS,
@@ -125,57 +128,9 @@ export default function FinanceAdmin() {
       }
     } catch (error) {
       logger.error("Error fetching finance data", error instanceof Error ? error : new Error(String(error)));
-      
-      // Set mock data for development based on actual API structure
-      setOverview({
-        wallet: {
-          balance: 1250.75,
-          pendingBalance: 200.00,
-          lastUpdated: new Date().toISOString(),
-          autoWithdraw: false,
-          minBalance: 100,
-          notificationSettings: {
-            lowBalance: true,
-            withdrawal: true,
-            payment: true
-          }
-        },
-        monthlyEarnings: {
-          totalEarnings: 2500.00,
-          bookingCount: 15
-        },
-        pendingPayments: {
-          totalPending: 450.00,
-          count: 3
-        },
-        referralEarnings: {
-          totalEarnings: 150.00,
-          count: 5
-        },
-        recentTransactions: []
-      });
-      
-      setTransactions([
-        {
-          type: 'income',
-          amount: 200.00,
-          category: 'service_payment',
-          description: 'House cleaning service',
-          paymentMethod: 'paypal',
-          status: 'completed',
-          timestamp: new Date().toISOString(),
-          reference: 'TXN-001234'
-        },
-        {
-          type: 'expense',
-          amount: -50.00,
-          category: 'equipment',
-          description: 'Cleaning supplies',
-          paymentMethod: 'wallet',
-          status: 'completed',
-          timestamp: new Date(Date.now() - 86400000).toISOString()
-        }
-      ]);
+      setError(error instanceof Error ? error.message : "Failed to load finance data");
+      setOverview(null);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -251,6 +206,21 @@ export default function FinanceAdmin() {
 
   return (
     <div className="space-y-4">
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-red-800">{error}</p>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-600 hover:text-red-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>

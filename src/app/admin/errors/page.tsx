@@ -905,7 +905,7 @@ export default function ErrorMonitoringPage() {
           title="Error Details"
           size="xl"
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Error ID</label>
@@ -1078,7 +1078,7 @@ export default function ErrorMonitoringPage() {
           title="Resolve Error"
           size="lg"
         >
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Error</label>
               <p className="text-xs text-gray-900 bg-gray-50 p-2 rounded">{selectedError.message}</p>

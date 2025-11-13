@@ -94,13 +94,15 @@ const nextConfig: NextConfig = {
       "https://maps.googleapis.com",
       "https://*.googleapis.com",
       "https://maps.gstatic.com",
+      "https://www.googletagmanager.com",
+      "https://*.googletagmanager.com",
       ...(isDevelopment ? ["http://localhost:5000", "ws://localhost:5000"] : []),
     ].join(' ');
 
     // Build CSP directives
     const cspDirectives = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com https://maps.googleapis.com https://*.googleapis.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live https://*.vercel-analytics.com https://va.vercel-scripts.com https://maps.googleapis.com https://*.googleapis.com https://www.googletagmanager.com https://*.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.gstatic.com",

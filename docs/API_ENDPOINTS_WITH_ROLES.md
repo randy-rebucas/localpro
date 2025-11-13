@@ -61,10 +61,10 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | GET | `/api/marketplace/providers/:id` | PUBLIC | Get provider details (accepts User ID or Provider ID, returns extended user data) |
 | GET | `/api/marketplace/my-services` | AUTHENTICATED | Get my services |
 | GET | `/api/marketplace/my-bookings` | AUTHENTICATED | Get my bookings |
-| POST | `/api/marketplace/services` | **provider, admin** | Create service |
+<!-- | POST | `/api/marketplace/services` | **provider, admin** | Create service |
 | PUT | `/api/marketplace/services/:id` | **provider, admin** | Update service |
 | DELETE | `/api/marketplace/services/:id` | **provider, admin** | Delete service |
-| POST | `/api/marketplace/services/:id/images` | **provider, admin** | Upload service images |
+| POST | `/api/marketplace/services/:id/images` | **provider, admin** | Upload service images | -->
 | POST | `/api/marketplace/bookings` | AUTHENTICATED | Create booking |
 | GET | `/api/marketplace/bookings` | AUTHENTICATED | Get bookings |
 | GET | `/api/marketplace/bookings/:id` | AUTHENTICATED | Get booking details |
@@ -92,12 +92,12 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | POST | `/api/ads/:id/images` | AUTHENTICATED | Upload ad images |
 | DELETE | `/api/ads/:id/images/:imageId` | AUTHENTICATED | Delete ad image |
 | POST | `/api/ads/:id/promote` | AUTHENTICATED | Promote ad |
-| GET | `/api/ads/pending` | **admin** | Get pending ads |
+<!-- | GET | `/api/ads/pending` | **admin** | Get pending ads |
 | PUT | `/api/ads/:id/approve` | **admin** | Approve ad |
 | PUT | `/api/ads/:id/reject` | **admin** | Reject ad |
+| GET | `/api/ads/statistics` | **admin** | Get ad statistics | -->
 | GET | `/api/ads/:id/analytics` | AUTHENTICATED | Get ad analytics |
 | GET | `/api/ads/my-ads` | AUTHENTICATED | Get my ads |
-| GET | `/api/ads/statistics` | **admin** | Get ad statistics |
 
 ---
 
@@ -113,11 +113,11 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | DELETE | `/api/jobs/:id` | **provider, admin** | Delete job |
 | POST | `/api/jobs/:id/logo` | **provider, admin** | Upload company logo |
 | GET | `/api/jobs/:id/stats` | **provider, admin** | Get job stats |
-| POST | `/api/jobs/:id/apply` | AUTHENTICATED | Apply for job |
-| GET | `/api/jobs/my-applications` | AUTHENTICATED | Get my applications |
 | GET | `/api/jobs/my-jobs` | **provider, admin** | Get my jobs |
 | GET | `/api/jobs/:id/applications` | **provider, admin** | Get job applications |
 | PUT | `/api/jobs/:id/applications/:applicationId/status` | **provider, admin** | Update application status |
+| POST | `/api/jobs/:id/apply` | AUTHENTICATED | Apply for job |
+| GET | `/api/jobs/my-applications` | AUTHENTICATED | Get my applications |
 
 ---
 
@@ -132,18 +132,18 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | GET | `/api/rentals/featured` | PUBLIC | Get featured rentals |
 | GET | `/api/rentals/nearby` | PUBLIC | Get nearby rentals |
 | GET | `/api/rentals/:id` | PUBLIC | Get rental details |
-| POST | `/api/rentals` | **provider, admin** | Create rental |
+<!-- | POST | `/api/rentals` | **provider, admin** | Create rental |
 | POST | `/api/rentals/items` | **provider, admin** | Create rental (alias) |
 | PUT | `/api/rentals/:id` | **provider, admin** | Update rental |
 | DELETE | `/api/rentals/:id` | **provider, admin** | Delete rental |
 | POST | `/api/rentals/:id/images` | **provider, admin** | Upload rental images |
 | DELETE | `/api/rentals/:id/images/:imageId` | **provider, admin** | Delete rental image |
+| GET | `/api/rentals/statistics` | **admin** | Get rental statistics | -->
 | POST | `/api/rentals/:id/book` | AUTHENTICATED | Book rental |
 | PUT | `/api/rentals/:id/bookings/:bookingId/status` | AUTHENTICATED | Update booking status |
 | POST | `/api/rentals/:id/reviews` | AUTHENTICATED | Add rental review |
 | GET | `/api/rentals/my-rentals` | AUTHENTICATED | Get my rentals |
 | GET | `/api/rentals/my-bookings` | AUTHENTICATED | Get my rental bookings |
-| GET | `/api/rentals/statistics` | **admin** | Get rental statistics |
 
 ---
 
@@ -155,18 +155,18 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | GET | `/api/academy/courses/:id` | PUBLIC | Get course details |
 | GET | `/api/academy/categories` | PUBLIC | Get course categories |
 | GET | `/api/academy/featured` | PUBLIC | Get featured courses |
-| POST | `/api/academy/courses` | **instructor, admin** | Create course |
+<!-- | POST | `/api/academy/courses` | **instructor, admin** | Create course |
 | PUT | `/api/academy/courses/:id` | **instructor, admin** | Update course |
 | DELETE | `/api/academy/courses/:id` | **instructor, admin** | Delete course |
 | POST | `/api/academy/courses/:id/thumbnail` | **instructor, admin** | Upload course thumbnail |
 | POST | `/api/academy/courses/:id/videos` | **instructor, admin** | Upload course video |
 | DELETE | `/api/academy/courses/:id/videos/:videoId` | **instructor, admin** | Delete course video |
+| GET | `/api/academy/statistics` | **admin** | Get course statistics | -->
 | POST | `/api/academy/courses/:id/enroll` | AUTHENTICATED | Enroll in course |
 | PUT | `/api/academy/courses/:id/progress` | AUTHENTICATED | Update course progress |
 | POST | `/api/academy/courses/:id/reviews` | AUTHENTICATED | Add course review |
 | GET | `/api/academy/my-courses` | AUTHENTICATED | Get my courses |
 | GET | `/api/academy/my-created-courses` | AUTHENTICATED | Get my created courses |
-| GET | `/api/academy/statistics` | **admin** | Get course statistics |
 
 ---
 
@@ -181,18 +181,18 @@ This document provides a comprehensive list of all API endpoints in the LocalPro
 | GET | `/api/supplies/featured` | PUBLIC | Get featured supplies |
 | GET | `/api/supplies/nearby` | PUBLIC | Get nearby supplies |
 | GET | `/api/supplies/:id` | PUBLIC | Get supply details |
-| POST | `/api/supplies` | **supplier, admin** | Create supply |
+<!-- | POST | `/api/supplies` | **supplier, admin** | Create supply |
 | POST | `/api/supplies/products` | **supplier, admin** | Create supply (alias) |
 | PUT | `/api/supplies/:id` | **supplier, admin** | Update supply |
 | DELETE | `/api/supplies/:id` | **supplier, admin** | Delete supply |
 | POST | `/api/supplies/:id/images` | **supplier, admin** | Upload supply images |
 | DELETE | `/api/supplies/:id/images/:imageId` | **supplier, admin** | Delete supply image |
+| GET | `/api/supplies/statistics` | **admin** | Get supply statistics | -->
 | POST | `/api/supplies/:id/order` | AUTHENTICATED | Order supply |
 | PUT | `/api/supplies/:id/orders/:orderId/status` | AUTHENTICATED | Update order status |
 | POST | `/api/supplies/:id/reviews` | AUTHENTICATED | Add supply review |
 | GET | `/api/supplies/my-supplies` | AUTHENTICATED | Get my supplies |
 | GET | `/api/supplies/my-orders` | AUTHENTICATED | Get my supply orders |
-| GET | `/api/supplies/statistics` | **admin** | Get supply statistics |
 
 ---
 

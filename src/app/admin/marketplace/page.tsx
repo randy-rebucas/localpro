@@ -15,7 +15,6 @@ import {
   ChevronUp,
   Image as ImageIcon,
   X,
-  DollarSign
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -33,6 +32,10 @@ import {
   DayOfWeek,
   ScheduleDay
 } from "@/types/services";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
+import { AppSettings } from "@/types/app-settings";
 
 // Type for API service response (raw data from backend)
 interface ApiServiceData {
@@ -124,6 +127,9 @@ const transformServiceData = (apiService: ApiServiceData): Service => {
 };
 
 export default function MarketplacePage() {
+  // App settings for currency formatting and other settings
+  const { settings: appSettings } = useAppSettings();
+  
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -160,7 +166,7 @@ export default function MarketplacePage() {
     subcategory: '',
     pricingType: 'fixed' as PricingType,
     basePrice: '',
-    currency: 'USD',
+    currency: getDefaultCurrency(appSettings),
     serviceArea: '',
     serviceType: 'one_time' as ServiceType,
     isActive: true
@@ -173,7 +179,7 @@ export default function MarketplacePage() {
     subcategory: '',
     pricingType: 'fixed' as PricingType,
     basePrice: '',
-    currency: 'USD',
+    currency: getDefaultCurrency(appSettings),
     serviceArea: '',
     serviceType: 'one_time' as ServiceType,
     isActive: true
@@ -411,7 +417,7 @@ export default function MarketplacePage() {
         subcategory: '',
         pricingType: 'fixed',
         basePrice: '',
-        currency: 'USD',
+        currency: getDefaultCurrency(appSettings),
         serviceArea: '',
         serviceType: 'one_time',
         isActive: true
@@ -507,30 +513,116 @@ export default function MarketplacePage() {
     
     try {
       setSubmitting(true);
-      if (!getApiToken()) return;
+      const token = getApiToken();
+      if (!token) {
+        const error = new Error('No authentication token found');
+        logger.error('Error uploading images', error, { serviceId: selectedService._id });
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
 
       const formData = new FormData();
       selectedFiles.forEach((file) => {
         formData.append('images', file);
       });
 
+      // Endpoint: POST /api/marketplace/services/:id/images
       const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${selectedService._id}/images`;
-      const token = getApiToken();
       const headers: HeadersInit = {
         'Authorization': `Bearer ${token}`
       };
       // Don't set Content-Type for FormData - browser will set it with boundary
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData
+      logger.debug('Uploading images', { 
+        url, 
+        serviceId: selectedService._id, 
+        fileCount: selectedFiles.length,
+        fileNames: selectedFiles.map(f => f.name),
+        fileSizes: selectedFiles.map(f => f.size)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload images');
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+      } catch (networkError) {
+        // Handle network errors (fetch failed)
+        const error = networkError instanceof Error ? networkError : new Error(String(networkError));
+        logger.error('Network error uploading images', error, {
+          url,
+          serviceId: selectedService._id,
+          fileCount: selectedFiles.length
+        });
+        toast.error('Network error: Failed to connect to server. Please check your connection and try again.');
+        return;
       }
+
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = 'Failed to upload images';
+        let errorData: { error?: string; message?: string } = {};
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', { parseError });
+        }
+
+        const error = new Error(errorMessage);
+        logger.error('Error uploading images', error, {
+          url,
+          serviceId: selectedService._id,
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          fileCount: selectedFiles.length
+        });
+
+        // Provide user-friendly error messages based on status code
+        if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          // Extract the specific error message from the backend if available
+          const backendMessage = errorData.message || errorMessage;
+          toast.error(backendMessage || 'You do not have permission to upload images for this service. Admin access may not be properly configured on the backend.');
+          logger.warn('403 Forbidden when uploading images - possible backend authorization issue', {
+            serviceId: selectedService._id,
+            backendMessage,
+            note: 'Admin users should have permission to upload images for any service according to API documentation'
+          });
+        } else if (response.status === 404) {
+          toast.error('Service not found. Please refresh and try again.');
+        } else if (response.status === 413) {
+          toast.error('Image files are too large. Please select smaller images.');
+        } else if (response.status === 415) {
+          toast.error('Invalid file type. Please select image files only.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error(errorMessage || 'Failed to upload images');
+        }
+        return;
+      }
+
+      // Success
+      const result = await response.json().catch(() => ({}));
+      logger.debug('Images uploaded successfully', { 
+        serviceId: selectedService._id, 
+        fileCount: selectedFiles.length,
+        result
+      });
 
       toast.success(`Successfully uploaded ${selectedFiles.length} image(s)`);
       setImageUploadModalOpen(false);
@@ -538,8 +630,13 @@ export default function MarketplacePage() {
       setSelectedFiles([]);
       await fetchData();
     } catch (err) {
-      logger.error('Error uploading images', err instanceof Error ? err : new Error(String(err)));
-      toast.error(err instanceof Error ? err.message : 'Failed to upload images');
+      // Catch any unexpected errors
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Unexpected error uploading images', error, {
+        serviceId: selectedService?._id,
+        fileCount: selectedFiles?.length
+      });
+      toast.error(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -601,7 +698,7 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -831,13 +928,14 @@ export default function MarketplacePage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
-                    <div className="flex items-center">
-                      <DollarSign className="w-3 h-3 mr-1 text-gray-500" />
-                      <span>
-                        {service.pricing?.basePrice?.toLocaleString() || '0'} {service.pricing?.currency || 'USD'}
-                        {service.pricing?.type && ` / ${service.pricing.type}`}
-                      </span>
-                    </div>
+                    <span>
+                      {formatCurrency(
+                        service.pricing?.basePrice || 0,
+                        service.pricing?.currency || getDefaultCurrency(appSettings),
+                        { appSettings }
+                      )}
+                      {service.pricing?.type && ` / ${service.pricing.type}`}
+                    </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(service.isActive)}`}>
@@ -868,7 +966,7 @@ export default function MarketplacePage() {
                               subcategory: service.subcategory || '',
                               pricingType: service.pricing?.type || 'fixed',
                               basePrice: service.pricing?.basePrice?.toString() || '',
-                              currency: service.pricing?.currency || 'USD',
+                              currency: service.pricing?.currency || getDefaultCurrency(appSettings),
                               serviceArea: service.serviceArea?.join(', ') || '',
                               serviceType: service.serviceType || 'one_time',
                               isActive: service.isActive !== undefined ? service.isActive : true
@@ -934,8 +1032,8 @@ export default function MarketplacePage() {
             <Loading size="md" />
           </div>
         ) : selectedServiceDetails ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-gray-500">Title</label>
                 <p className="text-sm font-semibold">{selectedServiceDetails.title || 'N/A'}</p>
@@ -953,7 +1051,11 @@ export default function MarketplacePage() {
               <div>
                 <label className="text-xs font-medium text-gray-500">Price</label>
                 <p className="text-sm">
-                  {selectedServiceDetails.pricing?.basePrice?.toLocaleString() || '0'} {selectedServiceDetails.pricing?.currency || 'USD'}
+                  {formatCurrency(
+                    selectedServiceDetails.pricing?.basePrice || 0,
+                    selectedServiceDetails.pricing?.currency || getDefaultCurrency(appSettings),
+                    { appSettings }
+                  )}
                   {selectedServiceDetails.pricing?.type && ` / ${selectedServiceDetails.pricing.type}`}
                 </p>
               </div>
@@ -978,14 +1080,14 @@ export default function MarketplacePage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateService}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Service'}
             </button>
@@ -995,6 +1097,7 @@ export default function MarketplacePage() {
         <CreateServiceForm 
           formData={createFormData}
           setFormData={setCreateFormData}
+          appSettings={appSettings}
         />
       </Modal>
 
@@ -1014,14 +1117,14 @@ export default function MarketplacePage() {
                 setEditModalOpen(false);
                 setSelectedService(null);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdateService}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Service'}
             </button>
@@ -1032,6 +1135,7 @@ export default function MarketplacePage() {
           <EditServiceForm 
             formData={editFormData}
             setFormData={setEditFormData}
+            appSettings={appSettings}
           />
         )}
       </Modal>
@@ -1052,14 +1156,14 @@ export default function MarketplacePage() {
                 setDeleteModalOpen(false);
                 setSelectedService(null);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteService}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
             >
               {submitting ? 'Deleting...' : 'Delete Service'}
             </button>
@@ -1067,7 +1171,7 @@ export default function MarketplacePage() {
         }
       >
         {selectedService && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <p className="text-sm text-gray-700">
               Are you sure you want to delete the service <strong>{selectedService.title}</strong>? 
               This action cannot be undone.
@@ -1094,14 +1198,14 @@ export default function MarketplacePage() {
                 setSelectedService(null);
                 setSelectedFiles([]);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUploadImages}
               disabled={submitting || !selectedFiles || selectedFiles.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Images'}
             </button>
@@ -1123,8 +1227,10 @@ export default function MarketplacePage() {
 // Create Service Form Component
 function CreateServiceForm({ 
   formData, 
-  setFormData 
-}: { 
+  setFormData,
+  appSettings
+}: {
+  appSettings: AppSettings | null; 
   formData: {
     title: string;
     description: string;
@@ -1151,24 +1257,24 @@ function CreateServiceForm({
   }>>;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Title *</label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Category *</label>
           <select
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="cleaning">Cleaning</option>
             <option value="plumbing">Plumbing</option>
@@ -1195,20 +1301,20 @@ function CreateServiceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Subcategory</label>
           <input
             type="text"
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Type *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Pricing Type *</label>
           <select
             value={formData.pricingType}
             onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="fixed">Fixed</option>
             <option value="hourly">Hourly</option>
@@ -1217,25 +1323,29 @@ function CreateServiceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Base Price *</label>
           <input
             type="number"
             step="0.01"
             value={formData.basePrice}
             onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Currency</label>
           <select
             value={formData.currency}
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
+            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
             <option value="USD">USD</option>
             <option value="PHP">PHP</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
           </select>
         </div>
       </div>
@@ -1280,8 +1390,10 @@ function CreateServiceForm({
 // Edit Service Form Component
 function EditServiceForm({ 
   formData, 
-  setFormData 
-}: { 
+  setFormData,
+  appSettings
+}: {
+  appSettings: AppSettings | null; 
   formData: {
     title: string;
     description: string;
@@ -1308,24 +1420,24 @@ function EditServiceForm({
   }>>;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Title *</label>
           <input
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Category *</label>
           <select
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="cleaning">Cleaning</option>
             <option value="plumbing">Plumbing</option>
@@ -1352,20 +1464,20 @@ function EditServiceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Subcategory</label>
           <input
             type="text"
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing Type *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Pricing Type *</label>
           <select
             value={formData.pricingType}
             onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="fixed">Fixed</option>
             <option value="hourly">Hourly</option>
@@ -1374,25 +1486,29 @@ function EditServiceForm({
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price *</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Base Price *</label>
           <input
             type="number"
             step="0.01"
             value={formData.basePrice}
             onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
             required
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Currency</label>
           <select
             value={formData.currency}
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
+            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
             <option value="USD">USD</option>
             <option value="PHP">PHP</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
           </select>
         </div>
       </div>
@@ -1466,7 +1582,7 @@ function ImageUploadForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Select Images</label>
         <input
@@ -1480,7 +1596,7 @@ function ImageUploadForm({
       </div>
       {selectedFiles.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Selected Images ({selectedFiles.length})</label>
+          <label className="block text-xs font-medium text-gray-700 mb-0.5">Selected Images ({selectedFiles.length})</label>
           <div className="grid grid-cols-3 gap-2">
             {selectedFiles.map((file, index) => (
               <div key={index} className="relative">

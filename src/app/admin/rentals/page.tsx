@@ -27,14 +27,21 @@ import {
   RentalItem,
   Image as RentalImage,
   Document,
-  RentalCategory
+  RentalCategory,
+  Booking,
+  Pricing,
+  Payment
 } from "@/types/rentals";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 // Extended Rental interface for admin page (includes owner/provider populated)
 interface Rental extends Omit<RentalItem, 'owner' | 'name' | 'createdAt' | 'updatedAt'> {
   name?: string;
   type?: string;
   price?: {
+    hourly?: number;
     daily?: number;
     weekly?: number;
     monthly?: number;
@@ -70,6 +77,13 @@ interface RentalStatistics {
 }
 
 export default function RentalsPage() {
+  // App settings for currency formatting and other settings
+  const { settings: appSettings } = useAppSettings();
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"items" | "transactions">("items");
+  
+  // Rental Items state
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [stats, setStats] = useState<RentalStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +95,12 @@ export default function RentalsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [currentPage] = useState(1);
   const itemsPerPage = 20;
+  
+  // Rental Transactions state
+  const [transactions, setTransactions] = useState<Array<Booking & { item?: { _id?: string; title?: string; category?: string; images?: RentalImage[] }; rentalItem?: Rental }>>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsError, setTransactionsError] = useState<string | null>(null);
+  const [transactionStatusFilter, setTransactionStatusFilter] = useState<string>("all");
 
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -103,7 +123,7 @@ export default function RentalsPage() {
     dailyPrice: 0,
     weeklyPrice: 0,
     monthlyPrice: 0,
-    currency: "USD",
+    currency: getDefaultCurrency(appSettings),
     // Location
     street: "",
     city: "",
@@ -223,11 +243,122 @@ export default function RentalsPage() {
     fetchData();
   }, [fetchData]);
 
+  // Fetch rental transactions/bookings
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
+
+      if (!getApiToken()) {
+        logger.warn('No API token found, cannot fetch transactions');
+        setTransactionsError('Authentication required. Please log in again.');
+        setTransactionsLoading(false);
+        return;
+      }
+
+      // For admin, we need to aggregate bookings from all rental items
+      // Since there's no dedicated admin endpoint for all bookings,
+      // we'll fetch all rental items and extract their bookings
+      const rentalsUrl = `${API_BASE_URL}${API_ENDPOINTS.rentals}?limit=1000`;
+      
+      logger.debug('Fetching rental transactions', { url: rentalsUrl });
+      
+      const response = await fetch(rentalsUrl, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || errorData.message || `HTTP ${response.status}: Failed to fetch transactions`;
+        logger.error('Error fetching rental transactions', new Error(errorMessage), {
+          status: response.status,
+          statusText: response.statusText,
+          errorData
+        });
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      
+      // Extract bookings from all rental items
+      const allBookings: Array<Booking & { item?: { _id?: string; title?: string; category?: string; images?: RentalImage[] }; rentalItem?: Rental }> = [];
+      let rentalsData: Rental[] = [];
+      
+      if (result.success && result.data) {
+        if (Array.isArray(result.data)) {
+          rentalsData = result.data;
+        } else if (result.data.rentals && Array.isArray(result.data.rentals)) {
+          rentalsData = result.data.rentals;
+        }
+      } else if (Array.isArray(result)) {
+        rentalsData = result;
+      }
+
+      // Extract bookings from each rental item
+      rentalsData.forEach((rental: Rental) => {
+        if (rental.bookings && Array.isArray(rental.bookings)) {
+          rental.bookings.forEach((booking: Booking) => {
+            // Add rental item info to each booking
+            allBookings.push({
+              ...booking,
+              item: {
+                _id: rental._id,
+                title: rental.title || rental.name,
+                category: rental.category,
+                images: rental.images
+              },
+              rentalItem: rental
+            });
+          });
+        }
+      });
+
+      // Apply status filter if needed
+      let filteredBookings = allBookings;
+      if (transactionStatusFilter !== 'all') {
+        filteredBookings = allBookings.filter((booking) => {
+          const bookingStatus = (booking.status || '').toLowerCase();
+          return bookingStatus === transactionStatusFilter.toLowerCase();
+        });
+      }
+
+      setTransactions(filteredBookings);
+      setLastUpdated(new Date());
+      
+      logger.debug('Rental transactions loaded', { 
+        totalBookings: allBookings.length,
+        filteredBookings: filteredBookings.length,
+        statusFilter: transactionStatusFilter
+      });
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching rental transactions', error);
+      setTransactionsError(error.message);
+      
+      // Provide user-friendly error message
+      if (error.message.includes('400')) {
+        toast.error('Unable to fetch transactions. The backend may not support admin access to all bookings yet.');
+      } else {
+        toast.error(`Failed to load transactions: ${error.message}`);
+      }
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }, [transactionStatusFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'transactions') {
+      fetchTransactions();
+    }
+  }, [activeTab, fetchTransactions]);
+
   const refreshData = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    if (activeTab === 'items') {
+      await fetchData();
+    } else {
+      await fetchTransactions();
+    }
     setRefreshing(false);
-  }, [fetchData]);
+  }, [fetchData, fetchTransactions, activeTab]);
 
   const handleCreateRental = async () => {
     try {
@@ -309,6 +440,7 @@ export default function RentalsPage() {
         description: rentalFormData.description,
         category: rentalFormData.category as RentalCategory,
         subcategory: rentalFormData.subcategory || undefined,
+        type: rentalFormData.type || undefined,
         pricing,
         location,
         availability: {
@@ -321,8 +453,12 @@ export default function RentalsPage() {
       if (Object.keys(specifications).length > 0) rentalData.specifications = specifications;
       if (Object.keys(requirements).length > 0) rentalData.requirements = requirements;
       if (tags && tags.length > 0) rentalData.tags = tags;
-      if (rentalFormData.owner) rentalData.owner = rentalFormData.owner;
-      if (rentalFormData.provider) rentalData.owner = rentalFormData.provider; // Use provider as owner if provided
+      // Use provider field value as owner (since UI shows "Owner" but uses provider field)
+      if (rentalFormData.provider) {
+        rentalData.owner = rentalFormData.provider;
+      } else if (rentalFormData.owner) {
+        rentalData.owner = rentalFormData.owner;
+      }
 
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.rentalsCreate}`,
@@ -438,6 +574,7 @@ export default function RentalsPage() {
         description: rentalFormData.description,
         category: rentalFormData.category as RentalCategory,
         subcategory: rentalFormData.subcategory || undefined,
+        type: rentalFormData.type || undefined,
         pricing,
         location,
         availability: {
@@ -450,8 +587,12 @@ export default function RentalsPage() {
       if (Object.keys(specifications).length > 0) rentalData.specifications = specifications;
       if (Object.keys(requirements).length > 0) rentalData.requirements = requirements;
       if (tags && tags.length > 0) rentalData.tags = tags;
-      if (rentalFormData.owner) rentalData.owner = rentalFormData.owner;
-      if (rentalFormData.provider) rentalData.owner = rentalFormData.provider;
+      // Use provider field value as owner (since UI shows "Owner" but uses provider field)
+      if (rentalFormData.provider) {
+        rentalData.owner = rentalFormData.provider;
+      } else if (rentalFormData.owner) {
+        rentalData.owner = rentalFormData.owner;
+      }
 
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.rentalsUpdate}/${selectedRental._id}`,
@@ -525,45 +666,155 @@ export default function RentalsPage() {
 
     try {
       setSubmitting(true);
-
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
+      const token = getApiToken();
+      if (!token) {
+        const error = new Error('No authentication token found');
+        logger.error('Error uploading images', error, { rentalId: selectedRental._id });
+        toast.error('Authentication required. Please log in again.');
+        return;
       }
 
-      // Upload images one by one
-      const uploadPromises = imageFiles.map(async (file) => {
-        const formData = new FormData();
-        formData.append('image', file);
+      // Validate files before creating FormData
+      const validFiles = imageFiles.filter(file => file instanceof File && file.size > 0);
+      if (validFiles.length === 0) {
+        toast.error('No valid files selected. Please select image files.');
+        setSubmitting(false);
+        return;
+      }
 
-        const response = await fetch(
-          `${API_BASE_URL}${API_ENDPOINTS.rentalsImages}/${selectedRental._id}/images`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${getApiToken()}`
-            },
-            body: formData
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to upload image');
-        }
-
-        return response.json();
+      const formData = new FormData();
+      // Append files - use 'images' as the field name (same as marketplace and supplies endpoints)
+      validFiles.forEach((file, index) => {
+        formData.append('images', file, file.name || `image-${index}.jpg`);
       });
 
-      await Promise.all(uploadPromises);
+      // Endpoint: POST /api/rentals/:id/images
+      const url = `${API_BASE_URL}${API_ENDPOINTS.rentalsImages}/${selectedRental._id}/images`;
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+      // Don't set Content-Type for FormData - browser will set it with boundary
       
-      toast.success('Images uploaded successfully');
+      logger.debug('Uploading images', { 
+        url, 
+        rentalId: selectedRental._id, 
+        fileCount: validFiles.length,
+        fileNames: validFiles.map(f => f.name),
+        fileSizes: validFiles.map(f => f.size),
+        fileTypes: validFiles.map(f => f.type),
+        note: 'Using field name: images'
+      });
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+      } catch (networkError) {
+        // Handle network errors (fetch failed)
+        const error = networkError instanceof Error ? networkError : new Error(String(networkError));
+        logger.error('Network error uploading images', error, {
+          url,
+          rentalId: selectedRental._id,
+          fileCount: validFiles.length
+        });
+        toast.error('Network error: Failed to connect to server. Please check your connection and try again.');
+        return;
+      }
+
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = 'Failed to upload images';
+        let errorData: { error?: string; message?: string } = {};
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', { parseError });
+        }
+
+        const error = new Error(errorMessage);
+        logger.error('Error uploading images', error, {
+          url,
+          rentalId: selectedRental._id,
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          fileCount: validFiles.length,
+          fieldName: 'images'
+        });
+
+        // Provide user-friendly error messages based on status code
+        if (response.status === 400) {
+          // 400 Bad Request - often means "No files uploaded" or wrong field name
+          const backendMessage = errorData.message || errorMessage;
+          if (backendMessage.toLowerCase().includes('no files') || backendMessage.toLowerCase().includes('file')) {
+            toast.error(backendMessage || 'No files were received by the server. The backend may expect a different field name.');
+            logger.warn('400 Bad Request - files not received', {
+              rentalId: selectedRental._id,
+              backendMessage,
+              fieldName: 'images',
+              fileCount: validFiles.length,
+              note: 'Backend may expect different field name (e.g., "image" instead of "images")'
+            });
+          } else {
+            toast.error(backendMessage || 'Invalid request. Please check your file selection and try again.');
+          }
+        } else if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          const backendMessage = errorData.message || errorMessage;
+          toast.error(backendMessage || 'You do not have permission to upload images for this rental. Admin access may not be properly configured on the backend.');
+          logger.warn('403 Forbidden when uploading images - possible backend authorization issue', {
+            rentalId: selectedRental._id,
+            backendMessage,
+            note: 'Admin users should have permission to upload images for any rental according to API documentation'
+          });
+        } else if (response.status === 404) {
+          toast.error('Rental not found. Please refresh and try again.');
+        } else if (response.status === 413) {
+          toast.error('Image files are too large. Please select smaller images.');
+        } else if (response.status === 415) {
+          toast.error('Invalid file type. Please select image files only.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error(errorMessage || 'Failed to upload images');
+        }
+        return;
+      }
+
+      // Success
+      const result = await response.json().catch(() => ({}));
+      logger.debug('Images uploaded successfully', { 
+        rentalId: selectedRental._id, 
+        fileCount: validFiles.length,
+        result
+      });
+
+      toast.success(`Successfully uploaded ${validFiles.length} image(s)`);
       setImagesModalOpen(false);
       setImageFiles([]);
       await refreshData();
     } catch (err) {
+      // Catch any unexpected errors
       const error = err instanceof Error ? err : new Error(String(err));
-      logger.error('Error uploading images', error);
-      toast.error(`Failed to upload images: ${error.message}`);
+      logger.error('Unexpected error uploading images', error, {
+        rentalId: selectedRental?._id,
+        fileCount: imageFiles?.length || 0
+      });
+      toast.error(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -616,7 +867,7 @@ export default function RentalsPage() {
       dailyPrice: 0,
       weeklyPrice: 0,
       monthlyPrice: 0,
-      currency: "USD",
+      currency: getDefaultCurrency(appSettings),
       street: "",
       city: "",
       state: "",
@@ -672,7 +923,7 @@ export default function RentalsPage() {
       dailyPrice: pricing?.daily || 0,
       weeklyPrice: pricing?.weekly || 0,
       monthlyPrice: pricing?.monthly || 0,
-      currency: pricing?.currency || "USD",
+      currency: pricing?.currency || getDefaultCurrency(appSettings),
       street: address?.street || "",
       city: address?.city || "",
       state: address?.state || "",
@@ -703,7 +954,8 @@ export default function RentalsPage() {
       isActive: rental.isActive ?? true,
       isFeatured: rental.isFeatured ?? false,
       owner: typeof rental.owner === 'string' ? rental.owner : rental.owner?._id || "",
-      provider: typeof rental.provider === 'string' ? rental.provider : rental.provider?._id || "",
+      // Set provider field from owner (since UI shows "Owner" but uses provider field)
+      provider: typeof rental.owner === 'string' ? rental.owner : rental.owner?._id || (typeof rental.provider === 'string' ? rental.provider : rental.provider?._id || ""),
       tags: Array.isArray(rental.tags) ? rental.tags.join(', ') : rental.tags || ""
     });
     setEditModalOpen(true);
@@ -743,7 +995,7 @@ export default function RentalsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Rentals Management</h1>
-          <p className="text-gray-600 text-sm">Manage rental items and bookings</p>
+          <p className="text-gray-600 text-sm">Manage rental items and transactions</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           {lastUpdated && (
@@ -753,24 +1005,58 @@ export default function RentalsPage() {
           )}
           <button
             onClick={refreshData}
-            disabled={refreshing}
+            disabled={refreshing || transactionsLoading}
             className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
           >
-            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 mr-1 ${(refreshing || transactionsLoading) ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          <button
-            onClick={() => {
-              resetForm();
-              setCreateModalOpen(true);
-            }}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add Rental
-          </button>
+          {activeTab === 'items' && (
+            <button
+              onClick={() => {
+                resetForm();
+                setCreateModalOpen(true);
+              }}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Add Rental Item
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px">
+            <button
+              onClick={() => setActiveTab('items')}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'items'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Rental Items
+            </button>
+            <button
+              onClick={() => setActiveTab('transactions')}
+              className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'transactions'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Rental Transactions
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'items' ? (
+        <>
 
       {/* Statistics Cards */}
       {stats && (
@@ -813,7 +1099,7 @@ export default function RentalsPage() {
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Revenue</p>
                 <p className="text-lg font-bold text-gray-900">
-                  ${stats.totalRevenue ? stats.totalRevenue.toLocaleString() : '0'}
+                  {formatCurrency(stats.totalRevenue || 0, getDefaultCurrency(appSettings), { appSettings })}
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
@@ -942,11 +1228,13 @@ export default function RentalsPage() {
                       {(() => {
                         const pricing = rental.pricing || rental.price;
                         if (!pricing) return 'N/A';
+                        const currency = pricing.currency || getDefaultCurrency(appSettings);
                         const prices: string[] = [];
-                        if ('hourly' in pricing && pricing.hourly) prices.push(`Hourly: $${pricing.hourly}`);
-                        if (pricing.daily) prices.push(`Daily: $${pricing.daily}`);
-                        if (pricing.weekly) prices.push(`Weekly: $${pricing.weekly}`);
-                        if (pricing.monthly) prices.push(`Monthly: $${pricing.monthly}`);
+                        const pricingAny = pricing as Pricing & { hourly?: number };
+                        if (pricingAny?.hourly) prices.push(`Hourly: ${formatCurrency(pricingAny.hourly, currency, { appSettings })}`);
+                        if (pricing.daily) prices.push(`Daily: ${formatCurrency(pricing.daily, currency, { appSettings })}`);
+                        if (pricing.weekly) prices.push(`Weekly: ${formatCurrency(pricing.weekly, currency, { appSettings })}`);
+                        if (pricing.monthly) prices.push(`Monthly: ${formatCurrency(pricing.monthly, currency, { appSettings })}`);
                         return prices.length > 0 ? prices.map((p, i) => <div key={i} className="text-xs">{p}</div>) : 'N/A';
                       })()}
                     </td>
@@ -1015,6 +1303,165 @@ export default function RentalsPage() {
           </table>
         </div>
       </div>
+        </>
+      ) : (
+        <>
+          {/* Transactions Section */}
+          <div className="bg-white rounded shadow">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Rental Transactions</h3>
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={transactionStatusFilter}
+                    onChange={(e) => setTransactionStatusFilter(e.target.value)}
+                    className="text-xs border border-gray-300 rounded px-2 py-1"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="disputed">Disputed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              {transactionsLoading ? (
+                <div className="p-8 text-center">
+                  <Loading />
+                </div>
+              ) : transactionsError ? (
+                <div className="p-8 text-center">
+                  <p className="text-red-600 mb-4">{transactionsError}</p>
+                  <button
+                    onClick={fetchTransactions}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : transactions.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No transactions found</p>
+                </div>
+              ) : (
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Renter</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {transactions.map((transaction, index) => {
+                      const item = transaction.item || transaction.rentalItem || {};
+                      const renter = ('renter' in transaction ? transaction.renter : null) || transaction.user || {};
+                      const owner = ('owner' in transaction ? transaction.owner : null) || (typeof item === 'object' && item !== null && 'owner' in item ? item.owner : null) || {};
+                      const startDate = transaction.startDate || ('start' in transaction ? transaction.start : null) || '';
+                      const endDate = transaction.endDate || ('end' in transaction ? transaction.end : null) || '';
+                      const totalAmountRaw = ('totalAmount' in transaction ? transaction.totalAmount : null) || ('amount' in transaction ? transaction.amount : null) || 0;
+                      const totalAmount = typeof totalAmountRaw === 'number' ? totalAmountRaw : (typeof totalAmountRaw === 'string' ? parseFloat(totalAmountRaw) : 0) || 0;
+                      const status = (transaction.status as string) || 'pending';
+                      const payment = 'payment' in transaction ? (transaction as { payment?: Payment }).payment : null;
+                      const paymentStatusRaw = (payment?.status) || ('paymentStatus' in transaction ? transaction.paymentStatus : null) || 'pending';
+                      const paymentStatus = typeof paymentStatusRaw === 'string' ? paymentStatusRaw : String(paymentStatusRaw) || 'pending';
+                      const transactionId = ('_id' in transaction && transaction._id ? String(transaction._id) : null) || ('id' in transaction && transaction.id ? String(transaction.id) : null) || `transaction-${index}`;
+                      
+                      // Extract email values with proper typing
+                      const renterEmail = (typeof renter === 'object' && renter !== null && 'email' in renter && renter.email) ? String((renter as { email: unknown }).email) : null;
+                      const ownerEmail = (typeof owner === 'object' && owner !== null && 'email' in owner && owner.email) ? String((owner as { email: unknown }).email) : null;
+                      
+                      return (
+                        <tr key={transactionId} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{item.title || (typeof item === 'object' && item !== null && 'name' in item && item.name ? String(item.name) : null) || 'N/A'}</div>
+                            <div className="text-xs text-gray-500">{item.category || ''}</div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {(typeof renter === 'object' && renter !== null && 'firstName' in renter && renter.firstName && 'lastName' in renter && renter.lastName)
+                                ? `${renter.firstName} ${renter.lastName}`
+                                : (typeof renter === 'object' && renter !== null && 'name' in renter && renter.name ? String((renter as { name: unknown }).name) : null) || renterEmail || 'N/A'}
+                            </div>
+                            {renterEmail && <div className="text-xs text-gray-500">{renterEmail}</div>}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {(typeof owner === 'object' && owner !== null && 'firstName' in owner && owner.firstName && 'lastName' in owner && owner.lastName)
+                                ? `${owner.firstName} ${owner.lastName}`
+                                : (typeof owner === 'object' && owner !== null && 'name' in owner && owner.name ? String((owner as { name: unknown }).name) : null) || ownerEmail || 'N/A'}
+                            </div>
+                            {ownerEmail && <div className="text-xs text-gray-500">{ownerEmail}</div>}
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {startDate ? new Date(startDate).toLocaleDateString() : 'N/A'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {endDate ? new Date(endDate).toLocaleDateString() : ''}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatCurrency(
+                                totalAmount,
+                                ('currency' in transaction ? (transaction as { currency?: string }).currency : null) || getDefaultCurrency(appSettings),
+                                { appSettings }
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              status === 'completed' ? 'bg-green-100 text-green-800' :
+                              status === 'active' ? 'bg-blue-100 text-blue-800' :
+                              status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              status === 'disputed' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              paymentStatus === 'paid' || paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                              paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                            <button
+                              onClick={() => {
+                                setSelectedRental(transaction.rentalItem || null);
+                                setViewModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="View details"
+                            >
+                              <Eye className="w-3 h-3" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Create Rental Modal */}
       <Modal
@@ -1066,31 +1513,38 @@ export default function RentalsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-              <select
-                value={rentalFormData.type}
-                onChange={(e) => setRentalFormData({ ...rentalFormData, type: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+              <input
+                type="text"
+                value={rentalFormData.subcategory}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, subcategory: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Select Type</option>
-                {types.map(type => (
-                  <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                ))}
-              </select>
+                placeholder="e.g., pickup_truck, sedan"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Provider ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
             <input
               type="text"
               value={rentalFormData.provider}
               onChange={(e) => setRentalFormData({ ...rentalFormData, provider: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of provider"
+              placeholder="User ID of owner"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hourly Price</label>
+              <input
+                type="number"
+                value={rentalFormData.hourlyPrice}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, hourlyPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Daily Price</label>
               <input
@@ -1127,13 +1581,18 @@ export default function RentalsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-            <input
-              type="text"
+            <select
               value={rentalFormData.currency}
               onChange={(e) => setRentalFormData({ ...rentalFormData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="USD"
-            />
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
+              <option value="USD">USD</option>
+              <option value="PHP">PHP</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -1179,6 +1638,82 @@ export default function RentalsPage() {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <input
+              type="text"
+              value={rentalFormData.country}
+              onChange={(e) => setRentalFormData({ ...rentalFormData, country: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Country"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+              <input
+                type="text"
+                value={rentalFormData.lat}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, lat: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., 34.0522"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+              <input
+                type="text"
+                value={rentalFormData.lng}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, lng: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., -118.2437"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.pickupRequired}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, pickupRequired: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Pickup Required</label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.deliveryAvailable}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryAvailable: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Delivery Available</label>
+            </div>
+          </div>
+          {rentalFormData.deliveryAvailable && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Fee</label>
+              <input
+                type="number"
+                value={rentalFormData.deliveryFee}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryFee: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <input
+              type="text"
+              value={typeof rentalFormData.tags === 'string' ? rentalFormData.tags : rentalFormData.tags.join(', ')}
+              onChange={(e) => setRentalFormData({ ...rentalFormData, tags: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Comma-separated tags (e.g., pickup, truck, moving)"
+            />
+            <p className="mt-1 text-xs text-gray-500">Separate multiple tags with commas</p>
+          </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <input
@@ -1198,6 +1733,15 @@ export default function RentalsPage() {
               />
               <label className="ml-2 block text-sm text-gray-700">Active</label>
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.isFeatured}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, isFeatured: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Featured</label>
+            </div>
           </div>
         </div>
         <div className="flex justify-end space-x-2 pt-4">
@@ -1212,7 +1756,7 @@ export default function RentalsPage() {
             </button>
             <button
               onClick={handleCreateRental}
-              disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category || !rentalFormData.type}
+              disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Rental'}
@@ -1268,31 +1812,38 @@ export default function RentalsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
-              <select
-                value={rentalFormData.type}
-                onChange={(e) => setRentalFormData({ ...rentalFormData, type: e.target.value })}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
+              <input
+                type="text"
+                value={rentalFormData.subcategory}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, subcategory: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                required
-              >
-                <option value="">Select Type</option>
-                {types.map(type => (
-                  <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
-                ))}
-              </select>
+                placeholder="e.g., pickup_truck, sedan"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Provider ID</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
             <input
               type="text"
               value={rentalFormData.provider}
               onChange={(e) => setRentalFormData({ ...rentalFormData, provider: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of provider"
+              placeholder="User ID of owner"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hourly Price</label>
+              <input
+                type="number"
+                value={rentalFormData.hourlyPrice}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, hourlyPrice: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Daily Price</label>
               <input
@@ -1329,13 +1880,18 @@ export default function RentalsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-            <input
-              type="text"
+            <select
               value={rentalFormData.currency}
               onChange={(e) => setRentalFormData({ ...rentalFormData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="USD"
-            />
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
+              <option value="USD">USD</option>
+              <option value="PHP">PHP</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="JPY">JPY</option>
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -1381,6 +1937,82 @@ export default function RentalsPage() {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+            <input
+              type="text"
+              value={rentalFormData.country}
+              onChange={(e) => setRentalFormData({ ...rentalFormData, country: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Country"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+              <input
+                type="text"
+                value={rentalFormData.lat}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, lat: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., 34.0522"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+              <input
+                type="text"
+                value={rentalFormData.lng}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, lng: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., -118.2437"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.pickupRequired}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, pickupRequired: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Pickup Required</label>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.deliveryAvailable}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryAvailable: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Delivery Available</label>
+            </div>
+          </div>
+          {rentalFormData.deliveryAvailable && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Fee</label>
+              <input
+                type="number"
+                value={rentalFormData.deliveryFee}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryFee: parseFloat(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
+                step="0.01"
+              />
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
+            <input
+              type="text"
+              value={typeof rentalFormData.tags === 'string' ? rentalFormData.tags : rentalFormData.tags.join(', ')}
+              onChange={(e) => setRentalFormData({ ...rentalFormData, tags: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Comma-separated tags (e.g., pickup, truck, moving)"
+            />
+            <p className="mt-1 text-xs text-gray-500">Separate multiple tags with commas</p>
+          </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <input
@@ -1400,6 +2032,15 @@ export default function RentalsPage() {
               />
               <label className="ml-2 block text-sm text-gray-700">Active</label>
             </div>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                checked={rentalFormData.isFeatured}
+                onChange={(e) => setRentalFormData({ ...rentalFormData, isFeatured: e.target.checked })}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label className="ml-2 block text-sm text-gray-700">Featured</label>
+            </div>
           </div>
           <div className="flex justify-end space-x-2 pt-4">
             <button
@@ -1413,7 +2054,7 @@ export default function RentalsPage() {
             </button>
             <button
               onClick={handleUpdateRental}
-              disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category || !rentalFormData.type}
+              disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Rental'}
@@ -1528,102 +2169,409 @@ export default function RentalsPage() {
         size="lg"
       >
         {selectedRental && (
-          <div className="space-y-4">
+          <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
+            {/* Images */}
             {selectedRental.images && selectedRental.images.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {selectedRental.images.slice(0, 4).map((image, idx) => 
-                  (image.url || image.thumbnail) ? (
-                    <Image
-                      key={idx}
-                      src={image.url || image.thumbnail || ''}
-                      alt={`${selectedRental.title} ${idx + 1}`}
-                      width={300}
-                      height={128}
-                      className="w-full h-32 object-cover rounded"
-                      unoptimized
-                    />
-                  ) : null
-                )}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Images</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedRental.images.slice(0, 4).map((image, idx) => 
+                    (image.url || image.thumbnail) ? (
+                      <Image
+                        key={idx}
+                        src={image.url || image.thumbnail || ''}
+                        alt={`${selectedRental.title} ${idx + 1}`}
+                        width={300}
+                        height={128}
+                        className="w-full h-32 object-cover rounded"
+                        unoptimized
+                      />
+                    ) : null
+                  )}
+                </div>
               </div>
             )}
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Description</h3>
-              <p className="mt-1 text-sm text-gray-900">{selectedRental.description}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Category</h3>
-                <p className="mt-1 text-sm text-gray-900">{selectedRental.category || 'N/A'}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Type</h3>
-                <p className="mt-1 text-sm text-gray-900">{selectedRental.type || 'N/A'}</p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Pricing</h3>
-              <div className="mt-1 text-sm text-gray-900">
-                {selectedRental.price ? (
-                  <>
-                    {selectedRental.price.daily && <div>Daily: ${selectedRental.price.daily}</div>}
-                    {selectedRental.price.weekly && <div>Weekly: ${selectedRental.price.weekly}</div>}
-                    {selectedRental.price.monthly && <div>Monthly: ${selectedRental.price.monthly}</div>}
-                    {selectedRental.price.currency && <div className="text-xs text-gray-500">Currency: {selectedRental.price.currency}</div>}
-                  </>
-                ) : (
-                  'N/A'
-                )}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Location</h3>
-              <div className="mt-1 text-sm text-gray-900">
-                {selectedRental.location ? (
-                  <>
-                    {(() => {
-                      const address = selectedRental.location?.address;
-                      if (address?.street) {
-                        return <div>{address.street}</div>;
-                      }
-                      if (address?.city && address?.state) {
-                        return <div>{address.city}, {address.state}</div>;
-                      }
-                      return 'N/A';
-                    })()}
-                    {selectedRental.location.address?.city && selectedRental.location.address?.state && (
-                      <div>{selectedRental.location.address.city}, {selectedRental.location.address.state}</div>
+
+            {/* Basic Information */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Title</h4>
+                  <p className="mt-1 text-sm text-gray-900">{selectedRental.title || 'N/A'}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Description</h4>
+                  <p className="mt-1 text-sm text-gray-900">{selectedRental.description || 'N/A'}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Category</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedRental.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Subcategory</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedRental.subcategory || 'N/A'}</p>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Owner</h4>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {typeof selectedRental.owner === 'object' && selectedRental.owner ? (
+                      <>
+                        {selectedRental.owner.firstName && selectedRental.owner.lastName 
+                          ? `${selectedRental.owner.firstName} ${selectedRental.owner.lastName}`
+                          : selectedRental.owner.email || 'N/A'}
+                        {selectedRental.owner.email && (
+                          <div className="text-xs text-gray-500">{selectedRental.owner.email}</div>
+                        )}
+                      </>
+                    ) : (
+                      selectedRental.owner || 'N/A'
                     )}
-                    {selectedRental.location.address?.zipCode && <div>{selectedRental.location.address.zipCode}</div>}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Pricing</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {(() => {
+                  const pricing = selectedRental.pricing || selectedRental.price;
+                  const pricingAny = pricing as Pricing & { hourly?: number }; // Type assertion to handle hourly property
+                  return (
+                    <>
+                      {pricingAny?.hourly && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500">Hourly</h4>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {formatCurrency(pricingAny.hourly, pricingAny.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </p>
+                        </div>
+                      )}
+                      {pricing?.daily && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500">Daily</h4>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {formatCurrency(pricing.daily, pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </p>
+                        </div>
+                      )}
+                      {pricing?.weekly && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500">Weekly</h4>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {formatCurrency(pricing.weekly, pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </p>
+                        </div>
+                      )}
+                      {pricing?.monthly && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-500">Monthly</h4>
+                          <p className="mt-1 text-sm text-gray-900">
+                            {formatCurrency(pricing.monthly, pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* Location */}
+            {selectedRental.location && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Location</h3>
+                <div className="space-y-2">
+                  {selectedRental.location.address?.street && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Street</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.location.address.street}</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedRental.location.address?.city && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">City</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.address.city}</p>
+                      </div>
+                    )}
+                    {selectedRental.location.address?.state && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">State</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.address.state}</p>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedRental.location.address?.zipCode && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Zip Code</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.address.zipCode}</p>
+                      </div>
+                    )}
                     {selectedRental.location.address?.country && (
-                      <div>{selectedRental.location.address.country}</div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Country</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.address.country}</p>
+                      </div>
                     )}
-                  </>
-                ) : (
-                  'N/A'
+                  </div>
+                  {selectedRental.location.coordinates && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Latitude</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.coordinates.lat}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Longitude</h4>
+                        <p className="mt-1 text-sm text-gray-900">{selectedRental.location.coordinates.lng}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Pickup Required</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedRental.location.pickupRequired !== undefined 
+                          ? (selectedRental.location.pickupRequired ? 'Yes' : 'No')
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Delivery Available</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedRental.location.deliveryAvailable !== undefined 
+                          ? (selectedRental.location.deliveryAvailable ? 'Yes' : 'No')
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedRental.location.deliveryAvailable && selectedRental.location.deliveryFee !== undefined && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Delivery Fee</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {formatCurrency(
+                          selectedRental.location.deliveryFee,
+                          (selectedRental.pricing || selectedRental.price)?.currency || getDefaultCurrency(appSettings),
+                          { appSettings }
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Specifications */}
+            {selectedRental.specifications && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Specifications</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedRental.specifications.brand && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Brand</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.specifications.brand}</p>
+                    </div>
+                  )}
+                  {selectedRental.specifications.model && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Model</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.specifications.model}</p>
+                    </div>
+                  )}
+                  {selectedRental.specifications.year && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Year</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.specifications.year}</p>
+                    </div>
+                  )}
+                  {selectedRental.specifications.condition && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Condition</h4>
+                      <p className="mt-1 text-sm text-gray-900 capitalize">{selectedRental.specifications.condition}</p>
+                    </div>
+                  )}
+                </div>
+                {selectedRental.specifications.features && selectedRental.specifications.features.length > 0 && (
+                  <div className="mt-3">
+                    <h4 className="text-sm font-medium text-gray-500">Features</h4>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {selectedRental.specifications.features.map((feature, idx) => (
+                        <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {selectedRental.specifications.dimensions && (
+                  <div className="mt-3 grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Dimensions</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {selectedRental.specifications.dimensions.length && 
+                         selectedRental.specifications.dimensions.width && 
+                         selectedRental.specifications.dimensions.height
+                          ? `${selectedRental.specifications.dimensions.length} × ${selectedRental.specifications.dimensions.width} × ${selectedRental.specifications.dimensions.height} ${selectedRental.specifications.dimensions.unit || 'inches'}`
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    {selectedRental.specifications.weight && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500">Weight</h4>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedRental.specifications.weight.value 
+                            ? `${selectedRental.specifications.weight.value} ${selectedRental.specifications.weight.unit || 'lbs'}`
+                            : 'N/A'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Requirements */}
+            {selectedRental.requirements && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedRental.requirements.minAge && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Minimum Age</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.requirements.minAge} years</p>
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">License Required</h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedRental.requirements.licenseRequired !== undefined 
+                        ? (selectedRental.requirements.licenseRequired ? 'Yes' : 'No')
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  {selectedRental.requirements.licenseType && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">License Type</h4>
+                      <p className="mt-1 text-sm text-gray-900">{selectedRental.requirements.licenseType}</p>
+                    </div>
+                  )}
+                  {selectedRental.requirements.deposit !== undefined && selectedRental.requirements.deposit > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Deposit</h4>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {formatCurrency(
+                          selectedRental.requirements.deposit,
+                          (selectedRental.pricing || selectedRental.price)?.currency || getDefaultCurrency(appSettings),
+                          { appSettings }
+                        )}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Insurance Required</h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedRental.requirements.insuranceRequired !== undefined 
+                        ? (selectedRental.requirements.insuranceRequired ? 'Yes' : 'No')
+                        : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Status & Metadata */}
+            <div className="border-b pb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Status & Metadata</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                  <p className="mt-1">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      selectedRental.isActive && selectedRental.availability?.isAvailable
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {selectedRental.isActive && selectedRental.availability?.isAvailable ? 'Available' : 'Unavailable'}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Active</h4>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedRental.isActive !== undefined ? (selectedRental.isActive ? 'Yes' : 'No') : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500">Featured</h4>
+                  <p className="mt-1 text-sm text-gray-900">
+                    {selectedRental.isFeatured !== undefined ? (selectedRental.isFeatured ? 'Yes' : 'No') : 'N/A'}
+                  </p>
+                </div>
+                {selectedRental.views !== undefined && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Views</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedRental.views}</p>
+                  </div>
                 )}
               </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-500">Status</h3>
-              <p className="mt-1 text-sm text-gray-900">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  selectedRental.isActive && selectedRental.availability?.isAvailable
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {selectedRental.isActive && selectedRental.availability?.isAvailable ? 'Available' : 'Unavailable'}
-                </span>
-              </p>
-            </div>
-            {selectedRental.rating && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-500">Rating</h3>
-                <p className="mt-1 text-sm text-gray-900">
-                  {selectedRental.rating.average ? selectedRental.rating.average.toFixed(1) : '0.0'} 
-                  {selectedRental.rating.count && ` (${selectedRental.rating.count} reviews)`}
-                </p>
+
+            {/* Tags */}
+            {selectedRental.tags && selectedRental.tags.length > 0 && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedRental.tags.map((tag, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
+
+            {/* Rating */}
+            {selectedRental.rating && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Rating</h3>
+                <div>
+                  <p className="text-sm text-gray-900">
+                    <span className="text-lg font-semibold">
+                      {selectedRental.rating.average ? selectedRental.rating.average.toFixed(1) : '0.0'}
+                    </span>
+                    {selectedRental.rating.count && ` (${selectedRental.rating.count} reviews)`}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Dates */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Dates</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {selectedRental.createdAt && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Created</h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {new Date(selectedRental.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                {selectedRental.updatedAt && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Last Updated</h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {new Date(selectedRental.updatedAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </Modal>

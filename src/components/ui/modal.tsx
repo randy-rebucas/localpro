@@ -130,21 +130,21 @@ export function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white flex-shrink-0">
-            {title && <h2 className="text-xl font-semibold text-gray-900">{title}</h2>}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
+            {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
             {showCloseButton && (
               <button
                 onClick={onClose}
                 className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-900"
                 aria-label="Close modal"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
         )}
         <div 
-          className="flex-1 overflow-y-auto p-6 text-gray-900 leading-relaxed text-base antialiased modal-content-scroll"
+          className="flex-1 overflow-y-auto px-4 py-3 text-gray-900 leading-normal text-sm antialiased modal-content-scroll"
           style={{
             scrollbarWidth: 'thin',
             scrollbarColor: '#cbd5e1 #f1f5f9'
@@ -152,7 +152,7 @@ export function Modal({
         >
           {children}
         </div>
-        {footer && <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">{footer}</div>}
+        {footer && <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );

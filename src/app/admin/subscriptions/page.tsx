@@ -504,9 +504,9 @@ export default function AdminSubscriptionsPage() {
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-2">User ID *</label>
+            <label className="block text-xs font-medium mb-1">User ID *</label>
             <Input
               value={createForm.userId}
               onChange={(e) => setCreateForm({ ...createForm, userId: e.target.value })}
@@ -514,7 +514,7 @@ export default function AdminSubscriptionsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Plan *</label>
+            <label className="block text-xs font-medium mb-1">Plan *</label>
             <Select
               value={createForm.planId}
               onValueChange={(value) => setCreateForm({ ...createForm, planId: value })}
@@ -527,9 +527,9 @@ export default function AdminSubscriptionsPage() {
               ]}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Billing Cycle</label>
+              <label className="block text-xs font-medium mb-1">Billing Cycle</label>
               <Select
                 value={createForm.billingCycle}
                 onValueChange={(value) =>
@@ -545,16 +545,16 @@ export default function AdminSubscriptionsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Start Date</label>
+              <label className="block text-xs font-medium mb-1">Start Date</label>
               <DatePicker
                 value={createForm.startDate}
                 onChange={(date) => date && setCreateForm({ ...createForm, startDate: date })}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">End Date</label>
+              <label className="block text-xs font-medium mb-1">End Date</label>
               <DatePicker
                 value={createForm.endDate}
                 onChange={(date) => date && setCreateForm({ ...createForm, endDate: date })}
@@ -563,7 +563,7 @@ export default function AdminSubscriptionsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Reason</label>
+            <label className="block text-xs font-medium mb-1">Reason</label>
             <Input
               value={createForm.reason}
               onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })}
@@ -571,7 +571,7 @@ export default function AdminSubscriptionsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Notes</label>
+            <label className="block text-xs font-medium mb-1">Notes</label>
             <Textarea
               value={createForm.notes}
               onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
@@ -599,9 +599,9 @@ export default function AdminSubscriptionsPage() {
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-2">Plan</label>
+            <label className="block text-xs font-medium mb-1">Plan</label>
             <Select
               value={editForm.planId}
               onValueChange={(value) => setEditForm({ ...editForm, planId: value })}
@@ -615,7 +615,7 @@ export default function AdminSubscriptionsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Status</label>
+            <label className="block text-xs font-medium mb-1">Status</label>
             <Select
               value={editForm.status}
               onValueChange={(value) =>
@@ -633,9 +633,9 @@ export default function AdminSubscriptionsPage() {
               ]}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Billing Cycle</label>
+              <label className="block text-xs font-medium mb-1">Billing Cycle</label>
               <Select
                 value={editForm.billingCycle}
                 onValueChange={(value) =>
@@ -651,16 +651,16 @@ export default function AdminSubscriptionsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Start Date</label>
+              <label className="block text-xs font-medium mb-1">Start Date</label>
               <DatePicker
                 value={editForm.startDate}
                 onChange={(date) => date && setEditForm({ ...editForm, startDate: date })}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">End Date</label>
+              <label className="block text-xs font-medium mb-1">End Date</label>
               <DatePicker
                 value={editForm.endDate}
                 onChange={(date) => date && setEditForm({ ...editForm, endDate: date })}
@@ -669,7 +669,7 @@ export default function AdminSubscriptionsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Reason</label>
+            <label className="block text-xs font-medium mb-1">Reason</label>
             <Input
               value={editForm.reason}
               onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
@@ -677,7 +677,7 @@ export default function AdminSubscriptionsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Notes</label>
+            <label className="block text-xs font-medium mb-1">Notes</label>
             <Textarea
               value={editForm.notes}
               onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
@@ -703,8 +703,8 @@ export default function AdminSubscriptionsPage() {
         }
       >
         {selectedSubscription && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-sm text-gray-600">User</p>
                 <p className="font-semibold">
@@ -796,12 +796,12 @@ export default function AdminSubscriptionsPage() {
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <p className="text-gray-600">
             Are you sure you want to cancel this manual subscription? This action cannot be undone.
           </p>
           <div>
-            <label className="block text-sm font-medium mb-2">Cancellation Reason</label>
+            <label className="block text-xs font-medium mb-1">Cancellation Reason</label>
             <Textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
