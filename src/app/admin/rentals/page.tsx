@@ -29,7 +29,8 @@ import {
   Document,
   RentalCategory,
   Booking,
-  Pricing
+  Pricing,
+  Payment
 } from "@/types/rentals";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
@@ -1362,37 +1363,45 @@ export default function RentalsPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {transactions.map((transaction) => {
+                    {transactions.map((transaction, index) => {
                       const item = transaction.item || transaction.rentalItem || {};
                       const renter = ('renter' in transaction ? transaction.renter : null) || transaction.user || {};
-                      const owner = ('owner' in transaction ? transaction.owner : null) || (item && 'owner' in item ? item.owner : null) || {};
+                      const owner = ('owner' in transaction ? transaction.owner : null) || (typeof item === 'object' && item !== null && 'owner' in item ? item.owner : null) || {};
                       const startDate = transaction.startDate || ('start' in transaction ? transaction.start : null) || '';
                       const endDate = transaction.endDate || ('end' in transaction ? transaction.end : null) || '';
-                      const totalAmount = ('totalAmount' in transaction ? transaction.totalAmount : null) || ('amount' in transaction ? transaction.amount : null) || 0;
-                      const status = transaction.status || 'pending';
-                      const paymentStatus = transaction.payment?.status || ('paymentStatus' in transaction ? transaction.paymentStatus : null) || 'pending';
+                      const totalAmountRaw = ('totalAmount' in transaction ? transaction.totalAmount : null) || ('amount' in transaction ? transaction.amount : null) || 0;
+                      const totalAmount = typeof totalAmountRaw === 'number' ? totalAmountRaw : (typeof totalAmountRaw === 'string' ? parseFloat(totalAmountRaw) : 0) || 0;
+                      const status = (transaction.status as string) || 'pending';
+                      const payment = 'payment' in transaction ? (transaction as { payment?: Payment }).payment : null;
+                      const paymentStatusRaw = (payment?.status) || ('paymentStatus' in transaction ? transaction.paymentStatus : null) || 'pending';
+                      const paymentStatus = typeof paymentStatusRaw === 'string' ? paymentStatusRaw : String(paymentStatusRaw) || 'pending';
+                      const transactionId = ('_id' in transaction && transaction._id ? String(transaction._id) : null) || ('id' in transaction && transaction.id ? String(transaction.id) : null) || `transaction-${index}`;
+                      
+                      // Extract email values with proper typing
+                      const renterEmail = (typeof renter === 'object' && renter !== null && 'email' in renter && renter.email) ? String((renter as { email: unknown }).email) : null;
+                      const ownerEmail = (typeof owner === 'object' && owner !== null && 'email' in owner && owner.email) ? String((owner as { email: unknown }).email) : null;
                       
                       return (
-                        <tr key={transaction._id || transaction.id} className="hover:bg-gray-50">
+                        <tr key={transactionId} className="hover:bg-gray-50">
                           <td className="px-3 py-2 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{item.title || item.name || 'N/A'}</div>
+                            <div className="text-sm font-medium text-gray-900">{item.title || (typeof item === 'object' && item !== null && 'name' in item && item.name ? String(item.name) : null) || 'N/A'}</div>
                             <div className="text-xs text-gray-500">{item.category || ''}</div>
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {renter.firstName && renter.lastName 
+                              {(typeof renter === 'object' && renter !== null && 'firstName' in renter && renter.firstName && 'lastName' in renter && renter.lastName)
                                 ? `${renter.firstName} ${renter.lastName}`
-                                : renter.name || renter.email || 'N/A'}
+                                : (typeof renter === 'object' && renter !== null && 'name' in renter && renter.name ? String((renter as { name: unknown }).name) : null) || renterEmail || 'N/A'}
                             </div>
-                            {renter.email && <div className="text-xs text-gray-500">{renter.email}</div>}
+                            {renterEmail && <div className="text-xs text-gray-500">{renterEmail}</div>}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
-                              {owner.firstName && owner.lastName 
+                              {(typeof owner === 'object' && owner !== null && 'firstName' in owner && owner.firstName && 'lastName' in owner && owner.lastName)
                                 ? `${owner.firstName} ${owner.lastName}`
-                                : owner.name || owner.email || 'N/A'}
+                                : (typeof owner === 'object' && owner !== null && 'name' in owner && owner.name ? String((owner as { name: unknown }).name) : null) || ownerEmail || 'N/A'}
                             </div>
-                            {owner.email && <div className="text-xs text-gray-500">{owner.email}</div>}
+                            {ownerEmail && <div className="text-xs text-gray-500">{ownerEmail}</div>}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
@@ -1405,8 +1414,8 @@ export default function RentalsPage() {
                           <td className="px-3 py-2 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
                               {formatCurrency(
-                                typeof totalAmount === 'number' ? totalAmount : parseFloat(totalAmount) || 0,
-                                transaction.payment?.currency || transaction.currency || getDefaultCurrency(appSettings),
+                                totalAmount,
+                                ('currency' in transaction ? (transaction as { currency?: string }).currency : null) || getDefaultCurrency(appSettings),
                                 { appSettings }
                               )}
                             </div>
@@ -1434,7 +1443,7 @@ export default function RentalsPage() {
                           <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                             <button
                               onClick={() => {
-                                setSelectedRental(item);
+                                setSelectedRental(transaction.rentalItem || null);
                                 setViewModalOpen(true);
                               }}
                               className="text-blue-600 hover:text-blue-900"
