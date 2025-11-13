@@ -16,6 +16,8 @@ import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 
 interface SettingsData {
   general: {
@@ -65,48 +67,30 @@ export default function SettingsPage() {
       setLoading(true);
       setError(null);
 
-      // Simulate API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.settingsApp}`,
+        createAuthFetchOptions({ method: 'GET' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Failed to fetch settings: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const settingsData = result.data || result;
       
-      // Default settings
-      setSettings({
-        general: {
-          siteName: "LocalPro",
-          siteDescription: "Professional services marketplace",
-          adminEmail: "admin@localpro.com",
-          supportEmail: "support@localpro.com",
-          maintenanceMode: false,
-        },
-        security: {
-          requireEmailVerification: true,
-          requirePhoneVerification: true,
-          twoFactorAuth: false,
-          sessionTimeout: 30,
-          maxLoginAttempts: 5,
-        },
-        notifications: {
-          emailEnabled: true,
-          smsEnabled: true,
-          pushEnabled: true,
-          adminNotifications: true,
-        },
-        payments: {
-          paymentEnabled: true,
-          defaultCurrency: "USD",
-          transactionFee: 2.5,
-          minWithdrawal: 10,
-        },
-        features: {
-          marketplaceEnabled: true,
-          academyEnabled: true,
-          jobBoardEnabled: true,
-          rentalsEnabled: true,
-        },
-      });
+      // Transform API response to match SettingsData interface if needed
+      setSettings(settingsData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       logger.error("Error fetching settings", err instanceof Error ? err : new Error(errorMessage));
       setError(errorMessage);
+      setSettings(null);
     } finally {
       setLoading(false);
     }
@@ -120,8 +104,26 @@ export default function SettingsPage() {
       setError(null);
       setSuccess(false);
 
-      // Simulate API call - replace with actual API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.settingsAppUpdate}`,
+        createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify(settings)
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Failed to save settings: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const updatedSettings = result.data || result;
+      setSettings(updatedSettings);
       
       setSuccess(true);
       toast.success("Settings saved successfully");

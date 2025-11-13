@@ -264,30 +264,14 @@ export default function ProvidersPage() {
         makeClientAuthenticatedRequestWithEndpointSafe(
           'usersStats' as keyof typeof API_ENDPOINTS,
           { method: 'GET', query: { hasrole: 'provider' } }
-        ).catch(err => { // fallback
-          logger.warn('Failed to fetch stats, using fallback', { error: err instanceof Error ? err.message : String(err) });
+        ).catch(err => {
+          logger.warn('Failed to fetch stats', { error: err instanceof Error ? err.message : String(err) });
+          // Return empty stats on error instead of mock data
           return {
-            ok: true,
-            json: () => Promise.resolve({
-              totalProviders: 0,
-              activeProviders: 0,
-              pendingProviders: 0,
-              suspendedProviders: 0,
-              newProvidersToday: 0,
-              newProvidersWeek: 0,
-              newProvidersMonth: 0,
-              averageRating: 0,
-              totalEarnings: 0,
-              trends: { daily: [], weekly: [], monthly: [] },
-              topCategories: [],
-              statusStats: [],
-              performanceMetrics: {
-                averageCompletionRate: 0,
-                averageResponseTime: 0,
-                averageRating: 0
-              }
-            })
-          };
+            ok: false,
+            status: 500,
+            json: () => Promise.reject(err)
+          } as Response;
         })
       ]);
 
@@ -296,13 +280,20 @@ export default function ProvidersPage() {
         throw new Error(errorData.error || 'Failed to fetch providers data');
       }
 
-      if (!statsResponse.ok) {
-        const errorData = await statsResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch providers statistics');
-      }
-
       const dataResult = await dataResponse.json();
-      const statsResult = await statsResponse.json();
+      
+      // Handle stats response - allow it to fail gracefully
+      let statsResult = null;
+      if (statsResponse.ok) {
+        try {
+          statsResult = await statsResponse.json();
+        } catch (err) {
+          logger.warn('Failed to parse stats response', { error: err instanceof Error ? err.message : String(err) });
+        }
+      } else {
+        const status = 'status' in statsResponse ? statsResponse.status : 'unknown';
+        logger.warn('Stats response not OK', { status });
+      }
 
       // Transform the API response data to match frontend expectations
       let providersData: ProviderWithUser[] = [];
@@ -323,30 +314,17 @@ export default function ProvidersPage() {
       setProviders(providersData);
       
       // Handle stats response - it should be an object, not an array
-      const statsData = statsResult.data || statsResult;
-      if (Array.isArray(statsData)) {
-        // If it's an array, create a default stats object
-        setStats({
-          totalProviders: 0,
-          activeProviders: 0,
-          pendingProviders: 0,
-          suspendedProviders: 0,
-          newProvidersToday: 0,
-          newProvidersWeek: 0,
-          newProvidersMonth: 0,
-          averageRating: 0,
-          totalEarnings: 0,
-          trends: { daily: [], weekly: [], monthly: [] },
-          topCategories: [],
-          statusStats: [],
-          performanceMetrics: {
-            averageCompletionRate: 0,
-            averageResponseTime: 0,
-            averageRating: 0
-          }
-        });
+      if (statsResult) {
+        const statsData = statsResult.data || statsResult;
+        if (Array.isArray(statsData)) {
+          // If it's an array, set to null (invalid format)
+          setStats(null);
+        } else {
+          setStats(statsData);
+        }
       } else {
-        setStats(statsData);
+        // Stats fetch failed, set to null
+        setStats(null);
       }
       setLastUpdated(new Date());
     } catch (err) {

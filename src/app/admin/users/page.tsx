@@ -1359,66 +1359,66 @@ export default function UsersPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateUser}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create User'}
             </button>
           </div>
         }
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name *</label>
               <input
                 type="text"
                 value={createFormData.firstName}
                 onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Last Name *</label>
               <input
                 type="text"
                 value={createFormData.lastName}
                 onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Email *</label>
               <input
                 type="email"
                 value={createFormData.email}
                 onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Phone Number *</label>
               <input
                 type="tel"
                 value={createFormData.phoneNumber}
                 onChange={(e) => setCreateFormData({ ...createFormData, phoneNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Roles *</label>
-              <p className="text-xs text-gray-500 mb-2">Select all that apply. Client role is always included.</p>
-              <div className="space-y-2 border border-gray-300 rounded-md p-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Roles *</label>
+              <p className="text-xs text-gray-500 mb-1.5">Select all that apply. Client role is always included.</p>
+              <div className="space-y-1.5 border border-gray-300 rounded-md p-2">
                 {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
                   <label key={role} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1444,7 +1444,7 @@ export default function UsersPage() {
                       disabled={role === 'client' && createFormData.roles.length === 1}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 capitalize">{role.replace('_', ' ')}</span>
+                    <span className="text-xs text-gray-700 capitalize">{role.replace('_', ' ')}</span>
                   </label>
                 ))}
               </div>
@@ -1466,62 +1466,62 @@ export default function UsersPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setEditModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdateUser}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update User'}
             </button>
           </div>
         }
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name</label>
               <input
                 type="text"
                 value={editFormData.firstName}
                 onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Last Name</label>
               <input
                 type="text"
                 value={editFormData.lastName}
                 onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Email</label>
               <input
                 type="email"
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Phone Number</label>
               <input
                 type="tel"
                 value={editFormData.phoneNumber}
                 onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Roles</label>
-              <p className="text-xs text-gray-500 mb-2">Select all that apply. Client role is always included.</p>
-              <div className="space-y-2 border border-gray-300 rounded-md p-3">
+              <label className="block text-xs font-medium text-gray-700 mb-1">Roles</label>
+              <p className="text-xs text-gray-500 mb-1.5">Select all that apply. Client role is always included.</p>
+              <div className="space-y-1.5 border border-gray-300 rounded-md p-2">
                 {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
                   <label key={role} className="flex items-center gap-2 cursor-pointer">
                     <input
@@ -1547,7 +1547,7 @@ export default function UsersPage() {
                       disabled={role === 'client' && editFormData.roles.length === 1}
                       className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700 capitalize">{role.replace('_', ' ')}</span>
+                    <span className="text-xs text-gray-700 capitalize">{role.replace('_', ' ')}</span>
                   </label>
                 ))}
               </div>
@@ -1569,14 +1569,14 @@ export default function UsersPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setVerificationModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdateVerification}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Verification'}
             </button>
@@ -1611,14 +1611,14 @@ export default function UsersPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setBadgeModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleAddBadge}
               disabled={submitting || !badgeFormData.type}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Adding...' : 'Add Badge'}
             </button>
@@ -1662,14 +1662,14 @@ export default function UsersPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setBulkUpdateModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleBulkUpdate}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Users'}
             </button>

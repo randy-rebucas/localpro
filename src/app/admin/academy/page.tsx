@@ -24,6 +24,9 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { Course, CourseCategory, CourseLevel } from "@/types/academy";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface CourseStatistics {
   totalCourses: number;
@@ -37,6 +40,9 @@ interface CourseStatistics {
 }
 
 export default function AcademyPage() {
+  // App settings for currency formatting and other settings
+  const { settings: appSettings } = useAppSettings();
+  
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<CourseStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +73,7 @@ export default function AcademyPage() {
     instructor: "",
     regularPrice: 0,
     discountedPrice: 0,
-    currency: "USD",
+    currency: getDefaultCurrency(appSettings),
     hours: 0,
     weeks: 0,
     maxCapacity: 0,
@@ -164,6 +170,27 @@ export default function AcademyPage() {
     await fetchData();
     setRefreshing(false);
   }, [fetchData]);
+
+  const resetForm = () => {
+    setCourseFormData({
+      title: "",
+      description: "",
+      category: "cleaning",
+      level: "beginner",
+      instructor: "",
+      regularPrice: 0,
+      discountedPrice: 0,
+      currency: getDefaultCurrency(appSettings),
+      hours: 0,
+      weeks: 0,
+      maxCapacity: 0,
+      isActive: true,
+      tags: [],
+      prerequisites: [],
+      learningOutcomes: []
+    });
+    setSelectedCourse(null);
+  };
 
   const handleCreateCourse = async () => {
     try {
@@ -337,33 +364,133 @@ export default function AcademyPage() {
 
     try {
       setSubmitting(true);
+      const token = getApiToken();
+      if (!token) {
+        const error = new Error('No authentication token found');
+        logger.error('Error uploading thumbnail', error, { courseId: selectedCourse._id });
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
 
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
+      // Validate file before creating FormData
+      if (!(thumbnailFile instanceof File) || thumbnailFile.size === 0) {
+        toast.error('Invalid file selected. Please select a valid image file.');
+        setSubmitting(false);
+        return;
       }
 
       const formData = new FormData();
-      formData.append('thumbnail', thumbnailFile);
+      formData.append('thumbnail', thumbnailFile, thumbnailFile.name || 'thumbnail.jpg');
 
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.academyCoursesThumbnail.replace('[id]', selectedCourse._id)}`,
-        {
+      // Endpoint: POST /api/academy/courses/:id/thumbnail
+      const url = `${API_BASE_URL}${API_ENDPOINTS.academyCoursesThumbnail.replace('[id]', selectedCourse._id)}`;
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+      // Don't set Content-Type for FormData - browser will set it with boundary
+      
+      logger.debug('Uploading thumbnail', { 
+        url, 
+        courseId: selectedCourse._id, 
+        fileName: thumbnailFile.name,
+        fileSize: thumbnailFile.size,
+        fileType: thumbnailFile.type
+      });
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${getApiToken()}`
-          },
+          headers,
           body: formData
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload thumbnail');
+        });
+      } catch (networkError) {
+        // Handle network errors (fetch failed)
+        const error = networkError instanceof Error ? networkError : new Error(String(networkError));
+        logger.error('Network error uploading thumbnail', error, {
+          url,
+          courseId: selectedCourse._id
+        });
+        toast.error('Network error: Failed to connect to server. Please check your connection and try again.');
+        return;
       }
 
-      const result = await response.json();
-      
-      if (result.success) {
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = 'Failed to upload thumbnail';
+        let errorData: { error?: string; message?: string } = {};
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', { parseError });
+        }
+
+        const error = new Error(errorMessage);
+        logger.error('Error uploading thumbnail', error, {
+          url,
+          courseId: selectedCourse._id,
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          fieldName: 'thumbnail'
+        });
+
+        // Provide user-friendly error messages based on status code
+        if (response.status === 400) {
+          const backendMessage = errorData.message || errorMessage;
+          if (backendMessage.toLowerCase().includes('no file') || backendMessage.toLowerCase().includes('file')) {
+            toast.error(backendMessage || 'No file was received by the server. The backend may expect a different field name.');
+            logger.warn('400 Bad Request - file not received', {
+              courseId: selectedCourse._id,
+              backendMessage,
+              fieldName: 'thumbnail',
+              note: 'Backend may expect different field name'
+            });
+          } else {
+            toast.error(backendMessage || 'Invalid request. Please check your file selection and try again.');
+          }
+        } else if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          const backendMessage = errorData.message || errorMessage;
+          toast.error(backendMessage || 'You do not have permission to upload thumbnails for this course. Admin access may not be properly configured on the backend.');
+          logger.warn('403 Forbidden when uploading thumbnail - possible backend authorization issue', {
+            courseId: selectedCourse._id,
+            backendMessage,
+            note: 'Admin users should have permission to upload thumbnails for any course according to API documentation'
+          });
+        } else if (response.status === 404) {
+          toast.error('Course not found. Please refresh and try again.');
+        } else if (response.status === 413) {
+          toast.error('Thumbnail file is too large. Please select a smaller image.');
+        } else if (response.status === 415) {
+          toast.error('Invalid file type. Please select an image file.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error(errorMessage || 'Failed to upload thumbnail');
+        }
+        return;
+      }
+
+      // Success
+      const result = await response.json().catch(() => ({}));
+      logger.debug('Thumbnail uploaded successfully', { 
+        courseId: selectedCourse._id,
+        result
+      });
+
+      if (result.success !== false) {
         toast.success('Thumbnail uploaded successfully');
         setThumbnailModalOpen(false);
         setThumbnailFile(null);
@@ -372,9 +499,12 @@ export default function AcademyPage() {
         throw new Error(result.error || 'Failed to upload thumbnail');
       }
     } catch (err) {
+      // Catch any unexpected errors
       const error = err instanceof Error ? err : new Error(String(err));
-      logger.error('Error uploading thumbnail', error);
-      toast.error(`Failed to upload thumbnail: ${error.message}`);
+      logger.error('Unexpected error uploading thumbnail', error, {
+        courseId: selectedCourse?._id
+      });
+      toast.error(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -385,35 +515,185 @@ export default function AcademyPage() {
 
     try {
       setSubmitting(true);
+      const token = getApiToken();
+      if (!token) {
+        const error = new Error('No authentication token found');
+        logger.error('Error uploading video', error, { courseId: selectedCourse._id });
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
 
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
+      // Validate file before creating FormData
+      if (!(videoFile instanceof File) || videoFile.size === 0) {
+        toast.error('Invalid file selected. Please select a valid video file.');
+        setSubmitting(false);
+        return;
+      }
+
+      // Validate video file format
+      const fileName = videoFile.name.toLowerCase();
+      const fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+      const supportedFormats = ['mp4', 'webm', 'mov', 'm4v', 'mkv', 'flv', 'wmv', '3gp', 'avi'];
+      const unsupportedFormats = ['rm', 'rmvb', 'vob', 'asf'];
+      
+      // Check if file extension is in unsupported list
+      if (unsupportedFormats.includes(fileExtension)) {
+        toast.error(`Unsupported video format: ${fileExtension.toUpperCase()}. Please use MP4, WebM, MOV, or other supported formats.`);
+        logger.warn('Unsupported video format detected', {
+          courseId: selectedCourse._id,
+          fileName: videoFile.name,
+          fileExtension,
+          fileType: videoFile.type
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      // Check if file extension is in supported list or has a video MIME type
+      const hasVideoMimeType = videoFile.type.startsWith('video/');
+      if (!supportedFormats.includes(fileExtension) && !hasVideoMimeType) {
+        toast.error(`Unsupported video format: ${fileExtension.toUpperCase()}. Supported formats: ${supportedFormats.join(', ').toUpperCase()}.`);
+        logger.warn('Unsupported video format detected', {
+          courseId: selectedCourse._id,
+          fileName: videoFile.name,
+          fileExtension,
+          fileType: videoFile.type
+        });
+        setSubmitting(false);
+        return;
       }
 
       const formData = new FormData();
-      formData.append('video', videoFile);
+      formData.append('video', videoFile, videoFile.name || 'video.mp4');
       if (videoTitle) formData.append('title', videoTitle);
       if (videoDuration) formData.append('duration', videoDuration.toString());
 
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.academyCoursesVideos.replace('[id]', selectedCourse._id)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${getApiToken()}`
-          },
-          body: formData
-        }
-      );
+      // Endpoint: POST /api/academy/courses/:id/videos
+      const url = `${API_BASE_URL}${API_ENDPOINTS.academyCoursesVideos.replace('[id]', selectedCourse._id)}`;
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${token}`
+      };
+      // Don't set Content-Type for FormData - browser will set it with boundary
+      
+      logger.debug('Uploading video', { 
+        url, 
+        courseId: selectedCourse._id, 
+        fileName: videoFile.name,
+        fileSize: videoFile.size,
+        fileType: videoFile.type,
+        videoTitle,
+        videoDuration
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload video');
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+      } catch (networkError) {
+        // Handle network errors (fetch failed)
+        const error = networkError instanceof Error ? networkError : new Error(String(networkError));
+        logger.error('Network error uploading video', error, {
+          url,
+          courseId: selectedCourse._id
+        });
+        toast.error('Network error: Failed to connect to server. Please check your connection and try again.');
+        return;
       }
 
-      const result = await response.json();
-      
-      if (result.success) {
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = 'Failed to upload video';
+        let errorData: { error?: string; message?: string } = {};
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', { parseError });
+        }
+
+        const error = new Error(errorMessage);
+        logger.error('Error uploading video', error, {
+          url,
+          courseId: selectedCourse._id,
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          fieldName: 'video'
+        });
+
+        // Provide user-friendly error messages based on status code
+        if (response.status === 400) {
+          const backendMessage = errorData.message || errorMessage;
+          if (backendMessage.toLowerCase().includes('no file') || backendMessage.toLowerCase().includes('file')) {
+            toast.error(backendMessage || 'No file was received by the server. The backend may expect a different field name.');
+            logger.warn('400 Bad Request - file not received', {
+              courseId: selectedCourse._id,
+              backendMessage,
+              fieldName: 'video',
+              note: 'Backend may expect different field name'
+            });
+          } else {
+            toast.error(backendMessage || 'Invalid request. Please check your file selection and try again.');
+          }
+        } else if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          const backendMessage = errorData.message || errorMessage;
+          toast.error(backendMessage || 'You do not have permission to upload videos for this course. Admin access may not be properly configured on the backend.');
+          logger.warn('403 Forbidden when uploading video - possible backend authorization issue', {
+            courseId: selectedCourse._id,
+            backendMessage,
+            note: 'Admin users should have permission to upload videos for any course according to API documentation'
+          });
+        } else if (response.status === 404) {
+          toast.error('Course not found. Please refresh and try again.');
+        } else if (response.status === 413) {
+          toast.error('Video file is too large. Please select a smaller video file.');
+        } else if (response.status === 415) {
+          toast.error('Invalid file type. Please select a video file.');
+        } else if (response.status >= 500) {
+          // Check if error is about unsupported video format
+          const errorLower = errorMessage.toLowerCase();
+          if (errorLower.includes('unsupported') && (errorLower.includes('format') || errorLower.includes('video'))) {
+            const formatMatch = errorMessage.match(/format:\s*(\w+)/i);
+            const format = formatMatch ? formatMatch[1] : 'unknown';
+            toast.error(`Unsupported video format: ${format.toUpperCase()}. Please use MP4, WebM, MOV, or other supported formats.`);
+            logger.warn('Backend rejected video format', {
+              courseId: selectedCourse._id,
+              fileName: videoFile.name,
+              rejectedFormat: format,
+              fileType: videoFile.type,
+              backendError: errorMessage
+            });
+          } else {
+            toast.error(errorMessage || 'Server error. Please try again later.');
+          }
+        } else {
+          toast.error(errorMessage || 'Failed to upload video');
+        }
+        return;
+      }
+
+      // Success
+      const result = await response.json().catch(() => ({}));
+      logger.debug('Video uploaded successfully', { 
+        courseId: selectedCourse._id,
+        result
+      });
+
+      if (result.success !== false) {
         toast.success('Video uploaded successfully');
         setVideoModalOpen(false);
         setVideoFile(null);
@@ -424,70 +704,23 @@ export default function AcademyPage() {
         throw new Error(result.error || 'Failed to upload video');
       }
     } catch (err) {
+      // Catch any unexpected errors
       const error = err instanceof Error ? err : new Error(String(err));
-      logger.error('Error uploading video', error);
-      toast.error(`Failed to upload video: ${error.message}`);
+      logger.error('Unexpected error uploading video', error, {
+        courseId: selectedCourse?._id
+      });
+      toast.error(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // TODO: Implement video deletion functionality when needed
+  // Note: handleDeleteVideo is defined but not currently used in the UI
+  // Uncomment and wire up to a delete button when needed
   // const handleDeleteVideo = async (courseId: string, videoId: string) => {
   //   if (!confirm('Are you sure you want to delete this video?')) return;
-  //
-  //   try {
-  //     if (!getApiToken()) {
-  //       throw new Error('Authentication required');
-  //     }
-  //
-  //     const response = await fetch(
-  //       `${API_BASE_URL}${API_ENDPOINTS.academyCoursesVideosById.replace('[id]', courseId).replace('[videoId]', videoId)}`,
-  //       createAuthFetchOptions({
-  //         method: 'DELETE'
-  //       })
-  //     );
-  //
-  //     if (!response.ok) {
-  //       const errorData = await response.json().catch(() => ({}));
-  //       throw new Error(errorData.error || 'Failed to delete video');
-  //     }
-  //
-  //     const result = await response.json();
-  //     
-  //     if (result.success) {
-  //       toast.success('Video deleted successfully');
-  //       await refreshData();
-  //     } else {
-  //       throw new Error(result.error || 'Failed to delete video');
-  //     }
-  //   } catch (err) {
-  //     const error = err instanceof Error ? err : new Error(String(err));
-  //     logger.error('Error deleting video', error);
-  //     toast.error(`Failed to delete video: ${error.message}`);
-  //   }
+  //   // ... implementation
   // };
-
-  const resetForm = () => {
-    setCourseFormData({
-      title: "",
-      description: "",
-      category: "cleaning",
-      level: "beginner",
-      instructor: "",
-      regularPrice: 0,
-      discountedPrice: 0,
-      currency: "USD",
-      hours: 0,
-      weeks: 0,
-      maxCapacity: 0,
-      isActive: true,
-      tags: [],
-      prerequisites: [],
-      learningOutcomes: []
-    });
-    setSelectedCourse(null);
-  };
 
   const openEditModal = (course: Course) => {
     setSelectedCourse(course);
@@ -503,7 +736,7 @@ export default function AcademyPage() {
           : "",
       regularPrice: typeof course.pricing === 'object' ? course.pricing.regularPrice : 0,
       discountedPrice: typeof course.pricing === 'object' ? (course.pricing.discountedPrice ?? 0) : 0,
-      currency: typeof course.pricing === 'object' ? course.pricing.currency || "USD" : "USD",
+      currency: typeof course.pricing === 'object' ? course.pricing.currency || getDefaultCurrency(appSettings) : getDefaultCurrency(appSettings),
       hours: typeof course.duration === 'object' ? course.duration.hours : 0,
       weeks: typeof course.duration === 'object' ? (course.duration.weeks ?? 0) : 0,
       maxCapacity: course.enrollment?.maxCapacity || 0,
@@ -747,11 +980,15 @@ export default function AcademyPage() {
                         <>
                           {course.pricing.discountedPrice ? (
                             <>
-                              <span className="line-through text-gray-400">${course.pricing.regularPrice}</span>
-                              <span className="ml-2 text-green-600 font-medium">${course.pricing.discountedPrice}</span>
+                              <span className="line-through text-gray-400">
+                                {formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                              </span>
+                              <span className="ml-2 text-green-600 font-medium">
+                                {formatCurrency(course.pricing.discountedPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                              </span>
                             </>
                           ) : (
-                            `$${course.pricing.regularPrice}`
+                            formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })
                           )}
                         </>
                       ) : (
@@ -918,13 +1155,18 @@ export default function AcademyPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-              <input
-                type="text"
+              <select
                 value={courseFormData.currency}
                 onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="USD"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
+                <option value="USD">USD</option>
+                <option value="PHP">PHP</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1085,13 +1327,18 @@ export default function AcademyPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-              <input
-                type="text"
+              <select
                 value={courseFormData.currency}
                 onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="USD"
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
+                <option value="USD">USD</option>
+                <option value="PHP">PHP</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="JPY">JPY</option>
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -1245,8 +1492,9 @@ export default function AcademyPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Video File</label>
+            <p className="text-xs text-gray-500 mb-2">Supported formats: MP4, WebM, MOV, M4V, MKV, FLV, WMV, 3GP, AVI</p>
             <FileUpload
-              accept="video/*"
+              accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/x-matroska,video/x-flv,video/x-ms-wmv,video/3gpp,video/x-msvideo"
               files={videoFile ? [videoFile] : []}
               onFilesSelected={(files) => setVideoFile(files[0] || null)}
               onRemove={() => setVideoFile(null)}
@@ -1317,9 +1565,17 @@ export default function AcademyPage() {
               <p className="mt-1 text-sm text-gray-900">
                 {typeof selectedCourse.pricing === 'object' ? (
                   <>
-                    Regular: ${selectedCourse.pricing.regularPrice}
+                    Regular: {formatCurrency(
+                      selectedCourse.pricing.regularPrice,
+                      selectedCourse.pricing.currency || getDefaultCurrency(appSettings),
+                      { appSettings }
+                    )}
                     {selectedCourse.pricing.discountedPrice && (
-                      <> | Discounted: ${selectedCourse.pricing.discountedPrice}</>
+                      <> | Discounted: {formatCurrency(
+                        selectedCourse.pricing.discountedPrice,
+                        selectedCourse.pricing.currency || getDefaultCurrency(appSettings),
+                        { appSettings }
+                      )}</>
                     )}
                   </>
                 ) : (

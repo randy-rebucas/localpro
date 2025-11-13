@@ -982,9 +982,9 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
           <div>
-            <label className="block text-sm font-medium mb-2">Title *</label>
+            <label className="block text-xs font-medium mb-1">Title *</label>
             <Input
               value={createForm.title}
               onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
@@ -992,7 +992,7 @@ export default function AdminJobsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Description *</label>
+            <label className="block text-xs font-medium mb-1">Description *</label>
             <Textarea
               value={createForm.description}
               onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
@@ -1000,9 +1000,9 @@ export default function AdminJobsPage() {
               rows={4}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Company Name *</label>
+              <label className="block text-xs font-medium mb-1">Company Name *</label>
               <Input
                 value={createForm.company.name}
                 onChange={(e) =>
@@ -1015,7 +1015,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Category *</label>
+              <label className="block text-xs font-medium mb-1">Category *</label>
               <Input
                 value={createForm.category}
                 onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
@@ -1023,9 +1023,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Job Type *</label>
+              <label className="block text-xs font-medium mb-1">Job Type *</label>
               <Select
                 value={createForm.jobType}
                 onValueChange={(value) => setCreateForm({ ...createForm, jobType: value as JobType })}
@@ -1040,7 +1040,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Experience Level *</label>
+              <label className="block text-xs font-medium mb-1">Experience Level *</label>
               <Select
                 value={createForm.experienceLevel}
                 onValueChange={(value) => setCreateForm({ ...createForm, experienceLevel: value as ExperienceLevel })}
@@ -1055,9 +1055,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+              <label className="block text-xs font-medium mb-1">Status</label>
               <Select
                 value={createForm.status}
                 onValueChange={(value) => setCreateForm({ ...createForm, status: value as JobStatus })}
@@ -1071,7 +1071,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Visibility</label>
+              <label className="block text-xs font-medium mb-1">Visibility</label>
               <Select
                 value={createForm.visibility}
                 onValueChange={(value) => setCreateForm({ ...createForm, visibility: value as "public" | "private" | "featured" })}
@@ -1085,7 +1085,7 @@ export default function AdminJobsPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Salary Min</label>
+              <label className="block text-xs font-medium mb-1">Salary Min</label>
               <Input
                 type="number"
                 value={createForm.salary.min}
@@ -1099,7 +1099,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Salary Max</label>
+              <label className="block text-xs font-medium mb-1">Salary Max</label>
               <Input
                 type="number"
                 value={createForm.salary.max}
@@ -1113,7 +1113,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Currency</label>
+              <label className="block text-xs font-medium mb-1">Currency</label>
               <Input
                 value={createForm.salary.currency}
                 onChange={(e) =>
@@ -1146,9 +1146,9 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+        <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
           <div>
-            <label className="block text-sm font-medium mb-2">Title *</label>
+            <label className="block text-xs font-medium mb-1">Title *</label>
             <Input
               value={editForm.title}
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
@@ -1156,7 +1156,7 @@ export default function AdminJobsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Description *</label>
+            <label className="block text-xs font-medium mb-1">Description *</label>
             <Textarea
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -1164,9 +1164,9 @@ export default function AdminJobsPage() {
               rows={4}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Company Name *</label>
+              <label className="block text-xs font-medium mb-1">Company Name *</label>
               <Input
                 value={editForm.company.name}
                 onChange={(e) =>
@@ -1179,7 +1179,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Category *</label>
+              <label className="block text-xs font-medium mb-1">Category *</label>
               <Input
                 value={editForm.category}
                 onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
@@ -1187,9 +1187,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Job Type *</label>
+              <label className="block text-xs font-medium mb-1">Job Type *</label>
               <Select
                 value={editForm.jobType}
                 onValueChange={(value) => setEditForm({ ...editForm, jobType: value as JobType })}
@@ -1204,7 +1204,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Experience Level *</label>
+              <label className="block text-xs font-medium mb-1">Experience Level *</label>
               <Select
                 value={editForm.experienceLevel}
                 onValueChange={(value) => setEditForm({ ...editForm, experienceLevel: value as ExperienceLevel })}
@@ -1219,9 +1219,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-2">Status</label>
+              <label className="block text-xs font-medium mb-1">Status</label>
               <Select
                 value={editForm.status}
                 onValueChange={(value) => setEditForm({ ...editForm, status: value as JobStatus })}
@@ -1235,7 +1235,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Visibility</label>
+              <label className="block text-xs font-medium mb-1">Visibility</label>
               <Select
                 value={editForm.visibility}
                 onValueChange={(value) => setEditForm({ ...editForm, visibility: value as "public" | "private" | "featured" })}
@@ -1249,7 +1249,7 @@ export default function AdminJobsPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Salary Min</label>
+              <label className="block text-xs font-medium mb-1">Salary Min</label>
               <Input
                 type="number"
                 value={editForm.salary.min}
@@ -1263,7 +1263,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Salary Max</label>
+              <label className="block text-xs font-medium mb-1">Salary Max</label>
               <Input
                 type="number"
                 value={editForm.salary.max}
@@ -1277,7 +1277,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Currency</label>
+              <label className="block text-xs font-medium mb-1">Currency</label>
               <Input
                 value={editForm.salary.currency}
                 onChange={(e) =>
@@ -1308,8 +1308,8 @@ export default function AdminJobsPage() {
         }
       >
         {selectedJob && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-sm text-gray-600">Title</p>
                 <p className="font-semibold">{selectedJob.title}</p>
@@ -1376,7 +1376,7 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <p className="text-gray-600">
             Are you sure you want to delete the job <strong>{selectedJob?.title}</strong>? This action cannot be undone.
           </p>
@@ -1403,9 +1403,9 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-2">Select Logo Image</label>
+            <label className="block text-xs font-medium mb-1">Select Logo Image</label>
             <input
               type="file"
               accept="image/*"
@@ -1444,8 +1444,8 @@ export default function AdminJobsPage() {
         }
       >
         {selectedJobStats && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-sm text-gray-600">Views</p>
                 <p className="text-lg font-semibold">{selectedJobStats.viewsCount || 0}</p>
@@ -1473,7 +1473,7 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="space-y-3 max-h-[60vh] overflow-y-auto">
           {selectedJobApplications.length === 0 ? (
             <p className="text-center text-gray-500 text-sm py-8">No applications found</p>
           ) : (

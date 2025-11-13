@@ -15,7 +15,6 @@ import {
   ChevronUp,
   Image as ImageIcon,
   X,
-  DollarSign,
   Package,
   BarChart3
 } from "lucide-react";
@@ -26,6 +25,10 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { Product, ProductCategory, ProductImage } from "@/types/supplies";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
+import { AppSettings } from "@/types/app-settings";
 
 // Extended ProductImage interface for admin page (includes _id)
 type ProductImageWithId = ProductImage & { _id?: string };
@@ -99,7 +102,9 @@ interface SupplyStatistics {
 }
 
 // Helper function to transform API product data to frontend format
-const transformProductData = (apiProduct: ApiProductData): Product => {
+// Note: This function is called before component render, so we'll use a default currency
+// The actual app settings will be used in the component for display
+const transformProductData = (apiProduct: ApiProductData, defaultCurrency: string = 'PHP'): Product => {
   const product: Product = {
     _id: apiProduct._id,
     name: apiProduct.name || '',
@@ -112,7 +117,7 @@ const transformProductData = (apiProduct: ApiProductData): Product => {
     pricing: {
       retailPrice: apiProduct.pricing?.retailPrice || 0,
       wholesalePrice: apiProduct.pricing?.wholesalePrice,
-      currency: apiProduct.pricing?.currency || 'USD'
+      currency: apiProduct.pricing?.currency || defaultCurrency
     },
     inventory: {
       quantity: apiProduct.inventory?.quantity || 0,
@@ -140,6 +145,9 @@ const transformProductData = (apiProduct: ApiProductData): Product => {
 };
 
 export default function AdminSuppliesPage() {
+  // App settings for currency formatting and other settings
+  const { settings: appSettings } = useAppSettings();
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -180,7 +188,7 @@ export default function AdminSuppliesPage() {
     sku: '',
     retailPrice: '',
     wholesalePrice: '',
-    currency: 'USD',
+    currency: getDefaultCurrency(appSettings),
     quantity: '',
     minStock: '',
     maxStock: '',
@@ -198,7 +206,7 @@ export default function AdminSuppliesPage() {
     sku: '',
     retailPrice: '',
     wholesalePrice: '',
-    currency: 'USD',
+    currency: getDefaultCurrency(appSettings),
     quantity: '',
     minStock: '',
     maxStock: '',
@@ -305,21 +313,21 @@ export default function AdminSuppliesPage() {
       // Handle different response structures
       if (dataResult.success && dataResult.data) {
         if (dataResult.data.products && Array.isArray(dataResult.data.products)) {
-          productsData = dataResult.data.products.map(transformProductData);
+          productsData = dataResult.data.products.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
           totalCount = dataResult.data.pagination?.total || dataResult.data.products.length;
         } else if (Array.isArray(dataResult.data)) {
-          productsData = dataResult.data.map(transformProductData);
+          productsData = dataResult.data.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
           totalCount = dataResult.total || dataResult.data.length;
         }
       } else if (Array.isArray(dataResult)) {
-        productsData = dataResult.map(transformProductData);
+        productsData = dataResult.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
         totalCount = dataResult.length;
       } else if (dataResult.data) {
         if (Array.isArray(dataResult.data)) {
-          productsData = dataResult.data.map(transformProductData);
+          productsData = dataResult.data.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
           totalCount = dataResult.total || dataResult.data.length;
         } else if (dataResult.data.products && Array.isArray(dataResult.data.products)) {
-          productsData = dataResult.data.products.map(transformProductData);
+          productsData = dataResult.data.products.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
           totalCount = dataResult.data.pagination?.total || dataResult.data.products.length;
         }
       } else if (Array.isArray(dataResult.products)) {
@@ -363,7 +371,7 @@ export default function AdminSuppliesPage() {
       setLoading(false);
       setSlowRequest(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, categoryFilter, statusFilter, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, searchTerm, categoryFilter, statusFilter, sortBy, sortOrder, appSettings]);
 
   useEffect(() => {
     fetchData();
@@ -407,7 +415,7 @@ export default function AdminSuppliesPage() {
 
       const result = await response.json();
       const productData = result.data || result;
-      setSelectedProductDetails(transformProductData(productData));
+      setSelectedProductDetails(transformProductData(productData, getDefaultCurrency(appSettings)));
       setViewModalOpen(true);
     } catch (err) {
       logger.error('Error fetching product details', err instanceof Error ? err : new Error(String(err)));
@@ -496,7 +504,7 @@ export default function AdminSuppliesPage() {
         sku: '',
         retailPrice: '',
         wholesalePrice: '',
-        currency: 'USD',
+        currency: getDefaultCurrency(appSettings),
         quantity: '',
         minStock: '',
         maxStock: '',
@@ -602,41 +610,159 @@ export default function AdminSuppliesPage() {
   const handleUploadImages = async () => {
     if (!selectedProduct?._id || !selectedFiles || selectedFiles.length === 0) return;
     
+    // Validate files before creating FormData
+    const validFiles = selectedFiles.filter(file => file instanceof File && file.size > 0);
+    if (validFiles.length === 0) {
+      toast.error('No valid files selected. Please select image files.');
+      return;
+    }
+    
     try {
       setSubmitting(true);
-      if (!getApiToken()) return;
+      const token = getApiToken();
+      if (!token) {
+        const error = new Error('No authentication token found');
+        logger.error('Error uploading images', error, { productId: selectedProduct._id });
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
 
       const formData = new FormData();
-      selectedFiles.forEach((file) => {
-        formData.append('images', file);
+      // Append files - try 'images' first (most common), backend may also accept 'image' or 'files'
+      validFiles.forEach((file, index) => {
+        // Use 'images' as the field name (same as marketplace endpoint)
+        formData.append('images', file, file.name || `image-${index}.jpg`);
       });
 
+      // Endpoint: POST /api/supplies/:id/images
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesById.replace('[id]', selectedProduct._id)}/images`;
-      const token = getApiToken();
       const headers: HeadersInit = {
         'Authorization': `Bearer ${token}`
       };
       // Don't set Content-Type for FormData - browser will set it with boundary
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: formData
+      // Log FormData contents for debugging (note: FormData.entries() is not enumerable in all browsers)
+      logger.debug('Uploading images', { 
+        url, 
+        productId: selectedProduct._id, 
+        fileCount: validFiles.length,
+        fileNames: validFiles.map(f => f.name),
+        fileSizes: validFiles.map(f => f.size),
+        fileTypes: validFiles.map(f => f.type),
+        note: 'Using field name: images'
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload images');
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: formData
+        });
+      } catch (networkError) {
+        // Handle network errors (fetch failed)
+        const error = networkError instanceof Error ? networkError : new Error(String(networkError));
+        logger.error('Network error uploading images', error, {
+          url,
+          productId: selectedProduct._id,
+          fileCount: validFiles.length
+        });
+        toast.error('Network error: Failed to connect to server. Please check your connection and try again.');
+        return;
       }
 
-      toast.success(`Successfully uploaded ${selectedFiles.length} image(s)`);
+      if (!response.ok) {
+        // Try to extract error message from response
+        let errorMessage = 'Failed to upload images';
+        let errorData: { error?: string; message?: string } = {};
+        
+        try {
+          const responseText = await response.text();
+          if (responseText) {
+            try {
+              errorData = JSON.parse(responseText);
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } catch {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage;
+            }
+          }
+        } catch (parseError) {
+          logger.warn('Failed to parse error response', { parseError });
+        }
+
+        const error = new Error(errorMessage);
+        logger.error('Error uploading images', error, {
+          url,
+          productId: selectedProduct._id,
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          fileCount: validFiles.length,
+          fieldName: 'images'
+        });
+
+        // Provide user-friendly error messages based on status code
+        if (response.status === 400) {
+          // 400 Bad Request - often means "No files uploaded" or wrong field name
+          const backendMessage = errorData.message || errorMessage;
+          if (backendMessage.toLowerCase().includes('no files') || backendMessage.toLowerCase().includes('file')) {
+            toast.error(backendMessage || 'No files were received by the server. The backend may expect a different field name.');
+            logger.warn('400 Bad Request - files not received', {
+              productId: selectedProduct._id,
+              backendMessage,
+              fieldName: 'images',
+              fileCount: validFiles.length,
+              note: 'Backend may expect different field name (e.g., "image" or "files" instead of "images")'
+            });
+          } else {
+            toast.error(backendMessage || 'Invalid request. Please check your file selection and try again.');
+          }
+        } else if (response.status === 401) {
+          toast.error('Authentication failed. Please log in again.');
+        } else if (response.status === 403) {
+          const backendMessage = errorData.message || errorMessage;
+          toast.error(backendMessage || 'You do not have permission to upload images for this product. Admin access may not be properly configured on the backend.');
+          logger.warn('403 Forbidden when uploading images - possible backend authorization issue', {
+            productId: selectedProduct._id,
+            backendMessage,
+            note: 'Admin users should have permission to upload images for any product according to API documentation'
+          });
+        } else if (response.status === 404) {
+          toast.error('Product not found. Please refresh and try again.');
+        } else if (response.status === 413) {
+          toast.error('Image files are too large. Please select smaller images.');
+        } else if (response.status === 415) {
+          toast.error('Invalid file type. Please select image files only.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error(errorMessage || 'Failed to upload images');
+        }
+        return;
+      }
+
+      // Success
+      const result = await response.json().catch(() => ({}));
+      logger.debug('Images uploaded successfully', { 
+        productId: selectedProduct._id, 
+        fileCount: validFiles.length,
+        result
+      });
+
+      toast.success(`Successfully uploaded ${validFiles.length} image(s)`);
       setImageUploadModalOpen(false);
       setSelectedProduct(null);
       setSelectedFiles([]);
       await fetchData();
     } catch (err) {
-      logger.error('Error uploading images', err instanceof Error ? err : new Error(String(err)));
-      toast.error(err instanceof Error ? err.message : 'Failed to upload images');
+      // Catch any unexpected errors
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Unexpected error uploading images', error, {
+        productId: selectedProduct?._id,
+        fileCount: selectedFiles?.length || 0
+      });
+      toast.error(error.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -959,12 +1085,13 @@ export default function AdminSuppliesPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
-                    <div className="flex items-center">
-                      <DollarSign className="w-3 h-3 mr-1 text-gray-500" />
-                      <span>
-                        {product.pricing?.retailPrice?.toLocaleString() || '0'} {product.pricing?.currency || 'USD'}
-                      </span>
-                    </div>
+                    <span>
+                      {formatCurrency(
+                        product.pricing?.retailPrice || 0,
+                        product.pricing?.currency || getDefaultCurrency(appSettings),
+                        { appSettings }
+                      )}
+                    </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
                     <span className={product.inventory?.quantity && product.inventory.quantity < (product.inventory.minStock || 10) ? 'text-red-600 font-semibold' : ''}>
@@ -1003,7 +1130,7 @@ export default function AdminSuppliesPage() {
                                 sku: product.sku || '',
                                 retailPrice: product.pricing?.retailPrice?.toString() || '',
                                 wholesalePrice: product.pricing?.wholesalePrice?.toString() || '',
-                                currency: product.pricing?.currency || 'USD',
+                                currency: product.pricing?.currency || getDefaultCurrency(appSettings),
                                 quantity: product.inventory?.quantity?.toString() || '',
                                 minStock: product.inventory?.minStock?.toString() || '',
                                 maxStock: product.inventory?.maxStock?.toString() || '',
@@ -1098,7 +1225,11 @@ export default function AdminSuppliesPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500">Price</label>
                 <p className="text-sm">
-                  {selectedProductDetails.pricing?.retailPrice?.toLocaleString() || '0'} {selectedProductDetails.pricing?.currency || 'USD'}
+                  {formatCurrency(
+                    selectedProductDetails.pricing?.retailPrice || 0,
+                    selectedProductDetails.pricing?.currency || getDefaultCurrency(appSettings),
+                    { appSettings }
+                  )}
                 </p>
               </div>
               <div>
@@ -1130,14 +1261,14 @@ export default function AdminSuppliesPage() {
           <div className="flex justify-end space-x-2">
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleCreateProduct}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Product'}
             </button>
@@ -1147,6 +1278,7 @@ export default function AdminSuppliesPage() {
         <CreateProductForm 
           formData={createFormData}
           setFormData={setCreateFormData}
+          appSettings={appSettings}
         />
       </Modal>
 
@@ -1166,14 +1298,14 @@ export default function AdminSuppliesPage() {
                 setEditModalOpen(false);
                 setSelectedProduct(null);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUpdateProduct}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Product'}
             </button>
@@ -1184,6 +1316,7 @@ export default function AdminSuppliesPage() {
           <EditProductForm 
             formData={editFormData}
             setFormData={setEditFormData}
+            appSettings={appSettings}
           />
         )}
       </Modal>
@@ -1204,7 +1337,7 @@ export default function AdminSuppliesPage() {
                 setDeleteModalOpen(false);
                 setSelectedProduct(null);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -1246,14 +1379,14 @@ export default function AdminSuppliesPage() {
                 setSelectedProduct(null);
                 setSelectedFiles([]);
               }}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               onClick={handleUploadImages}
               disabled={submitting || !selectedFiles || selectedFiles.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Images'}
             </button>
@@ -1276,8 +1409,10 @@ export default function AdminSuppliesPage() {
 // Create Product Form Component
 function CreateProductForm({ 
   formData, 
-  setFormData 
-}: { 
+  setFormData,
+  appSettings
+}: {
+  appSettings: AppSettings | null; 
   formData: {
     name: string;
     title: string;
@@ -1407,8 +1542,12 @@ function CreateProductForm({
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
+            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
             <option value="USD">USD</option>
             <option value="PHP">PHP</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
           </select>
         </div>
         <div>
@@ -1466,8 +1605,10 @@ function CreateProductForm({
 // Edit Product Form Component
 function EditProductForm({ 
   formData, 
-  setFormData 
-}: { 
+  setFormData,
+  appSettings
+}: {
+  appSettings: AppSettings | null; 
   formData: {
     name: string;
     title: string;
@@ -1597,8 +1738,12 @@ function EditProductForm({
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
+            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
             <option value="USD">USD</option>
             <option value="PHP">PHP</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="JPY">JPY</option>
           </select>
         </div>
         <div>

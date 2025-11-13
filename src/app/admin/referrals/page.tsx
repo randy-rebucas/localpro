@@ -117,7 +117,6 @@ export default function AdminReferralsPage() {
   const [selectedReferrals, setSelectedReferrals] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isUsingFallbackData, setIsUsingFallbackData] = useState(false);
   const [processingReferral, setProcessingReferral] = useState<string | null>(null);
 
   // Fetch referrals data
@@ -156,10 +155,6 @@ export default function AdminReferralsPage() {
         logger.debug('Processed referrals data', { count: referralsData.length });
         setReferrals(referralsData);
         setPagination(data.pagination);
-        // Check if we're using real data or fallback
-        // Real data will have different ID format, fallback uses 'ref_' prefix
-        const isFallbackData = referralsData.length > 0 && referralsData[0].id?.startsWith('ref_');
-        setIsUsingFallbackData(isFallbackData);
       } else {
         throw new Error(data.error || 'Failed to fetch referrals');
       }
@@ -395,26 +390,6 @@ export default function AdminReferralsPage() {
 
   return (
     <div className="space-y-4">
-      {/* Fallback Data Notification */}
-      {isUsingFallbackData && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <Clock className="h-5 w-5 text-yellow-400" />
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Demo Data Active
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  The referrals analytics API returned empty data. You&apos;re viewing demo data to demonstrate the referrals management interface.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
