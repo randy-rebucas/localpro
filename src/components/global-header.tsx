@@ -73,7 +73,6 @@ export function GlobalHeader({
   const {
     isAdmin,
     isBusinessRole,
-    isServiceProvider,
   } = useRoleAccess();
 
   // Get user roles and determine available role views
@@ -83,7 +82,7 @@ export function GlobalHeader({
   const hasMultipleRoles = userRoles.length > 1;
   const shouldShowSwitcher = hasMultipleRoles && session;
 
-  // Role view state - persist in localStorage, default to first available role
+  // Role view state - persist in localStorage, default to 'client' if available
   const [roleView, setRoleView] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('roleView');
@@ -92,8 +91,11 @@ export function GlobalHeader({
         return saved;
       }
     }
-    // Default to first role (usually 'client')
-    return userRoles.length > 0 ? userRoles[0] : 'client';
+    // Default to 'client' if user has that role, otherwise first available role
+    if (userRoles.length > 0) {
+      return userRoles.includes('client') ? 'client' : userRoles[0];
+    }
+    return 'client';
   });
 
   // Update roleView when userRoles change (e.g., after login)
@@ -101,19 +103,27 @@ export function GlobalHeader({
     if (userRoles.length > 0) {
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('roleView');
-        // If saved value is valid, use it; otherwise use first role
+        // If saved value is valid, use it; otherwise default to 'client' if available
         if (saved && userRoles.includes(saved)) {
           setRoleView(saved);
         } else {
-          // Check current roleView, if invalid, set to first role
+          // Check current roleView, if invalid, default to 'client' if available
           setRoleView((currentView) => {
-            return userRoles.includes(currentView) ? currentView : userRoles[0];
+            if (userRoles.includes(currentView)) {
+              return currentView;
+            }
+            // Default to 'client' if available, otherwise first role
+            return userRoles.includes('client') ? 'client' : userRoles[0];
           });
         }
       } else {
-        // Check current roleView, if invalid, set to first role
+        // Check current roleView, if invalid, default to 'client' if available
         setRoleView((currentView) => {
-          return userRoles.includes(currentView) ? currentView : userRoles[0];
+          if (userRoles.includes(currentView)) {
+            return currentView;
+          }
+          // Default to 'client' if available, otherwise first role
+          return userRoles.includes('client') ? 'client' : userRoles[0];
         });
       }
     }
@@ -488,15 +498,19 @@ export function GlobalHeader({
                         <span className="font-medium">Marketplace</span>
                       </Link>
                       <div className="border-t border-gray-100 my-1"></div>
-                      <Link
-                        href="/marketplace/my-bookings"
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors group"
-                        onClick={() => setShowQuickActions(false)}
-                      >
-                        <Calendar className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-                        <span className="font-medium">My Bookings</span>
-                      </Link>
-                      {(isServiceProvider || isAdmin) && (
+                      {/* Show "My Bookings" only in client view */}
+                      {roleView === 'client' && (
+                        <Link
+                          href="/marketplace/my-bookings"
+                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors group"
+                          onClick={() => setShowQuickActions(false)}
+                        >
+                          <Calendar className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                          <span className="font-medium">My Bookings</span>
+                        </Link>
+                      )}
+                      {/* Show "My Services" only in provider view (provider, agency_owner, agency_admin, admin) */}
+                      {roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView) && userRoles.includes(roleView) && (
                         <Link
                           href="/marketplace/my-services"
                           className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors group"

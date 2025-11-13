@@ -36,7 +36,7 @@ export function ServiceGrid({
   hasActiveFilters = false,
   pagination = null,
   onPageChange,
-  viewMode = 'grid',
+  viewMode = 'list',
   selectedCategory = null,
 }: ServiceGridProps) {
   const { settings: appSettings } = useAppSettings();

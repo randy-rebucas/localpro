@@ -15,6 +15,8 @@ export interface JobsParams {
   isRemote?: boolean;
   minSalary?: number;
   maxSalary?: number;
+  company?: string;
+  featured?: boolean;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -59,6 +61,8 @@ export function useJobs(params: JobsParams = {}) {
       if (params.isRemote !== undefined) queryParams.append("isRemote", params.isRemote.toString());
       if (params.minSalary !== undefined) queryParams.append("minSalary", params.minSalary.toString());
       if (params.maxSalary !== undefined) queryParams.append("maxSalary", params.maxSalary.toString());
+      if (params.company) queryParams.append("company", params.company);
+      if (params.featured !== undefined) queryParams.append("featured", params.featured.toString());
       if (params.status) queryParams.append("status", params.status);
       if (params.search) queryParams.append("search", params.search);
       
