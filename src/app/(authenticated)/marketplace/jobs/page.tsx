@@ -6,15 +6,14 @@ import Image from "next/image";
 import { 
   Search, 
   Filter, 
-  Star, 
   MapPin, 
-  Clock, 
-  DollarSign,
   Briefcase,
-  // User,
   Calendar,
   ChevronDown,
-  X
+  X,
+  Building2,
+  Grid3x3,
+  List
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -22,42 +21,21 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-
-interface Job {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  budget: number;
-  duration: number;
-  client: {
-    id: string;
-    name: string;
-    rating: number;
-    reviewCount: number;
-    avatar: string;
-  };
-  location: {
-    city: string;
-    state: string;
-  };
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  isAvailable: boolean;
-  createdAt: string;
-  deadline: string;
-  skills: string[];
-}
+import { Job as JobType } from "@/types/jobs";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 export default function BrowseJobsPage() {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const { settings: appSettings } = useAppSettings();
+  const [jobs, setJobs] = useState<JobType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("relevance");
   const [isFiltering, setIsFiltering] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [filters, setFilters] = useState({
     category: "",
     location: "",
@@ -65,23 +43,169 @@ export default function BrowseJobsPage() {
     skills: [] as string[],
     availability: true
   });
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [skills, setSkills] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingSkills, setLoadingSkills] = useState(true);
 
-  const categories = [
-    "ALL",
-    "WEB_DEVELOPMENT",
-    "MOBILE_DEVELOPMENT", 
-    "DESIGN",
-    "WRITING",
-    "MARKETING",
-    "CONSULTING",
-    "OTHER"
-  ];
+  // Fetch categories from API
+  const fetchCategories = useCallback(async () => {
+    try {
+      setLoadingCategories(true);
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.jobsCategories}`,
+        createAuthFetchOptions()
+      );
 
-  const skills = [
-    "React", "Node.js", "Python", "JavaScript", "TypeScript",
-    "UI/UX Design", "Content Writing", "SEO", "Social Media",
-    "Project Management", "Data Analysis", "Graphic Design"
-  ];
+      if (!response.ok) {
+        logger.warn("Failed to fetch job categories", { status: response.status });
+        return;
+      }
+
+      const data = await response.json();
+      logger.debug("Job categories data", { data });
+      // Handle different response formats
+      interface CategoryItem {
+        id?: string;
+        _id?: string;
+        value?: string;
+        name?: string;
+        [key: string]: unknown;
+      }
+      let categoriesData: (CategoryItem | string)[] = [];
+      
+      if (Array.isArray(data)) {
+        categoriesData = data;
+      } else if (data && typeof data === 'object') {
+        // Check for nested structure: data.data.categories
+        if (data.data && typeof data.data === 'object' && Array.isArray(data.data.categories)) {
+          categoriesData = data.data.categories;
+        } else if (Array.isArray(data.categories)) {
+          categoriesData = data.categories;
+        } else if (Array.isArray(data.data)) {
+          categoriesData = data.data;
+        }
+      }
+      
+      // Ensure we have an array before mapping
+      if (!Array.isArray(categoriesData)) {
+        logger.warn("Job categories data is not an array", { data, categoriesData });
+        categoriesData = [];
+      }
+      
+      // Extract category objects with id and name
+      // Store objects with id (for filtering) and name (for display)
+      const categoryList = categoriesData.map((cat: CategoryItem | string) => {
+        if (typeof cat === 'string') {
+          // If it's already a string, use it as both id and name
+          return { id: cat, name: cat };
+        }
+        // Extract id and name from the category object
+        const id = cat.id || cat._id || cat.value || String(cat);
+        const name = cat.name || cat.value || id;
+        return { id, name };
+      });
+      
+      setCategories(categoryList);
+    } catch (error) {
+      logger.error("Error fetching job categories", error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
+  // Fetch skills from API
+  const fetchSkills = useCallback(async () => {
+    try {
+      setLoadingSkills(true);
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.providersSkills}`,
+        createAuthFetchOptions()
+      );
+
+      if (!response.ok) {
+        logger.warn("Failed to fetch skills", { status: response.status });
+        return;
+      }
+
+      const data = await response.json();
+      logger.debug("Skills data", { data });
+      // Handle different response formats
+      interface SkillItem {
+        id?: string;
+        _id?: string;
+        value?: string;
+        name?: string;
+        [key: string]: unknown;
+      }
+      let skillsData: (SkillItem | string)[] = [];
+      
+      if (Array.isArray(data)) {
+        skillsData = data;
+      } else if (data && typeof data === 'object') {
+        // Check for nested structure: data.data.skills
+        if (data.data && typeof data.data === 'object' && Array.isArray(data.data.skills)) {
+          skillsData = data.data.skills;
+        } else if (Array.isArray(data.skills)) {
+          skillsData = data.skills;
+        } else if (Array.isArray(data.data)) {
+          skillsData = data.data;
+        }
+      }
+      
+      // Ensure we have an array before mapping
+      if (!Array.isArray(skillsData)) {
+        logger.warn("Skills data is not an array", { data, skillsData });
+        skillsData = [];
+      }
+      
+      // Extract skill objects with id and name
+      // Store objects with id (for filtering) and name (for display)
+      const skillsList = skillsData.map((skill: SkillItem | string) => {
+        if (typeof skill === 'string') {
+          // If it's already a string, use it as both id and name
+          return { id: skill, name: skill };
+        }
+        // Extract id and name from the skill object
+        const id = skill.id || skill._id || skill.value || String(skill);
+        const name = skill.name || skill.value || id;
+        return { id, name };
+      });
+      
+      setSkills(skillsList);
+    } catch (error) {
+      logger.error("Error fetching skills", error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setLoadingSkills(false);
+    }
+  }, []);
+
+  // Normalize job data from API response to match Job type
+  const normalizeJob = useCallback((jobData: Partial<JobType> & { _id?: string; id?: string }): JobType => {
+    return {
+      ...jobData,
+      _id: jobData._id || jobData.id,
+      company: jobData.company || { name: "Unknown Company" },
+      salary: jobData.salary ? {
+        min: jobData.salary.min,
+        max: jobData.salary.max,
+        currency: jobData.salary.currency,
+        period: jobData.salary.period,
+        isNegotiable: jobData.salary.isNegotiable,
+        isConfidential: jobData.salary.isConfidential,
+      } : undefined,
+      requirements: jobData.requirements || {},
+      applicationProcess: jobData.applicationProcess ? {
+        deadline: jobData.applicationProcess.deadline ? new Date(jobData.applicationProcess.deadline) : undefined,
+        startDate: jobData.applicationProcess.startDate ? new Date(jobData.applicationProcess.startDate) : undefined,
+        applicationMethod: jobData.applicationProcess.applicationMethod,
+        contactEmail: jobData.applicationProcess.contactEmail,
+        contactPhone: jobData.applicationProcess.contactPhone,
+        applicationUrl: jobData.applicationProcess.applicationUrl,
+        instructions: jobData.applicationProcess.instructions,
+      } : undefined,
+    } as JobType;
+  }, []);
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -133,7 +257,9 @@ export default function BrowseJobsPage() {
           jobsData = [];
         }
         
-        setJobs(jobsData);
+        // Normalize job data to match Job type
+        const normalizedJobs = jobsData.map((job: Partial<JobType> & { _id?: string; id?: string }) => normalizeJob(job));
+        setJobs(normalizedJobs);
         
         // Clear any previous errors on successful fetch
         setError(null);
@@ -155,7 +281,13 @@ export default function BrowseJobsPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, filters, sortBy]);
+  }, [searchQuery, filters, sortBy, normalizeJob]);
+
+  // Fetch categories and skills on mount
+  useEffect(() => {
+    fetchCategories();
+    fetchSkills();
+  }, [fetchCategories, fetchSkills]);
 
   // Debounced search
   useEffect(() => {
@@ -171,12 +303,12 @@ export default function BrowseJobsPage() {
     setIsFiltering(true);
   };
 
-  const handleSkillToggle = (skill: string) => {
+  const handleSkillToggle = (skillId: string) => {
     setFilters(prev => ({
       ...prev,
-      skills: prev.skills.includes(skill)
-        ? prev.skills.filter(s => s !== skill)
-        : [...prev.skills, skill]
+      skills: prev.skills.includes(skillId)
+        ? prev.skills.filter(s => s !== skillId)
+        : [...prev.skills, skillId]
     }));
     setIsFiltering(true);
   };
@@ -192,32 +324,94 @@ export default function BrowseJobsPage() {
     setSearchQuery("");
   };
 
-  const formatPrice = useCallback((price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
-  }, []);
+  // Normalize currency to code for conversion base, then format with symbol
+  const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
+    if (!currency) return getDefaultCurrency(appSettings);
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to app settings currency if not found
+    return getDefaultCurrency(appSettings);
+  }, [appSettings]);
 
-  const formatDuration = useCallback((days: number) => {
-    if (days < 7) return `${days} days`;
-    const weeks = Math.floor(days / 7);
-    const remainingDays = days % 7;
-    return remainingDays > 0 ? `${weeks}w ${remainingDays}d` : `${weeks}w`;
-  }, []);
+  const formatPrice = useCallback((price: number, currency?: string) => {
+    // Normalize currency to code for conversion base
+    const currencyCode = normalizeCurrencyCode(currency);
+    // Use formatCurrency which now uses symbols
+    return formatCurrency(price, currencyCode, {
+      appSettings,
+      showSymbol: true,
+    });
+  }, [appSettings, normalizeCurrencyCode]);
 
-  const renderStars = useCallback((rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${
-          i < Math.floor(rating)
-            ? "text-yellow-400 fill-current"
-            : "text-gray-300"
-        }`}
-      />
-    ));
-  }, []);
+  const formatSalary = useCallback((job: JobType) => {
+    if (!job.salary) return "Salary not specified";
+    
+    if (job.salary.isConfidential) return "Confidential";
+    if (job.salary.isNegotiable) {
+      if (job.salary.min && job.salary.max) {
+        return `${formatPrice(job.salary.min, job.salary.currency)} - ${formatPrice(job.salary.max, job.salary.currency)} (Negotiable)`;
+      }
+      return "Negotiable";
+    }
+    
+    if (job.salary.min && job.salary.max) {
+      const period = job.salary.period || 'monthly';
+      const periodLabel = period === 'hourly' ? '/hr' : period === 'daily' ? '/day' : period === 'weekly' ? '/wk' : period === 'monthly' ? '/mo' : period === 'yearly' ? '/yr' : '';
+      return `${formatPrice(job.salary.min, job.salary.currency)} - ${formatPrice(job.salary.max, job.salary.currency)}${periodLabel}`;
+    }
+    
+    if (job.salary.min) {
+      const period = job.salary.period || 'monthly';
+      const periodLabel = period === 'hourly' ? '/hr' : period === 'daily' ? '/day' : period === 'weekly' ? '/wk' : period === 'monthly' ? '/mo' : period === 'yearly' ? '/yr' : '';
+      return `${formatPrice(job.salary.min, job.salary.currency)}+${periodLabel}`;
+    }
+    
+    return "Salary not specified";
+  }, [formatPrice]);
+
+  // Format date using locale from app settings (based on default currency)
+  const formatDateWithAppSettings = useCallback((date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const defaultCurrency = getDefaultCurrency(appSettings);
+    const currencyConfig = CURRENCY_CONFIGS[defaultCurrency] || CURRENCY_CONFIGS.PHP;
+    const locale = currencyConfig.locale;
+    
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }).format(dateObj);
+  }, [appSettings]);
+
 
   if (loading) {
     return (
@@ -332,6 +526,32 @@ export default function BrowseJobsPage() {
             )}
             <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`} />
           </button>
+          
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-white text-green-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Grid View"
+            >
+              <Grid3x3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-white text-green-700 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="List View"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Filter Panel */}
@@ -345,11 +565,12 @@ export default function BrowseJobsPage() {
                   value={filters.category}
                   onChange={(e) => handleFilterChange("category", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  disabled={loadingCategories}
                 >
                   <option value="">All Categories</option>
-                  {categories.slice(1).map(category => (
-                    <option key={category} value={category}>
-                      {category.replace('_', ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
                     </option>
                   ))}
                 </select>
@@ -407,21 +628,31 @@ export default function BrowseJobsPage() {
             {/* Skills Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-              <div className="flex flex-wrap gap-2">
-                {skills.map(skill => (
-                  <button
-                    key={skill}
-                    onClick={() => handleSkillToggle(skill)}
-                    className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                      filters.skills.includes(skill)
-                        ? "bg-green-100 text-green-700 border border-green-300"
-                        : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                    }`}
-                  >
-                    {skill}
-                  </button>
-                ))}
-              </div>
+              {loadingSkills ? (
+                <div className="flex flex-wrap gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-8 w-20 bg-gray-200 rounded-full animate-pulse" />
+                  ))}
+                </div>
+              ) : skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {skills.map((skill: { id: string; name: string }) => (
+                    <button
+                      key={skill.id}
+                      onClick={() => handleSkillToggle(skill.id)}
+                      className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                        filters.skills.includes(skill.id)
+                          ? "bg-green-100 text-green-700 border border-green-300"
+                          : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                      }`}
+                    >
+                      {skill.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No skills available</p>
+              )}
             </div>
 
             {/* Filter Actions */}
@@ -505,102 +736,166 @@ export default function BrowseJobsPage() {
           />
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.isArray(jobs) && jobs.map((job, index) => (
-            <div
-              key={job.id || job.title || `job-${index}`}
-              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2 line-clamp-2">
-                      {job.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-3">
-                      {job.description}
-                    </p>
+        <div className={viewMode === 'grid' 
+          ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          : "space-y-3"
+        }>
+          {Array.isArray(jobs) && jobs.map((job, index) => {
+            const jobId = job._id || (job as Partial<JobType> & { id?: string }).id || `job-${index}`;
+            const companyName = job.company?.name || "Company not specified";
+            const companyLogo = job.company?.logo?.url;
+            const location = job.company?.location;
+            const skills = job.requirements?.skills || [];
+            const deadline = job.applicationProcess?.deadline;
+            const isRemote = job.isRemote || job.company?.location?.isRemote;
+            
+            return (
+              <Link
+                key={jobId}
+                href={`/marketplace/jobs/${jobId}`}
+                className={`group bg-white rounded-xl border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-200 ${
+                  viewMode === 'list' 
+                    ? 'flex gap-4 p-4' 
+                    : 'p-4 transform hover:-translate-y-0.5'
+                }`}
+              >
+                {/* List view: Company logo on the left */}
+                {viewMode === 'list' && job.company && (
+                  <div className="flex-shrink-0">
+                    {companyLogo ? (
+                      <Image
+                        src={companyLogo}
+                        alt={companyName}
+                        width={64}
+                        height={64}
+                        className="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
+                        <Building2 className="w-7 h-7 text-gray-400" />
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
-                <div className="space-y-3">
-                  {/* Budget and Duration */}
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center text-green-600 font-medium">
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      {formatPrice(job.budget)}
+                <div className={viewMode === 'list' ? 'flex-1 min-w-0' : 'w-full'}>
+                  {/* Header: Title and Company (Grid view) */}
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`font-semibold text-gray-900 mb-1.5 group-hover:text-green-700 transition-colors ${
+                        viewMode === 'list' ? 'text-lg' : 'text-base line-clamp-2'
+                      }`}>
+                        {job.title}
+                      </h3>
+                      {viewMode === 'grid' && job.company && (
+                        <div className="flex items-center gap-2 mb-2">
+                          {companyLogo ? (
+                            <Image
+                              src={companyLogo}
+                              alt={companyName}
+                              width={24}
+                              height={24}
+                              className="w-6 h-6 rounded-full object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                              <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-sm text-gray-600 truncate">{companyName}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {formatDuration(job.duration)}
+                    {/* Job Type Badges */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {job.jobType && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 rounded-md border border-blue-100">
+                          {job.jobType.replace('_', ' ')}
+                        </span>
+                      )}
+                      {job.experienceLevel && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 rounded-md border border-purple-100">
+                          {job.experienceLevel.charAt(0).toUpperCase() + job.experienceLevel.slice(1)}
+                        </span>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className={`text-gray-600 text-sm mb-3 leading-relaxed ${
+                    viewMode === 'list' ? 'line-clamp-2' : 'line-clamp-2'
+                  }`}>
+                    {job.description}
+                  </p>
+
+                  {/* Salary */}
+                  <div className="flex items-center gap-1.5 mb-2.5">
+                    <span className="text-sm font-semibold text-green-700">
+                      {formatSalary(job)}
+                    </span>
                   </div>
 
                   {/* Skills */}
-                  <div className="flex flex-wrap gap-1">
-                    {job.skills && Array.isArray(job.skills) && job.skills.slice(0, 3).map(skill => (
-                      <span
-                        key={skill}
-                        className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {job.skills && Array.isArray(job.skills) && job.skills.length > 3 && (
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
-                        +{job.skills.length - 3} more
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Client Info */}
-                  {job.client && (
-                    <div className="flex items-center space-x-3 pt-3 border-t border-gray-100">
-                      <Image
-                        src={job.client.avatar || "/default-avatar.png"}
-                        alt={job.client.name || "Client"}
-                        width={32}
-                        height={32}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 truncate">
-                          {job.client.name || "Unknown Client"}
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          <div className="flex">{renderStars(job.client.rating || 0)}</div>
-                          <span className="text-xs text-gray-500">
-                            ({job.client.reviewCount || 0})
-                          </span>
-                        </div>
-                      </div>
+                  {skills.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2.5">
+                      {skills.slice(0, viewMode === 'list' ? 4 : 3).map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-50 text-gray-700 rounded-md border border-gray-200"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {skills.length > (viewMode === 'list' ? 4 : 3) && (
+                        <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-md">
+                          +{skills.length - (viewMode === 'list' ? 4 : 3)}
+                        </span>
+                      )}
                     </div>
                   )}
 
-                  {/* Location and Deadline */}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <div className="flex items-center">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {job.location ? `${job.location.city || "Unknown"}, ${job.location.state || "Unknown"}` : "Location not specified"}
+                  {/* Footer: Location, Deadline, Company (List view) */}
+                  <div className="flex items-center justify-between gap-4 pt-2.5 border-t border-gray-100">
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {isRemote ? (
+                            <span className="text-green-600 font-medium">Remote</span>
+                          ) : location ? (
+                            <span>{location.city || "Unknown"}{location.state ? `, ${location.state}` : ""}</span>
+                          ) : (
+                            <span>Location not specified</span>
+                          )}
+                        </span>
+                      </div>
+                      {viewMode === 'list' && job.company && (
+                        <div className="flex items-center gap-1">
+                          <Building2 className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate font-medium text-gray-600">{companyName}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      Due {job.deadline ? new Date(job.deadline).toLocaleDateString() : "No deadline"}
+                    {deadline && (
+                      <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Due {formatDateWithAppSettings(deadline)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* View CTA */}
+                  <div className="mt-3 pt-2.5 border-t border-gray-100">
+                    <div className="text-center">
+                      <span className="text-sm font-medium text-green-600 group-hover:text-green-700 transition-colors">
+                        View Details →
+                      </span>
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <Link
-                    href={`/marketplace/jobs/${job.id}`}
-                    className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-center block"
-                  >
-                    View Job Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>

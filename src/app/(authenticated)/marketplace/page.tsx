@@ -86,7 +86,15 @@ export default function MarketplacePage() {
   // Determine if we're in client or provider view
   const isClientView = roleView === 'client';
   const isProviderView = roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView);
-  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
+  
+  // Fetch categories based on roleView - client uses service categories, provider uses job categories
+  const categoryType = isClientView ? 'service' : 'job';
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    error: categoriesError, 
+    refetch: refetchCategories 
+  } = useCategories({ type: categoryType });
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [categoryKey, setCategoryKey] = useState<string | null>(null);

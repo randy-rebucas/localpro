@@ -14,6 +14,21 @@ export type InterviewStatus = "scheduled" | "completed" | "cancelled" | "resched
 export type Recommendation = "strong_hire" | "hire" | "no_hire" | "strong_no_hire";
 export type PromotionType = "standard" | "premium" | "urgent";
 
+export interface JobCategoryMetadata {
+  icon?: string;
+  color?: string;
+  tags?: string[];
+}
+
+export interface JobCategory {
+  _id?: string;
+  name: string;
+  description?: string;
+  isActive?: boolean;
+  displayOrder?: number;
+  metadata?: JobCategoryMetadata;
+}
+
 export interface CompanyLogo {
   url?: string;
   publicId?: string;

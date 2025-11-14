@@ -77,6 +77,7 @@ export const API_ENDPOINTS = {
   jobs: "/api/jobs",
   jobsSearch: "/api/jobs/search",
   jobsById: "/api/jobs",
+  jobsCategories: "/api/jobs/categories",
   jobsMyApplications: "/api/jobs/my-applications",
   jobsMyJobs: "/api/jobs/my-jobs",
   jobsApply: "/api/jobs",
@@ -299,6 +300,7 @@ export const API_ENDPOINTS = {
   providersAnalyticsPerformance: "/api/providers/analytics/performance",
   providersAdminAll: "/api/providers/admin/all",
   providersAdminStatus: "/api/providers/admin",
+  providersSkills: "/api/providers/skills",
   
   // Agency Management
   agencies: "/api/agencies",

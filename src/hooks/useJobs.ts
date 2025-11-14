@@ -200,11 +200,21 @@ export function useMyApplications(params: { status?: string; page?: number; limi
       queryParams.append("page", page.toString());
       queryParams.append("limit", limit.toString());
 
+      // Using /api/jobs/my-applications endpoint
       const url = `${API_BASE_URL}${API_ENDPOINTS.jobsMyApplications}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      logger.debug("Fetching my applications", { url, params: queryParams.toString() });
       const response = await fetch(url, createAuthFetchOptions());
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch applications: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || `Failed to fetch applications: ${response.status}`;
+        logger.error("Failed to fetch applications", undefined, { 
+          status: response.status, 
+          errorData, 
+          url,
+          queryParams: queryParams.toString()
+        });
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -225,7 +235,7 @@ export function useMyApplications(params: { status?: string; page?: number; limi
         setLoading(false);
       }
     }
-  }, [params]);
+  }, [params.status, params.page, params.limit]);
 
   useEffect(() => {
     mountedRef.current = true;

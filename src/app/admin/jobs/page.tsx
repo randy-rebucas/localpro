@@ -358,23 +358,76 @@ export default function AdminJobsPage() {
         return;
       }
 
-      if (!getApiToken()) {
+      // Validate file before uploading
+      if (!(logoFile instanceof File) || logoFile.size === 0) {
+        showError("Invalid file. Please select a valid image file.");
+        return;
+      }
+
+      // Validate file type
+      if (!logoFile.type.startsWith('image/')) {
+        showError("Please select an image file (PNG, JPG, GIF, etc.)");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (logoFile.size > maxSize) {
+        showError("File size must be less than 5MB");
+        return;
+      }
+
+      const apiToken = getApiToken();
+      if (!apiToken) {
         showError("Authentication required");
         return;
       }
 
-      const formData = new FormData();
-      formData.append("logo", logoFile);
+      setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsLogo}/${selectedJob._id}/logo`, {
-        ...createAuthFetchOptions(),
+      const formData = new FormData();
+      // Use "logo" as the field name - backend expects this field name
+      formData.append("logo", logoFile, logoFile.name || "logo.jpg");
+
+      // Log upload details for debugging
+      logger.debug('Uploading logo', {
+        url: `${API_BASE_URL}${API_ENDPOINTS.jobsById}/${selectedJob._id}/logo`,
+        jobId: selectedJob._id,
+        fileName: logoFile.name,
+        fileSize: logoFile.size,
+        fileType: logoFile.type,
+        fieldName: 'logo'
+      });
+
+      // Create headers manually without Content-Type for FormData
+      // The browser will automatically set Content-Type with boundary
+      const headers: HeadersInit = {
+        'Authorization': `Bearer ${apiToken}`,
+      };
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsById}/${selectedJob._id}/logo`, {
         method: "POST",
+        headers,
         body: formData,
+        credentials: 'include',
       });
 
       if (!response.ok) {
+        // Check if response is actually JSON before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(text || `Failed to upload logo: ${response.status}`);
+        }
         const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to upload logo: ${response.status}`);
+        throw new Error(errorData.message || errorData.error || `Failed to upload logo: ${response.status}`);
+      }
+
+      // Check if response is actually JSON before parsing
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text || 'Invalid response format');
       }
 
       const result = await response.json();
@@ -384,12 +437,14 @@ export default function AdminJobsPage() {
         setLogoFile(null);
         fetchJobs();
       } else {
-        throw new Error(result.message || "Failed to upload logo");
+        throw new Error(result.message || result.error || "Failed to upload logo");
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       showError(errorMessage);
       logger.error("Error uploading logo", err instanceof Error ? err : new Error(errorMessage));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -405,7 +460,7 @@ export default function AdminJobsPage() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsStats}/${job._id}/stats`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsById}/${job._id}/stats`, {
         ...createAuthFetchOptions({ method: "GET" }),
       });
 
@@ -441,7 +496,7 @@ export default function AdminJobsPage() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsApplications}/${job._id}/applications`, {
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.jobsById}/${job._id}/applications`, {
         ...createAuthFetchOptions({ method: "GET" }),
       });
 
@@ -479,7 +534,7 @@ export default function AdminJobsPage() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.jobsApplicationStatus}/${selectedJob._id}/applications/${applicationId}/status`,
+        `${API_BASE_URL}${API_ENDPOINTS.jobsById}/${selectedJob._id}/applications/${applicationId}/status`,
         {
           ...createAuthFetchOptions(),
           method: "PUT",
@@ -1416,14 +1471,19 @@ export default function AdminJobsPage() {
           {logoFile && (
             <div>
               <p className="text-sm text-gray-600 mb-2">Preview:</p>
-              <Image
-                src={URL.createObjectURL(logoFile)}
-                alt="Logo preview"
-                width={128}
-                height={128}
-                className="w-32 h-32 object-cover rounded"
-                unoptimized
-              />
+              <div className="relative">
+                <Image
+                  src={URL.createObjectURL(logoFile)}
+                  alt="Logo preview"
+                  width={128}
+                  height={128}
+                  className="w-32 h-32 object-cover rounded border border-gray-200"
+                  unoptimized
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {logoFile.name} ({(logoFile.size / 1024).toFixed(1)} KB)
+                </p>
+              </div>
             </div>
           )}
         </div>

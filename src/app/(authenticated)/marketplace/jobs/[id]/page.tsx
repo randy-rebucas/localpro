@@ -25,7 +25,9 @@ import {
   Sparkles,
   TrendingUp,
   Eye,
-  Users
+  Users,
+  ArrowLeft,
+  Briefcase
 } from "lucide-react";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
@@ -37,12 +39,9 @@ import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface ApplicationForm {
   coverLetter: string;
-  proposedBudget: number;
-  proposedTimeline: number;
-  relevantExperience: string;
-  portfolioLinks: string[];
+  expectedSalary: number;
   availability: string;
-  questions: string;
+  portfolio: string;
 }
 
 interface RelatedJob {
@@ -65,15 +64,14 @@ export default function JobDetailPage() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [applicationForm, setApplicationForm] = useState<ApplicationForm>({
     coverLetter: "",
-    proposedBudget: 0,
-    proposedTimeline: 0,
-    relevantExperience: "",
-    portfolioLinks: [],
+    expectedSalary: 0,
     availability: "",
-    questions: ""
+    portfolio: ""
   });
   const [applicationLoading, setApplicationLoading] = useState(false);
-  const [newPortfolioLink, setNewPortfolioLink] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
 
   // Get default currency from app settings
   const defaultCurrency = getDefaultCurrency(appSettings);
@@ -99,6 +97,13 @@ export default function JobDetailPage() {
       // Handle different response structures
       const jobData = data?.data || data?.job || data;
       setJob(jobData);
+      
+      // Load favorite status from localStorage
+      const jobId = jobData._id || jobData.id;
+      if (jobId) {
+        const favorites = JSON.parse(localStorage.getItem('favoriteJobs') || '[]');
+        setIsFavorited(favorites.includes(jobId));
+      }
     } catch (error) {
       logger.error("Error fetching job", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
       setError("Failed to load job details");
@@ -131,6 +136,79 @@ export default function JobDetailPage() {
     }
   }, [params.id, fetchJob, fetchRelatedJobs]);
 
+  const handleToggleFavorite = useCallback(() => {
+    if (!job) return;
+    
+    const jobId = job._id || (job as Partial<JobType> & { id?: string }).id;
+    if (!jobId) return;
+    
+    const newFavorited = !isFavorited;
+    
+    try {
+      const favorites = JSON.parse(localStorage.getItem('favoriteJobs') || '[]');
+      
+      if (newFavorited) {
+        // Add to favorites if not already present
+        if (!favorites.includes(jobId)) {
+          favorites.push(jobId);
+        }
+      } else {
+        // Remove from favorites
+        const index = favorites.indexOf(jobId);
+        if (index > -1) {
+          favorites.splice(index, 1);
+        }
+      }
+      
+      localStorage.setItem('favoriteJobs', JSON.stringify(favorites));
+      setIsFavorited(newFavorited);
+    } catch (error) {
+      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { jobId: params.id, isFavorited: newFavorited });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job, isFavorited]);
+
+  const handleShare = useCallback(async () => {
+    if (!job) return;
+    
+    const shareData = {
+      title: job.title,
+      text: job.description || '',
+      url: typeof window !== 'undefined' ? window.location.href : ''
+    };
+    
+    try {
+      // Try Web Share API first (mobile and modern browsers)
+      if (navigator.share && typeof navigator.share === 'function') {
+        await navigator.share(shareData);
+        setShareFeedback('Shared successfully!');
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(shareData.url);
+        setShareFeedback('Link copied to clipboard!');
+      }
+      
+      // Clear feedback after 2 seconds
+      setTimeout(() => setShareFeedback(null), 2000);
+    } catch (error) {
+      // User cancelled share or error occurred
+      if (error instanceof Error && error.name !== 'AbortError') {
+        logger.error('Error sharing', error, { jobId: params.id });
+        // Try clipboard as fallback
+        try {
+          await navigator.clipboard.writeText(shareData.url);
+          setShareFeedback('Link copied to clipboard!');
+          setTimeout(() => setShareFeedback(null), 2000);
+        } catch (clipboardError) {
+          logger.error('Error copying to clipboard', clipboardError instanceof Error ? clipboardError : new Error(String(clipboardError)), { jobId: params.id });
+          setShareFeedback('Failed to share. Please try again.');
+          setTimeout(() => setShareFeedback(null), 2000);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job]);
+
   const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!job) return;
@@ -141,45 +219,88 @@ export default function JobDetailPage() {
         throw new Error('Please log in to apply for this job');
       }
       
-      const url = `${API_BASE_URL}${API_ENDPOINTS.jobsApplications}`;
-      const response = await fetch(url, createAuthFetchOptions({
+      const jobId = job._id || String(params.id);
+      // Use the correct endpoint: POST /api/jobs/:id/apply
+      const url = `${API_BASE_URL}${API_ENDPOINTS.jobs}/${jobId}/apply`;
+      
+      // Use FormData for multipart/form-data (required for resume upload)
+      const formData = new FormData();
+      
+      // Required: Resume file
+      if (resumeFile) {
+        formData.append('resume', resumeFile);
+      } else {
+        throw new Error('Please upload your resume');
+      }
+      
+      // Required: Cover letter
+      if (!applicationForm.coverLetter.trim()) {
+        throw new Error('Please provide a cover letter');
+      }
+      formData.append('coverLetter', applicationForm.coverLetter);
+      
+      // Required: Expected salary
+      if (applicationForm.expectedSalary > 0) {
+        formData.append('expectedSalary', applicationForm.expectedSalary.toString());
+      } else {
+        throw new Error('Please enter your expected salary');
+      }
+      
+      // Required: Availability (date string in YYYY-MM-DD format)
+      if (applicationForm.availability) {
+        formData.append('availability', applicationForm.availability);
+      } else {
+        throw new Error('Please select your availability date');
+      }
+      
+      // Optional: Portfolio
+      if (applicationForm.portfolio.trim()) {
+        formData.append('portfolio', applicationForm.portfolio.trim());
+      }
+      
+      // Create fetch options without Content-Type for FormData
+      // The browser will automatically set Content-Type with boundary for multipart/form-data
+      const apiToken = getApiToken();
+      const fetchOptions: RequestInit = {
         method: 'POST',
-        body: JSON.stringify({
-          jobId: job._id || String(params.id),
-          ...applicationForm
-        }),
-      }));
+        body: formData,
+        headers: {
+          ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
+        },
+        credentials: 'include',
+      };
+      
+      const response = await fetch(url, fetchOptions);
 
       if (!response.ok) {
-        throw new Error("Failed to submit application");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}: Failed to submit application`;
+        logger.error("Failed to submit application", undefined, { 
+          status: response.status, 
+          errorData, 
+          jobId 
+        });
+        throw new Error(errorMessage);
       }
 
-      const application = await response.json();
-      router.push(`/marketplace/my-applications/${application.id}`);
+      const result = await response.json();
+      const application = result.data || result;
+      const applicationId = application._id || application.id || application.applicationId;
+      
+      if (applicationId) {
+        router.push(`/marketplace/my-applications/${applicationId}`);
+      } else {
+        router.push('/marketplace/my-applications');
+      }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit application. Please try again.";
       logger.error("Error submitting application", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
-      alert("Failed to submit application. Please try again.");
+      alert(errorMessage);
     } finally {
       setApplicationLoading(false);
     }
   };
 
-  const addPortfolioLink = () => {
-    if (newPortfolioLink.trim()) {
-      setApplicationForm(prev => ({
-        ...prev,
-        portfolioLinks: [...prev.portfolioLinks, newPortfolioLink.trim()]
-      }));
-      setNewPortfolioLink("");
-    }
-  };
-
-  const removePortfolioLink = (index: number) => {
-    setApplicationForm(prev => ({
-      ...prev,
-      portfolioLinks: prev.portfolioLinks.filter((_, i) => i !== index)
-    }));
-  };
 
   const formatPrice = (price: number, currency?: string) => {
     const currencyCode = currency || job?.salary?.currency || defaultCurrency;
@@ -230,32 +351,36 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-        <Link href="/marketplace/jobs" className="hover:text-gray-700 transition-colors">
-          Jobs
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/marketplace/jobs"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Back to marketplace"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <span>/</span>
-        <span className="text-gray-700 font-medium">{job.title}</span>
-      </nav>
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+          <Briefcase className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{job.title}</h1>
+          <p className="text-sm text-gray-600">{job.description ? job.description.substring(0, 80) + (job.description.length > 80 ? '...' : '') : 'Job opportunity'}</p>
+        </div>
+      </div>
 
-      {/* Job Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-3 mb-3">
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight">{job.title}</h1>
-              {job.company && (
-                <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
+      {/* Job Details */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+              {job.company?.name && (
+                <div className="flex items-center gap-1">
+                  <Building2 className="w-4 h-4" />
+                  <span>{job.company.name}</span>
+                </div>
               )}
-            </div>
-            {job.company?.name && (
-              <div className="mb-4">
-                <p className="text-lg text-gray-700 font-medium">{job.company.name}</p>
-              </div>
-            )}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
               {job.company?.location && (
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
@@ -279,12 +404,30 @@ export default function JobDetailPage() {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Share2 className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handleShare}
+              className="relative p-3 rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all hover:scale-110 group"
+              title="Share job"
+            >
+              <Share2 className="w-5 h-5" />
+              {shareFeedback && (
+                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                  {shareFeedback}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                </div>
+              )}
             </button>
-            <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Heart className="w-4 h-4" />
+            <button 
+              onClick={handleToggleFavorite}
+              className={`p-3 rounded-full transition-all hover:scale-110 ${
+                isFavorited 
+                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-600'
+              }`}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
@@ -301,7 +444,7 @@ export default function JobDetailPage() {
                   height={256}
                   className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+                <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
               </div>
             </div>
             {/* Company logo is shown as main image, no thumbnail gallery for jobs */}
@@ -855,8 +998,14 @@ export default function JobDetailPage() {
 
       {/* Application Modal */}
       {showApplicationForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
+          onClick={() => setShowApplicationForm(false)}
+        >
+          <div 
+            className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-gray-700">Apply for Job</h2>
@@ -883,119 +1032,79 @@ export default function JobDetailPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Proposed Budget ({defaultCurrency})
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={applicationForm.proposedBudget}
-                      onChange={(e) => setApplicationForm(prev => ({ ...prev, proposedBudget: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Proposed Timeline (days)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={applicationForm.proposedTimeline}
-                      onChange={(e) => setApplicationForm(prev => ({ ...prev, proposedTimeline: Number(e.target.value) }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="30"
-                    />
-                  </div>
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Relevant Experience *
+                    Expected Salary * ({defaultCurrency})
                   </label>
-                  <textarea
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
                     required
-                    rows={3}
-                    value={applicationForm.relevantExperience}
-                    onChange={(e) => setApplicationForm(prev => ({ ...prev, relevantExperience: e.target.value }))}
+                    value={applicationForm.expectedSalary || ""}
+                    onChange={(e) => setApplicationForm(prev => ({ ...prev, expectedSalary: Number(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Describe your relevant experience for this job..."
+                    placeholder="0.00"
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Your expected salary for this position
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Portfolio Links
+                    Resume * (PDF, DOC, DOCX)
                   </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={newPortfolioLink}
-                      onChange={(e) => setNewPortfolioLink(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addPortfolioLink();
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Add portfolio link..."
-                    />
-                    <button
-                      type="button"
-                      onClick={addPortfolioLink}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  {applicationForm.portfolioLinks.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {applicationForm.portfolioLinks.map((link, index) => (
-                        <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                          <span className="flex-1 text-sm truncate">{link}</span>
-                          <button
-                            type="button"
-                            onClick={() => removePortfolioLink(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                    </div>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    required
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setResumeFile(file);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                  />
+                  {resumeFile && (
+                    <p className="mt-1 text-sm text-gray-600">
+                      Selected: {resumeFile.name} ({(resumeFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Availability
+                    Portfolio URL
                   </label>
                   <input
-                    type="text"
-                    value={applicationForm.availability}
-                    onChange={(e) => setApplicationForm(prev => ({ ...prev, availability: e.target.value }))}
+                    type="url"
+                    value={applicationForm.portfolio}
+                    onChange={(e) => setApplicationForm(prev => ({ ...prev, portfolio: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="e.g., Available immediately, 20 hours/week"
+                    placeholder="https://yourportfolio.com"
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Link to your portfolio or work samples (optional)
+                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Questions for Client
+                    Availability Date *
                   </label>
-                  <textarea
-                    rows={2}
-                    value={applicationForm.questions}
-                    onChange={(e) => setApplicationForm(prev => ({ ...prev, questions: e.target.value }))}
+                  <input
+                    type="date"
+                    required
+                    value={applicationForm.availability}
+                    onChange={(e) => setApplicationForm(prev => ({ ...prev, availability: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Any questions you have about the project..."
+                    min={new Date().toISOString().split('T')[0]}
                   />
+                  <p className="mt-1 text-xs text-gray-500">
+                    When can you start working on this job?
+                  </p>
                 </div>
+
 
                 <div className="flex gap-3">
                   <button
