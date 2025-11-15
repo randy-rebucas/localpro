@@ -103,6 +103,8 @@ export interface Profile {
   address?: Address;
   skills?: string[];
   experience?: number;
+  gender?: "male" | "female" | "other" | "prefer_not_to_say";
+  birthdate?: Date | string;
   rating?: number;
   totalReviews?: number;
   businessName?: string;
@@ -221,6 +223,7 @@ export interface User {
   localProPlusSubscription?: string;
   wallet?: Wallet;
   agency?: Agency;
+  provider?: import("@/types/providers").Provider; // Optional provider data for users with provider role
   trustScore?: number;
   verification?: Verification;
   badges?: UserBadge[];

@@ -71,6 +71,7 @@ export const API_ENDPOINTS = {
   aiResponseAssistant: "/api/ai/marketplace/response-assistant",
   aiListingOptimizer: "/api/ai/marketplace/listing-optimizer",
   aiSchedulingAssistant: "/api/ai/marketplace/scheduling-assistant",
+  aiBioGenerator: "/api/ai/users/bio-generator",
 
   
   // Job Board

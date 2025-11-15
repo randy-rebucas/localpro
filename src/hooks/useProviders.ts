@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { User } from "@/types/users";
 import { Provider } from "@/types/providers";
 
 export interface ProvidersParams {
@@ -19,8 +20,8 @@ export interface ProvidersParams {
 
 interface ProvidersResponse {
   success?: boolean;
-  data?: Provider[];
-  providers?: Provider[];
+  data?: { users?: User[]; pagination?: { current: number; pages: number; total: number; limit: number; count: number } };
+  users?: User[];
   pagination?: {
     current: number;
     pages: number;
@@ -31,7 +32,7 @@ interface ProvidersResponse {
 }
 
 export function useProviders(params: ProvidersParams = {}) {
-  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<ProvidersResponse["pagination"] | null>(null);
@@ -45,6 +46,8 @@ export function useProviders(params: ProvidersParams = {}) {
       setError(null);
 
       const queryParams = new URLSearchParams();
+      // Always filter by provider role
+      queryParams.append("role", "provider");
       if (params.status) queryParams.append("status", params.status);
       if (params.providerType) queryParams.append("providerType", params.providerType);
       if (params.category) queryParams.append("category", params.category);
@@ -58,23 +61,46 @@ export function useProviders(params: ProvidersParams = {}) {
       if (params.sortBy) queryParams.append("sortBy", params.sortBy);
       if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-      const url = `${API_BASE_URL}${API_ENDPOINTS.providers}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
       const response = await fetch(url, createAuthFetchOptions());
 
       if (!response.ok) {
         throw new Error(`Failed to fetch providers: ${response.status}`);
       }
 
-      const data: ProvidersResponse | Provider[] = await response.json();
-      let providersData: Provider[] = [];
+      const data: ProvidersResponse | User[] | { success?: boolean; data?: { users?: User[]; pagination?: ProvidersResponse["pagination"] } } = await response.json();
+      let providersData: User[] = [];
       let paginationData = null;
+
+      // Debug logging
+      logger.debug("Providers API response", { 
+        isArray: Array.isArray(data),
+        hasData: !!(data && typeof data === 'object'),
+        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
+        dataStructure: data && typeof data === 'object' && 'data' in data ? Object.keys((data as { data?: Record<string, unknown> }).data || {}) : []
+      });
 
       if (Array.isArray(data)) {
         providersData = data;
       } else if (data && typeof data === "object") {
-        providersData = (data as ProvidersResponse).data || (data as ProvidersResponse).providers || [];
-        paginationData = (data as ProvidersResponse).pagination || null;
+        // Handle users endpoint response structure: { success: true, data: { users: [...], pagination: {...} } }
+        if ('data' in data && data.data && 'users' in data.data) {
+          providersData = data.data.users || [];
+          paginationData = data.data.pagination || null;
+        } else if ('users' in data) {
+          // Handle direct users array in response
+          providersData = (data as ProvidersResponse).users || [];
+          paginationData = (data as ProvidersResponse).pagination || null;
+        }
       }
+
+      // Log how many users have provider data
+      const usersWithProvider = providersData.filter(user => user.provider);
+      logger.debug("Providers data processed", {
+        totalUsers: providersData.length,
+        usersWithProvider: usersWithProvider.length,
+        usersWithoutProvider: providersData.length - usersWithProvider.length
+      });
 
       if (mountedRef.current) {
         setProviders(providersData);

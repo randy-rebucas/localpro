@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { 
   Users, 
   Search, 
@@ -20,15 +21,18 @@ import {
   ChevronUp,
   Award,
   CheckCircle2,
-  Save
+  Save,
+  Sparkles
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
+import { FileUpload } from "@/components/ui/file-upload";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { User, UserStatus, UserBadge, Verification, Profile, BadgeType } from "@/types/users";
+import { generateBio } from "@/lib/ai-utils";
 
 // Type for API user response (raw data from backend)
 interface ApiUserData {
@@ -103,7 +107,20 @@ const transformUserData = (apiUser: ApiUserData): User => {
 
   // Handle profile
   if (apiUser.profile) {
-    user.profile = apiUser.profile as Profile;
+    user.profile = {
+      ...apiUser.profile,
+      // Ensure gender and birthdate are properly preserved
+      gender: apiUser.profile.gender 
+        ? (apiUser.profile.gender as "male" | "female" | "other" | "prefer_not_to_say")
+        : undefined,
+      birthdate: apiUser.profile.birthdate 
+        ? (apiUser.profile.birthdate instanceof Date 
+            ? apiUser.profile.birthdate 
+            : typeof apiUser.profile.birthdate === 'string'
+            ? apiUser.profile.birthdate
+            : apiUser.profile.birthdate ? new Date(String(apiUser.profile.birthdate)) : undefined)
+        : undefined
+    } as Profile;
   }
 
   // Handle verification
@@ -203,7 +220,30 @@ export default function UsersPage() {
     lastName: "",
     roles: ["client"] as string[],
     agencyId: "",
-    agencyRole: ""
+    agencyRole: "",
+    profile: {
+      avatar: {
+        url: "",
+        publicId: "",
+        thumbnail: ""
+      },
+      bio: "",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+            coordinates: {
+              lat: undefined as number | undefined,
+              lng: undefined as number | undefined
+            }
+      },
+      skills: [] as string[],
+      experience: 0,
+      gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
+      birthdate: "" as string | Date | undefined
+    }
   });
 
   const [editFormData, setEditFormData] = useState({
@@ -211,7 +251,30 @@ export default function UsersPage() {
     lastName: "",
     email: "",
     phoneNumber: "",
-    roles: ["client"] as string[]
+    roles: ["client"] as string[],
+    profile: {
+      avatar: {
+        url: "",
+        publicId: "",
+        thumbnail: ""
+      },
+      bio: "",
+      address: {
+        street: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "",
+            coordinates: {
+              lat: undefined as number | undefined,
+              lng: undefined as number | undefined
+            }
+      },
+      skills: [] as string[],
+      experience: 0,
+      gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
+      birthdate: "" as string | Date | undefined
+    }
   });
 
   const [verificationFormData, setVerificationFormData] = useState({
@@ -232,6 +295,37 @@ export default function UsersPage() {
     isActive: true,
     status: "active" as UserStatus
   });
+
+  // Avatar upload states
+  const [createAvatarFile, setCreateAvatarFile] = useState<File | null>(null);
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Skills state - skills can be objects with {id, name, category, ...} or strings
+  const [availableSkills, setAvailableSkills] = useState<Array<{ id?: string; name: string; category?: string; displayOrder?: number; metadata?: Record<string, unknown> } | string>>([]);
+  const [loadingSkills, setLoadingSkills] = useState(false);
+  const [skillsSearchInput, setSkillsSearchInput] = useState({ create: "", edit: "" });
+  const [showSkillsSuggestions, setShowSkillsSuggestions] = useState({ create: false, edit: false });
+
+  // Roles state
+  const availableRoles = ['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'];
+  const [rolesSearchInput, setRolesSearchInput] = useState({ create: "", edit: "" });
+  const [showRolesSuggestions, setShowRolesSuggestions] = useState({ create: false, edit: false });
+
+  // AI Bio generation state
+  const [generatingBio, setGeneratingBio] = useState({ create: false, edit: false });
+
+  // Debug: Track editFormData changes
+  useEffect(() => {
+    if (editModalOpen) {
+      console.log('📋 Edit form data changed', {
+        gender: editFormData.profile.gender,
+        birthdate: editFormData.profile.birthdate,
+        genderType: typeof editFormData.profile.gender,
+        birthdateType: typeof editFormData.profile.birthdate
+      });
+    }
+  }, [editFormData.profile.gender, editFormData.profile.birthdate, editModalOpen]);
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -418,6 +512,160 @@ export default function UsersPage() {
     fetchData();
   }, [fetchData]);
 
+  // Fetch available skills
+  const fetchSkills = useCallback(async () => {
+    try {
+      setLoadingSkills(true);
+      if (!getApiToken()) return;
+      
+      const url = `${API_BASE_URL}${API_ENDPOINTS.providersSkills}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        logger.warn('Failed to fetch skills', { 
+          status: response.status, 
+          error: errorData.error || errorData.message 
+        });
+        return;
+      }
+
+      const result = await response.json();
+      // Handle different response structures
+      const skills = result.data?.skills || result.data || result.skills || result || [];
+      // Ensure we have an array and normalize to objects with name property
+      type SkillType = { id?: string; name: string; category?: string; displayOrder?: number; metadata?: Record<string, unknown> } | string;
+      const normalizedSkills: SkillType[] = Array.isArray(skills) 
+        ? skills.map((skill: { id?: string; name?: string; category?: string; [key: string]: unknown } | string): SkillType => {
+            // If it's already an object with a name, use it
+            if (typeof skill === 'object' && skill !== null && skill.name && typeof skill.name === 'string') {
+              return {
+                id: typeof skill.id === 'string' ? skill.id : undefined,
+                name: skill.name,
+                category: typeof skill.category === 'string' ? skill.category : undefined,
+                displayOrder: typeof skill.displayOrder === 'number' ? skill.displayOrder : undefined,
+                metadata: typeof skill.metadata === 'object' && skill.metadata !== null ? skill.metadata as Record<string, unknown> : undefined
+              };
+            }
+            // If it's a string, convert to object
+            if (typeof skill === 'string') {
+              return { name: skill };
+            }
+            // Otherwise, try to extract name or use the skill as-is
+            const nameValue = (typeof skill === 'object' && skill !== null && skill.name) 
+              ? String(skill.name) 
+              : String(skill);
+            return { name: nameValue };
+          })
+        : [];
+      setAvailableSkills(normalizedSkills);
+    } catch (err) {
+      logger.error('Error fetching skills', err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setLoadingSkills(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSkills();
+  }, [fetchSkills]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.skills-autosuggest-container') && !target.closest('.roles-autosuggest-container')) {
+        setShowSkillsSuggestions({ create: false, edit: false });
+        setShowRolesSuggestions({ create: false, edit: false });
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (file: File, isCreate: boolean) => {
+    if (!file) return null;
+
+    try {
+      setUploadingAvatar(true);
+      if (!getApiToken()) {
+        toast.error('Authentication required');
+        return null;
+      }
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const apiToken = getApiToken();
+      const headers: HeadersInit = {
+        ...(apiToken && { 'Authorization': `Bearer ${apiToken}` }),
+      };
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.authUploadAvatar}`, {
+        method: "POST",
+        headers,
+        body: formData,
+        credentials: 'include',
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(text || 'Invalid response format');
+      }
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        const errorMsg = data.message || data.error || "Failed to upload avatar";
+        toast.error(errorMsg);
+        return null;
+      }
+
+      const avatarData = data.data?.avatar || data.avatar;
+      if (avatarData) {
+        if (isCreate) {
+          setCreateFormData(prev => ({
+            ...prev,
+            profile: {
+              ...prev.profile,
+              avatar: {
+                url: avatarData.url || "",
+                publicId: avatarData.publicId || "",
+                thumbnail: avatarData.thumbnail || ""
+              }
+            }
+          }));
+        } else {
+          setEditFormData(prev => ({
+            ...prev,
+            profile: {
+              ...prev.profile,
+              avatar: {
+                url: avatarData.url || "",
+                publicId: avatarData.publicId || "",
+                thumbnail: avatarData.thumbnail || ""
+              }
+            }
+          }));
+        }
+        toast.success('Avatar uploaded successfully');
+        return avatarData;
+      }
+      return null;
+    } catch (err) {
+      logger.error('Error uploading avatar', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to upload avatar');
+      return null;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const refreshData = async () => {
     setRefreshing(true);
     try {
@@ -476,16 +724,217 @@ export default function UsersPage() {
     }
   };
 
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setEditFormData({
-      firstName: user.firstName || "",
-      lastName: user.lastName || "",
-      email: user.email || "",
-      phoneNumber: user.phoneNumber || "",
-      roles: user.roles || ['client']
-    });
-    setEditModalOpen(true);
+  const handleEditUser = async (user: User) => {
+    if (!user._id) {
+      toast.error('User ID is required');
+      return;
+    }
+
+    try {
+      setLoadingUserDetails(true);
+      if (!getApiToken()) {
+        toast.error('Authentication required');
+        return;
+      }
+      
+      // Fetch full user details to ensure we have all profile data
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}/${user._id}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch user details');
+      }
+
+      const result = await response.json();
+      const userData = result.data || result;
+      
+      // Debug: Log raw API response
+      console.log('🔍 Raw user data from API', {
+        userData,
+        profile: userData.profile,
+        gender: userData.profile?.gender,
+        birthdate: userData.profile?.birthdate,
+        profileKeys: userData.profile ? Object.keys(userData.profile) : []
+      });
+      
+      const fullUser = transformUserData(userData);
+      
+      // Debug: Log transformed user data
+      console.log('🔄 Transformed user data', {
+        fullUser,
+        profile: fullUser.profile,
+        gender: fullUser.profile?.gender,
+        birthdate: fullUser.profile?.birthdate,
+        profileKeys: fullUser.profile ? Object.keys(fullUser.profile) : []
+      });
+      
+      setSelectedUser(fullUser);
+      
+      // Format birthdate for input field
+      const formatBirthdate = (bd: Date | string | undefined): string => {
+        if (!bd) return "";
+        try {
+          if (bd instanceof Date) {
+            return bd.toISOString().split('T')[0];
+          }
+          if (typeof bd === 'string') {
+            // Handle ISO string format: "2024-01-15T00:00:00.000Z" or "2024-01-15"
+            const dateStr = bd.split('T')[0].split(' ')[0];
+            // Validate it's a valid date format (YYYY-MM-DD)
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+              return dateStr;
+            }
+            // Try to parse and reformat
+            const parsed = new Date(bd);
+            if (!isNaN(parsed.getTime())) {
+              return parsed.toISOString().split('T')[0];
+            }
+          }
+        } catch (e) {
+          logger.warn('Error formatting birthdate', { birthdate: bd, error: e });
+        }
+        return "";
+      };
+      
+      // Extract gender - handle both direct access and through profile
+      const rawGender = fullUser.profile?.gender || userData.profile?.gender;
+      const userGender = (
+        rawGender === "male" || rawGender === "female" || rawGender === "other" || rawGender === "prefer_not_to_say"
+          ? rawGender
+          : ""
+      ) as "" | "male" | "female" | "other" | "prefer_not_to_say";
+      const userBirthdate = fullUser.profile?.birthdate || userData.profile?.birthdate;
+      
+      console.log('📝 Extracted values for form', {
+        rawGender,
+        userGender,
+        userBirthdate,
+        formattedBirthdate: formatBirthdate(userBirthdate),
+        genderType: typeof userGender,
+        birthdateType: typeof userBirthdate
+      });
+      
+      const formDataToSet: typeof editFormData = {
+        firstName: fullUser.firstName || "",
+        lastName: fullUser.lastName || "",
+        email: fullUser.email || "",
+        phoneNumber: fullUser.phoneNumber || "",
+        roles: fullUser.roles || ['client'],
+        profile: {
+          avatar: {
+            url: fullUser.profile?.avatar?.url || "",
+            publicId: fullUser.profile?.avatar?.publicId || "",
+            thumbnail: fullUser.profile?.avatar?.thumbnail || ""
+          },
+          bio: fullUser.profile?.bio || "",
+          address: {
+            street: fullUser.profile?.address?.street || "",
+            city: fullUser.profile?.address?.city || "",
+            state: fullUser.profile?.address?.state || "",
+            zipCode: fullUser.profile?.address?.zipCode || "",
+            country: fullUser.profile?.address?.country || "",
+            coordinates: {
+              lat: fullUser.profile?.address?.coordinates?.lat as number | undefined,
+              lng: fullUser.profile?.address?.coordinates?.lng as number | undefined
+            }
+          },
+          skills: fullUser.profile?.skills || [],
+          experience: fullUser.profile?.experience || 0,
+          gender: userGender,
+          birthdate: formatBirthdate(userBirthdate)
+        }
+      };
+      
+      // Debug: Log the final form data being set
+      console.log('✅ Setting edit form data', {
+        gender: formDataToSet.profile.gender,
+        birthdate: formDataToSet.profile.birthdate,
+        genderType: typeof formDataToSet.profile.gender,
+        birthdateType: typeof formDataToSet.profile.birthdate,
+        genderValue: formDataToSet.profile.gender,
+        birthdateValue: formDataToSet.profile.birthdate,
+        fullProfile: formDataToSet.profile
+      });
+      
+      setEditFormData(formDataToSet);
+      
+      // Verify the state was set correctly
+      setTimeout(() => {
+        console.log('🔎 Edit form data after setState', {
+          gender: editFormData.profile.gender,
+          birthdate: editFormData.profile.birthdate
+        });
+      }, 50);
+      
+      setEditModalOpen(true);
+    } catch (err) {
+      logger.error('Error fetching user details for edit', err instanceof Error ? err : new Error(String(err)), { userId: user._id });
+      toast.error(err instanceof Error ? err.message : 'Failed to fetch user details');
+    } finally {
+      setLoadingUserDetails(false);
+    }
+  };
+
+  const handleGenerateBio = async (isCreate: boolean) => {
+    try {
+      const formData = isCreate ? createFormData : editFormData;
+      
+      // Check if user has skills
+      if (!formData.profile.skills || formData.profile.skills.length === 0) {
+        toast.error('Please add skills first to generate a bio');
+        return;
+      }
+
+      setGeneratingBio({ ...generatingBio, [isCreate ? 'create' : 'edit']: true });
+      
+      const bioParams = {
+        skills: formData.profile.skills,
+        experience: formData.profile.experience,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        roles: formData.roles
+      };
+
+      const result = await generateBio(bioParams);
+      
+      if (result.bio) {
+        if (isCreate) {
+          setCreateFormData({
+            ...createFormData,
+            profile: {
+              ...createFormData.profile,
+              bio: result.bio
+            }
+          });
+        } else {
+          setEditFormData({
+            ...editFormData,
+            profile: {
+              ...editFormData.profile,
+              bio: result.bio
+            }
+          });
+        }
+        toast.success('Bio generated successfully!');
+      } else {
+        toast.error('Failed to generate bio');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate bio';
+      logger.error('Error generating bio', error instanceof Error ? error : new Error(String(error)));
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+        toast.error('Bio generation service is temporarily unavailable. Please try again later or write your bio manually.');
+      } else if (errorMessage.includes('404') || errorMessage.includes('not available')) {
+        toast.error('Bio generation feature is not available yet. Please write your bio manually.');
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setGeneratingBio({ ...generatingBio, [isCreate ? 'create' : 'edit']: false });
+    }
   };
 
   const handleOpenVerificationModal = (user: User) => {
@@ -517,12 +966,20 @@ export default function UsersPage() {
         ? createFormData.roles
         : ['client', ...createFormData.roles];
 
+      // Prepare profile data, ensuring gender and birthdate are included
+      const profileData: Profile = {
+        ...createFormData.profile,
+        gender: createFormData.profile.gender || undefined,
+        birthdate: createFormData.profile.birthdate || undefined
+      };
+
       const url = `${API_BASE_URL}${API_ENDPOINTS.usersCreate}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'POST',
         body: JSON.stringify({
           ...createFormData,
-          roles: rolesToSend
+          roles: rolesToSend,
+          profile: profileData
         })
       }));
 
@@ -533,6 +990,7 @@ export default function UsersPage() {
 
       toast.success('User created successfully');
       setCreateModalOpen(false);
+      setCreateAvatarFile(null);
       setCreateFormData({
         phoneNumber: "",
         email: "",
@@ -540,7 +998,30 @@ export default function UsersPage() {
         lastName: "",
         roles: ["client"],
         agencyId: "",
-        agencyRole: ""
+        agencyRole: "",
+        profile: {
+          avatar: {
+            url: "",
+            publicId: "",
+            thumbnail: ""
+          },
+          bio: "",
+          address: {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: "",
+            coordinates: {
+              lat: undefined as number | undefined,
+              lng: undefined as number | undefined
+            }
+          },
+          skills: [],
+          experience: 0,
+          gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
+          birthdate: "" as string | Date | undefined
+        }
       });
       await fetchData();
     } catch (err) {
@@ -563,12 +1044,20 @@ export default function UsersPage() {
         ? editFormData.roles
         : ['client', ...editFormData.roles];
 
+      // Prepare profile data, ensuring gender and birthdate are included
+      const profileData: Profile = {
+        ...editFormData.profile,
+        gender: editFormData.profile.gender || undefined,
+        birthdate: editFormData.profile.birthdate || undefined
+      };
+
       const url = `${API_BASE_URL}${API_ENDPOINTS.usersUpdate}/${selectedUser._id}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'PUT',
         body: JSON.stringify({
           ...editFormData,
-          roles: rolesToSend
+          roles: rolesToSend,
+          profile: profileData
         })
       }));
 
@@ -1343,6 +1832,11 @@ export default function UsersPage() {
         isOpen={createModalOpen}
         onClose={() => {
           setCreateModalOpen(false);
+          setCreateAvatarFile(null);
+          setSkillsSearchInput({ ...skillsSearchInput, create: "" });
+          setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
+          setRolesSearchInput({ ...rolesSearchInput, create: "" });
+          setShowRolesSuggestions({ ...showRolesSuggestions, create: false });
           setCreateFormData({
             phoneNumber: "",
             email: "",
@@ -1350,11 +1844,34 @@ export default function UsersPage() {
             lastName: "",
             roles: ["client"],
             agencyId: "",
-            agencyRole: ""
+            agencyRole: "",
+            profile: {
+              avatar: {
+                url: "",
+                publicId: "",
+                thumbnail: ""
+              },
+              bio: "",
+              address: {
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "",
+                coordinates: {
+                  lat: undefined,
+                  lng: undefined
+                }
+              },
+              skills: [],
+              experience: 0,
+              gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
+              birthdate: "" as string | Date | undefined
+            }
           });
         }}
         title="Create New User"
-        size="lg"
+        size="xl"
         footer={
           <div className="flex justify-end space-x-2">
             <button
@@ -1416,38 +1933,495 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Roles *</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Roles *</label>
               <p className="text-xs text-gray-500 mb-1.5">Select all that apply. Client role is always included.</p>
-              <div className="space-y-1.5 border border-gray-300 rounded-md p-2">
-                {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
-                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+              <div className="relative roles-autosuggest-container">
+                {/* Selected Roles Tags */}
+                {createFormData.roles.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {createFormData.roles.map((role) => (
+                      <span
+                        key={role}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(role)}`}
+                      >
+                        {role.replace('_', ' ')}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Don't allow removing client if it's the only role
+                            if (role === 'client' && createFormData.roles.length === 1) {
+                              return;
+                            }
+                            setCreateFormData({
+                              ...createFormData,
+                              roles: createFormData.roles.filter(r => r !== role)
+                            });
+                          }}
+                          disabled={role === 'client' && createFormData.roles.length === 1}
+                          className="ml-1 hover:opacity-70 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Search Input */}
                     <input
-                      type="checkbox"
-                      checked={createFormData.roles.includes(role)}
+                  type="text"
+                  value={rolesSearchInput.create}
                       onChange={(e) => {
-                        if (e.target.checked) {
+                    setRolesSearchInput({ ...rolesSearchInput, create: e.target.value });
+                    setShowRolesSuggestions({ ...showRolesSuggestions, create: true });
+                  }}
+                  onFocus={() => setShowRolesSuggestions({ ...showRolesSuggestions, create: true })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowRolesSuggestions({ ...showRolesSuggestions, create: false });
+                    }
+                  }}
+                  placeholder="Type to search roles..."
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                
+                {/* Suggestions Dropdown */}
+                {showRolesSuggestions.create && availableRoles.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                    {availableRoles
+                      .filter((role) => {
+                        const searchTerm = rolesSearchInput.create.toLowerCase();
+                        const roleDisplay = role.replace('_', ' ');
+                        return (
+                          roleDisplay.toLowerCase().includes(searchTerm) &&
+                          !createFormData.roles.includes(role)
+                        );
+                      })
+                      .map((role) => {
+                        const roleDisplay = role.replace('_', ' ');
+                        return (
+                          <div
+                            key={role}
+                            onClick={() => {
+                              if (!createFormData.roles.includes(role)) {
                           setCreateFormData({
                             ...createFormData,
                             roles: [...createFormData.roles, role]
                           });
+                              }
+                              setRolesSearchInput({ ...rolesSearchInput, create: "" });
+                              setShowRolesSuggestions({ ...showRolesSuggestions, create: false });
+                            }}
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="text-sm text-gray-900 capitalize">{roleDisplay}</div>
+                          </div>
+                        );
+                      })}
+                    {availableRoles.filter((role) => {
+                      const searchTerm = rolesSearchInput.create.toLowerCase();
+                      const roleDisplay = role.replace('_', ' ');
+                      return (
+                        roleDisplay.toLowerCase().includes(searchTerm) &&
+                        !createFormData.roles.includes(role)
+                      );
+                    }).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500">No matching roles</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Profile Section */}
+          <div className="border-t border-gray-200 pt-3 mt-3">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Profile Information</h3>
+            
+            {/* Avatar Upload */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Avatar</label>
+              <FileUpload
+                type="image"
+                multiple={false}
+                files={createAvatarFile ? [createAvatarFile] : []}
+                onFilesSelected={(files) => {
+                  if (files.length > 0) {
+                    setCreateAvatarFile(files[0]);
+                    handleAvatarUpload(files[0], true);
                         } else {
-                          // Don't allow removing client if it's the only role
-                          if (role === 'client' && createFormData.roles.length === 1) {
-                            return;
+                    setCreateAvatarFile(null);
+                  }
+                }}
+                onRemove={() => {
+                  setCreateAvatarFile(null);
+                  setCreateFormData(prev => ({
+                    ...prev,
+                    profile: {
+                      ...prev.profile,
+                      avatar: {
+                        url: "",
+                        publicId: "",
+                        thumbnail: ""
+                      }
+                    }
+                  }));
+                }}
+                label="Upload Avatar"
+                disabled={uploadingAvatar}
+              />
+              {createFormData.profile.avatar.url && (
+                <div className="mt-2 relative w-20 h-20">
+                  <Image 
+                    src={createFormData.profile.avatar.url} 
+                    alt="Avatar preview" 
+                    width={80}
+                    height={80}
+                    className="rounded-full object-cover border border-gray-300"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Bio */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="block text-xs font-medium text-gray-700">Bio</label>
+                <button
+                  type="button"
+                  onClick={() => handleGenerateBio(true)}
+                  disabled={generatingBio.create || createFormData.profile.skills.length === 0}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  title={createFormData.profile.skills.length === 0 ? "Add skills first to generate bio" : "Generate bio with AI"}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {generatingBio.create ? 'Generating...' : 'AI Generate'}
+                </button>
+              </div>
+              <textarea
+                value={createFormData.profile.bio}
+                onChange={(e) => setCreateFormData({
+                  ...createFormData,
+                  profile: {
+                    ...createFormData.profile,
+                    bio: e.target.value
+                  }
+                })}
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder={generatingBio.create ? "Generating bio..." : "Enter bio or click AI Generate to create one based on skills"}
+              />
+            </div>
+
+            {/* Gender and Birthdate */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Gender</label>
+                <select
+                  value={createFormData.profile.gender}
+                  onChange={(e) => setCreateFormData({
+                    ...createFormData,
+                    profile: {
+                      ...createFormData.profile,
+                      gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
+                    }
+                  })}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Birthdate</label>
+                <input
+                  type="date"
+                  value={typeof createFormData.profile.birthdate === 'string' ? createFormData.profile.birthdate : ""}
+                  onChange={(e) => setCreateFormData({
+                    ...createFormData,
+                    profile: {
+                      ...createFormData.profile,
+                      birthdate: e.target.value || undefined
+                    }
+                  })}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Address</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Street</label>
+                  <input
+                    type="text"
+                    value={createFormData.profile.address.street}
+                    onChange={(e) => setCreateFormData({
+                      ...createFormData,
+                      profile: {
+                        ...createFormData.profile,
+                        address: {
+                          ...createFormData.profile.address,
+                          street: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">City</label>
+                  <input
+                    type="text"
+                    value={createFormData.profile.address.city}
+                    onChange={(e) => setCreateFormData({
+                      ...createFormData,
+                      profile: {
+                        ...createFormData.profile,
+                        address: {
+                          ...createFormData.profile.address,
+                          city: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">State</label>
+                  <input
+                    type="text"
+                    value={createFormData.profile.address.state}
+                    onChange={(e) => setCreateFormData({
+                      ...createFormData,
+                      profile: {
+                        ...createFormData.profile,
+                        address: {
+                          ...createFormData.profile.address,
+                          state: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Zip Code</label>
+                  <input
+                    type="text"
+                    value={createFormData.profile.address.zipCode}
+                    onChange={(e) => setCreateFormData({
+                      ...createFormData,
+                      profile: {
+                        ...createFormData.profile,
+                        address: {
+                          ...createFormData.profile.address,
+                          zipCode: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Country</label>
+                  <input
+                    type="text"
+                    value={createFormData.profile.address.country}
+                    onChange={(e) => setCreateFormData({
+                      ...createFormData,
+                      profile: {
+                        ...createFormData.profile,
+                        address: {
+                          ...createFormData.profile.address,
+                          country: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Latitude (optional)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={createFormData.profile.address.coordinates.lat || ""}
+                      onChange={(e) => setCreateFormData({
+                        ...createFormData,
+                        profile: {
+                          ...createFormData.profile,
+                          address: {
+                            ...createFormData.profile.address,
+                            coordinates: {
+                              ...createFormData.profile.address.coordinates,
+                              lat: e.target.value ? parseFloat(e.target.value) : undefined
+                            }
                           }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Longitude (optional)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={createFormData.profile.address.coordinates.lng || ""}
+                      onChange={(e) => setCreateFormData({
+                        ...createFormData,
+                        profile: {
+                          ...createFormData.profile,
+                          address: {
+                            ...createFormData.profile.address,
+                            coordinates: {
+                              ...createFormData.profile.address.coordinates,
+                              lng: e.target.value ? parseFloat(e.target.value) : undefined
+                            }
+                          }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Skills</label>
+              {loadingSkills ? (
+                <div className="text-xs text-gray-500">Loading skills...</div>
+              ) : (
+                <div className="relative skills-autosuggest-container">
+                  {/* Selected Skills Tags */}
+                  {createFormData.profile.skills.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {createFormData.profile.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => {
                           setCreateFormData({
                             ...createFormData,
-                            roles: createFormData.roles.filter(r => r !== role)
-                          });
-                        }
-                      }}
-                      disabled={role === 'client' && createFormData.roles.length === 1}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xs text-gray-700 capitalize">{role.replace('_', ' ')}</span>
-                  </label>
-                ))}
+                                profile: {
+                                  ...createFormData.profile,
+                                  skills: createFormData.profile.skills.filter(s => s !== skill)
+                                }
+                              });
+                            }}
+                            className="ml-1 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Search Input */}
+                  <input
+                    type="text"
+                    value={skillsSearchInput.create}
+                    onChange={(e) => {
+                      setSkillsSearchInput({ ...skillsSearchInput, create: e.target.value });
+                      setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true });
+                    }}
+                    onFocus={() => setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
+                      }
+                    }}
+                    placeholder="Type to search skills..."
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  
+                  {/* Suggestions Dropdown */}
+                  {showSkillsSuggestions.create && availableSkills.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                      {availableSkills
+                        .filter((skill) => {
+                          const skillName = typeof skill === 'string' ? skill : skill.name;
+                          const searchTerm = skillsSearchInput.create.toLowerCase();
+                          return (
+                            skillName.toLowerCase().includes(searchTerm) &&
+                            !createFormData.profile.skills.includes(skillName)
+                          );
+                        })
+                        .slice(0, 10)
+                        .map((skill, index) => {
+                          const skillName = typeof skill === 'string' ? skill : skill.name;
+                          const skillId = typeof skill === 'object' && skill.id ? skill.id : skillName;
+                          return (
+                            <div
+                              key={skillId || index}
+                              onClick={() => {
+                                if (!createFormData.profile.skills.includes(skillName)) {
+                                  setCreateFormData({
+                                    ...createFormData,
+                                    profile: {
+                                      ...createFormData.profile,
+                                      skills: [...createFormData.profile.skills, skillName]
+                                    }
+                                  });
+                                }
+                                setSkillsSearchInput({ ...skillsSearchInput, create: "" });
+                                setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
+                              }}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="text-sm text-gray-900">{skillName}</div>
+                              {typeof skill === 'object' && skill.category && (
+                                <div className="text-xs text-gray-500">{skill.category}</div>
+                              )}
               </div>
+                          );
+                        })}
+                      {availableSkills.filter((skill) => {
+                        const skillName = typeof skill === 'string' ? skill : skill.name;
+                        const searchTerm = skillsSearchInput.create.toLowerCase();
+                        return (
+                          skillName.toLowerCase().includes(searchTerm) &&
+                          !createFormData.profile.skills.includes(skillName)
+                        );
+                      }).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">No matching skills</div>
+                      )}
+            </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Experience */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
+              <input
+                type="number"
+                min="0"
+                value={createFormData.profile.experience}
+                onChange={(e) => setCreateFormData({
+                  ...createFormData,
+                  profile: {
+                    ...createFormData.profile,
+                    experience: parseInt(e.target.value) || 0
+                  }
+                })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
           </div>
         </div>
@@ -1458,10 +2432,15 @@ export default function UsersPage() {
         isOpen={editModalOpen}
         onClose={() => {
           setEditModalOpen(false);
+          setEditAvatarFile(null);
+          setSkillsSearchInput({ ...skillsSearchInput, edit: "" });
+          setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: false });
+          setRolesSearchInput({ ...rolesSearchInput, edit: "" });
+          setShowRolesSuggestions({ ...showRolesSuggestions, edit: false });
           setSelectedUser(null);
         }}
         title="Edit User"
-        size="lg"
+        size="xl"
         footer={
           <div className="flex justify-end space-x-2">
             <button
@@ -1519,38 +2498,495 @@ export default function UsersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Roles</label>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Roles</label>
               <p className="text-xs text-gray-500 mb-1.5">Select all that apply. Client role is always included.</p>
-              <div className="space-y-1.5 border border-gray-300 rounded-md p-2">
-                {['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin'].map((role) => (
-                  <label key={role} className="flex items-center gap-2 cursor-pointer">
+              <div className="relative roles-autosuggest-container">
+                {/* Selected Roles Tags */}
+                {editFormData.roles.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-1">
+                    {editFormData.roles.map((role) => (
+                      <span
+                        key={role}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(role)}`}
+                      >
+                        {role.replace('_', ' ')}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Don't allow removing client if it's the only role
+                            if (role === 'client' && editFormData.roles.length === 1) {
+                              return;
+                            }
+                            setEditFormData({
+                              ...editFormData,
+                              roles: editFormData.roles.filter(r => r !== role)
+                            });
+                          }}
+                          disabled={role === 'client' && editFormData.roles.length === 1}
+                          className="ml-1 hover:opacity-70 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Search Input */}
                     <input
-                      type="checkbox"
-                      checked={editFormData.roles.includes(role)}
+                  type="text"
+                  value={rolesSearchInput.edit}
                       onChange={(e) => {
-                        if (e.target.checked) {
+                    setRolesSearchInput({ ...rolesSearchInput, edit: e.target.value });
+                    setShowRolesSuggestions({ ...showRolesSuggestions, edit: true });
+                  }}
+                  onFocus={() => setShowRolesSuggestions({ ...showRolesSuggestions, edit: true })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowRolesSuggestions({ ...showRolesSuggestions, edit: false });
+                    }
+                  }}
+                  placeholder="Type to search roles..."
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                
+                {/* Suggestions Dropdown */}
+                {showRolesSuggestions.edit && availableRoles.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                    {availableRoles
+                      .filter((role) => {
+                        const searchTerm = rolesSearchInput.edit.toLowerCase();
+                        const roleDisplay = role.replace('_', ' ');
+                        return (
+                          roleDisplay.toLowerCase().includes(searchTerm) &&
+                          !editFormData.roles.includes(role)
+                        );
+                      })
+                      .map((role) => {
+                        const roleDisplay = role.replace('_', ' ');
+                        return (
+                          <div
+                            key={role}
+                            onClick={() => {
+                              if (!editFormData.roles.includes(role)) {
                           setEditFormData({
                             ...editFormData,
                             roles: [...editFormData.roles, role]
                           });
+                              }
+                              setRolesSearchInput({ ...rolesSearchInput, edit: "" });
+                              setShowRolesSuggestions({ ...showRolesSuggestions, edit: false });
+                            }}
+                            className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="text-sm text-gray-900 capitalize">{roleDisplay}</div>
+                          </div>
+                        );
+                      })}
+                    {availableRoles.filter((role) => {
+                      const searchTerm = rolesSearchInput.edit.toLowerCase();
+                      const roleDisplay = role.replace('_', ' ');
+                      return (
+                        roleDisplay.toLowerCase().includes(searchTerm) &&
+                        !editFormData.roles.includes(role)
+                      );
+                    }).length === 0 && (
+                      <div className="px-3 py-2 text-sm text-gray-500">No matching roles</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Profile Section */}
+          <div className="border-t border-gray-200 pt-3 mt-3">
+            <h3 className="text-sm font-medium text-gray-900 mb-3">Profile Information</h3>
+            
+            {/* Avatar Upload */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Avatar</label>
+              <FileUpload
+                type="image"
+                multiple={false}
+                files={editAvatarFile ? [editAvatarFile] : []}
+                onFilesSelected={(files) => {
+                  if (files.length > 0) {
+                    setEditAvatarFile(files[0]);
+                    handleAvatarUpload(files[0], false);
                         } else {
-                          // Don't allow removing client if it's the only role
-                          if (role === 'client' && editFormData.roles.length === 1) {
-                            return;
+                    setEditAvatarFile(null);
+                  }
+                }}
+                onRemove={() => {
+                  setEditAvatarFile(null);
+                  setEditFormData(prev => ({
+                    ...prev,
+                    profile: {
+                      ...prev.profile,
+                      avatar: {
+                        url: "",
+                        publicId: "",
+                        thumbnail: ""
+                      }
+                    }
+                  }));
+                }}
+                label="Upload Avatar"
+                disabled={uploadingAvatar}
+              />
+              {editFormData.profile.avatar.url && (
+                <div className="mt-2 relative w-20 h-20">
+                  <Image 
+                    src={editFormData.profile.avatar.url} 
+                    alt="Avatar preview" 
+                    width={80}
+                    height={80}
+                    className="rounded-full object-cover border border-gray-300"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Bio */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-0.5">
+                <label className="block text-xs font-medium text-gray-700">Bio</label>
+                <button
+                  type="button"
+                  onClick={() => handleGenerateBio(false)}
+                  disabled={generatingBio.edit || editFormData.profile.skills.length === 0}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  title={editFormData.profile.skills.length === 0 ? "Add skills first to generate bio" : "Generate bio with AI"}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  {generatingBio.edit ? 'Generating...' : 'AI Generate'}
+                </button>
+              </div>
+              <textarea
+                value={editFormData.profile.bio}
+                onChange={(e) => setEditFormData({
+                  ...editFormData,
+                  profile: {
+                    ...editFormData.profile,
+                    bio: e.target.value
+                  }
+                })}
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder={generatingBio.edit ? "Generating bio..." : "Enter bio or click AI Generate to create one based on skills"}
+              />
+            </div>
+
+            {/* Gender and Birthdate */}
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Gender</label>
+                <select
+                  value={editFormData.profile.gender}
+                  onChange={(e) => setEditFormData({
+                    ...editFormData,
+                    profile: {
+                      ...editFormData.profile,
+                      gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
+                    }
+                  })}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Birthdate</label>
+                <input
+                  type="date"
+                  value={typeof editFormData.profile.birthdate === 'string' ? editFormData.profile.birthdate : ""}
+                  onChange={(e) => setEditFormData({
+                    ...editFormData,
+                    profile: {
+                      ...editFormData.profile,
+                      birthdate: e.target.value || undefined
+                    }
+                  })}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-2">Address</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Street</label>
+                  <input
+                    type="text"
+                    value={editFormData.profile.address.street}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      profile: {
+                        ...editFormData.profile,
+                        address: {
+                          ...editFormData.profile.address,
+                          street: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">City</label>
+                  <input
+                    type="text"
+                    value={editFormData.profile.address.city}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      profile: {
+                        ...editFormData.profile,
+                        address: {
+                          ...editFormData.profile.address,
+                          city: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">State</label>
+                  <input
+                    type="text"
+                    value={editFormData.profile.address.state}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      profile: {
+                        ...editFormData.profile,
+                        address: {
+                          ...editFormData.profile.address,
+                          state: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Zip Code</label>
+                  <input
+                    type="text"
+                    value={editFormData.profile.address.zipCode}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      profile: {
+                        ...editFormData.profile,
+                        address: {
+                          ...editFormData.profile.address,
+                          zipCode: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Country</label>
+                  <input
+                    type="text"
+                    value={editFormData.profile.address.country}
+                    onChange={(e) => setEditFormData({
+                      ...editFormData,
+                      profile: {
+                        ...editFormData.profile,
+                        address: {
+                          ...editFormData.profile.address,
+                          country: e.target.value
+                        }
+                      }
+                    })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Latitude (optional)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editFormData.profile.address.coordinates.lat || ""}
+                      onChange={(e) => setEditFormData({
+                        ...editFormData,
+                        profile: {
+                          ...editFormData.profile,
+                          address: {
+                            ...editFormData.profile.address,
+                            coordinates: {
+                              ...editFormData.profile.address.coordinates,
+                              lat: e.target.value ? parseFloat(e.target.value) : undefined
+                            }
                           }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Longitude (optional)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={editFormData.profile.address.coordinates.lng || ""}
+                      onChange={(e) => setEditFormData({
+                        ...editFormData,
+                        profile: {
+                          ...editFormData.profile,
+                          address: {
+                            ...editFormData.profile.address,
+                            coordinates: {
+                              ...editFormData.profile.address.coordinates,
+                              lng: e.target.value ? parseFloat(e.target.value) : undefined
+                            }
+                          }
+                        }
+                      })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="mb-3">
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Skills</label>
+              {loadingSkills ? (
+                <div className="text-xs text-gray-500">Loading skills...</div>
+              ) : (
+                <div className="relative skills-autosuggest-container">
+                  {/* Selected Skills Tags */}
+                  {editFormData.profile.skills.length > 0 && (
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {editFormData.profile.skills.map((skill) => (
+                        <span
+                          key={skill}
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => {
                           setEditFormData({
                             ...editFormData,
-                            roles: editFormData.roles.filter(r => r !== role)
-                          });
-                        }
-                      }}
-                      disabled={role === 'client' && editFormData.roles.length === 1}
-                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="text-xs text-gray-700 capitalize">{role.replace('_', ' ')}</span>
-                  </label>
-                ))}
+                                profile: {
+                                  ...editFormData.profile,
+                                  skills: editFormData.profile.skills.filter(s => s !== skill)
+                                }
+                              });
+                            }}
+                            className="ml-1 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Search Input */}
+                  <input
+                    type="text"
+                    value={skillsSearchInput.edit}
+                    onChange={(e) => {
+                      setSkillsSearchInput({ ...skillsSearchInput, edit: e.target.value });
+                      setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: true });
+                    }}
+                    onFocus={() => setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: true })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: false });
+                      }
+                    }}
+                    placeholder="Type to search skills..."
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  
+                  {/* Suggestions Dropdown */}
+                  {showSkillsSuggestions.edit && availableSkills.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
+                      {availableSkills
+                        .filter((skill) => {
+                          const skillName = typeof skill === 'string' ? skill : skill.name;
+                          const searchTerm = skillsSearchInput.edit.toLowerCase();
+                          return (
+                            skillName.toLowerCase().includes(searchTerm) &&
+                            !editFormData.profile.skills.includes(skillName)
+                          );
+                        })
+                        .slice(0, 10)
+                        .map((skill, index) => {
+                          const skillName = typeof skill === 'string' ? skill : skill.name;
+                          const skillId = typeof skill === 'object' && skill.id ? skill.id : skillName;
+                          return (
+                            <div
+                              key={skillId || index}
+                              onClick={() => {
+                                if (!editFormData.profile.skills.includes(skillName)) {
+                                  setEditFormData({
+                                    ...editFormData,
+                                    profile: {
+                                      ...editFormData.profile,
+                                      skills: [...editFormData.profile.skills, skillName]
+                                    }
+                                  });
+                                }
+                                setSkillsSearchInput({ ...skillsSearchInput, edit: "" });
+                                setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: false });
+                              }}
+                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="text-sm text-gray-900">{skillName}</div>
+                              {typeof skill === 'object' && skill.category && (
+                                <div className="text-xs text-gray-500">{skill.category}</div>
+                              )}
               </div>
+                          );
+                        })}
+                      {availableSkills.filter((skill) => {
+                        const skillName = typeof skill === 'string' ? skill : skill.name;
+                        const searchTerm = skillsSearchInput.edit.toLowerCase();
+                        return (
+                          skillName.toLowerCase().includes(searchTerm) &&
+                          !editFormData.profile.skills.includes(skillName)
+                        );
+                      }).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-gray-500">No matching skills</div>
+                      )}
+            </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Experience */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
+              <input
+                type="number"
+                min="0"
+                value={editFormData.profile.experience}
+                onChange={(e) => setEditFormData({
+                  ...editFormData,
+                  profile: {
+                    ...editFormData.profile,
+                    experience: parseInt(e.target.value) || 0
+                  }
+                })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
             </div>
           </div>
         </div>

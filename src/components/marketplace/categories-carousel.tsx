@@ -35,13 +35,19 @@ import {
 } from "lucide-react";
 
 export interface ServiceCategory {
-  key?: string;
-  id?: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  slug?: string;
-  subcategories?: string[];
+  key?: string; // Computed from id or name for internal use
+  id: string; // Required: category ID from API
+  name: string; // Required: category name
+  description?: string; // Optional: category description
+  icon?: string; // Legacy field, prefer metadata.icon
+  slug?: string; // Computed from name for URL-friendly identifier
+  subcategories?: string[]; // Optional: subcategories list
+  displayOrder?: number; // Optional: order for display/sorting
+  metadata?: {
+    icon?: string; // Icon identifier (e.g., "cleaning", "construction")
+    color?: string; // Hex color code (e.g., "#87CEEB")
+    tags?: string[]; // Array of tag strings
+  };
   statistics?: {
     totalServices?: number;
     providerCount?: number;
@@ -193,6 +199,7 @@ export function CategoriesCarousel({
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   const getCategoryKey = (category: ServiceCategory): string => {
+    // id is required, but keep fallbacks for backward compatibility
     return category.key || category.id || category.slug || category.name.toLowerCase().replace(/\s+/g, '-');
   };
 

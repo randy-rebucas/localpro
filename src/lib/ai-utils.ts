@@ -617,6 +617,65 @@ export async function generateServiceDescription(
   }
 }
 
+// Bio Generator (User Profile)
+export interface BioGeneratorParams {
+  skills: string[];
+  experience?: number;
+  firstName?: string;
+  lastName?: string;
+  roles?: string[];
+}
+
+export interface GeneratedBio {
+  bio: string;
+  suggestions?: string[];
+}
+
+export async function generateBio(
+  params: BioGeneratorParams
+): Promise<GeneratedBio> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.aiBioGenerator}`,
+      createAuthFetchOptions({
+        method: "POST",
+        body: JSON.stringify(params),
+      })
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.debug("AI bio generator endpoint not available", { status: 404 });
+        throw new Error("Bio generation feature is not available yet.");
+      }
+      
+      // Try to extract error message from response
+      let errorMessage = `Bio generation failed (${response.status})`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    // Handle both direct response and wrapped response
+    if (result.data) {
+      return result.data;
+    }
+    return result;
+  } catch (error) {
+    if (error instanceof Error && !error.message.includes("404") && !error.message.includes("not available")) {
+      logger.error("Bio generation error", error);
+    }
+    throw error;
+  }
+}
+
 // Pricing Optimizer (Provider)
 interface CompetitorData {
   price?: number;

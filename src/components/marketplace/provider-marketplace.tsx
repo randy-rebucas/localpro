@@ -1,0 +1,111 @@
+"use client";
+
+import React, { useState } from "react";
+import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
+import { ProviderFilterSidebar } from "@/components/marketplace/provider-filter-sidebar";
+import { ProviderGrid } from "@/components/marketplace/provider-grid";
+import { useProviders } from "@/hooks/useProviders";
+import { useCategories } from "@/hooks/useCategories";
+import { useProviderFilters } from "@/hooks/useProviderFilters";
+import { ProviderControlsBar } from "@/components/marketplace/provider-controls-bar";
+
+interface ProviderMarketplaceProps {
+  userName: string;
+}
+
+export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
+  // Fetch service categories (providers can be filtered by service category)
+  const { 
+    categories, 
+    loading: categoriesLoading, 
+    error: categoriesError, 
+    refetch: refetchCategories 
+  } = useCategories();
+
+  // Manage filters
+  const filters = useProviderFilters({
+    limit: 10,
+  });
+
+  // Fetch providers with filters applied
+  const { providers, loading: loadingProviders, pagination: providersPagination } = useProviders(filters.providersParams);
+
+  const handlePageChange = (page: number) => {
+    filters.setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // UI state
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+
+  console.log(providers);
+  return (
+    <>
+      {/* Hero Section with Categories */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          <MarketplaceHero
+            userName={userName}
+            selectedCategory={filters.category}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
+            categoriesError={categoriesError}
+            onCategorySelect={(category) => {
+              if (category) {
+                filters.setCategory(category.key || category.id || category.name);
+              } else {
+                filters.setCategory("");
+              }
+            }}
+            onCategoriesRetry={refetchCategories}
+          />
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Sidebar - Filters */}
+          <ProviderFilterSidebar
+            isOpen={filterDrawerOpen}
+            onClose={() => setFilterDrawerOpen(false)}
+            status={filters.status}
+            onStatusChange={filters.setStatus}
+            providerType={filters.providerType}
+            onProviderTypeChange={filters.setProviderType}
+            location={filters.location}
+            onLocationChange={filters.setLocation}
+            hasActiveFilters={filters.hasActiveFilters}
+            onClearFilters={filters.clearFilters}
+          />
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Controls Bar */}
+            <ProviderControlsBar
+              sortBy={filters.sortBy}
+              onSortByChange={filters.setSortBy}
+              sortOrder={filters.sortOrder}
+              onSortOrderChange={filters.setSortOrder}
+              viewMode={filters.viewMode}
+              onViewModeChange={filters.setViewMode}
+            />
+
+            {/* Provider Listings */}
+            <ProviderGrid 
+              providers={providers}
+              loading={loadingProviders}
+              hasActiveFilters={filters.hasActiveFilters}
+              pagination={providersPagination || null}
+              currentPage={filters.currentPage}
+              onPageChange={handlePageChange}
+              viewMode={filters.viewMode}
+              selectedCategory={filters.category}
+            />
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
