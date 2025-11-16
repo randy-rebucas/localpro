@@ -33,7 +33,7 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { Provider, ProfessionalInfo, Preferences, Performance } from "@/types/providers";
+import { Provider, ProfessionalInfo, Preferences, Performance, ServiceCategory } from "@/types/providers";
 
 // Extended Provider interface for admin page (includes user fields populated)
 interface ProviderWithUser extends Omit<Provider, 'createdAt' | 'updatedAt' | 'profile' | 'subscription'> {
@@ -1354,7 +1354,7 @@ export default function ProvidersPage() {
                               value={specialty.category || ''}
                               onChange={(e) => {
                                 const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = { ...specialty, category: e.target.value as any };
+                                newSpecialties[index] = { ...specialty, category: e.target.value as ServiceCategory | undefined };
                                 setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                               }}
                               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"

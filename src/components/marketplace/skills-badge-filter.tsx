@@ -67,18 +67,6 @@ export function SkillsBadgeFilter({
     );
   }
 
-  const getSkillId = (skill: ProviderSkill): string => {
-    // Always prefer ID over name for query parameters
-    // Use id first, then _id, and only fall back to name if neither exists
-    // Note: For query params, we should ideally always have an ID
-    return skill.id || skill._id || skill.name;
-  };
-
-  // Helper to check if skill has a valid ID (not just name)
-  const hasValidId = (skill: ProviderSkill): boolean => {
-    return !!(skill.id || skill._id);
-  };
-
   const getCategoryColor = (skill: ProviderSkill): string => {
     // Try to get color from category metadata
     if (typeof skill.category === 'object' && skill.category?.metadata?.color) {
@@ -91,9 +79,11 @@ export function SkillsBadgeFilter({
   const isSelected = (skill: ProviderSkill): boolean => {
     // Check against both id and _id to handle different API response formats
     const skillId = skill.id || skill._id || skill.name;
-    return selectedSkills.includes(skillId) || 
-           (skill.id && selectedSkills.includes(skill.id)) ||
-           (skill._id && selectedSkills.includes(skill._id));
+    return Boolean(
+      (skillId && selectedSkills.includes(skillId)) || 
+      (skill.id && selectedSkills.includes(skill.id)) ||
+      (skill._id && selectedSkills.includes(skill._id))
+    );
   };
 
   return (

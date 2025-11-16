@@ -150,7 +150,8 @@ export function useProviders(params: ProvidersParams = {}) {
             firstName: userId.firstName,
             lastName: userId.lastName,
             email: userId.email,
-            phone: userId.phone,
+            phoneNumber: userId.phone || '',
+            roles: userId.roles || (userId.role ? [userId.role] : ['client']),
             profile: {
               avatar: userId.profile?.avatar || (userId.profileImage ? {
                 url: userId.profileImage,

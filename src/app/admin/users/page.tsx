@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -23,12 +23,7 @@ import {
   Award,
   CheckCircle2,
   Save,
-  Sparkles,
-  Briefcase,
-  Building2,
-  Settings,
-  BarChart3,
-  User as UserIcon
+  Sparkles
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -320,6 +315,7 @@ export default function UsersPage() {
     providerType?: 'individual' | 'business' | 'agency';
     status?: 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected';
   } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingProviderData, setLoadingProviderData] = useState(false);
   
   const [professionalInfoForm, setProfessionalInfoForm] = useState<ProfessionalInfo>({

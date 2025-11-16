@@ -19,11 +19,9 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { getPlaceholderImageUrl } from "@/lib/image-utils";
 import { useServiceCategories } from "@/hooks/useServiceCategories";
-import { ServiceCategory as ServiceCategoryType } from "@/components/marketplace/categories-carousel";
 import { useProviderSkills } from "@/hooks/useProviderSkills";
 import { SkillsBadgeFilter } from "@/components/marketplace/skills-badge-filter";
 
@@ -86,9 +84,6 @@ interface Service {
   createdAt?: string;
   updatedAt?: string;
 }
-
-// Use ServiceCategory from categories-carousel for consistency
-type ServiceCategory = ServiceCategoryType;
 
 interface Pagination {
   current?: number;
