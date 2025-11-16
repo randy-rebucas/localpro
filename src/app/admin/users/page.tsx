@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
   Users, 
@@ -186,6 +187,7 @@ interface UserStats {
 }
 
 export default function UsersPage() {
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -200,6 +202,8 @@ export default function UsersPage() {
   const [itemsPerPage] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all"); // "all", "true", "false"
@@ -297,19 +301,24 @@ export default function UsersPage() {
     description: ""
   });
 
-  const [bulkUpdateFormData, setBulkUpdateFormData] = useState({
+  const [bulkUpdateFormData, setBulkUpdateFormData] = useState<{
+    isActive?: boolean;
+    status?: UserStatus | '';
+    addRoles?: string;
+    removeRoles?: string;
+  }>({
     isActive: true,
     status: "active" as UserStatus
   });
 
   // Provider form states
-  const [activeTab, setActiveTab] = useState<'basic' | 'professional' | 'business' | 'preferences' | 'performance'>('basic');
   const [providerData, setProviderData] = useState<{
     professionalInfo?: ProfessionalInfo;
     businessInfo?: BusinessInfo;
     preferences?: Preferences;
     performance?: Performance;
     providerType?: 'individual' | 'business' | 'agency';
+    status?: 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected';
   } | null>(null);
   const [loadingProviderData, setLoadingProviderData] = useState(false);
   
@@ -408,7 +417,7 @@ export default function UsersPage() {
       const queryParams = new URLSearchParams();
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
-      if (searchTerm) queryParams.set('search', searchTerm);
+      if (debouncedSearchTerm) queryParams.set('search', debouncedSearchTerm);
       if (roleFilter !== 'all') queryParams.set('role', roleFilter);
       if (statusFilter !== 'all') queryParams.set('status', statusFilter);
       if (isActiveFilter !== 'all') queryParams.set('isActive', isActiveFilter);
@@ -569,11 +578,67 @@ export default function UsersPage() {
       setLoading(false);
       setSlowRequest(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter, isActiveFilter, isVerifiedFilter, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, roleFilter, statusFilter, isActiveFilter, isVerifiedFilter, sortBy, sortOrder]);
+
+  // Debounce search term
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Check for query parameter to auto-open create modal with provider role
+  useEffect(() => {
+    const createParam = searchParams.get('create');
+    if (createParam === 'provider' && !createModalOpen) {
+      // Pre-select provider role
+      setCreateFormData(prev => ({
+        ...prev,
+        roles: ["client", "provider"]
+      }));
+      // Open create modal
+      setCreateModalOpen(true);
+      // Clean up URL by removing query parameter
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('create');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [searchParams, createModalOpen]);
+
+  // Keyboard shortcut: Ctrl+K or Cmd+K to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search users..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          // Show filters if hidden
+          if (!showFilters) {
+            setShowFilters(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showFilters]);
 
   // Fetch available skills
   const fetchSkills = useCallback(async () => {
@@ -807,7 +872,8 @@ export default function UsersPage() {
           businessInfo: provider.businessInfo,
           preferences: provider.preferences,
           performance: provider.performance,
-          providerType: provider.providerType
+          providerType: provider.providerType,
+          status: provider.status
         });
 
         // Populate forms with existing data
@@ -852,7 +918,6 @@ export default function UsersPage() {
       
       // Reset provider data and tabs
       setProviderData(null);
-      setActiveTab('basic');
       
       // Fetch full user details to ensure we have all profile data
       const url = `${API_BASE_URL}${API_ENDPOINTS.users}/${user._id}`;
@@ -866,13 +931,37 @@ export default function UsersPage() {
       const result = await response.json();
       const userData = result.data || result;
       
-      // Check if user has provider role and fetch provider data
+      // Check if user has provider role and extract provider data
       const userRoles = userData.roles || (userData.role ? [userData.role] : []);
       if (userRoles.includes('provider') || userRoles.includes('agency_owner') || userRoles.includes('agency_admin')) {
-        // Note: The API endpoint /api/providers/profile/me returns the current authenticated user's profile
-        // For admin editing another user, we might need a different endpoint
-        // For now, we'll try to fetch it - if it fails, we'll just show empty forms
-        await fetchProviderData(user._id);
+        // First, check if provider data is included in the user object
+        if (userData.provider) {
+          const provider = userData.provider;
+          setProviderData({
+            professionalInfo: provider.professionalInfo,
+            businessInfo: provider.businessInfo,
+            preferences: provider.preferences,
+            performance: provider.performance,
+            providerType: provider.providerType,
+            status: provider.status
+          });
+          
+          // Populate forms with existing data
+          if (provider.professionalInfo) {
+            setProfessionalInfoForm(provider.professionalInfo);
+          }
+          if (provider.businessInfo) {
+            setBusinessInfoForm(provider.businessInfo);
+          }
+          if (provider.preferences) {
+            setPreferencesForm(provider.preferences);
+          }
+        } else {
+          // If provider data is not in user object, try to fetch it
+          // Note: /api/providers/profile/me returns current authenticated user's profile
+          // For admin editing another user, this may not work unless backend supports it
+          await fetchProviderData(user._id);
+        }
       }
       
       // Debug: Log raw API response
@@ -1115,7 +1204,75 @@ export default function UsersPage() {
         throw new Error(errorData.error || 'Failed to create user');
       }
 
-      toast.success('User created successfully');
+      const result = await response.json();
+      const createdUser = result.data || result;
+      const createdUserId = createdUser._id || createdUser.id;
+
+      // Check if user has provider-related roles and create provider profile if needed
+      const hasProviderRole = rolesToSend.includes('provider') || 
+                              rolesToSend.includes('agency_owner') || 
+                              rolesToSend.includes('agency_admin');
+      
+      if (hasProviderRole && createdUserId) {
+        try {
+          // Determine provider type based on roles
+          let providerType: 'individual' | 'business' | 'agency' = 'individual';
+          if (rolesToSend.includes('agency_owner') || rolesToSend.includes('agency_admin')) {
+            providerType = 'agency';
+          } else if (rolesToSend.includes('provider')) {
+            providerType = 'individual'; // Default to individual for new providers
+          }
+
+          // Create provider profile with required fields
+          const providerPayload: Record<string, unknown> = {
+            providerType: providerType,
+            status: 'pending' // New providers start as pending
+          };
+
+          const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
+          const providerResponse = await fetch(providerUrl, createAuthFetchOptions({
+            method: 'POST',
+            body: JSON.stringify(providerPayload)
+          }));
+
+          if (!providerResponse.ok) {
+            const errorData = await providerResponse.json().catch(() => ({}));
+            const errorMessage = errorData.error || errorData.message || 'Unknown error';
+            logger.warn('Failed to create provider profile for new user', { 
+              error: errorMessage,
+              status: providerResponse.status,
+              userId: createdUserId
+            });
+            
+            // Show warning toast but don't fail the entire creation
+            toast.error(`User created but provider profile creation failed: ${errorMessage}`, {
+              duration: 5000
+            });
+          } else {
+            logger.debug('Provider profile created successfully for new user', { 
+              userId: createdUserId,
+              providerType
+            });
+            toast.success('User and provider profile created successfully', {
+              duration: 3000
+            });
+          }
+        } catch (providerErr) {
+          const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
+          logger.warn('Error creating provider profile for new user', { 
+            error: errorMessage,
+            userId: createdUserId
+          });
+          
+          // Show warning toast but don't fail the entire creation
+          toast.error(`User created but provider profile creation failed: ${errorMessage}`, {
+            duration: 5000
+          });
+        }
+      } else {
+        toast.success('User created successfully');
+      }
+
       setCreateModalOpen(false);
       setCreateAvatarFile(null);
       setCreateFormData({
@@ -1249,8 +1406,9 @@ export default function UsersPage() {
                               rolesToSend.includes('agency_owner') || 
                               rolesToSend.includes('agency_admin');
       
-      // If user has provider role, create or update provider profile
+      // Handle provider creation/update or deletion based on roles
       if (hasProviderRole) {
+        // If user has provider role, create or update provider profile
         try {
           // Determine provider type based on roles
           let providerType: 'individual' | 'business' | 'agency' = 'individual';
@@ -1260,8 +1418,14 @@ export default function UsersPage() {
             providerType = 'business';
           }
 
+          // Build provider payload with required fields from basic info tab
+          // Fields: userId (auto-set by API), status (default 'pending'), providerType (required)
+          const existingStatus = providerData?.status as 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected' | undefined;
           const providerPayload: Record<string, unknown> = {
-            providerType: providerType
+            providerType: providerType,
+            // Set status: use existing status if available and not 'inactive', otherwise default to 'pending'
+            // If status was 'inactive' (deleted), reset to 'pending' when re-adding provider role
+            status: (existingStatus && existingStatus !== 'inactive') ? existingStatus : 'pending'
           };
           
           // Include professionalInfo if we have data in the form or if it exists in providerData
@@ -1315,21 +1479,22 @@ export default function UsersPage() {
           }
 
           // Check if provider profile already exists
-          const providerExists = providerData !== null && providerData.professionalInfo !== undefined;
+          // providerData will be set if a provider profile exists for this user
+          const providerExists = providerData !== null;
           
           const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
           let providerResponse: Response;
           
           if (providerExists) {
             // Update existing profile
-            logger.debug('Updating existing provider profile', { userId: selectedUser._id });
+            logger.debug('Updating existing provider profile', { userId: selectedUser._id, providerType, status: providerPayload.status });
             providerResponse = await fetch(providerUrl, createAuthFetchOptions({
               method: 'PUT',
               body: JSON.stringify(providerPayload)
             }));
           } else {
             // Create new profile
-            logger.debug('Creating new provider profile', { userId: selectedUser._id });
+            logger.debug('Creating new provider profile', { userId: selectedUser._id, providerType, status: providerPayload.status });
             providerResponse = await fetch(providerUrl, createAuthFetchOptions({
               method: 'POST',
               body: JSON.stringify(providerPayload)
@@ -1347,13 +1512,26 @@ export default function UsersPage() {
 
           if (!providerResponse.ok) {
             const errorData = await providerResponse.json().catch(() => ({}));
+            const errorMessage = errorData.error || errorData.message || 'Unknown error';
             logger.warn('Failed to create/update provider profile', { 
-              error: errorData.error || errorData.message,
-              status: providerResponse.status
+              error: errorMessage,
+              status: providerResponse.status,
+              userId: selectedUser._id
             });
-            // Don't throw - user update succeeded, provider update is secondary
+            
+            // Show warning toast but don't fail the entire update
+            toast.error(`Provider profile update failed: ${errorMessage}`, {
+              duration: 5000
+            });
           } else {
-            logger.debug('Provider profile created/updated successfully', { userId: selectedUser._id });
+            logger.debug('Provider profile created/updated successfully', { 
+              userId: selectedUser._id,
+              providerType,
+              status: providerPayload.status
+            });
+            toast.success('Provider profile updated successfully', {
+              duration: 3000
+            });
           }
         } catch (providerErr) {
           const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
@@ -1362,12 +1540,77 @@ export default function UsersPage() {
           });
           // Don't throw - user update succeeded
         }
+      } else {
+        // If user does not have provider role, attempt to set provider status to inactive (deleted)
+        // Only update if provider profile exists and is not already inactive
+        if (providerData !== null && providerData.status !== 'inactive') {
+          try {
+            logger.debug('Setting provider status to inactive (removed provider role)', { 
+              userId: selectedUser._id,
+              currentStatus: providerData.status
+            });
+            const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
+            const providerResponse = await fetch(providerUrl, createAuthFetchOptions({
+              method: 'PUT',
+              body: JSON.stringify({
+                status: 'inactive'
+              })
+            }));
+
+            if (!providerResponse.ok) {
+              const errorData = await providerResponse.json().catch(() => ({}));
+              let errorMessage = errorData.error || errorData.message || 'Unknown error';
+              
+              // Provide more helpful error messages for common validation errors
+              if (errorMessage.toLowerCase().includes('validation failed') || 
+                  errorMessage.toLowerCase().includes('deleting provider role') ||
+                  errorMessage.toLowerCase().includes('cannot delete') ||
+                  errorMessage.toLowerCase().includes('active dependencies')) {
+                errorMessage = 'Cannot remove provider role: Provider has active bookings, services, or other dependencies. Please cancel or complete these first, then try again.';
+              }
+              
+              logger.warn('Failed to set provider status to inactive', { 
+                error: errorMessage,
+                status: providerResponse.status,
+                userId: selectedUser._id,
+                originalError: errorData.error || errorData.message
+              });
+              
+              // Show warning toast but don't fail the entire update
+              toast.error(`Provider profile update failed: ${errorMessage}`, {
+                duration: 7000
+              });
+            } else {
+              logger.debug('Provider status set to inactive successfully', { userId: selectedUser._id });
+              toast.success('Provider deactivated successfully', {
+                duration: 3000
+              });
+            }
+          } catch (providerErr) {
+            const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
+            logger.warn('Error setting provider status to inactive', { 
+              error: errorMessage,
+              userId: selectedUser._id
+            });
+            
+            // Show warning toast but don't fail the entire update
+            const userFriendlyMessage = errorMessage.toLowerCase().includes('validation failed') || 
+                                       errorMessage.toLowerCase().includes('deleting provider role')
+              ? 'Cannot remove provider role: Provider has active dependencies. Please resolve these first.'
+              : `Error deactivating provider: ${errorMessage}`;
+            
+            toast.error(`Provider profile update failed: ${userFriendlyMessage}`, {
+              duration: 7000
+            });
+          }
+        } else if (providerData?.status === 'inactive') {
+          logger.debug('Provider already inactive, skipping status update', { userId: selectedUser._id });
+        }
       }
 
       toast.success('User updated successfully');
       setEditModalOpen(false);
       setSelectedUser(null);
-      setActiveTab('basic');
       await fetchData();
     } catch (err) {
       logger.error('Error updating user', err instanceof Error ? err : new Error(String(err)));
@@ -1744,6 +1987,11 @@ export default function UsersPage() {
                     placeholder="Search users..."
                     className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
+                  {searchTerm !== debouncedSearchTerm && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" title="Searching..."></div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2737,7 +2985,6 @@ export default function UsersPage() {
           setRolesSearchInput({ ...rolesSearchInput, edit: "" });
           setShowRolesSuggestions({ ...showRolesSuggestions, edit: false });
           setSelectedUser(null);
-          setActiveTab('basic');
         }}
         title="Edit User"
         size="xl"
@@ -2759,79 +3006,12 @@ export default function UsersPage() {
           </div>
         }
       >
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-4">
-          <nav className="flex space-x-1 -mb-px">
-            <button
-              onClick={() => setActiveTab('basic')}
-              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                activeTab === 'basic'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              <UserIcon className="w-3 h-3 inline mr-1" />
-              Basic Info
-            </button>
-            {isProviderUser && (
-              <>
-                <button
-                  onClick={() => setActiveTab('professional')}
-                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                    activeTab === 'professional'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Briefcase className="w-3 h-3 inline mr-1" />
-                  Professional
-                </button>
-                {(providerData?.providerType === 'business' || providerData?.providerType === 'agency') && (
-                  <button
-                    onClick={() => setActiveTab('business')}
-                    className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                      activeTab === 'business'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Building2 className="w-3 h-3 inline mr-1" />
-                    Business
-                  </button>
-                )}
-                <button
-                  onClick={() => setActiveTab('preferences')}
-                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                    activeTab === 'preferences'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Settings className="w-3 h-3 inline mr-1" />
-                  Preferences
-                </button>
-                <button
-                  onClick={() => setActiveTab('performance')}
-                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
-                    activeTab === 'performance'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <BarChart3 className="w-3 h-3 inline mr-1" />
-                  Performance
-                </button>
-              </>
-            )}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'basic' && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name</label>
+        {/* Basic Information Form */}
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name</label>
               <input
                 type="text"
                 value={editFormData.firstName}
@@ -3224,1059 +3404,161 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
-        )}
 
-        {/* Professional Info Tab */}
-        {activeTab === 'professional' && isProviderUser && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {loadingProviderData ? (
-              <div className="text-center py-8">
-                <Loading />
-                <p className="text-sm text-gray-500 mt-2">Loading provider data...</p>
-              </div>
-            ) : (
-              <>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Specialties</h3>
-                  <div className="space-y-3">
-                    {professionalInfoForm.specialties?.map((specialty, index) => (
-                      <div key={index} className="border border-gray-200 rounded-md p-3 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-0.5">Category</label>
-                            <select
-                              value={specialty.category || ''}
-                              onChange={(e) => {
-                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = { ...specialty, category: e.target.value as any };
-                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                              }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            >
-                              <option value="">Select category</option>
-                              <option value="cleaning">Cleaning</option>
-                              <option value="plumbing">Plumbing</option>
-                              <option value="electrical">Electrical</option>
-                              <option value="moving">Moving</option>
-                              <option value="landscaping">Landscaping</option>
-                              <option value="pest_control">Pest Control</option>
-                              <option value="handyman">Handyman</option>
-                              <option value="painting">Painting</option>
-                              <option value="carpentry">Carpentry</option>
-                              <option value="other">Other</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
-                            <input
-                              type="number"
-                              min="0"
-                              value={specialty.experience || 0}
-                              onChange={(e) => {
-                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = { ...specialty, experience: parseInt(e.target.value) || 0 };
-                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                              }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-0.5">Hourly Rate</label>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={specialty.hourlyRate || 0}
-                              onChange={(e) => {
-                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = { ...specialty, hourlyRate: parseFloat(e.target.value) || 0 };
-                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                              }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-                        </div>
-                        
-                        {/* Subcategories */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Subcategories</label>
-                          <div className="flex flex-wrap gap-1 mb-1">
-                            {specialty.subcategories?.map((sub, subIdx) => (
-                              <span key={subIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-800">
-                                {sub}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                    newSpecialties[index] = {
-                                      ...specialty,
-                                      subcategories: specialty.subcategories?.filter((_, i) => i !== subIdx) || []
-                                    };
-                                    setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                  }}
-                                  className="ml-1 text-gray-600 hover:text-gray-800"
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Add subcategory (press Enter)"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                e.preventDefault();
-                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = {
-                                  ...specialty,
-                                  subcategories: [...(specialty.subcategories || []), e.currentTarget.value.trim()]
-                                };
-                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                e.currentTarget.value = '';
-                              }
-                            }}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
-
-                        {/* Skills */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Skills (IDs)</label>
-                          <div className="flex flex-wrap gap-1 mb-1">
-                            {specialty.skills?.map((skill, skillIdx) => (
-                              <span key={skillIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
-                                {skill}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                    newSpecialties[index] = {
-                                      ...specialty,
-                                      skills: specialty.skills?.filter((_, i) => i !== skillIdx) || []
-                                    };
-                                    setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                  }}
-                                  className="ml-1 text-blue-600 hover:text-blue-800"
-                                >
-                                  ×
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                          <input
-                            type="text"
-                            placeholder="Add skill ID (press Enter)"
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                e.preventDefault();
-                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                newSpecialties[index] = {
-                                  ...specialty,
-                                  skills: [...(specialty.skills || []), e.currentTarget.value.trim()]
-                                };
-                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                e.currentTarget.value = '';
-                              }
-                            }}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          />
-                        </div>
-
-                        {/* Service Areas */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Service Areas</label>
-                          <div className="space-y-2 mb-2">
-                            {specialty.serviceAreas?.map((area, areaIdx) => (
-                              <div key={areaIdx} className="flex gap-2 items-end border border-gray-200 rounded p-2">
-                                <div className="flex-1">
-                                  <label className="block text-xs text-gray-600 mb-0.5">City</label>
-                                  <input
-                                    type="text"
-                                    value={area.city || ''}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        serviceAreas: specialty.serviceAreas?.map((a, i) => 
-                                          i === areaIdx ? { ...a, city: e.target.value } : a
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                </div>
-                                <div className="flex-1">
-                                  <label className="block text-xs text-gray-600 mb-0.5">State</label>
-                                  <input
-                                    type="text"
-                                    value={area.state || ''}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        serviceAreas: specialty.serviceAreas?.map((a, i) => 
-                                          i === areaIdx ? { ...a, state: e.target.value } : a
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                </div>
-                                <div className="w-20">
-                                  <label className="block text-xs text-gray-600 mb-0.5">Radius</label>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    value={area.radius || 0}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        serviceAreas: specialty.serviceAreas?.map((a, i) => 
-                                          i === areaIdx ? { ...a, radius: parseInt(e.target.value) || 0 } : a
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                    newSpecialties[index] = {
-                                      ...specialty,
-                                      serviceAreas: specialty.serviceAreas?.filter((_, i) => i !== areaIdx) || []
-                                    };
-                                    setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                  }}
-                                  className="text-xs text-red-600 hover:text-red-700 px-2"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                              newSpecialties[index] = {
-                                ...specialty,
-                                serviceAreas: [...(specialty.serviceAreas || []), { city: '', state: '', radius: 0 }]
-                              };
-                              setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                            }}
-                            className="text-xs text-blue-600 hover:text-blue-700"
-                          >
-                            + Add Service Area
-                          </button>
-                        </div>
-
-                        {/* Certifications */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Certifications</label>
-                          <div className="space-y-2 mb-2">
-                            {specialty.certifications?.map((cert, certIdx) => (
-                              <div key={certIdx} className="border border-gray-200 rounded p-2 space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
-                                  <input
-                                    type="text"
-                                    placeholder="Certification name"
-                                    value={cert.name || ''}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        certifications: specialty.certifications?.map((c, i) => 
-                                          i === certIdx ? { ...c, name: e.target.value } : c
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="Issuer"
-                                    value={cert.issuer || ''}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        certifications: specialty.certifications?.map((c, i) => 
-                                          i === certIdx ? { ...c, issuer: e.target.value } : c
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                  <input
-                                    type="text"
-                                    placeholder="Certificate number"
-                                    value={cert.certificateNumber || ''}
-                                    onChange={(e) => {
-                                      const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                      newSpecialties[index] = {
-                                        ...specialty,
-                                        certifications: specialty.certifications?.map((c, i) => 
-                                          i === certIdx ? { ...c, certificateNumber: e.target.value } : c
-                                        ) || []
-                                      };
-                                      setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                  />
-                                  <div className="flex gap-1">
-                                    <input
-                                      type="date"
-                                      placeholder="Date issued"
-                                      value={cert.dateIssued ? new Date(cert.dateIssued).toISOString().split('T')[0] : ''}
-                                      onChange={(e) => {
-                                        const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                        newSpecialties[index] = {
-                                          ...specialty,
-                                          certifications: specialty.certifications?.map((c, i) => 
-                                            i === certIdx ? { ...c, dateIssued: e.target.value ? new Date(e.target.value) : undefined } : c
-                                          ) || []
-                                        };
-                                        setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                      }}
-                                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                    />
-                                    <input
-                                      type="date"
-                                      placeholder="Expiry date"
-                                      value={cert.expiryDate ? new Date(cert.expiryDate).toISOString().split('T')[0] : ''}
-                                      onChange={(e) => {
-                                        const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                        newSpecialties[index] = {
-                                          ...specialty,
-                                          certifications: specialty.certifications?.map((c, i) => 
-                                            i === certIdx ? { ...c, expiryDate: e.target.value ? new Date(e.target.value) : undefined } : c
-                                          ) || []
-                                        };
-                                        setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                      }}
-                                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded-md"
-                                    />
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                    newSpecialties[index] = {
-                                      ...specialty,
-                                      certifications: specialty.certifications?.filter((_, i) => i !== certIdx) || []
-                                    };
-                                    setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                  }}
-                                  className="text-xs text-red-600 hover:text-red-700"
-                                >
-                                  Remove Certification
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                              newSpecialties[index] = {
-                                ...specialty,
-                                certifications: [...(specialty.certifications || []), {}]
-                              };
-                              setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                            }}
-                            className="text-xs text-blue-600 hover:text-blue-700"
-                          >
-                            + Add Certification
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newSpecialties = professionalInfoForm.specialties?.filter((_, i) => i !== index) || [];
-                            setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                          }}
-                          className="text-xs text-red-600 hover:text-red-700"
-                        >
-                          Remove Specialty
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newSpecialties = [...(professionalInfoForm.specialties || []), { 
-                          experience: 0, 
-                          hourlyRate: 0,
-                          subcategories: [],
-                          skills: [],
-                          serviceAreas: [],
-                          certifications: []
-                        }];
-                        setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                      }}
-                      className="text-xs text-blue-600 hover:text-blue-700"
-                    >
-                      + Add Specialty
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Languages</label>
-                  <div className="flex flex-wrap gap-2 mb-2">
-                    {professionalInfoForm.languages?.map((lang, idx) => (
-                      <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800">
-                        {lang}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newLangs = professionalInfoForm.languages?.filter((_, i) => i !== idx) || [];
-                            setProfessionalInfoForm({ ...professionalInfoForm, languages: newLangs });
-                          }}
-                          className="ml-1 text-gray-600 hover:text-gray-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Add language (e.g., en, fil)"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        e.preventDefault();
-                        const newLangs = [...(professionalInfoForm.languages || []), e.currentTarget.value.trim()];
-                        setProfessionalInfoForm({ ...professionalInfoForm, languages: newLangs });
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Availability</label>
-                  <div className="space-y-2">
-                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
-                      <div key={day} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={professionalInfoForm.availability?.[day]?.available || false}
-                          onChange={(e) => {
-                            setProfessionalInfoForm({
-                              ...professionalInfoForm,
-                              availability: {
-                                ...professionalInfoForm.availability,
-                                [day]: {
-                                  ...professionalInfoForm.availability?.[day],
-                                  available: e.target.checked,
-                                  start: professionalInfoForm.availability?.[day]?.start || '08:00',
-                                  end: professionalInfoForm.availability?.[day]?.end || '17:00'
-                                }
-                              }
-                            });
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <span className="text-xs text-gray-700 capitalize w-20">{day}</span>
-                        {professionalInfoForm.availability?.[day]?.available && (
-                          <>
-                            <input
-                              type="time"
-                              value={professionalInfoForm.availability[day]?.start || '08:00'}
-                              onChange={(e) => {
-                                setProfessionalInfoForm({
-                                  ...professionalInfoForm,
-                                  availability: {
-                                    ...professionalInfoForm.availability,
-                                    [day]: {
-                                      ...professionalInfoForm.availability?.[day],
-                                      start: e.target.value,
-                                      available: true
-                                    }
-                                  }
-                                });
-                              }}
-                              className="px-2 py-1 text-xs border border-gray-300 rounded-md"
-                            />
-                            <span className="text-xs text-gray-500">to</span>
-                            <input
-                              type="time"
-                              value={professionalInfoForm.availability[day]?.end || '17:00'}
-                              onChange={(e) => {
-                                setProfessionalInfoForm({
-                                  ...professionalInfoForm,
-                                  availability: {
-                                    ...professionalInfoForm.availability,
-                                    [day]: {
-                                      ...professionalInfoForm.availability?.[day],
-                                      end: e.target.value,
-                                      available: true
-                                    }
-                                  }
-                                });
-                              }}
-                              className="px-2 py-1 text-xs border border-gray-300 rounded-md"
-                            />
-                          </>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Emergency Services</label>
-                    <input
-                      type="checkbox"
-                      checked={professionalInfoForm.emergencyServices || false}
-                      onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, emergencyServices: e.target.checked })}
-                      className="rounded border-gray-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Travel Distance (km)</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={professionalInfoForm.travelDistance || 0}
-                      onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, travelDistance: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Minimum Job Value</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={professionalInfoForm.minimumJobValue || 0}
-                      onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, minimumJobValue: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Maximum Job Value</label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={professionalInfoForm.maximumJobValue || 0}
-                      onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, maximumJobValue: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Business Info Tab */}
-        {activeTab === 'business' && isProviderUser && (providerData?.providerType === 'business' || providerData?.providerType === 'agency') && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Name</label>
-                <input
-                  type="text"
-                  value={businessInfoForm.businessName || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessName: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Type</label>
-                <input
-                  type="text"
-                  value={businessInfoForm.businessType || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessType: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Registration</label>
-                <input
-                  type="text"
-                  value={businessInfoForm.businessRegistration || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessRegistration: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Tax ID</label>
-                <input
-                  type="text"
-                  value={businessInfoForm.taxId || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, taxId: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Phone</label>
-                <input
-                  type="tel"
-                  value={businessInfoForm.businessPhone || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessPhone: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Email</label>
-                <input
-                  type="email"
-                  value={businessInfoForm.businessEmail || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessEmail: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Website</label>
-                <input
-                  type="url"
-                  value={businessInfoForm.website || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, website: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Year Established</label>
-                <input
-                  type="number"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  value={businessInfoForm.yearEstablished || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, yearEstablished: parseInt(e.target.value) || undefined })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-0.5">Number of Employees</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={businessInfoForm.numberOfEmployees || ''}
-                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, numberOfEmployees: parseInt(e.target.value) || undefined })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Description</label>
-              <textarea
-                value={businessInfoForm.businessDescription || ''}
-                onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessDescription: e.target.value })}
-                rows={4}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <h4 className="text-xs font-medium text-gray-700 mb-2">Business Address</h4>
+        {/* Business Information - Show directly if business/agency provider */}
+        {isProviderUser && (providerData?.providerType === 'business' || providerData?.providerType === 'agency') && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Business Information</h3>
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Street</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Name</label>
                   <input
                     type="text"
-                    value={businessInfoForm.businessAddress?.street || ''}
-                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, street: e.target.value } })}
+                    value={businessInfoForm.businessName || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessName: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-0.5">City</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Type</label>
                   <input
                     type="text"
-                    value={businessInfoForm.businessAddress?.city || ''}
-                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, city: e.target.value } })}
+                    value={businessInfoForm.businessType || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessType: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-0.5">State</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Registration</label>
                   <input
                     type="text"
-                    value={businessInfoForm.businessAddress?.state || ''}
-                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, state: e.target.value } })}
+                    value={businessInfoForm.businessRegistration || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessRegistration: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Zip Code</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Tax ID</label>
                   <input
                     type="text"
-                    value={businessInfoForm.businessAddress?.zipCode || ''}
-                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, zipCode: e.target.value } })}
+                    value={businessInfoForm.taxId || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, taxId: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-0.5">Country</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Phone</label>
                   <input
-                    type="text"
-                    value={businessInfoForm.businessAddress?.country || ''}
-                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, country: e.target.value } })}
+                    type="tel"
+                    value={businessInfoForm.businessPhone || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessPhone: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Preferences Tab */}
-        {activeTab === 'preferences' && isProviderUser && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Notification Settings</h3>
-              <div className="space-y-2">
-                {Object.entries(preferencesForm.notificationSettings || {}).map(([key, value]) => (
-                  <label key={key} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={value as boolean}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        notificationSettings: {
-                          ...preferencesForm.notificationSettings,
-                          [key]: e.target.checked
-                        }
-                      })}
-                      className="rounded border-gray-300"
-                    />
-                    <span className="text-xs text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Job Preferences</h3>
-              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Job Types</label>
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {preferencesForm.jobPreferences?.preferredJobTypes?.map((type, idx) => (
-                      <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-100 text-green-800">
-                        {type}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreferencesForm({
-                              ...preferencesForm,
-                              jobPreferences: {
-                                ...preferencesForm.jobPreferences,
-                                preferredJobTypes: preferencesForm.jobPreferences?.preferredJobTypes?.filter((_, i) => i !== idx) || []
-                              }
-                            });
-                          }}
-                          className="ml-1 text-green-600 hover:text-green-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Email</label>
                   <input
-                    type="text"
-                    placeholder="Add preferred job type (press Enter)"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        e.preventDefault();
-                        setPreferencesForm({
-                          ...preferencesForm,
-                          jobPreferences: {
-                            ...preferencesForm.jobPreferences,
-                            preferredJobTypes: [...(preferencesForm.jobPreferences?.preferredJobTypes || []), e.currentTarget.value.trim()]
-                          }
-                        });
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Avoid Job Types</label>
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {preferencesForm.jobPreferences?.avoidJobTypes?.map((type, idx) => (
-                      <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">
-                        {type}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreferencesForm({
-                              ...preferencesForm,
-                              jobPreferences: {
-                                ...preferencesForm.jobPreferences,
-                                avoidJobTypes: preferencesForm.jobPreferences?.avoidJobTypes?.filter((_, i) => i !== idx) || []
-                              }
-                            });
-                          }}
-                          className="ml-1 text-red-600 hover:text-red-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Add job type to avoid (press Enter)"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        e.preventDefault();
-                        setPreferencesForm({
-                          ...preferencesForm,
-                          jobPreferences: {
-                            ...preferencesForm.jobPreferences,
-                            avoidJobTypes: [...(preferencesForm.jobPreferences?.avoidJobTypes || []), e.currentTarget.value.trim()]
-                          }
-                        });
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Preferred Time Slots</label>
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {preferencesForm.jobPreferences?.preferredTimeSlots?.map((slot, idx) => (
-                      <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
-                        {slot}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPreferencesForm({
-                              ...preferencesForm,
-                              jobPreferences: {
-                                ...preferencesForm.jobPreferences,
-                                preferredTimeSlots: preferencesForm.jobPreferences?.preferredTimeSlots?.filter((_, i) => i !== idx) || []
-                              }
-                            });
-                          }}
-                          className="ml-1 text-blue-600 hover:text-blue-800"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Add time slot (e.g., morning, afternoon, evening) (press Enter)"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                        e.preventDefault();
-                        setPreferencesForm({
-                          ...preferencesForm,
-                          jobPreferences: {
-                            ...preferencesForm.jobPreferences,
-                            preferredTimeSlots: [...(preferencesForm.jobPreferences?.preferredTimeSlots || []), e.currentTarget.value.trim()]
-                          }
-                        });
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Max Jobs Per Day</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={preferencesForm.jobPreferences?.maxJobsPerDay || 5}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        jobPreferences: {
-                          ...preferencesForm.jobPreferences,
-                          maxJobsPerDay: parseInt(e.target.value) || 5
-                        }
-                      })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-0.5">Advance Booking Days</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={preferencesForm.jobPreferences?.advanceBookingDays || 30}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        jobPreferences: {
-                          ...preferencesForm.jobPreferences,
-                          advanceBookingDays: parseInt(e.target.value) || 30
-                        }
-                      })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Communication Preferences</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Preferred Contact Method</label>
-                  <select
-                    value={preferencesForm.communicationPreferences?.preferredContactMethod || 'app'}
-                    onChange={(e) => setPreferencesForm({
-                      ...preferencesForm,
-                      communicationPreferences: {
-                        ...preferencesForm.communicationPreferences,
-                        preferredContactMethod: e.target.value as 'phone' | 'email' | 'sms' | 'app'
-                      }
-                    })}
+                    type="email"
+                    value={businessInfoForm.businessEmail || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessEmail: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="app">App</option>
-                    <option value="phone">Phone</option>
-                    <option value="email">Email</option>
-                    <option value="sms">SMS</option>
-                  </select>
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Response Time (minutes)</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Website</label>
+                  <input
+                    type="url"
+                    value={businessInfoForm.website || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, website: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Year Established</label>
+                  <input
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    value={businessInfoForm.yearEstablished || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, yearEstablished: parseInt(e.target.value) || undefined })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Number of Employees</label>
                   <input
                     type="number"
                     min="0"
-                    value={preferencesForm.communicationPreferences?.responseTimeExpectation || '60'}
-                    onChange={(e) => setPreferencesForm({
-                      ...preferencesForm,
-                      communicationPreferences: {
-                        ...preferencesForm.communicationPreferences,
-                        responseTimeExpectation: e.target.value || '60'
-                      }
-                    })}
+                    value={businessInfoForm.numberOfEmployees || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, numberOfEmployees: parseInt(e.target.value) || undefined })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="flex items-center space-x-2">
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Description</label>
+                <textarea
+                  value={businessInfoForm.businessDescription || ''}
+                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessDescription: e.target.value })}
+                  rows={4}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Business Address</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Street</label>
                     <input
-                      type="checkbox"
-                      checked={preferencesForm.communicationPreferences?.autoAcceptJobs || false}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        communicationPreferences: {
-                          ...preferencesForm.communicationPreferences,
-                          autoAcceptJobs: e.target.checked
-                        }
-                      })}
-                      className="rounded border-gray-300"
+                      type="text"
+                      value={businessInfoForm.businessAddress?.street || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, street: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     />
-                    <span className="text-xs text-gray-700">Auto Accept Jobs</span>
-                  </label>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">City</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.city || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, city: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">State</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.state || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, state: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Zip Code</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.zipCode || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, zipCode: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Country</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.country || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, country: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
-
-        {/* Performance Tab (Read-only) */}
-        {activeTab === 'performance' && isProviderUser && (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-            {loadingProviderData ? (
-              <div className="text-center py-8">
-                <Loading />
-                <p className="text-sm text-gray-500 mt-2">Loading performance data...</p>
-              </div>
-            ) : providerData?.performance ? (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="border border-gray-200 rounded-md p-3">
-                    <div className="text-xs text-gray-500 mb-1">Rating</div>
-                    <div className="text-2xl font-bold text-gray-900">{providerData.performance.rating?.toFixed(1) || 'N/A'}</div>
-                    <div className="text-xs text-gray-500 mt-1">{providerData.performance.totalReviews || 0} reviews</div>
-                  </div>
-                  <div className="border border-gray-200 rounded-md p-3">
-                    <div className="text-xs text-gray-500 mb-1">Total Jobs</div>
-                    <div className="text-2xl font-bold text-gray-900">{providerData.performance.totalJobs || 0}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {providerData.performance.completedJobs || 0} completed
-                      {providerData.performance.cancelledJobs !== undefined && providerData.performance.cancelledJobs > 0 && (
-                        <span className="text-red-600"> • {providerData.performance.cancelledJobs} cancelled</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="border border-gray-200 rounded-md p-3">
-                    <div className="text-xs text-gray-500 mb-1">Completion Rate</div>
-                    <div className="text-2xl font-bold text-gray-900">{providerData.performance.completionRate?.toFixed(1) || '0'}%</div>
-                  </div>
-                  <div className="border border-gray-200 rounded-md p-3">
-                    <div className="text-xs text-gray-500 mb-1">Response Time</div>
-                    <div className="text-2xl font-bold text-gray-900">{providerData.performance.responseTime || 0} min</div>
-                  </div>
-                  {providerData.performance.repeatCustomerRate !== undefined && (
-                    <div className="border border-gray-200 rounded-md p-3">
-                      <div className="text-xs text-gray-500 mb-1">Repeat Customer Rate</div>
-                      <div className="text-2xl font-bold text-gray-900">{providerData.performance.repeatCustomerRate?.toFixed(1) || '0'}%</div>
-                    </div>
-                  )}
-                </div>
-                {providerData.performance.earnings && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">Earnings</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-xs text-gray-500">Total</div>
-                        <div className="text-lg font-semibold">₱{providerData.performance.earnings.total?.toLocaleString() || '0'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">This Month</div>
-                        <div className="text-lg font-semibold">₱{providerData.performance.earnings.thisMonth?.toLocaleString() || '0'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Last Month</div>
-                        <div className="text-lg font-semibold">₱{providerData.performance.earnings.lastMonth?.toLocaleString() || '0'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-500">Pending</div>
-                        <div className="text-lg font-semibold">₱{providerData.performance.earnings.pending?.toLocaleString() || '0'}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {providerData.performance.badges && providerData.performance.badges.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-900 mb-2">Badges</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {providerData.performance.badges.map((badge, idx) => (
-                        <span key={idx} className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
-                          <Award className="w-3 h-3 mr-1" />
-                          {badge.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8 text-sm text-gray-500">
-                No performance data available
-              </div>
-            )}
-          </div>
-        )}
+        </div>
       </Modal>
 
       {/* Verification Modal */}
@@ -4392,38 +3674,47 @@ export default function UsersPage() {
             <button
               onClick={handleBulkUpdate}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {submitting ? 'Updating...' : 'Update Users'}
+              {submitting ? 'Updating...' : 'Update'}
             </button>
           </div>
         }
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
             <select
-              value={bulkUpdateFormData.status}
-              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: e.target.value as UserStatus })}
+              value={bulkUpdateFormData.status || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: (e.target.value || undefined) as UserStatus | '' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="">No change</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
               <option value="pending_verification">Pending Verification</option>
-              <option value="banned">Banned</option>
             </select>
           </div>
           <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={bulkUpdateFormData.isActive}
-                onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Is Active</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Add Roles</label>
+            <input
+              type="text"
+              value={bulkUpdateFormData.addRoles || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, addRoles: e.target.value })}
+              placeholder="Comma-separated roles (e.g., provider, admin)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Remove Roles</label>
+            <input
+              type="text"
+              value={bulkUpdateFormData.removeRoles || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, removeRoles: e.target.value })}
+              placeholder="Comma-separated roles (e.g., provider, admin)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </Modal>
