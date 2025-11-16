@@ -12,6 +12,9 @@ export interface ProvidersParams {
   providerType?: string;
   category?: string;
   location?: string;
+  skills?: string[];
+  minRating?: number;
+  city?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -20,22 +23,64 @@ export interface ProvidersParams {
 
 interface ProvidersResponse {
   success?: boolean;
-  data?: { users?: User[]; pagination?: { current: number; pages: number; total: number; limit: number; count: number } };
+  data?: Provider[] | { users?: User[]; pagination?: { current: number; pages: number; total: number; limit: number; count: number } };
   users?: User[];
   pagination?: {
-    current: number;
+    page?: number;
+    current?: number;
     pages: number;
     total: number;
     limit: number;
-    count: number;
+    count?: number;
   };
+}
+
+// Provider response structure from /api/providers
+interface ProviderResponseItem {
+  _id: string;
+  userId: {
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    profileImage?: string;
+    profile?: {
+      avatar?: {
+        url?: string;
+        thumbnail?: string;
+      };
+      address?: {
+        city?: string;
+        state?: string;
+      };
+    };
+  };
+  status?: string;
+  providerType?: string;
+  professionalInfo?: Provider["professionalInfo"];
+  businessInfo?: Provider["businessInfo"];
+  verification?: Provider["verification"];
+  preferences?: Provider["preferences"];
+  performance?: Provider["performance"];
+  metadata?: Provider["metadata"];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface PaginationData {
+  current: number;
+  pages: number;
+  total: number;
+  limit: number;
+  count: number;
 }
 
 export function useProviders(params: ProvidersParams = {}) {
   const [providers, setProviders] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<ProvidersResponse["pagination"] | null>(null);
+  const [pagination, setPagination] = useState<PaginationData | null>(null);
   const mountedRef = useRef(true);
 
   const fetchProviders = useCallback(async () => {
@@ -46,12 +91,23 @@ export function useProviders(params: ProvidersParams = {}) {
       setError(null);
 
       const queryParams = new URLSearchParams();
-      // Always filter by provider role
-      queryParams.append("role", "provider");
+      
+      // Add filter parameters
       if (params.status) queryParams.append("status", params.status);
       if (params.providerType) queryParams.append("providerType", params.providerType);
       if (params.category) queryParams.append("category", params.category);
       if (params.location) queryParams.append("location", params.location);
+      if (params.city) queryParams.append("city", params.city);
+      if (params.minRating) queryParams.append("minRating", params.minRating.toString());
+      
+      // Add skills as comma-separated string - using skill IDs
+      if (params.skills && params.skills.length > 0) {
+        // Ensure we're using IDs (filter out empty strings)
+        const skillIds = params.skills.filter(id => id && id.trim() !== '');
+        if (skillIds.length > 0) {
+          queryParams.append("skills", skillIds.join(","));
+        }
+      }
       
       const page = params.page || 1;
       const limit = params.limit || 10;
@@ -61,37 +117,86 @@ export function useProviders(params: ProvidersParams = {}) {
       if (params.sortBy) queryParams.append("sortBy", params.sortBy);
       if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
 
-      const url = `${API_BASE_URL}${API_ENDPOINTS.users}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      // Use /api/providers endpoint instead of /api/users
+      const url = `${API_BASE_URL}${API_ENDPOINTS.providers}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
       const response = await fetch(url, createAuthFetchOptions());
 
       if (!response.ok) {
         throw new Error(`Failed to fetch providers: ${response.status}`);
       }
 
-      const data: ProvidersResponse | User[] | { success?: boolean; data?: { users?: User[]; pagination?: ProvidersResponse["pagination"] } } = await response.json();
+      const responseData: { success?: boolean; data?: ProviderResponseItem[]; pagination?: ProvidersResponse["pagination"] } = await response.json();
+      
       let providersData: User[] = [];
       let paginationData = null;
 
       // Debug logging
       logger.debug("Providers API response", { 
-        isArray: Array.isArray(data),
-        hasData: !!(data && typeof data === 'object'),
-        dataKeys: data && typeof data === 'object' ? Object.keys(data) : [],
-        dataStructure: data && typeof data === 'object' && 'data' in data ? Object.keys((data as { data?: Record<string, unknown> }).data || {}) : []
+        hasSuccess: responseData.success,
+        hasData: !!responseData.data,
+        dataLength: Array.isArray(responseData.data) ? responseData.data.length : 0,
+        hasPagination: !!responseData.pagination
       });
 
-      if (Array.isArray(data)) {
-        providersData = data;
-      } else if (data && typeof data === "object") {
-        // Handle users endpoint response structure: { success: true, data: { users: [...], pagination: {...} } }
-        if ('data' in data && data.data && 'users' in data.data) {
-          providersData = data.data.users || [];
-          paginationData = data.data.pagination || null;
-        } else if ('users' in data) {
-          // Handle direct users array in response
-          providersData = (data as ProvidersResponse).users || [];
-          paginationData = (data as ProvidersResponse).pagination || null;
+      // Handle /api/providers response structure: { success: true, data: Provider[], pagination: {...} }
+      if (responseData.success && Array.isArray(responseData.data)) {
+        // Transform Provider objects to User objects with provider property
+        providersData = responseData.data.map((providerItem: ProviderResponseItem): User => {
+          const userId = providerItem.userId;
+          
+          // Create User object with provider data
+          const user: User = {
+            _id: userId._id,
+            firstName: userId.firstName,
+            lastName: userId.lastName,
+            email: userId.email,
+            phone: userId.phone,
+            profile: {
+              avatar: userId.profile?.avatar || (userId.profileImage ? {
+                url: userId.profileImage,
+                thumbnail: userId.profileImage
+              } : undefined),
+              address: userId.profile?.address
+            },
+            provider: {
+              _id: providerItem._id,
+              userId: userId._id,
+              status: providerItem.status as Provider["status"],
+              providerType: providerItem.providerType as Provider["providerType"],
+              professionalInfo: providerItem.professionalInfo,
+              businessInfo: providerItem.businessInfo,
+              verification: providerItem.verification,
+              preferences: providerItem.preferences,
+              performance: providerItem.performance,
+              metadata: providerItem.metadata,
+              createdAt: providerItem.createdAt ? new Date(providerItem.createdAt) : undefined,
+              updatedAt: providerItem.updatedAt ? new Date(providerItem.updatedAt) : undefined,
+            }
+          };
+          
+          return user;
+        });
+        
+        // Handle pagination - convert page to current if needed
+        if (responseData.pagination) {
+          paginationData = {
+            current: responseData.pagination.current ?? responseData.pagination.page ?? page,
+            pages: responseData.pagination.pages ?? 1,
+            total: responseData.pagination.total ?? 0,
+            limit: responseData.pagination.limit ?? limit,
+            count: responseData.pagination.count ?? providersData.length,
+          };
         }
+      } else if (Array.isArray(responseData.data)) {
+        // Fallback: if data is array but no success flag
+        providersData = (responseData.data as unknown as User[]) || [];
+        paginationData = responseData.pagination ? {
+          current: responseData.pagination.current ?? responseData.pagination.page ?? page,
+          pages: responseData.pagination.pages ?? 1,
+          total: responseData.pagination.total ?? 0,
+          limit: responseData.pagination.limit ?? limit,
+          count: responseData.pagination.count ?? providersData.length,
+        } : null;
       }
 
       // Log how many users have provider data

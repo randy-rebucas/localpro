@@ -7,6 +7,7 @@ interface ProviderFiltersState {
   providerType: string;
   category: string;
   location: string;
+  skills: string[];
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   currentPage: number;
@@ -23,6 +24,9 @@ interface UseProviderFiltersReturn extends ProviderFiltersState {
   setProviderType: (type: string) => void;
   setCategory: (category: string) => void;
   setLocation: (location: string) => void;
+  setSkills: (skills: string[]) => void;
+  toggleSkill: (skillId: string) => void;
+  clearSkills: () => void;
   setSortBy: (sortBy: string) => void;
   setSortOrder: (order: 'asc' | 'desc') => void;
   setCurrentPage: (page: number) => void;
@@ -38,6 +42,7 @@ export function useProviderFilters({
   const [providerType, setProviderType] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,21 +51,36 @@ export function useProviderFilters({
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [status, providerType, category, location, sortBy, sortOrder]);
+  }, [status, providerType, category, location, skills, sortBy, sortOrder]);
 
   // Active filters check
   const hasActiveFilters = useMemo(() => {
     return status !== "" ||
            providerType !== "" ||
            category !== "" ||
-           location.trim() !== "";
-  }, [status, providerType, category, location]);
+           location.trim() !== "" ||
+           skills.length > 0;
+  }, [status, providerType, category, location, skills]);
+
+  const toggleSkill = useCallback((skillId: string) => {
+    setSkills(prev => {
+      if (prev.includes(skillId)) {
+        return prev.filter(id => id !== skillId);
+      }
+      return [...prev, skillId];
+    });
+  }, []);
+
+  const clearSkills = useCallback(() => {
+    setSkills([]);
+  }, []);
 
   const clearFilters = useCallback(() => {
     setStatus("");
     setProviderType("");
     setCategory("");
     setLocation("");
+    setSkills([]);
     setCurrentPage(1);
   }, []);
 
@@ -70,17 +90,19 @@ export function useProviderFilters({
     providerType: providerType || undefined,
     category: category || undefined,
     location: location.trim() || undefined,
+    skills: skills.length > 0 ? skills : undefined,
     page: currentPage,
     limit: limit,
     sortBy: sortBy,
     sortOrder: sortOrder,
-  }), [status, providerType, category, location, currentPage, limit, sortBy, sortOrder]);
+  }), [status, providerType, category, location, skills, currentPage, limit, sortBy, sortOrder]);
 
   return {
     status,
     providerType,
     category,
     location,
+    skills,
     sortBy,
     sortOrder,
     currentPage,
@@ -90,6 +112,9 @@ export function useProviderFilters({
     setProviderType,
     setCategory,
     setLocation,
+    setSkills,
+    toggleSkill,
+    clearSkills,
     setSortBy,
     setSortOrder,
     setCurrentPage,

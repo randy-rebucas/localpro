@@ -302,6 +302,7 @@ export const API_ENDPOINTS = {
   providersAdminAll: "/api/providers/admin/all",
   providersAdminStatus: "/api/providers/admin",
   providersSkills: "/api/providers/skills",
+  providersSkillsByCategory: "/api/providers/skills", // Use query parameter: ?category=cleaning
   
   // Agency Management
   agencies: "/api/agencies",

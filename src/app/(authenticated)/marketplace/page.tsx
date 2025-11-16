@@ -26,7 +26,7 @@ export default function MarketplacePage() {
   const userName = getUserName(session);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       {/* Hero / Header Section */}
       <MarketplaceHeader
         greeting={greeting}

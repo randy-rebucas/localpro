@@ -9,6 +9,12 @@ import { ServiceCategory } from "@/components/marketplace/categories-carousel";
 // Global request deduplication and caching
 interface CachedCategories {
   categories: ServiceCategory[];
+  summary?: {
+    totalCategories?: number;
+    totalServices?: number;
+    totalProviders?: number;
+    categoriesWithServices?: number;
+  };
   timestamp: number;
 }
 
@@ -16,26 +22,23 @@ let categoriesCache: CachedCategories | null = null;
 let activeCategoriesRequest: Promise<CachedCategories | null> | null = null;
 const CACHE_DURATION = 60000; // 60 seconds cache (categories change less frequently)
 
-interface CategoriesResponse {
+interface ServiceCategoriesResponse {
   success?: boolean;
   message?: string;
-  data?: ServiceCategory[] | {
-    categories?: ServiceCategory[];
-    count?: number;
-  };
-  categories?: ServiceCategory[];
+  data?: ServiceCategory[];
   summary?: {
-    totalCategories: number;
+    totalCategories?: number;
     totalServices?: number;
     totalProviders?: number;
     categoriesWithServices?: number;
   };
 }
 
-export function useCategories() {
+export function useServiceCategories() {
   const cached = categoriesCache;
   
   const [categories, setCategories] = useState<ServiceCategory[]>(cached?.categories || []);
+  const [summary, setSummary] = useState<CachedCategories["summary"]>(cached?.summary);
   const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
   const mountedRef = useRef(true);
@@ -48,6 +51,7 @@ export function useCategories() {
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
       if (mountedRef.current) {
         setCategories(cached.categories);
+        setSummary(cached.summary);
         setLoading(false);
         setError(null);
       }
@@ -60,6 +64,7 @@ export function useCategories() {
         const cachedResult = await activeCategoriesRequest;
         if (cachedResult && mountedRef.current) {
           setCategories(cachedResult.categories);
+          setSummary(cachedResult.summary);
           setLoading(false);
           setError(null);
         }
@@ -79,6 +84,7 @@ export function useCategories() {
         if (recheckCache && (Date.now() - recheckCache.timestamp) < CACHE_DURATION) {
           if (mountedRef.current) {
             setCategories(recheckCache.categories);
+            setSummary(recheckCache.summary);
             setLoading(false);
             setError(null);
           }
@@ -115,6 +121,7 @@ export function useCategories() {
             const staleCache = categoriesCache;
             if (staleCache && mountedRef.current) {
               setCategories(staleCache.categories);
+              setSummary(staleCache.summary);
               setLoading(false);
               setError(null);
               return staleCache;
@@ -122,87 +129,34 @@ export function useCategories() {
             // If no cache, throw error but don't log it as a critical error
             throw new Error("Too many requests. Please try again in a moment.");
           }
-            throw new Error(`Failed to fetch service categories: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch service categories: ${response.status} ${response.statusText}`);
         }
 
-        const data: CategoriesResponse | ServiceCategory[] = await response.json();
-        
-        // Calculate data length for logging
-        let dataLength = 0;
-        if (Array.isArray(data)) {
-          dataLength = data.length;
-        } else if (data && typeof data === 'object' && 'data' in data) {
-          const responseData = data as CategoriesResponse;
-          if (Array.isArray(responseData.data)) {
-            dataLength = responseData.data.length;
-          } else if (responseData.data && typeof responseData.data === 'object' && 'categories' in responseData.data) {
-            dataLength = (responseData.data as { categories?: ServiceCategory[] }).categories?.length ?? 0;
-          }
-        }
+        const data: ServiceCategoriesResponse = await response.json();
         
         logger.debug(`Received service categories response`, { 
-          isArray: Array.isArray(data),
-          hasData: !!(data && typeof data === 'object'),
-          dataKeys: !Array.isArray(data) && data ? Object.keys(data) : [],
-          dataLength
+          success: data.success,
+          hasData: !!data.data,
+          dataLength: data.data?.length ?? 0,
+          hasSummary: !!data.summary
         });
         
         let categoriesData: ServiceCategory[] = [];
 
-        // Handle API response structure: {success: true, data: {categories: [...], count: number}} or {success: true, data: [...]} or {categories: [...]}
-        if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
-          const responseData = data as CategoriesResponse;
-          
-          // Check for nested structure: { success: true, data: { categories: [...], count: number } }
-          if (responseData.data && typeof responseData.data === 'object' && !Array.isArray(responseData.data) && 'categories' in responseData.data) {
-            const nestedData = responseData.data as { categories?: ServiceCategory[]; count?: number };
-            if (nestedData.categories && Array.isArray(nestedData.categories)) {
-              logger.debug(`Found service categories in response.data.categories`, { count: nestedData.categories.length });
-              categoriesData = nestedData.categories as ServiceCategory[];
-            }
-          }
-          // Check for data array: { success: true, data: [...] }
-          else if (responseData.data && Array.isArray(responseData.data)) {
-            logger.debug(`Found service categories in response.data`, { count: responseData.data.length });
-            categoriesData = responseData.data as ServiceCategory[];
-          } 
-          // Check for categories array: { categories: [...] }
-          else if (responseData.categories && Array.isArray(responseData.categories)) {
-            logger.debug(`Found service categories in response.categories`, { count: responseData.categories.length });
-            categoriesData = responseData.categories as ServiceCategory[];
-          } 
-          // Check for direct array in response
-          else {
-            // Try to find any array property in the response
-            const responseDataRecord = responseData as Record<string, unknown>;
-            const arrayKey = Object.keys(responseDataRecord).find(key => 
-              Array.isArray(responseDataRecord[key])
-            );
-            
-            if (arrayKey) {
-              const arrayValue = responseDataRecord[arrayKey];
-              logger.debug(`Found service categories in response.${arrayKey}`, { 
-                count: Array.isArray(arrayValue) ? arrayValue.length : 0
-              });
-              if (Array.isArray(arrayValue)) {
-                categoriesData = arrayValue as ServiceCategory[];
-              }
-            } else {
-              logger.warn("Categories response data is not an array", { 
-                data: responseData,
-                availableKeys: Object.keys(responseData)
-              });
-            }
-          }
+        // Handle API response structure: {success: true, message: "...", data: [...], summary: {...}}
+        if (data.success && data.data && Array.isArray(data.data)) {
+          categoriesData = data.data;
+          logger.debug(`Found service categories in response.data`, { count: categoriesData.length });
         } else if (Array.isArray(data)) {
           // Fallback if response is directly an array
           logger.debug(`Received service categories as direct array`, { count: data.length });
-          categoriesData = data as ServiceCategory[];
+          categoriesData = data as unknown as ServiceCategory[];
         } else {
-          logger.warn("Unexpected categories response format", { 
+          logger.warn("Unexpected service categories response format", { 
             hasData: !!data, 
             dataType: typeof data,
-            isArray: Array.isArray(data)
+            isArray: Array.isArray(data),
+            dataKeys: data ? Object.keys(data) : []
           });
         }
         
@@ -211,6 +165,7 @@ export function useCategories() {
         // Update cache
         const cachedResult: CachedCategories = {
           categories: categoriesData,
+          summary: data.summary,
           timestamp: Date.now(),
         };
         categoriesCache = cachedResult;
@@ -218,6 +173,7 @@ export function useCategories() {
         // Update state if component is still mounted
         if (mountedRef.current) {
           setCategories(categoriesData);
+          setSummary(data.summary);
           setLoading(false);
           setError(null);
         }
@@ -234,6 +190,7 @@ export function useCategories() {
         const staleCache = categoriesCache;
         if (staleCache && mountedRef.current) {
           setCategories(staleCache.categories);
+          setSummary(staleCache.summary);
           setLoading(false);
           setError(null);
           return staleCache;
@@ -242,6 +199,7 @@ export function useCategories() {
         if (mountedRef.current) {
           setError(errorMessage);
           setCategories([]);
+          setSummary(undefined);
           setLoading(false);
         }
 
@@ -266,6 +224,7 @@ export function useCategories() {
 
   return {
     categories,
+    summary,
     loading,
     error,
     refetch: fetchCategories,
