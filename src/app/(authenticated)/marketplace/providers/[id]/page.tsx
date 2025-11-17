@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Award, Clock, DollarSign, Shield, Briefcase, Calendar, TrendingUp, Users, FileText, Building2 } from "lucide-react";
+import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Award, Clock, DollarSign, Shield, Briefcase, Calendar, TrendingUp, Users, FileText, Building2, Wrench } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -185,10 +185,34 @@ interface Provider {
   createdAt?: string;
 }
 
+interface MarketplaceService {
+  _id?: string;
+  id?: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  subcategory?: string;
+  basePrice?: number;
+  price?: number;
+  currency?: string;
+  rating?: number | { average?: number; count?: number };
+  reviewCount?: number;
+  images?: Array<{ url?: string; thumbnail?: string }>;
+  pricing?: {
+    type?: string;
+    basePrice?: number;
+    currency?: string;
+  };
+  serviceType?: string;
+  isActive?: boolean;
+}
+
 export default function ProviderDetailPage() {
   const params = useParams();
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [services, setServices] = useState<MarketplaceService[]>([]);
   const [loading, setLoading] = useState(true);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusWarning, setStatusWarning] = useState<string | null>(null);
 
@@ -317,8 +341,8 @@ export default function ProviderDetailPage() {
         const errorMessage = err instanceof Error ? err.message : "Failed to load provider";
         // Only log error if we didn't successfully fetch provider data
         if (!providerDataFetched) {
-          logger.error("Error fetching provider:", new Error(errorMessage));
-          setError(errorMessage);
+        logger.error("Error fetching provider:", new Error(errorMessage));
+        setError(errorMessage);
         }
       } finally {
         setLoading(false);
@@ -327,6 +351,36 @@ export default function ProviderDetailPage() {
 
     fetchProvider();
   }, [providerId]);
+
+  // Fetch provider services
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!providerId) return;
+
+      try {
+        setServicesLoading(true);
+        const endpoint = API_ENDPOINTS.marketplaceProvidersServices.replace("[id]", providerId);
+        const response = await fetch(
+          `${API_BASE_URL}${endpoint}`,
+          createAuthFetchOptions()
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const servicesData = data?.data || data?.services || (Array.isArray(data) ? data : []);
+          setServices(Array.isArray(servicesData) ? servicesData : []);
+        }
+      } catch (err) {
+        logger.warn("Error fetching provider services", { error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    if (providerId && provider) {
+      fetchServices();
+    }
+  }, [providerId, provider]);
 
   if (loading) {
     return <Loading />;
@@ -369,41 +423,47 @@ export default function ProviderDetailPage() {
   const totalJobs = provider.performance?.totalJobs || 0;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 p-6">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/marketplace/providers"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Back to providers"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <User className="w-6 h-6" />
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Link
+            href="/marketplace/providers"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to providers"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <User className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h1>
+            <p className="text-sm text-gray-600">
+              {provider.businessInfo?.businessName || location}
+              {rating > 0 && ` • ${rating.toFixed(1)} (${reviewCount} reviews)`}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h1>
-          <p className="text-sm text-gray-600">
-            {provider.businessInfo?.businessName || location}
-            {rating > 0 && ` • ${rating.toFixed(1)} (${reviewCount} reviews)`}
-          </p>
-        </div>
+
+        {/* Status Warning Banner */}
+        {statusWarning && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">
+              <strong>Note:</strong> {statusWarning}
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Status Warning Banner */}
-      {statusWarning && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">
-            <strong>Note:</strong> {statusWarning}
-          </p>
-        </div>
-      )}
-
-      {/* Provider Info Card */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex items-start gap-6">
-          <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Provider Avatar & Quick Info */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex flex-col items-center text-center mb-4">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-200 mb-4">
             <Image
               src={avatarUrl}
               alt={fullName}
@@ -411,48 +471,202 @@ export default function ProviderDetailPage() {
               className="object-cover"
             />
           </div>
-          <div className="flex-1">
             {provider.businessInfo?.businessName && (
-              <p className="text-lg text-gray-600 mb-2">{provider.businessInfo.businessName}</p>
+                <p className="text-lg font-semibold text-gray-900 mb-1">{provider.businessInfo.businessName}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                 <MapPin className="w-4 h-4" />
                 <span>{location}</span>
               </div>
               {rating > 0 && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 text-sm">
                   <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span>{rating.toFixed(1)} ({reviewCount} reviews)</span>
+                  <span className="font-semibold">{rating.toFixed(1)}</span>
+                  <span className="text-gray-600">({reviewCount} reviews)</span>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Quick Stats */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Quick Stats</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Total Jobs</span>
+                <span className="font-semibold text-gray-900">{totalJobs}</span>
+              </div>
+              {provider.performance?.completedJobs !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Completed</span>
+                  <span className="font-semibold text-gray-900">{provider.performance.completedJobs}</span>
+                </div>
+              )}
+              {provider.performance?.completionRate !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Completion Rate</span>
+                  <span className="font-semibold text-green-600">{provider.performance.completionRate.toFixed(1)}%</span>
+                </div>
+              )}
+              {provider.performance?.averageResponseTime !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Avg Response</span>
+                  <span className="font-semibold text-gray-900">{provider.performance.averageResponseTime.toFixed(1)}h</span>
+                </div>
+              )}
         </div>
       </div>
 
       {/* Contact Info */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h2>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
         <div className="space-y-3">
           {provider.email && (
             <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-700">{provider.email}</span>
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{provider.email}</span>
             </div>
           )}
           {provider.phoneNumber && (
             <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-gray-400" />
-              <span className="text-gray-700">{provider.phoneNumber}</span>
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{provider.phoneNumber}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Verification Summary */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Verification
+            </h3>
+            <div className="space-y-2">
+              {(provider.verification?.identityVerified || userId?.trust?.verification?.identityVerified) && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Identity</span>
+                </div>
+              )}
+              {provider.verification?.businessVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Business</span>
+                </div>
+              )}
+              {userId?.trust?.verification?.phoneVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Phone</span>
+                </div>
+              )}
+              {userId?.trust?.verification?.emailVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Email</span>
+                </div>
+              )}
+              {provider.verification?.backgroundCheck?.status === 'passed' && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Background Check</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Trust Score */}
+          {provider.trust?.trustScore && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Trust Score</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl font-bold text-gray-900">{provider.trust.trustScore}</span>
+                <span className="text-sm text-gray-500">/100</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${provider.trust.trustScore}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
+
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Services */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Wrench className="w-5 h-5" />
+              Services
+            </h2>
+            {servicesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : services.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {services.map((service) => {
+                  const serviceId = service._id || service.id;
+                  const serviceRating = typeof service.rating === 'object' ? service.rating?.average : service.rating;
+                  const servicePrice = service.price || service.basePrice || service.pricing?.basePrice;
+                  const serviceImage = service.images?.[0]?.thumbnail || service.images?.[0]?.url;
+                  
+                  return (
+                    <Link
+                      key={serviceId}
+                      href={`/marketplace/services/${serviceId}`}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                    >
+                      {serviceImage && (
+                        <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-200 mb-3">
+                          <Image
+                            src={serviceImage}
+                            alt={service.title || 'Service'}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-gray-900 mb-1">{service.title || 'Service'}</h3>
+                      {service.description && (
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{service.description}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        {servicePrice && (
+                          <div className="text-lg font-bold text-gray-900">
+                            ${servicePrice}
+                            {service.currency && <span className="text-sm font-normal text-gray-600"> {service.currency}</span>}
+                          </div>
+                        )}
+                        {serviceRating && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm text-gray-600">{serviceRating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
+                      {service.category && (
+                        <div className="mt-2">
+                          <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
+                            {service.category}
+                          </span>
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No services available</p>
+            )}
       </div>
 
       {/* About */}
       {userId?.profile?.bio && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
           <p className="text-gray-700">{userId.profile.bio}</p>
         </div>
@@ -460,7 +674,7 @@ export default function ProviderDetailPage() {
 
       {/* Business Description */}
       {provider.businessInfo?.businessDescription && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Business Description</h2>
           <p className="text-gray-700">{provider.businessInfo.businessDescription}</p>
         </div>
@@ -468,14 +682,14 @@ export default function ProviderDetailPage() {
 
       {/* Specialties */}
       {provider.professionalInfo?.specialties && provider.professionalInfo.specialties.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Specialties & Services</h2>
-          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Specialties & Services</h2>
+              <div className="space-y-6">
             {provider.professionalInfo.specialties.map((specialty, idx) => (
               <div key={idx} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    {specialty.category && (
+                {specialty.category && (
                       <h3 className="font-semibold text-lg text-gray-900 capitalize mb-1">
                         {specialty.category}
                       </h3>
@@ -551,7 +765,7 @@ export default function ProviderDetailPage() {
 
       {/* Languages */}
       {provider.professionalInfo?.languages && provider.professionalInfo.languages.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Languages</h2>
           <div className="flex flex-wrap gap-2">
             {provider.professionalInfo.languages.map((lang, idx) => (
@@ -563,37 +777,37 @@ export default function ProviderDetailPage() {
         </div>
       )}
 
-      {/* Verification */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Verification & Credentials
-        </h2>
-        <div className="space-y-4">
+          {/* Verification Details */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Verification & Credentials
+            </h2>
+            <div className="space-y-4">
           {/* Basic Verifications */}
           <div className="grid grid-cols-2 gap-3">
-            {(provider.verification?.identityVerified || userId?.trust?.verification?.identityVerified) && (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700">Identity Verified</span>
-              </div>
-            )}
-            {provider.verification?.businessVerified && (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700">Business Verified</span>
-              </div>
-            )}
-            {userId?.trust?.verification?.phoneVerified && (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700">Phone Verified</span>
-              </div>
-            )}
-            {userId?.trust?.verification?.emailVerified && (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-gray-700">Email Verified</span>
+          {(provider.verification?.identityVerified || userId?.trust?.verification?.identityVerified) && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Identity Verified</span>
+            </div>
+          )}
+          {provider.verification?.businessVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Business Verified</span>
+            </div>
+          )}
+          {userId?.trust?.verification?.phoneVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Phone Verified</span>
+            </div>
+          )}
+          {userId?.trust?.verification?.emailVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Email Verified</span>
               </div>
             )}
           </div>
@@ -697,9 +911,9 @@ export default function ProviderDetailPage() {
         </div>
       </div>
 
-      {/* Trust & Badges */}
-      {(provider.trust?.trustScore || provider.trust?.badges) && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* Trust & Badges */}
+          {(provider.trust?.trustScore || provider.trust?.badges) && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Award className="w-5 h-5" />
             Trust & Badges
@@ -740,9 +954,9 @@ export default function ProviderDetailPage() {
         </div>
       )}
 
-      {/* Availability */}
-      {provider.professionalInfo?.availability && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* Availability */}
+          {provider.professionalInfo?.availability && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Availability
@@ -770,9 +984,9 @@ export default function ProviderDetailPage() {
         </div>
       )}
 
-      {/* Agency Info */}
-      {provider.agency && (
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* Agency Info */}
+          {provider.agency && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Agency Information
@@ -800,8 +1014,8 @@ export default function ProviderDetailPage() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          {/* Performance Statistics */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Performance Statistics
@@ -870,9 +1084,9 @@ export default function ProviderDetailPage() {
         )}
       </div>
 
-      {/* Metadata */}
-      {provider.metadata && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
+          {/* Metadata */}
+          {provider.metadata && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Additional Information</h2>
           <div className="space-y-3">
             {provider.metadata.profileViews && (
@@ -908,6 +1122,8 @@ export default function ProviderDetailPage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

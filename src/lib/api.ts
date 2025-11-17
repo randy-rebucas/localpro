@@ -56,6 +56,7 @@ export const API_ENDPOINTS = {
   marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
   marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
   marketplaceProvidersById: "/api/marketplace/providers/[id]",
+  marketplaceProvidersServices: "/api/marketplace/providers/[id]/services",
   
   // AI Features
   aiNaturalLanguageSearch: "/api/ai/marketplace/natural-language-search",
