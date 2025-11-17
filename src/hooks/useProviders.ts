@@ -11,10 +11,17 @@ export interface ProvidersParams {
   status?: string;
   providerType?: string;
   category?: string;
-  location?: string;
   skills?: string[];
-  minRating?: number;
+  skillsMatch?: 'any' | 'all';
   city?: string;
+  state?: string;
+  minRating?: number;
+  maxDistance?: number;
+  lat?: number;
+  lng?: number;
+  featured?: boolean;
+  promoted?: boolean;
+  location?: string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -98,7 +105,13 @@ export function useProviders(params: ProvidersParams = {}) {
       if (params.category) queryParams.append("category", params.category);
       if (params.location) queryParams.append("location", params.location);
       if (params.city) queryParams.append("city", params.city);
+      if (params.state) queryParams.append("state", params.state);
       if (params.minRating) queryParams.append("minRating", params.minRating.toString());
+      if (params.maxDistance) queryParams.append("maxDistance", params.maxDistance.toString());
+      if (params.lat !== undefined) queryParams.append("lat", params.lat.toString());
+      if (params.lng !== undefined) queryParams.append("lng", params.lng.toString());
+      if (params.featured !== undefined) queryParams.append("featured", params.featured.toString());
+      if (params.promoted !== undefined) queryParams.append("promoted", params.promoted.toString());
       
       // Add skills as comma-separated string - using skill IDs
       if (params.skills && params.skills.length > 0) {
@@ -109,8 +122,15 @@ export function useProviders(params: ProvidersParams = {}) {
         }
       }
       
+      // Add skillsMatch parameter (defaults to 'any' if skills are provided)
+      if (params.skillsMatch) {
+        queryParams.append("skillsMatch", params.skillsMatch);
+      } else if (params.skills && params.skills.length > 0) {
+        queryParams.append("skillsMatch", "any"); // Default to 'any' when skills are provided
+      }
+      
       const page = params.page || 1;
-      const limit = params.limit || 10;
+      const limit = params.limit || 20;
       queryParams.append("page", page.toString());
       queryParams.append("limit", limit.toString());
       

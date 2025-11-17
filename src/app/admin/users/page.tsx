@@ -224,8 +224,6 @@ export default function UsersPage() {
     firstName: "",
     lastName: "",
     roles: ["client"] as string[],
-    agencyId: "",
-    agencyRole: "",
     profile: {
       avatar: {
         url: "",
@@ -244,8 +242,6 @@ export default function UsersPage() {
               lng: undefined as number | undefined
             }
       },
-      skills: [] as string[],
-      experience: 0,
       gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
       birthdate: "" as string | Date | undefined
     }
@@ -276,9 +272,7 @@ export default function UsersPage() {
           lat: undefined as number | undefined,
           lng: undefined as number | undefined
         }
-      },
-      skills: [] as string[],
-      experience: 0
+      }
     }
   });
 
@@ -927,37 +921,33 @@ export default function UsersPage() {
       const result = await response.json();
       const userData = result.data || result;
       
-      // Check if user has provider role and extract provider data
-      const userRoles = userData.roles || (userData.role ? [userData.role] : []);
-      if (userRoles.includes('provider') || userRoles.includes('agency_owner') || userRoles.includes('agency_admin')) {
-        // First, check if provider data is included in the user object
-        if (userData.provider) {
-          const provider = userData.provider;
-          setProviderData({
-            professionalInfo: provider.professionalInfo,
-            businessInfo: provider.businessInfo,
-            preferences: provider.preferences,
-            performance: provider.performance,
-            providerType: provider.providerType,
-            status: provider.status
-          });
-          
-          // Populate forms with existing data
-          if (provider.professionalInfo) {
-            setProfessionalInfoForm(provider.professionalInfo);
-          }
-          if (provider.businessInfo) {
-            setBusinessInfoForm(provider.businessInfo);
-          }
-          if (provider.preferences) {
-            setPreferencesForm(provider.preferences);
-          }
-        } else {
-          // If provider data is not in user object, try to fetch it
-          // Note: /api/providers/profile/me returns current authenticated user's profile
-          // For admin editing another user, this may not work unless backend supports it
-          await fetchProviderData(user._id);
+      // Extract provider data if it exists (server handles role checks)
+      if (userData.provider) {
+        const provider = userData.provider;
+        setProviderData({
+          professionalInfo: provider.professionalInfo,
+          businessInfo: provider.businessInfo,
+          preferences: provider.preferences,
+          performance: provider.performance,
+          providerType: provider.providerType,
+          status: provider.status
+        });
+        
+        // Populate forms with existing data
+        if (provider.professionalInfo) {
+          setProfessionalInfoForm(provider.professionalInfo);
         }
+        if (provider.businessInfo) {
+          setBusinessInfoForm(provider.businessInfo);
+        }
+        if (provider.preferences) {
+          setPreferencesForm(provider.preferences);
+        }
+      } else {
+        // If provider data is not in user object, try to fetch it
+        // Note: /api/providers/profile/me returns current authenticated user's profile
+        // For admin editing another user, this may not work unless backend supports it
+        await fetchProviderData(user._id);
       }
       
       // Debug: Log raw API response
@@ -1053,9 +1043,7 @@ export default function UsersPage() {
               lat: fullUser.profile?.address?.coordinates?.lat as number | undefined,
               lng: fullUser.profile?.address?.coordinates?.lng as number | undefined
             }
-          },
-          skills: fullUser.profile?.skills || [],
-          experience: fullUser.profile?.experience || 0
+          }
         }
       };
       
@@ -1089,10 +1077,8 @@ export default function UsersPage() {
     }
   };
   
-  // Check if user has provider-related roles
-  const isProviderUser = selectedUser?.roles?.includes('provider') || 
-                        selectedUser?.roles?.includes('agency_owner') || 
-                        selectedUser?.roles?.includes('agency_admin');
+  // Check if user has provider data (server handles role checks)
+  const isProviderUser = providerData !== null;
 
   const handleGenerateBio = async (isCreate: boolean) => {
     try {
@@ -1100,12 +1086,11 @@ export default function UsersPage() {
 
       setGeneratingBio({ ...generatingBio, [isCreate ? 'create' : 'edit']: true });
       
-      const bioParams = {
+      const bioParams: { firstName: string; lastName: string; roles: string[]; skills: string[] } = {
         firstName: formData.firstName || "",
         lastName: formData.lastName || "",
         roles: formData.roles || [],
-        skills: formData.profile.skills || [],
-        experience: formData.profile.experience || 0
+        skills: []
       };
 
       const result = await generateBio(bioParams);
@@ -1201,73 +1186,8 @@ export default function UsersPage() {
       }
 
       const result = await response.json();
-      const createdUser = result.data || result;
-      const createdUserId = createdUser._id || createdUser.id;
 
-      // Check if user has provider-related roles and create provider profile if needed
-      const hasProviderRole = rolesToSend.includes('provider') || 
-                              rolesToSend.includes('agency_owner') || 
-                              rolesToSend.includes('agency_admin');
-      
-      if (hasProviderRole && createdUserId) {
-        try {
-          // Determine provider type based on roles
-          let providerType: 'individual' | 'business' | 'agency' = 'individual';
-          if (rolesToSend.includes('agency_owner') || rolesToSend.includes('agency_admin')) {
-            providerType = 'agency';
-          } else if (rolesToSend.includes('provider')) {
-            providerType = 'individual'; // Default to individual for new providers
-          }
-
-          // Create provider profile with required fields
-          const providerPayload: Record<string, unknown> = {
-            providerType: providerType,
-            status: 'pending' // New providers start as pending
-          };
-
-          const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
-          const providerResponse = await fetch(providerUrl, createAuthFetchOptions({
-            method: 'POST',
-            body: JSON.stringify(providerPayload)
-          }));
-
-          if (!providerResponse.ok) {
-            const errorData = await providerResponse.json().catch(() => ({}));
-            const errorMessage = errorData.error || errorData.message || 'Unknown error';
-            logger.warn('Failed to create provider profile for new user', { 
-              error: errorMessage,
-              status: providerResponse.status,
-              userId: createdUserId
-            });
-            
-            // Show warning toast but don't fail the entire creation
-            toast.error(`User created but provider profile creation failed: ${errorMessage}`, {
-              duration: 5000
-            });
-          } else {
-            logger.debug('Provider profile created successfully for new user', { 
-              userId: createdUserId,
-              providerType
-            });
-            toast.success('User and provider profile created successfully', {
-              duration: 3000
-            });
-          }
-        } catch (providerErr) {
-          const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
-          logger.warn('Error creating provider profile for new user', { 
-            error: errorMessage,
-            userId: createdUserId
-          });
-          
-          // Show warning toast but don't fail the entire creation
-          toast.error(`User created but provider profile creation failed: ${errorMessage}`, {
-            duration: 5000
-          });
-        }
-      } else {
-        toast.success('User created successfully');
-      }
+      toast.success('User created successfully');
 
       setCreateModalOpen(false);
       setCreateAvatarFile(null);
@@ -1277,8 +1197,6 @@ export default function UsersPage() {
         firstName: "",
         lastName: "",
         roles: ["client"],
-        agencyId: "",
-        agencyRole: "",
         profile: {
           avatar: {
             url: "",
@@ -1297,8 +1215,6 @@ export default function UsersPage() {
               lng: undefined as number | undefined
             }
           },
-          skills: [],
-          experience: 0,
           gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
           birthdate: "" as string | Date | undefined
         }
@@ -1395,213 +1311,6 @@ export default function UsersPage() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to update user');
-      }
-
-      // Check if user has provider-related roles after update
-      const hasProviderRole = rolesToSend.includes('provider') || 
-                              rolesToSend.includes('agency_owner') || 
-                              rolesToSend.includes('agency_admin');
-      
-      // Handle provider creation/update or deletion based on roles
-      if (hasProviderRole) {
-        // If user has provider role, create or update provider profile
-        try {
-          // Determine provider type based on roles
-          let providerType: 'individual' | 'business' | 'agency' = 'individual';
-          if (rolesToSend.includes('agency_owner') || rolesToSend.includes('agency_admin')) {
-            providerType = 'agency';
-          } else if (rolesToSend.includes('provider') && businessInfoForm.businessName) {
-            providerType = 'business';
-          }
-
-          // Build provider payload with required fields from basic info tab
-          // Fields: userId (auto-set by API), status (default 'pending'), providerType (required)
-          const existingStatus = providerData?.status as 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected' | undefined;
-          const providerPayload: Record<string, unknown> = {
-            providerType: providerType,
-            // Set status: use existing status if available and not 'inactive', otherwise default to 'pending'
-            // If status was 'inactive' (deleted), reset to 'pending' when re-adding provider role
-            status: (existingStatus && existingStatus !== 'inactive') ? existingStatus : 'pending'
-          };
-          
-          // Include professionalInfo if we have data in the form or if it exists in providerData
-          const hasProfessionalInfo = (professionalInfoForm.specialties && professionalInfoForm.specialties.length > 0) ||
-                                     (professionalInfoForm.languages && professionalInfoForm.languages.length > 0) ||
-                                     (professionalInfoForm.availability && Object.keys(professionalInfoForm.availability).length > 0) ||
-                                     professionalInfoForm.emergencyServices !== undefined ||
-                                     (professionalInfoForm.travelDistance !== undefined && (professionalInfoForm.travelDistance ?? 0) > 0) ||
-                                     (professionalInfoForm.minimumJobValue !== undefined && (professionalInfoForm.minimumJobValue ?? 0) > 0) ||
-                                     (professionalInfoForm.maximumJobValue !== undefined && (professionalInfoForm.maximumJobValue ?? 0) > 0) ||
-                                     (providerData?.professionalInfo && Object.keys(providerData.professionalInfo).length > 0);
-
-          if (hasProfessionalInfo) {
-            // Use form data if available, otherwise use existing providerData
-            providerPayload.professionalInfo = Object.keys(professionalInfoForm).length > 0 
-              ? professionalInfoForm 
-              : providerData?.professionalInfo || {};
-          }
-          
-          // Include businessInfo for business/agency types
-          if (providerType === 'business' || providerType === 'agency') {
-            const hasBusinessInfo = businessInfoForm.businessName ||
-                                   businessInfoForm.businessType ||
-                                   businessInfoForm.businessRegistration ||
-                                   businessInfoForm.taxId ||
-                                   businessInfoForm.businessPhone ||
-                                   businessInfoForm.businessEmail ||
-                                   businessInfoForm.website ||
-                                   businessInfoForm.businessDescription ||
-                                   businessInfoForm.yearEstablished ||
-                                   businessInfoForm.numberOfEmployees ||
-                                   (providerData?.businessInfo && Object.keys(providerData.businessInfo).length > 0);
-
-            if (hasBusinessInfo) {
-              providerPayload.businessInfo = Object.keys(businessInfoForm).length > 0
-                ? businessInfoForm
-                : providerData?.businessInfo || {};
-            }
-          }
-          
-          // Include preferences if we have data
-          const hasPreferences = preferencesForm.notificationSettings ||
-                                preferencesForm.jobPreferences ||
-                                preferencesForm.communicationPreferences ||
-                                (providerData?.preferences && Object.keys(providerData.preferences).length > 0);
-
-          if (hasPreferences) {
-            providerPayload.preferences = Object.keys(preferencesForm).length > 0
-              ? preferencesForm
-              : providerData?.preferences || {};
-          }
-
-          // Check if provider profile already exists
-          // providerData will be set if a provider profile exists for this user
-          const providerExists = providerData !== null;
-          
-          const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
-          let providerResponse: Response;
-          
-          if (providerExists) {
-            // Update existing profile
-            logger.debug('Updating existing provider profile', { userId: selectedUser._id, providerType, status: providerPayload.status });
-            providerResponse = await fetch(providerUrl, createAuthFetchOptions({
-              method: 'PUT',
-              body: JSON.stringify(providerPayload)
-            }));
-          } else {
-            // Create new profile
-            logger.debug('Creating new provider profile', { userId: selectedUser._id, providerType, status: providerPayload.status });
-            providerResponse = await fetch(providerUrl, createAuthFetchOptions({
-              method: 'POST',
-              body: JSON.stringify(providerPayload)
-            }));
-            
-            // If creation fails with conflict (409), try update instead
-            if (!providerResponse.ok && providerResponse.status === 409) {
-              logger.debug('Provider profile already exists, updating instead', { userId: selectedUser._id });
-              providerResponse = await fetch(providerUrl, createAuthFetchOptions({
-                method: 'PUT',
-                body: JSON.stringify(providerPayload)
-              }));
-            }
-          }
-
-          if (!providerResponse.ok) {
-            const errorData = await providerResponse.json().catch(() => ({}));
-            const errorMessage = errorData.error || errorData.message || 'Unknown error';
-            logger.warn('Failed to create/update provider profile', { 
-              error: errorMessage,
-              status: providerResponse.status,
-              userId: selectedUser._id
-            });
-            
-            // Show warning toast but don't fail the entire update
-            toast.error(`Provider profile update failed: ${errorMessage}`, {
-              duration: 5000
-            });
-          } else {
-            logger.debug('Provider profile created/updated successfully', { 
-              userId: selectedUser._id,
-              providerType,
-              status: providerPayload.status
-            });
-            toast.success('Provider profile updated successfully', {
-              duration: 3000
-            });
-          }
-        } catch (providerErr) {
-          const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
-          logger.warn('Error creating/updating provider profile', { 
-            error: errorMessage
-          });
-          // Don't throw - user update succeeded
-        }
-      } else {
-        // If user does not have provider role, attempt to set provider status to inactive (deleted)
-        // Only update if provider profile exists and is not already inactive
-        if (providerData !== null && providerData.status !== 'inactive') {
-          try {
-            logger.debug('Setting provider status to inactive (removed provider role)', { 
-              userId: selectedUser._id,
-              currentStatus: providerData.status
-            });
-            const providerUrl = `${API_BASE_URL}${API_ENDPOINTS.providersProfile}`;
-            const providerResponse = await fetch(providerUrl, createAuthFetchOptions({
-              method: 'PUT',
-              body: JSON.stringify({
-                status: 'inactive'
-              })
-            }));
-
-            if (!providerResponse.ok) {
-              const errorData = await providerResponse.json().catch(() => ({}));
-              let errorMessage = errorData.error || errorData.message || 'Unknown error';
-              
-              // Provide more helpful error messages for common validation errors
-              if (errorMessage.toLowerCase().includes('validation failed') || 
-                  errorMessage.toLowerCase().includes('deleting provider role') ||
-                  errorMessage.toLowerCase().includes('cannot delete') ||
-                  errorMessage.toLowerCase().includes('active dependencies')) {
-                errorMessage = 'Cannot remove provider role: Provider has active bookings, services, or other dependencies. Please cancel or complete these first, then try again.';
-              }
-              
-              logger.warn('Failed to set provider status to inactive', { 
-                error: errorMessage,
-                status: providerResponse.status,
-                userId: selectedUser._id,
-                originalError: errorData.error || errorData.message
-              });
-              
-              // Show warning toast but don't fail the entire update
-              toast.error(`Provider profile update failed: ${errorMessage}`, {
-                duration: 7000
-              });
-            } else {
-              logger.debug('Provider status set to inactive successfully', { userId: selectedUser._id });
-              toast.success('Provider deactivated successfully', {
-                duration: 3000
-              });
-            }
-          } catch (providerErr) {
-            const errorMessage = providerErr instanceof Error ? providerErr.message : String(providerErr);
-            logger.warn('Error setting provider status to inactive', { 
-              error: errorMessage,
-              userId: selectedUser._id
-            });
-            
-            // Show warning toast but don't fail the entire update
-            const userFriendlyMessage = errorMessage.toLowerCase().includes('validation failed') || 
-                                       errorMessage.toLowerCase().includes('deleting provider role')
-              ? 'Cannot remove provider role: Provider has active dependencies. Please resolve these first.'
-              : `Error deactivating provider: ${errorMessage}`;
-            
-            toast.error(`Provider profile update failed: ${userFriendlyMessage}`, {
-              duration: 7000
-            });
-          }
-        } else if (providerData?.status === 'inactive') {
-          logger.debug('Provider already inactive, skipping status update', { userId: selectedUser._id });
-        }
       }
 
       toast.success('User updated successfully');
@@ -2386,8 +2095,6 @@ export default function UsersPage() {
             firstName: "",
             lastName: "",
             roles: ["client"],
-            agencyId: "",
-            agencyRole: "",
             profile: {
               avatar: {
                 url: "",
@@ -2406,8 +2113,6 @@ export default function UsersPage() {
                   lng: undefined
                 }
               },
-              skills: [],
-              experience: 0,
               gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
               birthdate: "" as string | Date | undefined
             }
@@ -2633,9 +2338,9 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => handleGenerateBio(true)}
-                  disabled={generatingBio.create || createFormData.profile.skills.length === 0}
+                  disabled={generatingBio.create}
                   className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                  title={createFormData.profile.skills.length === 0 ? "Add skills first to generate bio" : "Generate bio with AI"}
+                  title="Generate bio with AI"
                 >
                   <Sparkles className="w-3 h-3" />
                   {generatingBio.create ? 'Generating...' : 'AI Generate'}
@@ -2836,135 +2541,6 @@ export default function UsersPage() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Skills */}
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Skills</label>
-              {loadingSkills ? (
-                <div className="text-xs text-gray-500">Loading skills...</div>
-              ) : (
-                <div className="relative skills-autosuggest-container">
-                  {/* Selected Skills Tags */}
-                  {createFormData.profile.skills.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {createFormData.profile.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => {
-                          setCreateFormData({
-                            ...createFormData,
-                                profile: {
-                                  ...createFormData.profile,
-                                  skills: createFormData.profile.skills.filter(s => s !== skill)
-                                }
-                              });
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Search Input */}
-                  <input
-                    type="text"
-                    value={skillsSearchInput.create}
-                    onChange={(e) => {
-                      setSkillsSearchInput({ ...skillsSearchInput, create: e.target.value });
-                      setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true });
-                    }}
-                    onFocus={() => setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
-                      }
-                    }}
-                    placeholder="Type to search skills..."
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  
-                  {/* Suggestions Dropdown */}
-                  {showSkillsSuggestions.create && availableSkills.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {availableSkills
-                        .filter((skill) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const searchTerm = skillsSearchInput.create.toLowerCase();
-                          return (
-                            skillName.toLowerCase().includes(searchTerm) &&
-                            !createFormData.profile.skills.includes(skillName)
-                          );
-                        })
-                        .slice(0, 10)
-                        .map((skill, index) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const skillId = typeof skill === 'object' && skill.id ? skill.id : skillName;
-                          return (
-                            <div
-                              key={skillId || index}
-                              onClick={() => {
-                                if (!createFormData.profile.skills.includes(skillName)) {
-                                  setCreateFormData({
-                                    ...createFormData,
-                                    profile: {
-                                      ...createFormData.profile,
-                                      skills: [...createFormData.profile.skills, skillName]
-                                    }
-                                  });
-                                }
-                                setSkillsSearchInput({ ...skillsSearchInput, create: "" });
-                                setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
-                              }}
-                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="text-sm text-gray-900">{skillName}</div>
-                              {typeof skill === 'object' && skill.category && (
-                                <div className="text-xs text-gray-500">{skill.category}</div>
-                              )}
-              </div>
-                          );
-                        })}
-                      {availableSkills.filter((skill) => {
-                        const skillName = typeof skill === 'string' ? skill : skill.name;
-                        const searchTerm = skillsSearchInput.create.toLowerCase();
-                        return (
-                          skillName.toLowerCase().includes(searchTerm) &&
-                          !createFormData.profile.skills.includes(skillName)
-                        );
-                      }).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-500">No matching skills</div>
-                      )}
-            </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Experience */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
-              <input
-                type="number"
-                min="0"
-                value={createFormData.profile.experience}
-                onChange={(e) => setCreateFormData({
-                  ...createFormData,
-                  profile: {
-                    ...createFormData.profile,
-                    experience: parseInt(e.target.value) || 0
-                  }
-                })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
             </div>
           </div>
         </div>

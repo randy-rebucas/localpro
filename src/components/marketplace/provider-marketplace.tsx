@@ -25,7 +25,7 @@ export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
 
   // Manage filters
   const filters = useProviderFilters({
-    limit: 10,
+    limit: 20,
   });
 
   // Fetch providers with filters applied

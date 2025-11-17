@@ -196,21 +196,11 @@ export function CategoriesCarousel({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   const getCategoryKey = (category: ServiceCategory): string => {
     // key is required, but keep fallbacks for backward compatibility
     return category.key || category.id || category.slug || category.name.toLowerCase().replace(/\s+/g, '-');
   };
-
-  // Auto-select first category when categories load and no category is selected
-  useEffect(() => {
-    if (!loading && categories.length > 0 && !selectedCategoryId && !hasAutoSelected && onCategorySelect) {
-      const firstCategory = categories[0];
-      onCategorySelect(firstCategory);
-      setHasAutoSelected(true);
-    }
-  }, [categories, loading, selectedCategoryId, hasAutoSelected, onCategorySelect]);
 
   const isCategorySelected = (category: ServiceCategory): boolean => {
     if (!selectedCategoryId) return false;

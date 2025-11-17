@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Users2, 
   Search, 
@@ -33,7 +34,7 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { Provider, ProfessionalInfo, Preferences, Performance, ServiceCategory } from "@/types/providers";
+import { Provider, ProfessionalInfo, BusinessInfo, Preferences, Performance, ServiceCategory } from "@/types/providers";
 
 // Extended Provider interface for admin page (includes user fields populated)
 interface ProviderWithUser extends Omit<Provider, 'createdAt' | 'updatedAt' | 'profile' | 'subscription'> {
@@ -81,62 +82,43 @@ interface ProviderWithUser extends Omit<Provider, 'createdAt' | 'updatedAt' | 'p
   }>;
   tags?: string[];
   notes?: string[];
+  professionalInfo?: ProfessionalInfo;
+  businessInfo?: BusinessInfo;
+  preferences?: Preferences;
+  performance?: Performance;
+  roles?: string[];
 }
 
 // Helper function to transform API provider data to frontend format
 const transformProviderData = (apiProvider: {
   _id: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  phoneNumber?: string;
-  role?: string;
-  status?: string;
-  isActive?: boolean;
-  isVerified?: boolean;
-  profilePicture?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  lastLogin?: string;
-  profileCompleteness?: number;
-  address?: {
-    street?: string;
-    city?: string;
-    state?: string;
-    zipCode?: string;
-    country?: string;
-  };
-  businessInfo?: {
-    businessName?: string;
-    businessType?: string;
-    licenseNumber?: string;
-    taxId?: string;
-  };
-  services?: string[];
-  rating?: {
-    average?: number;
-    count?: number;
-  };
-  joinedAt?: string;
-  lastActive?: string;
-  notes?: string[];
-  profile?: {
-    businessName?: string;
-    businessType?: string;
-    serviceAreas?: string[];
-    specialties?: string[];
-    rating?: number;
-    totalReviews?: number;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zipCode?: string;
-      country?: string;
+  userId?: string | {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    phoneNumber?: string;
+    profileImage?: string;
+    profile?: {
+      bio?: string;
+      address?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+        country?: string;
+      };
     };
-    bio?: string;
+    roles?: string[];
+    isActive?: boolean;
+    isVerified?: boolean;
+    createdAt?: string;
   };
+  providerType?: 'individual' | 'business' | 'agency';
+  status?: 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected';
+  professionalInfo?: ProfessionalInfo;
+  businessInfo?: BusinessInfo;
   verification?: {
     phoneVerified?: boolean;
     emailVerified?: boolean;
@@ -146,14 +128,8 @@ const transformProviderData = (apiProvider: {
     bankAccountVerified?: boolean;
     verifiedAt?: string;
   };
-  performance?: {
-    completionRate?: number;
-    cancellationRate?: number;
-    averageRating?: number;
-    totalBookings?: number;
-    totalEarnings?: number;
-    responseTime?: number;
-  };
+  preferences?: Preferences;
+  performance?: Performance;
   subscription?: {
     type?: string;
     isActive?: boolean;
@@ -167,32 +143,63 @@ const transformProviderData = (apiProvider: {
     earnedAt: string;
   }>;
   tags?: string[];
+  notes?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }): ProviderWithUser => {
+  // Extract user data from populated userId object or use provider-level fields
+  const userIdObj = typeof apiProvider.userId === 'object' ? apiProvider.userId : null;
+  const userId = userIdObj?._id || (typeof apiProvider.userId === 'string' ? apiProvider.userId : apiProvider._id);
+  
+  // Get user fields from populated userId object or fallback to provider-level
+  const firstName = userIdObj?.firstName;
+  const lastName = userIdObj?.lastName;
+  const email = userIdObj?.email;
+  const phoneNumber = userIdObj?.phoneNumber || userIdObj?.phone;
+  const isActive = userIdObj?.isActive;
+  const isVerified = userIdObj?.isVerified;
+  const userProfile = userIdObj?.profile;
+  const userRoles = userIdObj?.roles;
+  const userCreatedAt = userIdObj?.createdAt;
+  const profileImage = userIdObj?.profileImage;
+
+  // Determine verification status
+  const verificationStatus: 'verified' | 'pending' | 'rejected' = 
+    apiProvider.verification?.phoneVerified && apiProvider.verification?.emailVerified 
+      ? 'verified' 
+      : 'pending';
+
   return {
     _id: apiProvider._id,
-    userId: apiProvider._id, // Use _id as userId fallback
-    providerType: 'individual', // Default provider type
-    status: (apiProvider.status as 'active' | 'inactive' | 'suspended' | 'pending' | 'rejected') || 'pending',
-    firstName: apiProvider.firstName,
-    lastName: apiProvider.lastName,
-    email: apiProvider.email,
-    phoneNumber: apiProvider.phoneNumber || apiProvider.phone,
-    isActive: apiProvider.isActive,
-    isVerified: apiProvider.isVerified,
-    createdAt: apiProvider.createdAt,
+    userId: userId,
+    providerType: apiProvider.providerType || 'individual',
+    status: apiProvider.status || 'pending',
+    firstName: firstName,
+    lastName: lastName,
+    email: email,
+    phoneNumber: phoneNumber,
+    isActive: isActive,
+    isVerified: isVerified,
+    createdAt: userCreatedAt || apiProvider.createdAt,
     updatedAt: apiProvider.updatedAt,
-    lastLogin: apiProvider.lastLogin,
-    profileCompleteness: apiProvider.profileCompleteness,
-    verificationStatus: apiProvider.verification?.phoneVerified && 
-                       apiProvider.verification?.emailVerified ? 'verified' : 'pending',
-    profile: apiProvider.profile,
+    lastLogin: undefined, // Not in the response structure
+    profileCompleteness: undefined, // Calculate if needed
+    verificationStatus: verificationStatus,
+    profile: userProfile ? {
+      bio: userProfile.bio,
+      address: userProfile.address
+    } : undefined,
+    professionalInfo: apiProvider.professionalInfo,
+    businessInfo: apiProvider.businessInfo,
     verification: apiProvider.verification,
+    preferences: apiProvider.preferences,
     performance: apiProvider.performance,
     subscription: apiProvider.subscription,
     trustScore: apiProvider.trustScore,
     badges: apiProvider.badges,
     tags: apiProvider.tags,
-    notes: apiProvider.notes
+    notes: apiProvider.notes,
+    roles: userRoles
   };
 };
 
@@ -221,6 +228,7 @@ interface ProviderStats {
 }
 
 export default function ProvidersPage() {
+  const router = useRouter();
   const [providers, setProviders] = useState<ProviderWithUser[]>([]);
   const [stats, setStats] = useState<ProviderStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -341,7 +349,6 @@ export default function ProvidersPage() {
 
       // Build query parameters for providers data
       const queryParams = new URLSearchParams();
-      queryParams.set('role', 'provider');
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
       queryParams.set('includeDeleted', 'true'); // Include deleted providers in the query
@@ -351,24 +358,10 @@ export default function ProvidersPage() {
       queryParams.set('sortBy', sortBy);
       queryParams.set('sortOrder', sortOrder);
 
-      const [dataResponse, statsResponse] = await Promise.all([
-        makeClientAuthenticatedRequestWithEndpointSafe(
-          'users' as keyof typeof API_ENDPOINTS,
-          { method: 'GET', query: Object.fromEntries(queryParams) }
-        ),
-        makeClientAuthenticatedRequestWithEndpointSafe(
-          'usersStats' as keyof typeof API_ENDPOINTS,
-          { method: 'GET', query: { hasrole: 'provider' } }
-        ).catch(err => {
-          logger.warn('Failed to fetch stats', { error: err instanceof Error ? err.message : String(err) });
-          // Return empty stats on error instead of mock data
-          return {
-            ok: false,
-            status: 500,
-            json: () => Promise.reject(err)
-          } as Response;
-        })
-      ]);
+      const dataResponse = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'providers' as keyof typeof API_ENDPOINTS,
+        { method: 'GET', query: Object.fromEntries(queryParams) }
+      );
 
       if (!dataResponse.ok) {
         const errorData = await dataResponse.json().catch(() => ({}));
@@ -376,19 +369,6 @@ export default function ProvidersPage() {
       }
 
       const dataResult = await dataResponse.json();
-      
-      // Handle stats response - allow it to fail gracefully
-      let statsResult = null;
-      if (statsResponse.ok) {
-        try {
-          statsResult = await statsResponse.json();
-        } catch (err) {
-          logger.warn('Failed to parse stats response', { error: err instanceof Error ? err.message : String(err) });
-        }
-      } else {
-        const status = 'status' in statsResponse ? statsResponse.status : 'unknown';
-        logger.warn('Stats response not OK', { status });
-      }
 
       // Transform the API response data to match frontend expectations
       let providersData: ProviderWithUser[] = [];
@@ -407,20 +387,7 @@ export default function ProvidersPage() {
       }
 
       setProviders(providersData);
-      
-      // Handle stats response - it should be an object, not an array
-      if (statsResult) {
-        const statsData = statsResult.data || statsResult;
-        if (Array.isArray(statsData)) {
-          // If it's an array, set to null (invalid format)
-          setStats(null);
-        } else {
-          setStats(statsData);
-        }
-      } else {
-        // Stats fetch failed, set to null
-        setStats(null);
-      }
+      setStats(null);
       setLastUpdated(new Date());
     } catch (err) {
       logger.error('Error fetching providers data', err instanceof Error ? err : new Error(String(err)));
@@ -889,7 +856,7 @@ export default function ProvidersPage() {
             </p>
           )}
           <button
-            onClick={() => setCreateModalOpen(true)}
+            onClick={() => router.push('/admin/users?create=provider')}
             className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />

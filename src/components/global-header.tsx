@@ -200,9 +200,26 @@ export function GlobalHeader({
           const data = await response.json();
           const count = data?.data?.count || data?.count || 0;
           setUnreadCount(count);
+        } else {
+          // Only log non-network errors (4xx, 5xx) to avoid noise from network issues
+          if (response.status >= 400) {
+            logger.warn(`Failed to fetch notification count: ${response.status} ${response.statusText}`);
+          }
+          // Silently fail for network errors - they're expected when offline
         }
       } catch (error) {
-        logger.error('Error fetching notification count', error instanceof Error ? error : new Error(String(error)));
+        // Only log if it's not a network error (Failed to fetch, NetworkError, etc.)
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isNetworkError = 
+          errorMessage.includes('Failed to fetch') || 
+          errorMessage.includes('NetworkError') ||
+          errorMessage.includes('Network request failed') ||
+          errorMessage.includes('Load failed');
+        
+        if (!isNetworkError) {
+          logger.error('Error fetching notification count', error instanceof Error ? error : new Error(String(error)));
+        }
+        // Silently handle network errors - they're expected when offline or API unavailable
       }
     };
 
