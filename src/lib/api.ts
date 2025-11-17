@@ -290,7 +290,6 @@ export const API_ENDPOINTS = {
   
   // Provider Management
   providers: "/api/providers",
-  providersById: "/api/providers",
   providersProfileMe: "/api/providers/profile/me",
   providersProfile: "/api/providers/profile",
   providersOnboardingStep: "/api/providers/onboarding/step",
@@ -303,6 +302,7 @@ export const API_ENDPOINTS = {
   providersAdminStatus: "/api/providers/admin",
   providersSkills: "/api/providers/skills",
   providersSkillsByCategory: "/api/providers/skills", // Use query parameter: ?category=cleaning
+  providersById: "/api/providers/[id]",
   
   // Agency Management
   agencies: "/api/agencies",

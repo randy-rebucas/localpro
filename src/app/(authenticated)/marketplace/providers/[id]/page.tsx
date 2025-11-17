@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MapPin, Phone, Mail, CheckCircle } from "lucide-react";
+import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -79,6 +79,7 @@ export default function ProviderDetailPage() {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusWarning, setStatusWarning] = useState<string | null>(null);
 
   const providerId = params?.id as string;
 
@@ -90,53 +91,120 @@ export default function ProviderDetailPage() {
         return;
       }
 
+      const normalizeProviderData = (providerData: any, isStatusError: boolean = false): Provider | null => {
+        if (!providerData || (!providerData._id && !providerData.id && !providerData.userId)) {
+          return null;
+        }
+
+        const userId = typeof providerData.userId === 'object' ? providerData.userId : null;
+        return {
+          ...providerData,
+          _id: providerData._id || providerData.id,
+          firstName: userId?.firstName || '',
+          lastName: userId?.lastName || '',
+          email: userId?.email || '',
+          phoneNumber: userId?.phoneNumber || userId?.phone || '',
+          userId: userId,
+          status: providerData.status || (isStatusError ? 'pending' : undefined),
+        };
+      };
+
+      let providerDataFetched = false; // Track if we successfully fetched provider data
+
       try {
         setLoading(true);
+        setError(null);
+        setStatusWarning(null);
         const fetchOptions = createAuthFetchOptions();
 
-        const endpoint = API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId);
-        const response = await fetch(
-          `${API_BASE_URL}${endpoint}`,
+        // Try marketplace endpoint first
+        const marketplaceEndpoint = API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId);
+        const marketplaceResponse = await fetch(
+          `${API_BASE_URL}${marketplaceEndpoint}`,
           fetchOptions
         );
 
-        if (!response.ok) {
-          let errorMessage = `Failed to fetch provider: ${response.status} ${response.statusText}`;
-          try {
-            const errorData = await response.json();
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            } else if (errorData.error) {
-              errorMessage = errorData.error;
-            }
-          } catch {
-            // If response is not JSON, use status text
-          }
-          throw new Error(errorMessage);
+        let data: any = null;
+        let errorMessage: string | null = null;
+        let isStatusError = false;
+
+        // Try to parse response even if not ok
+        try {
+          data = await marketplaceResponse.json();
+        } catch {
+          // If response is not JSON, continue with error handling
         }
 
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          // Normalize provider data
-          const userId = typeof data.data.userId === 'object' ? data.data.userId : null;
-          const normalizedProvider: Provider = {
-            ...data.data,
-            _id: data.data._id || data.data.id,
-            firstName: userId?.firstName || '',
-            lastName: userId?.lastName || '',
-            email: userId?.email || '',
-            phoneNumber: userId?.phoneNumber || userId?.phone || '',
-            userId: userId,
-          };
+        if (!marketplaceResponse.ok) {
+          errorMessage = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
+          if (data) {
+            if (data.message) {
+              errorMessage = data.message;
+            } else if (data.error) {
+              errorMessage = data.error;
+            }
+          }
+          
+          // Check if this is a status-related error (not active, pending, etc.)
+          const statusErrorPattern = /not active|pending|inactive|suspended/i;
+          if (errorMessage && statusErrorPattern.test(errorMessage)) {
+            isStatusError = true;
+            setStatusWarning(errorMessage);
+          }
+        }
+
+        // If we have data from marketplace endpoint (even with an error), try to use it
+        let normalizedProvider: Provider | null = null;
+        if (data && (data.success || data.data || data.provider)) {
+          const providerData = data.data || data.provider || data;
+          normalizedProvider = normalizeProviderData(providerData, isStatusError);
+        }
+
+        // If we got provider data, use it (even if there was a status error)
+        if (normalizedProvider) {
           setProvider(normalizedProvider);
-        } else {
-          throw new Error("Invalid response format");
+          providerDataFetched = true;
+          if (isStatusError) {
+            // Don't log error for status issues when we have data to display
+            return;
+          }
+        } else if (isStatusError) {
+          // If marketplace endpoint failed with status error and no data, try regular providers endpoint
+          try {
+            const providersEndpoint = API_ENDPOINTS.providersById.replace("[id]", providerId);
+            const providersResponse = await fetch(
+              `${API_BASE_URL}${providersEndpoint}`,
+              fetchOptions
+            );
+
+            if (providersResponse.ok) {
+              const providersData = await providersResponse.json();
+              const providerData = providersData.data || providersData.provider || providersData;
+              normalizedProvider = normalizeProviderData(providerData, true);
+              
+              if (normalizedProvider) {
+                setProvider(normalizedProvider);
+                providerDataFetched = true;
+                // Don't log error - we successfully got provider data from fallback endpoint
+                return;
+              }
+            }
+          } catch (fallbackErr) {
+            // Fallback failed, continue with original error
+          }
+        }
+
+        // Only throw error if we don't have provider data
+        if (!normalizedProvider) {
+          throw new Error(errorMessage || "Invalid response format");
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load provider";
-        logger.error("Error fetching provider:", new Error(errorMessage));
-        setError(errorMessage);
+        // Only log error if we didn't successfully fetch provider data
+        if (!providerDataFetched) {
+          logger.error("Error fetching provider:", new Error(errorMessage));
+          setError(errorMessage);
+        }
       } finally {
         setLoading(false);
       }
@@ -149,11 +217,24 @@ export default function ProviderDetailPage() {
     return <Loading />;
   }
 
-  if (error || !provider) {
+  if (error && !provider) {
     return (
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error || "Provider not found"}</p>
+          <Link href="/marketplace/providers" className="text-blue-600 hover:underline mt-2 inline-block">
+            ← Back to Providers
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!provider) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Provider not found</p>
           <Link href="/marketplace/providers" className="text-blue-600 hover:underline mt-2 inline-block">
             ← Back to Providers
           </Link>
@@ -173,13 +254,38 @@ export default function ProviderDetailPage() {
   const totalJobs = provider.performance?.totalJobs || 0;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Back Link */}
-      <Link href="/marketplace/providers" className="text-blue-600 hover:underline mb-6 inline-block">
-        ← Back to Providers
-      </Link>
-
+    <div className="max-w-7xl mx-auto space-y-6 p-6">
       {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/marketplace/providers"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Back to providers"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        </Link>
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <User className="w-6 h-6" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h1>
+          <p className="text-sm text-gray-600">
+            {provider.businessInfo?.businessName || location}
+            {rating > 0 && ` • ${rating.toFixed(1)} (${reviewCount} reviews)`}
+          </p>
+        </div>
+      </div>
+
+      {/* Status Warning Banner */}
+      {statusWarning && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            <strong>Note:</strong> {statusWarning}
+          </p>
+        </div>
+      )}
+
+      {/* Provider Info Card */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex items-start gap-6">
           <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200">
@@ -191,7 +297,6 @@ export default function ProviderDetailPage() {
             />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{fullName}</h1>
             {provider.businessInfo?.businessName && (
               <p className="text-lg text-gray-600 mb-2">{provider.businessInfo.businessName}</p>
             )}

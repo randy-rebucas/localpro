@@ -171,7 +171,7 @@ export function useProviders(params: ProvidersParams = {}) {
             lastName: userId.lastName,
             email: userId.email,
             phoneNumber: userId.phone || '',
-            roles: userId.roles || (userId.role ? [userId.role] : ['client']),
+            roles: ['provider'], // Default to provider role since this is a provider endpoint
             profile: {
               avatar: userId.profile?.avatar || (userId.profileImage ? {
                 url: userId.profileImage,
