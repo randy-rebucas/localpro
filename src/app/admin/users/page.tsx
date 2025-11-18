@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { 
   Users, 
@@ -33,6 +34,7 @@ import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { User, UserStatus, UserBadge, Verification, Profile, BadgeType } from "@/types/users";
 import { generateBio } from "@/lib/ai-utils";
+import { ProfessionalInfo, BusinessInfo, Preferences, Performance } from "@/types/providers";
 
 // Type for API user response (raw data from backend)
 interface ApiUserData {
@@ -180,6 +182,7 @@ interface UserStats {
 }
 
 export default function UsersPage() {
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -194,6 +197,8 @@ export default function UsersPage() {
   const [itemsPerPage] = useState(50);
   const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isActiveFilter, setIsActiveFilter] = useState<string>("all"); // "all", "true", "false"
@@ -219,8 +224,6 @@ export default function UsersPage() {
     firstName: "",
     lastName: "",
     roles: ["client"] as string[],
-    agencyId: "",
-    agencyRole: "",
     profile: {
       avatar: {
         url: "",
@@ -239,8 +242,6 @@ export default function UsersPage() {
               lng: undefined as number | undefined
             }
       },
-      skills: [] as string[],
-      experience: 0,
       gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
       birthdate: "" as string | Date | undefined
     }
@@ -251,6 +252,8 @@ export default function UsersPage() {
     lastName: "",
     email: "",
     phoneNumber: "",
+    gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
+    birthdate: "" as string | undefined,
     roles: ["client"] as string[],
     profile: {
       avatar: {
@@ -265,15 +268,11 @@ export default function UsersPage() {
         state: "",
         zipCode: "",
         country: "",
-            coordinates: {
-              lat: undefined as number | undefined,
-              lng: undefined as number | undefined
-            }
-      },
-      skills: [] as string[],
-      experience: 0,
-      gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
-      birthdate: "" as string | Date | undefined
+        coordinates: {
+          lat: undefined as number | undefined,
+          lng: undefined as number | undefined
+        }
+      }
     }
   });
 
@@ -291,9 +290,74 @@ export default function UsersPage() {
     description: ""
   });
 
-  const [bulkUpdateFormData, setBulkUpdateFormData] = useState({
+  const [bulkUpdateFormData, setBulkUpdateFormData] = useState<{
+    isActive?: boolean;
+    status?: UserStatus | '';
+    addRoles?: string;
+    removeRoles?: string;
+  }>({
     isActive: true,
     status: "active" as UserStatus
+  });
+
+  // Provider form states
+  const [providerData, setProviderData] = useState<{
+    professionalInfo?: ProfessionalInfo;
+    businessInfo?: BusinessInfo;
+    preferences?: Preferences;
+    performance?: Performance;
+    providerType?: 'individual' | 'business' | 'agency';
+    status?: 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected';
+  } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [loadingProviderData, setLoadingProviderData] = useState(false);
+  
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [professionalInfoForm, setProfessionalInfoForm] = useState<ProfessionalInfo>({
+    specialties: [],
+    languages: [],
+    availability: {},
+    emergencyServices: false,
+    travelDistance: 0,
+    minimumJobValue: 0,
+    maximumJobValue: 0
+  });
+
+  const [businessInfoForm, setBusinessInfoForm] = useState<BusinessInfo>({
+    businessName: "",
+    businessType: "",
+    businessRegistration: "",
+    taxId: "",
+    businessAddress: {},
+    businessPhone: "",
+    businessEmail: "",
+    website: "",
+    businessDescription: "",
+    yearEstablished: undefined,
+    numberOfEmployees: undefined
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [preferencesForm, setPreferencesForm] = useState<Preferences>({
+    notificationSettings: {
+      newJobAlerts: true,
+      messageNotifications: true,
+      paymentNotifications: true,
+      reviewNotifications: true,
+      marketingEmails: false
+    },
+    jobPreferences: {
+      preferredJobTypes: [],
+      avoidJobTypes: [],
+      preferredTimeSlots: [],
+      maxJobsPerDay: 5,
+      advanceBookingDays: 30
+    },
+    communicationPreferences: {
+      preferredContactMethod: 'app',
+      responseTimeExpectation: '60',
+      autoAcceptJobs: false
+    }
   });
 
   // Avatar upload states
@@ -302,7 +366,9 @@ export default function UsersPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Skills state - skills can be objects with {id, name, category, ...} or strings
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [availableSkills, setAvailableSkills] = useState<Array<{ id?: string; name: string; category?: string; displayOrder?: number; metadata?: Record<string, unknown> } | string>>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingSkills, setLoadingSkills] = useState(false);
   const [skillsSearchInput, setSkillsSearchInput] = useState({ create: "", edit: "" });
   const [showSkillsSuggestions, setShowSkillsSuggestions] = useState({ create: false, edit: false });
@@ -319,13 +385,13 @@ export default function UsersPage() {
   useEffect(() => {
     if (editModalOpen) {
       console.log('📋 Edit form data changed', {
-        gender: editFormData.profile.gender,
-        birthdate: editFormData.profile.birthdate,
-        genderType: typeof editFormData.profile.gender,
-        birthdateType: typeof editFormData.profile.birthdate
+        gender: editFormData.gender,
+        birthdate: editFormData.birthdate,
+        genderType: typeof editFormData.gender,
+        birthdateType: typeof editFormData.birthdate
       });
     }
-  }, [editFormData.profile.gender, editFormData.profile.birthdate, editModalOpen]);
+  }, [editFormData.gender, editFormData.birthdate, editModalOpen]);
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -345,7 +411,7 @@ export default function UsersPage() {
       const queryParams = new URLSearchParams();
       queryParams.set('page', currentPage.toString());
       queryParams.set('limit', itemsPerPage.toString());
-      if (searchTerm) queryParams.set('search', searchTerm);
+      if (debouncedSearchTerm) queryParams.set('search', debouncedSearchTerm);
       if (roleFilter !== 'all') queryParams.set('role', roleFilter);
       if (statusFilter !== 'all') queryParams.set('status', statusFilter);
       if (isActiveFilter !== 'all') queryParams.set('isActive', isActiveFilter);
@@ -506,11 +572,67 @@ export default function UsersPage() {
       setLoading(false);
       setSlowRequest(false);
     }
-  }, [currentPage, itemsPerPage, searchTerm, roleFilter, statusFilter, isActiveFilter, isVerifiedFilter, sortBy, sortOrder]);
+  }, [currentPage, itemsPerPage, debouncedSearchTerm, roleFilter, statusFilter, isActiveFilter, isVerifiedFilter, sortBy, sortOrder]);
+
+  // Debounce search term
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Check for query parameter to auto-open create modal with provider role
+  useEffect(() => {
+    const createParam = searchParams.get('create');
+    if (createParam === 'provider' && !createModalOpen) {
+      // Pre-select provider role
+      setCreateFormData(prev => ({
+        ...prev,
+        roles: ["client", "provider"]
+      }));
+      // Open create modal
+      setCreateModalOpen(true);
+      // Clean up URL by removing query parameter
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('create');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [searchParams, createModalOpen]);
+
+  // Keyboard shortcut: Ctrl+K or Cmd+K to focus search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder="Search users..."]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+          // Show filters if hidden
+          if (!showFilters) {
+            setShowFilters(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showFilters]);
 
   // Fetch available skills
   const fetchSkills = useCallback(async () => {
@@ -724,6 +846,57 @@ export default function UsersPage() {
     }
   };
 
+  // Fetch provider data for a user
+  const fetchProviderData = useCallback(async (userId: string) => {
+    try {
+      setLoadingProviderData(true);
+      if (!getApiToken()) return;
+
+      // Try to fetch provider profile - this endpoint requires provider role
+      // For admin, we might need to use a different endpoint or handle errors gracefully
+      const url = `${API_BASE_URL}${API_ENDPOINTS.providersProfileMe}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        const provider = result.data || result;
+        
+        setProviderData({
+          professionalInfo: provider.professionalInfo,
+          businessInfo: provider.businessInfo,
+          preferences: provider.preferences,
+          performance: provider.performance,
+          providerType: provider.providerType,
+          status: provider.status
+        });
+
+        // Populate forms with existing data
+        if (provider.professionalInfo) {
+          setProfessionalInfoForm(provider.professionalInfo);
+        }
+        if (provider.businessInfo) {
+          setBusinessInfoForm(provider.businessInfo);
+        }
+        if (provider.preferences) {
+          setPreferencesForm(provider.preferences);
+        }
+      } else {
+        // User might not have provider profile yet - that's okay
+        logger.debug('No provider profile found for user', { userId });
+        setProviderData(null);
+      }
+    } catch (err) {
+      const errorMessage: string = err instanceof Error ? err.message : String(err);
+      logger.warn('Error fetching provider data', { 
+        error: errorMessage
+      });
+      // Don't show error - user might not be a provider
+      setProviderData(null);
+    } finally {
+      setLoadingProviderData(false);
+    }
+  }, []);
+
   const handleEditUser = async (user: User) => {
     if (!user._id) {
       toast.error('User ID is required');
@@ -737,6 +910,9 @@ export default function UsersPage() {
         return;
       }
       
+      // Reset provider data and tabs
+      setProviderData(null);
+      
       // Fetch full user details to ensure we have all profile data
       const url = `${API_BASE_URL}${API_ENDPOINTS.users}/${user._id}`;
       const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
@@ -748,6 +924,35 @@ export default function UsersPage() {
 
       const result = await response.json();
       const userData = result.data || result;
+      
+      // Extract provider data if it exists (server handles role checks)
+      if (userData.provider) {
+        const provider = userData.provider;
+        setProviderData({
+          professionalInfo: provider.professionalInfo,
+          businessInfo: provider.businessInfo,
+          preferences: provider.preferences,
+          performance: provider.performance,
+          providerType: provider.providerType,
+          status: provider.status
+        });
+        
+        // Populate forms with existing data
+        if (provider.professionalInfo) {
+          setProfessionalInfoForm(provider.professionalInfo);
+        }
+        if (provider.businessInfo) {
+          setBusinessInfoForm(provider.businessInfo);
+        }
+        if (provider.preferences) {
+          setPreferencesForm(provider.preferences);
+        }
+      } else {
+        // If provider data is not in user object, try to fetch it
+        // Note: /api/providers/profile/me returns current authenticated user's profile
+        // For admin editing another user, this may not work unless backend supports it
+        await fetchProviderData(user._id);
+      }
       
       // Debug: Log raw API response
       console.log('🔍 Raw user data from API', {
@@ -797,14 +1002,16 @@ export default function UsersPage() {
         return "";
       };
       
-      // Extract gender - handle both direct access and through profile
-      const rawGender = fullUser.profile?.gender || userData.profile?.gender;
+      // Extract gender - check root level first, then profile (for backward compatibility)
+      const rawGender = userData.gender || fullUser.profile?.gender || userData.profile?.gender;
       const userGender = (
         rawGender === "male" || rawGender === "female" || rawGender === "other" || rawGender === "prefer_not_to_say"
           ? rawGender
           : ""
       ) as "" | "male" | "female" | "other" | "prefer_not_to_say";
-      const userBirthdate = fullUser.profile?.birthdate || userData.profile?.birthdate;
+      
+      // Extract birthdate - check root level first, then profile (for backward compatibility)
+      const userBirthdate = userData.birthdate || fullUser.profile?.birthdate || userData.profile?.birthdate;
       
       console.log('📝 Extracted values for form', {
         rawGender,
@@ -820,6 +1027,8 @@ export default function UsersPage() {
         lastName: fullUser.lastName || "",
         email: fullUser.email || "",
         phoneNumber: fullUser.phoneNumber || "",
+        gender: userGender,
+        birthdate: formatBirthdate(userBirthdate),
         roles: fullUser.roles || ['client'],
         profile: {
           avatar: {
@@ -838,23 +1047,19 @@ export default function UsersPage() {
               lat: fullUser.profile?.address?.coordinates?.lat as number | undefined,
               lng: fullUser.profile?.address?.coordinates?.lng as number | undefined
             }
-          },
-          skills: fullUser.profile?.skills || [],
-          experience: fullUser.profile?.experience || 0,
-          gender: userGender,
-          birthdate: formatBirthdate(userBirthdate)
+          }
         }
       };
       
       // Debug: Log the final form data being set
       console.log('✅ Setting edit form data', {
-        gender: formDataToSet.profile.gender,
-        birthdate: formDataToSet.profile.birthdate,
-        genderType: typeof formDataToSet.profile.gender,
-        birthdateType: typeof formDataToSet.profile.birthdate,
-        genderValue: formDataToSet.profile.gender,
-        birthdateValue: formDataToSet.profile.birthdate,
-        fullProfile: formDataToSet.profile
+        gender: formDataToSet.gender,
+        birthdate: formDataToSet.birthdate,
+        genderType: typeof formDataToSet.gender,
+        birthdateType: typeof formDataToSet.birthdate,
+        genderValue: formDataToSet.gender,
+        birthdateValue: formDataToSet.birthdate,
+        fullFormData: formDataToSet
       });
       
       setEditFormData(formDataToSet);
@@ -862,8 +1067,8 @@ export default function UsersPage() {
       // Verify the state was set correctly
       setTimeout(() => {
         console.log('🔎 Edit form data after setState', {
-          gender: editFormData.profile.gender,
-          birthdate: editFormData.profile.birthdate
+          gender: editFormData.gender,
+          birthdate: editFormData.birthdate
         });
       }, 50);
       
@@ -875,25 +1080,21 @@ export default function UsersPage() {
       setLoadingUserDetails(false);
     }
   };
+  
+  // Check if user has provider data (server handles role checks)
+  const isProviderUser = providerData !== null;
 
   const handleGenerateBio = async (isCreate: boolean) => {
     try {
       const formData = isCreate ? createFormData : editFormData;
-      
-      // Check if user has skills
-      if (!formData.profile.skills || formData.profile.skills.length === 0) {
-        toast.error('Please add skills first to generate a bio');
-        return;
-      }
 
       setGeneratingBio({ ...generatingBio, [isCreate ? 'create' : 'edit']: true });
       
-      const bioParams = {
-        skills: formData.profile.skills,
-        experience: formData.profile.experience,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        roles: formData.roles
+      const bioParams: { firstName: string; lastName: string; roles: string[]; skills: string[] } = {
+        firstName: formData.firstName || "",
+        lastName: formData.lastName || "",
+        roles: formData.roles || [],
+        skills: []
       };
 
       const result = await generateBio(bioParams);
@@ -988,7 +1189,11 @@ export default function UsersPage() {
         throw new Error(errorData.error || 'Failed to create user');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const result = await response.json();
+
       toast.success('User created successfully');
+
       setCreateModalOpen(false);
       setCreateAvatarFile(null);
       setCreateFormData({
@@ -997,8 +1202,6 @@ export default function UsersPage() {
         firstName: "",
         lastName: "",
         roles: ["client"],
-        agencyId: "",
-        agencyRole: "",
         profile: {
           avatar: {
             url: "",
@@ -1017,8 +1220,6 @@ export default function UsersPage() {
               lng: undefined as number | undefined
             }
           },
-          skills: [],
-          experience: 0,
           gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
           birthdate: "" as string | Date | undefined
         }
@@ -1044,21 +1245,72 @@ export default function UsersPage() {
         ? editFormData.roles
         : ['client', ...editFormData.roles];
 
-      // Prepare profile data, ensuring gender and birthdate are included
-      const profileData: Profile = {
-        ...editFormData.profile,
-        gender: editFormData.profile.gender || undefined,
-        birthdate: editFormData.profile.birthdate || undefined
-      };
+      // Build payload matching the API structure from Untitled-1
+      // Structure: phoneNumber, firstName, lastName, email, gender, birthdate at root
+      // roles array at root
+      // profile object with bio and address
+      const payload: Record<string, unknown> = {};
 
+      // Add root level fields (only if they have values)
+      if (editFormData.phoneNumber) payload.phoneNumber = editFormData.phoneNumber;
+      if (editFormData.firstName) payload.firstName = editFormData.firstName;
+      if (editFormData.lastName) payload.lastName = editFormData.lastName;
+      if (editFormData.email) payload.email = editFormData.email;
+      if (editFormData.gender) payload.gender = editFormData.gender;
+      if (editFormData.birthdate) payload.birthdate = editFormData.birthdate;
+      
+      // Always include roles
+      payload.roles = rolesToSend;
+
+      // Build profile object if bio or address has data
+      const hasAddress = editFormData.profile.address.street || 
+                        editFormData.profile.address.city || 
+                        editFormData.profile.address.state ||
+                        editFormData.profile.address.zipCode ||
+                        editFormData.profile.address.country ||
+                        editFormData.profile.address.coordinates?.lat ||
+                        editFormData.profile.address.coordinates?.lng;
+
+      if (editFormData.profile.bio || hasAddress) {
+        payload.profile = {} as Record<string, unknown>;
+        
+        if (editFormData.profile.bio) {
+          (payload.profile as Record<string, unknown>).bio = editFormData.profile.bio;
+        }
+
+        if (hasAddress) {
+          const address: Record<string, unknown> = {};
+          
+          if (editFormData.profile.address.street) address.street = editFormData.profile.address.street;
+          if (editFormData.profile.address.city) address.city = editFormData.profile.address.city;
+          if (editFormData.profile.address.state) address.state = editFormData.profile.address.state;
+          if (editFormData.profile.address.zipCode) address.zipCode = editFormData.profile.address.zipCode;
+          if (editFormData.profile.address.country) address.country = editFormData.profile.address.country;
+          
+          if (editFormData.profile.address.coordinates?.lat || editFormData.profile.address.coordinates?.lng) {
+            const coordinates: Record<string, unknown> = {};
+            if (editFormData.profile.address.coordinates.lat !== undefined) {
+              coordinates.lat = editFormData.profile.address.coordinates.lat;
+            }
+            if (editFormData.profile.address.coordinates.lng !== undefined) {
+              coordinates.lng = editFormData.profile.address.coordinates.lng;
+            }
+            if (Object.keys(coordinates).length > 0) {
+              address.coordinates = coordinates;
+            }
+          }
+          
+          if (Object.keys(address).length > 0) {
+            (payload.profile as Record<string, unknown>).address = address;
+          }
+        }
+      }
+
+      // Update user basic info - using /api/users/:id endpoint
       const url = `${API_BASE_URL}${API_ENDPOINTS.usersUpdate}/${selectedUser._id}`;
       const response = await fetch(url, createAuthFetchOptions({
         method: 'PUT',
-        body: JSON.stringify({
-          ...editFormData,
-          roles: rolesToSend,
-          profile: profileData
-        })
+        body: JSON.stringify(payload)
       }));
 
       if (!response.ok) {
@@ -1445,6 +1697,11 @@ export default function UsersPage() {
                     placeholder="Search users..."
                     className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
+                  {searchTerm !== debouncedSearchTerm && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" title="Searching..."></div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1843,8 +2100,6 @@ export default function UsersPage() {
             firstName: "",
             lastName: "",
             roles: ["client"],
-            agencyId: "",
-            agencyRole: "",
             profile: {
               avatar: {
                 url: "",
@@ -1863,8 +2118,6 @@ export default function UsersPage() {
                   lng: undefined
                 }
               },
-              skills: [],
-              experience: 0,
               gender: "" as "" | "male" | "female" | "other" | "prefer_not_to_say",
               birthdate: "" as string | Date | undefined
             }
@@ -2090,9 +2343,9 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => handleGenerateBio(true)}
-                  disabled={generatingBio.create || createFormData.profile.skills.length === 0}
+                  disabled={generatingBio.create}
                   className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                  title={createFormData.profile.skills.length === 0 ? "Add skills first to generate bio" : "Generate bio with AI"}
+                  title="Generate bio with AI"
                 >
                   <Sparkles className="w-3 h-3" />
                   {generatingBio.create ? 'Generating...' : 'AI Generate'}
@@ -2294,135 +2547,6 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
-
-            {/* Skills */}
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Skills</label>
-              {loadingSkills ? (
-                <div className="text-xs text-gray-500">Loading skills...</div>
-              ) : (
-                <div className="relative skills-autosuggest-container">
-                  {/* Selected Skills Tags */}
-                  {createFormData.profile.skills.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {createFormData.profile.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => {
-                          setCreateFormData({
-                            ...createFormData,
-                                profile: {
-                                  ...createFormData.profile,
-                                  skills: createFormData.profile.skills.filter(s => s !== skill)
-                                }
-                              });
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Search Input */}
-                  <input
-                    type="text"
-                    value={skillsSearchInput.create}
-                    onChange={(e) => {
-                      setSkillsSearchInput({ ...skillsSearchInput, create: e.target.value });
-                      setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true });
-                    }}
-                    onFocus={() => setShowSkillsSuggestions({ ...showSkillsSuggestions, create: true })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
-                      }
-                    }}
-                    placeholder="Type to search skills..."
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  
-                  {/* Suggestions Dropdown */}
-                  {showSkillsSuggestions.create && availableSkills.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {availableSkills
-                        .filter((skill) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const searchTerm = skillsSearchInput.create.toLowerCase();
-                          return (
-                            skillName.toLowerCase().includes(searchTerm) &&
-                            !createFormData.profile.skills.includes(skillName)
-                          );
-                        })
-                        .slice(0, 10)
-                        .map((skill, index) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const skillId = typeof skill === 'object' && skill.id ? skill.id : skillName;
-                          return (
-                            <div
-                              key={skillId || index}
-                              onClick={() => {
-                                if (!createFormData.profile.skills.includes(skillName)) {
-                                  setCreateFormData({
-                                    ...createFormData,
-                                    profile: {
-                                      ...createFormData.profile,
-                                      skills: [...createFormData.profile.skills, skillName]
-                                    }
-                                  });
-                                }
-                                setSkillsSearchInput({ ...skillsSearchInput, create: "" });
-                                setShowSkillsSuggestions({ ...showSkillsSuggestions, create: false });
-                              }}
-                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="text-sm text-gray-900">{skillName}</div>
-                              {typeof skill === 'object' && skill.category && (
-                                <div className="text-xs text-gray-500">{skill.category}</div>
-                              )}
-              </div>
-                          );
-                        })}
-                      {availableSkills.filter((skill) => {
-                        const skillName = typeof skill === 'string' ? skill : skill.name;
-                        const searchTerm = skillsSearchInput.create.toLowerCase();
-                        return (
-                          skillName.toLowerCase().includes(searchTerm) &&
-                          !createFormData.profile.skills.includes(skillName)
-                        );
-                      }).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-500">No matching skills</div>
-                      )}
-            </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Experience */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
-              <input
-                type="number"
-                min="0"
-                value={createFormData.profile.experience}
-                onChange={(e) => setCreateFormData({
-                  ...createFormData,
-                  profile: {
-                    ...createFormData.profile,
-                    experience: parseInt(e.target.value) || 0
-                  }
-                })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
           </div>
         </div>
       </Modal>
@@ -2459,10 +2583,12 @@ export default function UsersPage() {
           </div>
         }
       >
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name</label>
+        {/* Basic Information Form */}
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">First Name</label>
               <input
                 type="text"
                 value={editFormData.firstName}
@@ -2655,9 +2781,9 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => handleGenerateBio(false)}
-                  disabled={generatingBio.edit || editFormData.profile.skills.length === 0}
+                  disabled={generatingBio.edit}
                   className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
-                  title={editFormData.profile.skills.length === 0 ? "Add skills first to generate bio" : "Generate bio with AI"}
+                  title="Generate bio with AI"
                 >
                   <Sparkles className="w-3 h-3" />
                   {generatingBio.edit ? 'Generating...' : 'AI Generate'}
@@ -2674,7 +2800,7 @@ export default function UsersPage() {
                 })}
                 rows={3}
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder={generatingBio.edit ? "Generating bio..." : "Enter bio or click AI Generate to create one based on skills"}
+                placeholder={generatingBio.edit ? "Generating bio..." : "Enter bio or click AI Generate to create one"}
               />
             </div>
 
@@ -2683,13 +2809,10 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-0.5">Gender</label>
                 <select
-                  value={editFormData.profile.gender}
+                  value={editFormData.gender}
                   onChange={(e) => setEditFormData({
                     ...editFormData,
-                    profile: {
-                      ...editFormData.profile,
-                      gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
-                    }
+                    gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
                   })}
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
@@ -2704,13 +2827,10 @@ export default function UsersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-0.5">Birthdate</label>
                 <input
                   type="date"
-                  value={typeof editFormData.profile.birthdate === 'string' ? editFormData.profile.birthdate : ""}
+                  value={typeof editFormData.birthdate === 'string' ? editFormData.birthdate : ""}
                   onChange={(e) => setEditFormData({
                     ...editFormData,
-                    profile: {
-                      ...editFormData.profile,
-                      birthdate: e.target.value || undefined
-                    }
+                    birthdate: e.target.value || undefined
                   })}
                   className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
@@ -2859,136 +2979,162 @@ export default function UsersPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Skills */}
-            <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Skills</label>
-              {loadingSkills ? (
-                <div className="text-xs text-gray-500">Loading skills...</div>
-              ) : (
-                <div className="relative skills-autosuggest-container">
-                  {/* Selected Skills Tags */}
-                  {editFormData.profile.skills.length > 0 && (
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      {editFormData.profile.skills.map((skill) => (
-                        <span
-                          key={skill}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {skill}
-                          <button
-                            type="button"
-                            onClick={() => {
-                          setEditFormData({
-                            ...editFormData,
-                                profile: {
-                                  ...editFormData.profile,
-                                  skills: editFormData.profile.skills.filter(s => s !== skill)
-                                }
-                              });
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Search Input */}
+        {/* Business Information - Show directly if business/agency provider */}
+        {isProviderUser && (providerData?.providerType === 'business' || providerData?.providerType === 'agency') && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">Business Information</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Name</label>
                   <input
                     type="text"
-                    value={skillsSearchInput.edit}
-                    onChange={(e) => {
-                      setSkillsSearchInput({ ...skillsSearchInput, edit: e.target.value });
-                      setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: true });
-                    }}
-                    onFocus={() => setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: true })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: false });
-                      }
-                    }}
-                    placeholder="Type to search skills..."
+                    value={businessInfoForm.businessName || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessName: e.target.value })}
                     className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  
-                  {/* Suggestions Dropdown */}
-                  {showSkillsSuggestions.edit && availableSkills.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-auto">
-                      {availableSkills
-                        .filter((skill) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const searchTerm = skillsSearchInput.edit.toLowerCase();
-                          return (
-                            skillName.toLowerCase().includes(searchTerm) &&
-                            !editFormData.profile.skills.includes(skillName)
-                          );
-                        })
-                        .slice(0, 10)
-                        .map((skill, index) => {
-                          const skillName = typeof skill === 'string' ? skill : skill.name;
-                          const skillId = typeof skill === 'object' && skill.id ? skill.id : skillName;
-                          return (
-                            <div
-                              key={skillId || index}
-                              onClick={() => {
-                                if (!editFormData.profile.skills.includes(skillName)) {
-                                  setEditFormData({
-                                    ...editFormData,
-                                    profile: {
-                                      ...editFormData.profile,
-                                      skills: [...editFormData.profile.skills, skillName]
-                                    }
-                                  });
-                                }
-                                setSkillsSearchInput({ ...skillsSearchInput, edit: "" });
-                                setShowSkillsSuggestions({ ...showSkillsSuggestions, edit: false });
-                              }}
-                              className="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="text-sm text-gray-900">{skillName}</div>
-                              {typeof skill === 'object' && skill.category && (
-                                <div className="text-xs text-gray-500">{skill.category}</div>
-                              )}
-              </div>
-                          );
-                        })}
-                      {availableSkills.filter((skill) => {
-                        const skillName = typeof skill === 'string' ? skill : skill.name;
-                        const searchTerm = skillsSearchInput.edit.toLowerCase();
-                        return (
-                          skillName.toLowerCase().includes(searchTerm) &&
-                          !editFormData.profile.skills.includes(skillName)
-                        );
-                      }).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-gray-500">No matching skills</div>
-                      )}
-            </div>
-                  )}
                 </div>
-              )}
-            </div>
-
-            {/* Experience */}
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
-              <input
-                type="number"
-                min="0"
-                value={editFormData.profile.experience}
-                onChange={(e) => setEditFormData({
-                  ...editFormData,
-                  profile: {
-                    ...editFormData.profile,
-                    experience: parseInt(e.target.value) || 0
-                  }
-                })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Type</label>
+                  <input
+                    type="text"
+                    value={businessInfoForm.businessType || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessType: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Registration</label>
+                  <input
+                    type="text"
+                    value={businessInfoForm.businessRegistration || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessRegistration: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Tax ID</label>
+                  <input
+                    type="text"
+                    value={businessInfoForm.taxId || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, taxId: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Phone</label>
+                  <input
+                    type="tel"
+                    value={businessInfoForm.businessPhone || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessPhone: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Email</label>
+                  <input
+                    type="email"
+                    value={businessInfoForm.businessEmail || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessEmail: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Website</label>
+                  <input
+                    type="url"
+                    value={businessInfoForm.website || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, website: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Year Established</label>
+                  <input
+                    type="number"
+                    min="1900"
+                    max={new Date().getFullYear()}
+                    value={businessInfoForm.yearEstablished || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, yearEstablished: parseInt(e.target.value) || undefined })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-0.5">Number of Employees</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={businessInfoForm.numberOfEmployees || ''}
+                    onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, numberOfEmployees: parseInt(e.target.value) || undefined })}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Business Description</label>
+                <textarea
+                  value={businessInfoForm.businessDescription || ''}
+                  onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessDescription: e.target.value })}
+                  rows={4}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-gray-700 mb-2">Business Address</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Street</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.street || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, street: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">City</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.city || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, city: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">State</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.state || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, state: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Zip Code</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.zipCode || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, zipCode: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-0.5">Country</label>
+                    <input
+                      type="text"
+                      value={businessInfoForm.businessAddress?.country || ''}
+                      onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, country: e.target.value } })}
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        )}
         </div>
       </Modal>
 
@@ -3105,38 +3251,47 @@ export default function UsersPage() {
             <button
               onClick={handleBulkUpdate}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {submitting ? 'Updating...' : 'Update Users'}
+              {submitting ? 'Updating...' : 'Update'}
             </button>
           </div>
         }
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Update Status</label>
             <select
-              value={bulkUpdateFormData.status}
-              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: e.target.value as UserStatus })}
+              value={bulkUpdateFormData.status || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: (e.target.value || undefined) as UserStatus | '' })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
+              <option value="">No change</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
               <option value="pending_verification">Pending Verification</option>
-              <option value="banned">Banned</option>
             </select>
           </div>
           <div>
-            <label className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={bulkUpdateFormData.isActive}
-                onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, isActive: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700">Is Active</span>
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Add Roles</label>
+            <input
+              type="text"
+              value={bulkUpdateFormData.addRoles || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, addRoles: e.target.value })}
+              placeholder="Comma-separated roles (e.g., provider, admin)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Remove Roles</label>
+            <input
+              type="text"
+              value={bulkUpdateFormData.removeRoles || ''}
+              onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, removeRoles: e.target.value })}
+              placeholder="Comma-separated roles (e.g., provider, admin)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </Modal>

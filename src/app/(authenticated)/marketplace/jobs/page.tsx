@@ -219,7 +219,14 @@ export default function BrowseJobsPage() {
       if (filters.availability) params.append("available", "true");
       if (filters.budget[0] > 0) params.append("minBudget", filters.budget[0].toString());
       if (filters.budget[1] < 5000) params.append("maxBudget", filters.budget[1].toString());
-      if (filters.skills.length > 0) params.append("skills", filters.skills.join(","));
+      // Add skills filter - using skill IDs
+      if (filters.skills.length > 0) {
+        // Ensure we're using IDs (filter out empty strings)
+        const skillIds = filters.skills.filter(id => id && id.trim() !== '');
+        if (skillIds.length > 0) {
+          params.append("skills", skillIds.join(","));
+        }
+      }
       params.append("sort", sortBy);
 
       logger.debug("Fetching jobs with params", { params: params.toString() });

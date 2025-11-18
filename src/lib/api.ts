@@ -56,6 +56,7 @@ export const API_ENDPOINTS = {
   marketplaceProvidersWithService: "/api/marketplace/services/[id]/providers",
   marketplaceServicesCategoriesById: "/api/marketplace/services/categories/[id]",
   marketplaceProvidersById: "/api/marketplace/providers/[id]",
+  marketplaceProvidersServices: "/api/marketplace/providers/[id]/services",
   
   // AI Features
   aiNaturalLanguageSearch: "/api/ai/marketplace/natural-language-search",
@@ -290,7 +291,6 @@ export const API_ENDPOINTS = {
   
   // Provider Management
   providers: "/api/providers",
-  providersById: "/api/providers",
   providersProfileMe: "/api/providers/profile/me",
   providersProfile: "/api/providers/profile",
   providersOnboardingStep: "/api/providers/onboarding/step",
@@ -302,6 +302,9 @@ export const API_ENDPOINTS = {
   providersAdminAll: "/api/providers/admin/all",
   providersAdminStatus: "/api/providers/admin",
   providersSkills: "/api/providers/skills",
+  providersSkillsByCategory: "/api/providers/skills", // Use query parameter: ?category=cleaning
+  providersById: "/api/providers/[id]",
+  providersAdminStatusById: "/api/providers/admin/[id]/status",
   
   // Agency Management
   agencies: "/api/agencies",

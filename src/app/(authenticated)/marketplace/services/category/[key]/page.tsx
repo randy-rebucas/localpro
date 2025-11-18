@@ -13,14 +13,17 @@ import {
   List,
   SlidersHorizontal,
   ChevronLeft,
+  AlertCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { getPlaceholderImageUrl } from "@/lib/image-utils";
+import { useServiceCategories } from "@/hooks/useServiceCategories";
+import { useProviderSkills } from "@/hooks/useProviderSkills";
+import { SkillsBadgeFilter } from "@/components/marketplace/skills-badge-filter";
 
 // Service Image Interface
 interface ServiceImage {
@@ -82,30 +85,6 @@ interface Service {
   updatedAt?: string;
 }
 
-interface ServiceCategory {
-  key: string;
-  name: string;
-  description: string;
-  icon: string;
-  subcategories: string[];
-  statistics: {
-    totalServices: number;
-    pricing: {
-      average: number;
-      min: number;
-      max: number;
-    } | null;
-    rating: {
-      average: number;
-      totalRatings: number;
-    } | null;
-    popularSubcategories: Array<{
-      subcategory: string;
-      count: number;
-    }>;
-  };
-}
-
 interface Pagination {
   current?: number;
   pages?: number;
@@ -126,10 +105,38 @@ export default function CategoryServicesPage() {
   const params = useParams();
   const categoryKey = params.key as string;
   
-  const [category, setCategory] = useState<ServiceCategory | null>(null);
+  // Use the service categories hook
+  const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
+  
+  // Find the current category from the fetched categories
+  const category = categories.find(cat => cat.key === categoryKey) || null;
+  
+  // Fetch skills for the current category - only when categoryKey is available
+  const { skills, loading: skillsLoading, error: skillsError, count: skillsCount } = useProviderSkills(
+    categoryKey && categoryKey.trim() !== '' ? categoryKey : null
+  );
+  
+  // Debug: Log skills data
+  useEffect(() => {
+    if (categoryKey) {
+      console.log("categoryKey", categoryKey);
+      logger.debug("Category page - Skills state", { 
+        categoryKey, 
+        skillsCount: skills.length,
+        totalCount: skillsCount,
+        loading: skillsLoading, 
+        error: skillsError,
+        firstSkill: skills.length > 0 ? {
+          id: skills[0].id,
+          name: skills[0].name,
+          displayOrder: skills[0].displayOrder
+        } : null
+      });
+    }
+  }, [categoryKey, skills, skillsLoading, skillsError, skillsCount]);
+  
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingCategory, setLoadingCategory] = useState(true);
   const [, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
@@ -144,45 +151,11 @@ export default function CategoryServicesPage() {
   });
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [minRating, setMinRating] = useState(0);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   
   // Use ref to track pagination to avoid dependency loop
   const paginationRef = useRef(pagination);
   const isPaginationUpdateFromApiRef = useRef(false);
-
-  // Fetch category details
-  const fetchCategory = useCallback(async () => {
-    if (!categoryKey) return;
-    
-    try {
-      setLoadingCategory(true);
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}`,
-        createAuthFetchOptions()
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-
-      const data = await response.json();
-      
-      // Handle API response structure
-      const categoriesList: ServiceCategory[] = data.success && data.data 
-        ? data.data 
-        : Array.isArray(data) 
-        ? data 
-        : [];
-
-      const foundCategory = categoriesList.find(cat => cat.key === categoryKey);
-      setCategory(foundCategory || null);
-    } catch (error) {
-      logger.error("Error fetching category", error instanceof Error ? error : new Error(String(error)), { categoryKey: params.key });
-      setError(error instanceof Error ? error.message : "Failed to load category");
-    } finally {
-      setLoadingCategory(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryKey]);
 
   // Normalize service data from API response
   const normalizeService = useCallback((serviceData: Partial<Service> & Record<string, unknown>): Service => {
@@ -279,6 +252,15 @@ export default function CategoryServicesPage() {
         params.append("rating", minRating.toString());
       }
 
+      // Add skills filter - using skill IDs
+      if (selectedSkills.length > 0) {
+        // Filter out any non-ID values (names) and only use IDs
+        const skillIds = selectedSkills.filter(id => id && id.trim() !== '');
+        skillIds.forEach(skillId => {
+          params.append("skills", skillId);
+        });
+      }
+
       // Add sorting
       if (sortBy === "price_low") {
         params.append("sortBy", "basePrice");
@@ -357,19 +339,29 @@ export default function CategoryServicesPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryKey, searchQuery, sortBy, priceRange, minRating, normalizeService]);
+  }, [categoryKey, searchQuery, sortBy, priceRange, minRating, selectedSkills, normalizeService]);
 
   // Reset pagination when filters change (but not pagination itself)
   useEffect(() => {
     setPagination(prev => ({ ...prev, current: 1 }));
-  }, [categoryKey, searchQuery, sortBy, priceRange, minRating]);
+  }, [categoryKey, searchQuery, sortBy, priceRange, minRating, selectedSkills]);
 
-  // Fetch category and services when categoryKey changes
-  useEffect(() => {
-    if (categoryKey) {
-      fetchCategory();
-    }
-  }, [categoryKey, fetchCategory]);
+  // Handle skill selection
+  const handleSkillToggle = useCallback((skillId: string) => {
+    setSelectedSkills(prev => {
+      if (prev.includes(skillId)) {
+        return prev.filter(id => id !== skillId);
+      }
+      return [...prev, skillId];
+    });
+  }, []);
+
+  const handleClearSkills = useCallback(() => {
+    setSelectedSkills([]);
+  }, []);
+
+  // Note: Categories are fetched via useServiceCategories hook
+  // Services are fetched via fetchServices which is called when filters change
 
   // Fetch services when filters change (excluding pagination to avoid loops)
   useEffect(() => {
@@ -458,10 +450,22 @@ export default function CategoryServicesPage() {
       .join(' ');
   };
 
-  if (loadingCategory || (loading && services.length === 0)) {
+  if (categoriesLoading || (loading && services.length === 0)) {
     return (
       <div className="p-4">
         <Loading size="lg" text="Loading category..." />
+      </div>
+    );
+  }
+
+  if (categoriesError) {
+    return (
+      <div className="p-4">
+        <EmptyState
+          icon={AlertCircle}
+          title="Failed to load category"
+          description={categoriesError}
+        />
       </div>
     );
   }
@@ -526,7 +530,7 @@ export default function CategoryServicesPage() {
                   {category.subcategories.map((subcategory, index) => (
                     <span key={subcategory} className="text-gray-600">
                       {formatSubcategoryName(subcategory)}
-                      {index < category.subcategories.length - 1 && <span className="text-gray-400">,</span>}
+                      {index < (category.subcategories?.length || 0) - 1 && <span className="text-gray-400">,</span>}
                     </span>
                   ))}
                 </div>
@@ -535,6 +539,26 @@ export default function CategoryServicesPage() {
           </div>
         )}
       </div>
+
+      {/* Skills Filter */}
+      {categoryKey && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Filter by Skills</h3>
+            <p className="text-xs text-gray-500">
+              Select skills to find providers with specific expertise
+            </p>
+          </div>
+          <SkillsBadgeFilter
+            skills={skills}
+            selectedSkills={selectedSkills}
+            onSkillToggle={handleSkillToggle}
+            onClearAll={handleClearSkills}
+            loading={skillsLoading}
+            error={skillsError}
+          />
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-6">

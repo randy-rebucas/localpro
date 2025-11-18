@@ -30,7 +30,7 @@ export function MarketplaceHero({
       error={categoriesError}
       onRetry={onCategoriesRetry}
       onCategorySelect={onCategorySelect as (category: ServiceCategory | null) => void} 
-      selectedCategoryId={selectedCategory} 
+      selectedCategoryId={selectedCategory}
     />
   );
 }

@@ -1,105 +1,206 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Star, 
-  MapPin, 
-  Clock, 
-  Share2,
-  Heart,
-  Shield,
-  CheckCircle,
-  AlertCircle,
-  Award,
-  Phone,
-  Mail,
-  Globe
-} from "lucide-react";
+import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Clock, Shield, Calendar, TrendingUp, Users, Building2, Wrench, Award } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 
-// Provider Interface
-interface Provider {
+// UserId Interface
+interface UserIdData {
   _id?: string;
-  id?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
   phoneNumber?: string;
-  status?: 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected';
-  providerType?: 'individual' | 'business' | 'agency';
-  businessInfo?: {
-    businessName?: string;
-    businessType?: string;
-    businessDescription?: string;
-    businessAddress?: {
-      street?: string;
+  phone?: string;
+  profileImage?: string;
+  profile?: {
+    avatar?: {
+      url?: string;
+      thumbnail?: string;
+    };
+    bio?: string;
+    address?: {
       city?: string;
       state?: string;
       zipCode?: string;
-      country?: string;
     };
-    website?: string;
-    yearEstablished?: number;
-    numberOfEmployees?: number;
   };
+  trust?: {
+    trustScore?: number;
+    verification?: {
+      phoneVerified?: boolean;
+      emailVerified?: boolean;
+      identityVerified?: boolean;
+    };
+  };
+}
+
+// Provider Interface
+interface Provider {
+  _id?: string;
+  userId?: UserIdData | string;
+  user?: UserIdData; // Duplicate of userId in API response
+  userProfile?: UserIdData; // Another duplicate in API response
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phoneNumber?: string;
+  status?: string;
+  providerType?: string;
+  businessInfo?: {
+    businessName?: string;
+    businessDescription?: string;
+  } | null;
   professionalInfo?: {
+    _id?: string;
+    provider?: string;
     specialties?: Array<{
-      category?: string;
-      subcategories?: string[];
+      _id?: string;
       experience?: number;
+      yearsOfExperience?: number; // Legacy support
+      hourlyRate?: number;
       certifications?: Array<{
+        _id?: string;
         name?: string;
         issuer?: string;
         dateIssued?: string;
         expiryDate?: string;
+        certificateNumber?: string;
       }>;
-      skills?: string[];
-      hourlyRate?: number;
+      skills?: Array<{
+        _id?: string;
+        name?: string;
+        description?: string;
+        category?: {
+          _id?: string;
+          name?: string;
+          key?: string;
+        } | string;
+        metadata?: {
+          level?: string;
+          yearsExperience?: number;
+          certified?: boolean;
+        };
+      }>;
       serviceAreas?: Array<{
+        _id?: string;
         city?: string;
         state?: string;
+        zipCode?: string;
         radius?: number;
       }>;
+      // Optional fields not in API response but may be used in UI
+      category?: string; // Not in API response - may be derived from skills
+      description?: string; // Not in API response - may be used for display
+      pricing?: {
+        hourlyRate?: number;
+        minimumCharge?: number;
+        currency?: string;
+      };
     }>;
     languages?: string[];
+    availability?: {
+      [key: string]: {
+        available?: boolean;
+        start?: string | null;
+        end?: string | null;
+      };
+    };
     emergencyServices?: boolean;
     travelDistance?: number;
     minimumJobValue?: number;
     maximumJobValue?: number;
+    createdAt?: string;
+    updatedAt?: string;
   };
   verification?: {
+    _id?: string;
+    provider?: string;
     identityVerified?: boolean;
+    identityVerifiedAt?: string;
     businessVerified?: boolean;
+    businessVerifiedAt?: string | null;
     backgroundCheck?: {
-      status?: 'pending' | 'passed' | 'failed' | 'not_required';
+      status?: string;
       dateCompleted?: string;
+      completedAt?: string; // Legacy support
+      reportId?: string;
+      expiresAt?: string;
     };
     insurance?: {
       hasInsurance?: boolean;
       insuranceProvider?: string;
+      policyNumber?: string;
       coverageAmount?: number;
+      expiryDate?: string;
+      // Legacy structure support
+      liability?: {
+        active?: boolean;
+        amount?: number;
+        expiresAt?: string;
+      };
+      workersComp?: {
+        active?: boolean;
+        amount?: number;
+        expiresAt?: string;
+      };
     };
     licenses?: Array<{
+      _id?: string;
       type?: string;
       number?: string;
+      state?: string;
       issuingAuthority?: string;
+      issueDate?: string;
       expiryDate?: string;
+      expiresAt?: string; // Legacy support
     }>;
+    certifications?: Array<{
+      name?: string;
+      issuer?: string;
+      issuedAt?: string;
+      expiresAt?: string;
+    }>;
+    references?: Array<{
+      name?: string;
+      contact?: string;
+      relationship?: string;
+      [key: string]: unknown;
+    }>;
+    portfolio?: {
+      images?: string[];
+      videos?: string[];
+      descriptions?: string[];
+      beforeAfter?: Array<{
+        before?: string;
+        after?: string;
+        description?: string;
+        [key: string]: unknown;
+      }>;
+    };
+    createdAt?: string;
+    updatedAt?: string;
   };
   performance?: {
+    _id?: string;
+    provider?: string;
     rating?: number;
     totalReviews?: number;
     totalJobs?: number;
     completedJobs?: number;
     cancelledJobs?: number;
-    responseTime?: number;
+    pendingJobs?: number; // Legacy support
+    responseTime?: number; // In minutes
+    averageResponseTime?: number; // Legacy support
+    responseTimeMinutes?: number; // Legacy support
     completionRate?: number;
+    cancellationRate?: number;
     repeatCustomerRate?: number;
     earnings?: {
       total?: number;
@@ -107,769 +208,1039 @@ interface Provider {
       lastMonth?: number;
       pending?: number;
     };
+    totalEarnings?: number; // Legacy support
+    averageJobValue?: number;
     badges?: Array<{
+      _id?: string;
       name?: string;
       description?: string;
       earnedDate?: string;
+      category?: string;
+    }>;
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  trust?: {
+    trustScore?: number;
+    badges?: Array<{
+      type?: string;
+      description?: string;
+      earnedAt?: string;
     }>;
   };
-  profile?: {
-    avatar?: {
-      url?: string;
-      publicId?: string;
-      thumbnail?: string;
+  agency?: {
+    agencyId?: {
+      name?: string;
     };
-    bio?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      state?: string;
-      zipCode?: string;
-      country?: string;
+    role?: string;
+    commissionRate?: number;
+  };
+  metadata?: {
+    profileViews?: number;
+    featured?: boolean;
+    promoted?: boolean;
+    tags?: string[];
+    lastActive?: string;
+    searchRanking?: number;
+    notes?: string | null;
+  };
+  preferences?: {
+    _id?: string;
+    provider?: string;
+    notificationSettings?: {
+      newJobAlerts?: boolean;
+      messageNotifications?: boolean;
+      paymentNotifications?: boolean;
+      reviewNotifications?: boolean;
+      marketingEmails?: boolean;
     };
+    jobPreferences?: {
+      preferredJobTypes?: string[];
+      avoidJobTypes?: string[];
+      preferredTimeSlots?: string[];
+      maxJobsPerDay?: number;
+      advanceBookingDays?: number;
+      acceptEmergencyJobs?: boolean; // Legacy support
+      preferredDistance?: number; // Legacy support
+    };
+    communicationPreferences?: {
+      preferredContactMethod?: string;
+      responseTimeExpectation?: number;
+      autoAcceptJobs?: boolean;
+      preferredMethod?: string; // Legacy support
+      responseTime?: string; // Legacy support
+    };
+    availabilityPreferences?: {
+      sameDayBooking?: boolean;
+      weekendAvailability?: boolean;
+      advanceBookingDays?: number;
+    };
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  settings?: {
+    profileVisibility?: string;
+    showContactInfo?: boolean;
+    showPricing?: boolean;
+    showReviews?: boolean;
+    allowDirectBooking?: boolean;
+    requireApproval?: boolean;
   };
   createdAt?: string;
   updatedAt?: string;
 }
 
-// Service Interface (for displaying provider's services)
-interface ProviderService {
+interface MarketplaceService {
   _id?: string;
   id?: string;
-  title: string;
+  title?: string;
   description?: string;
   category?: string;
   subcategory?: string;
+  basePrice?: number;
+  price?: number;
+  currency?: string;
+  rating?: number | { average?: number; count?: number };
+  reviewCount?: number;
+  images?: Array<{ url?: string; thumbnail?: string }>;
   pricing?: {
-    type?: 'hourly' | 'fixed' | 'per_sqft' | 'per_item';
+    type?: string;
     basePrice?: number;
     currency?: string;
   };
-  images?: Array<{
-    url?: string;
-    thumbnail?: string;
-  }> | string[];
-  rating?: {
-    average?: number;
-    count?: number;
-  };
+  serviceType?: string;
   isActive?: boolean;
 }
 
 export default function ProviderDetailPage() {
   const params = useParams();
   const [provider, setProvider] = useState<Provider | null>(null);
-  const [services, setServices] = useState<ProviderService[]>([]);
-  // Removed unused: const [reviews, setReviews] = useState<Review[]>([]);
+  const [services, setServices] = useState<MarketplaceService[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingServices, setLoadingServices] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [statusWarning, setStatusWarning] = useState<string | null>(null);
 
-  const normalizeProvider = useCallback((providerData: Partial<Provider> & Record<string, unknown>): Provider => {
-    return {
-      ...providerData,
-      _id: providerData._id || providerData.id || '',
-      id: providerData.id || providerData._id || '',
-      firstName: (providerData.firstName as string) || '',
-      lastName: (providerData.lastName as string) || '',
-      email: (providerData.email as string) || '',
-      phoneNumber: (providerData.phoneNumber as string) || '',
-      status: (providerData.status as Provider['status']) || 'pending',
-      providerType: (providerData.providerType as Provider['providerType']) || 'individual',
-      businessInfo: providerData.businessInfo as Provider['businessInfo'],
-      professionalInfo: providerData.professionalInfo as Provider['professionalInfo'],
-      verification: providerData.verification as Provider['verification'],
-      performance: providerData.performance as Provider['performance'],
-      profile: providerData.profile as Provider['profile'],
-    };
-  }, []);
-
-  const fetchProvider = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null); // Clear any previous errors
-      
-      // Provider endpoint is PUBLIC
-      const endpoint = API_ENDPOINTS.marketplaceProvidersById.replace('[id]', String(params.id));
-      const url = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(url, getApiToken()
-        ? createAuthFetchOptions({ method: 'GET' })
-        : { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
-      
-      // Handle different HTTP status codes
-      if (response.status === 404) {
-        setError("Provider not found");
-        setProvider(null);
-        return;
-      }
-      
-      if (!response.ok) {
-        // Try to get error message from response
-        let errorMessage = "Failed to load provider details";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          // If response is not JSON, use status text
-          errorMessage = response.statusText || errorMessage;
-        }
-        setError(errorMessage);
-        setProvider(null);
-        return;
-      }
-
-      const data = await response.json();
-      
-      // Handle API response structure: {success: true, data: {...}}
-      const providerData = data.success && data.data ? data.data : data;
-      
-      // Check if provider data exists
-      if (!providerData || (!providerData._id && !providerData.id)) {
-        setError("Provider not found");
-        setProvider(null);
-        return;
-      }
-      
-      const normalizedProvider = normalizeProvider(providerData);
-      setProvider(normalizedProvider);
-      setError(null); // Clear any errors on success
-      
-      // Load favorite status from localStorage
-      const providerId = normalizedProvider._id || normalizedProvider.id;
-      if (providerId) {
-        const favorites = JSON.parse(localStorage.getItem('favoriteProviders') || '[]');
-        setIsFavorited(favorites.includes(providerId));
-      }
-    } catch (error) {
-      // Only log unexpected errors (network errors, etc.)
-      logger.error("Error fetching provider", error instanceof Error ? error : new Error(String(error)), { providerId: params.id });
-      setError(error instanceof Error ? error.message : "Failed to load provider details");
-      setProvider(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [params.id, normalizeProvider]);
-
-  const fetchServices = useCallback(async () => {
-    if (!params.id) return;
-    
-    try {
-      setLoadingServices(true);
-      // Marketplace listings is PUBLIC endpoint
-      const queryParams = new URLSearchParams({
-        provider: String(params.id),
-        limit: '20'
-      }).toString();
-      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceListings}?${queryParams}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const servicesList = Array.isArray(data) 
-          ? data 
-          : (data.data || data.services || []);
-        setServices(servicesList);
-      }
-    } catch (error) {
-      logger.error("Error fetching services", error instanceof Error ? error : new Error(String(error)), { providerId: params.id });
-    } finally {
-      setLoadingServices(false);
-    }
-  }, [params.id]);
+  const providerId = params?.id as string;
 
   useEffect(() => {
-    if (params.id) {
-      fetchProvider();
+    const fetchProvider = async () => {
+      if (!providerId) {
+        setError("Provider ID is required");
+        setLoading(false);
+        return;
+      }
+
+      const normalizeProviderData = (providerData: unknown, isStatusError: boolean = false): Provider | null => {
+        if (!providerData || typeof providerData !== 'object') {
+          return null;
+        }
+
+        // Type guard: ensure providerData is a record with string keys
+        const data = providerData as Record<string, unknown>;
+
+        // Check if we have at least some identifier or user data
+        const hasId = !!(data._id || data.id);
+        const hasUserId = !!data.userId;
+        const hasUserData = !!(data.firstName || data.lastName || data.email);
+        
+        // If we have no identifying information at all, return null
+        if (!hasId && !hasUserId && !hasUserData) {
+          if (process.env.NODE_ENV === 'development') {
+            logger.debug('Cannot normalize provider data - missing identifiers', {
+              hasId,
+              hasUserId,
+              hasUserData,
+              dataKeys: Object.keys(data),
+            });
+          }
+          return null;
+        }
+        // Debug logging removed - use logger.debug if needed
+        const userId = typeof data.userId === 'object' ? data.userId : null;
+        // Merge trust data from userId.trust if available
+        const trustData = (userId as { trust?: unknown } | null)?.trust || data.trust;
+        
+        // If we don't have an _id but have other data, try to use what we have
+        const providerId = data._id || data.id || ((userId as { _id?: string; id?: string } | null)?._id || (userId as { _id?: string; id?: string } | null)?.id) || undefined;
+        
+        return {
+          ...data,
+          _id: providerId,
+          firstName: (userId as { firstName?: string } | null)?.firstName || data.firstName || '',
+          lastName: (userId as { lastName?: string } | null)?.lastName || data.lastName || '',
+          email: (userId as { email?: string } | null)?.email || data.email || '',
+          phoneNumber: (userId as { phoneNumber?: string; phone?: string } | null)?.phoneNumber || (userId as { phoneNumber?: string; phone?: string } | null)?.phone || data.phoneNumber || data.phone || '',
+          userId: userId,
+          status: data.status || (isStatusError ? 'pending' : undefined),
+          trust: trustData || data.trust,
+        } as Provider;
+      };
+
+      let providerDataFetched = false; // Track if we successfully fetched provider data
+      let httpStatus: number | null = null;
+      let apiErrorDetails: { error?: string; message?: string; [key: string]: unknown } | null = null;
+
+      try {
+        setLoading(true);
+        setError(null);
+        setStatusWarning(null);
+        const fetchOptions = createAuthFetchOptions();
+
+        // Try marketplace endpoint first
+        const marketplaceEndpoint = API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId);
+        const marketplaceResponse = await fetch(
+          `${API_BASE_URL}${marketplaceEndpoint}`,
+          fetchOptions
+        );
+
+        let data: { data?: unknown; provider?: unknown; result?: unknown; error?: string; message?: string; [key: string]: unknown } | null = null;
+        let errorMessage: string | null = null;
+        let isStatusError = false;
+        httpStatus = marketplaceResponse.status;
+
+        // Try to parse response even if not ok
+        try {
+          data = await marketplaceResponse.json();
+        } catch {
+          // If response is not JSON, continue with error handling
+        }
+
+        if (!marketplaceResponse.ok) {
+          errorMessage = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
+          apiErrorDetails = data;
+          if (data) {
+            if (data.message && typeof data.message === 'string') {
+              errorMessage = data.message;
+            } else if (data.error) {
+              if (typeof data.error === 'string') {
+                errorMessage = data.error;
+              } else if (typeof data.error === 'object' && data.error !== null && 'message' in data.error) {
+                errorMessage = (data.error as { message?: string }).message || String(data.error);
+              } else {
+                errorMessage = String(data.error);
+              }
+            }
+          }
+          
+          // Check if this is a status-related error (not active, pending, etc.)
+          const statusErrorPattern = /not active|pending|inactive|suspended/i;
+          if (errorMessage && statusErrorPattern.test(errorMessage)) {
+            isStatusError = true;
+            setStatusWarning(errorMessage);
+          }
+        }
+
+        // If we have data from marketplace endpoint (even with an error), try to use it
+        let normalizedProvider: Provider | null = null;
+        if (data) {
+          // Try multiple possible data structures
+          const providerData = data.data || data.provider || data.result || data;
+          
+          // Log the structure we received for debugging
+          if (process.env.NODE_ENV === 'development') {
+            logger.debug('Provider data structure', {
+              hasData: !!data,
+              hasSuccess: !!data.success,
+              hasDataField: !!data.data,
+              hasProviderField: !!data.provider,
+              hasResultField: !!data.result,
+              dataKeys: data ? Object.keys(data) : [],
+              providerDataKeys: providerData && typeof providerData === 'object' ? Object.keys(providerData) : [],
+            });
+          }
+          
+          normalizedProvider = normalizeProviderData(providerData, isStatusError);
+        }
+
+        // If we got provider data, use it (even if there was a status error)
+        if (normalizedProvider) {
+          setProvider(normalizedProvider);
+          providerDataFetched = true;
+          if (isStatusError) {
+            // Don't log error for status issues when we have data to display
+            return;
+          }
+        } else {
+          // If we couldn't normalize data from marketplace endpoint, try fallback
+          // This handles cases where marketplace endpoint returns unexpected structure
+          try {
+            const providersEndpoint = API_ENDPOINTS.providersById.replace("[id]", providerId);
+            const providersResponse = await fetch(
+              `${API_BASE_URL}${providersEndpoint}`,
+              fetchOptions
+            );
+
+            if (providersResponse.ok) {
+              const providersData = await providersResponse.json();
+              const providerData = providersData.data || providersData.provider || providersData.result || providersData;
+              normalizedProvider = normalizeProviderData(providerData, isStatusError || !marketplaceResponse.ok);
+              
+              if (normalizedProvider) {
+                setProvider(normalizedProvider);
+                providerDataFetched = true;
+                // Successfully got provider data from fallback endpoint
+                logger.info('Successfully fetched provider from fallback endpoint', { providerId });
+                return;
+              }
+            } else {
+              httpStatus = providersResponse.status;
+              // Try to get error message from fallback response
+              try {
+                const fallbackErrorData = await providersResponse.json();
+                if (fallbackErrorData.error || fallbackErrorData.message) {
+                  errorMessage = fallbackErrorData.error || fallbackErrorData.message;
+                }
+              } catch {
+                // Ignore JSON parse errors
+              }
+            }
+          } catch (fallbackErr) {
+            // Fallback failed, continue with original error
+            logger.warn('Fallback endpoint also failed', { 
+              error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+              providerId 
+            });
+          }
+        }
+
+        // Only throw error if we don't have provider data
+        if (!normalizedProvider) {
+          // Provide more descriptive error message
+          let descriptiveError = errorMessage;
+          if (!descriptiveError) {
+            if (marketplaceResponse.ok && data) {
+              descriptiveError = "Invalid response format: Provider data structure is not recognized";
+            } else if (!marketplaceResponse.ok) {
+              descriptiveError = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
+            } else {
+              descriptiveError = "Invalid response format: No provider data received";
+            }
+          }
+          
+          const finalError = new Error(descriptiveError) as Error & { status?: number; apiResponse?: unknown };
+          finalError.status = httpStatus || undefined;
+          finalError.apiResponse = apiErrorDetails || data || undefined;
+          throw finalError;
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to load provider";
+        // Only log error if we didn't successfully fetch provider data
+        if (!providerDataFetched) {
+          const errorToLog = err instanceof Error ? err : new Error(errorMessage);
+          const errorWithStatus = err as Error & { status?: number; apiResponse?: unknown };
+          logger.error("Error fetching provider", errorToLog, {
+            providerId,
+            httpStatus: httpStatus || errorWithStatus?.status,
+            endpoint: API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId),
+            apiError: apiErrorDetails || errorWithStatus?.apiResponse,
+          });
+          setError(errorMessage);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProvider();
+  }, [providerId]);
+
+  // Fetch provider services
+  useEffect(() => {
+    const fetchServices = async () => {
+      if (!providerId) return;
+
+      try {
+        setServicesLoading(true);
+        const endpoint = API_ENDPOINTS.marketplaceProvidersServices.replace("[id]", providerId);
+        const response = await fetch(
+          `${API_BASE_URL}${endpoint}`,
+          createAuthFetchOptions()
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const servicesData = data?.data || data?.services || (Array.isArray(data) ? data : []);
+          setServices(Array.isArray(servicesData) ? servicesData : []);
+        }
+      } catch (err) {
+        logger.warn("Error fetching provider services", { error: err instanceof Error ? err.message : String(err) });
+      } finally {
+        setServicesLoading(false);
+      }
+    };
+
+    if (providerId && provider) {
       fetchServices();
     }
-  }, [params.id, fetchProvider, fetchServices]);
-
-  const handleToggleFavorite = useCallback(() => {
-    if (!provider) return;
-    
-    const providerId = provider._id || provider.id;
-    if (!providerId) return;
-    
-    try {
-      const favorites = JSON.parse(localStorage.getItem('favoriteProviders') || '[]');
-      const newFavorited = !isFavorited;
-      
-      if (newFavorited) {
-        if (!favorites.includes(providerId)) {
-          favorites.push(providerId);
-        }
-      } else {
-        const index = favorites.indexOf(providerId);
-        if (index > -1) {
-          favorites.splice(index, 1);
-        }
-      }
-      
-      localStorage.setItem('favoriteProviders', JSON.stringify(favorites));
-      setIsFavorited(newFavorited);
-    } catch (error) {
-      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { providerId });
-    }
-  }, [provider, isFavorited]);
-
-  const handleShare = useCallback(async () => {
-    if (!provider) return;
-    
-    const providerName = provider.businessInfo?.businessName || 
-                         `${provider.firstName} ${provider.lastName}`.trim() ||
-                         'Provider';
-    
-    const shareData = {
-      title: providerName,
-      text: provider.profile?.bio || provider.businessInfo?.businessDescription || '',
-      url: typeof window !== 'undefined' ? window.location.href : ''
-    };
-    
-    try {
-      if (navigator.share && typeof navigator.share === 'function') {
-        await navigator.share(shareData);
-        setShareFeedback('Shared successfully!');
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        setShareFeedback('Link copied to clipboard!');
-      }
-      setTimeout(() => setShareFeedback(null), 2000);
-    } catch (error) {
-      if (error instanceof Error && error.name !== 'AbortError') {
-        logger.error('Error sharing', error instanceof Error ? error : new Error(String(error)));
-        try {
-          await navigator.clipboard.writeText(shareData.url);
-          setShareFeedback('Link copied to clipboard!');
-          setTimeout(() => setShareFeedback(null), 2000);
-        } catch (clipboardError) {
-          logger.error('Error copying to clipboard', clipboardError instanceof Error ? clipboardError : new Error(String(clipboardError)));
-        }
-      }
-    }
-  }, [provider]);
-
-  // Removed unused renderStars function
-
-  const getProviderName = () => {
-    if (!provider) return '';
-    if (provider.businessInfo?.businessName) {
-      return provider.businessInfo.businessName;
-    }
-    return `${provider.firstName || ''} ${provider.lastName || ''}`.trim() || 'Provider';
-  };
-
-  const getProviderLocation = () => {
-    if (!provider) return 'Location not specified';
-    const address = provider.businessInfo?.businessAddress || provider.profile?.address;
-    if (!address) return 'Location not specified';
-    const parts = [address.city, address.state, address.zipCode].filter(Boolean);
-    return parts.length > 0 ? parts.join(', ') : 'Location not specified';
-  };
+  }, [providerId, provider]);
 
   if (loading) {
+    return <Loading />;
+  }
+
+  if (error && !provider) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loading size="lg" text="Loading provider details..." />
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error || "Provider not found"}</p>
+          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
+            ← Back to Providers
+          </Link>
+        </div>
       </div>
     );
   }
 
-  if (error || !provider) {
+  if (!provider) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Provider Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The provider you're looking for doesn't exist."}</p>
-        <Link
-          href="/marketplace"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Back to Marketplace
-        </Link>
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Provider not found</p>
+          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
+            ← Back to Providers
+          </Link>
+        </div>
       </div>
     );
   }
 
-  const providerName = getProviderName();
-  const providerLocation = getProviderLocation();
+  const userId = typeof provider.userId === 'object' ? provider.userId : null;
+  const avatarUrl = userId?.profile?.avatar?.url || userId?.profile?.avatar?.thumbnail || userId?.profileImage;
+  const hasAvatar = avatarUrl && avatarUrl !== '/placeholder-avatar.png' && !avatarUrl.includes('placeholder');
+  const fullName = `${provider.firstName || ''} ${provider.lastName || ''}`.trim() || 'Provider';
+  
+  // Get initials from name
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(fullName);
+  const location = userId?.profile?.address 
+    ? `${userId.profile.address.city || ''}, ${userId.profile.address.state || ''}`.trim()
+    : 'Location not specified';
   const rating = provider.performance?.rating || 0;
-  const totalReviews = provider.performance?.totalReviews || 0;
+  const reviewCount = provider.performance?.totalReviews || 0;
+  const totalJobs = provider.performance?.totalJobs || 0;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500">
-        <Link href="/marketplace" className="hover:text-gray-700">
-          Marketplace
-        </Link>
-        <span>/</span>
-        <Link href="/marketplace/providers" className="hover:text-gray-700">
-          Providers
-        </Link>
-        <span>/</span>
-        <span className="text-gray-700">{providerName}</span>
-      </nav>
-
-      {/* Provider Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start gap-4 flex-1">
-            {/* Avatar */}
-            <div className="relative">
-              {provider.profile?.avatar?.url || provider.profile?.avatar?.thumbnail ? (
-                <Image
-                  src={provider.profile.avatar.url || provider.profile.avatar.thumbnail || ''}
-                  alt={providerName}
-                  width={120}
-                  height={120}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-green-500"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-green-500">
-                  {providerName.charAt(0).toUpperCase()}
-                </div>
-              )}
-              {provider.verification?.identityVerified && (
-                <div className="absolute bottom-0 right-0 bg-green-500 rounded-full p-1">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-              )}
-            </div>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-2xl font-bold text-gray-700">{providerName}</h1>
-                {provider.verification?.identityVerified && (
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                )}
-                {provider.verification?.businessVerified && (
-                  <Shield className="w-6 h-6 text-blue-500" />
-                )}
-              </div>
-              
-              {provider.providerType && (
-                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full mb-2">
-                  {provider.providerType === 'business' ? 'Business' : 
-                   provider.providerType === 'agency' ? 'Agency' : 'Individual'}
-                </span>
-              )}
-
-              <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{providerLocation}</span>
-                </div>
-                {provider.performance?.responseTime && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    <span>Responds in {provider.performance.responseTime} min</span>
-                  </div>
-                )}
-                {rating > 0 && (
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span>{rating.toFixed(1)} ({totalReviews} reviews)</span>
-                  </div>
-                )}
-              </div>
-
-              {provider.performance?.totalJobs && (
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium">{provider.performance.completedJobs || 0}</span> completed jobs
-                  {provider.performance.completionRate && (
-                    <span className="ml-2">
-                      • {Math.round(provider.performance.completionRate * 100)}% completion rate
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
+    <div className="max-w-7xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <Link
+            href="/marketplace"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to providers"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <User className="w-6 h-6" />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={handleShare}
-              className="relative p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors group"
-              title="Share provider"
-            >
-              <Share2 className="w-4 h-4" />
-              {shareFeedback && (
-                <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                  {shareFeedback}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
-                </div>
-              )}
-            </button>
-            <button 
-              onClick={handleToggleFavorite}
-              className={`p-2 border rounded-lg transition-colors ${
-                isFavorited 
-                  ? 'border-red-300 bg-red-50 text-red-600 hover:bg-red-100' 
-                  : 'border-gray-300 hover:bg-gray-50'
-              }`}
-              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-            </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h1>
+            <p className="text-sm text-gray-600">
+              {provider.businessInfo?.businessName || location}
+              {rating > 0 && ` • ${rating.toFixed(1)} (${reviewCount} reviews)`}
+            </p>
           </div>
         </div>
 
-        {/* Contact Information */}
-        {(provider.email || provider.phoneNumber || provider.businessInfo?.website) && (
-          <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-200">
-            {provider.phoneNumber && (
-              <a 
-                href={`tel:${provider.phoneNumber}`}
-                className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                <span>{provider.phoneNumber}</span>
-              </a>
-            )}
-            {provider.email && (
-              <a 
-                href={`mailto:${provider.email}`}
-                className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-              >
-                <Mail className="w-4 h-4" />
-                <span>{provider.email}</span>
-              </a>
-            )}
-            {provider.businessInfo?.website && (
-              <a 
-                href={provider.businessInfo.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
-              >
-                <Globe className="w-4 h-4" />
-                <span>Website</span>
-              </a>
-            )}
+        {/* Status Warning Banner */}
+        {statusWarning && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800">
+              <strong>Note:</strong> {statusWarning}
+            </p>
           </div>
         )}
       </div>
 
+      {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Provider Avatar & Quick Info */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex flex-col items-center text-center mb-4">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 mb-4 flex items-center justify-center">
+            {hasAvatar && avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={fullName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <span className="text-4xl font-semibold text-white">
+                {initials}
+              </span>
+            )}
+          </div>
+            {provider.businessInfo?.businessName && (
+                <p className="text-lg font-semibold text-gray-900 mb-1">{provider.businessInfo.businessName}</p>
+            )}
+              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                <MapPin className="w-4 h-4" />
+                <span>{location}</span>
+              </div>
+              {rating > 0 && (
+                <div className="flex items-center gap-1 text-sm">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-semibold">{rating.toFixed(1)}</span>
+                  <span className="text-gray-600">({reviewCount} reviews)</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Quick Stats</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Total Jobs</span>
+                <span className="font-semibold text-gray-900">{totalJobs}</span>
+              </div>
+              {provider.performance?.completedJobs !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Completed</span>
+                  <span className="font-semibold text-gray-900">{provider.performance.completedJobs}</span>
+                </div>
+              )}
+              {provider.performance?.completionRate !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Completion Rate</span>
+                  <span className="font-semibold text-green-600">{provider.performance.completionRate.toFixed(1)}%</span>
+                </div>
+              )}
+              {provider.performance?.averageResponseTime !== undefined && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Avg Response</span>
+                  <span className="font-semibold text-gray-900">{provider.performance.averageResponseTime.toFixed(1)}h</span>
+                </div>
+              )}
+        </div>
+      </div>
+
+      {/* Contact Info */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
+        <div className="space-y-3">
+          {provider.email && (
+            <div className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{provider.email}</span>
+            </div>
+          )}
+          {provider.phoneNumber && (
+            <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700">{provider.phoneNumber}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Verification Summary */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Shield className="w-4 h-4" />
+              Verification
+            </h3>
+            <div className="space-y-2">
+              {(provider.verification?.identityVerified || userId?.trust?.verification?.identityVerified) && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Identity</span>
+                </div>
+              )}
+              {provider.verification?.businessVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Business</span>
+                </div>
+              )}
+              {userId?.trust?.verification?.phoneVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Phone</span>
+                </div>
+              )}
+              {userId?.trust?.verification?.emailVerified && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Email</span>
+                </div>
+              )}
+              {provider.verification?.backgroundCheck?.status === 'passed' && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-700">Background Check</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Trust Score */}
+          {provider.trust?.trustScore && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="font-semibold text-gray-900 mb-3">Trust Score</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl font-bold text-gray-900">{provider.trust.trustScore}</span>
+                <span className="text-sm text-gray-500">/100</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full"
+                  style={{ width: `${provider.trust.trustScore}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Bio/Description */}
-          {(provider.profile?.bio || provider.businessInfo?.businessDescription) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">About</h2>
-              <p className="text-gray-600 leading-relaxed">
-                {provider.profile?.bio || provider.businessInfo?.businessDescription}
-              </p>
-            </div>
-          )}
-
-          {/* Specialties */}
-          {provider.professionalInfo?.specialties && provider.professionalInfo.specialties.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Specialties</h2>
-              <div className="space-y-4">
-                {provider.professionalInfo.specialties.map((specialty, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-700">
-                        {specialty.category ? specialty.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Specialty'}
-                      </h3>
-                      {specialty.experience && (
-                        <span className="text-sm text-gray-600">
-                          {specialty.experience} years experience
-                        </span>
-                      )}
-                    </div>
-                    {specialty.subcategories && specialty.subcategories.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {specialty.subcategories.map((subcat, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                            {subcat}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    {specialty.skills && specialty.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {specialty.skills.map((skill, idx) => (
-                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Certifications & Licenses */}
-          {(provider.professionalInfo?.specialties?.some(s => s.certifications && s.certifications.length > 0) || 
-            provider.verification?.licenses && provider.verification.licenses.length > 0) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Certifications & Licenses</h2>
-              <div className="space-y-3">
-                {provider.professionalInfo?.specialties?.map((specialty, sIdx) => 
-                  specialty.certifications?.map((cert, cIdx) => (
-                    <div key={`cert-${sIdx}-${cIdx}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-                      <Award className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-700">{cert.name}</div>
-                        <div className="text-sm text-gray-600">{cert.issuer}</div>
-                        {cert.expiryDate && (
-                          <div className="text-xs text-gray-500">
-                            Expires: {new Date(cert.expiryDate).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-                {provider.verification?.licenses?.map((license, idx) => (
-                  <div key={`license-${idx}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-                    <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-700">{license.type}</div>
-                      <div className="text-sm text-gray-600">License #{license.number}</div>
-                      <div className="text-xs text-gray-500">{license.issuingAuthority}</div>
-                      {license.expiryDate && (
-                        <div className="text-xs text-gray-500">
-                          Expires: {new Date(license.expiryDate).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Service Areas */}
-          {provider.professionalInfo?.specialties?.some(s => s.serviceAreas && s.serviceAreas.length > 0) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Areas</h2>
-              <div className="flex flex-wrap gap-2">
-                {provider.professionalInfo.specialties.flatMap(specialty => 
-                  specialty.serviceAreas?.map((area, idx) => (
-                    <div key={idx} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                      <MapPin className="w-3 h-3 inline mr-1" />
-                      {area.city}{area.state ? `, ${area.state}` : ''}
-                      {area.radius && ` (${area.radius} mi radius)`}
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Services Offered */}
+          {/* Services */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Services Offered</h2>
-            {loadingServices ? (
-              <div className="flex justify-center py-8">
-                <Loading size="md" text="Loading services..." />
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Wrench className="w-5 h-5" />
+              Services
+            </h2>
+            {servicesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             ) : services.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {services.map((service) => {
                   const serviceId = service._id || service.id;
-                  const imageUrl = Array.isArray(service.images) && service.images.length > 0
-                    ? (typeof service.images[0] === 'string' ? service.images[0] : service.images[0]?.url || service.images[0]?.thumbnail)
-                    : null;
+                  const serviceRating = typeof service.rating === 'object' ? service.rating?.average : service.rating;
+                  const servicePrice = service.price || service.basePrice || service.pricing?.basePrice;
+                  const serviceImage = service.images?.[0]?.thumbnail || service.images?.[0]?.url;
                   
                   return (
                     <Link
                       key={serviceId}
                       href={`/marketplace/services/${serviceId}`}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group"
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
                     >
-                      {imageUrl && (
-                        <div className="relative w-full h-32 mb-3 rounded-lg overflow-hidden">
+                      {serviceImage && (
+                        <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-200 mb-3">
                           <Image
-                            src={imageUrl}
-                            alt={service.title}
+                            src={serviceImage}
+                            alt={service.title || 'Service'}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform"
+                            className="object-cover"
                           />
                         </div>
                       )}
-                      <h3 className="font-semibold text-gray-700 mb-1 group-hover:text-green-600 transition-colors">
-                        {service.title}
-                      </h3>
+                      <h3 className="font-semibold text-gray-900 mb-1">{service.title || 'Service'}</h3>
                       {service.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                          {service.description}
-                        </p>
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{service.description}</p>
                       )}
                       <div className="flex items-center justify-between">
-                        {service.pricing?.basePrice && (
-                          <span className="text-lg font-bold text-green-600">
-                            ${service.pricing.basePrice.toFixed(2)}
-                            {service.pricing.type === 'hourly' && '/hr'}
-                          </span>
+                        {servicePrice && (
+                          <div className="text-lg font-bold text-gray-900">
+                            ${servicePrice}
+                            {service.currency && <span className="text-sm font-normal text-gray-600"> {service.currency}</span>}
+                          </div>
                         )}
-                        {service.rating?.average && (
+                        {serviceRating && (
                           <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                            <span className="text-sm text-gray-600">
-                              {service.rating.average.toFixed(1)}
-                            </span>
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm text-gray-600">{serviceRating.toFixed(1)}</span>
                           </div>
                         )}
                       </div>
+                      {service.category && (
+                        <div className="mt-2">
+                          <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
+                            {service.category}
+                          </span>
+                        </div>
+                      )}
                     </Link>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No services listed yet.</p>
+              <p className="text-gray-500 text-center py-8">No services available</p>
             )}
+      </div>
+
+      {/* About */}
+      {userId?.profile?.bio && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
+          <p className="text-gray-700">{userId.profile.bio}</p>
+        </div>
+      )}
+
+      {/* Business Description */}
+      {provider.businessInfo?.businessDescription && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Business Description</h2>
+          <p className="text-gray-700">{provider.businessInfo.businessDescription}</p>
+        </div>
+      )}
+
+      {/* Specialties */}
+      {provider.professionalInfo?.specialties && provider.professionalInfo.specialties.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Specialties & Services</h2>
+              <div className="space-y-6">
+            {provider.professionalInfo.specialties.map((specialty, idx) => {
+              const specialtyId = specialty._id || idx;
+              const experience = specialty.experience || specialty.yearsOfExperience;
+              const hourlyRate = specialty.hourlyRate || specialty.pricing?.hourlyRate;
+              
+              return (
+              <div key={specialtyId} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                {specialty.category && (
+                      <h3 className="font-semibold text-lg text-gray-900 capitalize mb-1">
+                        {specialty.category}
+                      </h3>
+                    )}
+                    {experience && (
+                      <p className="text-sm text-gray-600">
+                        {experience} years of experience
+                      </p>
+                    )}
+                  </div>
+                  {(hourlyRate || specialty.pricing?.minimumCharge) && (
+                    <div className="text-right">
+                      {hourlyRate && (
+                        <div className="text-lg font-semibold text-gray-900">
+                          ${hourlyRate}
+                          <span className="text-sm font-normal text-gray-600">/hr</span>
+                        </div>
+                      )}
+                      {specialty.pricing?.minimumCharge && (
+                        <div className="text-sm text-gray-600">
+                          Min: ${specialty.pricing.minimumCharge}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {specialty.description && (
+                  <p className="text-gray-700 mb-3">{specialty.description}</p>
+                )}
+                
+                {/* Certifications */}
+                {specialty.certifications && specialty.certifications.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Certifications:</h4>
+                    <div className="space-y-2">
+                      {specialty.certifications.map((cert, certIdx) => {
+                        const certId = cert._id || certIdx;
+                        return (
+                          <div key={certId} className="flex items-start gap-2">
+                            <Award className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-700">{cert.name}</span>
+                              {cert.issuer && (
+                                <p className="text-xs text-gray-600">Issued by: {cert.issuer}</p>
+                              )}
+                              {cert.expiryDate && (
+                                <p className="text-xs text-gray-500">
+                                  Expires: {new Date(cert.expiryDate).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Skills */}
+                {specialty.skills && Array.isArray(specialty.skills) && (
+                  <div className="mb-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Skills:</h4>
+                    {(() => {
+                      // Filter out undefined/null items first
+                      const validSkills = specialty.skills.filter(skill => skill != null && typeof skill === 'object');
+                      
+                      // Debug logging in development
+                      if (process.env.NODE_ENV === 'development') {
+                        logger.debug('Skills data', {
+                          originalLength: specialty.skills.length,
+                          validSkillsLength: validSkills.length,
+                          skillsCount: validSkills.length,
+                        });
+                      }
+                      
+                      if (validSkills.length === 0) {
+                        return <p className="text-sm text-gray-500">No skills listed</p>;
+                      }
+                      
+                      return (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            {validSkills.map((skill, skillIdx) => {
+                              const skillId = skill?._id || `skill-${skillIdx}`;
+                              const skillName = skill?.name || skill?.description || `Skill ${skillIdx + 1}`;
+                              const categoryName = skill?.category && typeof skill.category === 'object' 
+                                ? (skill.category?.name || '')
+                                : (typeof skill?.category === 'string' ? skill.category : '');
+                              const skillLevel = skill?.metadata?.level;
+                              const yearsExp = skill?.metadata?.yearsExperience;
+                              const isCertified = skill?.metadata?.certified;
+                              
+                              // Build comprehensive tooltip
+                              const tooltipParts = [skillName];
+                              if (skillLevel) tooltipParts.push(`Level: ${skillLevel}`);
+                              if (yearsExp) tooltipParts.push(`${yearsExp} years experience`);
+                              if (categoryName) tooltipParts.push(`Category: ${categoryName}`);
+                              if (skill?.description) tooltipParts.push(skill.description);
+                              const tooltip = tooltipParts.join(' • ');
+                              
+                              return (
+                                <div
+                                  key={skillId}
+                                  className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm flex items-center gap-1 hover:bg-blue-100 transition-colors"
+                                  title={tooltip}
+                                >
+                                  {skillName}
+                                  {isCertified && (
+                                    <Award className="w-3 h-3" />
+                                  )}
+                                  {skillLevel && !isCertified && (
+                                    <span className="text-xs opacity-75" title={`${skillLevel} level`}>
+                                      ({skillLevel})
+                                    </span>
+                                  )}
+                                  {yearsExp && !skillLevel && !isCertified && (
+                                    <span className="text-xs opacity-75" title={`${yearsExp} years experience`}>
+                                      ({yearsExp}y)
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Show skill details if available */}
+                          {validSkills.some(skill => skill && (skill.description || (skill.metadata && (skill.metadata.level || skill.metadata.yearsExperience)))) && (
+                            <div className="mt-3 space-y-2 border-t border-gray-100 pt-2">
+                              {validSkills
+                                .filter(skill => skill && (skill.description || (skill.metadata && (skill.metadata.level || skill.metadata.yearsExperience))))
+                                .map((skill, skillIdx) => {
+                                  const skillId = skill?._id || `skill-${skillIdx}`;
+                                  const skillName = skill?.name || skill?.description || `Skill ${skillIdx + 1}`;
+                                  const categoryName: string = skill?.category && typeof skill.category === 'object' 
+                                    ? (skill.category?.name || '')
+                                    : (typeof skill?.category === 'string' ? skill.category : '');
+                                  const skillLevel = skill?.metadata?.level;
+                                  const yearsExp = skill?.metadata?.yearsExperience;
+                                
+                                  return (
+                                    <div key={skillId} className="text-xs text-gray-600">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium text-gray-700">{skillName}</span>
+                                        {categoryName && (
+                                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                            {categoryName}
+                                          </span>
+                                        )}
+                                        {skillLevel && (
+                                          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                                            {skillLevel}
+                                          </span>
+                                        )}
+                                        {yearsExp && (
+                                          <span className="text-gray-500">
+                                            {yearsExp} {yearsExp === 1 ? 'year' : 'years'} exp.
+                                          </span>
+                                        )}
+                                      </div>
+                                      {skill?.description && (
+                                        <p className="text-gray-600 mt-1 ml-0">{skill.description}</p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Service Areas */}
+                {specialty.serviceAreas && specialty.serviceAreas.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Service Areas:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {specialty.serviceAreas.map((area, areaIdx) => (
+                        <span
+                          key={areaIdx}
+                          className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                        >
+                          {area.city}, {area.state} {area.zipCode}
+                          {area.radius && ` (${area.radius}mi radius)`}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              );
+            })}
           </div>
         </div>
+      )}
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Verification Badges */}
+      {/* Languages */}
+      {provider.professionalInfo?.languages && provider.professionalInfo.languages.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Languages</h2>
+          <div className="flex flex-wrap gap-2">
+            {provider.professionalInfo.languages.map((lang, idx) => (
+              <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                {lang}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+          {/* Verification Details */}
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Verification</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                {provider.verification?.identityVerified ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-gray-400" />
-                )}
-                <span className="text-gray-600">Identity Verified</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {provider.verification?.businessVerified ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-gray-400" />
-                )}
-                <span className="text-gray-600">Business Verified</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {provider.verification?.insurance?.hasInsurance ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <AlertCircle className="w-5 h-5 text-gray-400" />
-                )}
-                <span className="text-gray-600">
-                  Insured
-                  {provider.verification?.insurance?.coverageAmount && (
-                    <span className="text-xs text-gray-500 ml-1">
-                      (${provider.verification?.insurance?.coverageAmount.toLocaleString()})
-                    </span>
-                  )}
-                </span>
-              </div>
-              {provider.verification?.backgroundCheck && (
-                <div className="flex items-center gap-3">
-                  {provider.verification.backgroundCheck.status === 'passed' ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-gray-400" />
-                  )}
-                  <span className="text-gray-600">
-                    Background Check: {provider.verification.backgroundCheck.status}
-                  </span>
-                </div>
-              )}
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Verification & Credentials
+            </h2>
+            <div className="space-y-4">
+          {/* Basic Verifications */}
+          <div className="grid grid-cols-2 gap-3">
+          {(provider.verification?.identityVerified || userId?.trust?.verification?.identityVerified) && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Identity Verified</span>
             </div>
+          )}
+          {provider.verification?.businessVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Business Verified</span>
+            </div>
+          )}
+          {userId?.trust?.verification?.phoneVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Phone Verified</span>
+            </div>
+          )}
+          {userId?.trust?.verification?.emailVerified && (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="text-gray-700">Email Verified</span>
+              </div>
+            )}
           </div>
 
-          {/* Performance Stats */}
-          {provider.performance && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Performance</h2>
-              <div className="space-y-3">
-                {provider.performance.totalJobs !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Jobs</span>
-                    <span className="font-semibold text-gray-700">{provider.performance.totalJobs}</span>
+          {/* Background Check */}
+          {provider.verification?.backgroundCheck && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="font-medium text-gray-900 mb-2">Background Check</h3>
+              <div className="flex items-center gap-2">
+                <CheckCircle className={`w-5 h-5 ${provider.verification.backgroundCheck.status === 'passed' ? 'text-green-500' : 'text-yellow-500'}`} />
+                <span className="text-gray-700 capitalize">{provider.verification.backgroundCheck.status}</span>
+                {provider.verification.backgroundCheck.reportId && (
+                  <span className="text-sm text-gray-500">({provider.verification.backgroundCheck.reportId})</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Insurance */}
+          {provider.verification?.insurance && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="font-medium text-gray-900 mb-3">Insurance</h3>
+              <div className="space-y-2">
+                {provider.verification.insurance.liability?.active && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-green-500" />
+                      <span className="text-gray-700">Liability Insurance</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      ${(provider.verification.insurance.liability.amount || 0).toLocaleString()}
+                    </div>
                   </div>
                 )}
-                {provider.performance.completionRate !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Completion Rate</span>
-                    <span className="font-semibold text-gray-700">
-                      {Math.round(provider.performance.completionRate * 100)}%
-                    </span>
-                  </div>
-                )}
-                {provider.performance.responseTime !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Avg. Response</span>
-                    <span className="font-semibold text-gray-700">
-                      {provider.performance.responseTime} min
-                    </span>
-                  </div>
-                )}
-                {provider.performance.repeatCustomerRate !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Repeat Customers</span>
-                    <span className="font-semibold text-gray-700">
-                      {Math.round(provider.performance.repeatCustomerRate * 100)}%
-                    </span>
+                {provider.verification.insurance.workersComp?.active && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-green-500" />
+                      <span className="text-gray-700">Workers&apos; Compensation</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      ${(provider.verification.insurance.workersComp.amount || 0).toLocaleString()}
+                    </div>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Business Info */}
-          {provider.businessInfo && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Business Info</h2>
-              <div className="space-y-2 text-sm">
-                {provider.businessInfo.yearEstablished && (
-                  <div>
-                    <span className="text-gray-600">Established: </span>
-                    <span className="font-medium text-gray-700">
-                      {new Date().getFullYear() - provider.businessInfo.yearEstablished} years ago
-                    </span>
+          {/* Licenses */}
+          {provider.verification?.licenses && provider.verification.licenses.length > 0 && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="font-medium text-gray-900 mb-3">Licenses</h3>
+              <div className="space-y-2">
+                {provider.verification.licenses.map((license, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <div>
+                      <span className="text-gray-700 font-medium capitalize">{license.type?.replace('_', ' ')}</span>
+                      {license.number && (
+                        <span className="text-sm text-gray-600 ml-2">#{license.number}</span>
+                      )}
+                      {license.state && (
+                        <span className="text-sm text-gray-600 ml-2">({license.state})</span>
+                      )}
+                    </div>
+                    {license.expiresAt && (
+                      <span className="text-sm text-gray-500">
+                        Expires: {new Date(license.expiresAt).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
-                )}
-                {provider.businessInfo.numberOfEmployees && (
-                  <div>
-                    <span className="text-gray-600">Employees: </span>
-                    <span className="font-medium text-gray-700">
-                      {provider.businessInfo.numberOfEmployees}
-                    </span>
-                  </div>
-                )}
-                {provider.businessInfo.businessType && (
-                  <div>
-                    <span className="text-gray-600">Type: </span>
-                    <span className="font-medium text-gray-700">
-                      {provider.businessInfo.businessType}
-                    </span>
-                  </div>
-                )}
+                ))}
               </div>
             </div>
           )}
 
-          {/* Badges */}
-          {provider.performance?.badges && provider.performance.badges.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Badges</h2>
-              <div className="flex flex-wrap gap-2">
-                {provider.performance.badges.map((badge, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm"
-                  >
-                    <Award className="w-4 h-4" />
-                    <span>{badge.name}</span>
+          {/* Certifications */}
+          {provider.verification?.certifications && provider.verification.certifications.length > 0 && (
+            <div className="pt-4 border-t border-gray-200">
+              <h3 className="font-medium text-gray-900 mb-3">Certifications</h3>
+              <div className="space-y-2">
+                {provider.verification.certifications.map((cert, idx) => (
+                  <div key={idx}>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-blue-500" />
+                      <span className="text-gray-700 font-medium">{cert.name}</span>
+                    </div>
+                    {cert.issuer && (
+                      <p className="text-sm text-gray-600 ml-6">Issued by: {cert.issuer}</p>
+                    )}
+                    {cert.expiresAt && (
+                      <p className="text-sm text-gray-500 ml-6">
+                        Expires: {new Date(cert.expiresAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -877,7 +1248,220 @@ export default function ProviderDetailPage() {
           )}
         </div>
       </div>
+
+          {/* Trust & Badges */}
+          {(provider.trust?.trustScore || provider.trust?.badges) && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Award className="w-5 h-5" />
+            Trust & Badges
+          </h2>
+          <div className="space-y-4">
+            {provider.trust.trustScore && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-medium text-gray-700">Trust Score</span>
+                  <span className="text-2xl font-bold text-gray-900">{provider.trust.trustScore}</span>
+                  <span className="text-sm text-gray-500">/100</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: `${provider.trust.trustScore}%` }}
+                  />
+                </div>
+              </div>
+            )}
+            {provider.trust.badges && provider.trust.badges.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Badges</h3>
+                <div className="flex flex-wrap gap-2">
+                  {provider.trust.badges.map((badge, idx) => (
+                    <div
+                      key={idx}
+                      className="px-3 py-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg flex items-center gap-2"
+                    >
+                      <Award className="w-4 h-4 text-purple-600" />
+                      <span className="text-sm font-medium text-gray-700">{badge.description || badge.type}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+          {/* Availability */}
+          {provider.professionalInfo?.availability && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Availability
+          </h2>
+          <div className="space-y-2">
+            {Object.entries(provider.professionalInfo.availability).map(([day, schedule]) => (
+              schedule.available ? (
+                <div key={day} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                  <span className="font-medium text-gray-700 capitalize">{day}</span>
+                  <span className="text-sm text-gray-600">
+                    {schedule.start} - {schedule.end}
+                  </span>
+                </div>
+              ) : null
+            ))}
+            {provider.professionalInfo.emergencyServices && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="flex items-center gap-2 text-green-600">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Emergency Services Available</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+          {/* Agency Info */}
+          {provider.agency && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Building2 className="w-5 h-5" />
+            Agency Information
+          </h2>
+          <div className="space-y-2">
+            {provider.agency.agencyId?.name && (
+              <div>
+                <span className="text-sm text-gray-600">Agency:</span>
+                <span className="ml-2 font-medium text-gray-900">{provider.agency.agencyId.name}</span>
+              </div>
+            )}
+            {provider.agency.role && (
+              <div>
+                <span className="text-sm text-gray-600">Role:</span>
+                <span className="ml-2 font-medium text-gray-900 capitalize">{provider.agency.role}</span>
+              </div>
+            )}
+            {provider.agency.commissionRate && (
+              <div>
+                <span className="text-sm text-gray-600">Commission Rate:</span>
+                <span className="ml-2 font-medium text-gray-900">{provider.agency.commissionRate}%</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+          {/* Performance Statistics */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5" />
+          Performance Statistics
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <div className="text-2xl font-bold text-gray-900">{rating > 0 ? rating.toFixed(1) : 'N/A'}</div>
+            <div className="text-sm text-gray-600">Rating</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900">{reviewCount}</div>
+            <div className="text-sm text-gray-600">Reviews</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900">{totalJobs}</div>
+            <div className="text-sm text-gray-600">Total Jobs</div>
+          </div>
+          {provider.performance?.completedJobs !== undefined && (
+            <div>
+              <div className="text-2xl font-bold text-gray-900">{provider.performance.completedJobs}</div>
+              <div className="text-sm text-gray-600">Completed</div>
+            </div>
+          )}
+        </div>
+        {(provider.performance?.completionRate || provider.performance?.cancellationRate || provider.performance?.averageResponseTime) && (
+          <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 md:grid-cols-3 gap-4">
+            {provider.performance.completionRate !== undefined && (
+              <div>
+                <div className="text-xl font-bold text-green-600">{provider.performance.completionRate.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">Completion Rate</div>
+              </div>
+            )}
+            {provider.performance.cancellationRate !== undefined && (
+              <div>
+                <div className="text-xl font-bold text-gray-900">{provider.performance.cancellationRate.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">Cancellation Rate</div>
+              </div>
+            )}
+            {provider.performance.averageResponseTime !== undefined && (
+              <div>
+                <div className="text-xl font-bold text-gray-900">{provider.performance.averageResponseTime.toFixed(1)}h</div>
+                <div className="text-sm text-gray-600">Avg Response Time</div>
+              </div>
+            )}
+          </div>
+        )}
+        {(provider.performance?.totalEarnings || provider.performance?.averageJobValue) && (
+          <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
+            {provider.performance.totalEarnings !== undefined && (
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  ${provider.performance.totalEarnings.toLocaleString()}
+                </div>
+                <div className="text-sm text-gray-600">Total Earnings</div>
+              </div>
+            )}
+            {provider.performance.averageJobValue !== undefined && (
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  ${provider.performance.averageJobValue.toFixed(0)}
+                </div>
+                <div className="text-sm text-gray-600">Avg Job Value</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+          {/* Metadata */}
+          {provider.metadata && (
+            <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Additional Information</h2>
+          <div className="space-y-3">
+            {provider.metadata.profileViews && (
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  {provider.metadata.profileViews.toLocaleString()} profile views
+                </span>
+              </div>
+            )}
+            {(provider.metadata.featured || provider.metadata.promoted) && (
+              <div className="flex items-center gap-2">
+                <Star className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm text-gray-600">
+                  {provider.metadata.featured && 'Featured'}
+                  {provider.metadata.featured && provider.metadata.promoted && ' • '}
+                  {provider.metadata.promoted && 'Promoted'}
+                </span>
+              </div>
+            )}
+            {provider.metadata.tags && provider.metadata.tags.length > 0 && (
+              <div>
+                <span className="text-sm font-medium text-gray-700 mb-2 block">Tags:</span>
+                <div className="flex flex-wrap gap-2">
+                  {provider.metadata.tags.map((tag, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+        </div>
+      </div>
     </div>
   );
 }
-

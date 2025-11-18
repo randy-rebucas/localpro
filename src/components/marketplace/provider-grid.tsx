@@ -22,6 +22,7 @@ interface ProviderGridProps {
   onPageChange: (page: number) => void;
   viewMode: 'grid' | 'list';
   selectedCategory?: string | null;
+  selectedSkills?: string[];
 }
 
 function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list' }) {
@@ -43,7 +44,18 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
   const rating = provider?.performance?.rating || provider?.rating?.average || 0;
   const totalReviews = provider?.performance?.totalReviews || provider?.rating?.count || 0;
   const avatarUrl = user.profile?.avatar?.url || user.profile?.avatar?.thumbnail;
+  const hasAvatar = avatarUrl && avatarUrl !== '/placeholder-avatar.png' && !avatarUrl.includes('placeholder');
   const isGrid = viewMode === 'grid';
+  
+  // Get initials from name
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(name);
 
   return (
     <Link
@@ -51,8 +63,8 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
       className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'}`}
     >
       {/* Provider Image */}
-      <div className={`relative ${isGrid ? 'w-full h-48' : 'w-48 flex-shrink-0'} bg-gradient-to-br from-green-100 to-green-200 overflow-hidden ${isGrid ? '' : 'self-stretch'} flex items-center justify-center`}>
-        {avatarUrl ? (
+      <div className={`relative ${isGrid ? 'w-full h-40' : 'w-40 flex-shrink-0'} bg-gradient-to-br from-green-100 to-green-200 overflow-hidden ${isGrid ? '' : 'self-stretch'} flex items-center justify-center`}>
+        {hasAvatar && avatarUrl ? (
           <Image
             src={avatarUrl}
             alt={name}
@@ -62,9 +74,9 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
             unoptimized={avatarUrl.startsWith('http://localhost') || !avatarUrl.startsWith('http')}
           />
         ) : (
-          <div className={`w-full h-full flex items-center justify-center ${isGrid ? 'h-48' : 'min-h-[12rem]'}`}>
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {name.charAt(0).toUpperCase()}
+          <div className={`w-full h-full flex items-center justify-center ${isGrid ? 'h-40' : 'min-h-[10rem]'}`}>
+            <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              {initials}
             </div>
           </div>
         )}
@@ -72,16 +84,16 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
 
       {/* Content */}
       <div className={`flex-1 p-4 flex flex-col ${isGrid ? 'min-h-0' : 'justify-between'}`}>
-        <div>
+        <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="font-semibold text-gray-900">{name}</h3>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <h3 className="text-base font-semibold text-gray-900 truncate">{name}</h3>
                 {provider?.verification?.identityVerified && (
                   <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                 )}
                 {provider?.providerType && (
-                  <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium">
+                  <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium flex-shrink-0">
                     {provider.providerType === 'business' ? 'Business' : 
                      provider.providerType === 'agency' ? 'Agency' : 'Individual'}
                   </span>
@@ -89,28 +101,28 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
               </div>
               
               {/* Location */}
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                <MapPin className="w-3 h-3" />
-                <span>{location || 'Location not specified'}</span>
-              </div>
+              {location && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-2">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{location}</span>
+                </div>
+              )}
 
               {/* Business Description */}
               {provider?.businessInfo?.businessDescription ? (
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">{provider.businessInfo.businessDescription}</p>
-              ) : (
-                <p className="text-sm text-gray-400 italic mb-3">No description available</p>
-              )}
+                <p className="text-xs text-gray-600 line-clamp-2 mb-3">{provider.businessInfo.businessDescription}</p>
+              ) : null}
             </div>
           </div>
         </div>
 
         {/* Bottom Section - Rating and Actions */}
-        <div className={isGrid ? 'mt-auto pt-4 border-t border-gray-100' : 'flex items-end justify-between gap-4'}>
+        <div className={isGrid ? 'mt-auto pt-3 border-t border-gray-100' : 'flex items-end justify-between gap-4 pt-3'}>
           {/* Left Side - Rating */}
-          <div className={isGrid ? 'w-full' : 'flex items-center gap-4 flex-wrap'}>
+          <div className={isGrid ? 'w-full mb-2' : 'flex items-center gap-4 flex-wrap'}>
             {rating > 0 && (
               <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm font-semibold text-gray-900">{rating.toFixed(1)}</span>
                 {totalReviews > 0 && (
                   <span className="text-xs text-gray-500">({totalReviews})</span>
@@ -120,13 +132,13 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
           </div>
 
           {/* Right Side - View Profile Button */}
-          <div className={`flex ${isGrid ? 'flex-col gap-2 w-full mt-2' : 'gap-2 flex-shrink-0'}`}>
+          <div className={`flex ${isGrid ? 'w-full' : 'flex-shrink-0'}`}>
             <button 
               onClick={(e) => {
                 e.preventDefault();
                 window.location.href = `/marketplace/providers/${providerId}`;
               }}
-              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all shadow-sm hover:shadow-md`}
+              className={`${isGrid ? 'w-full' : ''} px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all shadow-sm hover:shadow-md`}
             >
               View Profile
             </button>
@@ -173,8 +185,8 @@ export function ProviderGrid({
   return (
     <div>
       <div className={viewMode === 'grid' 
-        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-        : 'space-y-4'
+        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'
+        : 'space-y-3'
       }>
         {providers.map((user) => (
           <ProviderCard
@@ -187,7 +199,7 @@ export function ProviderGrid({
 
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-2">
+        <div className="mt-5 flex items-center justify-center gap-2">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
