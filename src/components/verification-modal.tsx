@@ -107,7 +107,17 @@ export function VerificationModal({
       if (response.ok) {
         toast.success("Verification code sent!");
       } else {
-        toast.error(result.error || "Failed to send verification code");
+        const errorCode = result.code;
+        const errorMessage = result.message || result.error || "Failed to send verification code";
+        
+        // Provide more specific error messages
+        if (response.status === 500 && errorCode === 'SMS_SEND_FAILED') {
+          toast.error(errorMessage || "Unable to send SMS. Please check your phone number and try again.");
+        } else if (response.status === 500) {
+          toast.error(errorMessage || "Server error. Please try again later.");
+        } else {
+          toast.error(errorMessage);
+        }
       }
     } catch (error) {
       logger.error("Resend error", error instanceof Error ? error : new Error(String(error)));

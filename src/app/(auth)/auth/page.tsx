@@ -212,7 +212,12 @@ function SignInForm() {
           // Bad request - likely invalid phone format
           toast.error(errorMessage || "Invalid phone number format. Please use international format (e.g., +1234567890)");
         } else if (response.status === 500) {
-          toast.error("Server error. Please try again later.");
+          // For 500 errors, show the actual error message if available, especially for SMS failures
+          if (errorCode === 'SMS_SEND_FAILED') {
+            toast.error(errorMessage || "Unable to send SMS. Please check your phone number and try again.");
+          } else {
+            toast.error(errorMessage || "Server error. Please try again later.");
+          }
         } else {
           toast.error(errorDetails ? `${errorMessage} - ${errorDetails}` : errorMessage);
         }

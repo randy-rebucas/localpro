@@ -106,18 +106,29 @@ export function MobileAuthForm() {
         toast.success("Verification code sent to your phone!");
         clearErrors();
       } else {
+        const errorCode = result.code;
+        const errorMessage = result.message || result.error || "Failed to send verification code";
+        const errorDetails = result.details;
+        
         if (response.status === 408) {
           toast.error("Request timed out. Please check your connection and try again.");
         } else if (response.status === 503) {
-          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          const errorMsg = errorDetails ? `${errorMessage} - ${errorDetails}` : errorMessage;
           toast.error(errorMsg || "Service temporarily unavailable. Please try again in a few moments.");
         } else if (response.status === 429) {
           toast.error("Too many requests. Please wait before trying again.");
+        } else if (response.status === 500) {
+          // For 500 errors, show the actual error message if available, especially for SMS failures
+          if (errorCode === 'SMS_SEND_FAILED') {
+            toast.error(errorMessage || "Unable to send SMS. Please check your phone number and try again.");
+          } else {
+            toast.error(errorMessage || "Server error. Please try again later.");
+          }
         } else {
-          const errorMsg = result.details ? `${result.error} - ${result.details}` : result.error;
+          const errorMsg = errorDetails ? `${errorMessage} - ${errorDetails}` : errorMessage;
           toast.error(errorMsg || "Failed to send verification code");
         }
-        setErrors({ phone: result.error || "Failed to send verification code" });
+        setErrors({ phone: errorMessage });
       }
     } catch (error) {
       logger.error("Send code error", error instanceof Error ? error : new Error(String(error)));
