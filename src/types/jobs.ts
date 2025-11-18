@@ -177,7 +177,7 @@ export interface Job {
   description: string;
   company: Company;
   employer: string;
-  category: string;
+  category: string | JobCategory;
   subcategory: string;
   jobType: JobType;
   experienceLevel: ExperienceLevel;

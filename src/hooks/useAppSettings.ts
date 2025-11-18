@@ -30,21 +30,49 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
       return;
     }
 
+    // Capture endpoint info for error logging
+    const useAuth = !usePublicEndpoint && getApiToken();
+    const endpoint = useAuth ? API_ENDPOINTS.settingsApp : API_ENDPOINTS.settingsAppPublic;
+    const url = `${API_BASE_URL}${endpoint}`;
+
     try {
       setLoading(true);
       setError(null);
-
-      // Use public endpoint by default (no auth required)
-      // Only use authenticated endpoint if explicitly requested and user has token
-      const useAuth = !usePublicEndpoint && getApiToken();
-      const endpoint = useAuth ? API_ENDPOINTS.settingsApp : API_ENDPOINTS.settingsAppPublic;
-      const url = `${API_BASE_URL}${endpoint}`;
+      
+      // Validate API_BASE_URL before making request
+      if (!API_BASE_URL || typeof API_BASE_URL !== 'string' || API_BASE_URL.trim() === '') {
+        throw new Error('API base URL is not configured. Please check your environment variables.');
+      }
       
       const fetchOptions = useAuth 
         ? createAuthFetchOptions()
         : { method: "GET" };
 
-      const response = await fetch(url, fetchOptions);
+      // Add timeout to fetch request
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...fetchOptions,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        
+        // Handle network errors specifically
+        if (fetchError instanceof TypeError && fetchError.message === 'Failed to fetch') {
+          // Network error - could be CORS, server down, or connectivity issue
+          const errorMessage = `Unable to connect to the server. Please check your internet connection and ensure the API server is running at ${API_BASE_URL}`;
+          throw new Error(errorMessage);
+        } else if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. The server may be slow or unavailable.');
+        }
+        // Re-throw other errors
+        throw fetchError;
+      }
 
       if (!response.ok) {
         // Handle 429 (Rate Limit) with exponential backoff retry
@@ -77,7 +105,27 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
         if (response.status === 403 && useAuth) {
           logger.warn("Admin endpoint returned 403, falling back to public endpoint");
           const publicUrl = `${API_BASE_URL}${API_ENDPOINTS.settingsAppPublic}`;
-          const publicResponse = await fetch(publicUrl, { method: "GET" });
+          
+          // Add timeout to fallback request too
+          const fallbackController = new AbortController();
+          const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 10000);
+          
+          let publicResponse: Response;
+          try {
+            publicResponse = await fetch(publicUrl, { 
+              method: "GET",
+              signal: fallbackController.signal,
+            });
+            clearTimeout(fallbackTimeoutId);
+          } catch (fallbackError) {
+            clearTimeout(fallbackTimeoutId);
+            if (fallbackError instanceof TypeError && fallbackError.message === 'Failed to fetch') {
+              throw new Error(`Unable to connect to the server at ${API_BASE_URL}. Please check your internet connection.`);
+            } else if (fallbackError instanceof Error && fallbackError.name === 'AbortError') {
+              throw new Error('Request timed out. The server may be slow or unavailable.');
+            }
+            throw fallbackError;
+          }
           
           if (!publicResponse.ok) {
             // Handle 429 on fallback too
@@ -113,6 +161,7 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
+      const error = err instanceof Error ? err : new Error(errorMessage);
       
       // Handle different error types
       if (errorMessage.includes("429") || errorMessage.includes("Rate limit")) {
@@ -134,15 +183,41 @@ export function useAppSettings(options: UseAppSettingsOptions = {}) {
         }
       } else if (errorMessage.includes("403")) {
         // 403 is expected for non-admin users, so we log as warning
-        const error = err instanceof Error ? err : new Error(errorMessage);
         logger.warn("App settings endpoint requires admin access, using public endpoint", { error: error.message });
         
         if (mountedRef.current) {
           setError(errorMessage);
           setLoading(false);
         }
+      } else if (errorMessage.includes("Unable to connect") || errorMessage.includes("timed out") || errorMessage.includes("Failed to fetch")) {
+        // Network errors - log with context for debugging
+        logger.error("Network error fetching app settings", error, {
+          url,
+          endpoint,
+          apiBaseUrl: API_BASE_URL,
+          retryAttempt,
+          hasCachedSettings: !!settings,
+        });
+        
+        if (mountedRef.current) {
+          // If we have cached settings, don't show error to user
+          if (settings) {
+            logger.info("Using cached app settings due to network error");
+            setError(null);
+            setLoading(false);
+            return;
+          }
+          setError(errorMessage);
+          setLoading(false);
+        }
       } else {
-        logger.error("Error fetching app settings", err instanceof Error ? err : new Error(errorMessage));
+        // Other errors
+        logger.error("Error fetching app settings", error, {
+          url,
+          endpoint,
+          apiBaseUrl: API_BASE_URL,
+          retryAttempt,
+        });
         
         if (mountedRef.current) {
           setError(errorMessage);
