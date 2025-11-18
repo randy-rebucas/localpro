@@ -52,9 +52,13 @@ export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
             categoriesError={categoriesError}
             onCategorySelect={(category) => {
               if (category) {
-                filters.setCategory(category.key || category.id || category.name);
+                // Pass both category key (for UI) and categoryId (ObjectId for API)
+                const categoryWithId = category as { _id?: string; id?: string; key?: string; name?: string };
+                const categoryId = categoryWithId._id || categoryWithId.id || categoryWithId.key;
+                const categoryKey = category.key || category.name;
+                filters.setCategory(categoryKey, categoryId);
               } else {
-                filters.setCategory("");
+                filters.setCategory("", "");
               }
             }}
             onCategoriesRetry={refetchCategories}

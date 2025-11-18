@@ -76,14 +76,14 @@ export function SkillsBadgeFilter({
     return "#4CAF50";
   };
 
+  const getSkillId = (skill: ProviderSkill): string => {
+    // Prefer _id (ObjectId) over id, only use name as last resort
+    return skill._id || skill.id || skill.name;
+  };
+
   const isSelected = (skill: ProviderSkill): boolean => {
-    // Check against both id and _id to handle different API response formats
-    const skillId = skill.id || skill._id || skill.name;
-    return Boolean(
-      (skillId && selectedSkills.includes(skillId)) || 
-      (skill.id && selectedSkills.includes(skill.id)) ||
-      (skill._id && selectedSkills.includes(skill._id))
-    );
+    const skillId = getSkillId(skill);
+    return selectedSkills.includes(skillId);
   };
 
   return (
@@ -102,8 +102,8 @@ export function SkillsBadgeFilter({
 
       {/* Skills badges */}
       {visibleSkills.map((skill) => {
-        // Ensure we use ID for query params - prefer id or _id, only use name as last resort
-        const skillId = skill.id || skill._id || skill.name;
+        // Ensure we use ID for query params - prefer _id (ObjectId) over id, only use name as last resort
+        const skillId = getSkillId(skill);
         const selected = isSelected(skill);
         const categoryColor = getCategoryColor(skill);
         const icon = skill.metadata?.icon;
@@ -112,9 +112,8 @@ export function SkillsBadgeFilter({
           <button
             key={skillId}
             onClick={() => {
-              // Always pass the ID (id or _id) if available, otherwise name
-              const idToUse = skill.id || skill._id || skill.name;
-              onSkillToggle(idToUse);
+              // Always pass the ID - prefer _id (ObjectId) for API queries
+              onSkillToggle(skillId);
             }}
             className={cn(
               "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all",

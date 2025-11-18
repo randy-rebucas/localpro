@@ -312,6 +312,7 @@ export default function UsersPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingProviderData, setLoadingProviderData] = useState(false);
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [professionalInfoForm, setProfessionalInfoForm] = useState<ProfessionalInfo>({
     specialties: [],
     languages: [],
@@ -336,6 +337,7 @@ export default function UsersPage() {
     numberOfEmployees: undefined
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [preferencesForm, setPreferencesForm] = useState<Preferences>({
     notificationSettings: {
       newJobAlerts: true,
@@ -364,7 +366,9 @@ export default function UsersPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Skills state - skills can be objects with {id, name, category, ...} or strings
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [availableSkills, setAvailableSkills] = useState<Array<{ id?: string; name: string; category?: string; displayOrder?: number; metadata?: Record<string, unknown> } | string>>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingSkills, setLoadingSkills] = useState(false);
   const [skillsSearchInput, setSkillsSearchInput] = useState({ create: "", edit: "" });
   const [showSkillsSuggestions, setShowSkillsSuggestions] = useState({ create: false, edit: false });
@@ -1185,6 +1189,7 @@ export default function UsersPage() {
         throw new Error(errorData.error || 'Failed to create user');
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const result = await response.json();
 
       toast.success('User created successfully');

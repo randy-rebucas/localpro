@@ -24,7 +24,6 @@ import {
   Briefcase,
   Settings,
   BarChart3,
-  Award
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -161,7 +160,6 @@ const transformProviderData = (apiProvider: {
   const userProfile = userIdObj?.profile;
   const userRoles = userIdObj?.roles;
   const userCreatedAt = userIdObj?.createdAt;
-  const profileImage = userIdObj?.profileImage;
 
   // Determine verification status
   const verificationStatus: 'verified' | 'pending' | 'rejected' = 
@@ -294,6 +292,8 @@ export default function ProvidersPage() {
   const [activeTab, setActiveTab] = useState<'basic' | 'business' | 'professional' | 'verification' | 'financial' | 'preferences' | 'onboarding' | 'metadata' | 'performance'>('basic');
   const [loadingProviderData, setLoadingProviderData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Note: providerData state is kept for potential future use but currently not read
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [providerData, setProviderData] = useState<{
     professionalInfo?: ProfessionalInfo;
     businessInfo?: BusinessInfo;
@@ -645,16 +645,15 @@ export default function ProvidersPage() {
     }
   }, [serviceCategories.length]);
 
-  // Fetch all skills (without category dependency)
-  const fetchAllSkills = useCallback(async () => {
-    if (Object.keys(availableSkills).length > 0 && availableSkills['all']) return; // Already loaded
+  // Fetch skills for a category
+  const fetchSkillsForCategory = useCallback(async (category: string) => {
+    if (!category || availableSkills[category]) return; // Already loaded or no category
     
     try {
-      setLoadingSkills(prev => ({ ...prev, all: true }));
+      setLoadingSkills(prev => ({ ...prev, [category]: true }));
       if (!getApiToken()) return;
 
-      // Try to fetch all skills - if endpoint doesn't support it, fetch for all categories
-      const url = `${API_BASE_URL}${API_ENDPOINTS.providersSkills}`;
+      const url = `${API_BASE_URL}${API_ENDPOINTS.providersSkillsByCategory}?category=${category}`;
       const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
       if (response.ok) {
@@ -666,65 +665,22 @@ export default function ProvidersPage() {
           if (typeof skill === 'string') {
             return { _id: skill, id: skill, name: skill };
           }
-          const skillObj = skill as { _id?: string; id?: string; name?: string; value?: string; category?: any };
+          const skillObj = skill as { _id?: string; id?: string; name?: string; value?: string };
           return {
             _id: skillObj._id || skillObj.id || skillObj.value || '',
             id: skillObj.id || skillObj._id || skillObj.value || '',
-            name: skillObj.name || skillObj.value || skillObj._id || skillObj.id || '',
-            category: skillObj.category
+            name: skillObj.name || skillObj.value || skillObj._id || skillObj.id || ''
           };
         }) : [];
 
-        setAvailableSkills(prev => ({ ...prev, all: normalizedSkills }));
-      } else {
-        // Fallback: fetch skills for all categories if endpoint doesn't support all skills
-        if (serviceCategories.length > 0) {
-          const categoryPromises = serviceCategories.map(cat => 
-            fetch(`${API_BASE_URL}${API_ENDPOINTS.providersSkillsByCategory}?category=${cat.key}`, createAuthFetchOptions({ method: 'GET' }))
-              .then(res => res.ok ? res.json() : null)
-              .then(result => {
-                if (result) {
-                  const skills = result.data?.skills || result.data || result.skills || result || [];
-                  return Array.isArray(skills) ? skills.map((skill: unknown) => {
-                    if (typeof skill === 'string') {
-                      return { _id: skill, id: skill, name: skill };
-                    }
-                    const skillObj = skill as { _id?: string; id?: string; name?: string; value?: string };
-                    return {
-                      _id: skillObj._id || skillObj.id || skillObj.value || '',
-                      id: skillObj.id || skillObj._id || skillObj.value || '',
-                      name: skillObj.name || skillObj.value || skillObj._id || skillObj.id || ''
-                    };
-                  }) : [];
-                }
-                return [];
-              })
-              .catch(() => [])
-          );
-          
-          const allSkillsArrays = await Promise.all(categoryPromises);
-          const allSkills = allSkillsArrays.flat();
-          // Remove duplicates based on _id
-          const uniqueSkills = Array.from(
-            new Map(allSkills.map(skill => [skill._id, skill])).values()
-          );
-          setAvailableSkills(prev => ({ ...prev, all: uniqueSkills }));
-        }
+        setAvailableSkills(prev => ({ ...prev, [category]: normalizedSkills }));
       }
     } catch (err) {
-      logger.warn('Failed to fetch all skills', { error: err });
+      logger.warn('Failed to fetch skills', { category, error: err });
     } finally {
-      setLoadingSkills(prev => ({ ...prev, all: false }));
+      setLoadingSkills(prev => ({ ...prev, [category]: false }));
     }
-  }, [availableSkills, serviceCategories]);
-
-  // Legacy function for backward compatibility (now fetches all skills)
-  const fetchSkillsForCategory = useCallback(async (category: string) => {
-    // Just fetch all skills if not already loaded
-    if (!availableSkills['all']) {
-      await fetchAllSkills();
-    }
-  }, [availableSkills, fetchAllSkills]);
+  }, [availableSkills]);
 
   const fetchData = useCallback(async () => {
     let slowRequestTimer: NodeJS.Timeout | null = null;
@@ -814,12 +770,71 @@ export default function ProvidersPage() {
     fetchServiceCategories();
   }, [fetchServiceCategories]);
 
-  // Fetch all skills when professional tab is opened
+  // Re-normalize categories when serviceCategories are loaded and we have provider data
   useEffect(() => {
-    if (activeTab === 'professional') {
-      fetchAllSkills();
+    if (serviceCategories.length > 0 && professionalInfoForm.specialties && professionalInfoForm.specialties.length > 0) {
+      type ServiceCategoryWithId = {
+        key?: string;
+        name?: string;
+        _id?: string;
+        [key: string]: unknown;
+      };
+
+      // Check if any specialty has a category that needs normalization
+      const needsNormalization = professionalInfoForm.specialties.some((spec) => {
+        const category = (spec as { category?: string | unknown }).category;
+        if (!category || typeof category !== 'string') return false;
+        // Check if category is an ObjectId or doesn't match serviceCategories keys
+        return /^[0-9a-fA-F]{24}$/.test(category) || 
+               !serviceCategories.some(cat => cat.key === category);
+      });
+
+      if (needsNormalization) {
+        // Re-normalize categories now that serviceCategories are available
+        const renormalizedSpecialties = professionalInfoForm.specialties.map((spec) => {
+          const specWithCategory = spec as { category?: string | unknown; [key: string]: unknown };
+          const category = specWithCategory.category;
+          if (!category || typeof category !== 'string') return spec;
+          
+          // If category is ObjectId, try to find matching category
+          if (/^[0-9a-fA-F]{24}$/.test(category)) {
+            const matchedCat = serviceCategories.find((cat: ServiceCategoryWithId) => cat._id === category);
+            if (matchedCat) {
+              return { ...spec, category: matchedCat.key || matchedCat.name } as typeof spec;
+            }
+          }
+          
+          // If category doesn't match any serviceCategory key, try to find it
+          if (!serviceCategories.some(cat => cat.key === category)) {
+            // Try to find by name (case-insensitive)
+            const matchedCat = serviceCategories.find((cat: ServiceCategoryWithId) => 
+              cat.name?.toLowerCase() === category?.toLowerCase() ||
+              cat.key?.toLowerCase() === category?.toLowerCase()
+            );
+            if (matchedCat) {
+              return { ...spec, category: matchedCat.key } as typeof spec;
+            }
+          }
+          
+          return spec;
+        });
+
+        setProfessionalInfoForm(prev => ({
+          ...prev,
+          specialties: renormalizedSpecialties as typeof prev.specialties
+        }));
+
+        // Fetch skills for newly normalized categories
+        renormalizedSpecialties.forEach((spec) => {
+          const category = (spec as { category?: string | unknown }).category;
+          if (category && typeof category === 'string' && serviceCategories.some(cat => cat.key === category)) {
+            fetchSkillsForCategory(category);
+          }
+        });
+      }
     }
-  }, [activeTab, fetchAllSkills]);
+  }, [serviceCategories, professionalInfoForm.specialties, fetchSkillsForCategory]);
+
 
   const refreshData = async () => {
     setRefreshing(true);
@@ -890,6 +905,7 @@ export default function ProvidersPage() {
             hasPreferences: !!provider.preferences,
             hasVerification: !!provider.verification,
             providerKeys: Object.keys(provider),
+            specialtiesCount: provider.professionalInfo?.specialties?.length || 0,
           });
         }
         
@@ -936,23 +952,152 @@ export default function ProvidersPage() {
         }
         if (provider.professionalInfo) {
           // Normalize skills to string IDs for form compatibility
+          // Also normalize category to string key format for the dropdown
           const normalizedProfessionalInfo = {
             ...provider.professionalInfo,
-            specialties: provider.professionalInfo.specialties?.map((spec: any) => ({
-              ...spec,
-              skills: spec.skills?.map((skill: any) => {
-                if (typeof skill === 'string') return skill;
-                if (skill && typeof skill === 'object') {
-                  return skill._id || skill.id || String(skill);
+            specialties: provider.professionalInfo.specialties?.map((spec: {
+              category?: string | { _id?: string; key?: string; name?: string };
+              skills?: Array<string | { _id?: string; id?: string; category?: string | { key?: string; name?: string; _id?: string } }>;
+              [key: string]: unknown;
+            }) => {
+              // Normalize category - extract key from various formats
+              let categoryKey: string | undefined = undefined;
+              
+              if (spec.category) {
+                if (typeof spec.category === 'string') {
+                  // If it's already a string, check if it's a key or ObjectId
+                  if (/^[0-9a-fA-F]{24}$/.test(spec.category)) {
+                    // It's an ObjectId - try to find matching category in serviceCategories by _id
+                    // Note: serviceCategories might not have _id, so we'll need to handle this differently
+                    // For now, we'll try to extract from skills or use the ObjectId as fallback
+                    categoryKey = undefined; // Will try to get from skills below
+                  } else {
+                    // It's a key string like "plumbing", "cleaning"
+                    categoryKey = spec.category;
+                  }
+                } else if (typeof spec.category === 'object' && spec.category !== null) {
+                  // Category is an object with _id, name, key
+                  categoryKey = spec.category.key || spec.category.name;
+                  // If still no key and we have _id, try to match with serviceCategories
+                  if (!categoryKey && typeof spec.category === 'object' && spec.category !== null && '_id' in spec.category && spec.category._id && serviceCategories.length > 0) {
+                    // Try to find category by _id in serviceCategories (if they have _id field)
+                    const categoryId = spec.category._id;
+                    const matchedCat = serviceCategories.find((cat: { _id?: string; key?: string; name?: string }) => cat._id === categoryId);
+                    if (matchedCat) {
+                      categoryKey = matchedCat.key || matchedCat.name;
+                    }
+                  }
                 }
-                return String(skill);
-              }).filter((s: any) => s) || [] // Filter out empty strings
-            })) || []
+              }
+              
+              // If we don't have a category key from specialty, try to get it from skills
+              if (!categoryKey && spec.skills && Array.isArray(spec.skills) && spec.skills.length > 0) {
+                // Try each skill to find a category
+                for (const skill of spec.skills) {
+                  if (skill && typeof skill === 'object') {
+                    let skillCategory: string | undefined = undefined;
+                    if (typeof skill.category === 'object' && skill.category !== null) {
+                      skillCategory = skill.category.key || skill.category.name;
+                    } else if (typeof skill.category === 'string') {
+                      if (!/^[0-9a-fA-F]{24}$/.test(skill.category)) {
+                        skillCategory = skill.category;
+                      }
+                    }
+                    if (skillCategory) {
+                      categoryKey = skillCategory;
+                      break; // Use first valid category found
+                    }
+                  }
+                }
+              }
+              
+              // Ensure categoryKey matches a valid serviceCategory key
+              let finalCategoryKey = categoryKey;
+              if (categoryKey && serviceCategories.length > 0) {
+                // Verify the category key exists in serviceCategories
+                const categoryExists = serviceCategories.some(cat => cat.key === categoryKey);
+                if (!categoryExists) {
+                  // Try to find by name or key (case-insensitive)
+                  const matchedCat = serviceCategories.find(cat => 
+                    cat.key?.toLowerCase() === categoryKey?.toLowerCase() ||
+                    cat.name?.toLowerCase() === categoryKey?.toLowerCase()
+                  );
+                  if (matchedCat) {
+                    finalCategoryKey = matchedCat.key;
+                  } else {
+                    // Category doesn't match any available category
+                    finalCategoryKey = undefined;
+                  }
+                }
+              }
+              
+              return {
+                ...spec,
+                category: finalCategoryKey, // Set the category key for the dropdown (must match option value exactly)
+                skills: spec.skills?.map((skill: string | { _id?: string; id?: string; name?: string; [key: string]: unknown }) => {
+                  if (typeof skill === 'string') return skill;
+                  if (skill && typeof skill === 'object') {
+                    return skill._id || skill.id || String(skill);
+                  }
+                  return String(skill);
+                }).filter((s: string | undefined) => s) || [] // Filter out empty strings
+              };
+            }) || []
           };
+          
           setProfessionalInfoForm(normalizedProfessionalInfo);
           
-          // Fetch all skills when loading provider data
-          fetchAllSkills();
+          // Fetch skills for all categories in specialties - do this immediately
+          if (normalizedProfessionalInfo.specialties && normalizedProfessionalInfo.specialties.length > 0) {
+            const categories = new Set<string>();
+            normalizedProfessionalInfo.specialties.forEach((spec: {
+              category?: string;
+              skills?: Array<string | { category?: string | { key?: string; name?: string } }>;
+            }) => {
+              if (spec.category) {
+                // Only add if it's not an ObjectId (24 hex chars) and matches a valid category key
+                if (!/^[0-9a-fA-F]{24}$/.test(spec.category)) {
+                  // Verify the category exists in serviceCategories
+                  const categoryExists = serviceCategories.some(cat => cat.key === spec.category);
+                  if (categoryExists) {
+                    categories.add(spec.category);
+                  } else if (process.env.NODE_ENV === 'development') {
+                    logger.warn('Category key not found in serviceCategories', { 
+                      category: spec.category,
+                      availableCategories: serviceCategories.map(c => c.key)
+                    });
+                  }
+                } else {
+                  // If it's an ObjectId, try to find matching category in serviceCategories
+                  // This is a fallback - ideally the API should return the key
+                  logger.warn('Category is ObjectId format, cannot fetch skills by key', { category: spec.category });
+                }
+              }
+              // Also check skills for category info
+              if (spec.skills && Array.isArray(spec.skills)) {
+                spec.skills.forEach((skill: string | { category?: string | { key?: string; name?: string } }) => {
+                  if (skill && typeof skill === 'object') {
+                    const skillCategory = typeof skill.category === 'object' 
+                      ? skill.category?.key || skill.category?.name
+                      : skill.category;
+                    if (skillCategory && typeof skillCategory === 'string' && !/^[0-9a-fA-F]{24}$/.test(skillCategory)) {
+                      const categoryExists = serviceCategories.some(cat => cat.key === skillCategory);
+                      if (categoryExists) {
+                        categories.add(skillCategory);
+                      }
+                    }
+                  }
+                });
+              }
+            });
+            
+            // Fetch skills for all detected categories
+            categories.forEach(cat => {
+              if (cat) {
+                fetchSkillsForCategory(cat);
+              }
+            });
+          }
         } else {
           // Reset professional info form if not available
           setProfessionalInfoForm({
@@ -1073,7 +1218,7 @@ export default function ProvidersPage() {
     } finally {
       setLoadingProviderData(false);
     }
-  }, [fetchAllSkills]);
+  }, [fetchSkillsForCategory, serviceCategories]);
 
   const handleEditProvider = async (providerId: string) => {
     try {
@@ -1311,7 +1456,25 @@ export default function ProvidersPage() {
                                  (professionalInfoForm.maximumJobValue !== undefined && (professionalInfoForm.maximumJobValue ?? 0) > 0);
 
       if (hasProfessionalInfo) {
-        providerPayload.professionalInfo = professionalInfoForm;
+        // Transform professionalInfo to handle category field - remove category if it's just a string key
+        // The backend expects category as ObjectId, not a string key
+        const transformedProfessionalInfo = {
+          ...professionalInfoForm,
+          specialties: professionalInfoForm.specialties?.map((specialty) => {
+            const { category, ...restSpecialty } = specialty;
+            // Only include category if it looks like an ObjectId (24 hex characters), otherwise remove it
+            // The backend should handle category assignment based on other fields or we need to fetch the actual category _id
+            const transformedSpecialty: Record<string, unknown> = { ...restSpecialty };
+            // If category is a valid ObjectId format, keep it; otherwise remove it
+            if (category && typeof category === 'string' && /^[0-9a-fA-F]{24}$/.test(category)) {
+              transformedSpecialty.category = category;
+            }
+            // If category is a string key (like "cleaning"), we remove it to avoid validation error
+            // The backend should handle category assignment separately if needed
+            return transformedSpecialty;
+          }) || []
+        };
+        providerPayload.professionalInfo = transformedProfessionalInfo;
       }
       
       // Onboarding
@@ -2395,6 +2558,39 @@ export default function ProvidersPage() {
                       <div key={index} className="border border-gray-200 rounded-md p-3 space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-0.5">Category</label>
+                            <select
+                              value={specialty.category || ''}
+                              onChange={(e) => {
+                                const newCategory = e.target.value as ServiceCategory | undefined;
+                                const newSpecialties = [...(professionalInfoForm.specialties || [])];
+                                // Only clear skills if category is actually changing (not initial load)
+                                const isCategoryChange = specialty.category && specialty.category !== newCategory;
+                                newSpecialties[index] = { 
+                                  ...specialty, 
+                                  category: newCategory || undefined, 
+                                  skills: isCategoryChange ? [] : specialty.skills // Preserve skills if not changing category
+                                };
+                                setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
+                                // Fetch skills for the new category
+                                if (newCategory) {
+                                  fetchSkillsForCategory(newCategory);
+                                }
+                              }}
+                              disabled={loadingCategories}
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                            >
+                              <option value="">
+                                {loadingCategories ? 'Loading categories...' : 'Select category'}
+                              </option>
+                              {serviceCategories.map((cat) => (
+                                <option key={cat.key} value={cat.key}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
                             <label className="block text-xs font-medium text-gray-700 mb-0.5">Experience (years)</label>
                             <input
                               type="number"
@@ -2428,80 +2624,90 @@ export default function ProvidersPage() {
                         {/* Skills */}
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">Skills</label>
-                          <div className="flex flex-wrap gap-1 mb-2">
-                            {specialty.skills?.map((skillIdOrObj, skillIdx) => {
-                              // Handle both string IDs and object IDs
-                              const skillId = typeof skillIdOrObj === 'string' ? skillIdOrObj : (skillIdOrObj as { _id?: string; id?: string })?._id || (skillIdOrObj as { _id?: string; id?: string })?.id || String(skillIdOrObj);
-                              // Find skill name from available skills (all skills) or use ID as fallback
-                              const skill = availableSkills['all']?.find(s => s._id === skillId || s.id === skillId);
-                              const skillName = skill?.name || skillId;
-                              return (
-                                <span key={skillIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
-                                  {skillName}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
+                          {specialty.category ? (
+                            <>
+                              {/* Always show skills if they exist, even if not loaded yet */}
+                              {specialty.skills && specialty.skills.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {specialty.skills.map((skillIdOrObj: string | { _id?: string; id?: string; name?: string }, skillIdx) => {
+                                    // Handle both string IDs and object IDs
+                                    const skillId = typeof skillIdOrObj === 'string' ? skillIdOrObj : (skillIdOrObj?._id || skillIdOrObj?.id || String(skillIdOrObj));
+                                    // Find skill name from available skills or use ID as fallback
+                                    const skill = availableSkills[specialty.category!]?.find(s => s._id === skillId || s.id === skillId);
+                                    const skillObjName = (typeof skillIdOrObj === 'object' && skillIdOrObj !== null) ? (skillIdOrObj as { name?: string; _id?: string; id?: string })?.name : undefined;
+                                    const skillName = skill?.name || skillObjName || skillId;
+                                    return (
+                                      <span key={skillIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                                        {skillName}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const newSpecialties = [...(professionalInfoForm.specialties || [])];
+                                            newSpecialties[index] = {
+                                              ...specialty,
+                                              skills: specialty.skills?.filter((_, i) => i !== skillIdx) || []
+                                            };
+                                            setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
+                                          }}
+                                          className="ml-1 text-blue-600 hover:text-blue-800"
+                                        >
+                                          ×
+                                        </button>
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <select
+                                key={`skill-select-${index}-${specialty.skills?.length || 0}`}
+                                value=""
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    const skillId = e.target.value;
+                                    // Normalize skill IDs for comparison
+                                    const normalizedSkills = specialty.skills?.map(s => {
+                                      if (typeof s === 'string') return s;
+                                      return (s as { _id?: string; id?: string })?._id || (s as { _id?: string; id?: string })?.id || String(s);
+                                    }) || [];
+                                    // Check if skill already added
+                                    if (!normalizedSkills.includes(skillId)) {
                                       const newSpecialties = [...(professionalInfoForm.specialties || [])];
                                       newSpecialties[index] = {
                                         ...specialty,
-                                        skills: specialty.skills?.filter((_, i) => i !== skillIdx) || []
+                                        skills: [...(specialty.skills || []), skillId]
                                       };
                                       setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                    }}
-                                    className="ml-1 text-blue-600 hover:text-blue-800"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              );
-                            })}
-                          </div>
-                          <select
-                            key={`skill-select-${index}-${specialty.skills?.length || 0}`}
-                            value=""
-                            onChange={(e) => {
-                              if (e.target.value) {
-                                const skillId = e.target.value;
-                                // Normalize skill IDs for comparison
-                                const normalizedSkills = specialty.skills?.map(s => {
-                                  if (typeof s === 'string') return s;
-                                  return (s as { _id?: string; id?: string })?._id || (s as { _id?: string; id?: string })?.id || String(s);
-                                }) || [];
-                                // Check if skill already added
-                                if (!normalizedSkills.includes(skillId)) {
-                                  const newSpecialties = [...(professionalInfoForm.specialties || [])];
-                                  newSpecialties[index] = {
-                                    ...specialty,
-                                    skills: [...(specialty.skills || []), skillId]
-                                  };
-                                  setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
-                                }
-                              }
-                            }}
-                            disabled={loadingSkills['all']}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
-                          >
-                            <option value="">
-                              {loadingSkills['all'] ? 'Loading skills...' : 'Select a skill to add'}
-                            </option>
-                            {availableSkills['all']?.map((skill) => {
-                              // Normalize skill IDs for comparison
-                              const normalizedSkills = specialty.skills?.map(s => {
-                                if (typeof s === 'string') return s;
-                                return (s as { _id?: string; id?: string })?._id || (s as { _id?: string; id?: string })?.id || String(s);
-                              }) || [];
-                              const skillId = skill._id || skill.id || '';
-                              // Don't show already selected skills
-                              if (normalizedSkills.includes(skillId)) {
-                                return null;
-                              }
-                              return (
-                                <option key={skillId} value={skillId}>
-                                  {skill.name}
+                                    }
+                                  }
+                                }}
+                                disabled={loadingSkills[specialty.category!]}
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                              >
+                                <option value="">
+                                  {loadingSkills[specialty.category!] ? 'Loading skills...' : 'Select a skill to add'}
                                 </option>
-                              );
-                            })}
-                          </select>
+                                {availableSkills[specialty.category!]?.map((skill) => {
+                                  // Normalize skill IDs for comparison
+                                  const normalizedSkills = specialty.skills?.map(s => {
+                                    if (typeof s === 'string') return s;
+                                    return (s as { _id?: string; id?: string })?._id || (s as { _id?: string; id?: string })?.id || String(s);
+                                  }) || [];
+                                  const skillId = skill._id || skill.id || '';
+                                  // Don't show already selected skills
+                                  if (normalizedSkills.includes(skillId)) {
+                                    return null;
+                                  }
+                                  return (
+                                    <option key={skillId} value={skillId}>
+                                      {skill.name}
+                                    </option>
+                                  );
+                                })}
+                              </select>
+                            </>
+                          ) : (
+                            <p className="text-xs text-gray-500">Select a category first to load skills</p>
+                          )}
                         </div>
 
                         {/* Service Areas */}

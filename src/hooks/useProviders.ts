@@ -10,8 +10,9 @@ import { Provider } from "@/types/providers";
 export interface ProvidersParams {
   status?: string;
   providerType?: string;
-  category?: string;
-  skills?: string[];
+  category?: string; // Deprecated: use categoryId instead
+  categoryId?: string; // Category ObjectId
+  skills?: string[]; // Skill IDs (ObjectIds)
   skillsMatch?: 'any' | 'all';
   city?: string;
   state?: string;
@@ -99,50 +100,125 @@ export function useProviders(params: ProvidersParams = {}) {
 
       const queryParams = new URLSearchParams();
       
-      // Add filter parameters
-      if (params.status) queryParams.append("status", params.status);
-      if (params.providerType) queryParams.append("providerType", params.providerType);
-      if (params.category) queryParams.append("category", params.category);
-      if (params.location) queryParams.append("location", params.location);
-      if (params.city) queryParams.append("city", params.city);
-      if (params.state) queryParams.append("state", params.state);
-      if (params.minRating) queryParams.append("minRating", params.minRating.toString());
-      if (params.maxDistance) queryParams.append("maxDistance", params.maxDistance.toString());
-      if (params.lat !== undefined) queryParams.append("lat", params.lat.toString());
-      if (params.lng !== undefined) queryParams.append("lng", params.lng.toString());
-      if (params.featured !== undefined) queryParams.append("featured", params.featured.toString());
-      if (params.promoted !== undefined) queryParams.append("promoted", params.promoted.toString());
+      // Add filter parameters - only add if they have valid values
+      if (params.status && typeof params.status === 'string' && params.status.trim()) {
+        queryParams.append("status", params.status.trim());
+      }
+      if (params.providerType && typeof params.providerType === 'string' && params.providerType.trim()) {
+        queryParams.append("providerType", params.providerType.trim());
+      }
+      // Prefer categoryId (ObjectId) over category (key)
+      if (params.categoryId && typeof params.categoryId === 'string' && params.categoryId.trim()) {
+        // Validate it looks like an ObjectId (24 hex characters)
+        const categoryId = params.categoryId.trim();
+        if (/^[0-9a-fA-F]{24}$/.test(categoryId)) {
+          queryParams.append("categoryId", categoryId);
+        } else {
+          logger.warn("Invalid categoryId format, skipping", { categoryId });
+        }
+      } else if (params.category && typeof params.category === 'string' && params.category.trim()) {
+        // Fallback to category key for backward compatibility
+        queryParams.append("category", params.category.trim());
+      }
+      if (params.location && typeof params.location === 'string' && params.location.trim()) {
+        queryParams.append("location", params.location.trim());
+      }
+      if (params.city && typeof params.city === 'string' && params.city.trim()) {
+        queryParams.append("city", params.city.trim());
+      }
+      if (params.state && typeof params.state === 'string' && params.state.trim()) {
+        queryParams.append("state", params.state.trim());
+      }
+      if (params.minRating !== undefined && params.minRating !== null && !isNaN(params.minRating) && params.minRating > 0) {
+        queryParams.append("minRating", params.minRating.toString());
+      }
+      if (params.maxDistance !== undefined && params.maxDistance !== null && !isNaN(params.maxDistance) && params.maxDistance > 0) {
+        queryParams.append("maxDistance", params.maxDistance.toString());
+      }
+      if (params.lat !== undefined && params.lat !== null && !isNaN(params.lat)) {
+        queryParams.append("lat", params.lat.toString());
+      }
+      if (params.lng !== undefined && params.lng !== null && !isNaN(params.lng)) {
+        queryParams.append("lng", params.lng.toString());
+      }
+      if (params.featured !== undefined && params.featured !== null) {
+        queryParams.append("featured", params.featured.toString());
+      }
+      if (params.promoted !== undefined && params.promoted !== null) {
+        queryParams.append("promoted", params.promoted.toString());
+      }
       
-      // Add skills as comma-separated string - using skill IDs
-      if (params.skills && params.skills.length > 0) {
-        // Ensure we're using IDs (filter out empty strings)
-        const skillIds = params.skills.filter(id => id && id.trim() !== '');
+      // Add skills as comma-separated string - using skill IDs (ObjectIds)
+      if (params.skills && Array.isArray(params.skills) && params.skills.length > 0) {
+        // Ensure we're using valid ObjectIds (filter out empty strings and invalid values)
+        const skillIds = params.skills
+          .filter(id => {
+            if (!id || typeof id !== 'string') return false;
+            const trimmed = id.trim();
+            // Validate ObjectId format (24 hex characters) or allow if it's a valid string
+            return trimmed !== '' && (/^[0-9a-fA-F]{24}$/.test(trimmed) || trimmed.length > 0);
+          })
+          .map(id => id.trim());
         if (skillIds.length > 0) {
           queryParams.append("skills", skillIds.join(","));
         }
       }
       
       // Add skillsMatch parameter (defaults to 'any' if skills are provided)
-      if (params.skillsMatch) {
+      if (params.skillsMatch && (params.skillsMatch === 'any' || params.skillsMatch === 'all')) {
         queryParams.append("skillsMatch", params.skillsMatch);
-      } else if (params.skills && params.skills.length > 0) {
+      } else if (params.skills && Array.isArray(params.skills) && params.skills.length > 0) {
         queryParams.append("skillsMatch", "any"); // Default to 'any' when skills are provided
       }
       
-      const page = params.page || 1;
-      const limit = params.limit || 20;
+      const page = params.page && params.page > 0 ? params.page : 1;
+      const limit = params.limit && params.limit > 0 ? params.limit : 20;
       queryParams.append("page", page.toString());
       queryParams.append("limit", limit.toString());
       
-      if (params.sortBy) queryParams.append("sortBy", params.sortBy);
-      if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+      if (params.sortBy && typeof params.sortBy === 'string' && params.sortBy.trim()) {
+        queryParams.append("sortBy", params.sortBy.trim());
+      }
+      if (params.sortOrder && (params.sortOrder === 'asc' || params.sortOrder === 'desc')) {
+        queryParams.append("sortOrder", params.sortOrder);
+      }
 
       // Use /api/providers endpoint instead of /api/users
       const url = `${API_BASE_URL}${API_ENDPOINTS.providers}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug('Fetching providers', {
+          url,
+          params: Object.fromEntries(queryParams.entries()),
+          paramsCount: queryParams.toString().split('&').length
+        });
+      }
+      
       const response = await fetch(url, createAuthFetchOptions());
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch providers: ${response.status}`);
+        // Try to get error details from response
+        let errorMessage = `Failed to fetch providers: ${response.status}`;
+        let errorDetails: { error?: string; message?: string; [key: string]: unknown } | null = null;
+        
+        try {
+          const errorData = await response.json() as { error?: string; message?: string; [key: string]: unknown };
+          errorDetails = errorData;
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = `Failed to fetch providers: ${response.status} ${response.statusText}`;
+        }
+        
+        logger.error("Error fetching providers", new Error(errorMessage), {
+          status: response.status,
+          statusText: response.statusText,
+          url,
+          params: Object.fromEntries(queryParams.entries()),
+          errorDetails
+        });
+        
+        throw new Error(errorMessage);
       }
 
       const responseData: { success?: boolean; data?: ProviderResponseItem[]; pagination?: ProvidersResponse["pagination"] } = await response.json();

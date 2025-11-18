@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Award, Clock, DollarSign, Shield, Briefcase, Calendar, TrendingUp, Users, FileText, Building2, Wrench } from "lucide-react";
+import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Clock, Shield, Calendar, TrendingUp, Users, Building2, Wrench, Award } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -167,12 +167,22 @@ interface Provider {
       issuedAt?: string;
       expiresAt?: string;
     }>;
-    references?: Array<any>;
+    references?: Array<{
+      name?: string;
+      contact?: string;
+      relationship?: string;
+      [key: string]: unknown;
+    }>;
     portfolio?: {
       images?: string[];
       videos?: string[];
       descriptions?: string[];
-      beforeAfter?: Array<any>;
+      beforeAfter?: Array<{
+        before?: string;
+        after?: string;
+        description?: string;
+        [key: string]: unknown;
+      }>;
     };
     createdAt?: string;
     updatedAt?: string;
@@ -321,15 +331,18 @@ export default function ProviderDetailPage() {
         return;
       }
 
-      const normalizeProviderData = (providerData: any, isStatusError: boolean = false): Provider | null => {
+      const normalizeProviderData = (providerData: unknown, isStatusError: boolean = false): Provider | null => {
         if (!providerData || typeof providerData !== 'object') {
           return null;
         }
 
+        // Type guard: ensure providerData is a record with string keys
+        const data = providerData as Record<string, unknown>;
+
         // Check if we have at least some identifier or user data
-        const hasId = !!(providerData._id || providerData.id);
-        const hasUserId = !!providerData.userId;
-        const hasUserData = !!(providerData.firstName || providerData.lastName || providerData.email);
+        const hasId = !!(data._id || data.id);
+        const hasUserId = !!data.userId;
+        const hasUserData = !!(data.firstName || data.lastName || data.email);
         
         // If we have no identifying information at all, return null
         if (!hasId && !hasUserId && !hasUserData) {
@@ -338,35 +351,35 @@ export default function ProviderDetailPage() {
               hasId,
               hasUserId,
               hasUserData,
-              dataKeys: Object.keys(providerData),
+              dataKeys: Object.keys(data),
             });
           }
           return null;
         }
         // Debug logging removed - use logger.debug if needed
-        const userId = typeof providerData.userId === 'object' ? providerData.userId : null;
+        const userId = typeof data.userId === 'object' ? data.userId : null;
         // Merge trust data from userId.trust if available
-        const trustData = userId?.trust || providerData.trust;
+        const trustData = (userId as { trust?: unknown } | null)?.trust || data.trust;
         
         // If we don't have an _id but have other data, try to use what we have
-        const providerId = providerData._id || providerData.id || (userId?._id || userId?.id) || undefined;
+        const providerId = data._id || data.id || ((userId as { _id?: string; id?: string } | null)?._id || (userId as { _id?: string; id?: string } | null)?.id) || undefined;
         
         return {
-          ...providerData,
+          ...data,
           _id: providerId,
-          firstName: userId?.firstName || providerData.firstName || '',
-          lastName: userId?.lastName || providerData.lastName || '',
-          email: userId?.email || providerData.email || '',
-          phoneNumber: userId?.phoneNumber || userId?.phone || providerData.phoneNumber || providerData.phone || '',
+          firstName: (userId as { firstName?: string } | null)?.firstName || data.firstName || '',
+          lastName: (userId as { lastName?: string } | null)?.lastName || data.lastName || '',
+          email: (userId as { email?: string } | null)?.email || data.email || '',
+          phoneNumber: (userId as { phoneNumber?: string; phone?: string } | null)?.phoneNumber || (userId as { phoneNumber?: string; phone?: string } | null)?.phone || data.phoneNumber || data.phone || '',
           userId: userId,
-          status: providerData.status || (isStatusError ? 'pending' : undefined),
-          trust: trustData || providerData.trust,
-        };
+          status: data.status || (isStatusError ? 'pending' : undefined),
+          trust: trustData || data.trust,
+        } as Provider;
       };
 
       let providerDataFetched = false; // Track if we successfully fetched provider data
       let httpStatus: number | null = null;
-      let apiErrorDetails: any = null;
+      let apiErrorDetails: { error?: string; message?: string; [key: string]: unknown } | null = null;
 
       try {
         setLoading(true);
@@ -381,7 +394,7 @@ export default function ProviderDetailPage() {
           fetchOptions
         );
 
-        let data: any = null;
+        let data: { data?: unknown; provider?: unknown; result?: unknown; error?: string; message?: string; [key: string]: unknown } | null = null;
         let errorMessage: string | null = null;
         let isStatusError = false;
         httpStatus = marketplaceResponse.status;
@@ -397,10 +410,16 @@ export default function ProviderDetailPage() {
           errorMessage = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
           apiErrorDetails = data;
           if (data) {
-            if (data.message) {
+            if (data.message && typeof data.message === 'string') {
               errorMessage = data.message;
             } else if (data.error) {
-              errorMessage = typeof data.error === 'string' ? data.error : data.error.message || String(data.error);
+              if (typeof data.error === 'string') {
+                errorMessage = data.error;
+              } else if (typeof data.error === 'object' && data.error !== null && 'message' in data.error) {
+                errorMessage = (data.error as { message?: string }).message || String(data.error);
+              } else {
+                errorMessage = String(data.error);
+              }
             }
           }
           
@@ -499,9 +518,9 @@ export default function ProviderDetailPage() {
             }
           }
           
-          const finalError = new Error(descriptiveError);
-          (finalError as any).status = httpStatus;
-          (finalError as any).apiResponse = apiErrorDetails || data;
+          const finalError = new Error(descriptiveError) as Error & { status?: number; apiResponse?: unknown };
+          finalError.status = httpStatus || undefined;
+          finalError.apiResponse = apiErrorDetails || data || undefined;
           throw finalError;
         }
       } catch (err) {
@@ -509,11 +528,12 @@ export default function ProviderDetailPage() {
         // Only log error if we didn't successfully fetch provider data
         if (!providerDataFetched) {
           const errorToLog = err instanceof Error ? err : new Error(errorMessage);
+          const errorWithStatus = err as Error & { status?: number; apiResponse?: unknown };
           logger.error("Error fetching provider", errorToLog, {
             providerId,
-            httpStatus: httpStatus || (err as any)?.status,
+            httpStatus: httpStatus || errorWithStatus?.status,
             endpoint: API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId),
-            apiError: apiErrorDetails || (err as any)?.apiResponse,
+            apiError: apiErrorDetails || errorWithStatus?.apiResponse,
           });
           setError(errorMessage);
         }
@@ -564,7 +584,7 @@ export default function ProviderDetailPage() {
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">{error || "Provider not found"}</p>
-          <Link href="/marketplace/providers" className="text-blue-600 hover:underline mt-2 inline-block">
+          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
             ← Back to Providers
           </Link>
         </div>
@@ -577,7 +597,7 @@ export default function ProviderDetailPage() {
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-red-800">Provider not found</p>
-          <Link href="/marketplace/providers" className="text-blue-600 hover:underline mt-2 inline-block">
+          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
             ← Back to Providers
           </Link>
         </div>
@@ -612,7 +632,7 @@ export default function ProviderDetailPage() {
       <div className="mb-6">
         <div className="flex items-center gap-4 mb-4">
           <Link
-            href="/marketplace/providers"
+            href="/marketplace"
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Back to providers"
           >
@@ -1164,7 +1184,7 @@ export default function ProviderDetailPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-green-500" />
-                      <span className="text-gray-700">Workers' Compensation</span>
+                      <span className="text-gray-700">Workers&apos; Compensation</span>
                     </div>
                     <div className="text-sm text-gray-600">
                       ${(provider.verification.insurance.workersComp.amount || 0).toLocaleString()}

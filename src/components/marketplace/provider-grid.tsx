@@ -44,7 +44,18 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
   const rating = provider?.performance?.rating || provider?.rating?.average || 0;
   const totalReviews = provider?.performance?.totalReviews || provider?.rating?.count || 0;
   const avatarUrl = user.profile?.avatar?.url || user.profile?.avatar?.thumbnail;
+  const hasAvatar = avatarUrl && avatarUrl !== '/placeholder-avatar.png' && !avatarUrl.includes('placeholder');
   const isGrid = viewMode === 'grid';
+  
+  // Get initials from name
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(name);
 
   return (
     <Link
@@ -53,7 +64,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
     >
       {/* Provider Image */}
       <div className={`relative ${isGrid ? 'w-full h-40' : 'w-40 flex-shrink-0'} bg-gradient-to-br from-green-100 to-green-200 overflow-hidden ${isGrid ? '' : 'self-stretch'} flex items-center justify-center`}>
-        {avatarUrl ? (
+        {hasAvatar && avatarUrl ? (
           <Image
             src={avatarUrl}
             alt={name}
@@ -65,7 +76,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
         ) : (
           <div className={`w-full h-full flex items-center justify-center ${isGrid ? 'h-40' : 'min-h-[10rem]'}`}>
             <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-              {name.charAt(0).toUpperCase()}
+              {initials}
             </div>
           </div>
         )}
