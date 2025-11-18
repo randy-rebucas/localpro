@@ -45,6 +45,8 @@ interface UserIdData {
 interface Provider {
   _id?: string;
   userId?: UserIdData | string;
+  user?: UserIdData; // Duplicate of userId in API response
+  userProfile?: UserIdData; // Another duplicate in API response
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -56,26 +58,46 @@ interface Provider {
     businessDescription?: string;
   } | null;
   professionalInfo?: {
+    _id?: string;
+    provider?: string;
     specialties?: Array<{
-      category?: string;
-      description?: string;
-      yearsOfExperience?: number;
-      serviceAreas?: Array<{
-        city?: string;
-        state?: string;
-        zipCode?: string;
-        radius?: number;
+      _id?: string;
+      experience?: number;
+      yearsOfExperience?: number; // Legacy support
+      hourlyRate?: number;
+      certifications?: Array<{
+        _id?: string;
+        name?: string;
+        issuer?: string;
+        dateIssued?: string;
+        expiryDate?: string;
+        certificateNumber?: string;
       }>;
       skills?: Array<{
         _id?: string;
         name?: string;
         description?: string;
-        category?: string;
+        category?: {
+          _id?: string;
+          name?: string;
+          key?: string;
+        } | string;
         metadata?: {
           level?: string;
+          yearsExperience?: number;
           certified?: boolean;
         };
       }>;
+      serviceAreas?: Array<{
+        _id?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+        radius?: number;
+      }>;
+      // Optional fields not in API response but may be used in UI
+      category?: string; // Not in API response - may be derived from skills
+      description?: string; // Not in API response - may be used for display
       pricing?: {
         hourlyRate?: number;
         minimumCharge?: number;
@@ -94,19 +116,30 @@ interface Provider {
     travelDistance?: number;
     minimumJobValue?: number;
     maximumJobValue?: number;
+    createdAt?: string;
+    updatedAt?: string;
   };
   verification?: {
+    _id?: string;
+    provider?: string;
     identityVerified?: boolean;
     identityVerifiedAt?: string;
     businessVerified?: boolean;
     businessVerifiedAt?: string | null;
     backgroundCheck?: {
       status?: string;
-      completedAt?: string;
+      dateCompleted?: string;
+      completedAt?: string; // Legacy support
       reportId?: string;
       expiresAt?: string;
     };
     insurance?: {
+      hasInsurance?: boolean;
+      insuranceProvider?: string;
+      policyNumber?: string;
+      coverageAmount?: number;
+      expiryDate?: string;
+      // Legacy structure support
       liability?: {
         active?: boolean;
         amount?: number;
@@ -119,10 +152,14 @@ interface Provider {
       };
     };
     licenses?: Array<{
+      _id?: string;
       type?: string;
       number?: string;
       state?: string;
-      expiresAt?: string;
+      issuingAuthority?: string;
+      issueDate?: string;
+      expiryDate?: string;
+      expiresAt?: string; // Legacy support
     }>;
     certifications?: Array<{
       name?: string;
@@ -130,20 +167,48 @@ interface Provider {
       issuedAt?: string;
       expiresAt?: string;
     }>;
+    references?: Array<any>;
+    portfolio?: {
+      images?: string[];
+      videos?: string[];
+      descriptions?: string[];
+      beforeAfter?: Array<any>;
+    };
+    createdAt?: string;
+    updatedAt?: string;
   };
   performance?: {
+    _id?: string;
+    provider?: string;
     rating?: number;
     totalReviews?: number;
     totalJobs?: number;
     completedJobs?: number;
     cancelledJobs?: number;
-    pendingJobs?: number;
+    pendingJobs?: number; // Legacy support
+    responseTime?: number; // In minutes
+    averageResponseTime?: number; // Legacy support
+    responseTimeMinutes?: number; // Legacy support
     completionRate?: number;
     cancellationRate?: number;
-    averageResponseTime?: number;
-    totalEarnings?: number;
+    repeatCustomerRate?: number;
+    earnings?: {
+      total?: number;
+      thisMonth?: number;
+      lastMonth?: number;
+      pending?: number;
+    };
+    totalEarnings?: number; // Legacy support
     averageJobValue?: number;
-    responseTimeMinutes?: number;
+    badges?: Array<{
+      _id?: string;
+      name?: string;
+      description?: string;
+      earnedDate?: string;
+      category?: string;
+    }>;
+    createdAt?: string;
+    updatedAt?: string;
   };
   trust?: {
     trustScore?: number;
@@ -166,23 +231,53 @@ interface Provider {
     promoted?: boolean;
     tags?: string[];
     lastActive?: string;
+    searchRanking?: number;
+    notes?: string | null;
   };
   preferences?: {
-    communicationPreferences?: {
-      preferredMethod?: string;
-      responseTime?: string;
+    _id?: string;
+    provider?: string;
+    notificationSettings?: {
+      newJobAlerts?: boolean;
+      messageNotifications?: boolean;
+      paymentNotifications?: boolean;
+      reviewNotifications?: boolean;
+      marketingEmails?: boolean;
     };
     jobPreferences?: {
-      acceptEmergencyJobs?: boolean;
-      preferredDistance?: number;
+      preferredJobTypes?: string[];
+      avoidJobTypes?: string[];
+      preferredTimeSlots?: string[];
+      maxJobsPerDay?: number;
+      advanceBookingDays?: number;
+      acceptEmergencyJobs?: boolean; // Legacy support
+      preferredDistance?: number; // Legacy support
+    };
+    communicationPreferences?: {
+      preferredContactMethod?: string;
+      responseTimeExpectation?: number;
+      autoAcceptJobs?: boolean;
+      preferredMethod?: string; // Legacy support
+      responseTime?: string; // Legacy support
     };
     availabilityPreferences?: {
       sameDayBooking?: boolean;
       weekendAvailability?: boolean;
       advanceBookingDays?: number;
     };
+    createdAt?: string;
+    updatedAt?: string;
+  };
+  settings?: {
+    profileVisibility?: string;
+    showContactInfo?: boolean;
+    showPricing?: boolean;
+    showReviews?: boolean;
+    allowDirectBooking?: boolean;
+    requireApproval?: boolean;
   };
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface MarketplaceService {
@@ -227,21 +322,42 @@ export default function ProviderDetailPage() {
       }
 
       const normalizeProviderData = (providerData: any, isStatusError: boolean = false): Provider | null => {
-        if (!providerData || (!providerData._id && !providerData.id && !providerData.userId)) {
+        if (!providerData || typeof providerData !== 'object') {
           return null;
         }
 
+        // Check if we have at least some identifier or user data
+        const hasId = !!(providerData._id || providerData.id);
+        const hasUserId = !!providerData.userId;
+        const hasUserData = !!(providerData.firstName || providerData.lastName || providerData.email);
+        
+        // If we have no identifying information at all, return null
+        if (!hasId && !hasUserId && !hasUserData) {
+          if (process.env.NODE_ENV === 'development') {
+            logger.debug('Cannot normalize provider data - missing identifiers', {
+              hasId,
+              hasUserId,
+              hasUserData,
+              dataKeys: Object.keys(providerData),
+            });
+          }
+          return null;
+        }
+        // Debug logging removed - use logger.debug if needed
         const userId = typeof providerData.userId === 'object' ? providerData.userId : null;
         // Merge trust data from userId.trust if available
         const trustData = userId?.trust || providerData.trust;
         
+        // If we don't have an _id but have other data, try to use what we have
+        const providerId = providerData._id || providerData.id || (userId?._id || userId?.id) || undefined;
+        
         return {
           ...providerData,
-          _id: providerData._id || providerData.id,
-          firstName: userId?.firstName || '',
-          lastName: userId?.lastName || '',
-          email: userId?.email || '',
-          phoneNumber: userId?.phoneNumber || userId?.phone || '',
+          _id: providerId,
+          firstName: userId?.firstName || providerData.firstName || '',
+          lastName: userId?.lastName || providerData.lastName || '',
+          email: userId?.email || providerData.email || '',
+          phoneNumber: userId?.phoneNumber || userId?.phone || providerData.phoneNumber || providerData.phone || '',
           userId: userId,
           status: providerData.status || (isStatusError ? 'pending' : undefined),
           trust: trustData || providerData.trust,
@@ -249,6 +365,8 @@ export default function ProviderDetailPage() {
       };
 
       let providerDataFetched = false; // Track if we successfully fetched provider data
+      let httpStatus: number | null = null;
+      let apiErrorDetails: any = null;
 
       try {
         setLoading(true);
@@ -266,6 +384,7 @@ export default function ProviderDetailPage() {
         let data: any = null;
         let errorMessage: string | null = null;
         let isStatusError = false;
+        httpStatus = marketplaceResponse.status;
 
         // Try to parse response even if not ok
         try {
@@ -276,11 +395,12 @@ export default function ProviderDetailPage() {
 
         if (!marketplaceResponse.ok) {
           errorMessage = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
+          apiErrorDetails = data;
           if (data) {
             if (data.message) {
               errorMessage = data.message;
             } else if (data.error) {
-              errorMessage = data.error;
+              errorMessage = typeof data.error === 'string' ? data.error : data.error.message || String(data.error);
             }
           }
           
@@ -294,8 +414,23 @@ export default function ProviderDetailPage() {
 
         // If we have data from marketplace endpoint (even with an error), try to use it
         let normalizedProvider: Provider | null = null;
-        if (data && (data.success || data.data || data.provider)) {
-          const providerData = data.data || data.provider || data;
+        if (data) {
+          // Try multiple possible data structures
+          const providerData = data.data || data.provider || data.result || data;
+          
+          // Log the structure we received for debugging
+          if (process.env.NODE_ENV === 'development') {
+            logger.debug('Provider data structure', {
+              hasData: !!data,
+              hasSuccess: !!data.success,
+              hasDataField: !!data.data,
+              hasProviderField: !!data.provider,
+              hasResultField: !!data.result,
+              dataKeys: data ? Object.keys(data) : [],
+              providerDataKeys: providerData && typeof providerData === 'object' ? Object.keys(providerData) : [],
+            });
+          }
+          
           normalizedProvider = normalizeProviderData(providerData, isStatusError);
         }
 
@@ -307,8 +442,9 @@ export default function ProviderDetailPage() {
             // Don't log error for status issues when we have data to display
             return;
           }
-        } else if (isStatusError) {
-          // If marketplace endpoint failed with status error and no data, try regular providers endpoint
+        } else {
+          // If we couldn't normalize data from marketplace endpoint, try fallback
+          // This handles cases where marketplace endpoint returns unexpected structure
           try {
             const providersEndpoint = API_ENDPOINTS.providersById.replace("[id]", providerId);
             const providersResponse = await fetch(
@@ -318,31 +454,68 @@ export default function ProviderDetailPage() {
 
             if (providersResponse.ok) {
               const providersData = await providersResponse.json();
-              const providerData = providersData.data || providersData.provider || providersData;
-              normalizedProvider = normalizeProviderData(providerData, true);
+              const providerData = providersData.data || providersData.provider || providersData.result || providersData;
+              normalizedProvider = normalizeProviderData(providerData, isStatusError || !marketplaceResponse.ok);
               
               if (normalizedProvider) {
                 setProvider(normalizedProvider);
                 providerDataFetched = true;
-                // Don't log error - we successfully got provider data from fallback endpoint
+                // Successfully got provider data from fallback endpoint
+                logger.info('Successfully fetched provider from fallback endpoint', { providerId });
                 return;
+              }
+            } else {
+              httpStatus = providersResponse.status;
+              // Try to get error message from fallback response
+              try {
+                const fallbackErrorData = await providersResponse.json();
+                if (fallbackErrorData.error || fallbackErrorData.message) {
+                  errorMessage = fallbackErrorData.error || fallbackErrorData.message;
+                }
+              } catch {
+                // Ignore JSON parse errors
               }
             }
           } catch (fallbackErr) {
             // Fallback failed, continue with original error
+            logger.warn('Fallback endpoint also failed', { 
+              error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+              providerId 
+            });
           }
         }
 
         // Only throw error if we don't have provider data
         if (!normalizedProvider) {
-          throw new Error(errorMessage || "Invalid response format");
+          // Provide more descriptive error message
+          let descriptiveError = errorMessage;
+          if (!descriptiveError) {
+            if (marketplaceResponse.ok && data) {
+              descriptiveError = "Invalid response format: Provider data structure is not recognized";
+            } else if (!marketplaceResponse.ok) {
+              descriptiveError = `Failed to fetch provider: ${marketplaceResponse.status} ${marketplaceResponse.statusText}`;
+            } else {
+              descriptiveError = "Invalid response format: No provider data received";
+            }
+          }
+          
+          const finalError = new Error(descriptiveError);
+          (finalError as any).status = httpStatus;
+          (finalError as any).apiResponse = apiErrorDetails || data;
+          throw finalError;
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "Failed to load provider";
         // Only log error if we didn't successfully fetch provider data
         if (!providerDataFetched) {
-        logger.error("Error fetching provider:", new Error(errorMessage));
-        setError(errorMessage);
+          const errorToLog = err instanceof Error ? err : new Error(errorMessage);
+          logger.error("Error fetching provider", errorToLog, {
+            providerId,
+            httpStatus: httpStatus || (err as any)?.status,
+            endpoint: API_ENDPOINTS.marketplaceProvidersById.replace("[id]", providerId),
+            apiError: apiErrorDetails || (err as any)?.apiResponse,
+          });
+          setError(errorMessage);
         }
       } finally {
         setLoading(false);
@@ -413,8 +586,19 @@ export default function ProviderDetailPage() {
   }
 
   const userId = typeof provider.userId === 'object' ? provider.userId : null;
-  const avatarUrl = userId?.profile?.avatar?.url || userId?.profile?.avatar?.thumbnail || userId?.profileImage || '/placeholder-avatar.png';
+  const avatarUrl = userId?.profile?.avatar?.url || userId?.profile?.avatar?.thumbnail || userId?.profileImage;
+  const hasAvatar = avatarUrl && avatarUrl !== '/placeholder-avatar.png' && !avatarUrl.includes('placeholder');
   const fullName = `${provider.firstName || ''} ${provider.lastName || ''}`.trim() || 'Provider';
+  
+  // Get initials from name
+  const getInitials = (name: string): string => {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+  const initials = getInitials(fullName);
   const location = userId?.profile?.address 
     ? `${userId.profile.address.city || ''}, ${userId.profile.address.state || ''}`.trim()
     : 'Location not specified';
@@ -463,13 +647,19 @@ export default function ProviderDetailPage() {
           {/* Provider Avatar & Quick Info */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex flex-col items-center text-center mb-4">
-              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-200 mb-4">
-            <Image
-              src={avatarUrl}
-              alt={fullName}
-              fill
-              className="object-cover"
-            />
+              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 mb-4 flex items-center justify-center">
+            {hasAvatar && avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={fullName}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <span className="text-4xl font-semibold text-white">
+                {initials}
+              </span>
+            )}
           </div>
             {provider.businessInfo?.businessName && (
                 <p className="text-lg font-semibold text-gray-900 mb-1">{provider.businessInfo.businessName}</p>
@@ -685,8 +875,13 @@ export default function ProviderDetailPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Specialties & Services</h2>
               <div className="space-y-6">
-            {provider.professionalInfo.specialties.map((specialty, idx) => (
-              <div key={idx} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
+            {provider.professionalInfo.specialties.map((specialty, idx) => {
+              const specialtyId = specialty._id || idx;
+              const experience = specialty.experience || specialty.yearsOfExperience;
+              const hourlyRate = specialty.hourlyRate || specialty.pricing?.hourlyRate;
+              
+              return (
+              <div key={specialtyId} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                 {specialty.category && (
@@ -694,21 +889,21 @@ export default function ProviderDetailPage() {
                         {specialty.category}
                       </h3>
                     )}
-                    {specialty.yearsOfExperience && (
+                    {experience && (
                       <p className="text-sm text-gray-600">
-                        {specialty.yearsOfExperience} years of experience
+                        {experience} years of experience
                       </p>
                     )}
                   </div>
-                  {specialty.pricing && (
+                  {(hourlyRate || specialty.pricing?.minimumCharge) && (
                     <div className="text-right">
-                      {specialty.pricing.hourlyRate && (
+                      {hourlyRate && (
                         <div className="text-lg font-semibold text-gray-900">
-                          ${specialty.pricing.hourlyRate}
+                          ${hourlyRate}
                           <span className="text-sm font-normal text-gray-600">/hr</span>
                         </div>
                       )}
-                      {specialty.pricing.minimumCharge && (
+                      {specialty.pricing?.minimumCharge && (
                         <div className="text-sm text-gray-600">
                           Min: ${specialty.pricing.minimumCharge}
                         </div>
@@ -720,23 +915,145 @@ export default function ProviderDetailPage() {
                   <p className="text-gray-700 mb-3">{specialty.description}</p>
                 )}
                 
+                {/* Certifications */}
+                {specialty.certifications && specialty.certifications.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Certifications:</h4>
+                    <div className="space-y-2">
+                      {specialty.certifications.map((cert, certIdx) => {
+                        const certId = cert._id || certIdx;
+                        return (
+                          <div key={certId} className="flex items-start gap-2">
+                            <Award className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-700">{cert.name}</span>
+                              {cert.issuer && (
+                                <p className="text-xs text-gray-600">Issued by: {cert.issuer}</p>
+                              )}
+                              {cert.expiryDate && (
+                                <p className="text-xs text-gray-500">
+                                  Expires: {new Date(cert.expiryDate).toLocaleDateString()}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
                 {/* Skills */}
-                {specialty.skills && specialty.skills.length > 0 && (
+                {specialty.skills && Array.isArray(specialty.skills) && (
                   <div className="mb-3">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Skills:</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {specialty.skills.map((skill, skillIdx) => (
-                        <span
-                          key={skillIdx}
-                          className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm flex items-center gap-1"
-                        >
-                          {skill.name}
-                          {skill.metadata?.certified && (
-                            <Award className="w-3 h-3" />
+                    {(() => {
+                      // Filter out undefined/null items first
+                      const validSkills = specialty.skills.filter(skill => skill != null && typeof skill === 'object');
+                      
+                      // Debug logging in development
+                      if (process.env.NODE_ENV === 'development') {
+                        logger.debug('Skills data', {
+                          originalLength: specialty.skills.length,
+                          validSkillsLength: validSkills.length,
+                          skillsCount: validSkills.length,
+                        });
+                      }
+                      
+                      if (validSkills.length === 0) {
+                        return <p className="text-sm text-gray-500">No skills listed</p>;
+                      }
+                      
+                      return (
+                        <>
+                          <div className="flex flex-wrap gap-2">
+                            {validSkills.map((skill, skillIdx) => {
+                              const skillId = skill?._id || `skill-${skillIdx}`;
+                              const skillName = skill?.name || skill?.description || `Skill ${skillIdx + 1}`;
+                              const categoryName = skill?.category && typeof skill.category === 'object' 
+                                ? (skill.category?.name || '')
+                                : (typeof skill?.category === 'string' ? skill.category : '');
+                              const skillLevel = skill?.metadata?.level;
+                              const yearsExp = skill?.metadata?.yearsExperience;
+                              const isCertified = skill?.metadata?.certified;
+                              
+                              // Build comprehensive tooltip
+                              const tooltipParts = [skillName];
+                              if (skillLevel) tooltipParts.push(`Level: ${skillLevel}`);
+                              if (yearsExp) tooltipParts.push(`${yearsExp} years experience`);
+                              if (categoryName) tooltipParts.push(`Category: ${categoryName}`);
+                              if (skill?.description) tooltipParts.push(skill.description);
+                              const tooltip = tooltipParts.join(' • ');
+                              
+                              return (
+                                <div
+                                  key={skillId}
+                                  className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm flex items-center gap-1 hover:bg-blue-100 transition-colors"
+                                  title={tooltip}
+                                >
+                                  {skillName}
+                                  {isCertified && (
+                                    <Award className="w-3 h-3" />
+                                  )}
+                                  {skillLevel && !isCertified && (
+                                    <span className="text-xs opacity-75" title={`${skillLevel} level`}>
+                                      ({skillLevel})
+                                    </span>
+                                  )}
+                                  {yearsExp && !skillLevel && !isCertified && (
+                                    <span className="text-xs opacity-75" title={`${yearsExp} years experience`}>
+                                      ({yearsExp}y)
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Show skill details if available */}
+                          {validSkills.some(skill => skill && (skill.description || (skill.metadata && (skill.metadata.level || skill.metadata.yearsExperience)))) && (
+                            <div className="mt-3 space-y-2 border-t border-gray-100 pt-2">
+                              {validSkills
+                                .filter(skill => skill && (skill.description || (skill.metadata && (skill.metadata.level || skill.metadata.yearsExperience))))
+                                .map((skill, skillIdx) => {
+                                  const skillId = skill?._id || `skill-${skillIdx}`;
+                                  const skillName = skill?.name || skill?.description || `Skill ${skillIdx + 1}`;
+                                  const categoryName: string = skill?.category && typeof skill.category === 'object' 
+                                    ? (skill.category?.name || '')
+                                    : (typeof skill?.category === 'string' ? skill.category : '');
+                                  const skillLevel = skill?.metadata?.level;
+                                  const yearsExp = skill?.metadata?.yearsExperience;
+                                
+                                  return (
+                                    <div key={skillId} className="text-xs text-gray-600">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium text-gray-700">{skillName}</span>
+                                        {categoryName && (
+                                          <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">
+                                            {categoryName}
+                                          </span>
+                                        )}
+                                        {skillLevel && (
+                                          <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                                            {skillLevel}
+                                          </span>
+                                        )}
+                                        {yearsExp && (
+                                          <span className="text-gray-500">
+                                            {yearsExp} {yearsExp === 1 ? 'year' : 'years'} exp.
+                                          </span>
+                                        )}
+                                      </div>
+                                      {skill?.description && (
+                                        <p className="text-gray-600 mt-1 ml-0">{skill.description}</p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                            </div>
                           )}
-                        </span>
-                      ))}
-                    </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
 
@@ -758,7 +1075,8 @@ export default function ProviderDetailPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
