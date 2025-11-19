@@ -88,7 +88,7 @@ export function JobDetail({
           <div className="flex flex-wrap gap-2">
             {job.category && (
               <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                {job.category}
+                {String(job.category)}
               </span>
             )}
             {job.jobType && (

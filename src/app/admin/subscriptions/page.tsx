@@ -136,14 +136,22 @@ export default function AdminSubscriptionsPage() {
         }
         
         // Transform users to suggestions format
-        const suggestions = users
-          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
-          .map((user: any) => ({
-            _id: user._id || user.id,
+        interface UserSuggestion {
+          _id?: string;
+          id?: string;
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+        }
+        const suggestions = (users as UserSuggestion[])
+          .filter((user) => (user._id || user.id) && (user.firstName || user.lastName || user.email))
+          .map((user) => ({
+            _id: user._id || user.id || '',
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email || ''
-          }));
+          }))
+          .filter((suggestion) => suggestion._id !== '');
         
         setUserSuggestions(suggestions);
         setShowUserSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
@@ -151,7 +159,7 @@ export default function AdminSubscriptionsPage() {
         setUserSuggestions([]);
         setShowUserSuggestions(false);
       }
-    } catch (err) {
+    } catch {
       // Silently fail - don't show error for autosuggest
       setUserSuggestions([]);
       setShowUserSuggestions(false);

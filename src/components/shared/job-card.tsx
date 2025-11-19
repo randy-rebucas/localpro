@@ -94,7 +94,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
           <div className="flex flex-wrap gap-1.5 mb-3">
             {job.category && (
               <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-md font-medium">
-                {job.category}
+                {String(job.category)}
               </span>
             )}
             {job.jobType && (

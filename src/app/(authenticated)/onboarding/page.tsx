@@ -20,7 +20,6 @@ import {
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
@@ -106,7 +105,6 @@ export default function OnboardingPage() {
 
   const {
     register,
-    handleSubmit,
     formState: { errors },
     watch,
     setValue,
@@ -128,8 +126,13 @@ export default function OnboardingPage() {
       if (session.user.lastName) setValue("lastName", session.user.lastName);
       if (session.user.email) setValue("email", session.user.email);
       // Pre-fill gender and birthdate if available in session
-      if ((session.user as any).gender) setValue("gender", (session.user as any).gender);
-      if ((session.user as any).birthdate) setValue("birthdate", (session.user as any).birthdate);
+      // These fields may exist on the user object even if not in the type definition
+      const userWithExtendedFields = session.user as typeof session.user & {
+        gender?: string;
+        birthdate?: string;
+      };
+      if (userWithExtendedFields.gender) setValue("gender", userWithExtendedFields.gender);
+      if (userWithExtendedFields.birthdate) setValue("birthdate", userWithExtendedFields.birthdate);
       // Pre-select roles if user has roles
       if (session.user.roles && session.user.roles.length > 0) {
         setValue("wantsToBeProvider", session.user.roles.includes("provider"));
@@ -145,8 +148,6 @@ export default function OnboardingPage() {
       router.push("/auth");
     }
   }, [router]);
-
-  const watchedFields = watch();
 
   const canProceedToNextStep = () => {
     const step = steps.find((s) => s.id === currentStep);
@@ -285,12 +286,15 @@ export default function OnboardingPage() {
       // Clean the payload to ensure no unwanted fields are included
       // This prevents issues with backend trying to cast referral objects to ObjectId
       // JSON.parse(JSON.stringify()) removes any non-serializable objects like Buffer
-      const cleanPayload = JSON.parse(JSON.stringify(payload));
+      const cleanPayload = JSON.parse(JSON.stringify(payload)) as Record<string, unknown>;
       
       // Explicitly remove any referral-related fields that might have been included
-      delete (cleanPayload as any).referral;
-      delete (cleanPayload as any).referredBy;
-      delete (cleanPayload.profile as any)?.referral;
+      delete cleanPayload.referral;
+      delete cleanPayload.referredBy;
+      if (cleanPayload.profile && typeof cleanPayload.profile === 'object') {
+        const profile = cleanPayload.profile as Record<string, unknown>;
+        delete profile.referral;
+      }
       
       logger.debug("Onboarding payload", { payload: cleanPayload });
       

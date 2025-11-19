@@ -415,14 +415,22 @@ export default function AcademyPage() {
         }
         
         // Transform users to instructor suggestions format
-        const suggestions = users
-          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
-          .map((user: any) => ({
-            _id: user._id || user.id,
+        interface UserSuggestion {
+          _id?: string;
+          id?: string;
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+        }
+        const suggestions = (users as UserSuggestion[])
+          .filter((user) => (user._id || user.id) && (user.firstName || user.lastName || user.email))
+          .map((user) => ({
+            _id: user._id || user.id || '',
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email || ''
-          }));
+          }))
+          .filter((suggestion) => suggestion._id !== '');
         
         setInstructorSuggestions(suggestions);
         setShowInstructorSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
@@ -430,7 +438,7 @@ export default function AcademyPage() {
         setInstructorSuggestions([]);
         setShowInstructorSuggestions(false);
       }
-    } catch (err) {
+    } catch {
       // Silently fail - don't show error for autosuggest
       setInstructorSuggestions([]);
       setShowInstructorSuggestions(false);
@@ -870,7 +878,7 @@ export default function AcademyPage() {
           setInstructorSearchTerm(`${instructor.firstName} ${instructor.lastName}`.trim() || instructor.email);
         }
       }
-    } catch (err) {
+    } catch {
       // Silently fail - instructor might not exist
     }
   }, []);

@@ -268,7 +268,7 @@ class Logger {
       const errorStr = errorMessageStr ? ` Error: ${errorMessageStr}` : '';
       const formattedMessage = `${prefix} ${timestamp} ${message}${contextStr}${errorStr}`;
       console.error(formattedMessage);
-    } catch (formatError) {
+    } catch {
       // Ultimate fallback if everything fails
       console.error(`[ERROR] ${new Date().toISOString()} ${message}${errorMessageStr ? ` Error: ${errorMessageStr}` : ''}`);
     }

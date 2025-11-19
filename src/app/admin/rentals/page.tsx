@@ -693,7 +693,7 @@ export default function RentalsPage() {
       let result;
       try {
         result = await response.json();
-      } catch (parseError) {
+      } catch {
         const errorMessage = 'Failed to parse rental details response';
         logger.error(errorMessage);
         toast.error(errorMessage);
@@ -701,16 +701,16 @@ export default function RentalsPage() {
       }
 
       // Extract rental data from response
-      let rentalData: any = null;
+      let rentalData: (RentalItem & { id?: string; owner?: string | { _id?: string; id?: string; firstName?: string; lastName?: string; email?: string } }) | null = null;
       try {
         if (result.success && result.data) {
-          rentalData = result.data;
+          rentalData = result.data as RentalItem & { id?: string; owner?: string | { _id?: string; id?: string; firstName?: string; lastName?: string; email?: string } };
         } else if (result.data) {
-          rentalData = result.data;
+          rentalData = result.data as RentalItem & { id?: string; owner?: string | { _id?: string; id?: string; firstName?: string; lastName?: string; email?: string } };
         } else {
-          rentalData = result;
+          rentalData = result as RentalItem & { id?: string; owner?: string | { _id?: string; id?: string; firstName?: string; lastName?: string; email?: string } };
         }
-      } catch (extractError) {
+      } catch {
         const errorMessage = 'Failed to extract rental data from response';
         logger.error(errorMessage);
         toast.error(errorMessage);
@@ -738,14 +738,15 @@ export default function RentalsPage() {
       // Transform owner data if it exists
       if (rentalData.owner && typeof rentalData.owner === 'object') {
         // Owner is already an object, ensure it has the right structure
-        if (!rentalData.owner._id && rentalData.owner.id) {
-          rentalData.owner._id = rentalData.owner.id;
+        const ownerObj = rentalData.owner as { _id?: string; id?: string; firstName?: string; lastName?: string; email?: string };
+        if (!ownerObj._id && ownerObj.id) {
+          ownerObj._id = ownerObj.id;
         }
       }
 
       setSelectedRental(rentalData as Rental);
       setViewModalOpen(true);
-    } catch (err) {
+    } catch {
       // Completely avoid accessing err object to prevent ObjectId serialization issues
       const errorMessage = 'Failed to fetch rental details';
       logger.error(errorMessage);
@@ -795,14 +796,22 @@ export default function RentalsPage() {
         }
         
         // Transform users to owner suggestions format
-        const suggestions = users
-          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
-          .map((user: any) => ({
-            _id: user._id || user.id,
+        interface UserSuggestion {
+          _id?: string;
+          id?: string;
+          firstName?: string;
+          lastName?: string;
+          email?: string;
+        }
+        const suggestions = (users as UserSuggestion[])
+          .filter((user) => (user._id || user.id) && (user.firstName || user.lastName || user.email))
+          .map((user) => ({
+            _id: user._id || user.id || '',
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email || ''
-          }));
+          }))
+          .filter((suggestion) => suggestion._id !== '');
         
         setOwnerSuggestions(suggestions);
         setShowOwnerSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
@@ -810,7 +819,7 @@ export default function RentalsPage() {
         setOwnerSuggestions([]);
         setShowOwnerSuggestions(false);
       }
-    } catch (err) {
+    } catch {
       // Silently fail - don't show error for autosuggest
       setOwnerSuggestions([]);
       setShowOwnerSuggestions(false);
@@ -887,7 +896,7 @@ export default function RentalsPage() {
           setOwnerSearchTerm(`${owner.firstName} ${owner.lastName}`.trim() || owner.email);
         }
       }
-    } catch (err) {
+    } catch {
       // Silently fail - owner might not exist
     }
   }, []);
@@ -2599,9 +2608,9 @@ export default function RentalsPage() {
               <div className="space-y-3">
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Name</h4>
-                  <p className="mt-1 text-sm text-gray-900">{(selectedRental as any).name || selectedRental.title || 'N/A'}</p>
+                  <p className="mt-1 text-sm text-gray-900">{(selectedRental as Rental).name || selectedRental.title || 'N/A'}</p>
                 </div>
-                {selectedRental.title && (selectedRental as any).name !== selectedRental.title && (
+                {selectedRental.title && (selectedRental as Rental).name !== selectedRental.title && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-500">Title</h4>
                     <p className="mt-1 text-sm text-gray-900">{selectedRental.title}</p>
@@ -2634,11 +2643,12 @@ export default function RentalsPage() {
                         {selectedRental.owner.email && (
                           <div className="text-xs text-gray-500 mt-1">{selectedRental.owner.email}</div>
                         )}
-                        {(selectedRental.owner as any).profile?.bio && (
+                        {selectedRental.owner && typeof selectedRental.owner === 'object' && 'profile' in selectedRental.owner && 
+                         selectedRental.owner.profile && typeof selectedRental.owner.profile === 'object' && 'bio' in selectedRental.owner.profile ? (
                           <div className="text-xs text-gray-600 mt-1 italic">
-                            {(selectedRental.owner as any).profile.bio}
+                            {String((selectedRental.owner.profile as { bio?: string }).bio || '')}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     ) : (
                       <span>{selectedRental.owner || 'N/A'}</span>
@@ -2712,12 +2722,16 @@ export default function RentalsPage() {
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-2">Schedule</h4>
                       <div className="space-y-1">
-                        {selectedRental.availability.schedule.map((scheduleItem: any, idx: number) => (
+                        {selectedRental.availability.schedule.map((scheduleItem, idx: number) => (
                           <div key={idx} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                            {scheduleItem.day && <span className="font-medium">{scheduleItem.day}: </span>}
-                            {scheduleItem.startTime && scheduleItem.endTime 
-                              ? `${scheduleItem.startTime} - ${scheduleItem.endTime}`
-                              : scheduleItem.startTime || scheduleItem.endTime || 'All day'}
+                            {scheduleItem.startDate && scheduleItem.endDate 
+                              ? `${new Date(scheduleItem.startDate).toLocaleDateString()} - ${new Date(scheduleItem.endDate).toLocaleDateString()}`
+                              : scheduleItem.startDate 
+                                ? `From ${new Date(scheduleItem.startDate).toLocaleDateString()}`
+                                : scheduleItem.endDate
+                                  ? `Until ${new Date(scheduleItem.endDate).toLocaleDateString()}`
+                                  : 'All day'}
+                            {scheduleItem.reason && <div className="text-xs text-gray-500 mt-1">Reason: {scheduleItem.reason}</div>}
                           </div>
                         ))}
                       </div>
@@ -2982,7 +2996,7 @@ export default function RentalsPage() {
             )}
 
             {/* Rating */}
-            {(selectedRental.rating || (selectedRental as any).averageRating !== undefined) && (
+            {(selectedRental.rating || ((selectedRental as Rental & { averageRating?: number }).averageRating !== undefined)) && (
               <div className="border-b pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Rating</h3>
                 <div>
@@ -2990,8 +3004,8 @@ export default function RentalsPage() {
                     <span className="text-lg font-semibold">
                       {selectedRental.rating?.average 
                         ? selectedRental.rating.average.toFixed(1) 
-                        : (selectedRental as any).averageRating 
-                          ? (selectedRental as any).averageRating.toFixed(1)
+                        : (selectedRental as Rental & { averageRating?: number }).averageRating !== undefined
+                          ? (selectedRental as Rental & { averageRating?: number }).averageRating!.toFixed(1)
                           : '0.0'}
                     </span>
                     {selectedRental.rating && selectedRental.rating.count !== undefined && selectedRental.rating.count > 0 && ` (${selectedRental.rating.count} reviews)`}
@@ -3001,12 +3015,14 @@ export default function RentalsPage() {
             )}
 
             {/* Maintenance */}
-            {(selectedRental as any).maintenance && (
+            {((selectedRental as Rental & { maintenance?: { serviceHistory?: Array<{ date?: string; type?: string; description?: string; cost?: number }> } }).maintenance) && (
               <div className="border-b pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Maintenance</h3>
-                {(selectedRental as any).maintenance.serviceHistory && Array.isArray((selectedRental as any).maintenance.serviceHistory) && (selectedRental as any).maintenance.serviceHistory.length > 0 ? (
+                {(() => {
+                  const rentalWithMaintenance = selectedRental as Rental & { maintenance?: { serviceHistory?: Array<{ date?: string; type?: string; description?: string; cost?: number }> } };
+                  return rentalWithMaintenance.maintenance?.serviceHistory && Array.isArray(rentalWithMaintenance.maintenance.serviceHistory) && rentalWithMaintenance.maintenance.serviceHistory.length > 0 ? (
                   <div className="space-y-2">
-                    {(selectedRental as any).maintenance.serviceHistory.map((service: any, idx: number) => (
+                    {rentalWithMaintenance.maintenance.serviceHistory.map((service, idx: number) => (
                       <div key={idx} className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
                         {service.date && <div className="font-medium">{new Date(service.date).toLocaleDateString()}</div>}
                         {service.type && <div className="text-xs text-gray-600">Type: {service.type}</div>}
@@ -3025,7 +3041,8 @@ export default function RentalsPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">No service history available</p>
-                )}
+                );
+                })()}
               </div>
             )}
 

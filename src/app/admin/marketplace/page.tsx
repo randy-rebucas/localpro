@@ -385,7 +385,7 @@ export default function MarketplacePage() {
       let result;
       try {
         result = await response.json();
-      } catch (parseError) {
+      } catch {
         throw new Error('Invalid JSON response from server');
       }
       
@@ -420,14 +420,14 @@ export default function MarketplacePage() {
       let transformedService;
       try {
         transformedService = transformServiceData(serviceData);
-      } catch (transformError) {
+      } catch {
         // If transformation fails (e.g., due to ObjectId in data), throw a safe error
         throw new Error('Failed to process service data');
       }
       
       setSelectedServiceDetails(transformedService);
       setViewModalOpen(true);
-    } catch (err) {
+    } catch {
       // Completely avoid accessing error object to prevent ObjectId serialization issues
       // Don't try to extract message, don't convert to string, just use a safe default
       const errorMessage = 'Failed to fetch service details';

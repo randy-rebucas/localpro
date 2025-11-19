@@ -439,7 +439,7 @@ export default function AdminSuppliesPage() {
       let result;
       try {
         result = await response.json();
-      } catch (parseError) {
+      } catch {
         throw new Error('Invalid JSON response from server');
       }
       
@@ -486,14 +486,14 @@ export default function AdminSuppliesPage() {
       let transformedProduct;
       try {
         transformedProduct = transformProductData(productData, getDefaultCurrency(appSettings));
-      } catch (transformError) {
+      } catch {
         // If transformation fails (e.g., due to ObjectId in data), throw a safe error
         throw new Error('Failed to process product data');
       }
       
       setSelectedProductDetails(transformedProduct);
       setViewModalOpen(true);
-    } catch (err) {
+    } catch {
       // Completely avoid accessing error object to prevent ObjectId serialization issues
       // Don't try to extract message, don't convert to string, just use a safe default
       const errorMessage = 'Failed to fetch product details';
