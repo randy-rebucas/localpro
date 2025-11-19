@@ -20,6 +20,7 @@ import {
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
@@ -30,18 +31,27 @@ import { SessionContext } from "@/contexts/session-context";
 const onboardingSchema = z.object({
   firstName: z.string().min(1, "First name is required").min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(1, "Last name is required").min(2, "Last name must be at least 2 characters"),
+  gender: z.string().min(1, "Gender is required"),
+  birthdate: z.string().min(1, "Birthdate is required").refine((date) => {
+    const dateObj = new Date(date);
+    const today = new Date();
+    const age = today.getFullYear() - dateObj.getFullYear();
+    const monthDiff = today.getMonth() - dateObj.getMonth();
+    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateObj.getDate()) ? age - 1 : age;
+    return actualAge >= 13 && actualAge <= 120;
+  }, "You must be at least 13 years old and not more than 120 years old"),
   email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
   wantsToBeProvider: z.boolean().optional(),
   wantsToBeSupplier: z.boolean().optional(),
   wantsToBeInstructor: z.boolean().optional(),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+  bio: z.string().min(1, "Bio is required").max(500, "Bio must be less than 500 characters"),
   address: z.object({
-    street: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zipCode: z.string().optional(),
-    country: z.string().optional(),
-  }).optional(),
+    street: z.string().min(1, "Street address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State/Province is required"),
+    zipCode: z.string().min(1, "ZIP/Postal code is required"),
+    country: z.string().min(1, "Country is required"),
+  }),
 });
 
 type OnboardingForm = z.infer<typeof onboardingSchema>;
@@ -52,7 +62,7 @@ const steps = [
     title: "Welcome!",
     description: "Let's get to know you",
     icon: User,
-    fields: ["firstName", "lastName"],
+    fields: ["firstName", "lastName", "gender", "birthdate"],
   },
   {
     id: 2,
@@ -101,9 +111,14 @@ export default function OnboardingPage() {
     watch,
     setValue,
     trigger,
+    getValues,
   } = useForm<OnboardingForm>({
     resolver: zodResolver(onboardingSchema),
     mode: "onChange",
+    defaultValues: {
+      gender: "",
+      birthdate: "",
+    },
   });
 
   // Pre-fill form with session data if available
@@ -112,6 +127,9 @@ export default function OnboardingPage() {
       if (session.user.firstName) setValue("firstName", session.user.firstName);
       if (session.user.lastName) setValue("lastName", session.user.lastName);
       if (session.user.email) setValue("email", session.user.email);
+      // Pre-fill gender and birthdate if available in session
+      if ((session.user as any).gender) setValue("gender", (session.user as any).gender);
+      if ((session.user as any).birthdate) setValue("birthdate", (session.user as any).birthdate);
       // Pre-select roles if user has roles
       if (session.user.roles && session.user.roles.length > 0) {
         setValue("wantsToBeProvider", session.user.roles.includes("provider"));
@@ -134,19 +152,40 @@ export default function OnboardingPage() {
     const step = steps.find((s) => s.id === currentStep);
     if (!step) return false;
 
+    // Use getValues for more reliable form state access
+    const formValues = getValues();
+
     // Check if required fields for current step are filled
-    return step.fields.every((field) => {
-      if (field === "email") return true; // Email is optional
-      if (field === "wantsToBeProvider" || field === "wantsToBeSupplier" || field === "wantsToBeInstructor") return true; // Role selections are optional
-      if (field === "bio") return true; // Bio is optional
-      if (field === "address") {
-        const address = watchedFields.address;
-        // Address is optional, but if any field is filled, validate structure
-        return !address || typeof address === 'object';
+    const allFieldsValid = step.fields.every((field) => {
+      if (field === "email") {
+        // Email is optional - allow proceeding
+        return true;
       }
-      const value = watchedFields[field as keyof OnboardingForm];
-      return value && String(value).trim() !== "";
+      if (field === "wantsToBeProvider" || field === "wantsToBeSupplier" || field === "wantsToBeInstructor") {
+        // At least one role must be selected
+        return formValues.wantsToBeProvider || formValues.wantsToBeSupplier || formValues.wantsToBeInstructor;
+      }
+      if (field === "bio") {
+        // Bio is required
+        const bio = formValues.bio;
+        return bio && String(bio).trim() !== "";
+      }
+      if (field === "address") {
+        // Address is required - all fields must be filled
+        const address = formValues.address;
+        return address && 
+               address.street && address.street.trim() !== "" &&
+               address.city && address.city.trim() !== "" &&
+               address.state && address.state.trim() !== "" &&
+               address.zipCode && address.zipCode.trim() !== "" &&
+               address.country && address.country.trim() !== "";
+      }
+      const value = formValues[field as keyof OnboardingForm];
+      const isValid = value !== undefined && value !== null && String(value).trim() !== "";
+      return isValid;
     });
+    
+    return allFieldsValid;
   };
 
   const handleNext = async () => {
@@ -157,15 +196,22 @@ export default function OnboardingPage() {
     const fieldsToValidate: Array<keyof OnboardingForm | "address.street" | "address.city" | "address.state" | "address.zipCode" | "address.country"> = [];
     
     step.fields.forEach((field) => {
-      if (field === "address") {
+      if (field === "email") {
+        // Email is optional - skip validation if empty
+        const email = watch("email");
+        if (email && email.trim() !== "") {
+          fieldsToValidate.push("email");
+        }
+      } else if (field === "address") {
         // Validate all address sub-fields
         fieldsToValidate.push("address.street", "address.city", "address.state", "address.zipCode", "address.country");
-      } else {
+      } else if (field !== "wantsToBeProvider" && field !== "wantsToBeSupplier" && field !== "wantsToBeInstructor") {
+        // Validate other required fields (roles are validated in canProceedToNextStep)
         fieldsToValidate.push(field as keyof OnboardingForm);
       }
     });
 
-    const isValid = await trigger(fieldsToValidate as Array<keyof OnboardingForm>);
+    const isValid = fieldsToValidate.length === 0 ? true : await trigger(fieldsToValidate as Array<keyof OnboardingForm>);
 
     if (isValid && canProceedToNextStep()) {
       if (currentStep < steps.length) {
@@ -189,20 +235,21 @@ export default function OnboardingPage() {
     try {
       const formData = watch();
       
-      // Build address object if any address fields are provided
-      const address = formData.address && (
-        formData.address.street ||
-        formData.address.city ||
-        formData.address.state ||
-        formData.address.zipCode ||
-        formData.address.country
-      ) ? {
-        street: formData.address.street || undefined,
-        city: formData.address.city || undefined,
-        state: formData.address.state || undefined,
-        zipCode: formData.address.zipCode || undefined,
-        country: formData.address.country || undefined,
-      } : undefined;
+      // Validate that at least one role is selected
+      if (!formData.wantsToBeProvider && !formData.wantsToBeSupplier && !formData.wantsToBeInstructor) {
+        toast.error("Please select at least one role.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Build address object - all fields are required
+      const address = {
+        street: formData.address.street,
+        city: formData.address.city,
+        state: formData.address.state,
+        zipCode: formData.address.zipCode,
+        country: formData.address.country,
+      };
       
       // Build roles array - always include client, add others if selected
       const roles: string[] = ["client"]; // Client is always included
@@ -210,38 +257,48 @@ export default function OnboardingPage() {
       if (formData.wantsToBeSupplier) roles.push("supplier");
       if (formData.wantsToBeInstructor) roles.push("instructor");
       
-      // Build profile object with optional fields
-      const profile: Record<string, unknown> = {};
-      if (formData.bio) {
-        profile.bio = formData.bio;
-      }
-      if (address) {
-        profile.address = address;
-      }
+      // Build profile object with required fields
+      const profile: Record<string, unknown> = {
+        bio: formData.bio,
+        address: address,
+      };
       
       // Build payload matching the expected structure
+      // Only include explicitly required fields to avoid sending unwanted data
       const payload: Record<string, unknown> = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        gender: formData.gender,
+        birthdate: formData.birthdate,
         roles: roles, // Send roles array
       };
       
-      if (formData.email) {
-        payload.email = formData.email;
+      // Email is optional - only include if provided
+      const email = formData.email || session?.user?.email || "";
+      if (email && email.trim() !== "") {
+        payload.email = email;
       }
       
-      // Only include profile if it has any fields
-      if (Object.keys(profile).length > 0) {
-        payload.profile = profile;
-      }
+      // Always include profile with required fields
+      payload.profile = profile;
       
-      logger.debug("Onboarding payload", { payload });
+      // Clean the payload to ensure no unwanted fields are included
+      // This prevents issues with backend trying to cast referral objects to ObjectId
+      // JSON.parse(JSON.stringify()) removes any non-serializable objects like Buffer
+      const cleanPayload = JSON.parse(JSON.stringify(payload));
+      
+      // Explicitly remove any referral-related fields that might have been included
+      delete (cleanPayload as any).referral;
+      delete (cleanPayload as any).referredBy;
+      delete (cleanPayload.profile as any)?.referral;
+      
+      logger.debug("Onboarding payload", { payload: cleanPayload });
       
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.authCompleteOnboarding}`,
         {
           ...createAuthFetchOptions({ method: "POST" }),
-          body: JSON.stringify(payload),
+          body: JSON.stringify(cleanPayload),
         }
       );
 
@@ -278,11 +335,18 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = async () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      await handleComplete();
+    // Only allow skipping the email step (step 3) since it's optional
+    if (currentStep === 3) {
+      if (currentStep < steps.length) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        await handleComplete();
+      }
+      return;
     }
+    
+    // All other steps are required, so don't allow skipping
+    toast.error("Please complete all required fields before proceeding.");
   };
 
   const currentStepData = steps.find((s) => s.id === currentStep);
@@ -390,7 +454,7 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit(handleNext)} className="space-y-6">
+              <form className="space-y-6">
                 {/* Step 1: Name */}
                 {currentStep === 1 && (
                   <div className="space-y-4">
@@ -424,6 +488,45 @@ export default function OnboardingPage() {
                         <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
                       )}
                     </div>
+                    <div>
+                      <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
+                        Gender <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="gender"
+                        {...register("gender")}
+                        className={`w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none ${
+                          errors.gender 
+                            ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500" 
+                            : "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        }`}
+                      >
+                        <option value="">Select your gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer-not-to-say">Prefer not to say</option>
+                      </select>
+                      {errors.gender && (
+                        <p className="mt-1 text-sm text-red-600">{errors.gender.message}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">
+                        Date of Birth <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        id="birthdate"
+                        type="date"
+                        {...register("birthdate")}
+                        className={errors.birthdate ? "border-red-500" : ""}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+                        min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
+                      />
+                      {errors.birthdate && (
+                        <p className="mt-1 text-sm text-red-600">{errors.birthdate.message}</p>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -431,7 +534,7 @@ export default function OnboardingPage() {
                 {currentStep === 2 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 mb-4">
-                      Select all that apply. You&apos;ll always have Client access to book services and use platform features.
+                      Select at least one role. You&apos;ll always have Client access to book services and use platform features. <span className="text-red-500">*</span>
                     </p>
                     
                     <div className="space-y-3">
@@ -492,28 +595,28 @@ export default function OnboardingPage() {
                   <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Email Address <span className="text-gray-400 text-xs">(Optional)</span>
-                      </label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        {...register("email")}
-                        className={errors.email ? "border-red-500" : ""}
-                      />
-                      {errors.email && (
-                        <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-                      )}
-                      <p className="mt-2 text-sm text-gray-500">
-                        We&apos;ll use this to send you important updates and notifications.
-                      </p>
-                    </div>
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      {...register("email")}
+                      className={errors.email ? "border-red-500" : ""}
+                    />
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                    )}
+                    <p className="mt-2 text-sm text-gray-500">
+                      We&apos;ll use this to send you important updates and notifications.
+                    </p>
+                  </div>
                 )}
 
                 {/* Step 4: Bio */}
                 {currentStep === 4 && (
                   <div>
                     <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
-                      Bio <span className="text-gray-400 text-xs">(Optional)</span>
+                      Bio <span className="text-red-500">*</span>
                     </label>
                     <Textarea
                       id="bio"
@@ -537,7 +640,7 @@ export default function OnboardingPage() {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="address.street" className="block text-sm font-medium text-gray-700 mb-2">
-                        Street Address <span className="text-gray-400 text-xs">(Optional)</span>
+                        Street Address <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="address.street"
@@ -553,7 +656,7 @@ export default function OnboardingPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-2">
-                          City <span className="text-gray-400 text-xs">(Optional)</span>
+                          City <span className="text-red-500">*</span>
                         </label>
                         <Input
                           id="address.city"
@@ -568,7 +671,7 @@ export default function OnboardingPage() {
                       </div>
                       <div>
                         <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-2">
-                          State/Province <span className="text-gray-400 text-xs">(Optional)</span>
+                          State/Province <span className="text-red-500">*</span>
                         </label>
                         <Input
                           id="address.state"
@@ -585,7 +688,7 @@ export default function OnboardingPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="address.zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                          ZIP/Postal Code <span className="text-gray-400 text-xs">(Optional)</span>
+                          ZIP/Postal Code <span className="text-red-500">*</span>
                         </label>
                         <Input
                           id="address.zipCode"
@@ -600,7 +703,7 @@ export default function OnboardingPage() {
                       </div>
                       <div>
                         <label htmlFor="address.country" className="block text-sm font-medium text-gray-700 mb-2">
-                          Country <span className="text-gray-400 text-xs">(Optional)</span>
+                          Country <span className="text-red-500">*</span>
                         </label>
                         <Input
                           id="address.country"
@@ -630,7 +733,7 @@ export default function OnboardingPage() {
                   </button>
 
                   <div className="flex gap-3">
-                    {currentStep < steps.length && (
+                    {currentStep < steps.length && currentStep === 3 && (
                       <button
                         type="button"
                         onClick={handleSkip}
@@ -642,7 +745,31 @@ export default function OnboardingPage() {
                     )}
                     <button
                       type="submit"
-                      disabled={!canProceedToNextStep() || isSubmitting}
+                      disabled={isSubmitting}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        if (!canProceedToNextStep()) {
+                          const step = steps.find((s) => s.id === currentStep);
+                          if (step) {
+                            const formValues = getValues();
+                            const missingFields = step.fields.filter((field) => {
+                              if (field === "email") return false;
+                              if (field === "wantsToBeProvider" || field === "wantsToBeSupplier" || field === "wantsToBeInstructor") {
+                                return !formValues.wantsToBeProvider && !formValues.wantsToBeSupplier && !formValues.wantsToBeInstructor;
+                              }
+                              const value = formValues[field as keyof OnboardingForm];
+                              return !value || String(value).trim() === "";
+                            });
+                            if (missingFields.length > 0) {
+                              toast.error(`Please fill in: ${missingFields.join(", ")}`);
+                            } else {
+                              toast.error("Please fill in all required fields");
+                            }
+                          }
+                          return;
+                        }
+                        await handleNext();
+                      }}
                       className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                     >
                       {isSubmitting ? (

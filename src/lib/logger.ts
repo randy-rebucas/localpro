@@ -46,8 +46,61 @@ class Logger {
   private formatMessage(level: LogLevel, message: string, context?: LogContext, error?: Error): string {
     const prefix = `[${level.toUpperCase()}]`;
     const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
-    const errorStr = error ? ` Error: ${error.message}` : '';
+    
+    // Safely stringify context, handling non-serializable values
+    let contextStr = '';
+    if (context) {
+      try {
+        contextStr = ` ${JSON.stringify(context, (key, value) => {
+          // Handle non-serializable values
+          if (value && typeof value === 'object') {
+            // Check for ObjectId-like objects (MongoDB ObjectId)
+            if (value.constructor && (
+              value.constructor.name === 'ObjectId' || 
+              (typeof value.toString === 'function' && key === '_id')
+            )) {
+              try {
+                return value.toString();
+              } catch {
+                return '[ObjectId]';
+              }
+            }
+            // Handle Date objects
+            if (value instanceof Date) {
+              return value.toISOString();
+            }
+          }
+          // Handle circular references and functions
+          if (typeof value === 'function') {
+            return '[Function]';
+          }
+          if (typeof value === 'undefined') {
+            return '[undefined]';
+          }
+          return value;
+        })}`;
+      } catch (e) {
+        contextStr = ` [Context serialization failed: ${e instanceof Error ? e.message : String(e)}]`;
+      }
+    }
+    
+    // Safely extract error message - don't access error.message directly as it might trigger ObjectId serialization
+    let errorStr = '';
+    if (error) {
+      try {
+        // Try to get message safely
+        const errorMessage = error.message || 'Unknown error';
+        errorStr = ` Error: ${errorMessage}`;
+      } catch {
+        // If accessing error.message fails, use a safe fallback
+        try {
+          errorStr = ` Error: ${String(error)}`;
+        } catch {
+          errorStr = ' Error: [Error details unavailable]';
+        }
+      }
+    }
+    
     return `${prefix} ${timestamp} ${message}${contextStr}${errorStr}`;
   }
 
@@ -134,17 +187,116 @@ class Logger {
   error(message: string, error?: Error, context?: LogContext): void {
     if (!this.shouldLog('error')) return;
 
-    const entry = this.createLogEntry('error', message, context, error);
-    console.error(this.formatMessage('error', message, context, error));
+    // Safely extract error message as a string BEFORE any serialization
+    // This prevents ObjectId serialization issues
+    let errorMessageStr = '';
+    let errorStackStr = '';
+    
+    if (error) {
+      try {
+        // Extract message as string - wrap in try-catch in case accessing .message triggers issues
+        errorMessageStr = (error as { message?: string }).message || 'Unknown error';
+      } catch {
+        try {
+          errorMessageStr = String(error);
+        } catch {
+          errorMessageStr = 'Error occurred (details unavailable)';
+        }
+      }
+      
+      try {
+        // Extract stack as string
+        errorStackStr = (error as { stack?: string }).stack || '';
+      } catch {
+        // Ignore stack extraction errors
+      }
+    }
+
+    // Create a completely clean error object with only string properties
+    let safeError: Error | undefined;
+    if (errorMessageStr) {
+      try {
+        safeError = new Error(errorMessageStr);
+        if (errorStackStr) {
+          safeError.stack = errorStackStr;
+        }
+      } catch {
+        // If creating error fails, use minimal error
+        safeError = new Error('Error occurred');
+      }
+    }
+
+    const entry = this.createLogEntry('error', message, context, safeError);
+    
+    // Format message with error message string instead of error object
+    // Don't pass error object at all - just pass the message string
+    try {
+      // Build the formatted message manually to avoid any ObjectId serialization
+      const prefix = '[ERROR]';
+      const timestamp = new Date().toISOString();
+      
+      // Safely stringify context
+      let contextStr = '';
+      if (context) {
+        try {
+          contextStr = ` ${JSON.stringify(context, (key, value) => {
+            if (value && typeof value === 'object') {
+              if (value.constructor && value.constructor.name === 'ObjectId') {
+                try {
+                  return value.toString();
+                } catch {
+                  return '[ObjectId]';
+                }
+              }
+              if (value instanceof Date) {
+                return value.toISOString();
+              }
+            }
+            if (typeof value === 'function') {
+              return '[Function]';
+            }
+            if (typeof value === 'undefined') {
+              return '[undefined]';
+            }
+            return value;
+          })}`;
+        } catch {
+          contextStr = ' [Context unavailable]';
+        }
+      }
+      
+      const errorStr = errorMessageStr ? ` Error: ${errorMessageStr}` : '';
+      const formattedMessage = `${prefix} ${timestamp} ${message}${contextStr}${errorStr}`;
+      console.error(formattedMessage);
+    } catch (formatError) {
+      // Ultimate fallback if everything fails
+      console.error(`[ERROR] ${new Date().toISOString()} ${message}${errorMessageStr ? ` Error: ${errorMessageStr}` : ''}`);
+    }
     
     // Always send errors to monitoring
     this.sendToSentry(entry);
     
     // Log error details in development
-    if (this.isDevelopment && error) {
-      console.error('Error stack:', error.stack);
-      if (context) {
-        console.error('Error context:', context);
+    if (this.isDevelopment && errorMessageStr) {
+      try {
+        if (errorStackStr) {
+          console.error('Error stack:', errorStackStr);
+        }
+        if (context) {
+          // Safely log context
+          try {
+            console.error('Error context:', JSON.stringify(context, (key, value) => {
+              if (value && typeof value === 'object' && value.constructor?.name === 'ObjectId') {
+                return value.toString();
+              }
+              return value;
+            }));
+          } catch {
+            console.error('Error context: [Unable to serialize]');
+          }
+        }
+      } catch {
+        // Silently fail if logging error details causes issues
       }
     }
   }

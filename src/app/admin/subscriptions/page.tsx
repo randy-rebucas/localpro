@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Plus,
   Search,
@@ -13,20 +13,18 @@ import {
   XCircle,
   AlertCircle,
   Clock,
+  X,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { Modal } from "@/components/ui/modal";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { useAdminSubscriptions } from "@/hooks/useAdminSubscriptions";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptions";
 import { UserSubscription } from "@/types/subscriptions";
-import { DatePicker } from "@/components/ui/date-picker";
-import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/shared/pagination";
+import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 
 export default function AdminSubscriptionsPage() {
   const {
@@ -80,6 +78,14 @@ export default function AdminSubscriptionsPage() {
 
   const [cancelReason, setCancelReason] = useState("");
 
+  // User autosuggest state
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [userSuggestions, setUserSuggestions] = useState<Array<{ _id: string; firstName: string; lastName: string; email: string }>>([]);
+  const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ _id: string; firstName: string; lastName: string; email: string } | null>(null);
+  const userAutosuggestRef = useRef<HTMLDivElement>(null);
+
   // Helper function to convert filters for API call
   const convertFilters = useCallback((f: typeof filters) => ({
     ...f,
@@ -89,6 +95,134 @@ export default function AdminSubscriptionsPage() {
   useEffect(() => {
     fetchSubscriptions(convertFilters(filters));
   }, [filters, fetchSubscriptions, convertFilters]);
+
+  // Fetch users for autosuggest
+  const fetchUsers = useCallback(async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setUserSuggestions([]);
+      setShowUserSuggestions(false);
+      return;
+    }
+
+    try {
+      setLoadingUsers(true);
+      setShowUserSuggestions(true); // Show dropdown while loading
+      if (!getApiToken()) {
+        setLoadingUsers(false);
+        return;
+      }
+
+      const queryParams = new URLSearchParams();
+      queryParams.append('search', searchTerm);
+      queryParams.append('limit', '10');
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}?${queryParams.toString()}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        // Handle different response structures
+        let users = [];
+        if (result.data) {
+          if (Array.isArray(result.data)) {
+            users = result.data;
+          } else if (result.data.users && Array.isArray(result.data.users)) {
+            users = result.data.users;
+          }
+        } else if (result.users && Array.isArray(result.users)) {
+          users = result.users;
+        } else if (Array.isArray(result)) {
+          users = result;
+        }
+        
+        // Transform users to suggestions format
+        const suggestions = users
+          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
+          .map((user: any) => ({
+            _id: user._id || user.id,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          }));
+        
+        setUserSuggestions(suggestions);
+        setShowUserSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
+      } else {
+        setUserSuggestions([]);
+        setShowUserSuggestions(false);
+      }
+    } catch (err) {
+      // Silently fail - don't show error for autosuggest
+      setUserSuggestions([]);
+      setShowUserSuggestions(false);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  // Debounced user search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (userSearchTerm && userSearchTerm.length >= 2) {
+        fetchUsers(userSearchTerm);
+      } else {
+        setUserSuggestions([]);
+        setShowUserSuggestions(false);
+        setLoadingUsers(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [userSearchTerm, fetchUsers]);
+
+  // Handle user selection
+  const handleUserSelect = (user: { _id: string; firstName: string; lastName: string; email: string }) => {
+    setSelectedUser(user);
+    setCreateForm({ ...createForm, userId: user._id });
+    setUserSearchTerm(`${user.firstName} ${user.lastName}`.trim() || user.email);
+    setShowUserSuggestions(false);
+  };
+
+  // Clear user selection
+  const handleUserClear = () => {
+    setSelectedUser(null);
+    setCreateForm({ ...createForm, userId: '' });
+    setUserSearchTerm('');
+    setShowUserSuggestions(false);
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userAutosuggestRef.current && !userAutosuggestRef.current.contains(event.target as Node)) {
+        setShowUserSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle closing create modal
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    // Reset user autosuggest state
+    setSelectedUser(null);
+    setUserSearchTerm('');
+    setUserSuggestions([]);
+    setShowUserSuggestions(false);
+    setCreateForm({
+      userId: "",
+      planId: "",
+      billingCycle: "monthly",
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      reason: "",
+      notes: "",
+    });
+  };
 
   const handleCreate = async () => {
     try {
@@ -109,16 +243,7 @@ export default function AdminSubscriptionsPage() {
 
       await createManualSubscription(payload);
       success("Manual subscription created successfully");
-      setShowCreateModal(false);
-      setCreateForm({
-        userId: "",
-        planId: "",
-        billingCycle: "monthly",
-        startDate: new Date(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        reason: "",
-        notes: "",
-      });
+      handleCloseCreateModal();
       fetchSubscriptions(convertFilters(filters));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
@@ -490,94 +615,199 @@ export default function AdminSubscriptionsPage() {
       {/* Create Modal */}
       <Modal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={handleCloseCreateModal}
         title="Create Manual Subscription"
         size="lg"
         footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={handleCloseCreateModal}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
               Cancel
-            </Button>
-            <Button onClick={handleCreate} disabled={loading}>
+            </button>
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={loading}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
               {loading ? "Creating..." : "Create Subscription"}
-            </Button>
+            </button>
           </div>
         }
       >
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium mb-1">User ID *</label>
-            <Input
-              value={createForm.userId}
-              onChange={(e) => setCreateForm({ ...createForm, userId: e.target.value })}
-              placeholder="Enter user ID"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Plan *</label>
-            <Select
-              value={createForm.planId}
-              onValueChange={(value) => setCreateForm({ ...createForm, planId: value })}
-              options={[
-                { value: "", label: "Select a plan" },
-                ...(plans.map((plan) => ({
-                  value: plan._id || "",
-                  label: plan.name,
-                }))),
-              ]}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+          <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium mb-1">Billing Cycle</label>
-              <Select
-                value={createForm.billingCycle}
-                onValueChange={(value) =>
-                  setCreateForm({
-                    ...createForm,
-                    billingCycle: value as "monthly" | "yearly",
-                  })
-                }
-                options={[
-                  { value: "monthly", label: "Monthly" },
-                  { value: "yearly", label: "Yearly" },
-                ]}
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">User ID *</label>
+              <div ref={userAutosuggestRef} className="relative">
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                  <input
+                    type="text"
+                    value={userSearchTerm}
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      setUserSearchTerm(newValue);
+                      if (newValue === '') {
+                        handleUserClear();
+                      } else if (selectedUser) {
+                        // If user starts typing and it doesn't match the selected user, clear selection
+                        const selectedName = `${selectedUser.firstName} ${selectedUser.lastName}`.trim();
+                        const selectedEmail = selectedUser.email;
+                        if (newValue !== selectedName && newValue !== selectedEmail && !newValue.startsWith(selectedName) && !newValue.startsWith(selectedEmail)) {
+                          setSelectedUser(null);
+                          setCreateForm({ ...createForm, userId: '' });
+                        }
+                      }
+                    }}
+                    onFocus={() => {
+                      if (userSearchTerm && userSearchTerm.length >= 2) {
+                        if (userSuggestions.length > 0) {
+                          setShowUserSuggestions(true);
+                        } else if (!loadingUsers) {
+                          // Trigger search if we have a search term but no suggestions yet
+                          fetchUsers(userSearchTerm);
+                        }
+                      }
+                    }}
+                    className="w-full pl-7 pr-7 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Search for user by name or email..."
+                    required
+                  />
+                  {selectedUser && (
+                    <button
+                      type="button"
+                      onClick={handleUserClear}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+                
+                {/* Suggestions Dropdown */}
+                {showUserSuggestions && userSearchTerm.length >= 2 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {loadingUsers ? (
+                      <div className="px-3 py-2 text-xs text-gray-500 text-center">
+                        Searching...
+                      </div>
+                    ) : userSuggestions.length > 0 ? (
+                      userSuggestions.map((user) => (
+                        <div
+                          key={user._id}
+                          onClick={() => handleUserSelect(user)}
+                          className="px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                        >
+                          <div className="font-medium text-xs text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500">{user.email}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">ID: {user._id}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-xs text-gray-500 text-center">
+                        No users found
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {selectedUser && (
+                  <div className="mt-1.5 px-2 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="text-xs font-medium text-blue-900">
+                      Selected: {selectedUser.firstName} {selectedUser.lastName}
+                    </div>
+                    <div className="text-xs text-blue-700">{selectedUser.email}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Plan *</label>
+              <select
+                value={createForm.planId}
+                onChange={(e) => setCreateForm({ ...createForm, planId: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                required
+              >
+                <option value="">Select a plan</option>
+                {plans.map((plan) => (
+                  <option key={plan._id} value={plan._id || ""}>
+                    {plan.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Billing Cycle</label>
+                <select
+                  value={createForm.billingCycle}
+                  onChange={(e) =>
+                    setCreateForm({
+                      ...createForm,
+                      billingCycle: e.target.value as "monthly" | "yearly",
+                    })
+                  }
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Start Date</label>
+                <input
+                  type="date"
+                  value={createForm.startDate.toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : new Date();
+                    setCreateForm({ ...createForm, startDate: date });
+                  }}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">End Date</label>
+                <input
+                  type="date"
+                  value={createForm.endDate.toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : new Date();
+                    setCreateForm({ ...createForm, endDate: date });
+                  }}
+                  min={createForm.startDate.toISOString().split('T')[0]}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Reason</label>
+              <input
+                type="text"
+                value={createForm.reason}
+                onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })}
+                placeholder="e.g., Free trial for new user"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1">Start Date</label>
-              <DatePicker
-                value={createForm.startDate}
-                onChange={(date) => date && setCreateForm({ ...createForm, startDate: date })}
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Notes</label>
+              <textarea
+                value={createForm.notes}
+                onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
+                placeholder="Additional admin notes"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium mb-1">End Date</label>
-              <DatePicker
-                value={createForm.endDate}
-                onChange={(date) => date && setCreateForm({ ...createForm, endDate: date })}
-                minDate={createForm.startDate}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Reason</label>
-            <Input
-              value={createForm.reason}
-              onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })}
-              placeholder="e.g., Free trial for new user"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Notes</label>
-            <Textarea
-              value={createForm.notes}
-              onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
-              placeholder="Additional admin notes"
-              rows={3}
-            />
           </div>
         </div>
       </Modal>
@@ -589,101 +819,126 @@ export default function AdminSubscriptionsPage() {
         title="Update Manual Subscription"
         size="lg"
         footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowEditModal(false)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
               Cancel
-            </Button>
-            <Button onClick={handleEdit} disabled={loading}>
+            </button>
+            <button
+              type="button"
+              onClick={handleEdit}
+              disabled={loading}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
               {loading ? "Updating..." : "Update Subscription"}
-            </Button>
+            </button>
           </div>
         }
       >
-        <div className="space-y-3">
-          <div>
-            <label className="block text-xs font-medium mb-1">Plan</label>
-            <Select
-              value={editForm.planId}
-              onValueChange={(value) => setEditForm({ ...editForm, planId: value })}
-              options={[
-                { value: "", label: "Keep current plan" },
-                ...(plans.map((plan) => ({
-                  value: plan._id || "",
-                  label: plan.name,
-                }))),
-              ]}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Status</label>
-            <Select
-              value={editForm.status}
-              onValueChange={(value) =>
-                setEditForm({
-                  ...editForm,
-                  status: value as UserSubscription["status"],
-                })
-              }
-              options={[
-                { value: "active", label: "Active" },
-                { value: "cancelled", label: "Cancelled" },
-                { value: "expired", label: "Expired" },
-                { value: "suspended", label: "Suspended" },
-                { value: "pending", label: "Pending" },
-              ]}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+          <div className="space-y-3">
             <div>
-              <label className="block text-xs font-medium mb-1">Billing Cycle</label>
-              <Select
-                value={editForm.billingCycle}
-                onValueChange={(value) =>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Plan</label>
+              <select
+                value={editForm.planId}
+                onChange={(e) => setEditForm({ ...editForm, planId: e.target.value })}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Keep current plan</option>
+                {plans.map((plan) => (
+                  <option key={plan._id} value={plan._id || ""}>
+                    {plan.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Status</label>
+              <select
+                value={editForm.status}
+                onChange={(e) =>
                   setEditForm({
                     ...editForm,
-                    billingCycle: value as "monthly" | "yearly",
+                    status: e.target.value as UserSubscription["status"],
                   })
                 }
-                options={[
-                  { value: "monthly", label: "Monthly" },
-                  { value: "yearly", label: "Yearly" },
-                ]}
-              />
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="active">Active</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="expired">Expired</option>
+                <option value="suspended">Suspended</option>
+                <option value="pending">Pending</option>
+              </select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Billing Cycle</label>
+                <select
+                  value={editForm.billingCycle}
+                  onChange={(e) =>
+                    setEditForm({
+                      ...editForm,
+                      billingCycle: e.target.value as "monthly" | "yearly",
+                    })
+                  }
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">Start Date</label>
+                <input
+                  type="date"
+                  value={editForm.startDate.toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : new Date();
+                    setEditForm({ ...editForm, startDate: date });
+                  }}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-0.5">End Date</label>
+                <input
+                  type="date"
+                  value={editForm.endDate.toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : new Date();
+                    setEditForm({ ...editForm, endDate: date });
+                  }}
+                  min={editForm.startDate.toISOString().split('T')[0]}
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Start Date</label>
-              <DatePicker
-                value={editForm.startDate}
-                onChange={(date) => date && setEditForm({ ...editForm, startDate: date })}
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Reason</label>
+              <input
+                type="text"
+                value={editForm.reason}
+                onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
+                placeholder="e.g., Plan upgrade"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">End Date</label>
-              <DatePicker
-                value={editForm.endDate}
-                onChange={(date) => date && setEditForm({ ...editForm, endDate: date })}
-                minDate={editForm.startDate}
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Notes</label>
+              <textarea
+                value={editForm.notes}
+                onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                placeholder="Additional admin notes"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Reason</label>
-            <Input
-              value={editForm.reason}
-              onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
-              placeholder="e.g., Plan upgrade"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Notes</label>
-            <Textarea
-              value={editForm.notes}
-              onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
-              placeholder="Additional admin notes"
-              rows={3}
-            />
           </div>
         </div>
       </Modal>
@@ -696,81 +951,87 @@ export default function AdminSubscriptionsPage() {
         size="lg"
         footer={
           <div className="flex justify-end">
-            <Button variant="outline" onClick={() => setShowViewModal(false)}>
+            <button
+              type="button"
+              onClick={() => setShowViewModal(false)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
               Close
-            </Button>
+            </button>
           </div>
         }
       >
         {selectedSubscription && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-sm text-gray-600">User</p>
-                <p className="font-semibold">
-                  {typeof selectedSubscription.user === "object"
-                    ? `${selectedSubscription.user.firstName || ""} ${selectedSubscription.user.lastName || ""}`.trim() ||
-                      selectedSubscription.user.email
-                    : selectedSubscription.user}
-                </p>
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">User</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {typeof selectedSubscription.user === "object"
+                      ? `${selectedSubscription.user.firstName || ""} ${selectedSubscription.user.lastName || ""}`.trim() ||
+                        selectedSubscription.user.email
+                      : selectedSubscription.user}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Plan</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {typeof selectedSubscription.plan === "object"
+                      ? selectedSubscription.plan.name
+                      : selectedSubscription.plan}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Status</p>
+                  <span
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                      selectedSubscription.status
+                    )}`}
+                  >
+                    {getStatusIcon(selectedSubscription.status)}
+                    {selectedSubscription.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Billing Cycle</p>
+                  <p className="text-sm font-semibold text-gray-900">{selectedSubscription.billingCycle || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Start Date</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {selectedSubscription.startDate
+                      ? new Date(selectedSubscription.startDate).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">End Date</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {selectedSubscription.endDate
+                      ? new Date(selectedSubscription.endDate).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Plan</p>
-                <p className="font-semibold">
-                  {typeof selectedSubscription.plan === "object"
-                    ? selectedSubscription.plan.name
-                    : selectedSubscription.plan}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Status</p>
-                <span
-                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                    selectedSubscription.status
-                  )}`}
-                >
-                  {getStatusIcon(selectedSubscription.status)}
-                  {selectedSubscription.status}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Billing Cycle</p>
-                <p className="font-semibold">{selectedSubscription.billingCycle || "N/A"}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Start Date</p>
-                <p className="font-semibold">
-                  {selectedSubscription.startDate
-                    ? new Date(selectedSubscription.startDate).toLocaleDateString()
-                    : "N/A"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">End Date</p>
-                <p className="font-semibold">
-                  {selectedSubscription.endDate
-                    ? new Date(selectedSubscription.endDate).toLocaleDateString()
-                    : "N/A"}
-                </p>
-              </div>
+              {selectedSubscription.manualDetails && (
+                <div className="pt-3 border-t border-gray-200">
+                  <h3 className="text-xs font-semibold text-gray-700 mb-2">Manual Details</h3>
+                  {selectedSubscription.manualDetails.reason && (
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">Reason</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedSubscription.manualDetails.reason}</p>
+                    </div>
+                  )}
+                  {selectedSubscription.manualDetails.notes && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 mb-0.5">Notes</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedSubscription.manualDetails.notes}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            {selectedSubscription.manualDetails && (
-              <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-2">Manual Details</h3>
-                {selectedSubscription.manualDetails.reason && (
-                  <div className="mb-2">
-                    <p className="text-sm text-gray-600">Reason</p>
-                    <p className="font-semibold">{selectedSubscription.manualDetails.reason}</p>
-                  </div>
-                )}
-                {selectedSubscription.manualDetails.notes && (
-                  <div>
-                    <p className="text-sm text-gray-600">Notes</p>
-                    <p className="font-semibold">{selectedSubscription.manualDetails.notes}</p>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </Modal>
@@ -782,32 +1043,40 @@ export default function AdminSubscriptionsPage() {
         title="Cancel Manual Subscription"
         size="md"
         footer={
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowCancelModal(false)}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={handleCancel}
               disabled={loading}
-              className="bg-red-600 hover:bg-red-700"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
             >
               {loading ? "Cancelling..." : "Confirm Cancellation"}
-            </Button>
+            </button>
           </div>
         }
       >
-        <div className="space-y-3">
-          <p className="text-gray-600">
-            Are you sure you want to cancel this manual subscription? This action cannot be undone.
-          </p>
-          <div>
-            <label className="block text-xs font-medium mb-1">Cancellation Reason</label>
-            <Textarea
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="Enter reason for cancellation"
-              rows={3}
-            />
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600">
+              Are you sure you want to cancel this manual subscription? This action cannot be undone.
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-0.5">Cancellation Reason</label>
+              <textarea
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Enter reason for cancellation"
+                rows={3}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
           </div>
         </div>
       </Modal>

@@ -163,7 +163,11 @@ export default function AdminJobsPage() {
       queryParams.append("page", filters.page.toString());
       queryParams.append("limit", filters.limit.toString());
       if (filters.status) queryParams.append("status", filters.status);
-      if (filters.category) queryParams.append("category", filters.category);
+      // Only include category if it's a valid ObjectId (24 hex characters)
+      // This prevents errors when category names are passed instead of IDs
+      if (filters.category && /^[0-9a-fA-F]{24}$/.test(filters.category)) {
+        queryParams.append("category", filters.category);
+      }
       if (filters.jobType) queryParams.append("jobType", filters.jobType);
       if (filters.search) queryParams.append("search", filters.search);
 
@@ -638,7 +642,7 @@ export default function AdminJobsPage() {
           remoteType: (company.location?.remoteType || "fully_remote") as "fully_remote" | "hybrid" | "on_site",
         } as { address: string; city: string; state: string; country: string; isRemote: boolean; remoteType: "fully_remote" | "hybrid" | "on_site" },
       },
-      category: job.category || "",
+      category: typeof job.category === 'string' ? job.category : job.category?.name || "",
       subcategory: job.subcategory || "",
       jobType: job.jobType || "full_time",
       experienceLevel: job.experienceLevel || "mid",
@@ -745,7 +749,7 @@ export default function AdminJobsPage() {
       job.title?.toLowerCase().includes(searchLower) ||
       job.company?.name?.toLowerCase().includes(searchLower) ||
       job.description?.toLowerCase().includes(searchLower) ||
-      job.category?.toLowerCase().includes(searchLower)
+      (typeof job.category === 'string' ? job.category.toLowerCase().includes(searchLower) : job.category?.name?.toLowerCase().includes(searchLower) || false)
     );
   });
 

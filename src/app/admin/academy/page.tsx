@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { 
   BookOpen, 
@@ -14,7 +14,8 @@ import {
   BarChart3,
   Users,
   TrendingUp,
-  Eye
+  Eye,
+  X
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -87,6 +88,14 @@ export default function AcademyPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoTitle, setVideoTitle] = useState("");
   const [videoDuration, setVideoDuration] = useState(0);
+
+  // Instructor autosuggest state
+  const [instructorSearchTerm, setInstructorSearchTerm] = useState("");
+  const [instructorSuggestions, setInstructorSuggestions] = useState<Array<{ _id: string; firstName: string; lastName: string; email: string }>>([]);
+  const [showInstructorSuggestions, setShowInstructorSuggestions] = useState(false);
+  const [loadingInstructors, setLoadingInstructors] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState<{ _id: string; firstName: string; lastName: string; email: string } | null>(null);
+  const instructorAutosuggestRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -172,6 +181,11 @@ export default function AcademyPage() {
   }, [fetchData]);
 
   const resetForm = () => {
+    // Reset instructor autosuggest state
+    setSelectedInstructor(null);
+    setInstructorSearchTerm('');
+    setInstructorSuggestions([]);
+    setShowInstructorSuggestions(false);
     setCourseFormData({
       title: "",
       description: "",
@@ -358,6 +372,117 @@ export default function AcademyPage() {
       toast.error(`Failed to delete course: ${error.message}`);
     }
   };
+
+  // Fetch instructors for autosuggest
+  const fetchInstructors = useCallback(async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setInstructorSuggestions([]);
+      setShowInstructorSuggestions(false);
+      return;
+    }
+
+    try {
+      setLoadingInstructors(true);
+      setShowInstructorSuggestions(true); // Show dropdown while loading
+      if (!getApiToken()) {
+        setLoadingInstructors(false);
+        return;
+      }
+
+      const queryParams = new URLSearchParams();
+      queryParams.append('search', searchTerm);
+      queryParams.append('limit', '10');
+      // Optionally filter by role if you want only instructors
+      // queryParams.append('role', 'instructor');
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}?${queryParams.toString()}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        // Handle different response structures
+        let users = [];
+        if (result.data) {
+          if (Array.isArray(result.data)) {
+            users = result.data;
+          } else if (result.data.users && Array.isArray(result.data.users)) {
+            users = result.data.users;
+          }
+        } else if (result.users && Array.isArray(result.users)) {
+          users = result.users;
+        } else if (Array.isArray(result)) {
+          users = result;
+        }
+        
+        // Transform users to instructor suggestions format
+        const suggestions = users
+          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
+          .map((user: any) => ({
+            _id: user._id || user.id,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          }));
+        
+        setInstructorSuggestions(suggestions);
+        setShowInstructorSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
+      } else {
+        setInstructorSuggestions([]);
+        setShowInstructorSuggestions(false);
+      }
+    } catch (err) {
+      // Silently fail - don't show error for autosuggest
+      setInstructorSuggestions([]);
+      setShowInstructorSuggestions(false);
+    } finally {
+      setLoadingInstructors(false);
+    }
+  }, []);
+
+  // Debounced instructor search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (instructorSearchTerm && instructorSearchTerm.length >= 2) {
+        fetchInstructors(instructorSearchTerm);
+      } else {
+        setInstructorSuggestions([]);
+        setShowInstructorSuggestions(false);
+        setLoadingInstructors(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [instructorSearchTerm, fetchInstructors]);
+
+  // Handle instructor selection
+  const handleInstructorSelect = (instructor: { _id: string; firstName: string; lastName: string; email: string }) => {
+    setSelectedInstructor(instructor);
+    setCourseFormData({ ...courseFormData, instructor: instructor._id });
+    setInstructorSearchTerm(`${instructor.firstName} ${instructor.lastName}`.trim() || instructor.email);
+    setShowInstructorSuggestions(false);
+  };
+
+  // Clear instructor selection
+  const handleInstructorClear = () => {
+    setSelectedInstructor(null);
+    setCourseFormData({ ...courseFormData, instructor: '' });
+    setInstructorSearchTerm('');
+    setShowInstructorSuggestions(false);
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (instructorAutosuggestRef.current && !instructorAutosuggestRef.current.contains(event.target as Node)) {
+        setShowInstructorSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleUploadThumbnail = async () => {
     if (!selectedCourse?._id || !thumbnailFile) return;
@@ -722,18 +847,49 @@ export default function AcademyPage() {
   //   // ... implementation
   // };
 
-  const openEditModal = (course: Course) => {
+  // Fetch instructor details by ID
+  const fetchInstructorById = useCallback(async (instructorId: string) => {
+    if (!instructorId || !getApiToken()) return;
+
+    try {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersById}/${instructorId}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        const user = result.data || result;
+        
+        if (user._id || user.id) {
+          const instructor = {
+            _id: user._id || user.id,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          };
+          setSelectedInstructor(instructor);
+          setInstructorSearchTerm(`${instructor.firstName} ${instructor.lastName}`.trim() || instructor.email);
+        }
+      }
+    } catch (err) {
+      // Silently fail - instructor might not exist
+    }
+  }, []);
+
+  const openEditModal = async (course: Course) => {
     setSelectedCourse(course);
+    
+    const instructorId = typeof course.instructor === 'string' 
+      ? course.instructor 
+      : (typeof course.instructor === 'object' && course.instructor !== null && '_id' in course.instructor)
+        ? (course.instructor as { _id?: string })._id || ""
+        : "";
+
     setCourseFormData({
       title: course.title,
       description: course.description,
       category: course.category,
       level: course.level,
-      instructor: typeof course.instructor === 'string' 
-        ? course.instructor 
-        : (typeof course.instructor === 'object' && course.instructor !== null && '_id' in course.instructor)
-          ? (course.instructor as { _id?: string })._id || ""
-          : "",
+      instructor: instructorId,
       regularPrice: typeof course.pricing === 'object' ? course.pricing.regularPrice : 0,
       discountedPrice: typeof course.pricing === 'object' ? (course.pricing.discountedPrice ?? 0) : 0,
       currency: typeof course.pricing === 'object' ? course.pricing.currency || getDefaultCurrency(appSettings) : getDefaultCurrency(appSettings),
@@ -745,6 +901,15 @@ export default function AcademyPage() {
       prerequisites: course.prerequisites || [],
       learningOutcomes: course.learningOutcomes || []
     });
+
+    // Fetch instructor details if instructor ID exists
+    if (instructorId) {
+      await fetchInstructorById(instructorId);
+    } else {
+      setSelectedInstructor(null);
+      setInstructorSearchTerm('');
+    }
+
     setEditModalOpen(true);
   };
 
@@ -1120,14 +1285,90 @@ export default function AcademyPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor ID</label>
-            <input
-              type="text"
-              value={courseFormData.instructor}
-              onChange={(e) => setCourseFormData({ ...courseFormData, instructor: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of instructor"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor</label>
+            <div ref={instructorAutosuggestRef} className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={instructorSearchTerm}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setInstructorSearchTerm(newValue);
+                    if (newValue === '') {
+                      handleInstructorClear();
+                    } else if (selectedInstructor) {
+                      // If user starts typing and it doesn't match the selected instructor, clear selection
+                      const selectedName = `${selectedInstructor.firstName} ${selectedInstructor.lastName}`.trim();
+                      const selectedEmail = selectedInstructor.email;
+                      if (newValue !== selectedName && newValue !== selectedEmail && !newValue.startsWith(selectedName) && !newValue.startsWith(selectedEmail)) {
+                        setSelectedInstructor(null);
+                        setCourseFormData({ ...courseFormData, instructor: '' });
+                      }
+                    }
+                  }}
+                  onFocus={() => {
+                    if (instructorSearchTerm && instructorSearchTerm.length >= 2) {
+                      if (instructorSuggestions.length > 0) {
+                        setShowInstructorSuggestions(true);
+                      } else if (!loadingInstructors) {
+                        // Trigger search if we have a search term but no suggestions yet
+                        fetchInstructors(instructorSearchTerm);
+                      }
+                    }
+                  }}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Search for instructor by name or email..."
+                />
+                {selectedInstructor && (
+                  <button
+                    type="button"
+                    onClick={handleInstructorClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Suggestions Dropdown */}
+              {showInstructorSuggestions && instructorSearchTerm.length >= 2 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {loadingInstructors ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Searching...
+                    </div>
+                  ) : instructorSuggestions.length > 0 ? (
+                    instructorSuggestions.map((instructor) => (
+                      <div
+                        key={instructor._id}
+                        onClick={() => handleInstructorSelect(instructor)}
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {instructor.firstName} {instructor.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{instructor.email}</div>
+                        <div className="text-xs text-gray-400 mt-1">ID: {instructor._id}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No instructors found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {selectedInstructor && (
+                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900">
+                    Selected: {selectedInstructor.firstName} {selectedInstructor.lastName}
+                  </div>
+                  <div className="text-xs text-blue-700">{selectedInstructor.email}</div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
@@ -1292,14 +1533,90 @@ export default function AcademyPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor ID</label>
-            <input
-              type="text"
-              value={courseFormData.instructor}
-              onChange={(e) => setCourseFormData({ ...courseFormData, instructor: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of instructor"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor</label>
+            <div ref={instructorAutosuggestRef} className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={instructorSearchTerm}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setInstructorSearchTerm(newValue);
+                    if (newValue === '') {
+                      handleInstructorClear();
+                    } else if (selectedInstructor) {
+                      // If user starts typing and it doesn't match the selected instructor, clear selection
+                      const selectedName = `${selectedInstructor.firstName} ${selectedInstructor.lastName}`.trim();
+                      const selectedEmail = selectedInstructor.email;
+                      if (newValue !== selectedName && newValue !== selectedEmail && !newValue.startsWith(selectedName) && !newValue.startsWith(selectedEmail)) {
+                        setSelectedInstructor(null);
+                        setCourseFormData({ ...courseFormData, instructor: '' });
+                      }
+                    }
+                  }}
+                  onFocus={() => {
+                    if (instructorSearchTerm && instructorSearchTerm.length >= 2) {
+                      if (instructorSuggestions.length > 0) {
+                        setShowInstructorSuggestions(true);
+                      } else if (!loadingInstructors) {
+                        // Trigger search if we have a search term but no suggestions yet
+                        fetchInstructors(instructorSearchTerm);
+                      }
+                    }
+                  }}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Search for instructor by name or email..."
+                />
+                {selectedInstructor && (
+                  <button
+                    type="button"
+                    onClick={handleInstructorClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Suggestions Dropdown */}
+              {showInstructorSuggestions && instructorSearchTerm.length >= 2 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {loadingInstructors ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Searching...
+                    </div>
+                  ) : instructorSuggestions.length > 0 ? (
+                    instructorSuggestions.map((instructor) => (
+                      <div
+                        key={instructor._id}
+                        onClick={() => handleInstructorSelect(instructor)}
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {instructor.firstName} {instructor.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{instructor.email}</div>
+                        <div className="text-xs text-gray-400 mt-1">ID: {instructor._id}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No instructors found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {selectedInstructor && (
+                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900">
+                    Selected: {selectedInstructor.firstName} {selectedInstructor.lastName}
+                  </div>
+                  <div className="text-xs text-blue-700">{selectedInstructor.email}</div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>

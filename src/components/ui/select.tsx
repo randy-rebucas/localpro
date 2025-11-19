@@ -10,10 +10,11 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
   options?: Array<{ value: string; label: string; disabled?: boolean }>;
   placeholder?: string;
   onValueChange?: (value: string) => void;
+  onChange?: React.ChangeEventHandler<HTMLSelectElement>;
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, helperText, variant = 'default', options, placeholder, children, onValueChange, ...props }, ref) => {
+  ({ className, label, error, helperText, variant = 'default', options, placeholder, children, onValueChange, onChange, ...props }, ref) => {
     const baseClasses = "w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none bg-no-repeat bg-right bg-[length:16px]";
     
     const variantClasses = {
@@ -29,8 +30,13 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     );
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      // Call onValueChange if provided
       if (onValueChange) {
         onValueChange(e.target.value);
+      }
+      // Call onChange from props (from react-hook-form register)
+      if (onChange) {
+        onChange(e);
       }
     };
 

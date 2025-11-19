@@ -84,10 +84,25 @@ interface ApiProductData {
   isFeatured?: boolean;
   views?: number;
   isSubscriptionEligible?: boolean;
-  supplier?: string | { _id?: string; id?: string; name?: string };
+  supplier?: string | { 
+    _id?: string; 
+    id?: string; 
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    profile?: {
+      bio?: string;
+      avatar?: string;
+      [key: string]: unknown;
+    };
+  };
   averageRating?: number;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  orders?: unknown[];
+  reviews?: unknown[];
+  __v?: number;
 }
 
 interface SupplyStatistics {
@@ -311,13 +326,14 @@ export default function AdminSuppliesPage() {
       let totalCount = 0;
 
       // Handle different response structures
+      // Response format: { success: true, count: 2, total: 2, page: 1, pages: 1, data: [...] }
       if (dataResult.success && dataResult.data) {
         if (dataResult.data.products && Array.isArray(dataResult.data.products)) {
           productsData = dataResult.data.products.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
-          totalCount = dataResult.data.pagination?.total || dataResult.data.products.length;
+          totalCount = dataResult.data.pagination?.total || dataResult.total || dataResult.count || dataResult.data.products.length;
         } else if (Array.isArray(dataResult.data)) {
           productsData = dataResult.data.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
-          totalCount = dataResult.total || dataResult.data.length;
+          totalCount = dataResult.total || dataResult.count || dataResult.data.length;
         }
       } else if (Array.isArray(dataResult)) {
         productsData = dataResult.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
@@ -325,14 +341,14 @@ export default function AdminSuppliesPage() {
       } else if (dataResult.data) {
         if (Array.isArray(dataResult.data)) {
           productsData = dataResult.data.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
-          totalCount = dataResult.total || dataResult.data.length;
+          totalCount = dataResult.total || dataResult.count || dataResult.data.length;
         } else if (dataResult.data.products && Array.isArray(dataResult.data.products)) {
           productsData = dataResult.data.products.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
-          totalCount = dataResult.data.pagination?.total || dataResult.data.products.length;
+          totalCount = dataResult.data.pagination?.total || dataResult.total || dataResult.count || dataResult.data.products.length;
         }
       } else if (Array.isArray(dataResult.products)) {
-        productsData = dataResult.products.map(transformProductData);
-        totalCount = dataResult.pagination?.total || dataResult.products.length;
+        productsData = dataResult.products.map((p: ApiProductData) => transformProductData(p, getDefaultCurrency(appSettings)));
+        totalCount = dataResult.pagination?.total || dataResult.total || dataResult.count || dataResult.products.length;
       }
 
       setProducts(productsData);
@@ -405,21 +421,88 @@ export default function AdminSuppliesPage() {
       setLoadingProductDetails(true);
       if (!getApiToken()) return;
       
+      // Validate productId format (should be a valid ObjectId or string)
+      if (!productId || typeof productId !== 'string') {
+        throw new Error('Invalid product ID');
+      }
+      
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesById.replace('[id]', productId)}`;
       const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch product details');
+        const errorMessage = errorData.error || errorData.message || `Failed to fetch product details: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      const productData = result.data || result;
-      setSelectedProductDetails(transformProductData(productData, getDefaultCurrency(appSettings)));
+      // Safely parse JSON response
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        throw new Error('Invalid JSON response from server');
+      }
+      
+      // Safely extract product data from nested structure
+      // Response format: { success: true, data: { supply: {...}, reviews: [], statistics: {...} } }
+      let productData;
+      try {
+        // Handle nested structure: data.supply contains the actual product
+        if (result.data && result.data.supply) {
+          productData = result.data.supply;
+          // Map 'id' to '_id' if present (API uses 'id' but our transform expects '_id')
+          if (productData.id && !productData._id) {
+            productData._id = productData.id;
+          }
+        } else if (result.data) {
+          // Fallback: if data exists but no supply property, use data directly
+          productData = result.data;
+          if (productData.id && !productData._id) {
+            productData._id = productData.id;
+          }
+        } else if (result.supply) {
+          // Another fallback: supply at root level
+          productData = result.supply;
+          if (productData.id && !productData._id) {
+            productData._id = productData.id;
+          }
+        } else {
+          // Last fallback: use result directly
+          productData = result;
+          if (productData.id && !productData._id) {
+            productData._id = productData.id;
+          }
+        }
+      } catch {
+        throw new Error('Invalid product data structure');
+      }
+      
+      // Ensure productData is a plain object before transformation
+      if (!productData || typeof productData !== 'object' || Array.isArray(productData)) {
+        throw new Error('Invalid product data received');
+      }
+      
+      // Safely transform the product data with error handling
+      let transformedProduct;
+      try {
+        transformedProduct = transformProductData(productData, getDefaultCurrency(appSettings));
+      } catch (transformError) {
+        // If transformation fails (e.g., due to ObjectId in data), throw a safe error
+        throw new Error('Failed to process product data');
+      }
+      
+      setSelectedProductDetails(transformedProduct);
       setViewModalOpen(true);
     } catch (err) {
-      logger.error('Error fetching product details', err instanceof Error ? err : new Error(String(err)));
-      toast.error(err instanceof Error ? err.message : 'Failed to fetch product details');
+      // Completely avoid accessing error object to prevent ObjectId serialization issues
+      // Don't try to extract message, don't convert to string, just use a safe default
+      const errorMessage = 'Failed to fetch product details';
+      
+      // Create a completely clean error object with only the safe message
+      // Never pass the original error to logger as it might contain ObjectId instances
+      const cleanError = new Error(errorMessage);
+      logger.error('Error fetching product details', cleanError);
+      toast.error(errorMessage);
     } finally {
       setLoadingProductDetails(false);
     }
@@ -1198,55 +1281,196 @@ export default function AdminSuppliesPage() {
             <Loading size="md" />
           </div>
         ) : selectedProductDetails ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-gray-500">Name</label>
-                <p className="text-sm font-semibold">{selectedProductDetails.name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Title</label>
-                <p className="text-sm font-semibold">{selectedProductDetails.title || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Category</label>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedProductDetails.category)}`}>
-                  {selectedProductDetails.category.replace('_', ' ').toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Brand</label>
-                <p className="text-sm">{selectedProductDetails.brand || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">SKU</label>
-                <p className="text-sm">{selectedProductDetails.sku || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Price</label>
-                <p className="text-sm">
-                  {formatCurrency(
-                    selectedProductDetails.pricing?.retailPrice || 0,
-                    selectedProductDetails.pricing?.currency || getDefaultCurrency(appSettings),
-                    { appSettings }
-                  )}
-                </p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Stock</label>
-                <p className="text-sm">{selectedProductDetails.inventory?.quantity || 0}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-gray-500">Status</label>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedProductDetails.isActive)}`}>
-                  {selectedProductDetails.isActive ? 'ACTIVE' : 'INACTIVE'}
-                </span>
-              </div>
-              <div className="col-span-2">
-                <label className="text-xs font-medium text-gray-500">Description</label>
-                <p className="text-sm">{selectedProductDetails.description || 'N/A'}</p>
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Name</label>
+                  <p className="text-sm font-semibold">{selectedProductDetails.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Title</label>
+                  <p className="text-sm font-semibold">{selectedProductDetails.title || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Category</label>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedProductDetails.category)}`}>
+                    {selectedProductDetails.category.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Subcategory</label>
+                  <p className="text-sm">{selectedProductDetails.subcategory || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Brand</label>
+                  <p className="text-sm">{selectedProductDetails.brand || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">SKU</label>
+                  <p className="text-sm font-mono">{selectedProductDetails.sku || 'N/A'}</p>
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs font-medium text-gray-500">Description</label>
+                  <p className="text-sm text-gray-700">{selectedProductDetails.description || 'N/A'}</p>
+                </div>
               </div>
             </div>
+
+            {/* Pricing Information */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Pricing</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Retail Price</label>
+                  <p className="text-sm font-semibold">
+                    {formatCurrency(
+                      selectedProductDetails.pricing?.retailPrice || 0,
+                      selectedProductDetails.pricing?.currency || getDefaultCurrency(appSettings),
+                      { appSettings }
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Wholesale Price</label>
+                  <p className="text-sm">
+                    {selectedProductDetails.pricing?.wholesalePrice 
+                      ? formatCurrency(
+                          selectedProductDetails.pricing.wholesalePrice,
+                          selectedProductDetails.pricing?.currency || getDefaultCurrency(appSettings),
+                          { appSettings }
+                        )
+                      : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Currency</label>
+                  <p className="text-sm">{selectedProductDetails.pricing?.currency || getDefaultCurrency(appSettings)}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Inventory Information */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Inventory</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Quantity</label>
+                  <p className={`text-sm font-semibold ${
+                    selectedProductDetails.inventory?.quantity && 
+                    selectedProductDetails.inventory.quantity < (selectedProductDetails.inventory.minStock || 10)
+                      ? 'text-red-600' 
+                      : ''
+                  }`}>
+                    {selectedProductDetails.inventory?.quantity || 0}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Min Stock</label>
+                  <p className="text-sm">{selectedProductDetails.inventory?.minStock || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Max Stock</label>
+                  <p className="text-sm">{selectedProductDetails.inventory?.maxStock || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Location</label>
+                  <p className="text-sm">{selectedProductDetails.inventory?.location || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Specifications */}
+            {selectedProductDetails.specifications && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Specifications</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedProductDetails.specifications.weight && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Weight</label>
+                      <p className="text-sm">{selectedProductDetails.specifications.weight}</p>
+                    </div>
+                  )}
+                  {selectedProductDetails.specifications.dimensions && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Dimensions</label>
+                      <p className="text-sm">{selectedProductDetails.specifications.dimensions}</p>
+                    </div>
+                  )}
+                  {selectedProductDetails.specifications.material && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Material</label>
+                      <p className="text-sm">{selectedProductDetails.specifications.material}</p>
+                    </div>
+                  )}
+                  {selectedProductDetails.specifications.color && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Color</label>
+                      <p className="text-sm">{selectedProductDetails.specifications.color}</p>
+                    </div>
+                  )}
+                  {selectedProductDetails.specifications.warranty && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Warranty</label>
+                      <p className="text-sm">{selectedProductDetails.specifications.warranty}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Information */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Additional Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Status</label>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedProductDetails.isActive)}`}>
+                    {selectedProductDetails.isActive ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Featured</label>
+                  <p className="text-sm">{selectedProductDetails.isFeatured ? 'Yes' : 'No'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Subscription Eligible</label>
+                  <p className="text-sm">{selectedProductDetails.isSubscriptionEligible ? 'Yes' : 'No'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Views</label>
+                  <p className="text-sm">{selectedProductDetails.views || 0}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Average Rating</label>
+                  <p className="text-sm">{selectedProductDetails.averageRating || 0}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Created At</label>
+                  <p className="text-sm">{selectedProductDetails.createdAt ? new Date(selectedProductDetails.createdAt).toLocaleString() : 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500">Updated At</label>
+                  <p className="text-sm">{selectedProductDetails.updatedAt ? new Date(selectedProductDetails.updatedAt).toLocaleString() : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tags */}
+            {selectedProductDetails.tags && selectedProductDetails.tags.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Tags</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProductDetails.tags.map((tag, index) => (
+                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
       </Modal>

@@ -44,7 +44,12 @@ interface ApiServiceData {
   description?: string;
   category?: string;
   subcategory?: string;
-  provider?: string | { _id?: string; id?: string };
+  provider?: string | { 
+    _id?: string; 
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+  };
   pricing?: ServicePricing;
   serviceArea?: string[];
   images?: ServiceImage[];
@@ -62,9 +67,19 @@ interface ApiServiceData {
   addOns?: Array<{ name?: string; description?: string; price?: number; category?: string }>;
   isActive?: boolean;
   rating?: { average?: number; count?: number };
-  availability?: { schedule?: Array<{ day?: string; startTime?: string; endTime?: string; isAvailable?: boolean }>; timezone?: string };
+  availability?: { 
+    schedule?: Array<{ 
+      _id?: string;
+      day?: string; 
+      startTime?: string; 
+      endTime?: string; 
+      isAvailable?: boolean;
+    }>; 
+    timezone?: string;
+  };
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  __v?: number;
 }
 
 // Helper function to transform API service data to frontend format
@@ -352,21 +367,76 @@ export default function MarketplacePage() {
       setLoadingServiceDetails(true);
       if (!getApiToken()) return;
       
+      // Validate serviceId format
+      if (!serviceId || typeof serviceId !== 'string') {
+        throw new Error('Invalid service ID');
+      }
+      
       const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`;
       const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to fetch service details');
+        const errorMessage = errorData.error || errorData.message || `Failed to fetch service details: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      const serviceData = result.data || result;
-      setSelectedServiceDetails(transformServiceData(serviceData));
+      // Safely parse JSON response
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        throw new Error('Invalid JSON response from server');
+      }
+      
+      // Safely extract service data from response structure
+      // Response format: { success: true, data: { ...service data... } }
+      let serviceData;
+      try {
+        // Handle nested structure: data contains the service
+        if (result.data) {
+          serviceData = result.data;
+          // Map 'id' to '_id' if present (API might use 'id' instead of '_id')
+          if (serviceData.id && !serviceData._id) {
+            serviceData._id = serviceData.id;
+          }
+        } else {
+          // Fallback: use result directly
+          serviceData = result;
+          if (serviceData.id && !serviceData._id) {
+            serviceData._id = serviceData.id;
+          }
+        }
+      } catch {
+        throw new Error('Invalid service data structure');
+      }
+      
+      // Ensure serviceData is a plain object before transformation
+      if (!serviceData || typeof serviceData !== 'object' || Array.isArray(serviceData)) {
+        throw new Error('Invalid service data received');
+      }
+      
+      // Safely transform the service data with error handling
+      let transformedService;
+      try {
+        transformedService = transformServiceData(serviceData);
+      } catch (transformError) {
+        // If transformation fails (e.g., due to ObjectId in data), throw a safe error
+        throw new Error('Failed to process service data');
+      }
+      
+      setSelectedServiceDetails(transformedService);
       setViewModalOpen(true);
     } catch (err) {
-      logger.error('Error fetching service details', err instanceof Error ? err : new Error(String(err)));
-      toast.error(err instanceof Error ? err.message : 'Failed to fetch service details');
+      // Completely avoid accessing error object to prevent ObjectId serialization issues
+      // Don't try to extract message, don't convert to string, just use a safe default
+      const errorMessage = 'Failed to fetch service details';
+      
+      // Create a completely clean error object with only the safe message
+      // Never pass the original error to logger as it might contain ObjectId instances
+      const cleanError = new Error(errorMessage);
+      logger.error('Error fetching service details', cleanError);
+      toast.error(errorMessage);
     } finally {
       setLoadingServiceDetails(false);
     }

@@ -326,6 +326,19 @@ export default function JobDetailPage() {
     }
   };
 
+  // Helper function to get category name (handles both string and object formats)
+  const getCategoryName = (category: string | { name?: string; _id?: string } | undefined): string | null => {
+    if (!category) return null;
+    if (typeof category === 'string') return category;
+    return category.name || null;
+  };
+
+  // Helper function to get isRemote status (checks both job level and company.location)
+  const getIsRemote = (): boolean | undefined => {
+    if (job?.isRemote !== undefined) return job.isRemote;
+    return job?.company?.location?.isRemote;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -386,7 +399,7 @@ export default function JobDetailPage() {
                   <MapPin className="w-4 h-4" />
                   <span>
                     {job.company.location.city || ''}, {job.company.location.state || ''}
-                    {job.isRemote && " (Remote)"}
+                    {getIsRemote() && " (Remote)"}
                   </span>
                 </div>
               )}
@@ -866,10 +879,18 @@ export default function JobDetailPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Job Details</h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600 text-sm font-medium">Category</span>
-                <span className="font-semibold text-gray-900 capitalize text-sm">{job.category.toLowerCase().replace(/_/g, ' ')}</span>
-              </div>
+              {(() => {
+                const categoryName = getCategoryName((job.category as unknown) as string | { name?: string; _id?: string } | undefined);
+                if (!categoryName) return null;
+                return (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600 text-sm font-medium">Category</span>
+                    <span className="font-semibold text-gray-900 capitalize text-sm">
+                      {categoryName.toLowerCase().replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                );
+              })()}
               {job.subcategory && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Subcategory</span>
@@ -892,11 +913,11 @@ export default function JobDetailPage() {
                   </span>
                 </div>
               )}
-              {job.isRemote !== undefined && (
+              {getIsRemote() !== undefined && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Remote</span>
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${job.isRemote ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
-                    {job.isRemote ? 'Yes' : 'No'}
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${getIsRemote() ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+                    {getIsRemote() ? 'Yes' : 'No'}
                   </span>
                 </div>
               )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { 
   Home, 
@@ -165,6 +165,14 @@ export default function RentalsPage() {
   });
 
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+
+  // Owner autosuggest state
+  const [ownerSearchTerm, setOwnerSearchTerm] = useState("");
+  const [ownerSuggestions, setOwnerSuggestions] = useState<Array<{ _id: string; firstName: string; lastName: string; email: string }>>([]);
+  const [showOwnerSuggestions, setShowOwnerSuggestions] = useState(false);
+  const [loadingOwners, setLoadingOwners] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState<{ _id: string; firstName: string; lastName: string; email: string } | null>(null);
+  const ownerAutosuggestRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -661,6 +669,229 @@ export default function RentalsPage() {
     }
   };
 
+  // Fetch rental details by ID
+  const handleViewRental = async (rentalId: string) => {
+    if (!rentalId || !getApiToken()) {
+      const errorMessage = 'Failed to fetch rental details';
+      logger.error(errorMessage);
+      toast.error(errorMessage);
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const url = `${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${rentalId}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        const errorMessage = 'Failed to fetch rental details';
+        logger.error(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        const errorMessage = 'Failed to parse rental details response';
+        logger.error(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Extract rental data from response
+      let rentalData: any = null;
+      try {
+        if (result.success && result.data) {
+          rentalData = result.data;
+        } else if (result.data) {
+          rentalData = result.data;
+        } else {
+          rentalData = result;
+        }
+      } catch (extractError) {
+        const errorMessage = 'Failed to extract rental data from response';
+        logger.error(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      if (!rentalData || typeof rentalData !== 'object') {
+        const errorMessage = 'Invalid rental data received';
+        logger.error(errorMessage);
+        toast.error(errorMessage);
+        return;
+      }
+
+      // Transform the API response to match the Rental interface
+      // Map id to _id if needed
+      if (rentalData.id && !rentalData._id) {
+        rentalData._id = rentalData.id;
+      }
+
+      // Ensure title is set (use name if title is missing)
+      if (!rentalData.title && rentalData.name) {
+        rentalData.title = rentalData.name;
+      }
+
+      // Transform owner data if it exists
+      if (rentalData.owner && typeof rentalData.owner === 'object') {
+        // Owner is already an object, ensure it has the right structure
+        if (!rentalData.owner._id && rentalData.owner.id) {
+          rentalData.owner._id = rentalData.owner.id;
+        }
+      }
+
+      setSelectedRental(rentalData as Rental);
+      setViewModalOpen(true);
+    } catch (err) {
+      // Completely avoid accessing err object to prevent ObjectId serialization issues
+      const errorMessage = 'Failed to fetch rental details';
+      logger.error(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Fetch owners for autosuggest
+  const fetchOwners = useCallback(async (searchTerm: string) => {
+    if (!searchTerm || searchTerm.length < 2) {
+      setOwnerSuggestions([]);
+      setShowOwnerSuggestions(false);
+      return;
+    }
+
+    try {
+      setLoadingOwners(true);
+      setShowOwnerSuggestions(true); // Show dropdown while loading
+      if (!getApiToken()) {
+        setLoadingOwners(false);
+        return;
+      }
+
+      const queryParams = new URLSearchParams();
+      queryParams.append('search', searchTerm);
+      queryParams.append('limit', '10');
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.users}?${queryParams.toString()}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        // Handle different response structures
+        let users = [];
+        if (result.data) {
+          if (Array.isArray(result.data)) {
+            users = result.data;
+          } else if (result.data.users && Array.isArray(result.data.users)) {
+            users = result.data.users;
+          }
+        } else if (result.users && Array.isArray(result.users)) {
+          users = result.users;
+        } else if (Array.isArray(result)) {
+          users = result;
+        }
+        
+        // Transform users to owner suggestions format
+        const suggestions = users
+          .filter((user: any) => user._id && (user.firstName || user.lastName || user.email))
+          .map((user: any) => ({
+            _id: user._id || user.id,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          }));
+        
+        setOwnerSuggestions(suggestions);
+        setShowOwnerSuggestions(suggestions.length > 0 || searchTerm.length >= 2);
+      } else {
+        setOwnerSuggestions([]);
+        setShowOwnerSuggestions(false);
+      }
+    } catch (err) {
+      // Silently fail - don't show error for autosuggest
+      setOwnerSuggestions([]);
+      setShowOwnerSuggestions(false);
+    } finally {
+      setLoadingOwners(false);
+    }
+  }, []);
+
+  // Debounced owner search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (ownerSearchTerm && ownerSearchTerm.length >= 2) {
+        fetchOwners(ownerSearchTerm);
+      } else {
+        setOwnerSuggestions([]);
+        setShowOwnerSuggestions(false);
+        setLoadingOwners(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [ownerSearchTerm, fetchOwners]);
+
+  // Handle owner selection
+  const handleOwnerSelect = (owner: { _id: string; firstName: string; lastName: string; email: string }) => {
+    setSelectedOwner(owner);
+    setRentalFormData({ ...rentalFormData, provider: owner._id, owner: owner._id });
+    setOwnerSearchTerm(`${owner.firstName} ${owner.lastName}`.trim() || owner.email);
+    setShowOwnerSuggestions(false);
+  };
+
+  // Clear owner selection
+  const handleOwnerClear = () => {
+    setSelectedOwner(null);
+    setRentalFormData({ ...rentalFormData, provider: '', owner: '' });
+    setOwnerSearchTerm('');
+    setShowOwnerSuggestions(false);
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ownerAutosuggestRef.current && !ownerAutosuggestRef.current.contains(event.target as Node)) {
+        setShowOwnerSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Fetch owner details by ID
+  const fetchOwnerById = useCallback(async (ownerId: string) => {
+    if (!ownerId || !getApiToken()) return;
+
+    try {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.usersById}/${ownerId}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (response.ok) {
+        const result = await response.json();
+        const user = result.data || result;
+        
+        if (user._id || user.id) {
+          const owner = {
+            _id: user._id || user.id,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            email: user.email || ''
+          };
+          setSelectedOwner(owner);
+          setOwnerSearchTerm(`${owner.firstName} ${owner.lastName}`.trim() || owner.email);
+        }
+      }
+    } catch (err) {
+      // Silently fail - owner might not exist
+    }
+  }, []);
+
   const handleUploadImages = async () => {
     if (!selectedRental?._id || imageFiles.length === 0) return;
 
@@ -856,6 +1087,11 @@ export default function RentalsPage() {
   };
 
   const resetForm = () => {
+    // Reset owner autosuggest state
+    setSelectedOwner(null);
+    setOwnerSearchTerm('');
+    setOwnerSuggestions([]);
+    setShowOwnerSuggestions(false);
     setRentalFormData({
       name: "",
       title: "",
@@ -904,7 +1140,7 @@ export default function RentalsPage() {
     setSelectedRental(null);
   };
 
-  const openEditModal = (rental: Rental) => {
+  const openEditModal = async (rental: Rental) => {
     setSelectedRental(rental);
     const pricing = rental.pricing || rental.price;
     const location = rental.location;
@@ -958,6 +1194,16 @@ export default function RentalsPage() {
       provider: typeof rental.owner === 'string' ? rental.owner : rental.owner?._id || (typeof rental.provider === 'string' ? rental.provider : rental.provider?._id || ""),
       tags: Array.isArray(rental.tags) ? rental.tags.join(', ') : rental.tags || ""
     });
+
+    // Fetch owner details if owner ID exists
+    const ownerId = typeof rental.owner === 'string' ? rental.owner : rental.owner?._id || "";
+    if (ownerId) {
+      await fetchOwnerById(ownerId);
+    } else {
+      setSelectedOwner(null);
+      setOwnerSearchTerm('');
+    }
+
     setEditModalOpen(true);
   };
 
@@ -1261,10 +1507,7 @@ export default function RentalsPage() {
                     <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => {
-                            setSelectedRental(rental);
-                            setViewModalOpen(true);
-                          }}
+                          onClick={() => rental._id && handleViewRental(rental._id)}
                           className="text-blue-600 hover:text-blue-900"
                           title="View rental details"
                         >
@@ -1443,8 +1686,14 @@ export default function RentalsPage() {
                           <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                             <button
                               onClick={() => {
-                                setSelectedRental(transaction.rentalItem || null);
-                                setViewModalOpen(true);
+                                if (transaction.rentalItem?._id) {
+                                  handleViewRental(transaction.rentalItem._id);
+                                } else if (transaction.item?._id) {
+                                  handleViewRental(transaction.item._id);
+                                } else {
+                                  setSelectedRental(transaction.rentalItem || null);
+                                  setViewModalOpen(true);
+                                }
                               }}
                               className="text-blue-600 hover:text-blue-900"
                               title="View details"
@@ -1525,13 +1774,89 @@ export default function RentalsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-            <input
-              type="text"
-              value={rentalFormData.provider}
-              onChange={(e) => setRentalFormData({ ...rentalFormData, provider: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of owner"
-            />
+            <div ref={ownerAutosuggestRef} className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={ownerSearchTerm}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setOwnerSearchTerm(newValue);
+                    if (newValue === '') {
+                      handleOwnerClear();
+                    } else if (selectedOwner) {
+                      // If user starts typing and it doesn't match the selected owner, clear selection
+                      const selectedName = `${selectedOwner.firstName} ${selectedOwner.lastName}`.trim();
+                      const selectedEmail = selectedOwner.email;
+                      if (newValue !== selectedName && newValue !== selectedEmail && !newValue.startsWith(selectedName) && !newValue.startsWith(selectedEmail)) {
+                        setSelectedOwner(null);
+                        setRentalFormData({ ...rentalFormData, provider: '', owner: '' });
+                      }
+                    }
+                  }}
+                  onFocus={() => {
+                    if (ownerSearchTerm && ownerSearchTerm.length >= 2) {
+                      if (ownerSuggestions.length > 0) {
+                        setShowOwnerSuggestions(true);
+                      } else if (!loadingOwners) {
+                        // Trigger search if we have a search term but no suggestions yet
+                        fetchOwners(ownerSearchTerm);
+                      }
+                    }
+                  }}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Search for owner by name or email..."
+                />
+                {selectedOwner && (
+                  <button
+                    type="button"
+                    onClick={handleOwnerClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Suggestions Dropdown */}
+              {showOwnerSuggestions && ownerSearchTerm.length >= 2 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {loadingOwners ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Searching...
+                    </div>
+                  ) : ownerSuggestions.length > 0 ? (
+                    ownerSuggestions.map((owner) => (
+                      <div
+                        key={owner._id}
+                        onClick={() => handleOwnerSelect(owner)}
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {owner.firstName} {owner.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{owner.email}</div>
+                        <div className="text-xs text-gray-400 mt-1">ID: {owner._id}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No owners found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {selectedOwner && (
+                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900">
+                    Selected: {selectedOwner.firstName} {selectedOwner.lastName}
+                  </div>
+                  <div className="text-xs text-blue-700">{selectedOwner.email}</div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
@@ -1824,13 +2149,89 @@ export default function RentalsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-            <input
-              type="text"
-              value={rentalFormData.provider}
-              onChange={(e) => setRentalFormData({ ...rentalFormData, provider: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="User ID of owner"
-            />
+            <div ref={ownerAutosuggestRef} className="relative">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={ownerSearchTerm}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setOwnerSearchTerm(newValue);
+                    if (newValue === '') {
+                      handleOwnerClear();
+                    } else if (selectedOwner) {
+                      // If user starts typing and it doesn't match the selected owner, clear selection
+                      const selectedName = `${selectedOwner.firstName} ${selectedOwner.lastName}`.trim();
+                      const selectedEmail = selectedOwner.email;
+                      if (newValue !== selectedName && newValue !== selectedEmail && !newValue.startsWith(selectedName) && !newValue.startsWith(selectedEmail)) {
+                        setSelectedOwner(null);
+                        setRentalFormData({ ...rentalFormData, provider: '', owner: '' });
+                      }
+                    }
+                  }}
+                  onFocus={() => {
+                    if (ownerSearchTerm && ownerSearchTerm.length >= 2) {
+                      if (ownerSuggestions.length > 0) {
+                        setShowOwnerSuggestions(true);
+                      } else if (!loadingOwners) {
+                        // Trigger search if we have a search term but no suggestions yet
+                        fetchOwners(ownerSearchTerm);
+                      }
+                    }
+                  }}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Search for owner by name or email..."
+                />
+                {selectedOwner && (
+                  <button
+                    type="button"
+                    onClick={handleOwnerClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Suggestions Dropdown */}
+              {showOwnerSuggestions && ownerSearchTerm.length >= 2 && (
+                <div className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  {loadingOwners ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Searching...
+                    </div>
+                  ) : ownerSuggestions.length > 0 ? (
+                    ownerSuggestions.map((owner) => (
+                      <div
+                        key={owner._id}
+                        onClick={() => handleOwnerSelect(owner)}
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {owner.firstName} {owner.lastName}
+                        </div>
+                        <div className="text-sm text-gray-500">{owner.email}</div>
+                        <div className="text-xs text-gray-400 mt-1">ID: {owner._id}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No owners found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {selectedOwner && (
+                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm font-medium text-blue-900">
+                    Selected: {selectedOwner.firstName} {selectedOwner.lastName}
+                  </div>
+                  <div className="text-xs text-blue-700">{selectedOwner.email}</div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
@@ -2197,9 +2598,15 @@ export default function RentalsPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
               <div className="space-y-3">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Title</h4>
-                  <p className="mt-1 text-sm text-gray-900">{selectedRental.title || 'N/A'}</p>
+                  <h4 className="text-sm font-medium text-gray-500">Name</h4>
+                  <p className="mt-1 text-sm text-gray-900">{(selectedRental as any).name || selectedRental.title || 'N/A'}</p>
                 </div>
+                {selectedRental.title && (selectedRental as any).name !== selectedRental.title && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Title</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedRental.title}</p>
+                  </div>
+                )}
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Description</h4>
                   <p className="mt-1 text-sm text-gray-900">{selectedRental.description || 'N/A'}</p>
@@ -2216,20 +2623,27 @@ export default function RentalsPage() {
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-gray-500">Owner</h4>
-                  <p className="mt-1 text-sm text-gray-900">
+                  <div className="mt-1 text-sm text-gray-900">
                     {typeof selectedRental.owner === 'object' && selectedRental.owner ? (
-                      <>
-                        {selectedRental.owner.firstName && selectedRental.owner.lastName 
-                          ? `${selectedRental.owner.firstName} ${selectedRental.owner.lastName}`
-                          : selectedRental.owner.email || 'N/A'}
+                      <div>
+                        <div className="font-medium">
+                          {selectedRental.owner.firstName && selectedRental.owner.lastName 
+                            ? `${selectedRental.owner.firstName} ${selectedRental.owner.lastName}`
+                            : selectedRental.owner.email || 'N/A'}
+                        </div>
                         {selectedRental.owner.email && (
-                          <div className="text-xs text-gray-500">{selectedRental.owner.email}</div>
+                          <div className="text-xs text-gray-500 mt-1">{selectedRental.owner.email}</div>
                         )}
-                      </>
+                        {(selectedRental.owner as any).profile?.bio && (
+                          <div className="text-xs text-gray-600 mt-1 italic">
+                            {(selectedRental.owner as any).profile.bio}
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      selectedRental.owner || 'N/A'
+                      <span>{selectedRental.owner || 'N/A'}</span>
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2280,6 +2694,38 @@ export default function RentalsPage() {
                 })()}
               </div>
             </div>
+
+            {/* Availability */}
+            {selectedRental.availability && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Availability</h3>
+                <div className="space-y-2">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Available</h4>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {selectedRental.availability.isAvailable !== undefined 
+                        ? (selectedRental.availability.isAvailable ? 'Yes' : 'No')
+                        : 'N/A'}
+                    </p>
+                  </div>
+                  {selectedRental.availability.schedule && Array.isArray(selectedRental.availability.schedule) && selectedRental.availability.schedule.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Schedule</h4>
+                      <div className="space-y-1">
+                        {selectedRental.availability.schedule.map((scheduleItem: any, idx: number) => (
+                          <div key={idx} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                            {scheduleItem.day && <span className="font-medium">{scheduleItem.day}: </span>}
+                            {scheduleItem.startTime && scheduleItem.endTime 
+                              ? `${scheduleItem.startTime} - ${scheduleItem.endTime}`
+                              : scheduleItem.startTime || scheduleItem.endTime || 'All day'}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Location */}
             {selectedRental.location && (
@@ -2536,17 +2982,50 @@ export default function RentalsPage() {
             )}
 
             {/* Rating */}
-            {selectedRental.rating && (
+            {(selectedRental.rating || (selectedRental as any).averageRating !== undefined) && (
               <div className="border-b pb-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Rating</h3>
                 <div>
                   <p className="text-sm text-gray-900">
                     <span className="text-lg font-semibold">
-                      {selectedRental.rating.average ? selectedRental.rating.average.toFixed(1) : '0.0'}
+                      {selectedRental.rating?.average 
+                        ? selectedRental.rating.average.toFixed(1) 
+                        : (selectedRental as any).averageRating 
+                          ? (selectedRental as any).averageRating.toFixed(1)
+                          : '0.0'}
                     </span>
-                    {selectedRental.rating.count && ` (${selectedRental.rating.count} reviews)`}
+                    {selectedRental.rating && selectedRental.rating.count !== undefined && selectedRental.rating.count > 0 && ` (${selectedRental.rating.count} reviews)`}
                   </p>
                 </div>
+              </div>
+            )}
+
+            {/* Maintenance */}
+            {(selectedRental as any).maintenance && (
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Maintenance</h3>
+                {(selectedRental as any).maintenance.serviceHistory && Array.isArray((selectedRental as any).maintenance.serviceHistory) && (selectedRental as any).maintenance.serviceHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {(selectedRental as any).maintenance.serviceHistory.map((service: any, idx: number) => (
+                      <div key={idx} className="text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                        {service.date && <div className="font-medium">{new Date(service.date).toLocaleDateString()}</div>}
+                        {service.type && <div className="text-xs text-gray-600">Type: {service.type}</div>}
+                        {service.description && <div className="text-xs text-gray-600 mt-1">{service.description}</div>}
+                        {service.cost !== undefined && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            Cost: {formatCurrency(
+                              service.cost,
+                              (selectedRental.pricing || selectedRental.price)?.currency || getDefaultCurrency(appSettings),
+                              { appSettings }
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No service history available</p>
+                )}
               </div>
             )}
 
