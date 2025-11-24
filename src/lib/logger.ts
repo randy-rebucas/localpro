@@ -120,17 +120,24 @@ class Logger {
   }
 
   private sendToSentry(entry: LogEntry): void {
-    if (!this.isClient || !this.isDevelopment) {
-      // Sentry is typically configured at the app level
-      // This is a placeholder for integration
-      interface WindowWithSentry extends Window {
-        Sentry?: {
-          captureException: (error: Error, options?: { contexts?: { log?: Record<string, unknown> }; level?: string }) => void;
-          captureMessage: (message: string, options?: { level?: string; contexts?: { log?: Record<string, unknown> } }) => void;
-        };
-      }
+    // Only send to Sentry on client side
+    if (!this.isClient) {
+      return;
+    }
+    
+    // Sentry is typically configured at the app level
+    // This is a placeholder for integration
+    interface WindowWithSentry extends Window {
+      Sentry?: {
+        captureException: (error: Error, options?: { contexts?: { log?: Record<string, unknown> }; level?: string }) => void;
+        captureMessage: (message: string, options?: { level?: string; contexts?: { log?: Record<string, unknown> } }) => void;
+      };
+    }
+    
+    // Double-check window exists before accessing (defensive programming)
+    if (typeof window !== 'undefined') {
       const windowWithSentry = window as WindowWithSentry;
-      if (typeof window !== 'undefined' && windowWithSentry.Sentry) {
+      if (windowWithSentry.Sentry) {
         if (entry.level === 'error' && entry.error) {
           windowWithSentry.Sentry.captureException(entry.error, {
             contexts: { log: entry.context },

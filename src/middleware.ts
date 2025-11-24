@@ -148,7 +148,22 @@ async function checkAuth(request: NextRequest): Promise<{
     
     return { isAuthenticated: false };
   } catch (error) {
-    logger.error("Auth check failed", error instanceof Error ? error : new Error(String(error)), { hasApiToken: !!apiToken });
+    // Only log unexpected errors here - decrypt() already handles expected errors
+    // This catch is for other unexpected errors in the auth check process
+    if (error instanceof Error) {
+      const errorCode = (error as Error & { code?: string }).code;
+      const errorName = error.name;
+      
+      // Skip logging if it's a session decryption error (already handled in decrypt)
+      if (!errorName.includes('JWS') && !errorName.includes('JWT') && 
+          errorCode !== 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED' &&
+          errorCode !== 'ERR_JWT_EXPIRED') {
+        logger.error("Auth check failed", error, { hasApiToken: !!apiToken });
+      }
+    } else {
+      logger.error("Auth check failed", new Error(String(error)), { hasApiToken: !!apiToken });
+    }
+    
     // If session decryption fails but we have api-token, still allow
     if (apiToken) {
       return { 

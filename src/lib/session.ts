@@ -224,15 +224,42 @@ export async function decrypt(session: string | undefined = ''): Promise<Session
     
     return null;
   } catch (error) {
-    // Enhanced error logging for debugging
+    // Signature verification failures and expired tokens are expected scenarios
+    // Only log unexpected errors to avoid noise
     if (error instanceof Error) {
-      logger.error('Session decryption failed', error, {
-        message: error.message,
-        name: error.name,
-        code: (error as Error & { code?: string }).code,
-        stack: error.stack
-      });
+      const errorCode = (error as Error & { code?: string }).code;
+      const errorName = error.name;
+      
+      // Expected errors that should be handled silently or with debug logging
+      const expectedErrors = [
+        'ERR_JWS_SIGNATURE_VERIFICATION_FAILED',
+        'ERR_JWT_EXPIRED',
+        'ERR_JWT_CLAIM_VALIDATION_FAILED',
+        'ERR_JWS_INVALID',
+        'JWSSignatureVerificationFailed',
+        'JWTExpired',
+        'JWTInvalid'
+      ];
+      
+      const isExpectedError = expectedErrors.some(expected => 
+        errorCode === expected || errorName === expected || error.message.includes(expected)
+      );
+      
+      if (isExpectedError) {
+        // Expected errors (expired/invalid tokens) are handled gracefully
+        // No need to log them as they're part of normal operation
+        // Just return null to indicate invalid session
+      } else {
+        // Log unexpected errors
+        logger.error('Session decryption failed (unexpected)', error, {
+          message: error.message,
+          name: error.name,
+          code: errorCode,
+          stack: error.stack
+        });
+      }
     } else {
+      // Unknown error type - log it
       logger.error('Session decryption failed', new Error(String(error)));
     }
     return null;
