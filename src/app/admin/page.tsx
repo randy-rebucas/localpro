@@ -28,7 +28,8 @@ import {
   Bell,
   Shield,
   Zap,
-  Crown
+  Crown,
+  Radio
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 // Lazy load admin error state
@@ -78,6 +79,7 @@ interface ModuleStats {
   rentals: number;
   ads: number;
   communication: number;
+  broadcaster: number;
 }
 
 export default function AdminDashboard() {
@@ -90,6 +92,7 @@ export default function AdminDashboard() {
     rentals: 0,
     ads: 0,
     communication: 0,
+    broadcaster: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,12 +108,13 @@ export default function AdminDashboard() {
       if (!getApiToken()) return;
 
       // Fetch stats for each module in parallel
-      const [suppliesRes, academyRes, rentalsRes, adsRes, communicationRes] = await Promise.allSettled([
+      const [suppliesRes, academyRes, rentalsRes, adsRes, communicationRes, broadcasterRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/supplies?limit=1`, createAuthFetchOptions({ method: 'GET' })),
         fetch(`${API_BASE_URL}/api/academy/courses?limit=1`, createAuthFetchOptions({ method: 'GET' })),
         fetch(`${API_BASE_URL}/api/rentals?limit=1`, createAuthFetchOptions({ method: 'GET' })),
         fetch(`${API_BASE_URL}/api/ads?limit=1`, createAuthFetchOptions({ method: 'GET' })),
         fetch(`${API_BASE_URL}/api/communication/messages?limit=1`, createAuthFetchOptions({ method: 'GET' })),
+        fetch(`${API_BASE_URL}${API_ENDPOINTS.broadcaster}?limit=1`, createAuthFetchOptions({ method: 'GET' })),
       ]);
 
       const parseCount = (result: PromiseSettledResult<Response>) => {
@@ -121,12 +125,13 @@ export default function AdminDashboard() {
         return Promise.resolve(0);
       };
 
-      const [suppliesCount, academyCount, rentalsCount, adsCount, communicationCount] = await Promise.all([
+      const [suppliesCount, academyCount, rentalsCount, adsCount, communicationCount, broadcasterCount] = await Promise.all([
         parseCount(suppliesRes),
         parseCount(academyRes),
         parseCount(rentalsRes),
         parseCount(adsRes),
         parseCount(communicationRes),
+        parseCount(broadcasterRes),
       ]);
 
       setModuleStats({
@@ -135,6 +140,7 @@ export default function AdminDashboard() {
         rentals: typeof rentalsCount === 'number' ? rentalsCount : 0,
         ads: typeof adsCount === 'number' ? adsCount : 0,
         communication: typeof communicationCount === 'number' ? communicationCount : 0,
+        broadcaster: typeof broadcasterCount === 'number' ? broadcasterCount : 0,
       });
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -458,6 +464,14 @@ export default function AdminDashboard() {
       href: "/admin/communication",
       color: "bg-cyan-500",
       stats: moduleStats.communication > 0 ? `${moduleStats.communication.toLocaleString()} messages` : "View messages"
+    },
+    {
+      name: "Broadcaster",
+      description: "Manage broadcasts for clients",
+      icon: Radio,
+      href: "/admin/broadcaster",
+      color: "bg-teal-500",
+      stats: moduleStats.broadcaster > 0 ? `${moduleStats.broadcaster.toLocaleString()} broadcasts` : "View broadcasts"
     },
     {
       name: "Analytics",

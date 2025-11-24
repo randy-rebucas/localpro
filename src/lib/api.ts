@@ -357,6 +357,14 @@ export const API_ENDPOINTS = {
   analyticsReferrals: "/api/analytics/referrals",
   analyticsAgencies: "/api/analytics/agencies",
   analyticsTrack: "/api/analytics/track",
+  
+  // Broadcaster
+  broadcaster: "/api/broadcaster",
+  broadcasterById: "/api/broadcaster",
+  broadcasterActive: "/api/broadcaster/active",
+  broadcasterStats: "/api/broadcaster/stats",
+  broadcasterView: "/api/broadcaster",
+  broadcasterClick: "/api/broadcaster",
   analyticsRealTime: "/api/analytics/real-time",
   analyticsPerformance: "/api/analytics/performance",
   analyticsUserBehavior: "/api/analytics/user-behavior",

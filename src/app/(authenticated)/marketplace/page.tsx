@@ -9,24 +9,32 @@ import { MarketplaceHeader } from "@/components/marketplace/marketplace-header";
 import { ProviderInfoBanner } from "@/components/marketplace/provider-info-banner";
 import { JobMarketplace } from "@/components/marketplace/job-marketplace";
 import { ProviderMarketplace } from "@/components/marketplace/provider-marketplace";
+import { Broadcaster } from "@/components/broadcaster";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
-  
+
   // Get user roles
   const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
-  
+
   // Manage role view state
   const { isClientView, isProviderView } = useRoleView({ userRoles });
 
   // Get greeting and description based on role view
   const { greeting, description } = getMarketplaceGreeting(session, isClientView, isProviderView);
-  
+
   // Get user name for marketplace components
   const userName = getUserName(session);
 
   return (
     <div className="min-h-screen">
+      {/* Broadcaster - Only shown for clients */}
+      {isClientView && (
+        <div className="container">
+          <Broadcaster />
+        </div>
+      )}
+
       {/* Hero / Header Section */}
       <MarketplaceHeader
         greeting={greeting}

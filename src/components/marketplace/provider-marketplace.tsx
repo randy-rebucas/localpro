@@ -67,7 +67,7 @@ export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-5">
+      <div className="py-4 lg:py-5">
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-5">
           {/* Left Sidebar - Filters */}
           <ProviderFilterSidebar
