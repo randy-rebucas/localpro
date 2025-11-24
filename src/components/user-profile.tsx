@@ -638,6 +638,96 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     handleEditProfile();
   }, [handleEditProfile]);
 
+  // Quick Actions handlers
+  const handleViewPublicProfile = useCallback(async () => {
+    // Check if user has provider role
+    if (!isServiceProvider && !isBusinessRole) {
+      alert('You need to be a provider to view your public profile.');
+      return;
+    }
+
+    const userId = profile?._id || profile?.id;
+    if (!userId) {
+      alert('Unable to find your profile ID.');
+      return;
+    }
+
+    // Try to get provider ID from the profile data first
+    const profileData = profile as unknown as Record<string, unknown>;
+    let providerId: string | undefined;
+    
+    // Check if provider data exists in profile
+    if (profileData?.provider && typeof profileData.provider === 'object') {
+      const provider = profileData.provider as Record<string, unknown>;
+      providerId = (provider._id || provider.id) as string | undefined;
+    }
+    
+    // If no provider ID found, try to fetch it from API
+    if (!providerId) {
+      try {
+        // Try marketplace providers endpoint with user ID filter
+        const response = await fetch(
+          `${API_BASE_URL}/api/marketplace/providers?userId=${userId}`,
+          createAuthFetchOptions()
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const providers = data?.data || data?.providers || (Array.isArray(data) ? data : []);
+          if (Array.isArray(providers) && providers.length > 0) {
+            providerId = providers[0]?._id || providers[0]?.id;
+          }
+        } else {
+          // If marketplace endpoint fails, try regular providers endpoint
+          const altResponse = await fetch(
+            `${API_BASE_URL}/api/providers?userId=${userId}`,
+            createAuthFetchOptions()
+          );
+          
+          if (altResponse.ok) {
+            const altData = await altResponse.json();
+            const altProviders = altData?.data || altData?.providers || (Array.isArray(altData) ? altData : []);
+            if (Array.isArray(altProviders) && altProviders.length > 0) {
+              providerId = altProviders[0]?._id || altProviders[0]?.id;
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('Error fetching provider ID', error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+    
+    // Use provider ID if found, otherwise fall back to user ID
+    // The provider detail page should handle both cases
+    const idToUse = providerId || userId;
+    router.push(`/marketplace/providers/${idToUse}`);
+  }, [router, profile, isServiceProvider, isBusinessRole]);
+
+  const handleDownloadResume = useCallback(() => {
+    // TODO: Implement resume download functionality
+    console.log('Download resume');
+  }, []);
+
+  const handleServiceDashboard = useCallback(() => {
+    router.push('/admin/services');
+  }, [router]);
+
+  const handleSupplyDashboard = useCallback(() => {
+    router.push('/admin/supplies');
+  }, [router]);
+
+  const handleAcademyDashboard = useCallback(() => {
+    router.push('/admin/academy');
+  }, [router]);
+
+  const handleAgencyDashboard = useCallback(() => {
+    router.push('/admin/agencies');
+  }, [router]);
+
+  const handlePrivacySettings = useCallback(() => {
+    router.push('/settings');
+  }, [router]);
+
   const formattedCreatedAt = useMemo(() => (
     profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"
   ), [profile?.createdAt]);
@@ -683,38 +773,40 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
     <div>
       {/* Welcome Section with Edit Button */}
       <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div className="flex-1">
-            <h2 className="text-3xl font-bold text-gray-700 mb-2">
-              Profile Settings
-            </h2>
-            <p className="text-gray-600 text-lg">
-              Manage your personal information and preferences
-            </p>
-            <p className="text-sm text-gray-500 mt-2 flex items-center">
-              <Edit className="w-4 h-4 mr-1" />
-              Click the edit button to make changes to your profile
-            </p>
-          </div>
-          
-          {/* Edit Profile Button */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <button
-              onClick={handleEditProfile}
-              className="flex items-center justify-center space-x-2 px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-white bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>Edit Profile</span>
-            </button>
+        <div className="bg-gradient-to-br from-white via-blue-50/30 to-green-50/30 rounded-2xl p-6 lg:p-8 border border-gray-200/50 shadow-xl">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex-1">
+              <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-2">
+                Profile Settings
+              </h2>
+              <p className="text-gray-700 text-lg font-medium">
+                Manage your personal information and preferences
+              </p>
+              <p className="text-sm text-gray-600 mt-2 flex items-center">
+                <Edit className="w-4 h-4 mr-1 text-blue-600" />
+                Click the edit button to make changes to your profile
+              </p>
+            </div>
             
-            {/* Last updated info */}
-            <div className="hidden lg:flex items-center space-x-4" aria-label="Last updated">
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Last updated</p>
-                <p className="text-sm font-medium text-gray-700">{formattedUpdatedAt}</p>
-              </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <UserIcon className="w-6 h-6 text-white" />
+            {/* Edit Profile Button */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <button
+                onClick={handleEditProfile}
+                className="flex items-center justify-center space-x-2 px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl hover:scale-105"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+              
+              {/* Last updated info */}
+              <div className="hidden lg:flex items-center space-x-4" aria-label="Last updated">
+                <div className="text-right">
+                  <p className="text-sm text-gray-600 font-medium">Last updated</p>
+                  <p className="text-sm font-bold text-gray-900">{formattedUpdatedAt}</p>
+                </div>
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-600 to-purple-700 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform duration-300">
+                  <UserIcon className="w-7 h-7 text-white" />
+                </div>
               </div>
             </div>
           </div>
@@ -726,7 +818,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         {/* Main Profile Display */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
-          <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             {/* Avatar Section */}
             <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-6 border-b border-gray-200">
               <div className="flex-shrink-0">
@@ -1255,6 +1347,13 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
               isSupplier={isSupplierView}
               isInstructor={isInstructorView}
               isAdministrative={isAdministrative}
+              onViewPublicProfile={handleViewPublicProfile}
+              onDownloadResume={handleDownloadResume}
+              onServiceDashboard={handleServiceDashboard}
+              onSupplyDashboard={handleSupplyDashboard}
+              onAcademyDashboard={handleAcademyDashboard}
+              onAgencyDashboard={handleAgencyDashboard}
+              onPrivacySettings={handlePrivacySettings}
             />
           </div>
         </div>

@@ -461,6 +461,14 @@ export const API_ENDPOINTS = {
 
   registrationEarlyAccess: "/api/registration/early",
   
+  // Favorites
+  favorites: "/api/favorites",
+  favoritesStats: "/api/favorites/stats",
+  favoritesByType: "/api/favorites/type",
+  favoritesCheck: "/api/favorites/check",
+  favoritesById: "/api/favorites",
+  favoritesByItem: "/api/favorites",
+  
   // Monitoring Endpoints
   monitoringSystemHealth: "/api/monitoring/system-health",
 } as const;

@@ -1597,18 +1597,50 @@ export default function ProvidersPage() {
 
   const handleUpdateProviderStatus = async (providerId: string, status: string, reason?: string) => {
     try {
-      // Use the new endpoint: /api/providers/admin/[id]/status
-      const endpoint = API_ENDPOINTS.providersAdminStatusById.replace("[id]", providerId);
+      // Use the endpoint: /api/providers/admin/[id]/status (as specified)
+      const endpoint = `/api/providers/admin/${providerId}/status`;
       const url = `${API_BASE_URL}${endpoint}`;
+      
+      logger.debug('Updating provider status', { url, providerId, status, reason });
       
       const response = await fetch(url, createAuthFetchOptions({
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ status, reason }),
       }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Failed to update provider status');
+        const errorMessage = errorData.error || errorData.message || `Failed to update provider status: ${response.status} ${response.statusText}`;
+        
+        // If 404, the endpoint might not be implemented yet - try fallback
+        if (response.status === 404) {
+          logger.debug('Status endpoint returned 404, trying fallback to PUT /api/providers/admin/[id]');
+          const fallbackEndpoint = `/api/providers/admin/${providerId}`;
+          const fallbackUrl = `${API_BASE_URL}${fallbackEndpoint}`;
+          
+          const fallbackResponse = await fetch(fallbackUrl, createAuthFetchOptions({
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status, reason }),
+          }));
+          
+          if (!fallbackResponse.ok) {
+            const fallbackErrorData = await fallbackResponse.json().catch(() => ({}));
+            throw new Error(fallbackErrorData.error || fallbackErrorData.message || `Failed to update provider status: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+          }
+          
+          const fallbackResult = await fallbackResponse.json();
+          toast.success(fallbackResult.message || `Provider status updated to ${status}`);
+          await fetchData();
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

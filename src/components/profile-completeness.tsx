@@ -21,7 +21,15 @@ interface ProfileCompletenessResponse {
       completed: boolean;
       percentage: number;
       missingFields: string[];
-      nextSteps: string[];
+      nextSteps: Array<string | {
+        id?: string;
+        field?: string;
+        action?: string;
+        title?: string;
+        description?: string;
+        priority?: 'high' | 'medium' | 'low';
+        fields?: string[];
+      }>;
     };
   };
   canAccessDashboard: boolean;
@@ -197,13 +205,28 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
   const getRecommendations = (): Recommendation[] => {
     // Use API nextSteps if available
     if (overallScore && overallScore.nextSteps.length > 0) {
-      return overallScore.nextSteps.map((step, index) => ({
-        id: `next-step-${index}`,
-        title: step,
-        description: step,
-        priority: 'high' as const,
-        suggestion: step
-      }));
+      return overallScore.nextSteps.map((step, index) => {
+        // Handle both string and object formats
+        if (typeof step === 'string') {
+          return {
+            id: `next-step-${index}`,
+            title: step,
+            description: step,
+            priority: 'high' as const,
+            suggestion: step
+          };
+        }
+        // Handle object format
+        const stepObj = step as Record<string, unknown>;
+        return {
+          id: stepObj.id as string || `next-step-${index}`,
+          field: stepObj.field as string || stepObj.action as string,
+          title: (stepObj.title as string) || (stepObj.action as string) || 'Complete this step',
+          description: (stepObj.description as string) || (stepObj.title as string) || '',
+          priority: (stepObj.priority as 'high' | 'medium' | 'low') || 'high',
+          suggestion: (stepObj.description as string) || (stepObj.title as string) || ''
+        };
+      });
     }
 
     // Fallback to client-side recommendations
@@ -327,10 +350,10 @@ export function ProfileCompleteness({ profileData, onSuggestionClick }: ProfileC
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-700 mb-1">Profile Completeness</h3>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">Profile Completeness</h3>
           {apiData?.needsOnboarding === false && apiData?.canAccessDashboard && (
             <p className="text-xs text-green-600 flex items-center gap-1">
               <CheckCircle className="w-3 h-3" />

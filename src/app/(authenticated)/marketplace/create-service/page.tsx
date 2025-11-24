@@ -25,7 +25,7 @@ interface ScheduleItem {
   day: string;
   startTime: string;
   endTime: string;
-  available: boolean;
+  isAvailable: boolean; // Changed from 'available' to match API payload
 }
 
 interface ServiceForm {
@@ -81,6 +81,7 @@ interface ServiceForm {
     schedule: ScheduleItem[];
   };
   images: File[];
+  isActive?: boolean; // Optional: default true
 }
 
 export default function CreateServicePage() {
@@ -126,7 +127,8 @@ export default function CreateServicePage() {
       timezone: "UTC",
       schedule: []
     },
-    images: []
+    images: [],
+    isActive: true // Default to true
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,6 +149,16 @@ export default function CreateServicePage() {
     features: [] as string[],
     duration: 0
   });
+
+  const daysOfWeek = [
+    { value: "monday", label: "Monday" },
+    { value: "tuesday", label: "Tuesday" },
+    { value: "wednesday", label: "Wednesday" },
+    { value: "thursday", label: "Thursday" },
+    { value: "friday", label: "Friday" },
+    { value: "saturday", label: "Saturday" },
+    { value: "sunday", label: "Sunday" }
+  ];
 
   const categories = [
     { value: "cleaning", label: "Cleaning Services" },
@@ -386,6 +398,55 @@ export default function CreateServicePage() {
     }));
   };
 
+  const addScheduleItem = (day: string) => {
+    const existingSchedule = form.availability.schedule;
+    const dayExists = existingSchedule.some(item => item.day === day);
+    
+    if (!dayExists) {
+      setForm(prev => ({
+        ...prev,
+        availability: {
+          ...prev.availability,
+          schedule: [
+            ...prev.availability.schedule,
+            {
+              day,
+              startTime: "09:00",
+              endTime: "17:00",
+              isAvailable: true
+            }
+          ]
+        }
+      }));
+    }
+  };
+
+  const removeScheduleItem = (day: string) => {
+    setForm(prev => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        schedule: prev.availability.schedule.filter(item => item.day !== day)
+      }
+    }));
+  };
+
+  const updateScheduleItem = (day: string, field: string, value: string | boolean) => {
+    setForm(prev => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        schedule: prev.availability.schedule.map(item =>
+          item.day === day ? { ...item, [field]: value } : item
+        )
+      }
+    }));
+  };
+
+  const getScheduleForDay = (day: string) => {
+    return form.availability.schedule.find(item => item.day === day);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -412,6 +473,7 @@ export default function CreateServicePage() {
       formData.append("servicePackages", JSON.stringify(form.servicePackages));
       formData.append("addOns", JSON.stringify(form.addOns));
       formData.append("availability", JSON.stringify(form.availability));
+      formData.append("isActive", (form.isActive ?? true).toString());
 
       form.images.forEach((image, index) => {
         formData.append(`image_${index}`, image);
@@ -442,26 +504,40 @@ export default function CreateServicePage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/marketplace"
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Marketplace
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-2xl font-bold text-gray-700 mb-6">Create New Service</h1>
+      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/marketplace"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to marketplace"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Plus className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Create New Service</h1>
+            <p className="text-sm text-gray-600">Add a new service listing to your marketplace</p>
+          </div>
+        </div>
+
+        <div>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Basic Information</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Input
@@ -528,7 +604,7 @@ export default function CreateServicePage() {
 
             {/* Pricing */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Pricing</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Pricing</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <Select
@@ -621,14 +697,14 @@ export default function CreateServicePage() {
                   <button
                     type="button"
                     onClick={addServiceArea}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {form.serviceArea.map((area, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1 rounded-full text-sm border border-blue-200 shadow-sm">
                       <span>{area}</span>
                       <button
                         type="button"
@@ -653,9 +729,9 @@ export default function CreateServicePage() {
                     id="equipmentProvided"
                     checked={form.equipmentProvided}
                     onChange={(e) => handleInputChange("equipmentProvided", e.target.checked)}
-                    className="rounded"
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="equipmentProvided" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="equipmentProvided" className="text-sm font-medium text-gray-700 cursor-pointer">
                     Equipment provided
                   </label>
                 </div>
@@ -665,9 +741,9 @@ export default function CreateServicePage() {
                     id="materialsIncluded"
                     checked={form.materialsIncluded}
                     onChange={(e) => handleInputChange("materialsIncluded", e.target.checked)}
-                    className="rounded"
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="materialsIncluded" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="materialsIncluded" className="text-sm font-medium text-gray-700 cursor-pointer">
                     Materials included
                   </label>
                 </div>
@@ -696,14 +772,14 @@ export default function CreateServicePage() {
                   <button
                     type="button"
                     onClick={addFeature}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                       <span className="flex-1 text-sm">{feature}</span>
                       <button
                         type="button"
@@ -740,14 +816,14 @@ export default function CreateServicePage() {
                   <button
                     type="button"
                     onClick={addRequirement}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                       <span className="flex-1 text-sm">{requirement}</span>
                       <button
                         type="button"
@@ -772,9 +848,9 @@ export default function CreateServicePage() {
                     id="hasWarranty"
                     checked={form.warranty.hasWarranty}
                     onChange={(e) => handleWarrantyChange("hasWarranty", e.target.checked)}
-                    className="rounded"
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="hasWarranty" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="hasWarranty" className="text-sm font-medium text-gray-700 cursor-pointer">
                     Offer warranty
                   </label>
                 </div>
@@ -814,9 +890,9 @@ export default function CreateServicePage() {
                     id="insuranceCovered"
                     checked={form.insurance.covered}
                     onChange={(e) => handleInsuranceChange("covered", e.target.checked)}
-                    className="rounded"
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="insuranceCovered" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="insuranceCovered" className="text-sm font-medium text-gray-700 cursor-pointer">
                     Service is insured
                   </label>
                 </div>
@@ -846,9 +922,9 @@ export default function CreateServicePage() {
                     id="emergencyAvailable"
                     checked={form.emergencyService.available}
                     onChange={(e) => handleEmergencyServiceChange("available", e.target.checked)}
-                    className="rounded"
+                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                   />
-                  <label htmlFor="emergencyAvailable" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="emergencyAvailable" className="text-sm font-medium text-gray-700 cursor-pointer">
                     Emergency service available
                   </label>
                 </div>
@@ -884,7 +960,7 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Packages</h2>
               <div className="space-y-6">
                 {/* Add New Package */}
-                <div className="border border-gray-200 rounded-lg p-4">
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-gradient-to-br from-white to-gray-50/50 shadow-sm">
                   <h3 className="text-lg font-medium text-gray-700 mb-4">Add New Package</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -946,14 +1022,14 @@ export default function CreateServicePage() {
                           <button
                             type="button"
                             onClick={addPackageFeature}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {newPackage.features.map((feature, index) => (
-                            <div key={index} className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded text-sm">
+                            <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-purple-50 to-pink-50 px-2 py-1 rounded text-sm border border-purple-200 shadow-sm">
                               <span>{feature}</span>
                               <button
                                 type="button"
@@ -1014,7 +1090,7 @@ export default function CreateServicePage() {
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Add-ons</h2>
               <div className="space-y-6">
                 {/* Add New Add-on */}
-                <div className="border border-gray-200 rounded-lg p-4">
+                <div className="border-2 border-gray-200 rounded-lg p-4 bg-gradient-to-br from-white to-gray-50/50 shadow-sm">
                   <h3 className="text-lg font-medium text-gray-700 mb-4">Add New Add-on</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -1102,7 +1178,7 @@ export default function CreateServicePage() {
             <div>
               <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Images</h2>
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gradient-to-br from-gray-50/50 to-white hover:border-emerald-300 transition-all">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">Upload images of your work</p>
                   <input
@@ -1115,7 +1191,7 @@ export default function CreateServicePage() {
                   />
                   <label
                     htmlFor="image-upload"
-                    className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer transition-colors"
+                    className="inline-block bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-emerald-800 cursor-pointer transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     Choose Images
                   </label>
@@ -1147,35 +1223,171 @@ export default function CreateServicePage() {
 
             {/* Availability */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Availability</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Input
-                    label="Timezone"
-                    type="text"
-                    value={form.availability.timezone}
-                    onChange={(e) => setForm(prev => ({
-                      ...prev,
-                      availability: {
-                        ...prev.availability,
-                        timezone: e.target.value
-                      }
-                    }))}
-                    placeholder="UTC"
-                  />
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Availability</h2>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Input
+                      label="Timezone"
+                      type="text"
+                      value={form.availability.timezone}
+                      onChange={(e) => setForm(prev => ({
+                        ...prev,
+                        availability: {
+                          ...prev.availability,
+                          timezone: e.target.value
+                        }
+                      }))}
+                      placeholder="Asia/Manila"
+                    />
+                  </div>
                 </div>
+
+                {/* Weekly Schedule */}
                 <div>
-                  <p className="text-sm text-gray-600">
-                    Schedule management will be available in the service dashboard after creation.
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Weekly Schedule
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+                          weekdays.forEach(day => {
+                            if (!getScheduleForDay(day)) {
+                              addScheduleItem(day);
+                            }
+                          });
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all border border-gray-200 shadow-sm hover:shadow-md hover:scale-105"
+                      >
+                        Set Weekdays
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          form.availability.schedule.forEach(item => removeScheduleItem(item.day));
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium text-red-700 bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 rounded-lg transition-all border border-red-200 shadow-sm hover:shadow-md hover:scale-105"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {daysOfWeek.map((day) => {
+                      const scheduleItem = getScheduleForDay(day.value);
+                      return (
+                        <div
+                          key={day.value}
+                          className="bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 rounded-lg p-4 shadow-sm"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={!!scheduleItem}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    addScheduleItem(day.value);
+                                  } else {
+                                    removeScheduleItem(day.value);
+                                  }
+                                }}
+                                className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
+                              />
+                              <label className="text-sm font-semibold text-gray-700 cursor-pointer">
+                                {day.label}
+                              </label>
+                            </div>
+                            {scheduleItem && (
+                              <button
+                                type="button"
+                                onClick={() => removeScheduleItem(day.value)}
+                                className="text-red-600 hover:text-red-700 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                          
+                          {scheduleItem && (
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  Start Time
+                                </label>
+                                <input
+                                  type="time"
+                                  value={scheduleItem.startTime}
+                                  onChange={(e) => updateScheduleItem(day.value, "startTime", e.target.value)}
+                                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                  End Time
+                                </label>
+                                <input
+                                  type="time"
+                                  value={scheduleItem.endTime}
+                                  onChange={(e) => updateScheduleItem(day.value, "endTime", e.target.value)}
+                                  className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                                />
+                              </div>
+                              <div className="flex items-end">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={scheduleItem.isAvailable}
+                                    onChange={(e) => updateScheduleItem(day.value, "isAvailable", e.target.checked)}
+                                    className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
+                                  />
+                                  <span className="text-xs font-medium text-gray-600">
+                                    Available
+                                  </span>
+                                </label>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {form.availability.schedule.length === 0 && (
+                    <p className="text-sm text-gray-500 mt-3 italic">
+                      No schedule set. Service will be available 24/7 or as per your default settings.
+                    </p>
+                  )}
                 </div>
+              </div>
+            </div>
+
+            {/* Service Status */}
+            <div>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Service Status</h2>
+              <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-gray-50 to-white rounded-lg border-2 border-gray-200">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={form.isActive ?? true}
+                  onChange={(e) => setForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                  className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Activate service immediately after creation
+                </label>
+                <span className="text-xs text-gray-500 ml-auto">
+                  {form.isActive ? "Service will be visible to clients" : "Service will be hidden until activated"}
+                </span>
               </div>
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-600">{error}</p>
+              <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 shadow-md">
+                <p className="text-red-600 font-medium">{error}</p>
               </div>
             )}
 
@@ -1183,20 +1395,21 @@ export default function CreateServicePage() {
             <div className="flex justify-end gap-4">
               <Link
                 href="/marketplace"
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold disabled:hover:scale-100"
               >
                 {loading ? "Creating..." : "Create Service"}
               </button>
             </div>
           </form>
         </div>
+      </div>
       </div>
     </div>
   );

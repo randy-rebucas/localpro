@@ -25,7 +25,6 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { getEnabledPaymentMethods } from "@/lib/settings-utils";
 import { logger } from "@/lib/logger";
 import { Checkbox } from "@/components/ui/checkbox";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
 import { Loading } from "@/components/ui/loading";
 import toast from "react-hot-toast";
 
@@ -51,14 +50,14 @@ function SettingsSection({
   const ChevronIcon = expanded ? ChevronUp : ChevronDown;
 
   return (
-    <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <section className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden backdrop-blur-sm">
       <button
         onClick={onToggle}
-        className="w-full bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 hover:from-gray-100 hover:to-gray-200 transition-colors"
+        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-4 border-b border-gray-200 hover:from-green-50/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center text-gray-600">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
               <Icon className="w-5 h-5" />
             </div>
             <div className="text-left">
@@ -68,11 +67,11 @@ function SettingsSection({
               )}
             </div>
           </div>
-          <ChevronIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />
+          <ChevronIcon className="w-5 h-5 text-gray-500 flex-shrink-0 transition-transform duration-300" />
         </div>
       </button>
       {expanded && (
-        <div className="p-6 transition-all duration-200 ease-in-out">
+        <div className="p-6 transition-all duration-200 ease-in-out animate-fade-in-up">
           {children}
         </div>
       )}
@@ -229,27 +228,27 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-8">
-      <Breadcrumbs
-        className="text-sm text-gray-500 mb-6"
-        items={[
-          { label: "Marketplace", href: "/marketplace" },
-          { label: "Settings" },
-        ]}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
 
-      {/* Header with Save Button */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 text-green-600 flex items-center justify-center shadow-sm">
-            <SettingsIcon className="w-7 h-7" />
+      <div className="max-w-7xl mx-auto px-4 pb-8 relative z-10">
+        {/* Header with Save Button */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
+              <SettingsIcon className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Settings</h1>
+              <p className="text-sm text-gray-500 mt-1">Manage your account preferences and privacy</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage your account preferences and privacy</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
           {lastSaved && (
             <span className="text-xs text-gray-500 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
@@ -267,7 +266,7 @@ export default function SettingsPage() {
             disabled={!hasChanges || saving}
             className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm ${
               hasChanges
-                ? 'bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg disabled:opacity-50'
+                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
@@ -752,14 +751,15 @@ export default function SettingsPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+          <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
             <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
-            <button className="w-full px-4 py-2 bg-white text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors border border-gray-200">
+            <button className="w-full px-4 py-2 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:from-green-50 hover:to-emerald-50 transition-all duration-300 border border-gray-200 hover:border-green-300 shadow-sm hover:shadow-md transform hover:scale-105">
               Contact Support
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
@@ -767,14 +767,14 @@ export default function SettingsPage() {
 
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
-      <span className="text-sm text-gray-700 font-medium">{props.label}</span>
+    <label className="flex items-center justify-between py-2 px-1 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 rounded-lg transition-all duration-300 cursor-pointer group">
+      <span className="text-sm text-gray-700 font-medium group-hover:text-gray-900 transition-colors">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
-        <span className={`w-11 h-6 rounded-full transition-all duration-200 relative ${
-          props.checked ? 'bg-green-600' : 'bg-gray-300'
+        <span className={`w-11 h-6 rounded-full transition-all duration-200 relative shadow-inner ${
+          props.checked ? 'bg-gradient-to-r from-green-600 to-emerald-600 shadow-green-500/30' : 'bg-gray-300'
         }`}>
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-200 ${
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200 ${
             props.checked ? 'translate-x-5' : 'translate-x-0'
           }`}></span>
         </span>
@@ -790,7 +790,7 @@ function RowInput(props: { label: string; value: string; onChange: (e: ChangeEve
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type={props.type || "text"}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" 
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
         value={props.value} 
         onChange={props.onChange} 
         placeholder={props.placeholder}
@@ -804,7 +804,7 @@ function RowSelect(props: { label: string; value: string; onChange: (value: stri
     <div className="flex items-center gap-4 py-2">
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <select
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white"
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
@@ -824,7 +824,7 @@ function RowNumberInput(props: { label: string; value: number; onChange: (e: Cha
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type="number" 
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" 
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
         value={Number.isFinite(props.value) ? props.value : 0} 
         onChange={props.onChange} 
         min={props.min} 
@@ -839,7 +839,7 @@ function RowTextarea(props: { label: string; value: string; onChange: (e: Change
     <div className="flex items-start gap-4 py-2">
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0 pt-2">{props.label}</label>
       <textarea
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none shadow-sm hover:shadow-md focus:shadow-lg"
         value={props.value}
         onChange={props.onChange}
         rows={props.rows || 3}
