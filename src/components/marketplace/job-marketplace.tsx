@@ -78,12 +78,6 @@ export function JobMarketplace({ userName }: JobMarketplaceProps) {
           <JobFilterSidebar
             isOpen={filterDrawerOpen}
             onClose={() => setFilterDrawerOpen(false)}
-            search={filters.jobSearch}
-            onSearchChange={filters.setJobSearch}
-            category={filters.jobCategory}
-            onCategoryChange={filters.setJobCategory}
-            subcategory={filters.jobSubcategory}
-            onSubcategoryChange={filters.setJobSubcategory}
             jobType={filters.jobType}
             onJobTypeChange={filters.setJobType}
             experienceLevel={filters.experienceLevel}
@@ -107,6 +101,8 @@ export function JobMarketplace({ userName }: JobMarketplaceProps) {
           <div className="flex-1 min-w-0">
             {/* Controls Bar */}
             <JobControlsBar
+              search={filters.jobSearch}
+              onSearchChange={filters.setJobSearch}
               sortBy={filters.sortBy}
               onSortByChange={filters.setSortBy}
               sortOrder={filters.sortOrder}

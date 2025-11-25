@@ -76,13 +76,32 @@ export default function JobDetailPage() {
   // Get default currency from app settings
   const defaultCurrency = getDefaultCurrency(appSettings);
 
+  // Check for reserved/special route IDs and redirect
+  useEffect(() => {
+    const jobId = String(params.id);
+    const reservedIds = ['create-job', 'create', 'new'];
+    
+    if (reservedIds.includes(jobId.toLowerCase())) {
+      router.replace('/marketplace/create-job');
+      return;
+    }
+  }, [params.id, router]);
+
   const fetchJob = useCallback(async () => {
     try {
+      const jobId = String(params.id);
+      const reservedIds = ['create-job', 'create', 'new'];
+      
+      // Don't fetch if this is a reserved ID (redirect will handle it)
+      if (reservedIds.includes(jobId.toLowerCase())) {
+        return;
+      }
+
       setLoading(true);
       // Jobs endpoint is PUBLIC
       const endpoint = API_ENDPOINTS.jobsById.includes('[id]')
-        ? API_ENDPOINTS.jobsById.replace('[id]', String(params.id))
-        : `${API_ENDPOINTS.jobs}/${params.id}`;
+        ? API_ENDPOINTS.jobsById.replace('[id]', jobId)
+        : `${API_ENDPOINTS.jobs}/${jobId}`;
       const url = `${API_BASE_URL}${endpoint}`;
       const response = await fetch(url, getApiToken()
         ? createAuthFetchOptions({ method: 'GET' })
@@ -99,10 +118,10 @@ export default function JobDetailPage() {
       setJob(jobData);
       
       // Load favorite status from localStorage
-      const jobId = jobData._id || jobData.id;
-      if (jobId) {
+      const fetchedJobId = jobData._id || jobData.id;
+      if (fetchedJobId) {
         const favorites = JSON.parse(localStorage.getItem('favoriteJobs') || '[]');
-        setIsFavorited(favorites.includes(jobId));
+        setIsFavorited(favorites.includes(fetchedJobId));
       }
     } catch (error) {
       logger.error("Error fetching job", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });

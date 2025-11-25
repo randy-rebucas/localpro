@@ -24,6 +24,8 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
+import { useToast, ToastContainer } from "@/components/ui/toast";
 
 // Service Image Interface
 interface ServiceImage {
@@ -153,6 +155,7 @@ interface ProviderWithService {
 
 export default function ServiceDetailPage() {
   const params = useParams();
+  const { toasts, success, error: showErrorToast, removeToast } = useToast();
   const [service, setService] = useState<Service | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,6 +166,8 @@ export default function ServiceDetailPage() {
   const [otherProviderServices, setOtherProviderServices] = useState<Service[]>([]);
   const [loadingOtherServices, setLoadingOtherServices] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isCheckingFavorite, setIsCheckingFavorite] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
@@ -267,11 +272,18 @@ export default function ServiceDetailPage() {
       const normalizedService = normalizeService(serviceData);
       setService(normalizedService);
       
-      // Load favorite status from localStorage
+      // Check favorite status from API
       const serviceId = normalizedService._id || normalizedService.id;
-      if (serviceId) {
-        const favorites = JSON.parse(localStorage.getItem('favoriteServices') || '[]');
-        setIsFavorited(favorites.includes(serviceId));
+      if (serviceId && getApiToken()) {
+        setIsCheckingFavorite(true);
+        try {
+          const favorited = await checkFavorite('service', serviceId);
+          setIsFavorited(favorited);
+        } catch (error) {
+          logger.error('Error checking favorite status', error instanceof Error ? error : new Error(String(error)), { serviceId });
+        } finally {
+          setIsCheckingFavorite(false);
+        }
       }
     } catch (error) {
       logger.error("Error fetching service", error instanceof Error ? error : new Error(String(error)), { serviceId: params.id });
@@ -380,6 +392,28 @@ export default function ServiceDetailPage() {
     }
   }, [params.id, fetchService, fetchReviews]);
 
+  // Listen for favorites updated events
+  useEffect(() => {
+    const handleFavoritesUpdated = async () => {
+      if (service) {
+        const serviceId = service._id || service.id;
+        if (serviceId && getApiToken()) {
+          try {
+            const favorited = await checkFavorite('service', serviceId);
+            setIsFavorited(favorited);
+          } catch (error) {
+            logger.error('Error checking favorite after update', error instanceof Error ? error : new Error(String(error)), { serviceId });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+    };
+  }, [service]);
+
   // Fetch providers with the same service when service is loaded
   useEffect(() => {
     if (service && service.category && service.subcategory) {
@@ -485,37 +519,36 @@ export default function ServiceDetailPage() {
     return formatCurrency(price, currencyCode);
   };
 
-  const handleToggleFavorite = useCallback(() => {
-    if (!service) return;
+  const handleToggleFavorite = useCallback(async () => {
+    if (!service || isTogglingFavorite) return;
     
     const serviceId = service._id || service.id;
     if (!serviceId) return;
     
-    const newFavorited = !isFavorited;
+    // Check if user is authenticated
+    if (!getApiToken()) {
+      showErrorToast('Please log in to add favorites');
+      return;
+    }
     
+    setIsTogglingFavorite(true);
     try {
-      const favorites = JSON.parse(localStorage.getItem('favoriteServices') || '[]');
+      const newFavorited = await toggleFavorite('service', serviceId);
+      setIsFavorited(newFavorited);
       
       if (newFavorited) {
-        // Add to favorites if not already present
-        if (!favorites.includes(serviceId)) {
-          favorites.push(serviceId);
-        }
+        success('Added to favorites');
       } else {
-        // Remove from favorites
-        const index = favorites.indexOf(serviceId);
-        if (index > -1) {
-          favorites.splice(index, 1);
-        }
+        success('Removed from favorites');
       }
-      
-      localStorage.setItem('favoriteServices', JSON.stringify(favorites));
-      setIsFavorited(newFavorited);
     } catch (error) {
-      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { serviceId: params.id, isFavorited: newFavorited });
+      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { serviceId: params.id });
+      showErrorToast('Failed to update favorite. Please try again.');
+    } finally {
+      setIsTogglingFavorite(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [service, isFavorited]);
+  }, [service, isTogglingFavorite]);
 
   const handleShare = useCallback(async () => {
     if (!service) return;
@@ -531,10 +564,12 @@ export default function ServiceDetailPage() {
       if (navigator.share && typeof navigator.share === 'function') {
         await navigator.share(shareData);
         setShareFeedback('Shared successfully!');
+        success('Service shared successfully!');
       } else {
         // Fallback to clipboard
         await navigator.clipboard.writeText(shareData.url);
         setShareFeedback('Link copied to clipboard!');
+        success('Link copied to clipboard!');
       }
       
       // Clear feedback after 2 seconds
@@ -547,13 +582,16 @@ export default function ServiceDetailPage() {
         try {
           await navigator.clipboard.writeText(shareData.url);
           setShareFeedback('Link copied to clipboard!');
+          success('Link copied to clipboard!');
           setTimeout(() => setShareFeedback(null), 2000);
         } catch (clipboardError) {
           logger.error('Error copying to clipboard', clipboardError instanceof Error ? clipboardError : new Error(String(clipboardError)), { serviceId: params.id });
           setShareFeedback('Failed to share. Please try again.');
+          showErrorToast('Failed to share. Please try again.');
           setTimeout(() => setShareFeedback(null), 2000);
         }
       }
+      // If AbortError, user cancelled - don't show error
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service]);
@@ -573,50 +611,79 @@ export default function ServiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loading size="lg" text="Loading service details..." />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+        <div className="relative z-10 flex items-center justify-center min-h-[400px]">
+          <Loading size="lg" text="Loading service details..." />
+        </div>
       </div>
     );
   }
 
   if (error || !service) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Service Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The service you're looking for doesn't exist."}</p>
-        <Link
-          href="/marketplace"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Back to Marketplace
-        </Link>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+        <div className="relative z-10 text-center py-12">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-red-200 shadow-lg p-8 max-w-md mx-auto">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent mb-2">Service Not Found</h2>
+            <p className="text-gray-600 mb-6">{error || "The service you're looking for doesn't exist."}</p>
+            <Link
+              href="/marketplace"
+              className="inline-block bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+            >
+              Back to Marketplace
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
+      
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
           href="/marketplace"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors hover:scale-105"
           title="Back to marketplace"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
           <Briefcase className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">{service.title}</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">{service.title}</h1>
           <p className="text-sm text-gray-600">{service.description ? service.description.substring(0, 80) + (service.description.length > 80 ? '...' : '') : 'Professional service'}</p>
         </div>
       </div>
 
       {/* Service Details */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
@@ -633,7 +700,7 @@ export default function ServiceDetailPage() {
                 <span>{service.rating?.average?.toFixed(1) || '0.0'} ({service.rating?.count || 0} reviews)</span>
               </div>
               <div className="flex items-center gap-1">
-                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                <span className="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
                   {service.category || 'Service'}
                 </span>
               </div>
@@ -642,7 +709,7 @@ export default function ServiceDetailPage() {
           <div className="flex items-center gap-3">
             <button 
               onClick={handleShare}
-              className="relative p-3 rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all hover:scale-110 group"
+              className="relative p-3 rounded-full bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 hover:from-emerald-100 hover:to-emerald-200 transition-all hover:scale-110 group shadow-md shadow-emerald-500/20 hover:shadow-lg"
               title="Share service"
             >
               <Share2 className="w-5 h-5" />
@@ -655,14 +722,15 @@ export default function ServiceDetailPage() {
             </button>
             <button 
               onClick={handleToggleFavorite}
-              className={`p-3 rounded-full transition-all hover:scale-110 ${
+              disabled={isTogglingFavorite || isCheckingFavorite}
+              className={`p-3 rounded-full transition-all hover:scale-110 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
                 isFavorited 
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-600'
-              }`}
+                  ? 'bg-gradient-to-br from-red-100 to-pink-100 text-red-600 hover:from-red-200 hover:to-pink-200 shadow-red-500/20' 
+                  : 'bg-gradient-to-br from-gray-100 to-gray-50 text-gray-600 hover:from-pink-100 hover:to-pink-50 hover:text-pink-600'
+              } ${isTogglingFavorite ? 'animate-pulse' : ''}`}
               title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''} ${isTogglingFavorite ? 'animate-pulse' : ''}`} />
             </button>
           </div>
         </div>
@@ -787,9 +855,9 @@ export default function ServiceDetailPage() {
       })()}
 
         {/* Price and Booking */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
           <div>
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
               {formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency)}
             </div>
             <div className="text-sm text-gray-500">
@@ -806,7 +874,7 @@ export default function ServiceDetailPage() {
           </div>
           <Link
             href={`/marketplace/services/${params.id}/book`}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold inline-block text-center"
+            className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold inline-block text-center"
           >
             Book Now
           </Link>
@@ -817,19 +885,19 @@ export default function ServiceDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Description</h2>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Description</h2>
             <p className="text-gray-600 leading-relaxed">{service.description}</p>
           </div>
 
           {/* Features */}
           {service.features && service.features.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">What&apos;s Included</h2>
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">What&apos;s Included</h2>
               <ul className="space-y-2">
                 {service.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                     <span className="text-gray-600">{feature}</span>
                   </li>
                 ))}
@@ -839,11 +907,11 @@ export default function ServiceDetailPage() {
 
           {/* Requirements */}
           {service.requirements && service.requirements.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Requirements</h2>
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Requirements</h2>
               <ul className="space-y-2">
                 {service.requirements.map((requirement, index) => (
-                  <li key={index} className="flex items-center gap-2">
+                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-yellow-50/50 transition-colors">
                     <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                     <span className="text-gray-600">{requirement}</span>
                   </li>
@@ -854,15 +922,15 @@ export default function ServiceDetailPage() {
 
           {/* Service Packages */}
           {service.servicePackages && service.servicePackages.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Packages</h2>
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Service Packages</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {service.servicePackages.map((pkg, idx) => (
-                  <div key={pkg._id || pkg.id || `package-${idx}`} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={pkg._id || pkg.id || `package-${idx}`} className="bg-gradient-to-br from-white to-emerald-50/30 border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-[1.02] transition-all">
                     <h3 className="font-semibold text-gray-700 mb-2">{pkg.name || 'Package'}</h3>
                     <p className="text-sm text-gray-600 mb-3">{pkg.description || 'No description available'}</p>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-bold text-green-600">
+                      <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                         {formatPrice(pkg.price || 0, service.pricing?.currency)}
                       </span>
                       <span className="text-sm text-gray-500">{pkg.duration || 0} hours</span>
@@ -870,7 +938,7 @@ export default function ServiceDetailPage() {
                     <ul className="space-y-1">
                       {pkg.features?.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                          <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" />
                           <span>{feature}</span>
                         </li>
                       )) || []}
@@ -883,19 +951,19 @@ export default function ServiceDetailPage() {
 
           {/* Add-ons */}
           {service.addOns && service.addOns.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Available Add-ons</h2>
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Available Add-ons</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {service.addOns.map((addon, idx) => (
-                  <div key={addon._id || addon.id || `addon-${idx}`} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={addon._id || addon.id || `addon-${idx}`} className="bg-gradient-to-br from-white to-blue-50/30 border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-[1.02] transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold text-gray-700">{addon.name || 'Add-on'}</h3>
-                      <span className="text-lg font-bold text-green-600">
+                      <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
                         {formatPrice(addon.price || 0, service.pricing?.currency)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{addon.description || 'No description available'}</p>
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <span className="inline-block px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
                       {addon.category || 'General'}
                     </span>
                   </div>
@@ -905,13 +973,13 @@ export default function ServiceDetailPage() {
           )}
 
           {/* Service Details */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Service Details</h2>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Service Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-700 mb-2">Service Type</h3>
-                  <span className="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
+                  <div>
+                    <h3 className="font-medium text-gray-700 mb-2">Service Type</h3>
+                  <span className="px-2 py-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 text-sm rounded-full border border-gray-300">
                     {service.serviceType?.replace('_', ' ').toUpperCase() || 'NOT SPECIFIED'}
                   </span>
                 </div>
@@ -942,7 +1010,7 @@ export default function ServiceDetailPage() {
                   <h3 className="font-medium text-gray-700 mb-2">Service Areas</h3>
                   <div className="flex flex-wrap gap-1">
                     {service.serviceArea?.map((area, index) => (
-                      <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span key={index} className="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
                         {area}
                       </span>
                     )) || <span className="text-sm text-gray-500">No service areas specified</span>}
@@ -979,11 +1047,11 @@ export default function ServiceDetailPage() {
           </div>
 
           {/* Warranty & Protection */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Warranty & Protection</h2>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Warranty & Protection</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 border border-gray-200 rounded-lg">
-                <Shield className="w-8 h-8 text-green-500 mx-auto mb-2" />
+              <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
+                <Shield className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
                 <h3 className="font-medium text-gray-700 mb-1">Warranty</h3>
                 <p className="text-sm text-gray-600">
                   {service.warranty?.hasWarranty 
@@ -992,7 +1060,7 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
-              <div className="text-center p-4 border border-gray-200 rounded-lg">
+              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
                 <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                 <h3 className="font-medium text-gray-700 mb-1">Insurance</h3>
                 <p className="text-sm text-gray-600">
@@ -1002,7 +1070,7 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
-              <div className="text-center p-4 border border-gray-200 rounded-lg">
+              <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
                 <AlertCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
                 <h3 className="font-medium text-gray-700 mb-1">Emergency Service</h3>
                 <p className="text-sm text-gray-600">
@@ -1016,16 +1084,16 @@ export default function ServiceDetailPage() {
           </div>
 
           {/* Reviews */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Reviews</h2>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Reviews</h2>
             {reviews.length === 0 ? (
               <p className="text-gray-500">No reviews yet</p>
             ) : (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+                  <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0 hover:bg-gray-50/50 p-3 rounded-lg transition-colors">
                     <div className="flex items-start gap-3">
-                      <div className="relative w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
+                      <div className="relative w-10 h-10 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center overflow-hidden shadow-md">
                         {review.user.avatar ? (
                           <Image
                             src={review.user.avatar}
@@ -1050,7 +1118,7 @@ export default function ServiceDetailPage() {
                         <p className="text-gray-600 text-sm mb-2">{review.comment}</p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>{new Date(review.createdAt).toLocaleDateString()}</span>
-                          <button className="hover:text-gray-700">
+                          <button className="hover:text-gray-700 transition-colors">
                             Helpful ({review.helpful})
                           </button>
                         </div>
@@ -1066,7 +1134,7 @@ export default function ServiceDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Provider Info */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Provider</h3>
             {(() => {
               const provider = typeof service.provider === 'object' && !Array.isArray(service.provider)
@@ -1126,7 +1194,7 @@ export default function ServiceDetailPage() {
                       <h4 className="text-sm font-medium text-gray-700 mb-2">Skills</h4>
                       <div className="flex flex-wrap gap-1">
                         {providerSkills.map((skill: string, index: number) => (
-                          <span key={index} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          <span key={index} className="px-2 py-1 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 text-xs rounded-full border border-emerald-300">
                             {skill}
                           </span>
                         ))}
@@ -1211,7 +1279,7 @@ export default function ServiceDetailPage() {
 
           {/* Other Services from This Provider */}
           {otherProviderServices.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-700">
                   Other Services
@@ -1303,26 +1371,26 @@ export default function ServiceDetailPage() {
           )}
 
           {/* Safety Info */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Safety & Trust</h3>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Safety & Trust</h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
+                <Shield className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm text-gray-600">Background verified</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm text-gray-600">Identity verified</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Star className="w-4 h-4 text-green-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
+                <Star className="w-4 h-4 text-emerald-500" />
                 <span className="text-sm text-gray-600">Highly rated</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-
+      </div>
     </div>
   );
 }

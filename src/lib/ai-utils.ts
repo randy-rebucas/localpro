@@ -570,6 +570,7 @@ export async function getBookingSuggestions(
 
 // Description Generator (Provider)
 export interface DescriptionGeneratorParams {
+  title?: string;
   serviceType: string;
   category: string;
   keyFeatures?: string[];
@@ -586,6 +587,37 @@ export interface GeneratedDescription {
   shortDescription: string;
   keywords: string[];
   seoSuggestions: string[];
+}
+
+// Description From Title (Simplified)
+export interface DescriptionFromTitleParams {
+  title: string;
+  category?: string;
+  serviceType?: string;
+}
+
+export interface DescriptionFromTitleResponse {
+  success: boolean;
+  message: string;
+  data: {
+    title: string;
+    description: string;
+    keyFeatures?: string[];
+    benefits?: string[];
+    tags?: string[];
+    wordCount?: number;
+    options?: {
+      length?: string;
+      tone?: string;
+      includeFeatures?: boolean;
+      includeBenefits?: boolean;
+    };
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      total_tokens?: number;
+    };
+  };
 }
 
 export async function generateServiceDescription(
@@ -605,7 +637,18 @@ export async function generateServiceDescription(
         logger.debug("AI description generator endpoint not available", { status: 404 });
         throw new Error("Description generation feature is not available yet.");
       }
-      throw new Error(`Description generation failed: ${response.status}`);
+      
+      // Try to get error message from response
+      let errorMessage = `Description generation failed: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
 
     return await response.json();
@@ -614,6 +657,125 @@ export async function generateServiceDescription(
       logger.error("Description generation error", error);
     }
     throw error;
+  }
+}
+
+// Description From Title (Simplified - Just needs title)
+export async function generateDescriptionFromTitle(
+  params: DescriptionFromTitleParams
+): Promise<DescriptionFromTitleResponse> {
+  try {
+    // Validate required params
+    if (!params.title || params.title.trim() === "") {
+      throw new Error("Title is required for description generation");
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.aiDescriptionFromTitle}`,
+      createAuthFetchOptions({
+        method: "POST",
+        body: JSON.stringify(params),
+      })
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.debug("AI description from title endpoint not available", { status: 404 });
+        throw new Error("Description generation feature is not available yet.");
+      }
+      
+      // Try to get error message from response
+      let errorMessage = `Description generation failed: ${response.status}`;
+      let errorDetails: any = null;
+      
+      try {
+        const errorData = await response.json();
+        errorDetails = errorData;
+        errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+      } catch (parseError) {
+        // If response is not JSON, try to get text
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            errorMessage = errorText;
+          } else {
+            errorMessage = response.statusText || errorMessage;
+          }
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      
+      // Log detailed error for debugging
+      logger.error("Description from title API error", new Error(errorMessage), {
+        status: response.status,
+        statusText: response.statusText,
+        params,
+        errorDetails
+      });
+      
+      throw new Error(errorMessage);
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      const text = await response.text();
+      throw new Error(`Invalid JSON response: ${text.substring(0, 200) || 'Empty response'}`);
+    }
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      throw new Error("Invalid response format from API");
+    }
+    
+    // Handle wrapped response format (success, message, data)
+    if (data.success !== undefined && data.data) {
+      return data as DescriptionFromTitleResponse;
+    } 
+    // Handle direct data format
+    else if (data.description || data.title) {
+      // If response is direct data, wrap it in expected format
+      return {
+        success: true,
+        message: "Description generated successfully",
+        data: {
+          title: data.title || "",
+          description: data.description || "",
+          keyFeatures: data.keyFeatures,
+          benefits: data.benefits,
+          tags: data.tags,
+          wordCount: data.wordCount,
+          options: data.options,
+          usage: data.usage
+        }
+      };
+    }
+    // If it's already in the expected format
+    else if (data.data && data.data.description) {
+      return data as DescriptionFromTitleResponse;
+    }
+    
+    // Log unexpected structure for debugging
+    logger.error("Unexpected response structure", new Error("Response format not recognized"), { data });
+    throw new Error("Unexpected response format from API");
+  } catch (error) {
+    // Re-throw if it's already an Error with a message
+    if (error instanceof Error) {
+      // Only log if it's not a user-facing error
+      if (!error.message.includes("404") && 
+          !error.message.includes("not available") &&
+          !error.message.includes("Title is required")) {
+        logger.error("Description from title generation error", error, { params });
+      }
+      throw error;
+    }
+    
+    // Handle unexpected error types
+    const errorMessage = String(error) || "Failed to generate description";
+    logger.error("Unexpected error in description generation", new Error(errorMessage), { params });
+    throw new Error(errorMessage);
   }
 }
 
@@ -1032,6 +1194,105 @@ export async function getSchedulingRecommendations(
       logger.error("Scheduling assistant error", error);
     }
     return [];
+  }
+}
+
+// Form Prefiller (Service Creation)
+export interface FormPrefillerParams {
+  description: string;
+  location?: string;
+}
+
+export interface PrefilledFormData {
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  serviceType: string;
+  teamSize: number;
+  pricing: {
+    type: string;
+    basePrice: number;
+    currency: string;
+  };
+  estimatedDuration: {
+    min: number;
+    max: number;
+  };
+  serviceArea: string[];
+  features: string[];
+  requirements: string[];
+  equipmentProvided: boolean;
+  materialsIncluded: boolean;
+  warranty: {
+    hasWarranty: boolean;
+    duration: number;
+    description: string;
+  };
+  insurance: {
+    covered: boolean;
+    coverageAmount: number;
+  };
+  emergencyService: {
+    available: boolean;
+    surcharge: number;
+    responseTime: string;
+  };
+  servicePackages: Array<{
+    name: string;
+    description: string;
+    price: number;
+    features: string[];
+    duration: number;
+  }>;
+  addOns: Array<{
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+  }>;
+  availability: {
+    timezone: string;
+    schedule: Array<{
+      day: string;
+      startTime: string;
+      endTime: string;
+      isAvailable: boolean;
+    }>;
+  };
+}
+
+export async function prefillServiceForm(
+  params: FormPrefillerParams
+): Promise<PrefilledFormData> {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.aiFormPrefiller}`,
+      createAuthFetchOptions({
+        method: "POST",
+        body: JSON.stringify(params),
+      })
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.debug("AI form prefiller endpoint not available", { status: 404 });
+        throw new Error("Form prefiller feature is not available yet.");
+      }
+      throw new Error(`Form prefilling failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    // Handle both direct response and wrapped response
+    if (data.data) {
+      return data.data;
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof Error && !error.message.includes("404") && !error.message.includes("not available")) {
+      logger.error("Form prefiller error", error);
+    }
+    throw error;
   }
 }
 

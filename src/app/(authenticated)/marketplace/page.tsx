@@ -34,14 +34,12 @@ export default function MarketplacePage() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
-      
+
       <div className="relative z-0">
         {/* Broadcaster - Only shown for clients */}
-        {isClientView && (
-          <div className="container">
-            <Broadcaster />
-          </div>
-        )}
+        <div className="container">
+          <Broadcaster />
+        </div>
 
         {/* Hero / Header Section */}
         <MarketplaceHeader
@@ -49,8 +47,7 @@ export default function MarketplacePage() {
           description={description}
           isProviderView={isProviderView}
         >
-          {/* Provider View Info Banner */}
-          {isProviderView && <ProviderInfoBanner />}
+
         </MarketplaceHeader>
 
         {/* Render appropriate marketplace component based on roleView */}

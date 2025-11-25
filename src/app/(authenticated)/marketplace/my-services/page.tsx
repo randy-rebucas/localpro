@@ -16,20 +16,42 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
 
 interface Service {
   id: string;
+  _id?: string;
   name: string;
+  title?: string; // API field name
   description: string;
   category: string;
   price: number;
+  pricing?: {
+    type: string;
+    basePrice: number;
+    currency: string;
+  };
   duration: number;
+  estimatedDuration?: {
+    min: number;
+    max: number;
+  };
   status: "ACTIVE" | "INACTIVE" | "PENDING";
+  isActive?: boolean; // API field name
   rating: number;
+  ratingObj?: {
+    average: number;
+    count: number;
+  };
   reviewCount: number;
   bookingCount: number;
   totalEarnings: number;
-  images?: string[];
+  images?: string[] | Array<{
+    url: string;
+    publicId?: string;
+    thumbnail?: string;
+    alt?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -119,6 +141,78 @@ export default function MyServicesPage() {
         servicesData = [];
       }
       
+      // Normalize service data to match our interface
+      const normalizedServices: Service[] = servicesData.map((service: any, index: number) => {
+        const id = service.id || service._id || `service-${index}-${Date.now()}`;
+        
+        // Handle rating - can be object {average, count} or number
+        let rating = 0;
+        let reviewCount = 0;
+        if (service.rating) {
+          if (typeof service.rating === 'object' && service.rating.average !== undefined) {
+            rating = service.rating.average || 0;
+            reviewCount = service.rating.count || 0;
+          } else if (typeof service.rating === 'number') {
+            rating = service.rating;
+            reviewCount = service.reviewCount || 0;
+          }
+        }
+        
+        // Handle pricing - can be object {type, basePrice, currency} or direct price
+        const price = service.pricing?.basePrice || service.price || service.basePrice || 0;
+        const currency = service.pricing?.currency || 'PHP';
+        
+        // Handle duration - can be object {min, max} or number
+        let duration = 0;
+        if (service.estimatedDuration) {
+          if (typeof service.estimatedDuration === 'object') {
+            // Use average of min and max, or max if min is not available
+            duration = service.estimatedDuration.max || service.estimatedDuration.min || 0;
+          } else {
+            duration = service.estimatedDuration;
+          }
+        } else if (service.duration) {
+          duration = service.duration;
+        }
+        
+        // Handle status - convert isActive boolean to status string
+        let status: "ACTIVE" | "INACTIVE" | "PENDING" = "PENDING";
+        if (service.status) {
+          status = service.status.toUpperCase() as "ACTIVE" | "INACTIVE" | "PENDING";
+        } else if (service.isActive !== undefined) {
+          status = service.isActive ? "ACTIVE" : "INACTIVE";
+        }
+        
+        // Handle images - can be array of strings or array of objects
+        let images: string[] = [];
+        if (service.images && Array.isArray(service.images)) {
+          images = service.images.map((img: any) => {
+            if (typeof img === 'string') return img;
+            return img.url || img.thumbnail || '';
+          }).filter((url: string) => url);
+        }
+        
+        // Handle name/title
+        const name = service.name || service.title || 'Untitled Service';
+        
+        return {
+          ...service,
+          id: id as string,
+          name,
+          price,
+          pricing: service.pricing || { type: 'fixed', basePrice: price, currency },
+          duration,
+          status,
+          rating,
+          reviewCount,
+          bookingCount: service.bookingCount || 0,
+          totalEarnings: service.totalEarnings || 0,
+          images,
+        } as Service;
+      });
+      
+      servicesData = normalizedServices;
+      
       logger.debug("Services extracted", { count: servicesData.length, hasStats: !!statsData });
       setServices(servicesData);
       setStats(statsData);
@@ -137,19 +231,38 @@ export default function MyServicesPage() {
 
   const updateServiceStatus = async (serviceId: string, status: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`, createAuthFetchOptions({
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      }));
-
-      if (!response.ok) {
-        throw new Error("Failed to update service status");
+      let response;
+      
+      // Use deactivate endpoint when deactivating
+      if (status === "INACTIVE") {
+        response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceDeactivate}/${serviceId}/deactivate`, createAuthFetchOptions({
+          method: 'PATCH',
+        }));
+      } else if (status === "ACTIVE") {
+        // Use activate endpoint when activating
+        response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceActivate}/${serviceId}/activate`, createAuthFetchOptions({
+          method: 'PATCH',
+        }));
+      } else {
+        // For other statuses, use the standard PUT endpoint
+        response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceById}/${serviceId}`, createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify({ status }),
+        }));
       }
 
-      fetchServices();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || "Failed to update service status";
+        throw new Error(errorMessage);
+      }
+
+      // Refresh the services list
+      await fetchServices();
     } catch (error) {
       logger.error("Error updating service status", error instanceof Error ? error : new Error(String(error)), { serviceId, status });
-      alert("Failed to update service status. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update service status. Please try again.";
+      alert(errorMessage);
     }
   };
 
@@ -174,11 +287,49 @@ export default function MyServicesPage() {
     }
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(price);
+  // Normalize currency to code for conversion base, then format with symbol
+  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+    if (!currency) return 'PHP';
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to PHP if not found
+    return 'PHP';
+  };
+
+  const formatPrice = (price: number, currency: string | undefined = 'PHP') => {
+    // Normalize currency to code for conversion base
+    const currencyCode = normalizeCurrencyCode(currency);
+    // Use formatCurrency which now uses symbols
+    return formatCurrency(price, currencyCode);
   };
 
   const formatDuration = (minutes: number) => {
@@ -464,8 +615,8 @@ export default function MyServicesPage() {
             </Card>
           ) : (
           <div className="grid gap-4">
-            {services.map((service) => (
-              <div key={service.id} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200 backdrop-blur-sm">
+            {services.map((service, index) => (
+              <div key={service.id || `service-${index}`} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200 backdrop-blur-sm">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
@@ -487,9 +638,19 @@ export default function MyServicesPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                          {formatPrice(service.price)}
+                          {formatPrice(service.price, service.pricing?.currency)}
                         </div>
-                        <div className="text-sm text-gray-500">per service</div>
+                        <div className="text-sm text-gray-500">
+                          {service.pricing?.type === 'hourly' 
+                            ? 'per hour' 
+                            : service.pricing?.type === 'fixed'
+                            ? 'fixed price'
+                            : service.pricing?.type === 'per_sqft'
+                            ? 'per square foot'
+                            : service.pricing?.type === 'per_item'
+                            ? 'per item'
+                            : 'per service'}
+                        </div>
                       </div>
                     </div>
 
@@ -501,7 +662,7 @@ export default function MyServicesPage() {
                         <div className="text-sm text-gray-500">Bookings</div>
                       </div>
                       <div className="text-center bg-gradient-to-br from-green-50/50 to-emerald-50/50 p-3 rounded-lg border border-green-100">
-                        <div className="text-xl font-bold text-gray-700">{formatPrice(service.totalEarnings)}</div>
+                        <div className="text-xl font-bold text-gray-700">{formatPrice(service.totalEarnings, service.pricing?.currency)}</div>
                         <div className="text-sm text-gray-500">Earnings</div>
                       </div>
                       <div className="text-center bg-gradient-to-br from-purple-50/50 to-pink-50/50 p-3 rounded-lg border border-purple-100">

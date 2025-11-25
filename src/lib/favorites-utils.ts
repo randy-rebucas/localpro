@@ -70,7 +70,42 @@ export async function addFavorite(
     }));
 
     if (!response.ok) {
-      throw new Error('Failed to add favorite');
+      // Try to extract error message from response
+      let errorMessage = `Failed to add favorite (${response.status} ${response.statusText})`;
+      try {
+        const contentType = response.headers.get('content-type');
+        let errorData: unknown;
+        
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            const data = errorData as Record<string, unknown>;
+            if (data.message && typeof data.message === 'string') {
+              errorMessage = data.message;
+            } else if (data.error && typeof data.error === 'string') {
+              errorMessage = data.error;
+            }
+          }
+        } else {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text.substring(0, 200);
+          }
+        }
+      } catch (parseError) {
+        // If we can't parse the error, use the status text
+        logger.error('Error parsing error response', parseError instanceof Error ? parseError : new Error(String(parseError)));
+      }
+      
+      logger.error('Failed to add favorite', new Error(errorMessage), { 
+        itemType, 
+        itemId, 
+        status: response.status,
+        statusText: response.statusText,
+        url 
+      });
+      
+      throw new Error(errorMessage);
     }
 
     toast.success('Added to favorites');
@@ -78,8 +113,16 @@ export async function addFavorite(
     // Dispatch custom event for header to update
     window.dispatchEvent(new Event('favoritesUpdated'));
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Error adding favorite', error instanceof Error ? error : new Error(String(error)), { itemType, itemId });
-    toast.error('Failed to add favorite');
+    
+    // Only show toast if it's not already shown by the error above
+    if (!errorMessage.includes('Failed to add favorite')) {
+      toast.error(errorMessage || 'Failed to add favorite');
+    } else {
+      toast.error('Failed to add favorite');
+    }
+    
     throw error;
   }
 }
@@ -98,7 +141,42 @@ export async function removeFavorite(
     }));
 
     if (!response.ok) {
-      throw new Error('Failed to remove favorite');
+      // Try to extract error message from response
+      let errorMessage = `Failed to remove favorite (${response.status} ${response.statusText})`;
+      try {
+        const contentType = response.headers.get('content-type');
+        let errorData: unknown;
+        
+        if (contentType && contentType.includes('application/json')) {
+          errorData = await response.json();
+          if (errorData && typeof errorData === 'object') {
+            const data = errorData as Record<string, unknown>;
+            if (data.message && typeof data.message === 'string') {
+              errorMessage = data.message;
+            } else if (data.error && typeof data.error === 'string') {
+              errorMessage = data.error;
+            }
+          }
+        } else {
+          const text = await response.text();
+          if (text) {
+            errorMessage = text.substring(0, 200);
+          }
+        }
+      } catch (parseError) {
+        // If we can't parse the error, use the status text
+        logger.error('Error parsing error response', parseError instanceof Error ? parseError : new Error(String(parseError)));
+      }
+      
+      logger.error('Failed to remove favorite', new Error(errorMessage), { 
+        itemType, 
+        itemId, 
+        status: response.status,
+        statusText: response.statusText,
+        url 
+      });
+      
+      throw new Error(errorMessage);
     }
 
     toast.success('Removed from favorites');
@@ -106,8 +184,16 @@ export async function removeFavorite(
     // Dispatch custom event for header to update
     window.dispatchEvent(new Event('favoritesUpdated'));
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error('Error removing favorite', error instanceof Error ? error : new Error(String(error)), { itemType, itemId });
-    toast.error('Failed to remove favorite');
+    
+    // Only show toast if it's not already shown by the error above
+    if (!errorMessage.includes('Failed to remove favorite')) {
+      toast.error(errorMessage || 'Failed to remove favorite');
+    } else {
+      toast.error('Failed to remove favorite');
+    }
+    
     throw error;
   }
 }

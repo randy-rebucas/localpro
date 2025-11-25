@@ -53,7 +53,7 @@ export function MarketplaceHeader({
                 <span className="sm:hidden">Post</span>
               </Link>
               <Link
-                href="/marketplace/jobs/my-jobs"
+                href="/marketplace/my-jobs"
                 className="flex items-center gap-1.5 px-4 py-2.5 bg-white text-gray-700 border-2 border-gray-300 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg hover:scale-105 transform duration-200"
               >
                 <BarChart3 className="w-4 h-4" />

@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
   // Marketplace Services
   marketplaceServices: "/api/marketplace/services",
   marketplaceServiceById: "/api/marketplace/services",
+  marketplaceServiceDeactivate: "/api/marketplace/services",
+  marketplaceServiceActivate: "/api/marketplace/services",
   marketplaceServicesCategories: "/api/marketplace/services/categories",
   marketplaceMyServices: "/api/marketplace/my-services",
   marketplaceMyBookings: "/api/marketplace/my-bookings",
@@ -66,6 +68,7 @@ export const API_ENDPOINTS = {
   aiReviewSentiment: "/api/ai/marketplace/review-sentiment",
   aiBookingAssistant: "/api/ai/marketplace/booking-assistant",
   aiDescriptionGenerator: "/api/ai/marketplace/description-generator",
+  aiDescriptionFromTitle: "/api/ai/marketplace/description-from-title",
   aiPricingOptimizer: "/api/ai/marketplace/pricing-optimizer",
   aiDemandForecast: "/api/ai/marketplace/demand-forecast",
   aiReviewInsights: "/api/ai/marketplace/review-insights",
@@ -73,6 +76,7 @@ export const API_ENDPOINTS = {
   aiListingOptimizer: "/api/ai/marketplace/listing-optimizer",
   aiSchedulingAssistant: "/api/ai/marketplace/scheduling-assistant",
   aiBioGenerator: "/api/ai/users/bio-generator",
+  aiFormPrefiller: "/api/ai/marketplace/form-prefiller",
 
   
   // Job Board

@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
-import { Grid3x3, List } from "lucide-react";
+import { Grid3x3, List, Search } from "lucide-react";
 
 interface JobControlsBarProps {
+  search: string;
+  onSearchChange: (search: string) => void;
   sortBy: string;
   onSortByChange: (sortBy: string) => void;
   sortOrder: 'asc' | 'desc';
@@ -13,6 +15,8 @@ interface JobControlsBarProps {
 }
 
 export function JobControlsBar({
+  search,
+  onSearchChange,
   sortBy,
   onSortByChange,
   sortOrder,
@@ -22,9 +26,23 @@ export function JobControlsBar({
 }: JobControlsBarProps) {
   return (
     <div className="mb-6 bg-white rounded-xl p-4 lg:p-5 shadow-sm border border-gray-200">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-end">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+        {/* Left Side - Search */}
+        <div className="flex-1 w-full sm:w-auto">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Search jobs..."
+              className="w-full sm:w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors hover:border-gray-400"
+            />
+          </div>
+        </div>
+
         {/* Right Side - Sort and View Mode Controls */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Sort By */}
           <select
             value={sortBy}

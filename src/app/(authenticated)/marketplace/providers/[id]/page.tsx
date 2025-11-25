@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,6 +9,9 @@ import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 // UserId Interface
 interface UserIdData {
@@ -314,14 +317,61 @@ interface MarketplaceService {
 
 export default function ProviderDetailPage() {
   const params = useParams();
+  const { settings: appSettings } = useAppSettings();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [services, setServices] = useState<MarketplaceService[]>([]);
   const [loading, setLoading] = useState(true);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusWarning, setStatusWarning] = useState<string | null>(null);
+  const [servicesPopulatedFromResponse, setServicesPopulatedFromResponse] = useState(false);
 
   const providerId = params?.id as string;
+  
+  // Currency normalization function - converts symbols to codes
+  const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
+    const defaultCurrencyCode = getDefaultCurrency(appSettings);
+    if (!currency) return defaultCurrencyCode;
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to app settings currency if not found
+    return defaultCurrencyCode;
+  }, [appSettings]);
+  
+  // Format price with currency
+  const formatPrice = useCallback((price: number, currency?: string | null): string => {
+    const currencyCode = normalizeCurrencyCode(currency);
+    return formatCurrency(price, currencyCode, { appSettings });
+  }, [normalizeCurrencyCode, appSettings]);
 
   useEffect(() => {
     const fetchProvider = async () => {
@@ -330,6 +380,10 @@ export default function ProviderDetailPage() {
         setLoading(false);
         return;
       }
+      
+      // Reset services state when provider changes
+      setServices([]);
+      setServicesPopulatedFromResponse(false);
 
       const normalizeProviderData = (providerData: unknown, isStatusError: boolean = false): Provider | null => {
         if (!providerData || typeof providerData !== 'object') {
@@ -364,6 +418,22 @@ export default function ProviderDetailPage() {
         // If we don't have an _id but have other data, try to use what we have
         const providerId = data._id || data.id || ((userId as { _id?: string; id?: string } | null)?._id || (userId as { _id?: string; id?: string } | null)?.id) || undefined;
         
+        // Explicitly extract verification to ensure it's preserved
+        const verification = data.verification || undefined;
+        
+        // Debug logging for verification in development
+        if (process.env.NODE_ENV === 'development' && verification) {
+          logger.debug('Verification data found in provider response', {
+            hasVerification: !!verification,
+            identityVerified: (verification as { identityVerified?: boolean })?.identityVerified,
+            businessVerified: (verification as { businessVerified?: boolean })?.businessVerified,
+            hasBackgroundCheck: !!(verification as { backgroundCheck?: unknown })?.backgroundCheck,
+            hasInsurance: !!(verification as { insurance?: unknown })?.insurance,
+            hasLicenses: !!(verification as { licenses?: unknown[] })?.licenses,
+            verificationKeys: verification && typeof verification === 'object' ? Object.keys(verification) : [],
+          });
+        }
+        
         return {
           ...data,
           _id: providerId,
@@ -374,6 +444,7 @@ export default function ProviderDetailPage() {
           userId: userId,
           status: data.status || (isStatusError ? 'pending' : undefined),
           trust: trustData || data.trust,
+          verification: verification as Provider['verification'],
         } as Provider;
       };
 
@@ -433,20 +504,51 @@ export default function ProviderDetailPage() {
 
         // If we have data from marketplace endpoint (even with an error), try to use it
         let normalizedProvider: Provider | null = null;
+        let servicesFromResponse: MarketplaceService[] = [];
         if (data) {
-          // Try multiple possible data structures
-          const providerData = data.data || data.provider || data.result || data;
+          // Extract services from response if available
+          // Response structure: { success: true, data: { provider: {...}, services: [...] } }
+          const responseData = typeof data === 'object' && data !== null && 'data' in data 
+            ? (data.data as Record<string, unknown>)
+            : null;
+          
+          // Extract services from the response data
+          if (responseData && 'services' in responseData && Array.isArray(responseData.services)) {
+            servicesFromResponse = responseData.services as MarketplaceService[];
+          } else if (data && typeof data === 'object' && 'services' in data && Array.isArray(data.services)) {
+            servicesFromResponse = data.services as MarketplaceService[];
+          }
+          
+          // Try multiple possible data structures for provider
+          // If responseData exists and has a provider field, use that; otherwise try other structures
+          let providerData: unknown;
+          if (responseData && 'provider' in responseData) {
+            providerData = responseData.provider;
+          } else if (responseData && !('provider' in responseData)) {
+            // If responseData exists but doesn't have provider, it might be the provider itself
+            providerData = responseData;
+          } else {
+            // Fallback to other structures
+            providerData = data.data || data.provider || data.result || data;
+          }
           
           // Log the structure we received for debugging
           if (process.env.NODE_ENV === 'development') {
+            const providerDataObj = providerData && typeof providerData === 'object' ? providerData as Record<string, unknown> : null;
             logger.debug('Provider data structure', {
               hasData: !!data,
               hasSuccess: !!data.success,
               hasDataField: !!data.data,
               hasProviderField: !!data.provider,
               hasResultField: !!data.result,
+              hasResponseData: !!responseData,
+              hasServices: servicesFromResponse.length > 0,
+              servicesCount: servicesFromResponse.length,
+              hasVerification: !!(providerDataObj?.verification),
+              verificationType: providerDataObj?.verification ? typeof providerDataObj.verification : 'none',
               dataKeys: data ? Object.keys(data) : [],
-              providerDataKeys: providerData && typeof providerData === 'object' ? Object.keys(providerData) : [],
+              responseDataKeys: responseData ? Object.keys(responseData) : [],
+              providerDataKeys: providerDataObj ? Object.keys(providerDataObj) : [],
             });
           }
           
@@ -456,6 +558,11 @@ export default function ProviderDetailPage() {
         // If we got provider data, use it (even if there was a status error)
         if (normalizedProvider) {
           setProvider(normalizedProvider);
+          // Set services if they were included in the response
+          if (servicesFromResponse.length > 0) {
+            setServices(servicesFromResponse);
+            setServicesPopulatedFromResponse(true);
+          }
           providerDataFetched = true;
           if (isStatusError) {
             // Don't log error for status issues when we have data to display
@@ -545,10 +652,15 @@ export default function ProviderDetailPage() {
     fetchProvider();
   }, [providerId]);
 
-  // Fetch provider services
+  // Fetch provider services (only if not already populated from provider response)
   useEffect(() => {
     const fetchServices = async () => {
       if (!providerId) return;
+      
+      // Skip if services are already populated from provider response
+      if (servicesPopulatedFromResponse) {
+        return;
+      }
 
       try {
         setServicesLoading(true);
@@ -570,10 +682,10 @@ export default function ProviderDetailPage() {
       }
     };
 
-    if (providerId && provider) {
+    if (providerId && provider && !servicesPopulatedFromResponse) {
       fetchServices();
     }
-  }, [providerId, provider]);
+  }, [providerId, provider, servicesPopulatedFromResponse]);
 
   if (loading) {
     return <Loading />;
@@ -796,6 +908,11 @@ export default function ProviderDetailPage() {
                   <span className="text-sm text-gray-700">Background Check</span>
                 </div>
               )}
+              {/* Show message if no verification data is available */}
+              {!provider.verification && 
+               !userId?.trust?.verification && (
+                <p className="text-sm text-gray-500">No verification information available</p>
+              )}
             </div>
           </div>
 
@@ -860,8 +977,7 @@ export default function ProviderDetailPage() {
                       <div className="flex items-center justify-between">
                         {servicePrice && (
                           <div className="text-lg font-bold text-gray-900">
-                            ${servicePrice}
-                            {service.currency && <span className="text-sm font-normal text-gray-600"> {service.currency}</span>}
+                            {formatPrice(servicePrice, service.currency || service.pricing?.currency)}
                           </div>
                         )}
                         {serviceRating && (
@@ -932,13 +1048,13 @@ export default function ProviderDetailPage() {
                     <div className="text-right">
                       {hourlyRate && (
                         <div className="text-lg font-semibold text-gray-900">
-                          ${hourlyRate}
+                          {formatPrice(hourlyRate, specialty.pricing?.currency)}
                           <span className="text-sm font-normal text-gray-600">/hr</span>
                         </div>
                       )}
                       {specialty.pricing?.minimumCharge && (
                         <div className="text-sm text-gray-600">
-                          Min: ${specialty.pricing.minimumCharge}
+                          Min: {formatPrice(specialty.pricing.minimumCharge, specialty.pricing?.currency)}
                         </div>
                       )}
                     </div>
@@ -1413,12 +1529,12 @@ export default function ProviderDetailPage() {
             )}
           </div>
         )}
-        {(provider.performance?.totalEarnings || provider.performance?.averageJobValue) && (
+        {(provider.performance?.totalEarnings !== undefined || provider.performance?.averageJobValue !== undefined) && (
           <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
             {provider.performance.totalEarnings !== undefined && (
               <div>
                 <div className="text-xl font-bold text-gray-900">
-                  ${provider.performance.totalEarnings.toLocaleString()}
+                  {formatPrice(provider.performance.totalEarnings)}
                 </div>
                 <div className="text-sm text-gray-600">Total Earnings</div>
               </div>
@@ -1426,7 +1542,7 @@ export default function ProviderDetailPage() {
             {provider.performance.averageJobValue !== undefined && (
               <div>
                 <div className="text-xl font-bold text-gray-900">
-                  ${provider.performance.averageJobValue.toFixed(0)}
+                  {formatPrice(provider.performance.averageJobValue)}
                 </div>
                 <div className="text-sm text-gray-600">Avg Job Value</div>
               </div>

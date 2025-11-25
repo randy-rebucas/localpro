@@ -13,7 +13,9 @@ import {
   Clock,
   Calendar,
   MapPin,
-  Briefcase
+  Briefcase,
+  CheckCircle2,
+  Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -21,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { useToast, ToastContainer } from "@/components/ui/toast";
 
 interface JobForm {
   title: string;
@@ -46,6 +49,7 @@ interface JobForm {
 
 export default function CreateJobPage() {
   const router = useRouter();
+  const { toasts, success, error: showErrorToast, removeToast } = useToast();
   const [form, setForm] = useState<JobForm>({
     title: "",
     description: "",
@@ -223,36 +227,61 @@ export default function CreateJobPage() {
       }
 
       const job = await response.json();
-      router.push(`/marketplace/jobs/${job.id}`);
+      
+      // Show success toast
+      success("Job created successfully! Redirecting...", 3000);
+      
+      // Keep button disabled and navigate after a short delay to show the toast
+      setTimeout(() => {
+        router.push(`/marketplace/jobs/${job.id}`);
+      }, 500);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error("Error creating job", error instanceof Error ? error : new Error(String(error)));
-      setError("Failed to create job. Please try again.");
-    } finally {
+      setError(errorMessage || "Failed to create job. Please try again.");
+      // Show error toast
+      showErrorToast(errorMessage || "Failed to create job. Please try again.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/marketplace/jobs"
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Jobs
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
+      
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-2xl font-bold text-gray-700 mb-6">Post a New Job</h1>
+      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/marketplace/jobs"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to jobs"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Post a New Job</h1>
+            <p className="text-sm text-gray-600">Create a job posting to find the right talent</p>
+          </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+
+          <form onSubmit={handleSubmit} className="space-y-8" noValidate>
             {/* Basic Information */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Job Details</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Job Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Input
@@ -341,12 +370,12 @@ export default function CreateJobPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="flex items-center gap-2">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={form.isRemote}
                       onChange={(e) => handleInputChange("isRemote", e.target.checked)}
-                      className="rounded"
+                      className="w-5 h-5 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 focus:ring-2 cursor-pointer"
                     />
                     <span className="text-sm font-medium text-gray-700">Remote work allowed</span>
                   </label>
@@ -367,7 +396,7 @@ export default function CreateJobPage() {
 
             {/* Location */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Location</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Location</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <Input
@@ -404,7 +433,7 @@ export default function CreateJobPage() {
 
             {/* Skills Required */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Skills Required</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Skills Required</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -424,14 +453,14 @@ export default function CreateJobPage() {
                   <button
                     type="button"
                     onClick={addSkill}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.skills.map((skill, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                       <span className="flex-1 text-sm">{skill}</span>
                       <button
                         type="button"
@@ -448,7 +477,7 @@ export default function CreateJobPage() {
 
             {/* Requirements */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Requirements</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Requirements</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -468,14 +497,14 @@ export default function CreateJobPage() {
                   <button
                     type="button"
                     onClick={addRequirement}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                       <span className="flex-1 text-sm">{requirement}</span>
                       <button
                         type="button"
@@ -492,7 +521,7 @@ export default function CreateJobPage() {
 
             {/* Deliverables */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Expected Deliverables</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Expected Deliverables</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -512,14 +541,14 @@ export default function CreateJobPage() {
                   <button
                     type="button"
                     onClick={addDeliverable}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.deliverables.map((deliverable, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
                       <span className="flex-1 text-sm">{deliverable}</span>
                       <button
                         type="button"
@@ -536,9 +565,9 @@ export default function CreateJobPage() {
 
             {/* Images */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Project Images (Optional)</h2>
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Project Images (Optional)</h2>
               <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gradient-to-br from-gray-50/50 to-white hover:border-emerald-300 transition-all">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">Upload images related to your project</p>
                   <input
@@ -551,7 +580,7 @@ export default function CreateJobPage() {
                   />
                   <label
                     htmlFor="image-upload"
-                    className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer transition-colors"
+                    className="inline-block bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-emerald-800 cursor-pointer transition-all shadow-md shadow-emerald-500/30 hover:shadow-lg hover:scale-105"
                   >
                     Choose Images
                   </label>
@@ -582,8 +611,8 @@ export default function CreateJobPage() {
             </div>
 
             {/* Job Preview */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Job Preview</h2>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border-2 border-blue-200">
+              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Job Preview</h2>
               <div className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium text-gray-700">{form.title || "Job Title"}</h3>
@@ -613,7 +642,7 @@ export default function CreateJobPage() {
                       {form.skills.map((skill, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                          className="inline-block px-2 py-1 text-xs bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full border border-blue-200 shadow-sm"
                         >
                           {skill}
                         </span>
@@ -626,27 +655,39 @@ export default function CreateJobPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-red-600">{error}</p>
+              <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 shadow-md">
+                <p className="text-red-600 font-medium">{error}</p>
               </div>
             )}
 
             {/* Submit Button */}
-            <div className="flex justify-end gap-4">
-              <Link
-                href="/marketplace/jobs"
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-              >
-                <Briefcase className="w-4 h-4" />
-                {loading ? "Creating Job..." : "Post Job"}
-              </button>
+            <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div></div>
+              <div className="flex gap-4">
+                <Link
+                  href="/marketplace/jobs"
+                  className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold disabled:hover:scale-100 flex items-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Briefcase className="w-5 h-5" />
+                      Post Job
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         </div>
