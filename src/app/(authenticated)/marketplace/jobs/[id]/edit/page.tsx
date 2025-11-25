@@ -22,6 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface Job {
   id: string;
@@ -74,6 +77,7 @@ interface JobForm {
 export default function EditJobPage() {
   const params = useParams();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const [job, setJob] = useState<Job | null>(null);
   const [form, setForm] = useState<JobForm>({
     title: "",
@@ -400,7 +404,7 @@ export default function EditJobPage() {
 
                 <div>
                   <Input
-                    label="Budget (USD) *"
+                    label={`Budget (${getDefaultCurrency(appSettings)}) *`}
                     type="number"
                     required
                     min="0"
@@ -733,7 +737,7 @@ export default function EditJobPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      {form.budget ? `$${form.budget.toLocaleString()}` : "Budget"}
+                      {form.budget ? formatCurrency(form.budget, getDefaultCurrency(appSettings), { appSettings }) : "Budget"}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />

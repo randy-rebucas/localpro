@@ -34,7 +34,7 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { Job as JobType, Language } from "@/types/jobs";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { formatCurrency } from "@/lib/currency-utils";
+import { formatCurrency, CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface ApplicationForm {
@@ -321,10 +321,49 @@ export default function JobDetailPage() {
   };
 
 
-  const formatPrice = (price: number, currency?: string) => {
-    const currencyCode = currency || job?.salary?.currency || defaultCurrency;
+  // Normalize currency to code for conversion base, then format with symbol
+  const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
+    if (!currency) return defaultCurrency;
+    
+    // If it's already a valid currency code, return it
+    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
+      return currency.toUpperCase();
+    }
+    
+    // Map currency symbols to codes
+    const symbolToCode: Record<string, string> = {
+      '₱': 'PHP',
+      '$': 'USD',
+      '€': 'EUR',
+      '£': 'GBP',
+      '¥': 'JPY',
+      'A$': 'AUD',
+      'C$': 'CAD',
+      'S$': 'SGD',
+    };
+    
+    // Check if it's a symbol
+    const normalized = currency.trim();
+    if (symbolToCode[normalized]) {
+      return symbolToCode[normalized];
+    }
+    
+    // Try to find by symbol in configs
+    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
+      if (config.symbol === normalized) {
+        return code;
+      }
+    }
+    
+    // Default to app settings currency if not found
+    return defaultCurrency;
+  }, [defaultCurrency]);
+
+  const formatPrice = useCallback((price: number, currency?: string) => {
+    // Normalize currency to code for conversion base
+    const currencyCode = normalizeCurrencyCode(currency || job?.salary?.currency);
     return formatCurrency(price, currencyCode, { appSettings });
-  };
+  }, [normalizeCurrencyCode, job?.salary?.currency, appSettings]);
 
   const getExperienceLevelColor = (level: string) => {
     switch (level?.toLowerCase()) {
@@ -516,26 +555,29 @@ export default function JobDetailPage() {
 
         {/* Salary and Application */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-200">
-          {job.salary && (
-            <div>
-              <div className="text-4xl font-bold text-green-600 mb-2">
-                {formatCurrency(job.salary.min || 0, job.salary.currency || defaultCurrency, { appSettings })}
-                {job.salary.max && ` - ${formatCurrency(job.salary.max, job.salary.currency || defaultCurrency, { appSettings })}`}
-                {job.salary.period && (
-                  <span className="text-2xl text-gray-500 font-normal">/{job.salary.period}</span>
-                )}
+          {job.salary && (() => {
+            const salaryCurrency = normalizeCurrencyCode(job.salary.currency);
+            return (
+              <div>
+                <div className="text-4xl font-bold text-green-600 mb-2">
+                  {formatCurrency(job.salary.min || 0, salaryCurrency, { appSettings })}
+                  {job.salary.max && ` - ${formatCurrency(job.salary.max, salaryCurrency, { appSettings })}`}
+                  {job.salary.period && (
+                    <span className="text-2xl text-gray-500 font-normal">/{job.salary.period}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  <span>Salary Range</span>
+                  {job.salary.isNegotiable && (
+                    <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-md text-xs font-medium border border-green-200">Negotiable</span>
+                  )}
+                  {job.salary.isConfidential && (
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200">Confidential</span>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                <span>Salary Range</span>
-                {job.salary.isNegotiable && (
-                  <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-md text-xs font-medium border border-green-200">Negotiable</span>
-                )}
-                {job.salary.isConfidential && (
-                  <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200">Confidential</span>
-                )}
-              </div>
-            </div>
-          )}
+            );
+          })()}
           <button
             onClick={() => setShowApplicationForm(true)}
             className="bg-green-600 text-white px-8 py-3.5 rounded-lg hover:bg-green-700 active:bg-green-800 transition-all font-semibold text-base shadow-md hover:shadow-lg w-full sm:w-auto"
@@ -805,7 +847,7 @@ export default function JobDetailPage() {
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-700 mb-1">{relatedJob.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="text-green-600 font-medium">{formatPrice(relatedJob.budget)}</span>
+                          <span className="text-green-600 font-medium">{formatPrice(relatedJob.budget, defaultCurrency)}</span>
                           <span>Due {new Date(relatedJob.deadline).toLocaleDateString()}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -940,16 +982,19 @@ export default function JobDetailPage() {
                   </span>
                 </div>
               )}
-              {job.salary && (
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600 text-sm font-medium">Salary</span>
-                  <span className="font-semibold text-gray-900 text-sm">
-                    {formatCurrency(job.salary.min || 0, job.salary.currency || defaultCurrency, { appSettings })}
-                    {job.salary.max && ` - ${formatCurrency(job.salary.max, job.salary.currency || defaultCurrency, { appSettings })}`}
-                    {job.salary.period && `/${job.salary.period}`}
-                  </span>
-                </div>
-              )}
+              {job.salary && (() => {
+                const salaryCurrency = normalizeCurrencyCode(job.salary.currency);
+                return (
+                  <div className="flex justify-between items-center py-2">
+                    <span className="text-gray-600 text-sm font-medium">Salary</span>
+                    <span className="font-semibold text-gray-900 text-sm">
+                      {formatCurrency(job.salary.min || 0, salaryCurrency, { appSettings })}
+                      {job.salary.max && ` - ${formatCurrency(job.salary.max, salaryCurrency, { appSettings })}`}
+                      {job.salary.period && `/${job.salary.period}`}
+                    </span>
+                  </div>
+                );
+              })()}
               {job.status && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Status</span>
@@ -1076,16 +1121,21 @@ export default function JobDetailPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Expected Salary * ({defaultCurrency})
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    value={applicationForm.expectedSalary || ""}
-                    onChange={(e) => setApplicationForm(prev => ({ ...prev, expectedSalary: Number(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium z-10">
+                      {getCurrencySymbol(defaultCurrency)}
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      required
+                      value={applicationForm.expectedSalary || ""}
+                      onChange={(e) => setApplicationForm(prev => ({ ...prev, expectedSalary: Number(e.target.value) || 0 }))}
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
                   <p className="mt-1 text-xs text-gray-500">
                     Your expected salary for this position
                   </p>

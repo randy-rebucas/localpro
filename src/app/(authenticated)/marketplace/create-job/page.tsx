@@ -24,6 +24,9 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useToast, ToastContainer } from "@/components/ui/toast";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface JobForm {
   title: string;
@@ -50,6 +53,7 @@ interface JobForm {
 export default function CreateJobPage() {
   const router = useRouter();
   const { toasts, success, error: showErrorToast, removeToast } = useToast();
+  const { settings: appSettings } = useAppSettings();
   const [form, setForm] = useState<JobForm>({
     title: "",
     description: "",
@@ -323,7 +327,7 @@ export default function CreateJobPage() {
 
                 <div>
                   <Input
-                    label="Budget (USD) *"
+                    label={`Budget (${getDefaultCurrency(appSettings)}) *`}
                     type="number"
                     required
                     min="0"
@@ -623,7 +627,7 @@ export default function CreateJobPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      {form.budget ? `$${form.budget.toLocaleString()}` : "Budget"}
+                      {form.budget ? formatCurrency(form.budget, getDefaultCurrency(appSettings), { appSettings }) : "Budget"}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
