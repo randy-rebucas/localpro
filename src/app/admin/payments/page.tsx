@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { 
   CreditCard, 
   TrendingUp, 
+  TrendingDown,
   DollarSign, 
   Download,
   Filter,
@@ -36,7 +37,6 @@ import { PaymentStatsCard } from "@/components/admin/payment-stats-card";
 import { 
   LazyPaymentMethodChart, 
   LazyRefundModal, 
-  LazyTransactionDetailsModal,
   LazyPaymentTransactionsTable
 } from "@/lib/lazy-components";
 import type { RefundData } from "@/components/admin/refund-modal";
@@ -161,6 +161,38 @@ interface TopUpRequest {
   adminNotes?: string;
 }
 
+interface WithdrawalRequest {
+  _id: string;
+  id?: string;
+  user?: string | {
+    _id?: string;
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+  amount: number;
+  paymentMethod?: string;
+  accountDetails?: {
+    bankName?: string;
+    accountNumber?: string;
+    routingNumber?: string;
+    paypalEmail?: string;
+    mobileNumber?: string;
+    [key: string]: any;
+  };
+  reference?: string;
+  notes?: string;
+  description?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed' | 'failed';
+  createdAt?: string;
+  timestamp?: string;
+  updatedAt?: string;
+  processedAt?: string;
+  processedBy?: string;
+  adminNotes?: string;
+}
+
 const ITEMS_PER_PAGE = 10;
 
 export default function PaymentProcessingPage() {
@@ -173,11 +205,28 @@ export default function PaymentProcessingPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Currency formatting helper
-  const formatPrice = useCallback((price: number, currency?: string | null) => {
+  // Currency formatting helper - uses currency utilities consistently
+  const formatPrice = useCallback((price: number | undefined | null | any, currency?: string | null) => {
+    // Normalize the price value (handle objects, strings, null, undefined)
+    let safeAmount = 0;
+    if (price === null || price === undefined) {
+      safeAmount = 0;
+    } else if (typeof price === 'number' && !isNaN(price)) {
+      safeAmount = price;
+    } else if (typeof price === 'string') {
+      const parsed = parseFloat(price);
+      safeAmount = isNaN(parsed) ? 0 : parsed;
+    } else if (typeof price === 'object' && price !== null) {
+      // Handle object values (e.g., { count: 5, total: 1000 })
+      safeAmount = price.count ?? price.total ?? price.value ?? price.amount ?? price.number ?? 0;
+    } else {
+      safeAmount = 0;
+    }
+    
     // Priority: 1. Provided currency, 2. User preferred currency, 3. App default currency
     const currencyCode = currency || getUserPreferredCurrency(userSettings) || getDefaultCurrency(appSettings);
-    return formatCurrency(price, currencyCode, {
+    
+    return formatCurrency(safeAmount, currencyCode, {
       appSettings,
       showSymbol: true,
     });
@@ -203,8 +252,13 @@ export default function PaymentProcessingPage() {
   const [processingTopUp, setProcessingTopUp] = useState<string | null>(null);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [selectedTopUp, setSelectedTopUp] = useState<TopUpRequest | null>(null);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
+  const [processingWithdrawal, setProcessingWithdrawal] = useState<string | null>(null);
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [selectedWithdrawal, setSelectedWithdrawal] = useState<WithdrawalRequest | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
-  const [activeTab, setActiveTab] = useState<'transactions' | 'topups'>('transactions');
+  const [activeTab, setActiveTab] = useState<'transactions' | 'topups' | 'withdrawals'>('transactions');
 
   useEffect(() => {
     if (status === "loading") return;
@@ -267,12 +321,49 @@ export default function PaymentProcessingPage() {
           processingFees: 0,
           netRevenue: 0
         };
+        // Helper function to normalize numeric values (handles objects, numbers, null, undefined)
+        const normalizeNumericValue = (value: any, defaultValue: number = 0): number => {
+          if (value === null || value === undefined) return defaultValue;
+          if (typeof value === 'number' && !isNaN(value)) return value;
+          if (typeof value === 'string') {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? defaultValue : parsed;
+          }
+          if (typeof value === 'object') {
+            // Try common object properties
+            return value.count ?? value.total ?? value.value ?? value.amount ?? value.number ?? defaultValue;
+          }
+          return defaultValue;
+        };
+
+        // Normalize all numeric fields from API response
+        const data = overviewResponse.data;
         setOverview({
           ...defaultOverview,
-          ...overviewResponse.data,
+          totalTransactions: normalizeNumericValue(data.totalTransactions, 0),
+          totalRevenue: normalizeNumericValue(data.totalRevenue, 0),
+          pendingPayments: normalizeNumericValue(data.pendingPayments, 0),
+          failedPayments: normalizeNumericValue(data.failedPayments, 0),
+          successRate: normalizeNumericValue(data.successRate, 0),
+          averageTransactionValue: normalizeNumericValue(data.averageTransactionValue, 0),
+          refunds: normalizeNumericValue(data.refunds, 0),
+          chargebacks: normalizeNumericValue(data.chargebacks, 0),
+          processingFees: normalizeNumericValue(data.processingFees, 0),
+          netRevenue: normalizeNumericValue(data.netRevenue, 0),
+          // Preserve array/object fields
+          paymentMethods: Array.isArray(data.paymentMethods) ? data.paymentMethods : defaultOverview.paymentMethods,
+          recentTransactions: Array.isArray(data.recentTransactions) ? data.recentTransactions : defaultOverview.recentTransactions,
+          dailyStats: Array.isArray(data.dailyStats) ? data.dailyStats : defaultOverview.dailyStats,
+          monthlyStats: Array.isArray(data.monthlyStats) ? data.monthlyStats : defaultOverview.monthlyStats,
+          topPaymentMethods: Array.isArray(data.topPaymentMethods) ? data.topPaymentMethods : defaultOverview.topPaymentMethods,
           paymentStatusBreakdown: {
             ...defaultOverview.paymentStatusBreakdown,
-            ...(overviewResponse.data.paymentStatusBreakdown || {})
+            ...(data.paymentStatusBreakdown && typeof data.paymentStatusBreakdown === 'object' ? {
+              completed: normalizeNumericValue(data.paymentStatusBreakdown.completed, 0),
+              pending: normalizeNumericValue(data.paymentStatusBreakdown.pending, 0),
+              failed: normalizeNumericValue(data.paymentStatusBreakdown.failed, 0),
+              refunded: normalizeNumericValue(data.paymentStatusBreakdown.refunded, 0),
+            } : {})
           }
         });
       }
@@ -300,6 +391,52 @@ export default function PaymentProcessingPage() {
         setTransactions(transformedTransactions);
         // Use pages from response (API returns pages, not totalPages)
         setTotalPages(transactionsResponse.pages || transactionsResponse.data?.pages || 1);
+
+        // If overview data is missing or incomplete, calculate from transactions
+        if (transformedTransactions.length > 0) {
+          setOverview(prev => {
+            if (!prev) return prev;
+            
+            const calculatedMetrics = {
+              totalTransactions: prev.totalTransactions || transformedTransactions.length,
+              pendingPayments: prev.pendingPayments || transformedTransactions.filter(tx => tx.status === 'pending').length,
+              failedPayments: prev.failedPayments || transformedTransactions.filter(tx => tx.status === 'failed').length,
+              totalRevenue: prev.totalRevenue || transformedTransactions
+                .filter(tx => (tx.type === 'income' || tx.type === 'topup') && tx.status === 'completed')
+                .reduce((sum, tx) => sum + (tx.amount || 0), 0),
+              refunds: prev.refunds || transformedTransactions
+                .filter(tx => tx.type === 'refund' && tx.status === 'completed')
+                .reduce((sum, tx) => sum + Math.abs(tx.amount || 0), 0),
+            };
+
+            // Only update if values are missing (0 or undefined)
+            const needsUpdate = prev.totalTransactions === 0 || prev.pendingPayments === 0 || 
+                                prev.failedPayments === 0 || prev.totalRevenue === 0;
+
+            if (needsUpdate) {
+              const avgTransaction = calculatedMetrics.totalTransactions > 0 
+                ? (calculatedMetrics.totalRevenue / calculatedMetrics.totalTransactions)
+                : 0;
+              const successRate = calculatedMetrics.totalTransactions > 0 
+                ? ((calculatedMetrics.totalTransactions - calculatedMetrics.failedPayments - calculatedMetrics.pendingPayments) / calculatedMetrics.totalTransactions * 100)
+                : 0;
+              const netRevenue = calculatedMetrics.totalRevenue - (prev.processingFees || 0) - calculatedMetrics.refunds;
+
+              return {
+                ...prev,
+                totalTransactions: prev.totalTransactions || calculatedMetrics.totalTransactions,
+                pendingPayments: prev.pendingPayments || calculatedMetrics.pendingPayments,
+                failedPayments: prev.failedPayments || calculatedMetrics.failedPayments,
+                totalRevenue: prev.totalRevenue || calculatedMetrics.totalRevenue,
+                refunds: prev.refunds || calculatedMetrics.refunds,
+                averageTransactionValue: prev.averageTransactionValue || avgTransaction,
+                successRate: prev.successRate || successRate,
+                netRevenue: prev.netRevenue || netRevenue,
+              };
+            }
+            return prev;
+          });
+        }
       } else {
         setTransactions([]);
         setTotalPages(1);
@@ -414,10 +551,109 @@ export default function PaymentProcessingPage() {
     }
   }, [adminNotes, fetchTopUpRequests, fetchPaymentData]);
 
+  // Fetch withdrawal requests
+  const fetchWithdrawalRequests = useCallback(async () => {
+    try {
+      setLoadingWithdrawals(true);
+      
+      // Filter transactions to get pending withdrawal requests
+      // Use the transactions endpoint with type=withdrawal and status=pending
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        'financeTransactions' as keyof typeof API_ENDPOINTS,
+        {
+          method: 'GET',
+          query: {
+            type: 'withdrawal',
+            status: 'pending',
+            limit: '50',
+            page: '1'
+          }
+        }
+      );
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        // Transform transactions to withdrawal requests
+        const transactionsArray = Array.isArray(data.data) 
+          ? data.data 
+          : data.data.transactions || [];
+        
+        const withdrawals: WithdrawalRequest[] = transactionsArray.map((tx: any) => ({
+          _id: tx._id || tx.id,
+          id: tx._id || tx.id,
+          user: tx.user,
+          amount: tx.amount,
+          paymentMethod: tx.paymentMethod || tx.method,
+          accountDetails: tx.accountDetails || {},
+          reference: tx.reference,
+          notes: tx.notes || tx.description,
+          description: tx.description,
+          status: tx.status || 'pending',
+          createdAt: tx.createdAt || tx.timestamp,
+          timestamp: tx.timestamp,
+          updatedAt: tx.updatedAt,
+          processedAt: tx.processedAt,
+          processedBy: tx.processedBy,
+          adminNotes: tx.adminNotes
+        }));
+        
+        setWithdrawalRequests(withdrawals);
+      } else {
+        setWithdrawalRequests([]);
+      }
+    } catch (error) {
+      logger.error("Error fetching withdrawal requests", error instanceof Error ? error : new Error(String(error)));
+      setWithdrawalRequests([]);
+    } finally {
+      setLoadingWithdrawals(false);
+    }
+  }, []);
+
+  // Process withdrawal request (approve/reject)
+  // PUT /api/finance/withdrawals/:withdrawalId/process
+  const processWithdrawalRequest = useCallback(async (withdrawalId: string, action: 'approved' | 'rejected', notes?: string) => {
+    try {
+      setProcessingWithdrawal(withdrawalId);
+      
+      // Use makeClientAuthenticatedRequestWithPathSafe for path parameters
+      // Endpoint: /api/finance/withdrawals/:withdrawalId/process
+      const response = await makeClientAuthenticatedRequestWithPathSafe(
+        'financeWithdrawalsProcess' as keyof typeof API_ENDPOINTS,
+        [withdrawalId, 'process'], // Path params: withdrawalId and 'process'
+        {}, // No query params
+        {
+          method: 'PUT',
+          body: JSON.stringify({
+            status: action,
+            adminNotes: notes || adminNotes || undefined
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success(`Withdrawal request ${action === 'approved' ? 'approved' : 'rejected'} successfully`);
+        await fetchWithdrawalRequests();
+        await fetchPaymentData();
+        setShowWithdrawalModal(false);
+        setSelectedWithdrawal(null);
+        setAdminNotes('');
+      } else {
+        throw new Error(data.message || data.error || `Failed to ${action} withdrawal request`);
+      }
+    } catch (error) {
+      logger.error('Error processing withdrawal request', error instanceof Error ? error : new Error(String(error)), { withdrawalId, action });
+      toast.error(error instanceof Error ? error.message : `Failed to ${action} withdrawal request`);
+    } finally {
+      setProcessingWithdrawal(null);
+    }
+  }, [adminNotes, fetchWithdrawalRequests, fetchPaymentData]);
+
   useEffect(() => {
     fetchPaymentData();
     fetchTopUpRequests();
-  }, [fetchPaymentData, fetchTopUpRequests]);
+    fetchWithdrawalRequests();
+  }, [fetchPaymentData, fetchTopUpRequests, fetchWithdrawalRequests]);
 
   const handleFiltersChange = (newFilters: PaymentFilters) => {
     setFilters(newFilters);
@@ -605,7 +841,9 @@ export default function PaymentProcessingPage() {
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Transactions</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {(overview.totalTransactions ?? 0).toLocaleString()}
+                  {typeof overview.totalTransactions === 'number' 
+                    ? overview.totalTransactions.toLocaleString() 
+                    : String(overview.totalTransactions ?? 0)}
                 </p>
                 <p className="text-xs text-gray-500">+8.2% from last period</p>
               </div>
@@ -620,7 +858,9 @@ export default function PaymentProcessingPage() {
               <div>
                 <p className="text-xs font-medium text-gray-500">Success Rate</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {(overview.successRate ?? 0).toFixed(1)}%
+                  {typeof overview.successRate === 'number' 
+                    ? overview.successRate.toFixed(1) 
+                    : '0.0'}%
                 </p>
                 <p className="text-xs text-gray-500">+2.1% from last period</p>
               </div>
@@ -650,7 +890,9 @@ export default function PaymentProcessingPage() {
               <div>
                 <p className="text-xs font-medium text-gray-500">Pending Payments</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {(overview.pendingPayments ?? 0).toLocaleString()}
+                  {typeof overview.pendingPayments === 'number' 
+                    ? overview.pendingPayments.toLocaleString() 
+                    : String(overview.pendingPayments ?? 0)}
                 </p>
                 <p className="text-xs text-gray-500">Awaiting processing</p>
               </div>
@@ -665,7 +907,9 @@ export default function PaymentProcessingPage() {
               <div>
                 <p className="text-xs font-medium text-gray-500">Failed Payments</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {(overview.failedPayments ?? 0).toLocaleString()}
+                  {typeof overview.failedPayments === 'number' 
+                    ? overview.failedPayments.toLocaleString() 
+                    : String(overview.failedPayments ?? 0)}
                 </p>
                 <p className="text-xs text-gray-500">Requires attention</p>
               </div>
@@ -785,6 +1029,28 @@ export default function PaymentProcessingPage() {
                   )}
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab('withdrawals')}
+                className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'withdrawals'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <ArrowDownRight className="w-4 h-4" />
+                  <span>Withdrawal Requests</span>
+                  {withdrawalRequests.length > 0 && (
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${
+                      activeTab === 'withdrawals'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {withdrawalRequests.length}
+                    </span>
+                  )}
+                </div>
+              </button>
             </nav>
             <div className="flex items-center gap-1.5 px-6">
               {activeTab === 'topups' && (
@@ -794,6 +1060,16 @@ export default function PaymentProcessingPage() {
                   className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
                 >
                   <RefreshCw className={`w-3 h-3 mr-1 ${loadingTopUps ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              )}
+              {activeTab === 'withdrawals' && (
+                <button
+                  onClick={fetchWithdrawalRequests}
+                  disabled={loadingWithdrawals}
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                >
+                  <RefreshCw className={`w-3 h-3 mr-1 ${loadingWithdrawals ? 'animate-spin' : ''}`} />
                   Refresh
                 </button>
               )}
@@ -935,6 +1211,7 @@ export default function PaymentProcessingPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                formatAmount={formatPrice}
               />
             </>
           )}
@@ -1056,6 +1333,128 @@ export default function PaymentProcessingPage() {
               )}
             </>
           )}
+
+          {/* Withdrawal Requests Tab Content */}
+          {activeTab === 'withdrawals' && (
+            <>
+              {loadingWithdrawals ? (
+                <div className="p-16 text-center">
+                  <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600 font-medium">Loading withdrawal requests...</p>
+                  <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your data</p>
+                </div>
+              ) : withdrawalRequests.length === 0 ? (
+                <div className="p-16 text-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-100 to-orange-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                    <ArrowDownRight className="w-10 h-10 text-red-400" />
+                  </div>
+                  <p className="text-lg font-semibold text-gray-700 mb-1.5">No pending withdrawal requests</p>
+                  <p className="text-sm text-gray-500 max-w-sm mx-auto">All withdrawal requests have been processed</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {withdrawalRequests.map((request) => {
+                    const userName = typeof request.user === 'object' 
+                      ? `${request.user.firstName || ''} ${request.user.lastName || ''}`.trim() || request.user.email || 'Unknown User'
+                      : 'Unknown User';
+                    const userEmail = typeof request.user === 'object' ? request.user.email : '';
+                    
+                    return (
+                      <div key={request._id} className="p-5 hover:bg-gradient-to-r hover:from-red-50/30 hover:to-orange-50/30 transition-all duration-200 group">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-red-500/20">
+                              <User className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                                <p className="font-semibold text-gray-900 text-base">{userName}</p>
+                                {userEmail && (
+                                  <span className="text-xs text-gray-500">({userEmail})</span>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                  <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
+                                  <p className="text-base font-bold text-gray-900">{formatPrice(request.amount)}</p>
+                                </div>
+                                <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                  <p className="text-xs font-medium text-gray-500 mb-1">Payment Method</p>
+                                  <p className="text-sm font-semibold text-gray-700 capitalize">{request.paymentMethod?.replace('_', ' ') || 'N/A'}</p>
+                                </div>
+                                {request.reference && (
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Reference</p>
+                                    <p className="text-xs font-mono font-semibold text-gray-700 truncate">{request.reference}</p>
+                                  </div>
+                                )}
+                                <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                  <p className="text-xs font-medium text-gray-500 mb-1">Requested</p>
+                                  <p className="text-xs font-semibold text-gray-700">
+                                    {new Date(request.createdAt || request.timestamp || new Date()).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                              {request.accountDetails && Object.keys(request.accountDetails).length > 0 && (
+                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                  <div className="flex items-start gap-2">
+                                    <FileText className="w-3.5 h-3.5 text-gray-500 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                      <p className="text-xs font-medium text-gray-500 mb-1">Account Details</p>
+                                      <div className="text-sm text-gray-700 space-y-1">
+                                        {request.accountDetails.bankName && (
+                                          <p><span className="font-medium">Bank:</span> {request.accountDetails.bankName}</p>
+                                        )}
+                                        {request.accountDetails.accountNumber && (
+                                          <p><span className="font-medium">Account:</span> {request.accountDetails.accountNumber}</p>
+                                        )}
+                                        {request.accountDetails.routingNumber && (
+                                          <p><span className="font-medium">Routing:</span> {request.accountDetails.routingNumber}</p>
+                                        )}
+                                        {request.accountDetails.paypalEmail && (
+                                          <p><span className="font-medium">PayPal:</span> {request.accountDetails.paypalEmail}</p>
+                                        )}
+                                        {request.accountDetails.mobileNumber && (
+                                          <p><span className="font-medium">Mobile:</span> {request.accountDetails.mobileNumber}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {(request.notes || request.description) && (
+                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                  <div className="flex items-start gap-2">
+                                    <FileText className="w-3.5 h-3.5 text-gray-500 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
+                                      <p className="text-sm text-gray-700 leading-relaxed">{request.notes || request.description}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                setSelectedWithdrawal(request);
+                                setShowWithdrawalModal(true);
+                              }}
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              Review
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -1072,16 +1471,173 @@ export default function PaymentProcessingPage() {
         />
       )}
 
+      {/* Transaction Details Modal */}
       {showTransactionDetails && selectedTransaction && (
-        <LazyTransactionDetailsModal
+        <Modal
           isOpen={showTransactionDetails}
           onClose={() => {
             setShowTransactionDetails(false);
             setSelectedTransaction(undefined);
           }}
-          transaction={adaptTransactionForComponents(selectedTransaction)}
-          onRefund={handleRefundTransaction}
-        />
+          title="Transaction Details"
+          size="xl"
+        >
+          {(() => {
+            const tx = adaptTransactionForComponents(selectedTransaction);
+            const isIncome = tx.type === 'income' || tx.type === 'bonus' || tx.type === 'referral' || tx.type === 'refund';
+            const rawAmount = tx.amount || 0;
+            const displayAmount = isIncome ? Math.abs(rawAmount) : -Math.abs(rawAmount);
+            
+            return (
+              <div className="space-y-4">
+                {/* Transaction Header */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{tx.reference || tx.id}</h3>
+                    <p className="text-sm text-gray-600">{tx.description || 'Transaction'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-2xl font-bold ${isIncome ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatPrice(displayAmount)}
+                    </p>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${
+                      tx.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : tx.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : tx.status === 'failed'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {tx.status || 'pending'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Transaction Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Transaction ID</label>
+                    <p className="text-sm font-semibold text-gray-900 font-mono">{tx.id}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Reference</label>
+                    <p className="text-sm text-gray-900">{tx.reference || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Type</label>
+                    <p className="text-sm text-gray-900 capitalize">{tx.type || 'transaction'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Category</label>
+                    <p className="text-sm text-gray-900">{tx.category || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Amount</label>
+                    <p className={`text-sm font-semibold ${isIncome ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatPrice(displayAmount)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Payment Method</label>
+                    <p className="text-sm text-gray-900 capitalize">{(tx.method || '').replace('_', ' ')}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Date</label>
+                    <p className="text-sm text-gray-900">
+                      {tx.date ? new Date(tx.date).toLocaleString() : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-gray-500">Status</label>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      tx.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : tx.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : tx.status === 'failed'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {tx.status || 'pending'}
+                    </span>
+                  </div>
+                  {tx.processedAt && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Processed At</label>
+                      <p className="text-sm text-gray-900">
+                        {new Date(tx.processedAt).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  {tx.processedBy && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500">Processed By</label>
+                      <p className="text-sm text-gray-900">{tx.processedBy}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Account Details */}
+                {tx.accountDetails && Object.keys(tx.accountDetails).length > 0 && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-2 block">Account Details</label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="space-y-2">
+                        {Object.entries(tx.accountDetails).map(([key, value]) => {
+                          if (!value || typeof value === 'object') return null;
+                          return (
+                            <div key={key} className="flex justify-between">
+                              <span className="text-xs text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                              <span className="text-xs font-medium text-gray-900">{String(value)}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin Notes */}
+                {tx.adminNotes && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-2 block">Admin Notes</label>
+                    <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-700">{tx.adminNotes}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    {tx.status === 'completed' && (
+                      <button
+                        onClick={() => {
+                          handleRefundTransaction(tx);
+                          setShowTransactionDetails(false);
+                        }}
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200"
+                      >
+                        <TrendingDown className="w-3 h-3 mr-1" />
+                        Process Refund
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowTransactionDetails(false);
+                      setSelectedTransaction(undefined);
+                    }}
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+        </Modal>
       )}
 
       {/* Top-Up Request Modal */}
@@ -1195,6 +1751,146 @@ export default function PaymentProcessingPage() {
                 </div>
               ) : null;
             })()}
+
+            {/* Admin Notes */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">
+                Admin Notes (optional)
+              </label>
+              <textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                placeholder="Add notes about this request..."
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                rows={3}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Withdrawal Request Modal */}
+      <Modal
+        isOpen={showWithdrawalModal}
+        onClose={() => {
+          setShowWithdrawalModal(false);
+          setSelectedWithdrawal(null);
+          setAdminNotes('');
+        }}
+        title="Withdrawal Request Details"
+        size="xl"
+        footer={
+          selectedWithdrawal ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => processWithdrawalRequest(selectedWithdrawal._id || selectedWithdrawal.id || '', 'approved', adminNotes)}
+                disabled={processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id)}
+                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200"
+              >
+                <Check className="w-3 h-3 mr-1" />
+                {processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id) ? 'Processing...' : 'Approve Request'}
+              </button>
+              <button
+                onClick={() => processWithdrawalRequest(selectedWithdrawal._id || selectedWithdrawal.id || '', 'rejected', adminNotes)}
+                disabled={processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id)}
+                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 transition-all duration-200"
+              >
+                <X className="w-3 h-3 mr-1" />
+                {processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id) ? 'Processing...' : 'Reject Request'}
+              </button>
+            </div>
+          ) : null
+        }
+      >
+        {selectedWithdrawal && (
+          <div className="space-y-4">
+            {/* User Info */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <User className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  {typeof selectedWithdrawal.user === 'object' 
+                    ? `${selectedWithdrawal.user.firstName || ''} ${selectedWithdrawal.user.lastName || ''}`.trim() || selectedWithdrawal.user.email || 'Unknown User'
+                    : 'Unknown User'}
+                </p>
+                {typeof selectedWithdrawal.user === 'object' && selectedWithdrawal.user.email && (
+                  <p className="text-xs text-gray-500">{selectedWithdrawal.user.email}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Request Details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
+                <p className="text-lg font-bold text-gray-900">{formatPrice(selectedWithdrawal.amount)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Payment Method</p>
+                <p className="text-sm font-medium text-gray-700 capitalize">{selectedWithdrawal.paymentMethod?.replace('_', ' ') || 'N/A'}</p>
+              </div>
+              {selectedWithdrawal.reference && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Reference</p>
+                  <p className="text-sm font-medium text-gray-700">{selectedWithdrawal.reference}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">Requested</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {new Date(selectedWithdrawal.createdAt || selectedWithdrawal.timestamp || new Date()).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Account Details */}
+            {selectedWithdrawal.accountDetails && Object.keys(selectedWithdrawal.accountDetails).length > 0 && (
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-xs font-medium text-gray-500 mb-2">Account Details</p>
+                <div className="space-y-2">
+                  {selectedWithdrawal.accountDetails.bankName && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-600">Bank Name:</span>
+                      <span className="text-xs font-medium text-gray-900">{selectedWithdrawal.accountDetails.bankName}</span>
+                    </div>
+                  )}
+                  {selectedWithdrawal.accountDetails.accountNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-600">Account Number:</span>
+                      <span className="text-xs font-medium text-gray-900">{selectedWithdrawal.accountDetails.accountNumber}</span>
+                    </div>
+                  )}
+                  {selectedWithdrawal.accountDetails.routingNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-600">Routing Number:</span>
+                      <span className="text-xs font-medium text-gray-900">{selectedWithdrawal.accountDetails.routingNumber}</span>
+                    </div>
+                  )}
+                  {selectedWithdrawal.accountDetails.paypalEmail && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-600">PayPal Email:</span>
+                      <span className="text-xs font-medium text-gray-900">{selectedWithdrawal.accountDetails.paypalEmail}</span>
+                    </div>
+                  )}
+                  {selectedWithdrawal.accountDetails.mobileNumber && (
+                    <div className="flex justify-between">
+                      <span className="text-xs text-gray-600">Mobile Number:</span>
+                      <span className="text-xs font-medium text-gray-900">{selectedWithdrawal.accountDetails.mobileNumber}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {(selectedWithdrawal.notes || selectedWithdrawal.description) && (
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="text-xs font-medium text-gray-500 mb-1">User Notes</p>
+                <p className="text-sm text-gray-700">{selectedWithdrawal.notes || selectedWithdrawal.description}</p>
+              </div>
+            )}
 
             {/* Admin Notes */}
             <div>

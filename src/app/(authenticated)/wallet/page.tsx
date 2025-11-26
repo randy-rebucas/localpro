@@ -483,10 +483,13 @@ export default function WalletPage() {
   };
 
   const getTransactionIcon = (type: string | undefined) => {
-    switch (type) {
+    const normalizedType = type?.toLowerCase() || '';
+    switch (normalizedType) {
       case 'income':
       case 'bonus':
       case 'referral':
+      case 'topup':
+      case 'top-up':
         return <ArrowDownRight className="w-5 h-5 text-green-600" />;
       case 'expense':
       case 'withdrawal':
@@ -499,10 +502,13 @@ export default function WalletPage() {
   };
 
   const getTransactionColor = (type: string | undefined) => {
-    switch (type) {
+    const normalizedType = type?.toLowerCase() || '';
+    switch (normalizedType) {
       case 'income':
       case 'bonus':
       case 'referral':
+      case 'topup':
+      case 'top-up':
         return 'text-green-600 bg-green-50';
       case 'expense':
       case 'withdrawal':
@@ -710,6 +716,12 @@ export default function WalletPage() {
       return;
     }
 
+    // Validate payment method is selected
+    if (!withdrawMethod) {
+      toast.error("Please select a withdrawal method");
+      return;
+    }
+
     // Validate minimum payout amount from app settings
     const minPayout = getMinimumPayout(appSettings);
     if (minPayout > 0 && amount < minPayout) {
@@ -729,6 +741,12 @@ export default function WalletPage() {
 
     setProcessing(true);
     try {
+      // Prepare account details - always send as object, not undefined
+      const accountDetails = withdrawMethod === "bank_transfer" 
+        ? bankAccount 
+        : {}; // Empty object for other payment methods
+
+      // Use the correct withdrawal endpoint: /api/finance/withdraw
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.financeWithdraw}`,
         createAuthFetchOptions({
@@ -739,7 +757,7 @@ export default function WalletPage() {
           body: JSON.stringify({
             amount: amount,
             paymentMethod: withdrawMethod,
-            accountDetails: withdrawMethod === "bank_transfer" ? bankAccount : undefined,
+            accountDetails: accountDetails,
           }),
         })
       );
@@ -910,9 +928,9 @@ export default function WalletPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6 relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
               <Wallet className="w-6 h-6" />
@@ -922,34 +940,35 @@ export default function WalletPage() {
               <p className="text-sm text-gray-600">Manage your finances and transactions</p>
             </div>
           </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowExpenseModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
-            title="Add expense"
-          >
-            <span className="text-base font-semibold">{currencySymbol}</span>
-            Add Expense
-          </button>
-          <button
-            onClick={() => setShowWalletSettingsModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md"
-            title="Wallet settings"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </button>
-          <button
-            onClick={refreshWalletData}
-            disabled={refreshing || loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refresh wallet data"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowExpenseModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+              title="Add expense"
+            >
+              <span className="text-base font-semibold">{currencySymbol}</span>
+              <span className="hidden sm:inline">Add Expense</span>
+              <span className="sm:hidden">Expense</span>
+            </button>
+            <button
+              onClick={() => setShowWalletSettingsModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md"
+              title="Wallet settings"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+            <button
+              onClick={refreshWalletData}
+              disabled={refreshing || loading}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh wallet data"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
         </div>
-      </div>
 
       {/* Error State */}
       {error && (
@@ -998,13 +1017,13 @@ export default function WalletPage() {
                   <Wallet className="w-8 h-8" />
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowAddFundsModal(true)}
                   className="flex-1 bg-white text-emerald-600 font-semibold py-3 px-4 rounded-lg hover:bg-emerald-50 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-2"
                 >
                   <Plus className="w-5 h-5" />
-                  Add Funds
+                  <span>Add Funds</span>
                 </button>
                 <button
                   onClick={() => setShowWithdrawModal(true)}
@@ -1012,14 +1031,14 @@ export default function WalletPage() {
                   className="flex-1 bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-lg hover:bg-white/30 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   <Minus className="w-5 h-5" />
-                  Withdraw
+                  <span>Withdraw</span>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
             {/* Monthly Earnings */}
             <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
@@ -1101,70 +1120,91 @@ export default function WalletPage() {
       )}
 
 
-      {/* Earnings & Expenses Summary */}
+      {/* Earnings Summary - 3 Blocks */}
       {!error && (earnings || expenses.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Total Earnings Block */}
           {earnings && (
             <div className="bg-gradient-to-br from-white to-green-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Earnings Summary</h3>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center shadow-md">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Total Earnings</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(
-                      (earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
-                        ? earnings.totalEarnings 
-                        : (earnings.total && !isNaN(earnings.total)) 
-                          ? earnings.total 
-                          : 0
-                    )}
-                  </span>
-                </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    (earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
+                      ? earnings.totalEarnings 
+                      : (earnings.total && !isNaN(earnings.total)) 
+                        ? earnings.total 
+                        : 0
+                  )}
+                </p>
                 {earnings.bookingCount && !isNaN(earnings.bookingCount) && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Bookings</span>
-                    <span className="text-sm text-gray-900">{earnings.bookingCount}</span>
-                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {earnings.bookingCount} bookings
+                  </p>
                 )}
               </div>
             </div>
           )}
+          
+          {/* Expenses Summary Block */}
           {expenses.length > 0 && (
             <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Expenses</h3>
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-md">
                   <Receipt className="w-5 h-5" />
                 </div>
               </div>
-              <div className="space-y-3">
-                {expenses.slice(0, 3).map((expense: ExpenseData, index: number) => {
-                  const expenseAmount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
-                  return (
-                    <div key={expense._id || expense.id || `expense-${index}`} className="flex justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{expense.description || expense.category}</p>
-                        <p className="text-xs text-gray-500">{expense.category}</p>
-                      </div>
-                      <span className="font-semibold text-red-600">
-                        {formatCurrency(expenseAmount)}
-                      </span>
-                    </div>
-                  );
-                })}
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    expenses.reduce((sum: number, expense: ExpenseData) => {
+                      const amount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
+                      return sum + amount;
+                    }, 0)
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
+                </p>
               </div>
-              {expenses.length > 3 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center">
-                    Showing 3 of {expenses.length} expenses
-                  </p>
+            </div>
+          )}
+          
+          {/* Net Earnings Block */}
+          {earnings && (
+            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md">
+                  <DollarSign className="w-5 h-5" />
                 </div>
-              )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Net Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    ((earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
+                      ? earnings.totalEarnings 
+                      : (earnings.total && !isNaN(earnings.total)) 
+                        ? earnings.total 
+                        : 0) - 
+                    (expenses.length > 0 
+                      ? expenses.reduce((sum: number, expense: ExpenseData) => {
+                          const amount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
+                          return sum + amount;
+                        }, 0)
+                      : 0)
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  After expenses
+                </p>
+              </div>
             </div>
           )}
         </div>
@@ -1175,11 +1215,11 @@ export default function WalletPage() {
         <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50/50 to-white">
-            <div className="flex items-center justify-between px-6 pt-4 pb-0">
-              <div className="flex space-x-0.5">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 pt-4 pb-0 gap-3">
+              <div className="flex space-x-0.5 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('transactions')}
-                  className={`relative px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
+                  className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
                     activeTab === 'transactions'
                       ? 'bg-white text-emerald-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
@@ -1189,10 +1229,11 @@ export default function WalletPage() {
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
                   )}
                   <div className="flex items-center gap-2">
-                    <Wallet className="w-4 h-4" />
-                    <span>Recent Transactions</span>
+                    <Wallet className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Recent Transactions</span>
+                    <span className="sm:hidden">Transactions</span>
                     {transactions.length > 0 && (
-                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
                         activeTab === 'transactions'
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-gray-200 text-gray-600'
@@ -1204,7 +1245,7 @@ export default function WalletPage() {
                 </button>
                 <button
                   onClick={() => setActiveTab('topups')}
-                  className={`relative px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
+                  className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
                     activeTab === 'topups'
                       ? 'bg-white text-emerald-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
@@ -1214,10 +1255,11 @@ export default function WalletPage() {
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
                   )}
                   <div className="flex items-center gap-2">
-                    <ArrowUpRight className="w-4 h-4" />
-                    <span>Top-Up Requests</span>
+                    <ArrowUpRight className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Top-Up Requests</span>
+                    <span className="sm:hidden">Top-Ups</span>
                     {topUpRequests.length > 0 && (
-                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
                         activeTab === 'topups'
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-gray-200 text-gray-600'
@@ -1232,10 +1274,10 @@ export default function WalletPage() {
                 <button
                   onClick={fetchTopUpRequests}
                   disabled={loadingTopUps}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
+                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all self-start sm:self-auto"
                 >
-                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingTopUps ? 'animate-spin' : ''}`} />
-                  Refresh
+                  <RefreshCw className={`w-4 h-4 ${loadingTopUps ? 'animate-spin' : ''} ${topUpRequests.length > 0 ? 'mr-2' : ''}`} />
+                  {topUpRequests.length > 0 && <span>Refresh</span>}
                 </button>
               )}
             </div>
@@ -1261,16 +1303,37 @@ export default function WalletPage() {
                         const transactionKey = transaction.reference 
                           || (transaction.timestamp ? (typeof transaction.timestamp === 'string' ? transaction.timestamp : transaction.timestamp.toString()) : null)
                           || `transaction-${index}`;
-                        const isIncome = transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund';
+                        // Determine if transaction is income (money coming in) or expense (money going out)
+                        // Income types: income, bonus, referral, refund, topup/top-up (money added to wallet)
+                        // Expense types: expense, withdrawal (money removed from wallet)
+                        const transactionType = transaction.type?.toLowerCase() || '';
+                        const isIncome = transactionType === 'income' 
+                          || transactionType === 'bonus' 
+                          || transactionType === 'referral' 
+                          || transactionType === 'refund'
+                          || transactionType === 'topup'
+                          || transactionType === 'top-up';
+                        
+                        // Get the raw amount value
+                        const rawAmount = (transaction.amount && !isNaN(transaction.amount)) ? transaction.amount : 0;
+                        
+                        // Normalize amount based on transaction type
+                        // Income types should always display as positive (green)
+                        // Expense/withdrawal types should always display as negative (red)
+                        // This handles cases where amounts might be stored inconsistently in the database
+                        const displayAmount = isIncome 
+                          ? Math.abs(rawAmount) // Income: always positive (money coming in)
+                          : -Math.abs(rawAmount); // Expenses/withdrawals: always negative (money going out)
+                        
                         return (
-                          <div key={transactionKey} className="p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${getTransactionColor(transaction.type)}`}>
+                          <div key={transactionKey} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                              <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full sm:w-auto">
+                                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${getTransactionColor(transaction.type)}`}>
                                   {getTransactionIcon(transaction.type)}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-gray-900 text-base mb-1.5 truncate">
+                                  <p className="font-semibold text-gray-900 text-sm sm:text-base mb-1.5 truncate">
                                     {transaction.description || transaction.category || 'Transaction'}
                                   </p>
                                   <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -1279,31 +1342,26 @@ export default function WalletPage() {
                                     </span>
                                     {transaction.reference && (
                                       <>
-                                        <span className="text-gray-300 text-xs">•</span>
-                                        <span className="text-xs text-gray-500 font-mono truncate max-w-[120px]">
+                                        <span className="text-gray-300 text-xs hidden sm:inline">•</span>
+                                        <span className="text-xs text-gray-500 font-mono truncate max-w-[100px] sm:max-w-[120px]">
                                           {transaction.reference}
                                         </span>
                                       </>
                                     )}
                                   </div>
                                   <p className="text-xs text-gray-400 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {formatDate(transaction.timestamp)}
+                                    <Clock className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate">{formatDate(transaction.timestamp)}</span>
                                   </p>
                                 </div>
                               </div>
-                              <div className="text-right flex-shrink-0">
-                                <p className={`text-lg font-bold mb-2 ${
+                              <div className="text-left sm:text-right flex-shrink-0 w-full sm:w-auto flex items-center sm:items-end justify-between sm:flex-col gap-2">
+                                <p className={`text-base sm:text-lg font-bold ${
                                   isIncome
                                     ? 'text-emerald-600'
                                     : 'text-red-600'
                                 }`}>
-                                  {isIncome ? '+' : '-'}
-                                  {formatCurrency(
-                                    (transaction.amount && !isNaN(transaction.amount)) 
-                                      ? Math.abs(transaction.amount) 
-                                      : 0
-                                  )}
+                                  {formatCurrency(displayAmount)}
                                 </p>
                                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full inline-block ${
                                   transaction.status === 'completed'
@@ -1325,21 +1383,21 @@ export default function WalletPage() {
 
                     {/* Pagination */}
                     {totalPages > 1 && (
-                      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex items-center justify-between">
+                      <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <button
                           onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                           disabled={currentPage === 1}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
                         >
                           Previous
                         </button>
-                        <span className="text-sm font-medium text-gray-600">
-                          Page <span className="text-emerald-600">{currentPage}</span> of <span className="text-gray-900">{totalPages}</span>
+                        <span className="text-sm font-medium text-gray-600 text-center">
+                          Page <span className="text-emerald-600 font-semibold">{currentPage}</span> of <span className="text-gray-900 font-semibold">{totalPages}</span>
                         </span>
                         <button
                           onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                           disabled={currentPage === totalPages}
-                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
                         >
                           Next
                         </button>
@@ -1390,22 +1448,22 @@ export default function WalletPage() {
                       };
 
                       return (
-                        <div key={request._id || request.id} className="p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+                        <div key={request._id || request.id} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full">
+                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
                                 <ArrowUpRight className="w-5 h-5" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2.5 mb-3 flex-wrap">
-                                  <p className="font-semibold text-gray-900 text-base">
+                                  <p className="font-semibold text-gray-900 text-sm sm:text-base">
                                     Top-Up Request
                                   </p>
                                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[request.status as keyof typeof statusColors] || statusColors.pending}`}>
                                     {request.status || 'pending'}
                                   </span>
                                 </div>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
                                   <div className="bg-gray-50/50 rounded-lg p-2.5">
                                     <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
                                     <p className="text-base font-bold text-gray-900">{formatCurrency(request.amount || 0)}</p>
@@ -1469,7 +1527,7 @@ export default function WalletPage() {
       {/* Add Funds Modal */}
       {showAddFundsModal && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget && !processing) {
               setShowAddFundsModal(false);
@@ -1477,7 +1535,7 @@ export default function WalletPage() {
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col relative border border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] my-4 flex flex-col relative border border-gray-100">
             {processing && (
               <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center">
@@ -1487,8 +1545,8 @@ export default function WalletPage() {
               </div>
             )}
             {/* Header - Fixed */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-emerald-50 to-transparent">
-              <h2 className="text-xl font-bold text-gray-900">Request Top-Up</h2>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-emerald-50 to-transparent">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Request Top-Up</h2>
               <button
                 onClick={() => {
                   setShowAddFundsModal(false);
@@ -1711,7 +1769,7 @@ export default function WalletPage() {
       {/* Withdraw Modal */}
       {showWithdrawModal && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget && !processing) {
               setShowWithdrawModal(false);
@@ -1720,7 +1778,7 @@ export default function WalletPage() {
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-4 sm:p-6 my-4 relative">
             {processing && (
               <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center">
@@ -1730,7 +1788,7 @@ export default function WalletPage() {
               </div>
             )}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Withdraw Funds</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Withdraw Funds</h2>
               <button
                 onClick={() => {
                   setShowWithdrawModal(false);
@@ -1866,21 +1924,21 @@ export default function WalletPage() {
                   )}
                 </div>
               )}
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   onClick={() => {
                     setShowWithdrawModal(false);
                     setWithdrawAmount("");
                     setBankAccount({ bankName: "", accountNumber: "", routingNumber: "" });
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleWithdraw}
                   disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > balance || (minPayout > 0 && parseFloat(withdrawAmount) < minPayout)}
-                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {processing ? "Processing..." : "Request Withdrawal"}
                 </button>

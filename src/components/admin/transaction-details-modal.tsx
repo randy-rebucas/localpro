@@ -23,13 +23,15 @@ interface TransactionDetailsModalProps {
   onClose: () => void;
   transaction?: Transaction;
   onRefund?: (transaction: Transaction) => void;
+  formatAmount?: (amount: number, currency?: string) => string; // Currency formatting function
 }
 
 export function TransactionDetailsModal({ 
   isOpen, 
   onClose, 
   transaction, 
-  onRefund 
+  onRefund,
+  formatAmount: formatAmountProp
 }: TransactionDetailsModalProps) {
   if (!isOpen || !transaction) return null;
 
@@ -78,7 +80,12 @@ export function TransactionDetailsModal({
     }
   };
 
-  const formatAmount = (amount: number) => {
+  // Use provided formatAmount function or fallback to default formatting
+  const formatAmount = (amount: number, currency?: string) => {
+    if (formatAmountProp) {
+      return formatAmountProp(amount, currency);
+    }
+    // Fallback to basic formatting if no formatter provided
     return `$${amount.toFixed(2)}`;
   };
 
