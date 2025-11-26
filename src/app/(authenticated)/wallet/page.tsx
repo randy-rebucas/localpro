@@ -87,6 +87,9 @@ export default function WalletPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
+  const [topUpRequests, setTopUpRequests] = useState<any[]>([]);
+  const [loadingTopUps, setLoadingTopUps] = useState(false);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'topups'>('transactions');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -271,13 +274,69 @@ export default function WalletPage() {
         }
 
         // Handle transactions data
-        if (transactionsData?.success && transactionsData.data) {
-          const transactionsArray = Array.isArray(transactionsData.data) 
-            ? transactionsData.data 
-            : transactionsData.data.transactions || [];
+        if (transactionsData?.success) {
+          let transactionsArray: TransactionDetails[] = [];
+          let totalPagesValue = 1;
+          
+          if (transactionsData.data) {
+            let rawTransactions: any[] = [];
+            
+            // Handle different response structures
+            if (Array.isArray(transactionsData.data)) {
+              // Direct array response
+              rawTransactions = transactionsData.data;
+            } else if (transactionsData.data.transactions && Array.isArray(transactionsData.data.transactions)) {
+              // Nested transactions array
+              rawTransactions = transactionsData.data.transactions;
+              totalPagesValue = transactionsData.data.pages || transactionsData.data.totalPages || 1;
+            } else if (transactionsData.data.results && Array.isArray(transactionsData.data.results)) {
+              // Alternative nested structure
+              rawTransactions = transactionsData.data.results;
+              totalPagesValue = transactionsData.data.pages || transactionsData.data.totalPages || 1;
+            }
+            
+            // Transform API response to TransactionDetails format
+            transactionsArray = rawTransactions.map((tx: any) => {
+              // Map Transaction to TransactionDetails
+              return {
+                type: tx.type || tx.category || 'transaction',
+                amount: tx.amount || 0,
+                category: tx.category || tx.type || 'transaction',
+                description: tx.description || tx.category || 'Transaction',
+                paymentMethod: tx.paymentMethod || tx.method || '',
+                status: tx.status || 'pending',
+                timestamp: tx.timestamp || tx.createdAt || tx.date || new Date(),
+                reference: tx.reference || tx.transactionId || tx._id || tx.id || '',
+                accountDetails: tx.accountDetails,
+                adminNotes: tx.adminNotes,
+                processedAt: tx.processedAt,
+                processedBy: tx.processedBy,
+              } as TransactionDetails;
+            });
+            
+            // Try to get pagination from root level if not found in data
+            if (totalPagesValue === 1 && transactionsData.pages) {
+              totalPagesValue = transactionsData.pages;
+            }
+          }
+          
+          logger.debug('Transactions loaded', { 
+            count: transactionsArray.length, 
+            totalPages: totalPagesValue,
+            hasData: !!transactionsData.data,
+            dataType: transactionsData.data ? typeof transactionsData.data : 'null',
+            isArray: Array.isArray(transactionsData.data),
+            sampleTransaction: transactionsArray[0] || null
+          });
+          
           setTransactions(transactionsArray);
-          setTotalPages(transactionsData.data.pages || transactionsData.pages || 1);
+          setTotalPages(totalPagesValue);
         } else {
+          logger.debug('No transactions data in response', { 
+            success: transactionsData?.success,
+            hasData: !!transactionsData?.data,
+            transactionsData 
+          });
           setTransactions([]);
           setTotalPages(1);
         }
@@ -347,10 +406,52 @@ export default function WalletPage() {
       }
     }, [currentPage]);
 
+  // Fetch top-up requests
+  const fetchTopUpRequests = useCallback(async () => {
+    try {
+      setLoadingTopUps(true);
+      const token = getApiToken();
+      
+      if (!token) {
+        setTopUpRequests([]);
+        return;
+      }
+
+      // GET /api/finance/top-ups/my-requests?page=1&limit=20
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.financeTopUpsMyRequests}?page=1&limit=20`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok && data.success && data.data) {
+        // Handle response structure: { success, data: [...] } or { success, data: { topUps: [...] } }
+        const requestsArray = Array.isArray(data.data) 
+          ? data.data 
+          : data.data.topUps || data.data.requests || [];
+        setTopUpRequests(requestsArray);
+      } else {
+        setTopUpRequests([]);
+      }
+    } catch (error) {
+      logger.error("Error fetching top-up requests", error instanceof Error ? error : new Error(String(error)));
+      setTopUpRequests([]);
+    } finally {
+      setLoadingTopUps(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!mounted) return;
     fetchWalletData(false, currentPage);
-  }, [mounted, currentPage, fetchWalletData]);
+    fetchTopUpRequests();
+  }, [mounted, currentPage, fetchWalletData, fetchTopUpRequests]);
 
   const refreshWalletData = useCallback(() => {
     fetchWalletData(true, currentPage);
@@ -524,38 +625,78 @@ export default function WalletPage() {
 
       // Make request
       const url = `${API_BASE_URL}${API_ENDPOINTS.financeTopUp}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+      let response: Response;
+      
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+      } catch (fetchError) {
+        // Handle network errors
+        if (fetchError instanceof TypeError && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch'))) {
+          throw new Error('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+        }
+        throw fetchError;
+      }
 
-      const data = await response.json();
+      // Check if response is ok before trying to parse JSON
+      const contentType = response.headers.get('content-type');
+      let data: any;
+      
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // If not JSON, read as text to get error message
+          const text = await response.text();
+          throw new Error(text || `Server error: ${response.status} ${response.statusText}`);
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, provide a helpful error message
+        if (parseError instanceof Error && parseError.message.includes('Server error')) {
+          throw parseError;
+        }
+        throw new Error(`Server error: ${response.status} ${response.statusText}. Please try again later.`);
+      }
 
       if (!response.ok) {
         // Handle specific error messages from API
-        const errorMessage = data.message || data.error || "Failed to submit top-up request";
+        const errorMessage = data?.message || data?.error || `Server error: ${response.status} ${response.statusText}`;
+        logger.error('Top-up request failed', new Error(errorMessage), {
+          status: response.status,
+          statusText: response.statusText,
+          responseData: data
+        });
         throw new Error(errorMessage);
       }
 
-      if (data.success) {
+      if (data?.success) {
         toast.success(data.message || "Top-up request submitted successfully. Please wait for admin approval.");
         // Reset form
         setShowAddFundsModal(false);
         resetTopUpForm();
         
-        // Refresh wallet data
+        // Refresh wallet data and top-up requests
         setTimeout(() => {
           fetchWalletData(true);
+          fetchTopUpRequests();
         }, 500);
       } else {
-        throw new Error(data.message || "Failed to submit top-up request");
+        const errorMessage = data?.message || "Failed to submit top-up request";
+        logger.error('Top-up request unsuccessful', new Error(errorMessage), { responseData: data });
+        throw new Error(errorMessage);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to submit top-up request. Please try again.";
-      logger.error('Error submitting top-up request', err instanceof Error ? err : new Error(String(err)));
+      logger.error('Error submitting top-up request', err instanceof Error ? err : new Error(String(err)), {
+        url: `${API_BASE_URL}${API_ENDPOINTS.financeTopUp}`,
+        amount: addFundsAmount,
+        paymentMethod: addFundsPaymentMethod
+      });
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
@@ -1029,116 +1170,299 @@ export default function WalletPage() {
         </div>
       )}
 
-      {/* Transactions Section */}
-      {!error && (
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-            <p className="text-sm text-gray-600 mt-1">View your transaction history</p>
+      {/* Transactions & Top-Up Requests Tabs */}
+      {!error && mounted && !loading && (
+        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50/50 to-white">
+            <div className="flex items-center justify-between px-6 pt-4 pb-0">
+              <div className="flex space-x-0.5">
+                <button
+                  onClick={() => setActiveTab('transactions')}
+                  className={`relative px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
+                    activeTab === 'transactions'
+                      ? 'bg-white text-emerald-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                  }`}
+                >
+                  {activeTab === 'transactions' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    <span>Recent Transactions</span>
+                    {transactions.length > 0 && (
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                        activeTab === 'transactions'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {transactions.length}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('topups')}
+                  className={`relative px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 ${
+                    activeTab === 'topups'
+                      ? 'bg-white text-emerald-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                  }`}
+                >
+                  {activeTab === 'topups' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <ArrowUpRight className="w-4 h-4" />
+                    <span>Top-Up Requests</span>
+                    {topUpRequests.length > 0 && (
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                        activeTab === 'topups'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {topUpRequests.length}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </div>
+              {activeTab === 'topups' && (
+                <button
+                  onClick={fetchTopUpRequests}
+                  disabled={loadingTopUps}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all"
+                >
+                  <RefreshCw className={`w-4 h-4 mr-2 ${loadingTopUps ? 'animate-spin' : ''}`} />
+                  Refresh
+                </button>
+              )}
+            </div>
           </div>
 
-          {transactions.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center mx-auto mb-4">
-                <Wallet className="w-8 h-8 text-gray-500" />
-              </div>
-              <p className="text-gray-600 font-medium">No transactions yet</p>
-              <p className="text-sm text-gray-500 mt-1">Your transaction history will appear here</p>
-            </div>
-          ) : (
-            <>
-              <div className="divide-y divide-gray-200">
-                {transactions.map((transaction, index) => {
-                  const transactionKey = transaction.reference 
-                    || (transaction.timestamp ? (typeof transaction.timestamp === 'string' ? transaction.timestamp : transaction.timestamp.toString()) : null)
-                    || `transaction-${index}`;
-                  return (
-                    <div key={transactionKey} className="p-6 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 transition-all duration-300">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getTransactionColor(transaction.type)}`}>
-                            {getTransactionIcon(transaction.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {transaction.description || transaction.category || 'Transaction'}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-gray-500 capitalize">
-                                {transaction.type || 'transaction'}
-                              </span>
-                              {transaction.reference && (
-                                <>
-                                  <span className="text-gray-300">•</span>
-                                  <span className="text-xs text-gray-500">
-                                    {transaction.reference}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(transaction.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-semibold ${
-                            transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund'
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }`}>
-                            {transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund'
-                              ? '+'
-                              : '-'
-                            }
-                            {formatCurrency(
-                              (transaction.amount && !isNaN(transaction.amount)) 
-                                ? Math.abs(transaction.amount) 
-                                : 0
-                            )}
-                          </p>
-                          <p className={`text-xs mt-1 px-2 py-1 rounded-full inline-block ${
-                            transaction.status === 'completed'
-                              ? 'bg-green-100 text-green-700'
-                              : transaction.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : transaction.status === 'failed'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {transaction.status || 'pending'}
-                          </p>
-                        </div>
-                      </div>
+          {/* Tab Content */}
+          <div className="bg-white">
+            {/* Transactions Tab Content */}
+            {activeTab === 'transactions' && (
+              <>
+                {transactions.length === 0 ? (
+                  <div className="p-16 text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                      <Wallet className="w-10 h-10 text-gray-400" />
                     </div>
-                  );
-                })}
-              </div>
+                    <p className="text-lg font-semibold text-gray-700 mb-1.5">No transactions yet</p>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto">Your transaction history will appear here once you start making transactions</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="divide-y divide-gray-100">
+                      {transactions.map((transaction, index) => {
+                        const transactionKey = transaction.reference 
+                          || (transaction.timestamp ? (typeof transaction.timestamp === 'string' ? transaction.timestamp : transaction.timestamp.toString()) : null)
+                          || `transaction-${index}`;
+                        const isIncome = transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund';
+                        return (
+                          <div key={transactionKey} className="p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${getTransactionColor(transaction.type)}`}>
+                                  {getTransactionIcon(transaction.type)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 text-base mb-1.5 truncate">
+                                    {transaction.description || transaction.category || 'Transaction'}
+                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                    <span className="text-xs font-medium text-gray-500 capitalize px-2 py-0.5 bg-gray-100 rounded-md">
+                                      {transaction.type || 'transaction'}
+                                    </span>
+                                    {transaction.reference && (
+                                      <>
+                                        <span className="text-gray-300 text-xs">•</span>
+                                        <span className="text-xs text-gray-500 font-mono truncate max-w-[120px]">
+                                          {transaction.reference}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {formatDate(transaction.timestamp)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className={`text-lg font-bold mb-2 ${
+                                  isIncome
+                                    ? 'text-emerald-600'
+                                    : 'text-red-600'
+                                }`}>
+                                  {isIncome ? '+' : '-'}
+                                  {formatCurrency(
+                                    (transaction.amount && !isNaN(transaction.amount)) 
+                                      ? Math.abs(transaction.amount) 
+                                      : 0
+                                  )}
+                                </p>
+                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full inline-block ${
+                                  transaction.status === 'completed'
+                                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                    : transaction.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                                    : transaction.status === 'failed'
+                                    ? 'bg-red-100 text-red-700 border border-red-200'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}>
+                                  {transaction.status || 'pending'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="p-6 border-t border-gray-200 flex items-center justify-between">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex items-center justify-between">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm font-medium text-gray-600">
+                          Page <span className="text-emerald-600">{currentPage}</span> of <span className="text-gray-900">{totalPages}</span>
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* Top-Up Requests Tab Content */}
+            {activeTab === 'topups' && (
+              <>
+                {loadingTopUps ? (
+                  <div className="p-16 text-center">
+                    <RefreshCw className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium">Loading top-up requests...</p>
+                    <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your data</p>
+                  </div>
+                ) : topUpRequests.length === 0 ? (
+                  <div className="p-16 text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-green-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                      <Receipt className="w-10 h-10 text-emerald-400" />
+                    </div>
+                    <p className="text-lg font-semibold text-gray-700 mb-1.5">No top-up requests yet</p>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto">Your top-up request history will appear here once you submit a request</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {topUpRequests.map((request) => {
+                      const receiptUrl = typeof request.receipt === 'object' 
+                        ? (request.receipt.url || request.receipt.thumbnail)
+                        : typeof request.receipt === 'string' 
+                        ? request.receipt 
+                        : request.accountDetails?.receipt
+                        ? (typeof request.accountDetails.receipt === 'string' 
+                          ? request.accountDetails.receipt 
+                          : request.accountDetails.receipt.url || request.accountDetails.receipt.thumbnail)
+                        : null;
+
+                      const statusColors = {
+                        pending: 'bg-amber-100 text-amber-700 border border-amber-200',
+                        approved: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                        rejected: 'bg-red-100 text-red-700 border border-red-200',
+                        completed: 'bg-blue-100 text-blue-700 border border-blue-200',
+                        cancelled: 'bg-gray-100 text-gray-700 border border-gray-200',
+                        failed: 'bg-red-100 text-red-700 border border-red-200'
+                      };
+
+                      return (
+                        <div key={request._id || request.id} className="p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+                                <ArrowUpRight className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                                  <p className="font-semibold text-gray-900 text-base">
+                                    Top-Up Request
+                                  </p>
+                                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[request.status as keyof typeof statusColors] || statusColors.pending}`}>
+                                    {request.status || 'pending'}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
+                                    <p className="text-base font-bold text-gray-900">{formatCurrency(request.amount || 0)}</p>
+                                  </div>
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Payment Method</p>
+                                    <p className="text-sm font-semibold text-gray-700 capitalize">{request.paymentMethod?.replace('_', ' ') || 'N/A'}</p>
+                                  </div>
+                                  {request.reference && (
+                                    <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                      <p className="text-xs font-medium text-gray-500 mb-1">Reference</p>
+                                      <p className="text-xs font-mono font-semibold text-gray-700 truncate">{request.reference}</p>
+                                    </div>
+                                  )}
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Requested</p>
+                                    <p className="text-xs font-semibold text-gray-700">
+                                      {formatDate(request.createdAt || request.timestamp || new Date())}
+                                    </p>
+                                  </div>
+                                </div>
+                                {(request.notes || request.description) && (
+                                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{request.notes || request.description}</p>
+                                  </div>
+                                )}
+                                {request.adminNotes && (
+                                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-xs font-semibold text-blue-900 mb-1.5">Admin Notes</p>
+                                    <p className="text-sm text-blue-800 leading-relaxed">{request.adminNotes}</p>
+                                  </div>
+                                )}
+                                {receiptUrl && (
+                                  <div className="mt-3">
+                                    <a
+                                      href={receiptUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all hover:shadow-sm"
+                                    >
+                                      <Receipt className="w-3.5 h-3.5" />
+                                      View Receipt
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -1248,8 +1572,9 @@ export default function WalletPage() {
                         mobile_money: "Mobile Money",
                         card: "Credit/Debit Card"
                       };
-                      // Include enabled methods plus mobile_money and card for add funds
-                      const allMethods = [...enabledMethods, "mobile_money", "card"].filter((v, i, a) => a.indexOf(v) === i);
+                      // Include all top-up payment methods from API: bank_transfer, mobile_money, card, cash, paypal, paymaya
+                      const topUpMethods = ["bank_transfer", "mobile_money", "card", "cash", "paypal", "paymaya"];
+                      const allMethods = [...enabledMethods, ...topUpMethods].filter((v, i, a) => a.indexOf(v) === i);
                       return allMethods.map(method => (
                         <option key={method} value={method}>
                           {methodLabels[method] || method}

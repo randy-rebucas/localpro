@@ -40,6 +40,11 @@ import { apiRequest, API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
+import { useUserSettings } from "@/hooks/useUserSettings";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getUserPreferredCurrency } from "@/lib/user-settings-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 // Types
 type FavoriteType = 'services' | 'providers' | 'courses' | 'supplies';
@@ -267,6 +272,8 @@ interface Supply {
 
 export default function FavoritesPage() {
   const router = useRouter();
+  const { settings: userSettings } = useUserSettings();
+  const { settings: appSettings } = useAppSettings();
   const [activeTab, setActiveTab] = useState<FavoriteType>('services');
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -287,6 +294,17 @@ export default function FavoritesPage() {
     total: number;
     byType: Record<ItemType, number>;
   } | null>(null);
+
+  // Currency formatting helper
+  const formatPrice = useCallback((price: number, currency?: string | null, suffix?: string) => {
+    // Priority: 1. Provided currency, 2. User preferred currency, 3. App default currency
+    const currencyCode = currency || getUserPreferredCurrency(userSettings) || getDefaultCurrency(appSettings);
+    const formatted = formatCurrency(price, currencyCode, {
+      appSettings,
+      showSymbol: true,
+    });
+    return suffix ? `${formatted}${suffix}` : formatted;
+  }, [userSettings, appSettings]);
 
   // Map API itemType to FavoriteType
   const mapItemTypeToFavoriteType = (itemType: ItemType): FavoriteType => {
@@ -818,6 +836,7 @@ export default function FavoritesPage() {
                 };
                 router.push(routes[type]);
               }}
+              formatPrice={formatPrice}
             />
           ))}
         </div>
@@ -833,6 +852,7 @@ interface FavoriteCardProps {
   onRemove: (id: string, type: FavoriteType) => void;
   onUpdate: (favoriteId: string, notes?: string, tags?: string[]) => Promise<void>;
   onView: (id: string, type: FavoriteType) => void;
+  formatPrice: (price: number, currency?: string | null, suffix?: string) => string;
 }
 
 const FavoriteCard = React.memo(function FavoriteCard({
@@ -840,7 +860,8 @@ const FavoriteCard = React.memo(function FavoriteCard({
   viewMode,
   onRemove,
   onUpdate,
-  onView
+  onView,
+  formatPrice
 }: FavoriteCardProps) {
   const { id, _id, type, data, notes, tags } = favorite;
   const [showEditModal, setShowEditModal] = useState(false);
@@ -851,13 +872,13 @@ const FavoriteCard = React.memo(function FavoriteCard({
   const renderContent = () => {
     switch (type) {
       case 'services':
-        return <ServiceCard service={data as unknown as Service} viewMode={viewMode} />;
+        return <ServiceCard service={data as unknown as Service} viewMode={viewMode} formatPrice={formatPrice} />;
       case 'providers':
         return <ProviderCard provider={data as unknown as Provider} viewMode={viewMode} />;
       case 'courses':
-        return <CourseCard course={data as unknown as Course} viewMode={viewMode} />;
+        return <CourseCard course={data as unknown as Course} viewMode={viewMode} formatPrice={formatPrice} />;
       case 'supplies':
-        return <SupplyCard supply={data as unknown as Supply} viewMode={viewMode} />;
+        return <SupplyCard supply={data as unknown as Supply} viewMode={viewMode} formatPrice={formatPrice} />;
     }
   };
 
@@ -878,12 +899,12 @@ const FavoriteCard = React.memo(function FavoriteCard({
 
   return (
     <>
-      <Card className={`${viewMode === "list" ? "flex gap-4 p-5" : "relative"} group hover:shadow-xl transition-all duration-300 border border-gray-200 rounded-xl overflow-hidden bg-gradient-to-br from-white to-gray-50/50`}>
+      <Card className={`${viewMode === "list" ? "flex flex-col gap-4 p-5" : "relative flex flex-col"} group hover:shadow-xl transition-all duration-300 border border-gray-200 rounded-xl overflow-hidden bg-gradient-to-br from-white to-gray-50/50`}>
         <div className={viewMode === "list" ? "flex-1 relative" : "relative"}>
           {renderContent()}
           
           {/* Notes and Tags Display */}
-          {(notes || tags?.length) && (
+          {(notes || (tags && tags.length > 0)) && (
             <div className={`${viewMode === "list" ? "mt-4" : "p-5 pt-0"} space-y-2`}>
               {notes && (
                 <div className="flex items-start gap-2 text-sm text-gray-600 bg-gradient-to-r from-blue-50/50 to-emerald-50/50 p-2 rounded-lg">
@@ -903,36 +924,37 @@ const FavoriteCard = React.memo(function FavoriteCard({
               )}
             </div>
           )}
-          
-          <div className={`${viewMode === "list" ? "absolute top-4 right-4" : "absolute top-3 right-3"} flex gap-2 z-10`}>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onView(id, type)}
-              className="opacity-70 group-hover:opacity-100 transition-all bg-gradient-to-br from-white to-gray-50 shadow-lg border-2 border-gray-300 hover:from-emerald-50 hover:to-green-50 hover:border-emerald-400 transform hover:scale-110 hover:shadow-xl"
-              title="View details"
-            >
-              <Eye className="w-4 h-4 text-emerald-600" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setShowEditModal(true)}
-              className="opacity-70 group-hover:opacity-100 transition-all bg-gradient-to-br from-white to-gray-50 shadow-lg border-2 border-gray-300 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 transform hover:scale-110 hover:shadow-xl"
-              title="Edit notes and tags"
-            >
-              <Edit className="w-4 h-4 text-blue-600" />
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onRemove(id, type)}
-              className="opacity-70 group-hover:opacity-100 transition-all text-red-600 hover:text-red-700 hover:bg-gradient-to-br hover:from-red-50 hover:to-pink-50 bg-white shadow-lg border-2 border-red-300 hover:border-red-400 transform hover:scale-110 hover:shadow-xl"
-              title="Remove from favorites"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
+        </div>
+        
+        {/* Card Footer with Actions */}
+        <div className={`${viewMode === "list" ? "border-t border-gray-200 pt-3 mt-2" : "border-t border-gray-200 pt-3 px-5 pb-3"} flex items-center justify-end gap-2`}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onView(id, type)}
+            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-emerald-50 hover:to-green-50 hover:border-emerald-400 transform hover:scale-110 hover:shadow-lg"
+            title="View details"
+          >
+            <Eye className="w-4 h-4 text-emerald-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowEditModal(true)}
+            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 transform hover:scale-110 hover:shadow-lg"
+            title="Edit notes and tags"
+          >
+            <Edit className="w-4 h-4 text-blue-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => onRemove(id, type)}
+            className="transition-all text-red-600 hover:text-red-700 hover:bg-gradient-to-br hover:from-red-50 hover:to-pink-50 bg-white shadow-md border border-red-300 hover:border-red-400 transform hover:scale-110 hover:shadow-lg"
+            title="Remove from favorites"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       </Card>
 
@@ -1003,7 +1025,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
   );
 });
 
-function ServiceCard({ service, viewMode }: { service: Service; viewMode: "grid" | "list" }) {
+function ServiceCard({ service, viewMode, formatPrice }: { service: Service; viewMode: "grid" | "list"; formatPrice: (price: number, currency?: string | null, suffix?: string) => string }) {
   const imageUrl = Array.isArray(service.images) && service.images.length > 0
     ? (typeof service.images[0] === 'string' ? service.images[0] : service.images[0].url || service.images[0].thumbnail)
     : null;
@@ -1013,7 +1035,7 @@ function ServiceCard({ service, viewMode }: { service: Service; viewMode: "grid"
     : 'Unknown Provider';
 
   const price = service.pricing?.basePrice 
-    ? `$${service.pricing.basePrice.toLocaleString()}${service.pricing.type === 'hourly' ? '/hr' : ''}`
+    ? formatPrice(service.pricing.basePrice, service.pricing.currency, service.pricing.type === 'hourly' ? '/hr' : '')
     : 'Price on request';
 
   return (
@@ -1124,7 +1146,7 @@ function ProviderCard({ provider, viewMode }: { provider: Provider; viewMode: "g
   );
 }
 
-function CourseCard({ course, viewMode }: { course: Course; viewMode: "grid" | "list" }) {
+function CourseCard({ course, viewMode, formatPrice }: { course: Course; viewMode: "grid" | "list"; formatPrice: (price: number, currency?: string | null, suffix?: string) => string }) {
   const imageUrl = course.thumbnail;
 
   const instructorName = typeof course.instructor === 'object' && course.instructor
@@ -1155,7 +1177,7 @@ function CourseCard({ course, viewMode }: { course: Course; viewMode: "grid" | "
           <span className="text-gray-600 font-medium">{instructorName}</span>
           {course.price !== undefined && (
             <span className="font-semibold text-emerald-600">
-              ${course.price.toLocaleString()}
+              {formatPrice(course.price)}
             </span>
           )}
         </div>
@@ -1178,7 +1200,7 @@ function CourseCard({ course, viewMode }: { course: Course; viewMode: "grid" | "
   );
 }
 
-function SupplyCard({ supply, viewMode }: { supply: Supply; viewMode: "grid" | "list" }) {
+function SupplyCard({ supply, viewMode, formatPrice }: { supply: Supply; viewMode: "grid" | "list"; formatPrice: (price: number, currency?: string | null, suffix?: string) => string }) {
   const imageUrl = Array.isArray(supply.images) && supply.images.length > 0
     ? (typeof supply.images[0] === 'string' ? supply.images[0] : supply.images[0].url || supply.images[0].thumbnail)
     : null;
@@ -1188,7 +1210,7 @@ function SupplyCard({ supply, viewMode }: { supply: Supply; viewMode: "grid" | "
     : 'Unknown Supplier';
 
   const price = supply.pricing?.price
-    ? `$${supply.pricing.price.toLocaleString()}`
+    ? formatPrice(supply.pricing.price, supply.pricing.currency)
     : 'Price on request';
 
   return (

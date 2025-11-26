@@ -665,7 +665,7 @@ export default function MyBookingsPage() {
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
               >
                 <Store className="w-4 h-4" />
-                Browse Services
+                Browse Providers
               </Link>
             </div>
           </div>
@@ -676,7 +676,7 @@ export default function MyBookingsPage() {
               icon={AlertCircle}
               iconColor="text-red-600"
               iconBgColor="bg-red-100"
-              title="Failed to Load Bookings"
+              title="Failed to Load Bookings" 
               description={error}
               actions={[
                 {
@@ -688,7 +688,7 @@ export default function MyBookingsPage() {
                 {
                   type: "link",
                   href: "/marketplace",
-                  label: "Browse Services",
+                  label: "Browse Providers",
                   variant: "secondary"
                 }
               ]}
@@ -721,7 +721,7 @@ export default function MyBookingsPage() {
               className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
             >
               <Store className="w-4 h-4" />
-              Browse Services
+              Browse Providers
             </Link>
           </div>
         </div>
@@ -819,7 +819,7 @@ export default function MyBookingsPage() {
                   {
                     type: "link",
                     href: "/marketplace",
-                    label: "Browse Services",
+                    label: "Browse Providers",
                     icon: Store,
                     variant: "primary"
                   },
