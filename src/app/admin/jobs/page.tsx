@@ -20,6 +20,7 @@ import {
   MapPin,
   DollarSign,
   Image as ImageIcon,
+  Filter,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -97,6 +98,7 @@ export default function AdminJobsPage() {
   const [selectedJobStats, setSelectedJobStats] = useState<JobStats | null>(null);
   const [selectedJobApplications, setSelectedJobApplications] = useState<(Application & { _id?: string })[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const [createForm, setCreateForm] = useState({
     title: "",
@@ -768,8 +770,8 @@ export default function AdminJobsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Jobs Management</h1>
-          <p className="text-gray-600 text-sm">Manage job postings, applications, and recruitment</p>
+          <h1 className="text-xl font-bold text-gray-900">Jobs Management</h1>
+          <p className="text-gray-600 text-xs">Manage job postings, applications, and recruitment</p>
         </div>
         <div className="mt-2 sm:mt-0">
           <button
@@ -782,75 +784,103 @@ export default function AdminJobsPage() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters and Controls */}
       <div className="bg-white rounded shadow">
         <div className="px-4 py-3 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by title, company, description..."
-                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="paused">Paused</option>
-                <option value="closed">Closed</option>
-                <option value="filled">Filled</option>
-                <option value="draft">Draft</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Job Type</label>
-              <select
-                value={filters.jobType}
-                onChange={(e) => setFilters({ ...filters, jobType: e.target.value, page: 1 })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">All Types</option>
-                <option value="full_time">Full Time</option>
-                <option value="part_time">Part Time</option>
-                <option value="contract">Contract</option>
-                <option value="freelance">Freelance</option>
-                <option value="internship">Internship</option>
-                <option value="temporary">Temporary</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+            <div className="flex items-center space-x-2">
               <button
-                onClick={() => fetchJobs()}
-                className="w-full inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={() => setShowFilters(!showFilters)}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <RefreshCw className="w-3 h-3 mr-1" />
-                Refresh
+                <Filter className="w-3 h-3 mr-1" />
+                {showFilters ? 'Hide' : 'Show'} Filters
               </button>
+              <div className="text-xs text-gray-500">
+                {filteredJobs.length} job{filteredJobs.length !== 1 ? 's' : ''} found
+              </div>
             </div>
           </div>
         </div>
+
+        {showFilters && (
+          <div className="p-4 border-b border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by title, company, description..."
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="active">Active</option>
+                  <option value="paused">Paused</option>
+                  <option value="closed">Closed</option>
+                  <option value="filled">Filled</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Job Type</label>
+                <select
+                  value={filters.jobType}
+                  onChange={(e) => setFilters({ ...filters, jobType: e.target.value, page: 1 })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">All Types</option>
+                  <option value="full_time">Full Time</option>
+                  <option value="part_time">Part Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="internship">Internship</option>
+                  <option value="temporary">Temporary</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
+                <button
+                  onClick={() => fetchJobs()}
+                  className="w-full inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <RefreshCw className="w-3 h-3 mr-1" />
+                  Refresh
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setSearchQuery("");
+                  setFilters({ ...filters, status: "", jobType: "", category: "", search: "", page: 1 });
+                }}
+                className="text-xs text-gray-600 hover:text-gray-800"
+              >
+                Clear all filters
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Jobs Table */}
       <div className="bg-white rounded shadow overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <h3 className="text-sm font-medium text-gray-900">Jobs</h3>
+        <div className="px-4 py-2 border-b border-gray-200">
+          <h3 className="text-xs font-medium text-gray-900">Jobs</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -874,19 +904,19 @@ export default function AdminJobsPage() {
               ) : (
                 filteredJobs.map((job) => (
                   <tr key={job._id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="px-3 py-1.5 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
-                            <Briefcase className="w-4 h-4 text-gray-600" />
+                        <div className="flex-shrink-0 h-6 w-6">
+                          <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center">
+                            <Briefcase className="w-3 h-3 text-gray-600" />
                           </div>
                         </div>
-                        <div className="ml-3">
+                        <div className="ml-2">
                           <div className="text-xs font-semibold text-gray-900">{job.title}</div>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-[10px] text-gray-600">
                             {job.company?.location?.city && job.company.location.state && (
                               <>
-                                <MapPin className="w-3 h-3 inline mr-1" />
+                                <MapPin className="w-2.5 h-2.5 inline mr-0.5" />
                                 {job.company.location.city}, {job.company.location.state}
                               </>
                             )}
@@ -895,8 +925,8 @@ export default function AdminJobsPage() {
                             )}
                           </div>
                           {job.salary && (
-                            <div className="text-xs text-gray-500">
-                              <DollarSign className="w-3 h-3 inline mr-1" />
+                            <div className="text-[10px] text-gray-500">
+                              <DollarSign className="w-2.5 h-2.5 inline mr-0.5" />
                               {job.salary.currency} {job.salary.min?.toLocaleString()}
                               {job.salary.max && ` - ${job.salary.max.toLocaleString()}`}
                             </div>
@@ -904,45 +934,45 @@ export default function AdminJobsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="px-3 py-1.5 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-6 w-6">
+                        <div className="flex-shrink-0 h-5 w-5">
                           {job.company?.logo?.url ? (
                             <Image
                               src={job.company.logo.url}
                               alt={job.company.name}
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded-full object-cover"
+                              width={20}
+                              height={20}
+                              className="h-5 w-5 rounded-full object-cover"
                               unoptimized
                             />
                           ) : (
-                            <div className="h-6 w-6 rounded-full bg-gray-300 flex items-center justify-center">
-                              <Building className="w-3 h-3 text-gray-600" />
+                            <div className="h-5 w-5 rounded-full bg-gray-300 flex items-center justify-center">
+                              <Building className="w-2.5 h-2.5 text-gray-600" />
                             </div>
                           )}
                         </div>
-                        <div className="ml-2">
+                        <div className="ml-1.5">
                           <div className="text-xs font-medium text-gray-900">{job.company?.name || "N/A"}</div>
-                          <div className="text-xs text-gray-500">{job.company?.industry || ""}</div>
+                          <div className="text-[10px] text-gray-500">{job.company?.industry || ""}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="space-y-1">
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <td className="px-3 py-1.5 whitespace-nowrap">
+                      <div className="space-y-0.5">
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
                           {job.jobType?.replace("_", " ").toUpperCase()}
                         </span>
                         <div>
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800">
                             {job.experienceLevel?.toUpperCase()}
                           </span>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
+                    <td className="px-3 py-1.5 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-xs font-medium ${getStatusColor(
                           job.status
                         )}`}
                       >
@@ -950,10 +980,10 @@ export default function AdminJobsPage() {
                         {job.status?.toUpperCase() || "DRAFT"}
                       </span>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
+                    <td className="px-3 py-1.5 whitespace-nowrap text-xs text-gray-700">
                       <div className="flex items-center">
                         <Users className="w-3 h-3 mr-1 text-gray-500" />
-                        <span>{job.applications?.length || 0} applications</span>
+                        <span className="text-[10px]">{job.applications?.length || 0}</span>
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
@@ -1041,27 +1071,29 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-2">
           <div>
-            <label className="block text-xs font-medium mb-1">Title *</label>
+            <label className="block text-xs font-medium mb-0.5">Title *</label>
             <Input
               value={createForm.title}
               onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
               placeholder="Job title"
+              className="text-xs px-2 py-1.5 h-8"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1">Description *</label>
+            <label className="block text-xs font-medium mb-0.5">Description *</label>
             <Textarea
               value={createForm.description}
               onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
               placeholder="Job description"
-              rows={4}
+              rows={3}
+              className="text-xs px-2 py-1.5"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Company Name *</label>
+              <label className="block text-xs font-medium mb-0.5">Company Name *</label>
               <Input
                 value={createForm.company.name}
                 onChange={(e) =>
@@ -1071,20 +1103,22 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Company name"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Category *</label>
+              <label className="block text-xs font-medium mb-0.5">Category *</label>
               <Input
                 value={createForm.category}
                 onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
                 placeholder="Category"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Job Type *</label>
+              <label className="block text-xs font-medium mb-0.5">Job Type *</label>
               <Select
                 value={createForm.jobType}
                 onValueChange={(value) => setCreateForm({ ...createForm, jobType: value as JobType })}
@@ -1099,7 +1133,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Experience Level *</label>
+              <label className="block text-xs font-medium mb-0.5">Experience Level *</label>
               <Select
                 value={createForm.experienceLevel}
                 onValueChange={(value) => setCreateForm({ ...createForm, experienceLevel: value as ExperienceLevel })}
@@ -1114,9 +1148,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Status</label>
+              <label className="block text-xs font-medium mb-0.5">Status</label>
               <Select
                 value={createForm.status}
                 onValueChange={(value) => setCreateForm({ ...createForm, status: value as JobStatus })}
@@ -1130,7 +1164,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Visibility</label>
+              <label className="block text-xs font-medium mb-0.5">Visibility</label>
               <Select
                 value={createForm.visibility}
                 onValueChange={(value) => setCreateForm({ ...createForm, visibility: value as "public" | "private" | "featured" })}
@@ -1142,9 +1176,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Salary Min</label>
+              <label className="block text-xs font-medium mb-0.5">Salary Min</label>
               <Input
                 type="number"
                 value={createForm.salary.min}
@@ -1155,10 +1189,11 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Min salary"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Salary Max</label>
+              <label className="block text-xs font-medium mb-0.5">Salary Max</label>
               <Input
                 type="number"
                 value={createForm.salary.max}
@@ -1169,10 +1204,11 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Max salary"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Currency</label>
+              <label className="block text-xs font-medium mb-0.5">Currency</label>
               <Input
                 value={createForm.salary.currency}
                 onChange={(e) =>
@@ -1182,6 +1218,7 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="USD"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
           </div>
@@ -1205,27 +1242,29 @@ export default function AdminJobsPage() {
           </div>
         }
       >
-        <div className="space-y-3 max-h-[80vh] overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-[80vh] overflow-y-auto pr-2">
           <div>
-            <label className="block text-xs font-medium mb-1">Title *</label>
+            <label className="block text-xs font-medium mb-0.5">Title *</label>
             <Input
               value={editForm.title}
               onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
               placeholder="Job title"
+              className="text-xs px-2 py-1.5 h-8"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1">Description *</label>
+            <label className="block text-xs font-medium mb-0.5">Description *</label>
             <Textarea
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               placeholder="Job description"
-              rows={4}
+              rows={3}
+              className="text-xs px-2 py-1.5"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Company Name *</label>
+              <label className="block text-xs font-medium mb-0.5">Company Name *</label>
               <Input
                 value={editForm.company.name}
                 onChange={(e) =>
@@ -1235,20 +1274,22 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Company name"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Category *</label>
+              <label className="block text-xs font-medium mb-0.5">Category *</label>
               <Input
                 value={editForm.category}
                 onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
                 placeholder="Category"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Job Type *</label>
+              <label className="block text-xs font-medium mb-0.5">Job Type *</label>
               <Select
                 value={editForm.jobType}
                 onValueChange={(value) => setEditForm({ ...editForm, jobType: value as JobType })}
@@ -1263,7 +1304,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Experience Level *</label>
+              <label className="block text-xs font-medium mb-0.5">Experience Level *</label>
               <Select
                 value={editForm.experienceLevel}
                 onValueChange={(value) => setEditForm({ ...editForm, experienceLevel: value as ExperienceLevel })}
@@ -1278,9 +1319,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Status</label>
+              <label className="block text-xs font-medium mb-0.5">Status</label>
               <Select
                 value={editForm.status}
                 onValueChange={(value) => setEditForm({ ...editForm, status: value as JobStatus })}
@@ -1294,7 +1335,7 @@ export default function AdminJobsPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Visibility</label>
+              <label className="block text-xs font-medium mb-0.5">Visibility</label>
               <Select
                 value={editForm.visibility}
                 onValueChange={(value) => setEditForm({ ...editForm, visibility: value as "public" | "private" | "featured" })}
@@ -1306,9 +1347,9 @@ export default function AdminJobsPage() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs font-medium mb-1">Salary Min</label>
+              <label className="block text-xs font-medium mb-0.5">Salary Min</label>
               <Input
                 type="number"
                 value={editForm.salary.min}
@@ -1319,10 +1360,11 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Min salary"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Salary Max</label>
+              <label className="block text-xs font-medium mb-0.5">Salary Max</label>
               <Input
                 type="number"
                 value={editForm.salary.max}
@@ -1333,10 +1375,11 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="Max salary"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1">Currency</label>
+              <label className="block text-xs font-medium mb-0.5">Currency</label>
               <Input
                 value={editForm.salary.currency}
                 onChange={(e) =>
@@ -1346,6 +1389,7 @@ export default function AdminJobsPage() {
                   })
                 }
                 placeholder="USD"
+                className="text-xs px-2 py-1.5 h-8"
               />
             </div>
           </div>

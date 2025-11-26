@@ -30,6 +30,9 @@ import { SubscriptionPlan, UserSubscription, FeatureLimit } from "@/types/subscr
 import { DatePicker } from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Pagination } from "@/components/shared/pagination";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 type TabType = "plans" | "subscriptions" | "analytics";
 
@@ -94,6 +97,7 @@ export default function AdminPlusPage() {
 }
 
 function PlansTab() {
+  const { settings: appSettings } = useAppSettings();
   const {
     plans,
     loading,
@@ -116,7 +120,7 @@ function PlansTab() {
     price: {
       monthly: 0,
       yearly: 0,
-      currency: "USD",
+      currency: getDefaultCurrency(appSettings),
     },
     features: [],
     limits: {},
@@ -162,7 +166,7 @@ function PlansTab() {
       setCreateForm({
         name: "",
         description: "",
-        price: { monthly: 0, yearly: 0, currency: "USD" },
+        price: { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
         features: [],
         limits: {},
         benefits: [],
@@ -294,12 +298,20 @@ function PlansTab() {
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-xs text-gray-900">
-                        ${plan.price?.monthly || 0} {plan.price?.currency || "USD"}
+                        {formatCurrency(
+                          plan.price?.monthly || 0,
+                          plan.price?.currency || getDefaultCurrency(appSettings),
+                          { appSettings }
+                        )}
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-xs text-gray-900">
-                        ${plan.price?.yearly || 0} {plan.price?.currency || "USD"}
+                        {formatCurrency(
+                          plan.price?.yearly || 0,
+                          plan.price?.currency || getDefaultCurrency(appSettings),
+                          { appSettings }
+                        )}
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
@@ -410,6 +422,7 @@ function PlanForm({
   addFeature: (formType: "create" | "edit") => void;
   removeFeature: (index: number, formType: "create" | "edit") => void;
 }) {
+  const { settings: appSettings } = useAppSettings();
   const formType = form._id ? "edit" : "create";
 
   return (
@@ -447,7 +460,7 @@ function PlanForm({
                 price: {
                   monthly: parseFloat(e.target.value) || 0,
                   yearly: form.price?.yearly || 0,
-                  currency: form.price?.currency || "USD"
+                  currency: form.price?.currency || getDefaultCurrency(appSettings)
                 },
               })
             }
@@ -467,7 +480,7 @@ function PlanForm({
                 price: {
                   monthly: form.price?.monthly || 0,
                   yearly: parseFloat(e.target.value) || 0,
-                  currency: form.price?.currency || "USD"
+                  currency: form.price?.currency || getDefaultCurrency(appSettings)
                 },
               })
             }
@@ -481,7 +494,7 @@ function PlanForm({
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-1">Currency</label>
         <Input
-          value={form.price?.currency || "USD"}
+          value={form.price?.currency || getDefaultCurrency(appSettings)}
           onChange={(e) =>
             setForm({
               ...form,
@@ -492,7 +505,7 @@ function PlanForm({
               },
             })
           }
-          placeholder="USD"
+          placeholder={getDefaultCurrency(appSettings)}
           className="text-xs !px-3 !py-2"
         />
       </div>
@@ -511,7 +524,7 @@ function PlanForm({
         </div>
         <div className="space-y-2">
           {(form.features || []).map((feature, index) => (
-            <div key={index} className="flex gap-2 items-start p-2 border rounded">
+            <div key={index} className="flex gap-2 items-start p-2 rounded">
               <div className="flex-1 space-y-2">
                 <Input
                   placeholder="Feature name"
@@ -1328,6 +1341,7 @@ function SubscriptionsTab() {
 }
 
 function AnalyticsTab() {
+  const { settings: appSettings } = useAppSettings();
   const { analytics, loading, error, refetch } = useSubscriptionAnalytics();
   const { toasts, removeToast } = useToast();
 
@@ -1393,7 +1407,11 @@ function AnalyticsTab() {
             <div>
               <p className="text-xs font-medium text-gray-500">Total Revenue</p>
               <p className="text-lg font-bold text-gray-900">
-                ${(analytics.totalRevenue || 0).toLocaleString()}
+                {formatCurrency(
+                  analytics.totalRevenue || 0,
+                  getDefaultCurrency(appSettings),
+                  { appSettings }
+                )}
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
@@ -1407,7 +1425,11 @@ function AnalyticsTab() {
             <div>
               <p className="text-xs font-medium text-gray-500">Monthly Revenue</p>
               <p className="text-lg font-bold text-gray-900">
-                ${(analytics.monthlyRevenue || 0).toLocaleString()}
+                {formatCurrency(
+                  analytics.monthlyRevenue || 0,
+                  getDefaultCurrency(appSettings),
+                  { appSettings }
+                )}
               </p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
@@ -1424,8 +1446,8 @@ function AnalyticsTab() {
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xs font-semibold text-gray-900 mb-3">Subscriptions by Plan</h3>
             <div className="space-y-2">
-              {analytics.subscriptionsByPlan.map((item) => (
-                <div key={item.planId} className="flex items-center justify-between">
+              {analytics.subscriptionsByPlan.map((item, index) => (
+                <div key={item.planId || `plan-${index}`} className="flex items-center justify-between">
                   <span className="text-xs text-gray-700">{item.planName}</span>
                   <span className="text-xs font-medium text-gray-900">{item.count}</span>
                 </div>
@@ -1439,8 +1461,8 @@ function AnalyticsTab() {
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xs font-semibold text-gray-900 mb-3">Subscriptions by Status</h3>
             <div className="space-y-2">
-              {analytics.subscriptionsByStatus.map((item) => (
-                <div key={item.status} className="flex items-center justify-between">
+              {analytics.subscriptionsByStatus.map((item, index) => (
+                <div key={item.status || `status-${index}`} className="flex items-center justify-between">
                   <span className="text-xs text-gray-700 capitalize">{item.status}</span>
                   <span className="text-xs font-medium text-gray-900">{item.count}</span>
                 </div>
@@ -1467,11 +1489,11 @@ function AnalyticsTab() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {analytics.recentSubscriptions.slice(0, 5).map((sub) => {
+                {analytics.recentSubscriptions.slice(0, 5).map((sub, index) => {
                   const user = typeof sub.user === "object" ? sub.user : null;
                   const plan = typeof sub.plan === "object" ? sub.plan : null;
                   return (
-                    <tr key={sub._id} className="hover:bg-gray-50">
+                    <tr key={sub._id || `subscription-${index}`} className="hover:bg-gray-50">
                       <td className="px-3 py-2 text-xs text-gray-900">
                         {user?.email || "Unknown"}
                       </td>
