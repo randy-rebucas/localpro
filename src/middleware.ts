@@ -366,6 +366,53 @@ export async function middleware(request: NextRequest) {
           { status: 401 }
         );
       }
+
+      // Role-based authorization for specific endpoints
+      // Jobs: POST, PUT, DELETE require provider/admin
+      if (pathname.startsWith("/api/jobs")) {
+        const method = request.method;
+        // POST /api/jobs - Create job
+        // PUT /api/jobs/:id - Update job
+        // DELETE /api/jobs/:id - Delete job
+        // POST /api/jobs/:id/logo - Upload logo
+        if ((method === "POST" && pathname === "/api/jobs") ||
+            (method === "PUT" && /^\/api\/jobs\/[^/]+$/.test(pathname)) ||
+            (method === "DELETE" && /^\/api\/jobs\/[^/]+$/.test(pathname)) ||
+            (method === "POST" && /^\/api\/jobs\/[^/]+\/logo$/.test(pathname))) {
+          if (!userRoles || !userRoles.some(role => ["provider", "agency_owner", "agency_admin", "admin"].includes(role))) {
+            return NextResponse.json(
+              { error: "Provider or admin access required" },
+              { status: 403 }
+            );
+          }
+        }
+      }
+
+      // Rentals: POST, PUT, DELETE, image operations require provider/admin
+      if (pathname.startsWith("/api/rentals")) {
+        const method = request.method;
+        // POST /api/rentals - Create rental
+        // POST /api/rentals/items - Create rental (alias)
+        // PUT /api/rentals/:id - Update rental
+        // DELETE /api/rentals/:id - Delete rental
+        // POST /api/rentals/:id/images - Upload rental images
+        // DELETE /api/rentals/:id/images/:imageId - Delete rental image
+        if ((method === "POST" && (pathname === "/api/rentals" || pathname === "/api/rentals/items")) ||
+            (method === "PUT" && /^\/api\/rentals\/[^/]+$/.test(pathname)) ||
+            (method === "DELETE" && /^\/api\/rentals\/[^/]+$/.test(pathname)) ||
+            (method === "POST" && /^\/api\/rentals\/[^/]+\/images$/.test(pathname)) ||
+            (method === "DELETE" && /^\/api\/rentals\/[^/]+\/images\/[^/]+$/.test(pathname))) {
+          if (!userRoles || !userRoles.some(role => ["provider", "agency_owner", "agency_admin", "admin"].includes(role))) {
+            return NextResponse.json(
+              { error: "Provider or admin access required" },
+              { status: 403 }
+            );
+          }
+        }
+        // Authenticated endpoints (book, bookings status, reviews) - already authenticated above
+        // These don't need additional role checks, just authentication
+      }
+
       return NextResponse.next();
     }
 

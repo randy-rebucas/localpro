@@ -309,7 +309,7 @@ export default function EditJobPage() {
         throw new Error("Failed to update job");
       }
 
-      router.push(`/marketplace/jobs/${params.id}`);
+      router.push(`/jobs/${params.id}`);
     } catch (error) {
       logger.error("Error updating job", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
       setError("Failed to update job. Please try again.");
@@ -333,7 +333,7 @@ export default function EditJobPage() {
         <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
         <p className="text-gray-600 mb-6">{error}</p>
         <Link
-          href="/marketplace/jobs"
+          href="/jobs"
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
           Back to Jobs
@@ -347,7 +347,7 @@ export default function EditJobPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href={`/marketplace/jobs/${params.id}`}
+          href={`/jobs/${params.id}`}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -777,7 +777,7 @@ export default function EditJobPage() {
             {/* Submit Button */}
             <div className="flex justify-end gap-4">
               <Link
-                href={`/marketplace/jobs/${params.id}`}
+                href={`/jobs/${params.id}`}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel

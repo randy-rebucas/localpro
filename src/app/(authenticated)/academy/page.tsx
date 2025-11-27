@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { GridSkeleton } from "@/components/ui/loading";
 import { useRoleAccess } from "@/components/role-guard";
+import { useSession } from "@/hooks/useAuth";
 import {
     Search,
     Star,
@@ -21,6 +22,11 @@ import {
     GraduationCap,
     ArrowRight,
     Sparkles,
+    ChevronLeft,
+    ChevronRight,
+    Filter,
+    X,
+    CheckCircle2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -186,13 +192,46 @@ const levels = [
     { value: "expert", label: "Expert" }
 ];
 
+const sortOptions = [
+    { value: "relevance", label: "Relevance" },
+    { value: "newest", label: "Newest First" },
+    { value: "oldest", label: "Oldest First" },
+    { value: "rating", label: "Highest Rated" },
+    { value: "price-low", label: "Price: Low to High" },
+    { value: "price-high", label: "Price: High to Low" },
+    { value: "popular", label: "Most Popular" },
+    { value: "duration", label: "Duration" }
+];
+
+interface Enrollment {
+    _id?: string;
+    id?: string;
+    course?: Course;
+    progress?: number;
+    status?: string;
+    enrolledAt?: string;
+    completedAt?: string;
+}
+
+type FeaturedResponse = {
+    success?: boolean;
+    data?: Course[];
+    featured?: Course[];
+    count?: number;
+} | Course[];
+
 export default function AcademyPage() {
     const [courses, setCourses] = useState<Course[]>([]);
+    const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
+    const [myEnrollments, setMyEnrollments] = useState<Enrollment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingFeatured, setLoadingFeatured] = useState(false);
+    const [loadingEnrollments, setLoadingEnrollments] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const [sortBy] = useState("relevance");
+    const [sortBy, setSortBy] = useState("relevance");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+    const [showFilters, setShowFilters] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
         pages: 1,
@@ -213,6 +252,7 @@ export default function AcademyPage() {
     const paginationRef = useRef(pagination);
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const { isInstructor, isAdmin, isClient } = useRoleAccess();
+    const { data: session } = useSession();
 
     // Normalize course data from API response
     const normalizeCourse = useCallback((course: Partial<Course> & Record<string, unknown>): Course => {
@@ -367,10 +407,80 @@ export default function AcademyPage() {
         paginationRef.current = pagination;
     }, [pagination]);
 
+    // Fetch featured courses
+    const fetchFeaturedCourses = useCallback(async () => {
+        try {
+            setLoadingFeatured(true);
+            const data = await apiRequest<FeaturedResponse>(API_ENDPOINTS.academyFeatured);
+            
+            let featuredData: Course[] = [];
+            if (Array.isArray(data)) {
+                featuredData = (data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
+            } else if (data && typeof data === 'object') {
+                const dataObj = data as Record<string, unknown>;
+                if ('success' in dataObj && dataObj.success && 'data' in dataObj && dataObj.data) {
+                    featuredData = (dataObj.data as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
+                } else if ('featured' in dataObj && Array.isArray(dataObj.featured)) {
+                    featuredData = (dataObj.featured as Array<Partial<Course> & Record<string, unknown>>).map((course) => normalizeCourse(course));
+                }
+            }
+            setFeaturedCourses(featuredData.slice(0, 6)); // Limit to 6 featured courses
+        } catch (error) {
+            logger.warn('Error fetching featured courses', { error: error instanceof Error ? error.message : String(error) });
+            setFeaturedCourses([]);
+        } finally {
+            setLoadingFeatured(false);
+        }
+    }, [normalizeCourse]);
+
+    // Fetch my enrolled courses
+    const fetchMyEnrollments = useCallback(async () => {
+        if (!session) return;
+        
+        try {
+            setLoadingEnrollments(true);
+            const data = await apiRequest<{ success?: boolean; data?: Enrollment[]; enrollments?: Enrollment[] }>(API_ENDPOINTS.academyMyCourses);
+            
+            let enrollmentsData: Enrollment[] = [];
+            if (data && typeof data === 'object') {
+                const dataObj = data as Record<string, unknown>;
+                if ('success' in dataObj && dataObj.success && 'data' in dataObj && dataObj.data) {
+                    enrollmentsData = (dataObj.data as Enrollment[]);
+                } else if ('enrollments' in dataObj && Array.isArray(dataObj.enrollments)) {
+                    enrollmentsData = (dataObj.enrollments as Enrollment[]);
+                }
+            } else if (Array.isArray(data)) {
+                enrollmentsData = data as Enrollment[];
+            }
+            setMyEnrollments(enrollmentsData.slice(0, 6)); // Limit to 6 enrollments
+        } catch (error) {
+            logger.warn('Error fetching my enrollments', { error: error instanceof Error ? error.message : String(error) });
+            setMyEnrollments([]);
+        } finally {
+            setLoadingEnrollments(false);
+        }
+    }, [session]);
+
+    // Reset to page 1 when filters or search change
+    useEffect(() => {
+        if (paginationRef.current.current !== 1) {
+            paginationRef.current = { ...paginationRef.current, current: 1 };
+            setPagination(prev => ({ ...prev, current: 1 }));
+        }
+    }, [debouncedSearchQuery, filters, sortBy]);
+
     // Fetch courses when filters or search change
     useEffect(() => {
         fetchCourses();
     }, [debouncedSearchQuery, filters, sortBy, fetchCourses]);
+
+    // Fetch featured courses and enrollments on mount
+    useEffect(() => {
+        fetchFeaturedCourses();
+        if (session) {
+            fetchMyEnrollments();
+        }
+    }, [fetchFeaturedCourses, fetchMyEnrollments, session]);
 
     // Filter courses client-side for additional filtering
     const filteredCourses = useMemo(() => {
@@ -396,6 +506,28 @@ export default function AcademyPage() {
     const handleCreateCourse = () => {
         router.push('/academy/create-course');
     };
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= pagination.pages) {
+            paginationRef.current = { ...paginationRef.current, current: page };
+            setPagination(prev => ({ ...prev, current: page }));
+        }
+    };
+
+    const handleCategoryFilter = (category: string) => {
+        setFilters(prev => ({ ...prev, category }));
+    };
+
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (filters.category) count++;
+        if (filters.level) count++;
+        if (filters.rating > 0) count++;
+        if (filters.certification) count++;
+        if (!filters.enrollment) count++;
+        if (filters.priceRange[0] > 0 || filters.priceRange[1] < 1000) count++;
+        return count;
+    }, [filters]);
 
     if (loading) {
         return (
@@ -437,31 +569,149 @@ export default function AcademyPage() {
     }
 
     return (
-        <div className="p-4 space-y-4">
-            {/* Header */}
-            <PageHeader
-                title="Academy"
-                subtitle="Browse courses, learn new skills, and earn certifications"
-                actions={[
-                    ...(isInstructor || isAdmin ? [{
-                        type: "button" as const,
-                        onClick: handleCreateCourse,
-                        label: "Create Course",
-                        icon: Plus,
-                        variant: "primary" as const
-                    }] : [])
-                ]}
-            />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+            {/* Animated Background Blobs */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-100/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+            </div>
+
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                {/* Header */}
+                <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+                    <PageHeader
+                        title="Academy"
+                        subtitle="Browse courses, learn new skills, and earn certifications"
+                        actions={[
+                            ...(isInstructor || isAdmin ? [{
+                                type: "button" as const,
+                                onClick: handleCreateCourse,
+                                label: "Create Course",
+                                icon: Plus,
+                                variant: "primary" as const
+                            }] : [])
+                        ]}
+                    />
+                </div>
+
+            {/* My Enrolled Courses Section */}
+            {session && myEnrollments.length > 0 && (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-bold text-gray-900">My Courses</h2>
+                        <Link 
+                            href="/academy/my-courses" 
+                            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                        >
+                            View All
+                            <ArrowRight className="w-4 h-4" />
+                        </Link>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {myEnrollments.map((enrollment) => {
+                            const course = enrollment.course;
+                            if (!course) return null;
+                            const courseId = course.id || course._id || '';
+                            return (
+                                <Card key={enrollment._id || enrollment.id} className="p-4 bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300">
+                                    <div className="space-y-3">
+                                        <div className="flex items-start justify-between">
+                                            <h3 className="font-semibold text-gray-900 line-clamp-2">{course.title}</h3>
+                                            {enrollment.status === 'completed' && (
+                                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 ml-2" />
+                                            )}
+                                        </div>
+                                        {enrollment.progress !== undefined && (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <span className="text-gray-600">Progress</span>
+                                                    <span className="font-medium text-gray-900">{enrollment.progress}%</span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                                    <div 
+                                                        className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all shadow-sm"
+                                                        style={{ width: `${enrollment.progress}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                        <button
+                                            onClick={() => handleViewCourse(courseId)}
+                                            className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl font-medium text-sm flex items-center justify-center gap-2"
+                                        >
+                                            <Play className="w-4 h-4" />
+                                            {enrollment.status === 'completed' ? 'Review Course' : 'Continue Learning'}
+                                        </button>
+                                    </div>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Featured Courses Section */}
+            {featuredCourses.length > 0 && (
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-yellow-500" />
+                            <h2 className="text-xl font-bold text-gray-900">Featured Courses</h2>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {featuredCourses.map((course, index) => (
+                            <CourseCard
+                                key={course.id || course._id || `featured-${index}`}
+                                course={course}
+                                viewMode="grid"
+                                onView={handleViewCourse}
+                                featured={true}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Category Quick Filters */}
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm space-y-3">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-900">Browse by Category</h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {categories.filter(c => c.value).map(category => (
+                        <button
+                            key={category.value}
+                            onClick={() => handleCategoryFilter(filters.category === category.value ? "" : category.value)}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md ${
+                                filters.category === category.value
+                                    ? "bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-500/30"
+                                    : "bg-white border-2 border-gray-300 text-gray-700 hover:border-green-500 hover:bg-green-50"
+                            }`}
+                        >
+                            {category.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
             {/* Main Layout: Filters on Left, Content on Right */}
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Sidebar - Filters */}
-                <aside className="w-full lg:w-64 flex-shrink-0">
-                    <Card className="p-4 sticky top-4">
+                <aside className={`w-full lg:w-64 flex-shrink-0 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+                    <Card className="p-6 bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 shadow-lg backdrop-blur-sm sticky top-24">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                                <div className="flex items-center gap-2">
+                                    {activeFiltersCount > 0 && (
+                                        <span className="px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded-full">
+                                            {activeFiltersCount}
+                                        </span>
+                                    )}
+                                    <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                                </div>
                             </div>
 
                             {/* Category Filter */}
@@ -593,7 +843,7 @@ export default function AcademyPage() {
                 {/* Right Content Area */}
                 <div className="flex-1 space-y-4">
                     {/* Search and Controls */}
-                    <div className="bg-white rounded-lg shadow-sm p-4">
+                    <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
                         <div className="flex flex-col sm:flex-row gap-3">
                             {/* Search */}
                             <div className="flex-1">
@@ -611,10 +861,43 @@ export default function AcademyPage() {
                                             onClick={() => setSearchQuery("")}
                                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                         >
-                                            ×
+                                            <X className="w-4 h-4" />
                                         </button>
                                     )}
                                 </div>
+                            </div>
+                            {/* Sort and View Controls */}
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                >
+                                    {sortOptions.map(option => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
+                                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                    title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                                >
+                                    {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+                                </button>
+                                <button
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="lg:hidden p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors relative"
+                                    title="Toggle filters"
+                                >
+                                    <Filter className="w-4 h-4" />
+                                    {activeFiltersCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                            {activeFiltersCount}
+                                        </span>
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -701,10 +984,65 @@ export default function AcademyPage() {
                                         />
                                     ))}
                                 </div>
+                                
+                                {/* Pagination */}
+                                {pagination.pages > 1 && (
+                                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                                        <div className="text-sm text-gray-600">
+                                            Showing {((pagination.current - 1) * pagination.limit) + 1} to {Math.min(pagination.current * pagination.limit, pagination.total)} of {pagination.total} courses
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => handlePageChange(pagination.current - 1)}
+                                                disabled={pagination.current === 1}
+                                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label="Previous page"
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            <div className="flex items-center gap-1">
+                                                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                                                    let pageNum: number;
+                                                    if (pagination.pages <= 5) {
+                                                        pageNum = i + 1;
+                                                    } else if (pagination.current <= 3) {
+                                                        pageNum = i + 1;
+                                                    } else if (pagination.current >= pagination.pages - 2) {
+                                                        pageNum = pagination.pages - 4 + i;
+                                                    } else {
+                                                        pageNum = pagination.current - 2 + i;
+                                                    }
+                                                    return (
+                                                        <button
+                                                            key={pageNum}
+                                                            onClick={() => handlePageChange(pageNum)}
+                                                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                                                pagination.current === pageNum
+                                                                    ? "bg-green-600 text-white"
+                                                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                                            }`}
+                                                        >
+                                                            {pageNum}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <button
+                                                onClick={() => handlePageChange(pagination.current + 1)}
+                                                disabled={pagination.current === pagination.pages}
+                                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label="Next page"
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </>
                         )}
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     );
@@ -714,9 +1052,10 @@ interface CourseCardProps {
     course: Course;
     viewMode: "grid" | "list";
     onView: (courseId: string) => void;
+    featured?: boolean;
 }
 
-const CourseCard = React.memo(function CourseCard({ course, viewMode, onView }: CourseCardProps) {
+const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, featured = false }: CourseCardProps) {
     const courseId = course.id || course._id || '';
     
     // Get image URL
@@ -826,7 +1165,7 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView }: 
         <div
             className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
                 viewMode === "list" ? "flex" : ""
-            }`}
+            } ${featured ? "ring-2 ring-yellow-400" : ""}`}
         >
             <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
                 <div className={viewMode === "list" ? "flex gap-6" : ""}>
@@ -850,7 +1189,13 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView }: 
                                 </div>
                             </div>
                         )}
-                        {course.partner && (
+                        {featured && (
+                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                Featured
+                            </div>
+                        )}
+                        {course.partner && !featured && (
                             <div className="absolute top-2 left-2 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium">
                                 {course.partner.name}
                             </div>

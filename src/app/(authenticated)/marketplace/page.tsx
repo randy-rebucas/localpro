@@ -7,7 +7,6 @@ import { getUserName } from "@/lib/utils/user-name";
 import { getMarketplaceGreeting } from "@/components/marketplace/marketplace-greeting";
 import { MarketplaceHeader } from "@/components/marketplace/marketplace-header";
 import { ProviderInfoBanner } from "@/components/marketplace/provider-info-banner";
-import { JobMarketplace } from "@/components/marketplace/job-marketplace";
 import { ProviderMarketplace } from "@/components/marketplace/provider-marketplace";
 import { Broadcaster } from "@/components/broadcaster";
 
@@ -50,12 +49,8 @@ export default function MarketplacePage() {
 
         </MarketplaceHeader>
 
-        {/* Render appropriate marketplace component based on roleView */}
-        {isClientView ? (
-          <ProviderMarketplace userName={userName} />
-        ) : isProviderView ? (
-          <JobMarketplace userName={userName} />
-        ) : null}
+        {/* Render marketplace component */}
+        <ProviderMarketplace userName={userName} />
       </div>
     </div>
   );

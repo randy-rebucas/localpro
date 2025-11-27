@@ -412,7 +412,7 @@ export default function JobDetailPage() {
         <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
         <p className="text-gray-600 mb-6">{error || "The job you're looking for doesn't exist."}</p>
         <Link
-          href="/marketplace/jobs"
+          href="/jobs"
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
           Back to Jobs
@@ -426,7 +426,7 @@ export default function JobDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/marketplace/jobs"
+          href="/jobs"
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           title="Back to marketplace"
         >
@@ -840,7 +840,7 @@ export default function JobDetailPage() {
                 {relatedJobs.slice(0, 3).map((relatedJob) => (
                   <Link
                     key={relatedJob.id}
-                    href={`/marketplace/jobs/${relatedJob.id}`}
+                    href={`/jobs/${relatedJob.id}`}
                     className="block p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
                   >
                     <div className="flex items-start justify-between">

@@ -237,7 +237,7 @@ export default function CreateJobPage() {
       
       // Keep button disabled and navigate after a short delay to show the toast
       setTimeout(() => {
-        router.push(`/marketplace/jobs/${job.id}`);
+        router.push(`/jobs/${job.id}`);
       }, 500);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -265,7 +265,7 @@ export default function CreateJobPage() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link
-            href="/marketplace/jobs"
+            href="/jobs"
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Back to jobs"
           >
@@ -669,7 +669,7 @@ export default function CreateJobPage() {
               <div></div>
               <div className="flex gap-4">
                 <Link
-                  href="/marketplace/jobs"
+                  href="/jobs"
                   className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
                 >
                   Cancel

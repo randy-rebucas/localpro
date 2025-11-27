@@ -44,7 +44,7 @@ export default function MarketplaceNav() {
       roles: ['client', 'provider', 'supplier', 'instructor', 'agency_owner', 'agency_admin', 'admin']
     },
     {
-      href: "/marketplace/jobs",
+      href: "/jobs",
       label: "Browse Jobs",
       icon: Briefcase,
       section: "browse",

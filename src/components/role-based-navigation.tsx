@@ -73,17 +73,17 @@ export function RoleBasedNavigation() {
         },
         {
           name: "Jobs",
-          href: "/marketplace/jobs",
+          href: "/jobs",
           icon: Briefcase,
           children: [
             {
               name: "Browse Jobs",
-              href: "/marketplace/jobs",
+              href: "/jobs",
               icon: Briefcase,
             },
             {
               name: "My Jobs",
-              href: "/marketplace/jobs/my-jobs",
+              href: "/marketplace/my-jobs",
               icon: Briefcase,
               roles: ["provider", "agency_owner", "agency_admin", "admin"],
             },
@@ -95,7 +95,7 @@ export function RoleBasedNavigation() {
             },
             {
               name: "My Applications",
-              href: "/marketplace/jobs/my-applications",
+              href: "/marketplace/my-applications",
               icon: Briefcase,
             },
           ],

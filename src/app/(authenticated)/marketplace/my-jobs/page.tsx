@@ -607,14 +607,14 @@ export default function MyJobsPage() {
                       {/* Actions */}
                       <div className="flex flex-wrap items-center gap-3 pt-4 border-t-2 border-gray-200">
                         <Link
-                          href={`/marketplace/jobs/${jobId}`}
+                          href={`/jobs/${jobId}`}
                           className="px-4 py-2 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 flex items-center gap-2 font-medium"
                         >
                           <Eye className="w-4 h-4" />
                           View
                         </Link>
                         <Link
-                          href={`/marketplace/jobs/${jobId}/edit`}
+                          href={`/jobs/${jobId}/edit`}
                           className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold"
                         >
                           <Edit className="w-4 h-4" />
@@ -622,7 +622,7 @@ export default function MyJobsPage() {
                         </Link>
                         {applicationsCount > 0 && (
                           <Link
-                            href={`/marketplace/jobs/${jobId}#applications`}
+                            href={`/jobs/${jobId}#applications`}
                             className="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold"
                           >
                             <Users className="w-4 h-4" />

@@ -45,7 +45,7 @@ export function MarketplaceHeader({
           {isProviderView && (
             <div className="flex items-center gap-2 ml-4 relative z-10">
               <Link
-                href="/marketplace/jobs/create-job"
+                href="/marketplace/create-job"
                 className="flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl hover:scale-105 transform duration-200"
               >
                 <Plus className="w-4 h-4" />
