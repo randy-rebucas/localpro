@@ -447,13 +447,7 @@ export default function SettingsPage() {
                 value={currentSettings.communication.currency}
                 onChange={(value) => onInput("communication.currency")({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
-                  { value: "PHP", label: "PHP (Philippine Peso)" },
-                  { value: "USD", label: "USD (US Dollar)" },
-                  { value: "EUR", label: "EUR (Euro)" },
-                  { value: "GBP", label: "GBP (British Pound)" },
-                  { value: "JPY", label: "JPY (Japanese Yen)" },
-                  { value: "KRW", label: "KRW (Korean Won)" },
-                  { value: "CNY", label: "CNY (Chinese Yuan)" }
+                  { value: "PHP", label: "PHP (Philippine Peso)" }
                 ]}
               />
             </div>

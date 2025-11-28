@@ -11,12 +11,11 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
 
 interface Service {
   id: string;
@@ -120,98 +119,103 @@ export default function MyServicesPage() {
       });
       
       // Handle different response structures
-      let servicesData: Service[] = [];
+      let rawServicesData: unknown[] = [];
       let statsData: ServiceStats | null = null;
       
       if (Array.isArray(data)) {
         // Direct array response (legacy)
-        servicesData = data;
+        rawServicesData = data;
       } else if (data.success && data.data) {
         // New structure: { success: true, data: { services: [], pagination: {}, stats: {} } }
-        servicesData = data.data.services || [];
+        rawServicesData = data.data.services || [];
         statsData = data.data.stats || null;
       } else if (data.services) {
         // Legacy structure: { services: [] }
-        servicesData = Array.isArray(data.services) ? data.services : [];
+        rawServicesData = Array.isArray(data.services) ? data.services : [];
       } else {
         logger.warn("Unexpected API response structure", { 
           hasData: !!data,
           properties: data ? Object.keys(data) : []
         });
-        servicesData = [];
+        rawServicesData = [];
       }
       
       // Normalize service data to match our interface
-      const normalizedServices: Service[] = servicesData.map((service: any, index: number) => {
-        const id = service.id || service._id || `service-${index}-${Date.now()}`;
+      const normalizedServices: Service[] = rawServicesData.map((service: unknown, index: number) => {
+        const serviceRecord = service as Record<string, unknown>;
+        const id = serviceRecord.id || serviceRecord._id || `service-${index}-${Date.now()}`;
         
         // Handle rating - can be object {average, count} or number
         let rating = 0;
         let reviewCount = 0;
-        if (service.rating) {
-          if (typeof service.rating === 'object' && service.rating.average !== undefined) {
-            rating = service.rating.average || 0;
-            reviewCount = service.rating.count || 0;
-          } else if (typeof service.rating === 'number') {
-            rating = service.rating;
-            reviewCount = service.reviewCount || 0;
+        if (serviceRecord.rating) {
+          if (typeof serviceRecord.rating === 'object' && serviceRecord.rating !== null && 'average' in serviceRecord.rating) {
+            const ratingObj = serviceRecord.rating as { average?: number; count?: number };
+            rating = ratingObj.average || 0;
+            reviewCount = ratingObj.count || 0;
+          } else if (typeof serviceRecord.rating === 'number') {
+            rating = serviceRecord.rating;
+            reviewCount = (serviceRecord.reviewCount as number) || 0;
           }
         }
         
         // Handle pricing - can be object {type, basePrice, currency} or direct price
-        const price = service.pricing?.basePrice || service.price || service.basePrice || 0;
-        const currency = service.pricing?.currency || 'PHP';
+        const pricingObj = serviceRecord.pricing as { basePrice?: number; currency?: string } | undefined;
+        const price = pricingObj?.basePrice || (serviceRecord.price as number) || (serviceRecord.basePrice as number) || 0;
+        const currency = pricingObj?.currency || 'PHP';
         
         // Handle duration - can be object {min, max} or number
         let duration = 0;
-        if (service.estimatedDuration) {
-          if (typeof service.estimatedDuration === 'object') {
+        if (serviceRecord.estimatedDuration) {
+          if (typeof serviceRecord.estimatedDuration === 'object' && serviceRecord.estimatedDuration !== null) {
+            const durationObj = serviceRecord.estimatedDuration as { min?: number; max?: number };
             // Use average of min and max, or max if min is not available
-            duration = service.estimatedDuration.max || service.estimatedDuration.min || 0;
+            duration = durationObj.max || durationObj.min || 0;
           } else {
-            duration = service.estimatedDuration;
+            duration = serviceRecord.estimatedDuration as number;
           }
-        } else if (service.duration) {
-          duration = service.duration;
+        } else if (serviceRecord.duration) {
+          duration = serviceRecord.duration as number;
         }
         
         // Handle status - convert isActive boolean to status string
         let status: "ACTIVE" | "INACTIVE" | "PENDING" = "PENDING";
-        if (service.status) {
-          status = service.status.toUpperCase() as "ACTIVE" | "INACTIVE" | "PENDING";
-        } else if (service.isActive !== undefined) {
-          status = service.isActive ? "ACTIVE" : "INACTIVE";
+        if (serviceRecord.status) {
+          status = (serviceRecord.status as string).toUpperCase() as "ACTIVE" | "INACTIVE" | "PENDING";
+        } else if (serviceRecord.isActive !== undefined) {
+          status = serviceRecord.isActive ? "ACTIVE" : "INACTIVE";
         }
         
         // Handle images - can be array of strings or array of objects
         let images: string[] = [];
-        if (service.images && Array.isArray(service.images)) {
-          images = service.images.map((img: any) => {
+        if (serviceRecord.images && Array.isArray(serviceRecord.images)) {
+          images = serviceRecord.images.map((img: unknown) => {
             if (typeof img === 'string') return img;
-            return img.url || img.thumbnail || '';
+            const imgObj = img as { url?: string; thumbnail?: string };
+            return imgObj.url || imgObj.thumbnail || '';
           }).filter((url: string) => url);
         }
         
         // Handle name/title
-        const name = service.name || service.title || 'Untitled Service';
+        const name = (serviceRecord.name as string) || (serviceRecord.title as string) || 'Untitled Service';
         
         return {
-          ...service,
+          ...serviceRecord,
           id: id as string,
           name,
           price,
-          pricing: service.pricing || { type: 'fixed', basePrice: price, currency },
+          pricing: pricingObj || { type: 'fixed', basePrice: price, currency },
           duration,
           status,
           rating,
           reviewCount,
-          bookingCount: service.bookingCount || 0,
-          totalEarnings: service.totalEarnings || 0,
+          bookingCount: (serviceRecord.bookingCount as number) || 0,
+          totalEarnings: (serviceRecord.totalEarnings as number) || 0,
           images,
         } as Service;
       });
       
-      servicesData = normalizedServices;
+      const servicesData = normalizedServices;
       
       logger.debug("Services extracted", { count: servicesData.length, hasStats: !!statsData });
       setServices(servicesData);
@@ -287,41 +291,9 @@ export default function MyServicesPage() {
     }
   };
 
-  // Normalize currency to code for conversion base, then format with symbol
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    if (!currency) return 'PHP';
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to PHP if not found
+    // Always return PHP as the only supported currency
     return 'PHP';
   };
 

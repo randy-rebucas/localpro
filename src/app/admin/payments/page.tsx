@@ -31,8 +31,6 @@ import {
 import Image from "next/image";
 import toast from "react-hot-toast";
 
-// Import payment components
-import { PaymentStatsCard } from "@/components/admin/payment-stats-card";
 // Lazy load heavy components
 import { 
   LazyPaymentMethodChart, 
@@ -111,11 +109,31 @@ interface PaymentTransaction {
   timestamp: string;
   reference: string;
   accountDetails?: {
-    [key: string]: any;
+    [key: string]: unknown;
   };
   processedAt?: string;
   processedBy?: string;
   adminNotes?: string;
+}
+
+interface Transaction {
+  id: string;
+  amount: number;
+  method: string;
+  status: 'completed' | 'pending' | 'failed' | 'refunded';
+  customer: string;
+  date: string;
+  reference: string;
+  description?: string;
+  fees?: number;
+  type?: 'income' | 'expense' | 'withdrawal' | 'refund' | 'bonus' | 'referral' | 'topup';
+  category?: string;
+  accountDetails?: {
+    [key: string]: unknown;
+  };
+  adminNotes?: string;
+  processedAt?: string;
+  processedBy?: string;
 }
 
 interface PaymentFilters {
@@ -150,7 +168,7 @@ interface TopUpRequest {
   description?: string;
   accountDetails?: {
     receipt?: string | { url?: string; thumbnail?: string };
-    [key: string]: any;
+    [key: string]: unknown;
   };
   status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed' | 'failed';
   createdAt?: string;
@@ -179,7 +197,7 @@ interface WithdrawalRequest {
     routingNumber?: string;
     paypalEmail?: string;
     mobileNumber?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   reference?: string;
   notes?: string;
@@ -206,7 +224,7 @@ export default function PaymentProcessingPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   // Currency formatting helper - uses currency utilities consistently
-  const formatPrice = useCallback((price: number | undefined | null | any, currency?: string | null) => {
+  const formatPrice = useCallback((price: number | undefined | null | unknown, currency?: string | null) => {
     // Normalize the price value (handle objects, strings, null, undefined)
     let safeAmount = 0;
     if (price === null || price === undefined) {
@@ -218,7 +236,8 @@ export default function PaymentProcessingPage() {
       safeAmount = isNaN(parsed) ? 0 : parsed;
     } else if (typeof price === 'object' && price !== null) {
       // Handle object values (e.g., { count: 5, total: 1000 })
-      safeAmount = price.count ?? price.total ?? price.value ?? price.amount ?? price.number ?? 0;
+      const priceObj = price as { count?: number; total?: number; value?: number; amount?: number; number?: number };
+      safeAmount = priceObj.count ?? priceObj.total ?? priceObj.value ?? priceObj.amount ?? priceObj.number ?? 0;
     } else {
       safeAmount = 0;
     }
@@ -322,16 +341,17 @@ export default function PaymentProcessingPage() {
           netRevenue: 0
         };
         // Helper function to normalize numeric values (handles objects, numbers, null, undefined)
-        const normalizeNumericValue = (value: any, defaultValue: number = 0): number => {
+        const normalizeNumericValue = (value: unknown, defaultValue: number = 0): number => {
           if (value === null || value === undefined) return defaultValue;
           if (typeof value === 'number' && !isNaN(value)) return value;
           if (typeof value === 'string') {
             const parsed = parseFloat(value);
             return isNaN(parsed) ? defaultValue : parsed;
           }
-          if (typeof value === 'object') {
+          if (typeof value === 'object' && value !== null) {
             // Try common object properties
-            return value.count ?? value.total ?? value.value ?? value.amount ?? value.number ?? defaultValue;
+            const valueObj = value as { count?: number; total?: number; value?: number; amount?: number; number?: number };
+            return valueObj.count ?? valueObj.total ?? valueObj.value ?? valueObj.amount ?? valueObj.number ?? defaultValue;
           }
           return defaultValue;
         };
@@ -375,7 +395,7 @@ export default function PaymentProcessingPage() {
           : transactionsResponse.data.transactions || [];
         
         // Transform API response to match interface (add id for backward compatibility)
-        const transformedTransactions: PaymentTransaction[] = transactionsArray.map((tx: any) => ({
+        const transformedTransactions: PaymentTransaction[] = transactionsArray.map((tx: Record<string, unknown>) => ({
           ...tx,
           id: tx._id || tx.id, // Add id field for backward compatibility
           // Ensure all required fields have defaults
@@ -578,7 +598,7 @@ export default function PaymentProcessingPage() {
           ? data.data 
           : data.data.transactions || [];
         
-        const withdrawals: WithdrawalRequest[] = transactionsArray.map((tx: any) => ({
+        const withdrawals: WithdrawalRequest[] = transactionsArray.map((tx: Record<string, unknown>) => ({
           _id: tx._id || tx.id,
           id: tx._id || tx.id,
           user: tx.user,
@@ -668,12 +688,12 @@ export default function PaymentProcessingPage() {
   };
 
   // Adapter function to convert PaymentTransaction to component Transaction format
-  const adaptTransactionForComponents = (tx: PaymentTransaction): any => {
+  const adaptTransactionForComponents = (tx: PaymentTransaction): Transaction => {
     return {
       id: tx.id || tx._id,
       amount: tx.amount,
-      method: tx.paymentMethod || 'unknown',
-      status: tx.status,
+      method: typeof tx.paymentMethod === 'string' ? tx.paymentMethod : 'unknown',
+      status: tx.status === 'cancelled' ? 'failed' : (tx.status === 'refunded' ? 'refunded' : tx.status as 'completed' | 'pending' | 'failed'),
       customer: tx.description || 'N/A', // Use description as customer fallback
       date: tx.timestamp || new Date().toISOString(),
       reference: tx.reference,
@@ -687,7 +707,7 @@ export default function PaymentProcessingPage() {
     };
   };
 
-  const handleViewTransaction = (transaction: any) => {
+  const handleViewTransaction = (transaction: { id?: string }) => {
     // Find the original transaction from our state
     const originalTx = transactions.find(tx => (tx.id || tx._id) === transaction.id);
     if (originalTx) {
@@ -696,7 +716,7 @@ export default function PaymentProcessingPage() {
     }
   };
 
-  const handleRefundTransaction = (transaction: any) => {
+  const handleRefundTransaction = (transaction: { id?: string }) => {
     // Find the original transaction from our state
     const originalTx = transactions.find(tx => (tx.id || tx._id) === transaction.id);
     if (originalTx) {

@@ -190,11 +190,11 @@ export function FacilityCareDetail({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Base Price</span>
-                <span className="font-semibold">${service.pricing.basePrice}</span>
+                <span className="font-semibold">₱{service.pricing.basePrice}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Currency</span>
-                <span className="font-semibold">{service.pricing.currency || "USD"}</span>
+                <span className="font-semibold">{service.pricing.currency || "PHP"}</span>
               </div>
             </div>
           </Card>

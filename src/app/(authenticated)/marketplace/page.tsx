@@ -6,7 +6,6 @@ import { useRoleView } from "@/hooks/useRoleView";
 import { getUserName } from "@/lib/utils/user-name";
 import { getMarketplaceGreeting } from "@/components/marketplace/marketplace-greeting";
 import { MarketplaceHeader } from "@/components/marketplace/marketplace-header";
-import { ProviderInfoBanner } from "@/components/marketplace/provider-info-banner";
 import { ProviderMarketplace } from "@/components/marketplace/provider-marketplace";
 import { Broadcaster } from "@/components/broadcaster";
 

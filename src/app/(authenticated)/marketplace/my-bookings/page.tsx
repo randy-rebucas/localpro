@@ -19,7 +19,6 @@ import {
   Store
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -263,12 +262,12 @@ export default function MyBookingsPage() {
         ...booking.pricing,
         basePrice: booking.pricing.basePrice ?? booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.pricing.totalAmount ?? booking.totalPrice ?? 0,
-        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
         additionalFees: booking.pricing.additionalFees ?? []
       } : {
         basePrice: booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.totalPrice ?? 0,
-        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
         additionalFees: []
       },
       // Handle payment
@@ -863,7 +862,7 @@ export default function MyBookingsPage() {
               
               // Get total price
               const totalPrice = booking.pricing?.totalAmount || booking.totalPrice || 0;
-              const currency = booking.pricing?.currency || 'USD';
+              const currency = booking.pricing?.currency || 'PHP';
               
               // Get payment status
               const paymentStatus = booking.payment?.status || booking.paymentStatus || 'pending';

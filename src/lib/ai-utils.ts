@@ -594,6 +594,7 @@ export interface DescriptionFromTitleParams {
   title: string;
   category?: string;
   serviceType?: string;
+  itemType?: 'rental' | 'service'; // Distinguish between rental and service description generation
 }
 
 export interface DescriptionFromTitleResponse {
@@ -686,13 +687,13 @@ export async function generateDescriptionFromTitle(
       
       // Try to get error message from response
       let errorMessage = `Description generation failed: ${response.status}`;
-      let errorDetails: any = null;
+      let errorDetails: Record<string, unknown> | null = null;
       
       try {
         const errorData = await response.json();
         errorDetails = errorData;
         errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
-      } catch (parseError) {
+      } catch {
         // If response is not JSON, try to get text
         try {
           const errorText = await response.text();
@@ -720,7 +721,7 @@ export async function generateDescriptionFromTitle(
     let data;
     try {
       data = await response.json();
-    } catch (parseError) {
+    } catch {
       const text = await response.text();
       throw new Error(`Invalid JSON response: ${text.substring(0, 200) || 'Empty response'}`);
     }
@@ -775,6 +776,150 @@ export async function generateDescriptionFromTitle(
     // Handle unexpected error types
     const errorMessage = String(error) || "Failed to generate description";
     logger.error("Unexpected error in description generation", new Error(errorMessage), { params });
+    throw new Error(errorMessage);
+  }
+}
+
+// Rental Description Generation (Rental-specific endpoint)
+export interface RentalDescriptionParams {
+  title: string;
+  name?: string; // Rental name (can be same as title)
+  category?: string;
+  subcategory?: string;
+}
+
+export interface RentalDescriptionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    title?: string;
+    name?: string;
+    description: string;
+    keyFeatures?: string[];
+    benefits?: string[];
+    tags?: string[];
+    wordCount?: number;
+  };
+}
+
+export async function generateRentalDescription(
+  params: RentalDescriptionParams
+): Promise<RentalDescriptionResponse> {
+  try {
+    // Validate required params
+    if (!params.title || params.title.trim() === "") {
+      throw new Error("Title is required for rental description generation");
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}${API_ENDPOINTS.rentalsGenerateDescription}`,
+      createAuthFetchOptions({
+        method: "POST",
+        body: JSON.stringify({
+          title: params.title.trim(),
+          name: params.name || params.title.trim(),
+          category: params.category,
+          subcategory: params.subcategory,
+        }),
+      })
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        logger.debug("Rental description generation endpoint not available", { status: 404 });
+        throw new Error("Rental description generation feature is not available yet.");
+      }
+      
+      // Try to get error message from response
+      let errorMessage = `Rental description generation failed: ${response.status}`;
+      let errorDetails: Record<string, unknown> | null = null;
+      
+      try {
+        const errorData = await response.json();
+        errorDetails = errorData;
+        errorMessage = errorData.message || errorData.error || errorData.details || errorMessage;
+      } catch {
+        // If response is not JSON, try to get text
+        try {
+          const errorText = await response.text();
+          if (errorText) {
+            errorMessage = errorText;
+          } else {
+            errorMessage = response.statusText || errorMessage;
+          }
+        } catch {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      
+      // Log detailed error for debugging
+      logger.error("Rental description generation API error", new Error(errorMessage), {
+        status: response.status,
+        statusText: response.statusText,
+        params,
+        errorDetails
+      });
+      
+      throw new Error(errorMessage);
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      const text = await response.text();
+      throw new Error(`Invalid JSON response: ${text.substring(0, 200) || 'Empty response'}`);
+    }
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      throw new Error("Invalid response format from API");
+    }
+    
+    // Handle wrapped response format (success, message, data)
+    if (data.success !== undefined && data.data) {
+      return data as RentalDescriptionResponse;
+    } 
+    // Handle direct data format
+    else if (data.description) {
+      // If response is direct data, wrap it in expected format
+      return {
+        success: true,
+        message: "Rental description generated successfully",
+        data: {
+          title: data.title || params.title,
+          name: data.name || params.name || params.title,
+          description: data.description || "",
+          keyFeatures: data.keyFeatures,
+          benefits: data.benefits,
+          tags: data.tags,
+          wordCount: data.wordCount,
+        }
+      };
+    }
+    // If it's already in the expected format
+    else if (data.data && data.data.description) {
+      return data as RentalDescriptionResponse;
+    }
+    
+    // Log unexpected structure for debugging
+    logger.error("Unexpected response structure", new Error("Response format not recognized"), { data });
+    throw new Error("Unexpected response format from API");
+  } catch (error) {
+    // Re-throw if it's already an Error with a message
+    if (error instanceof Error) {
+      // Only log if it's not a user-facing error
+      if (!error.message.includes("404") && 
+          !error.message.includes("not available") &&
+          !error.message.includes("Title is required")) {
+        logger.error("Rental description generation error", error, { params });
+      }
+      throw error;
+    }
+    
+    // Handle unexpected error types
+    const errorMessage = String(error) || "Failed to generate rental description";
+    logger.error("Unexpected error in rental description generation", new Error(errorMessage), { params });
     throw new Error(errorMessage);
   }
 }

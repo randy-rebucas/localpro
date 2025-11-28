@@ -266,7 +266,7 @@ export default function MarketplaceRentalsPage() {
         }
         const priceValue = typeof item.price === 'number' ? item.price : undefined;
         const priceUnit = typeof item.priceUnit === 'string' ? item.priceUnit : undefined;
-        const currency = typeof item.currency === 'string' ? item.currency : 'USD';
+        const currency = typeof item.currency === 'string' ? item.currency : 'PHP';
         return {
           hourly: priceValue && priceUnit === 'hour' ? priceValue : undefined,
           daily: priceValue && priceUnit === 'day' ? priceValue : undefined,
@@ -988,12 +988,12 @@ const RentalCard = React.memo(function RentalCard({
     // Get pricing display
     const getPriceDisplay = () => {
         const pricing = rental.pricing;
-        if (pricing.daily) return { amount: pricing.daily, unit: 'day', currency: pricing.currency || 'USD' };
-        if (pricing.hourly) return { amount: pricing.hourly, unit: 'hour', currency: pricing.currency || 'USD' };
-        if (pricing.weekly) return { amount: pricing.weekly, unit: 'week', currency: pricing.currency || 'USD' };
-        if (pricing.monthly) return { amount: pricing.monthly, unit: 'month', currency: pricing.currency || 'USD' };
+        if (pricing.daily) return { amount: pricing.daily, unit: 'day', currency: pricing.currency || 'PHP' };
+        if (pricing.hourly) return { amount: pricing.hourly, unit: 'hour', currency: pricing.currency || 'PHP' };
+        if (pricing.weekly) return { amount: pricing.weekly, unit: 'week', currency: pricing.currency || 'PHP' };
+        if (pricing.monthly) return { amount: pricing.monthly, unit: 'month', currency: pricing.currency || 'PHP' };
         // Fallback to legacy fields
-        if (rental.price) return { amount: rental.price, unit: rental.priceUnit || 'day', currency: pricing.currency || 'USD' };
+        if (rental.price) return { amount: rental.price, unit: rental.priceUnit || 'day', currency: pricing.currency || 'PHP' };
         return null;
     };
     const priceDisplay = getPriceDisplay();
@@ -1007,7 +1007,7 @@ const RentalCard = React.memo(function RentalCard({
     const imageUrl = getImageUrl();
 
     // Format price with currency
-    const formatPrice = (price: number, curr: string = priceDisplay?.currency || 'USD') => {
+    const formatPrice = (price: number, curr: string = priceDisplay?.currency || 'PHP') => {
         return new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: curr

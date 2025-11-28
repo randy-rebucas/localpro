@@ -1722,12 +1722,7 @@ export default function AdminAdsPage() {
                 onChange={(e) => setCreateFormData({ ...createFormData, currency: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
-                <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
-                <option value="USD">USD</option>
                 <option value="PHP">PHP</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
               </select>
             </div>
           </div>
@@ -2390,12 +2385,7 @@ export default function AdminAdsPage() {
                 onChange={(e) => setEditFormData({ ...editFormData, currency: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
-                <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
-                <option value="USD">USD</option>
                 <option value="PHP">PHP</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="JPY">JPY</option>
               </select>
             </div>
           </div>

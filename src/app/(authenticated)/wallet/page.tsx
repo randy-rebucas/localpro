@@ -87,7 +87,7 @@ export default function WalletPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
-  const [topUpRequests, setTopUpRequests] = useState<any[]>([]);
+  const [topUpRequests, setTopUpRequests] = useState<Record<string, unknown>[]>([]);
   const [loadingTopUps, setLoadingTopUps] = useState(false);
   const [activeTab, setActiveTab] = useState<'transactions' | 'topups'>('transactions');
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -279,7 +279,7 @@ export default function WalletPage() {
           let totalPagesValue = 1;
           
           if (transactionsData.data) {
-            let rawTransactions: any[] = [];
+            let rawTransactions: Record<string, unknown>[] = [];
             
             // Handle different response structures
             if (Array.isArray(transactionsData.data)) {
@@ -296,7 +296,7 @@ export default function WalletPage() {
             }
             
             // Transform API response to TransactionDetails format
-            transactionsArray = rawTransactions.map((tx: any) => {
+            transactionsArray = rawTransactions.map((tx: Record<string, unknown>) => {
               // Map Transaction to TransactionDetails
               return {
                 type: tx.type || tx.category || 'transaction',
@@ -651,7 +651,7 @@ export default function WalletPage() {
 
       // Check if response is ok before trying to parse JSON
       const contentType = response.headers.get('content-type');
-      let data: any;
+      let data: Record<string, unknown>;
       
       try {
         if (contentType && contentType.includes('application/json')) {
@@ -671,7 +671,8 @@ export default function WalletPage() {
 
       if (!response.ok) {
         // Handle specific error messages from API
-        const errorMessage = data?.message || data?.error || `Server error: ${response.status} ${response.statusText}`;
+        const message = typeof data?.message === 'string' ? data.message : (typeof data?.error === 'string' ? data.error : null);
+        const errorMessage = message || `Server error: ${response.status} ${response.statusText}`;
         logger.error('Top-up request failed', new Error(errorMessage), {
           status: response.status,
           statusText: response.statusText,
@@ -681,7 +682,8 @@ export default function WalletPage() {
       }
 
       if (data?.success) {
-        toast.success(data.message || "Top-up request submitted successfully. Please wait for admin approval.");
+        const message = typeof data.message === 'string' ? data.message : "Top-up request submitted successfully. Please wait for admin approval.";
+        toast.success(message);
         // Reset form
         setShowAddFundsModal(false);
         resetTopUpForm();
@@ -692,7 +694,8 @@ export default function WalletPage() {
           fetchTopUpRequests();
         }, 500);
       } else {
-        const errorMessage = data?.message || "Failed to submit top-up request";
+        const message = typeof data?.message === 'string' ? data.message : null;
+        const errorMessage = message || "Failed to submit top-up request";
         logger.error('Top-up request unsuccessful', new Error(errorMessage), { responseData: data });
         throw new Error(errorMessage);
       }
@@ -1428,14 +1431,16 @@ export default function WalletPage() {
                 ) : (
                   <div className="divide-y divide-gray-100">
                     {topUpRequests.map((request) => {
-                      const receiptUrl = typeof request.receipt === 'object' 
-                        ? (request.receipt.url || request.receipt.thumbnail)
+                      const receiptUrl = request.receipt && typeof request.receipt === 'object' && request.receipt !== null
+                        ? ((request.receipt as { url?: string; thumbnail?: string }).url || (request.receipt as { url?: string; thumbnail?: string }).thumbnail)
                         : typeof request.receipt === 'string' 
                         ? request.receipt 
-                        : request.accountDetails?.receipt
+                        : request.accountDetails && typeof request.accountDetails === 'object' && request.accountDetails !== null && 'receipt' in request.accountDetails && request.accountDetails.receipt
                         ? (typeof request.accountDetails.receipt === 'string' 
                           ? request.accountDetails.receipt 
-                          : request.accountDetails.receipt.url || request.accountDetails.receipt.thumbnail)
+                          : request.accountDetails.receipt && typeof request.accountDetails.receipt === 'object' && request.accountDetails.receipt !== null
+                          ? ((request.accountDetails.receipt as { url?: string; thumbnail?: string }).url || (request.accountDetails.receipt as { url?: string; thumbnail?: string }).thumbnail)
+                          : null)
                         : null;
 
                       const statusColors = {
@@ -1448,7 +1453,7 @@ export default function WalletPage() {
                       };
 
                       return (
-                        <div key={request._id || request.id} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                        <div key={String(request._id || request.id || `request-${topUpRequests.indexOf(request)}`)} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
                             <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full">
                               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
@@ -1460,38 +1465,42 @@ export default function WalletPage() {
                                     Top-Up Request
                                   </p>
                                   <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[request.status as keyof typeof statusColors] || statusColors.pending}`}>
-                                    {request.status || 'pending'}
+                                    {typeof request.status === 'string' ? request.status : 'pending'}
                                   </span>
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
                                   <div className="bg-gray-50/50 rounded-lg p-2.5">
                                     <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
-                                    <p className="text-base font-bold text-gray-900">{formatCurrency(request.amount || 0)}</p>
+                                    <p className="text-base font-bold text-gray-900">{formatCurrency(typeof request.amount === 'number' ? request.amount : 0)}</p>
                                   </div>
                                   <div className="bg-gray-50/50 rounded-lg p-2.5">
                                     <p className="text-xs font-medium text-gray-500 mb-1">Payment Method</p>
-                                    <p className="text-sm font-semibold text-gray-700 capitalize">{request.paymentMethod?.replace('_', ' ') || 'N/A'}</p>
+                                    <p className="text-sm font-semibold text-gray-700 capitalize">{typeof request.paymentMethod === 'string' ? request.paymentMethod.replace('_', ' ') : 'N/A'}</p>
                                   </div>
-                                  {request.reference && (
+                                  {(typeof request.reference === 'string' || typeof request.reference === 'number') && (
                                     <div className="bg-gray-50/50 rounded-lg p-2.5">
                                       <p className="text-xs font-medium text-gray-500 mb-1">Reference</p>
-                                      <p className="text-xs font-mono font-semibold text-gray-700 truncate">{request.reference}</p>
+                                      <p className="text-xs font-mono font-semibold text-gray-700 truncate">{String(request.reference)}</p>
                                     </div>
                                   )}
                                   <div className="bg-gray-50/50 rounded-lg p-2.5">
                                     <p className="text-xs font-medium text-gray-500 mb-1">Requested</p>
                                     <p className="text-xs font-semibold text-gray-700">
-                                      {formatDate(request.createdAt || request.timestamp || new Date())}
+                                      {formatDate(
+                                        (typeof request.createdAt === 'string' || request.createdAt instanceof Date) ? request.createdAt
+                                        : (typeof request.timestamp === 'string' || request.timestamp instanceof Date) ? request.timestamp
+                                        : new Date()
+                                      )}
                                     </p>
                                   </div>
                                 </div>
-                                {(request.notes || request.description) && (
+                                {((typeof request.notes === 'string' && request.notes) || (typeof request.description === 'string' && request.description)) && (
                                   <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                                     <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
-                                    <p className="text-sm text-gray-700 leading-relaxed">{request.notes || request.description}</p>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{typeof request.notes === 'string' ? request.notes : (typeof request.description === 'string' ? request.description : '')}</p>
                                   </div>
                                 )}
-                                {request.adminNotes && (
+                                {typeof request.adminNotes === 'string' && request.adminNotes && (
                                   <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                                     <p className="text-xs font-semibold text-blue-900 mb-1.5">Admin Notes</p>
                                     <p className="text-sm text-blue-800 leading-relaxed">{request.adminNotes}</p>

@@ -35,7 +35,7 @@ interface PublicSettingsData {
   features?: {
     [key: string]: {
       enabled: boolean;
-      [key: string]: any;
+      [key: string]: unknown;
     };
   };
 }
@@ -139,7 +139,7 @@ export default function HeaderPage() {
           // Exclude nested objects like payments.paypal (those are payment methods, not services)
           if (settings.features && typeof settings.features === 'object') {
             const enabledFeatures = Object.entries(settings.features)
-              .filter(([key, feature]) => {
+              .filter(([, feature]) => {
                 // Handle object structure: { "enabled": true, ... }
                 if (typeof feature === 'object' && feature !== null && 'enabled' in feature) {
                   return feature.enabled === true;

@@ -42,43 +42,10 @@ export function ServiceGrid({
   const { settings: appSettings } = useAppSettings();
   const defaultCurrencyCode = getDefaultCurrency(appSettings);
   
-  // Helper function to normalize currency to currency code
-  // Converts currency symbols to their corresponding codes
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    if (!currency) return defaultCurrencyCode;
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to app settings currency if not found
-    return defaultCurrencyCode;
+    // Always return PHP as the only supported currency
+    return 'PHP';
   };
 
   // Transform services to match ServiceCard props

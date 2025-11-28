@@ -13,22 +13,17 @@ import {
   DollarSign,
   Calendar,
   Users,
-  TrendingUp,
   AlertCircle,
   CheckCircle2,
   Clock,
   XCircle,
   Building2,
   Star,
-  ExternalLink
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
-import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Job, JobStatus } from "@/types/jobs";
@@ -154,42 +149,10 @@ export default function MyJobsPage() {
     fetchJobs();
   }, [fetchJobs]);
 
-  // Normalize currency to code for conversion base, then format with symbol
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    if (!currency) return defaultCurrency;
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to app default currency if not found
-    return defaultCurrency;
+    // Always return PHP as the only supported currency
+    return 'PHP';
   };
 
   const formatPrice = (min?: number, max?: number, currency?: string, period?: string) => {
@@ -481,7 +444,7 @@ export default function MyJobsPage() {
         ) : (
           <div className="space-y-4">
             {jobs.map((job) => {
-              const jobId = job._id || (job as any).id;
+              const jobId = job._id || (job as { id?: string }).id;
               const categoryName = typeof job.category === 'object' ? job.category?.name : job.category;
               const companyName = job.company?.name || "Unknown Company";
               const companyLogo = job.company?.logo?.url;
@@ -630,8 +593,13 @@ export default function MyJobsPage() {
                           </Link>
                         )}
                         <button
-                          onClick={() => handleDelete(jobId)}
-                          className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-lg shadow-red-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold"
+                          onClick={() => {
+                            if (jobId) {
+                              handleDelete(jobId);
+                            }
+                          }}
+                          disabled={!jobId}
+                          className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all shadow-lg shadow-red-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete

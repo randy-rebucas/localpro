@@ -9,13 +9,11 @@ import {
   Plus,
   RefreshCw,
   Eye,
-  X,
   AlertCircle,
   Info,
   CheckCircle,
   AlertTriangle,
   Gift,
-  Calendar,
   BarChart3
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
@@ -237,7 +235,7 @@ export default function BroadcasterPage() {
       message: broadcast.message || broadcast.description || broadcast.content || "",
       description: broadcast.description || "",
       content: broadcast.content || "",
-      type: mapTypeToFrontend(broadcast.type) as any,
+      type: mapTypeToFrontend(broadcast.type) as 'info' | 'success' | 'warning' | 'error' | 'promotion',
       category: broadcast.category || "marketing",
       priority: broadcast.priority,
       status: broadcast.status,
@@ -266,7 +264,7 @@ export default function BroadcasterPage() {
       }
 
       // Build payload according to backend structure
-      const broadcastData: any = {
+      const broadcastData: Record<string, unknown> = {
         // Required fields
         title: formData.title,
         
@@ -437,7 +435,7 @@ export default function BroadcasterPage() {
         throw new Error(errorMessage);
       }
 
-      let result: any = {};
+      let result: Record<string, unknown> = {};
       try {
         result = await response.json();
       } catch (parseError) {
@@ -465,7 +463,9 @@ export default function BroadcasterPage() {
         resetForm();
         await refreshData();
       } else {
-        const errorMsg = result.error || result.message || 'Failed to create broadcast';
+        const error = typeof result.error === 'string' ? result.error : null;
+        const message = typeof result.message === 'string' ? result.message : null;
+        const errorMsg = error || message || 'Failed to create broadcast';
         logger.error('Broadcast creation returned unsuccessful result', new Error(errorMsg), { 
           result,
           status: response.status,
@@ -514,7 +514,7 @@ export default function BroadcasterPage() {
       }
 
       // Build payload according to backend structure (same as create)
-      const broadcastData: any = {
+      const broadcastData: Record<string, unknown> = {
         // Required fields
         title: formData.title,
         
@@ -1020,6 +1020,7 @@ export default function BroadcasterPage() {
               {(selectedBroadcast.images && selectedBroadcast.images.length > 0) || selectedBroadcast.imageUrl ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={selectedBroadcast.images && selectedBroadcast.images.length > 0 
                       ? selectedBroadcast.images[0].url 
@@ -1084,7 +1085,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'info' | 'success' | 'warning' | 'error' | 'promotion' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="info">Info</option>
@@ -1098,7 +1099,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
                 <select
                   value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="low">Low</option>
@@ -1113,7 +1114,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'active' | 'inactive' | 'archived' | 'published' | 'scheduled' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="draft">Draft</option>
@@ -1195,6 +1196,7 @@ export default function BroadcasterPage() {
               />
               {imagePreview && (
                 <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imagePreview} alt="Preview" className="rounded-lg max-w-xs" />
                 </div>
               )}
@@ -1254,7 +1256,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'info' | 'success' | 'warning' | 'error' | 'promotion' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="info">Info</option>
@@ -1268,7 +1270,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
                 <select
                   value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="low">Low</option>
@@ -1283,7 +1285,7 @@ export default function BroadcasterPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status *</label>
                 <select
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'active' | 'inactive' | 'archived' | 'published' | 'scheduled' })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="draft">Draft</option>
@@ -1363,6 +1365,7 @@ export default function BroadcasterPage() {
               />
               {imagePreview && (
                 <div className="mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={imagePreview} alt="Preview" className="rounded-lg max-w-xs" />
                 </div>
               )}

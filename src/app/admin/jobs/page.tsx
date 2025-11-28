@@ -124,7 +124,7 @@ export default function AdminJobsPage() {
     salary: {
       min: "",
       max: "",
-      currency: "USD",
+      currency: "PHP",
       period: "yearly" as "hourly" | "daily" | "weekly" | "monthly" | "yearly",
       isNegotiable: false,
       isConfidential: false,
@@ -596,7 +596,7 @@ export default function AdminJobsPage() {
       salary: {
         min: "",
         max: "",
-        currency: "USD",
+        currency: "PHP",
         period: "yearly",
         isNegotiable: false,
         isConfidential: false,
@@ -651,7 +651,7 @@ export default function AdminJobsPage() {
       salary: {
         min: salary?.min?.toString() || "",
         max: salary?.max?.toString() || "",
-        currency: salary?.currency || "USD",
+        currency: salary?.currency || "PHP",
         period: (salary?.period || "yearly") as "hourly" | "daily" | "weekly" | "monthly" | "yearly",
         isNegotiable: salary?.isNegotiable || false,
         isConfidential: salary?.isConfidential || false,
@@ -1217,7 +1217,7 @@ export default function AdminJobsPage() {
                     salary: { ...createForm.salary, currency: e.target.value },
                   })
                 }
-                placeholder="USD"
+                placeholder="PHP"
                 className="text-xs px-2 py-1.5 h-8"
               />
             </div>
@@ -1388,7 +1388,7 @@ export default function AdminJobsPage() {
                     salary: { ...editForm.salary, currency: e.target.value },
                   })
                 }
-                placeholder="USD"
+                placeholder="PHP"
                 className="text-xs px-2 py-1.5 h-8"
               />
             </div>

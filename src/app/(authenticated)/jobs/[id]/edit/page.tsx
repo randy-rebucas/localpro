@@ -9,7 +9,6 @@ import {
   Upload,
   X,
   Plus,
-  DollarSign,
   Clock,
   Calendar,
   MapPin,
@@ -23,7 +22,7 @@ import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { formatCurrency, getCurrencySymbol } from "@/lib/currency-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface Job {
@@ -412,7 +411,7 @@ export default function EditJobPage() {
                     value={form.budget}
                     onChange={(e) => handleInputChange("budget", Number(e.target.value))}
                     placeholder="0.00"
-                    leftIcon={<DollarSign />}
+                    leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                   />
                 </div>
 
@@ -736,7 +735,7 @@ export default function EditJobPage() {
                       {form.isRemote ? "Remote" : `${form.location.city || "City"}, ${form.location.state || "State"}`}
                     </span>
                     <span className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
+                      <span className="text-gray-600 font-semibold">₱</span>
                       {form.budget ? formatCurrency(form.budget, getDefaultCurrency(appSettings), { appSettings }) : "Budget"}
                     </span>
                     <span className="flex items-center gap-1">

@@ -56,7 +56,8 @@ interface GlobalHeaderProps {
 }
 
 export function GlobalHeader({
-  showRoleNavigation = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showRoleNavigation: _showRoleNavigation = false,
   showFavorites = true,
   notificationsDropdown = true,
   logoHref,
@@ -71,7 +72,8 @@ export function GlobalHeader({
   const pathname = usePathname();
   const {
     isAdmin,
-    isBusinessRole,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isBusinessRole: _isBusinessRole,
   } = useRoleAccess();
 
   // Get user roles and determine available role views
@@ -139,7 +141,8 @@ export function GlobalHeader({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_showQuickActions, setShowQuickActions] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);

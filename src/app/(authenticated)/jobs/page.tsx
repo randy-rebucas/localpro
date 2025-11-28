@@ -1,30 +1,17 @@
 "use client";
 
-import React, { useMemo, useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/hooks/useAuth";
-import { useRoleView } from "@/hooks/useRoleView";
-import { useRoleAccess } from "@/components/role-guard";
 import { getUserName } from "@/lib/utils/user-name";
 import { JobMarketplace } from "@/components/marketplace/job-marketplace";
 import { Loading } from "@/components/ui/loading";
-import { UnauthorizedPage } from "@/components/unauthorized-page";
 
 export default function BrowseJobsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const roleAccess = useRoleAccess();
 
-  // Get user roles
-  const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
-
-  // Manage role view state
-  const { roleView, isProviderView } = useRoleView({ userRoles });
-
-  // Check authorization - jobs page should only be accessible to admin and provider roles
-  // No redirect needed - we'll show unauthorized page instead
-
-  // Show loading state while checking authorization
+  // Show loading state while checking session
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-green-50/30">
@@ -33,25 +20,10 @@ export default function BrowseJobsPage() {
     );
   }
 
-  // Check authorization
+  // Redirect to auth if not logged in
   if (!session) {
     router.push("/auth");
     return null;
-  }
-
-  const hasAuthorizedRole = roleAccess.isProvider || roleAccess.isAdmin;
-  const isInProviderView = roleView === 'provider' || roleView === 'admin';
-  
-  // Show unauthorized page if user doesn't have required role or view
-  if (!hasAuthorizedRole || !isInProviderView) {
-    return (
-      <UnauthorizedPage
-        title="Access Denied"
-        message="This page is only accessible to providers and administrators. Please switch to provider view or contact support if you believe this is an error."
-        backLink="/marketplace"
-        backLinkText="Go to Marketplace"
-      />
-    );
   }
 
   // Get user name for marketplace component

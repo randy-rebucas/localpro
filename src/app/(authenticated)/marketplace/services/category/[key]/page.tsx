@@ -193,11 +193,11 @@ export default function CategoryServicesPage() {
       pricing: serviceData.pricing ? {
         type: serviceData.pricing.type || 'fixed',
         basePrice: serviceData.pricing.basePrice ?? 0,
-        currency: serviceData.pricing.currency || 'USD'
+        currency: serviceData.pricing.currency || 'PHP'
       } : {
         type: 'fixed' as const,
         basePrice: 0,
-        currency: 'USD'
+        currency: 'PHP'
       },
       rating: serviceData.rating || {
         average: 0,
@@ -381,7 +381,7 @@ export default function CategoryServicesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.current]);
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
+  const formatPrice = (price: number, currency: string = 'PHP') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency

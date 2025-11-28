@@ -44,12 +44,6 @@ const timeFormatOptions = [
 
 const currencyOptions = [
   { value: "PHP", label: "Philippine Peso (PHP)" },
-  { value: "USD", label: "US Dollar (USD)" },
-  { value: "EUR", label: "Euro (EUR)" },
-  { value: "GBP", label: "British Pound (GBP)" },
-  { value: "JPY", label: "Japanese Yen (JPY)" },
-  { value: "KRW", label: "South Korean Won (KRW)" },
-  { value: "CNY", label: "Chinese Yuan (CNY)" },
 ];
 
 export function UserSettingsForm({
@@ -112,7 +106,7 @@ export function UserSettingsForm({
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         dateFormat: "MM/DD/YYYY",
         timeFormat: "12h",
-        currency: "USD",
+        currency: "PHP",
       },
     },
   });

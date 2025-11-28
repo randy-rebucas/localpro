@@ -267,7 +267,7 @@ export default function MarketplaceAdsPage() {
         return {
           total: budgetValue || 0,
           daily: undefined,
-          currency: (campaign as { currency?: string }).currency || 'USD'
+          currency: (campaign as { currency?: string }).currency || 'PHP'
         };
       })(),
       // Handle schedule

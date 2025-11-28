@@ -6,8 +6,6 @@ import { useEffect, useState, useCallback } from "react";
 import { Loading } from "@/components/ui/loading";
 import { 
   CreditCard, 
-  TrendingUp, 
-  TrendingDown, 
   DollarSign, 
   Filter,
   Eye,
@@ -18,7 +16,6 @@ import {
   Image as ImageIcon,
   X,
   RefreshCw,
-  FileText,
   Search
 } from "lucide-react";
 import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
@@ -72,7 +69,7 @@ interface WithdrawalRequest {
     routingNumber?: string;
     paypalEmail?: string;
     mobileNumber?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
   user?: {
     _id?: string;
@@ -161,7 +158,7 @@ export default function FinanceAdmin() {
           ? data.data 
           : data.data.transactions || [];
         
-        const withdrawals: WithdrawalRequest[] = transactionsArray.map((tx: any) => ({
+        const withdrawals: WithdrawalRequest[] = transactionsArray.map((tx: Record<string, unknown>) => ({
           _id: tx._id || tx.id,
           id: tx._id || tx.id,
           type: 'withdrawal',
@@ -339,35 +336,42 @@ export default function FinanceAdmin() {
     }
   };
 
-  const getUserDisplayName = (user: any): string => {
+  const getUserDisplayName = (user: unknown): string => {
     if (!user) return 'Unknown User';
     if (typeof user === 'string') return user;
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
+    if (typeof user !== 'object' || user === null) return 'Unknown User';
+    const userObj = user as { firstName?: string; lastName?: string; email?: string };
+    const firstName = userObj.firstName || '';
+    const lastName = userObj.lastName || '';
     if (firstName || lastName) return `${firstName} ${lastName}`.trim();
-    return user.email || 'Unknown User';
+    return userObj.email || 'Unknown User';
   };
 
-  const getUserEmail = (user: any): string => {
+  const getUserEmail = (user: unknown): string => {
     if (!user) return '';
     if (typeof user === 'string') return '';
-    return user.email || '';
+    if (typeof user !== 'object' || user === null) return '';
+    const userObj = user as { email?: string };
+    return userObj.email || '';
   };
 
-  const getUserAvatar = (user: any): string | null => {
+  const getUserAvatar = (user: unknown): string | null => {
     if (!user || typeof user === 'string') return null;
-    return user.profile?.avatar || null;
+    if (typeof user !== 'object' || user === null) return null;
+    const userObj = user as { profile?: { avatar?: string } };
+    return userObj.profile?.avatar || null;
   };
 
   const formatAmount = (amount: number): string => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'PHP',
       minimumFractionDigits: 2
     }).format(Math.abs(amount));
   };
 
-  const formatDate = (dateString: string): string => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -424,7 +428,7 @@ export default function FinanceAdmin() {
   const filteredTopUpRequests = filterTopUpRequests(topUpRequests);
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { color: string; icon: any; label: string }> = {
+    const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
       approved: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Approved' },
       rejected: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Rejected' },
@@ -680,6 +684,7 @@ export default function FinanceAdmin() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
                             {getUserAvatar(request.user) ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
                               <img
                                 src={getUserAvatar(request.user)!}
                                 alt={getUserDisplayName(request.user)}
@@ -790,6 +795,7 @@ export default function FinanceAdmin() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-8 w-8">
                             {getUserAvatar(request.user) ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
                               <img
                                 src={getUserAvatar(request.user)!}
                                 alt={getUserDisplayName(request.user)}
@@ -911,13 +917,13 @@ export default function FinanceAdmin() {
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Account Details</p>
                     <div className="bg-gray-50 rounded p-3 space-y-1">
-                      {Object.entries(selectedWithdrawal.accountDetails).map(([key, value]) => (
-                        value && (
+                      {Object.entries(selectedWithdrawal.accountDetails)
+                        .filter(([, value]) => value !== null && value !== undefined && value !== '')
+                        .map(([key, value]) => (
                           <p key={key} className="text-sm text-gray-900">
                             <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span> {String(value)}
                           </p>
-                        )
-                      ))}
+                        ))}
                     </div>
                   </div>
                 )}
@@ -1011,6 +1017,7 @@ export default function FinanceAdmin() {
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-2">Receipt</p>
                     <div className="border border-gray-200 rounded p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={selectedTopUp.receipt.url}
                         alt="Receipt"

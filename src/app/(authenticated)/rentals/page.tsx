@@ -9,30 +9,14 @@ import {
   Plus,
   MapPin,
   Star,
-  Eye,
-  Edit,
-  Heart,
-  Share2,
-  Grid3X3,
-  List,
-  SortAsc,
-  SortDesc,
   Calendar,
-  Clock,
-  Filter,
   X,
-  ChevronDown,
-  DollarSign,
   Building2,
   CheckCircle2,
   Zap,
   Headphones,
   HelpCircle
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { logger } from "@/lib/logger";
 import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
@@ -92,60 +76,6 @@ export interface Rental {
   updatedAt: string;
 }
 
-const categories = [
-  "All Categories",
-  "Construction Equipment",
-  "Vehicles",
-  "Tools",
-  "Event Equipment",
-  "Office Space",
-  "Storage",
-  "Other"
-];
-
-const types = [
-  "All Types",
-  "Equipment",
-  "Vehicle",
-  "Space",
-  "Tool"
-];
-
-const statuses = [
-  "All Status",
-  "Available",
-  "Rented",
-  "Maintenance",
-  "Unavailable"
-];
-
-// const priceUnits = [
-//   "All Units",
-//   "Per Hour",
-//   "Per Day",
-//   "Per Week",
-//   "Per Month"
-// ];
-
-const getStatusColor = (status: Rental['status']) => {
-  switch (status) {
-    case 'available': return 'bg-green-100 text-green-800';
-    case 'rented': return 'bg-blue-100 text-blue-800';
-    case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-    case 'unavailable': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getConditionColor = (condition: Rental['specifications']['condition']) => {
-  switch (condition) {
-    case 'excellent': return 'bg-green-100 text-green-800';
-    case 'good': return 'bg-blue-100 text-blue-800';
-    case 'fair': return 'bg-yellow-100 text-yellow-800';
-    case 'poor': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
 
 export default function RentalsPage() {
   const { settings: appSettings } = useAppSettings();
@@ -158,15 +88,15 @@ export default function RentalsPage() {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [location, setLocation] = useState("");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showFilters, setShowFilters] = useState(false);
-  const [isFiltering, setIsFiltering] = useState(false);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [guests, setGuests] = useState(1);
+  const [sortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
+
+  // Filter options
+  const types = ['All Types', 'equipment', 'vehicle', 'space', 'tool'];
 
   useEffect(() => {
     const fetchRentals = async () => {
@@ -348,45 +278,13 @@ export default function RentalsPage() {
     return matchesSearch && matchesCategory && matchesType && matchesStatus && matchesLocation && matchesPrice;
   });
 
-  // Normalize currency to code for conversion base, then format with symbol
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    if (!currency) return getDefaultCurrency(appSettings);
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to app settings currency if not found
-    return getDefaultCurrency(appSettings);
+    // Always return PHP as the only supported currency
+    return 'PHP';
   };
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
+  const formatPrice = (price: number, currency: string = 'PHP') => {
     const currencyCode = normalizeCurrencyCode(currency);
     return formatCurrency(price, currencyCode, {
       appSettings,
@@ -399,7 +297,6 @@ export default function RentalsPage() {
     else if (key === 'type') setSelectedType(value);
     else if (key === 'status') setSelectedStatus(value);
     else if (key === 'location') setLocation(value);
-    setIsFiltering(true);
   };
 
   const clearFilters = () => {
@@ -445,15 +342,18 @@ export default function RentalsPage() {
     router.push('/rentals/create');
   };
 
-  const handleViewRental = (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleViewRental = (rentalId: string) => {
     router.push(`/rentals/${rentalId}`);
   };
 
-  const handleEditRental = (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleEditRental = (rentalId: string) => {
     router.push(`/rentals/${rentalId}/edit`);
   };
 
-  const handleToggleFavorite = async (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleToggleFavorite = async (rentalId: string) => {
     // Implement favorite toggle
     logger.debug('Toggle favorite for rental', { rentalId });
   };

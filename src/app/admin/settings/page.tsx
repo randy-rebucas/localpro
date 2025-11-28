@@ -604,7 +604,7 @@ export default function SettingsPage() {
       },
       payments: {
         defaultCurrency: "PHP",
-        supportedCurrencies: ["PHP", "USD", "EUR"],
+        supportedCurrencies: ["PHP"],
         transactionFees: {
           percentage: 2.9,
           fixed: 0.30,
@@ -2247,10 +2247,6 @@ export default function SettingsPage() {
                             className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
                           >
                             <option value="PHP">PHP</option>
-                            <option value="USD">USD</option>
-                            <option value="EUR">EUR</option>
-                            <option value="GBP">GBP</option>
-                            <option value="NGN">NGN</option>
                           </select>
                         </div>
                         
@@ -2336,7 +2332,7 @@ export default function SettingsPage() {
                               },
                             })
                           }
-                          placeholder="PHP, USD, EUR"
+                          placeholder="PHP"
                           className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
                         />
                       </div>

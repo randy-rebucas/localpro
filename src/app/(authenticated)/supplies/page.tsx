@@ -34,6 +34,8 @@ import { useRoleAccess } from "@/components/role-guard";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 // Removed unused imports: createAuthFetchOptions, getApiToken
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export interface Supply {
   id: string;
@@ -194,6 +196,7 @@ const validateSupplyData = (supply: unknown): Supply | null => {
 };
 
 export default function SuppliesPage() {
+  const { settings: appSettings } = useAppSettings();
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
@@ -1050,10 +1053,10 @@ export default function SuppliesPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-gray-900">
-                          ${supply.price}
+                          {formatCurrency(supply.price, 'PHP', { appSettings })}
                           {supply.originalPrice && (
                             <span className="text-sm text-gray-500 line-through ml-1">
-                              ${supply.originalPrice}
+                              {formatCurrency(supply.originalPrice || 0, 'PHP', { appSettings })}
                             </span>
                           )}
                         </div>

@@ -131,7 +131,7 @@ const featureConfig: Record<string, { name: string; icon: React.ReactNode; color
 interface AppSettingsFeatures {
   [key: string]: {
     enabled: boolean;
-    [key: string]: any;
+    [key: string]: unknown;
   } | boolean;
 }
 
@@ -139,7 +139,7 @@ interface AppSettingsResponse {
   success: boolean;
   data: {
     features?: AppSettingsFeatures;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
@@ -170,18 +170,18 @@ export default function ServicesPage() {
             .map(([key, value]) => {
               // Determine if feature is enabled and extract details
               let enabled = false;
-              let featureDetails: any = {};
+              let featureDetails: Record<string, unknown> = {};
               
               if (typeof value === 'boolean') {
                 enabled = value;
               } else if (typeof value === 'object' && value !== null) {
                 enabled = (value as { enabled: boolean }).enabled ?? false;
-                featureDetails = value as any;
+                featureDetails = value as Record<string, unknown>;
               }
 
               // Get icon from settings or fallback to config
               let iconElement: React.ReactNode;
-              if (featureDetails.icon) {
+              if (featureDetails.icon && typeof featureDetails.icon === 'string') {
                 const IconComponent = getIconComponent(featureDetails.icon);
                 iconElement = <IconComponent className="w-6 h-6" />;
               } else {
@@ -189,10 +189,13 @@ export default function ServicesPage() {
               }
 
               // Get color from settings or fallback to config
-              const color = featureDetails.color || featureConfig[key]?.color || "bg-gray-100 text-gray-700";
+              const color = (typeof featureDetails.color === 'string' ? featureDetails.color : null) || 
+                featureConfig[key]?.color || 
+                "bg-gray-100 text-gray-700";
               
               // Get name from settings or fallback to config
-              const name = featureDetails.name || featureConfig[key]?.name || 
+              const name = (typeof featureDetails.name === 'string' ? featureDetails.name : null) || 
+                featureConfig[key]?.name || 
                 key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim();
 
               return {
@@ -201,13 +204,13 @@ export default function ServicesPage() {
                 enabled,
                 icon: iconElement,
                 color,
-                description: featureDetails.description,
-                services: featureDetails.services || [],
-                route: featureDetails.route,
-                category: featureDetails.category,
-                users: featureDetails.users,
-                lastUpdated: featureDetails.lastUpdated,
-                featured: featureDetails.featured || false,
+                description: typeof featureDetails.description === 'string' ? featureDetails.description : undefined,
+                services: Array.isArray(featureDetails.services) ? featureDetails.services : [],
+                route: typeof featureDetails.route === 'string' ? featureDetails.route : undefined,
+                category: typeof featureDetails.category === 'string' ? featureDetails.category : undefined,
+                users: typeof featureDetails.users === 'number' ? featureDetails.users : undefined,
+                lastUpdated: typeof featureDetails.lastUpdated === 'string' ? featureDetails.lastUpdated : undefined,
+                featured: typeof featureDetails.featured === 'boolean' ? featureDetails.featured : false,
               };
             })
             .sort((a, b) => {

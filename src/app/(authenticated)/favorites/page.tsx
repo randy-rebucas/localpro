@@ -8,6 +8,7 @@
  * - 'provider' → Provider (uses /api/providers)
  * - 'course' → Course (uses /api/academy/courses)
  * - 'supply' → Product (uses /api/supplies/products)
+ * - 'job' → Job (uses /api/jobs)
  */
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -30,7 +31,8 @@ import {
   CheckCircle,
   Edit,
   Tag,
-  FileText
+  FileText,
+  Briefcase
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,8 +49,8 @@ import { getUserPreferredCurrency } from "@/lib/user-settings-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 
 // Types
-type FavoriteType = 'services' | 'providers' | 'courses' | 'supplies';
-type ItemType = 'service' | 'provider' | 'course' | 'supply'; // API uses singular
+type FavoriteType = 'services' | 'providers' | 'courses' | 'supplies' | 'jobs';
+type ItemType = 'service' | 'provider' | 'course' | 'supply' | 'job'; // API uses singular
 
 /**
  * Item Type to Data Model Mapping:
@@ -56,6 +58,7 @@ type ItemType = 'service' | 'provider' | 'course' | 'supply'; // API uses singul
  * - 'provider' → Provider (uses /api/providers)
  * - 'course' → Course (uses /api/academy/courses)
  * - 'supply' → Product (uses /api/supplies/products)
+ * - 'job' → Job (uses /api/jobs)
  */
 interface Favorite {
   _id: string;
@@ -270,6 +273,45 @@ interface Supply {
   };
 }
 
+interface Job {
+  _id?: string;
+  id?: string;
+  title: string;
+  description: string;
+  company?: {
+    name?: string;
+    logo?: {
+      url?: string;
+      thumbnail?: string;
+    };
+    location?: {
+      city?: string;
+      state?: string;
+      country?: string;
+      isRemote?: boolean;
+      remoteType?: string;
+    };
+  };
+  category?: string | {
+    _id?: string;
+    name?: string;
+  };
+  subcategory?: string;
+  jobType?: string;
+  experienceLevel?: string;
+  salary?: {
+    min?: number;
+    max?: number;
+    currency?: string;
+    period?: string;
+    isNegotiable?: boolean;
+    isConfidential?: boolean;
+  };
+  isRemote?: boolean;
+  status?: string;
+  tags?: string[];
+}
+
 export default function FavoritesPage() {
   const router = useRouter();
   const { settings: userSettings } = useUserSettings();
@@ -284,11 +326,13 @@ export default function FavoritesPage() {
     providers: string[];
     courses: string[];
     supplies: string[];
+    jobs: string[];
   }>({
     services: [],
     providers: [],
     courses: [],
-    supplies: []
+    supplies: [],
+    jobs: []
   });
   const [stats, setStats] = useState<{
     total: number;
@@ -313,6 +357,7 @@ export default function FavoritesPage() {
       case 'provider': return 'providers';
       case 'course': return 'courses';
       case 'supply': return 'supplies';
+      case 'job': return 'jobs';
     }
   };
 
@@ -323,6 +368,7 @@ export default function FavoritesPage() {
       case 'providers': return 'provider';
       case 'courses': return 'course';
       case 'supplies': return 'supply';
+      case 'jobs': return 'job';
     }
   };
 
@@ -341,6 +387,9 @@ export default function FavoritesPage() {
       case 'supply':
         // Product (from supplies/products)
         return `${API_ENDPOINTS.suppliesProductsById.replace('[id]', itemId)}`;
+      case 'job':
+        // Job
+        return `${API_ENDPOINTS.jobsById}/${itemId}`;
     }
   };
 
@@ -353,6 +402,17 @@ export default function FavoritesPage() {
     } catch (error) {
       logger.error('Error fetching item data', error instanceof Error ? error : new Error(String(error)), { itemType, itemId });
       return null;
+    }
+  }, []);
+
+  // Fetch favorites statistics
+  const fetchStats = useCallback(async () => {
+    try {
+      const url = `${API_BASE_URL}${API_ENDPOINTS.favoritesStats}`;
+      const response = await fetch(url, createAuthFetchOptions()).then(res => res.json());
+      setStats(response.stats || response);
+    } catch (error) {
+      logger.error('Error fetching favorites stats', error instanceof Error ? error : new Error(String(error)));
     }
   }, []);
 
@@ -477,7 +537,8 @@ export default function FavoritesPage() {
         services: transformedFavorites.filter(f => f.type === 'services').map(f => f.itemId),
         providers: transformedFavorites.filter(f => f.type === 'providers').map(f => f.itemId),
         courses: transformedFavorites.filter(f => f.type === 'courses').map(f => f.itemId),
-        supplies: transformedFavorites.filter(f => f.type === 'supplies').map(f => f.itemId)
+        supplies: transformedFavorites.filter(f => f.type === 'supplies').map(f => f.itemId),
+        jobs: transformedFavorites.filter(f => f.type === 'jobs').map(f => f.itemId)
       };
       setFavoriteIds(idsByType);
       
@@ -489,18 +550,7 @@ export default function FavoritesPage() {
     } finally {
       setLoading(false);
     }
-  }, [fetchItemData]);
-
-  // Fetch favorites statistics
-  const fetchStats = useCallback(async () => {
-    try {
-      const url = `${API_BASE_URL}${API_ENDPOINTS.favoritesStats}`;
-      const response = await fetch(url, createAuthFetchOptions()).then(res => res.json());
-      setStats(response.stats || response);
-    } catch (error) {
-      logger.error('Error fetching favorites stats', error instanceof Error ? error : new Error(String(error)));
-    }
-  }, []);
+  }, [fetchItemData, fetchStats]);
 
   // Remove from favorites
   const removeFavorite = useCallback(async (id: string, type: FavoriteType) => {
@@ -547,10 +597,11 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     fetchFavorites();
-  }, []);
+  }, [fetchFavorites]);
 
-  // Add to favorites
-  const addFavorite = useCallback(async (itemType: ItemType, itemId: string, notes?: string, tags?: string[]) => {
+  // Add to favorites (unused but kept for potential future use)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _addFavorite = useCallback(async (itemType: ItemType, itemId: string, notes?: string, tags?: string[]) => {
     try {
       const url = `${API_BASE_URL}${API_ENDPOINTS.favorites}`;
       const response = await fetch(url, createAuthFetchOptions({
@@ -587,8 +638,9 @@ export default function FavoritesPage() {
     }
   }, [fetchFavorites, fetchStats]);
 
-  // Check if item is favorited
-  const checkFavorite = useCallback(async (itemType: ItemType, itemId: string): Promise<boolean> => {
+  // Check if item is favorited (unused but kept for potential future use)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _checkFavorite = useCallback(async (itemType: ItemType, itemId: string): Promise<boolean> => {
     try {
       const url = `${API_BASE_URL}${API_ENDPOINTS.favoritesCheck}/${itemType}/${itemId}`;
       const response = await fetch(url, createAuthFetchOptions());
@@ -651,6 +703,8 @@ export default function FavoritesPage() {
         return GraduationCap;
       case 'supplies':
         return Package;
+      case 'jobs':
+        return Briefcase;
     }
   };
 
@@ -693,7 +747,8 @@ export default function FavoritesPage() {
     favoriteIds.services.length + 
     favoriteIds.providers.length + 
     favoriteIds.courses.length + 
-    favoriteIds.supplies.length
+    favoriteIds.supplies.length +
+    favoriteIds.jobs.length
   );
 
   return (
@@ -743,7 +798,7 @@ export default function FavoritesPage() {
       {/* Tabs */}
       <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md border border-gray-200 overflow-hidden backdrop-blur-sm">
         <div className="flex flex-wrap gap-1 p-2">
-          {(['services', 'providers', 'courses', 'supplies'] as FavoriteType[]).map((type) => {
+          {(['services', 'providers', 'courses', 'supplies', 'jobs'] as FavoriteType[]).map((type) => {
             const Icon = getTypeIcon(type);
             const count = getTabCount(type);
             const isActive = activeTab === type;
@@ -807,7 +862,8 @@ export default function FavoritesPage() {
                 href: activeTab === 'services' ? '/marketplace' : 
                       activeTab === 'providers' ? '/marketplace/providers' :
                       activeTab === 'courses' ? '/marketplace/courses' :
-                      '/marketplace/supplies',
+                      activeTab === 'supplies' ? '/marketplace/supplies' :
+                      '/jobs',
                 label: `Browse ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`,
                 variant: "primary"
               }
@@ -832,7 +888,8 @@ export default function FavoritesPage() {
                   services: `/marketplace/services/${id}`,
                   providers: `/marketplace/providers/${id}`,
                   courses: `/marketplace/courses/${id}`,
-                  supplies: `/marketplace/supplies/${id}`
+                  supplies: `/marketplace/supplies/${id}`,
+                  jobs: `/jobs/${id}`
                 };
                 router.push(routes[type]);
               }}
@@ -879,6 +936,8 @@ const FavoriteCard = React.memo(function FavoriteCard({
         return <CourseCard course={data as unknown as Course} viewMode={viewMode} formatPrice={formatPrice} />;
       case 'supplies':
         return <SupplyCard supply={data as unknown as Supply} viewMode={viewMode} formatPrice={formatPrice} />;
+      case 'jobs':
+        return <JobCard job={data as unknown as Job} viewMode={viewMode} formatPrice={formatPrice} />;
     }
   };
 
@@ -890,7 +949,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
       const tagsArray = editTags.split(',').map(t => t.trim()).filter(t => t.length > 0 && t.length <= 50);
       await onUpdate(_id, editNotes || undefined, tagsArray.length > 0 ? tagsArray : undefined);
       setShowEditModal(false);
-    } catch (error) {
+    } catch {
       // Error handled in onUpdate
     } finally {
       setIsUpdating(false);
@@ -1245,6 +1304,99 @@ function SupplyCard({ supply, viewMode, formatPrice }: { supply: Supply; viewMod
             <span>{supply.location.city}{supply.location.state ? `, ${supply.location.state}` : ''}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function JobCard({ job, viewMode, formatPrice }: { job: Job; viewMode: "grid" | "list"; formatPrice: (price: number, currency?: string | null, suffix?: string) => string }) {
+  const companyLogo = job.company?.logo?.url || job.company?.logo?.thumbnail;
+  const companyName = job.company?.name || 'Unknown Company';
+  
+  const categoryName = typeof job.category === 'object' && job.category
+    ? job.category.name
+    : job.category || job.subcategory || 'Uncategorized';
+
+  const location = job.company?.location
+    ? `${job.company.location.city || ''}${job.company.location.city && job.company.location.state ? ', ' : ''}${job.company.location.state || ''}`
+    : '';
+
+  const isRemote = job.isRemote || job.company?.location?.isRemote;
+
+  // Format salary
+  let salaryDisplay = 'Salary not specified';
+  if (job.salary) {
+    if (job.salary.isConfidential) {
+      salaryDisplay = 'Confidential';
+    } else if (job.salary.min && job.salary.max) {
+      const min = formatPrice(job.salary.min, job.salary.currency);
+      const max = formatPrice(job.salary.max, job.salary.currency);
+      const period = job.salary.period === 'yearly' ? '/yr' : job.salary.period === 'monthly' ? '/mo' : job.salary.period === 'hourly' ? '/hr' : '';
+      salaryDisplay = `${min} - ${max}${period}`;
+      if (job.salary.isNegotiable) {
+        salaryDisplay += ' (negotiable)';
+      }
+    } else if (job.salary.min) {
+      const min = formatPrice(job.salary.min, job.salary.currency);
+      const period = job.salary.period === 'yearly' ? '/yr' : job.salary.period === 'monthly' ? '/mo' : job.salary.period === 'hourly' ? '/hr' : '';
+      salaryDisplay = `From ${min}${period}`;
+      if (job.salary.isNegotiable) {
+        salaryDisplay += ' (negotiable)';
+      }
+    }
+  }
+
+  return (
+    <div className={`${viewMode === "list" ? "flex gap-4" : ""}`}>
+      {companyLogo && (
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-md flex items-center justify-center`}>
+          <Image
+            src={companyLogo}
+            alt={companyName}
+            width={viewMode === "list" ? 192 : 400}
+            height={viewMode === "list" ? 128 : 192}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      {!companyLogo && (
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-md flex items-center justify-center`}>
+          <Briefcase className="w-16 h-16 text-white" />
+        </div>
+      )}
+      <div className={viewMode === "list" ? "flex-1" : "p-5"}>
+        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+          {job.title}
+        </h3>
+        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
+          {job.description}
+        </p>
+        <div className="flex items-center justify-between text-sm mb-3">
+          <span className="text-gray-600 font-medium">{companyName}</span>
+          {salaryDisplay !== 'Salary not specified' && (
+            <span className="font-semibold text-emerald-600">{salaryDisplay}</span>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          {categoryName && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-gray-50 to-blue-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>{categoryName}</span>
+            </div>
+          )}
+          {(location || isRemote) && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{isRemote ? 'Remote' : location || 'Location not specified'}</span>
+            </div>
+          )}
+          {job.jobType && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-purple-50 to-pink-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="capitalize">{job.jobType.replace('_', ' ')}</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

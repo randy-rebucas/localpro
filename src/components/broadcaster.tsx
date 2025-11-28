@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react";
 import { 
   X, 
-  AlertCircle, 
   Info, 
-  CheckCircle, 
   AlertTriangle,
   Radio,
   ExternalLink,
@@ -22,11 +20,11 @@ interface BroadcasterProps {
   maxHeight?: string;
 }
 
-export function Broadcaster({ className = "", maxHeight = "400px" }: BroadcasterProps) {
+export function Broadcaster({ className = "" }: BroadcasterProps) {
   const { isClient } = useRoleAccess();
   const [broadcasts, setBroadcasts] = useState<BroadcasterType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [, setDismissedIds] = useState<Set<string>>(new Set());
 
   // Load dismissed IDs from localStorage on mount
   useEffect(() => {
@@ -95,7 +93,6 @@ export function Broadcaster({ className = "", maxHeight = "400px" }: Broadcaster
     };
 
     fetchBroadcasts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isClient]);
 
   const trackView = async (broadcastId: string) => {
@@ -220,6 +217,7 @@ export function Broadcaster({ className = "", maxHeight = "400px" }: Broadcaster
                 )}
                 {(broadcast.images && broadcast.images.length > 0) || broadcast.imageUrl ? (
                   <div className="mt-2.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={broadcast.images && broadcast.images.length > 0 ? broadcast.images[0].url : broadcast.imageUrl}
                       alt={broadcast.images && broadcast.images.length > 0 ? broadcast.images[0].alt || broadcast.title : broadcast.title}

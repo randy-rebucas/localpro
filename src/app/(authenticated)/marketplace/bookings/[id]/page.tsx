@@ -180,43 +180,10 @@ export default function BookingDetailPage() {
   };
 
   const formatPrice = useCallback((price: number, currency?: string) => {
-    // Normalize currency to ensure it's a currency code (not symbol)
+    // Normalize currency to PHP only
     const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-      if (!currency) return getDefaultCurrency(appSettings);
-      
-      // If it's already a valid currency code, return it
-      if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-        return currency.toUpperCase();
-      }
-      
-      // Map currency symbols to codes
-      const symbolToCode: Record<string, string> = {
-        '₱': 'PHP',
-        '$': 'USD',
-        '€': 'EUR',
-        '£': 'GBP',
-        '¥': 'JPY',
-        'A$': 'AUD',
-        'C$': 'CAD',
-        'S$': 'SGD',
-        '±': 'PHP', // Fallback for unrecognized symbols
-      };
-      
-      // Check if it's a symbol
-      const normalized = currency.trim();
-      if (symbolToCode[normalized]) {
-        return symbolToCode[normalized];
-      }
-      
-      // Try to find by symbol in configs
-      for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-        if (config.symbol === normalized) {
-          return code;
-        }
-      }
-      
-      // Default to app settings currency
-      return getDefaultCurrency(appSettings);
+      // Always return PHP as the only supported currency
+      return 'PHP';
     };
     
     // Priority: 1. Provided currency, 2. Booking pricing currency, 3. Service pricing currency, 4. App settings default
@@ -293,42 +260,10 @@ export default function BookingDetailPage() {
       const servicePrice = booking.service?.price || booking.pricing?.basePrice || 0;
       const platformFee = totalAmount - servicePrice;
       
-      // Normalize currency to ensure it's a currency code (not symbol)
+      // Normalize currency to PHP only
       const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-        if (!currency) return getDefaultCurrency(appSettings);
-        
-        // If it's already a valid currency code, return it
-        if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-          return currency.toUpperCase();
-        }
-        
-        // Map currency symbols to codes
-        const symbolToCode: Record<string, string> = {
-          '₱': 'PHP',
-          '$': 'USD',
-          '€': 'EUR',
-          '£': 'GBP',
-          '¥': 'JPY',
-          'A$': 'AUD',
-          'C$': 'CAD',
-          'S$': 'SGD',
-        };
-        
-        // Check if it's a symbol
-        const normalized = currency.trim();
-        if (symbolToCode[normalized]) {
-          return symbolToCode[normalized];
-        }
-        
-        // Try to find by symbol in configs
-        for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-          if (config.symbol === normalized) {
-            return code;
-          }
-        }
-        
-        // Default to app settings currency
-        return getDefaultCurrency(appSettings);
+        // Always return PHP as the only supported currency
+        return 'PHP';
       };
       
       const rawCurrency = booking.pricing?.currency || booking.service?.pricing?.currency;

@@ -161,6 +161,7 @@ export const API_ENDPOINTS = {
   rentalsCreate: "/api/rentals",
   rentalsUpdate: "/api/rentals",
   rentalsDelete: "/api/rentals",
+  rentalsGenerateDescription: "/api/rentals/generate-description",
   
   // Facility Care Services
   facilityCare: "/api/facility-care",

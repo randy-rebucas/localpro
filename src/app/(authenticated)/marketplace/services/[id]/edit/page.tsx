@@ -9,7 +9,6 @@ import {
   Upload,
   X,
   Plus,
-  DollarSign,
   Clock,
   ChevronRight,
   ChevronLeft,
@@ -30,6 +29,8 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { generateDescriptionFromTitle } from "@/lib/ai-utils";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 interface ScheduleItem {
   day: string;
@@ -97,7 +98,7 @@ interface ServiceForm {
 
 const FORM_STEPS = [
   { id: 1, title: "Basic Information", icon: FileText, description: "Tell us about your service" },
-  { id: 2, title: "Pricing & Duration", icon: DollarSign, description: "Set your rates and time estimates" },
+  { id: 2, title: "Pricing & Duration", icon: Clock, description: "Set your rates and time estimates" },
   { id: 3, title: "Service Details", icon: Package, description: "Features, areas, and requirements" },
   { id: 4, title: "Warranty & Insurance", icon: Shield, description: "Protection and guarantees" },
   { id: 5, title: "Packages & Add-ons", icon: Package, description: "Service bundles and extras" },
@@ -108,6 +109,7 @@ const FORM_STEPS = [
 export default function EditServicePage() {
   const params = useParams();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const [currentStep, setCurrentStep] = useState(1);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState<ServiceForm>({
@@ -118,7 +120,7 @@ export default function EditServicePage() {
     pricing: {
       type: "",
       basePrice: 0,
-      currency: "USD"
+      currency: "PHP"
     },
     serviceArea: [],
     features: [],
@@ -280,66 +282,69 @@ export default function EditServicePage() {
   ];
 
   // Normalize service data from API
-  const normalizeServiceData = useCallback((data: any): ServiceForm => {
+  const normalizeServiceData = useCallback((data: Record<string, unknown>): ServiceForm => {
     // Handle images - can be array of strings or array of objects
     const images = Array.isArray(data.images) 
-      ? data.images.map((img: any) => typeof img === 'string' ? img : (img.url || img.publicId || ''))
+      ? data.images.map((img: unknown) => typeof img === 'string' ? img : (typeof img === 'object' && img !== null && 'url' in img ? (img as { url?: string }).url || (img as { publicId?: string }).publicId || '' : ''))
       : [];
     
     // Handle availability schedule
-    const schedule: ScheduleItem[] = data.availability?.schedule 
-      ? data.availability.schedule.map((item: any) => ({
-          day: item.day || '',
-          startTime: item.startTime || '09:00',
-          endTime: item.endTime || '17:00',
-          isAvailable: item.isAvailable !== false
-        }))
+    const schedule: ScheduleItem[] = (data.availability && typeof data.availability === 'object' && 'schedule' in data.availability && Array.isArray(data.availability.schedule))
+      ? data.availability.schedule.map((item: unknown) => {
+          const scheduleItem = item as Record<string, unknown>;
+          return {
+            day: (scheduleItem.day as string) || '',
+            startTime: (scheduleItem.startTime as string) || '09:00',
+            endTime: (scheduleItem.endTime as string) || '17:00',
+            isAvailable: scheduleItem.isAvailable !== false
+          };
+        })
       : [];
 
     return {
-      title: data.title || "",
-      description: data.description || "",
-      category: data.category || "",
-      subcategory: data.subcategory || "",
+      title: (typeof data.title === 'string' ? data.title : "") || "",
+      description: (typeof data.description === 'string' ? data.description : "") || "",
+      category: (typeof data.category === 'string' ? data.category : "") || "",
+      subcategory: (typeof data.subcategory === 'string' ? data.subcategory : "") || "",
       pricing: {
-        type: data.pricing?.type || "",
-        basePrice: data.pricing?.basePrice || 0,
-        currency: data.pricing?.currency || "USD"
+        type: (typeof data.pricing === 'object' && data.pricing !== null && 'type' in data.pricing && typeof data.pricing.type === 'string' ? data.pricing.type : "") || "",
+        basePrice: (typeof data.pricing === 'object' && data.pricing !== null && 'basePrice' in data.pricing && typeof data.pricing.basePrice === 'number' ? data.pricing.basePrice : 0) || 0,
+        currency: (typeof data.pricing === 'object' && data.pricing !== null && 'currency' in data.pricing && typeof data.pricing.currency === 'string' ? data.pricing.currency : "PHP") || "PHP"
       },
-      serviceArea: data.serviceArea || [],
-      features: data.features || [],
-      requirements: data.requirements || [],
-      serviceType: data.serviceType || "",
+      serviceArea: (Array.isArray(data.serviceArea) ? data.serviceArea.filter((item): item is string => typeof item === 'string') : []) || [],
+      features: (Array.isArray(data.features) ? data.features.filter((item): item is string => typeof item === 'string') : []) || [],
+      requirements: (Array.isArray(data.requirements) ? data.requirements.filter((item): item is string => typeof item === 'string') : []) || [],
+      serviceType: (typeof data.serviceType === 'string' ? data.serviceType : "") || "",
       estimatedDuration: {
-        min: data.estimatedDuration?.min || 0,
-        max: data.estimatedDuration?.max || 0
+        min: (typeof data.estimatedDuration === 'object' && data.estimatedDuration !== null && 'min' in data.estimatedDuration && typeof data.estimatedDuration.min === 'number' ? data.estimatedDuration.min : 0) || 0,
+        max: (typeof data.estimatedDuration === 'object' && data.estimatedDuration !== null && 'max' in data.estimatedDuration && typeof data.estimatedDuration.max === 'number' ? data.estimatedDuration.max : 0) || 0
       },
-      teamSize: data.teamSize || 1,
-      equipmentProvided: data.equipmentProvided || false,
-      materialsIncluded: data.materialsIncluded || false,
+      teamSize: (typeof data.teamSize === 'number' ? data.teamSize : 1) || 1,
+      equipmentProvided: (typeof data.equipmentProvided === 'boolean' ? data.equipmentProvided : false) || false,
+      materialsIncluded: (typeof data.materialsIncluded === 'boolean' ? data.materialsIncluded : false) || false,
       warranty: {
-        hasWarranty: data.warranty?.hasWarranty || false,
-        duration: data.warranty?.duration || 0,
-        description: data.warranty?.description || ""
+        hasWarranty: (typeof data.warranty === 'object' && data.warranty !== null && 'hasWarranty' in data.warranty && typeof data.warranty.hasWarranty === 'boolean' ? data.warranty.hasWarranty : false) || false,
+        duration: (typeof data.warranty === 'object' && data.warranty !== null && 'duration' in data.warranty && typeof data.warranty.duration === 'number' ? data.warranty.duration : 0) || 0,
+        description: (typeof data.warranty === 'object' && data.warranty !== null && 'description' in data.warranty && typeof data.warranty.description === 'string' ? data.warranty.description : "") || ""
       },
       insurance: {
-        covered: data.insurance?.covered || false,
-        coverageAmount: data.insurance?.coverageAmount || 0
+        covered: (typeof data.insurance === 'object' && data.insurance !== null && 'covered' in data.insurance && typeof data.insurance.covered === 'boolean' ? data.insurance.covered : false) || false,
+        coverageAmount: (typeof data.insurance === 'object' && data.insurance !== null && 'coverageAmount' in data.insurance && typeof data.insurance.coverageAmount === 'number' ? data.insurance.coverageAmount : 0) || 0
       },
       emergencyService: {
-        available: data.emergencyService?.available || false,
-        surcharge: data.emergencyService?.surcharge || 0,
-        responseTime: data.emergencyService?.responseTime || ""
+        available: (typeof data.emergencyService === 'object' && data.emergencyService !== null && 'available' in data.emergencyService && typeof data.emergencyService.available === 'boolean' ? data.emergencyService.available : false) || false,
+        surcharge: (typeof data.emergencyService === 'object' && data.emergencyService !== null && 'surcharge' in data.emergencyService && typeof data.emergencyService.surcharge === 'number' ? data.emergencyService.surcharge : 0) || 0,
+        responseTime: (typeof data.emergencyService === 'object' && data.emergencyService !== null && 'responseTime' in data.emergencyService && typeof data.emergencyService.responseTime === 'string' ? data.emergencyService.responseTime : "") || ""
       },
-      servicePackages: data.servicePackages || [],
-      addOns: data.addOns || [],
+      servicePackages: (Array.isArray(data.servicePackages) ? data.servicePackages : []) || [],
+      addOns: (Array.isArray(data.addOns) ? data.addOns : []) || [],
       availability: {
-        timezone: data.availability?.timezone || "UTC",
+        timezone: (typeof data.availability === 'object' && data.availability !== null && 'timezone' in data.availability && typeof data.availability.timezone === 'string' ? data.availability.timezone : "UTC") || "UTC",
         schedule
       },
       images: [],
       existingImages: images,
-      isActive: data.isActive !== undefined ? data.isActive : true
+      isActive: (typeof data.isActive === 'boolean' ? data.isActive : true) !== false
     };
   }, []);
 
@@ -785,8 +790,6 @@ export default function EditServicePage() {
 
       if (!response.ok) {
         let errorMessage = `Failed to update service (Status: ${response.status} ${response.statusText})`;
-        const contentType = response.headers.get('content-type') || '';
-        
         try {
           const textError = await response.text();
           
@@ -799,9 +802,15 @@ export default function EditServicePage() {
                 } else if (parsed.error) {
                   errorMessage = parsed.error;
                 } else if (parsed.errors && Array.isArray(parsed.errors)) {
-                  errorMessage = parsed.errors.map((e: any) => e.message || e.msg || String(e)).join(', ');
+                  errorMessage = parsed.errors.map((e: unknown) => {
+                    const err = e as { message?: string; msg?: string };
+                    return err.message || err.msg || String(e);
+                  }).join(', ');
                 } else if (parsed.details && Array.isArray(parsed.details)) {
-                  errorMessage = parsed.details.map((d: any) => d.message || d.msg || String(d)).join(', ');
+                  errorMessage = parsed.details.map((d: unknown) => {
+                    const det = d as { message?: string; msg?: string };
+                    return det.message || det.msg || String(d);
+                  }).join(', ');
                 } else {
                   errorMessage = textError.substring(0, 200);
                 }
@@ -819,7 +828,7 @@ export default function EditServicePage() {
         throw new Error(errorMessage);
       }
 
-      const service = await response.json();
+      await response.json();
       router.push(`/marketplace/services/${params.id}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -977,12 +986,12 @@ export default function EditServicePage() {
                   )}
                   {!form.title.trim() && !fieldErrors.title && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Enter a clear, descriptive title for your service (e.g., "Professional House Cleaning" or "24/7 Emergency Plumbing")
+                      Enter a clear, descriptive title for your service (e.g., &quot;Professional House Cleaning&quot; or &quot;24/7 Emergency Plumbing&quot;)
                     </p>
                   )}
                   {form.title.trim() && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Enter your service title and click "Generate with AI" to auto-fill the description
+                      Enter your service title and click &quot;Generate with AI&quot; to auto-fill the description
                     </p>
                   )}
                 </div>
@@ -1127,7 +1136,7 @@ export default function EditServicePage() {
 
               <div>
                 <Input
-                  label="Base Price (USD) *"
+                  label="Base Price (PHP) *"
                   type="number"
                   required
                   min="0"
@@ -1135,7 +1144,7 @@ export default function EditServicePage() {
                   value={form.pricing.basePrice}
                   onChange={(e) => handlePricingChange("basePrice", Number(e.target.value) || 0)}
                   placeholder="0.00"
-                  leftIcon={<DollarSign />}
+                  leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                   className={fieldErrors.basePrice ? "border-red-300 focus:ring-red-500" : ""}
                 />
                 {fieldErrors.basePrice && (
@@ -1154,10 +1163,10 @@ export default function EditServicePage() {
                   type="text"
                   value={form.pricing.currency}
                   onChange={(e) => handlePricingChange("currency", e.target.value)}
-                  placeholder="USD"
+                  placeholder="PHP"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported currencies: PHP, USD, EUR, GBP, JPY, AUD, CAD, SGD
+                  Supported currency: PHP
                 </p>
               </div>
             </div>
@@ -1316,7 +1325,7 @@ export default function EditServicePage() {
                       placeholder="Add a feature..."
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      List what&apos;s included in your service (e.g., "All cleaning supplies provided", "Free consultation"). Press Enter or click + to add.
+                      List what&apos;s included in your service (e.g., &quot;All cleaning supplies provided&quot;, &quot;Free consultation&quot;). Press Enter or click + to add.
                     </p>
                   </div>
                   <button
@@ -1363,7 +1372,7 @@ export default function EditServicePage() {
                       placeholder="Add a requirement..."
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      List any requirements clients need to meet (e.g., "Access to water source", "Parking space required"). Press Enter or click + to add.
+                      List any requirements clients need to meet (e.g., &quot;Access to water source&quot;, &quot;Parking space required&quot;). Press Enter or click + to add.
                     </p>
                   </div>
                   <button
@@ -1437,7 +1446,7 @@ export default function EditServicePage() {
                         placeholder="e.g., 30-day satisfaction guarantee"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Describe what the warranty covers (e.g., "30-day satisfaction guarantee", "Workmanship warranty")
+                        Describe what the warranty covers (e.g., &quot;30-day satisfaction guarantee&quot;, &quot;Workmanship warranty&quot;)
                       </p>
                     </div>
                   </div>
@@ -1464,13 +1473,13 @@ export default function EditServicePage() {
                 {form.insurance.covered && (
                   <div>
                     <Input
-                      label="Coverage Amount (USD)"
+                      label="Coverage Amount (PHP)"
                       type="number"
                       min="0"
                       value={form.insurance.coverageAmount}
                       onChange={(e) => handleInsuranceChange("coverageAmount", Number(e.target.value))}
                       placeholder="1000000"
-                      leftIcon={<DollarSign />}
+                      leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Total insurance coverage amount in your selected currency (e.g., 1000000 for $1,000,000)
@@ -1507,18 +1516,18 @@ export default function EditServicePage() {
                         placeholder="e.g., within 2 hours"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        How quickly you can respond to emergency calls (e.g., "within 2 hours", "within 30 minutes")
+                        How quickly you can respond to emergency calls (e.g., &quot;within 2 hours&quot;, &quot;within 30 minutes&quot;)
                       </p>
                     </div>
                     <div>
                       <Input
-                        label="Emergency Surcharge (USD)"
+                        label="Emergency Surcharge (PHP)"
                         type="number"
                         min="0"
                         value={form.emergencyService.surcharge}
                         onChange={(e) => handleEmergencyServiceChange("surcharge", Number(e.target.value))}
                         placeholder="50"
-                        leftIcon={<DollarSign />}
+                        leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Additional fee for emergency service in your selected currency (e.g., 50 for $50)
@@ -1553,7 +1562,7 @@ export default function EditServicePage() {
                     </div>
                     <div>
                       <Input
-                        label="Price (USD)"
+                        label="Price (PHP)"
                         type="number"
                         min="0"
                         value={newPackage.price}
@@ -1659,7 +1668,7 @@ export default function EditServicePage() {
                           </button>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
-                          <span>${pkg.price} • {pkg.duration}h</span>
+                          <span>{formatCurrency(pkg.price, 'PHP', { appSettings })} • {pkg.duration}h</span>
                           <span>{pkg.features.length} features</span>
                         </div>
                       </div>
@@ -1687,7 +1696,7 @@ export default function EditServicePage() {
                     </div>
                     <div>
                       <Input
-                        label="Price (USD)"
+                        label="Price (PHP)"
                         type="number"
                         min="0"
                         value={newAddon.price}
@@ -1747,7 +1756,7 @@ export default function EditServicePage() {
                           </button>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
-                          <span>${addon.price}</span>
+                          <span>{formatCurrency(addon.price, 'PHP', { appSettings })}</span>
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                             {addon.category}
                           </span>
@@ -1781,7 +1790,7 @@ export default function EditServicePage() {
                     placeholder="Asia/Manila"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Your timezone in IANA format (e.g., "Asia/Manila", "America/New_York", "Europe/London")
+                    Your timezone in IANA format (e.g., &quot;Asia/Manila&quot;, &quot;America/New_York&quot;, &quot;Europe/London&quot;)
                   </p>
                 </div>
               </div>
@@ -1958,7 +1967,7 @@ export default function EditServicePage() {
                   <span className="text-gray-500">Pricing:</span>
                   <p className="font-medium text-gray-900">
                     {form.pricing.basePrice > 0 
-                      ? `$${form.pricing.basePrice.toFixed(2)} ${form.pricing.type ? `(${pricingTypes.find(p => p.value === form.pricing.type)?.label || form.pricing.type})` : ''}`
+                      ? `${formatCurrency(form.pricing.basePrice, 'PHP', { appSettings })} ${form.pricing.type ? `(${pricingTypes.find(p => p.value === form.pricing.type)?.label || form.pricing.type})` : ''}`
                       : "Not set"}
                   </p>
                 </div>

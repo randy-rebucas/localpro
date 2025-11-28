@@ -328,44 +328,11 @@ export default function ProviderDetailPage() {
 
   const providerId = params?.id as string;
   
-  // Currency normalization function - converts symbols to codes
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
-    const defaultCurrencyCode = getDefaultCurrency(appSettings);
-    if (!currency) return defaultCurrencyCode;
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to app settings currency if not found
-    return defaultCurrencyCode;
-  }, [appSettings]);
+    // Always return PHP as the only supported currency
+    return 'PHP';
+  }, []);
   
   // Format price with currency
   const formatPrice = useCallback((price: number, currency?: string | null): string => {

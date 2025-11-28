@@ -9,7 +9,6 @@ import {
   Upload,
   X,
   Plus,
-  DollarSign,
   Clock,
   ChevronRight,
   ChevronLeft,
@@ -19,7 +18,6 @@ import {
   Shield,
   Calendar,
   Image as ImageIcon,
-  Eye,
   Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -28,10 +26,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import AIFormPrefiller from "@/components/marketplace/ai-form-prefiller";
 import { type PrefilledFormData, generateDescriptionFromTitle } from "@/lib/ai-utils";
 import { Sparkles } from "lucide-react";
 import { useToast, ToastContainer } from "@/components/ui/toast";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 interface ScheduleItem {
   day: string;
@@ -98,7 +97,7 @@ interface ServiceForm {
 
 const FORM_STEPS = [
   { id: 1, title: "Basic Information", icon: FileText, description: "Tell us about your service" },
-  { id: 2, title: "Pricing & Duration", icon: DollarSign, description: "Set your rates and time estimates" },
+  { id: 2, title: "Pricing & Duration", icon: Clock, description: "Set your rates and time estimates" },
   { id: 3, title: "Service Details", icon: Package, description: "Features, areas, and requirements" },
   { id: 4, title: "Warranty & Insurance", icon: Shield, description: "Protection and guarantees" },
   { id: 5, title: "Packages & Add-ons", icon: Package, description: "Service bundles and extras" },
@@ -108,6 +107,7 @@ const FORM_STEPS = [
 
 export default function CreateServicePage() {
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const { toasts, success, error: showErrorToast, removeToast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -119,7 +119,7 @@ export default function CreateServicePage() {
     pricing: {
       type: "hourly",
       basePrice: 0,
-      currency: "USD"
+      currency: "PHP"
     },
     serviceArea: [],
     features: [],
@@ -596,7 +596,8 @@ export default function CreateServicePage() {
     }
   };
 
-  const handleAIPrefill = (prefilledData: PrefilledFormData) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleAIPrefill = (prefilledData: PrefilledFormData) => {
     setForm(prev => ({
       ...prev,
       title: prefilledData.title || prev.title,
@@ -737,8 +738,6 @@ export default function CreateServicePage() {
       if (!response.ok) {
         // Try to extract error message from response
         let errorMessage = `Failed to create service (Status: ${response.status} ${response.statusText})`;
-        const contentType = response.headers.get('content-type') || '';
-        
         // Always try to get text first to avoid JSON parsing errors
         try {
           const textError = await response.text();
@@ -754,9 +753,15 @@ export default function CreateServicePage() {
                 } else if (parsed.error) {
                   errorMessage = parsed.error;
                 } else if (parsed.errors && Array.isArray(parsed.errors)) {
-                  errorMessage = parsed.errors.map((e: any) => e.message || e.msg || String(e)).join(', ');
+                  errorMessage = parsed.errors.map((e: unknown) => {
+                    const err = e as { message?: string; msg?: string };
+                    return err.message || err.msg || String(e);
+                  }).join(', ');
                 } else if (parsed.details && Array.isArray(parsed.details)) {
-                  errorMessage = parsed.details.map((d: any) => d.message || d.msg || String(d)).join(', ');
+                  errorMessage = parsed.details.map((d: unknown) => {
+                    const det = d as { message?: string; msg?: string };
+                    return det.message || det.msg || String(d);
+                  }).join(', ');
                 } else {
                   errorMessage = textError.substring(0, 200);
                 }
@@ -963,12 +968,12 @@ export default function CreateServicePage() {
                   />
                   {!form.title.trim() && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Enter a clear, descriptive title for your service (e.g., "Professional House Cleaning" or "24/7 Emergency Plumbing")
+                      Enter a clear, descriptive title for your service (e.g., &quot;Professional House Cleaning&quot; or &quot;24/7 Emergency Plumbing&quot;)
                     </p>
                   )}
                   {form.title.trim() && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Enter your service title and click "Generate with AI" to auto-fill the form
+                      Enter your service title and click &quot;Generate with AI&quot; to auto-fill the form
                     </p>
                   )}
                 </div>
@@ -1117,7 +1122,7 @@ export default function CreateServicePage() {
 
               <div>
                 <Input
-                  label="Base Price (USD) *"
+                  label="Base Price (PHP) *"
                   type="number"
                   required
                   min="0"
@@ -1125,7 +1130,7 @@ export default function CreateServicePage() {
                   value={form.pricing.basePrice}
                   onChange={(e) => handlePricingChange("basePrice", Number(e.target.value) || 0)}
                   placeholder="0.00"
-                  leftIcon={<DollarSign />}
+                  leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                   className={fieldErrors.basePrice ? "border-red-300 focus:ring-red-500" : ""}
                 />
                 {fieldErrors.basePrice && (
@@ -1144,10 +1149,10 @@ export default function CreateServicePage() {
                   type="text"
                   value={form.pricing.currency}
                   onChange={(e) => handlePricingChange("currency", e.target.value)}
-                  placeholder="USD"
+                  placeholder="PHP"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported currencies: PHP, USD, EUR, GBP, JPY, AUD, CAD, SGD
+                  Supported currency: PHP
                 </p>
               </div>
             </div>
@@ -1306,7 +1311,7 @@ export default function CreateServicePage() {
                       placeholder="Add a feature..."
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      List what&apos;s included in your service (e.g., "All cleaning supplies provided", "Free consultation"). Press Enter or click + to add.
+                      List what&apos;s included in your service (e.g., &quot;All cleaning supplies provided&quot;, &quot;Free consultation&quot;). Press Enter or click + to add.
                     </p>
                   </div>
                   <button
@@ -1353,7 +1358,7 @@ export default function CreateServicePage() {
                       placeholder="Add a requirement..."
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      List any requirements clients need to meet (e.g., "Access to water source", "Parking space required"). Press Enter or click + to add.
+                      List any requirements clients need to meet (e.g., &quot;Access to water source&quot;, &quot;Parking space required&quot;). Press Enter or click + to add.
                     </p>
                   </div>
                   <button
@@ -1427,7 +1432,7 @@ export default function CreateServicePage() {
                         placeholder="e.g., 30-day satisfaction guarantee"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Describe what the warranty covers (e.g., "30-day satisfaction guarantee", "Workmanship warranty")
+                        Describe what the warranty covers (e.g., &quot;30-day satisfaction guarantee&quot;, &quot;Workmanship warranty&quot;)
                       </p>
                     </div>
                   </div>
@@ -1454,13 +1459,13 @@ export default function CreateServicePage() {
                 {form.insurance.covered && (
                   <div>
                     <Input
-                      label="Coverage Amount (USD)"
+                      label="Coverage Amount (PHP)"
                       type="number"
                       min="0"
                       value={form.insurance.coverageAmount}
                       onChange={(e) => handleInsuranceChange("coverageAmount", Number(e.target.value))}
                       placeholder="1000000"
-                      leftIcon={<DollarSign />}
+                      leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Total insurance coverage amount in your selected currency (e.g., 1000000 for $1,000,000)
@@ -1497,18 +1502,18 @@ export default function CreateServicePage() {
                         placeholder="e.g., within 2 hours"
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        How quickly you can respond to emergency calls (e.g., "within 2 hours", "within 30 minutes")
+                        How quickly you can respond to emergency calls (e.g., &quot;within 2 hours&quot;, &quot;within 30 minutes&quot;)
                       </p>
                     </div>
                     <div>
                       <Input
-                        label="Emergency Surcharge (USD)"
+                        label="Emergency Surcharge (PHP)"
                         type="number"
                         min="0"
                         value={form.emergencyService.surcharge}
                         onChange={(e) => handleEmergencyServiceChange("surcharge", Number(e.target.value))}
                         placeholder="50"
-                        leftIcon={<DollarSign />}
+                        leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                       />
                       <p className="text-xs text-gray-500 mt-1">
                         Additional fee for emergency service in your selected currency (e.g., 50 for $50)
@@ -1544,7 +1549,7 @@ export default function CreateServicePage() {
                     </div>
                     <div>
                       <Input
-                        label="Price (USD)"
+                        label="Price (PHP)"
                         type="number"
                         min="0"
                         value={newPackage.price}
@@ -1651,7 +1656,7 @@ export default function CreateServicePage() {
                           </button>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
-                          <span>${pkg.price} • {pkg.duration}h</span>
+                          <span>{formatCurrency(pkg.price, 'PHP', { appSettings })} • {pkg.duration}h</span>
                           <span>{pkg.features.length} features</span>
                         </div>
                       </div>
@@ -1680,7 +1685,7 @@ export default function CreateServicePage() {
                     </div>
                     <div>
                       <Input
-                        label="Price (USD)"
+                        label="Price (PHP)"
                         type="number"
                         min="0"
                         value={newAddon.price}
@@ -1741,7 +1746,7 @@ export default function CreateServicePage() {
                           </button>
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
-                          <span>${addon.price}</span>
+                          <span>{formatCurrency(addon.price, 'PHP', { appSettings })}</span>
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                             {addon.category}
                           </span>
@@ -1775,7 +1780,7 @@ export default function CreateServicePage() {
                     placeholder="Asia/Manila"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Your timezone in IANA format (e.g., "Asia/Manila", "America/New_York", "Europe/London")
+                    Your timezone in IANA format (e.g., &quot;Asia/Manila&quot;, &quot;America/New_York&quot;, &quot;Europe/London&quot;)
                   </p>
                 </div>
               </div>
@@ -1952,7 +1957,7 @@ export default function CreateServicePage() {
                   <span className="text-gray-500">Pricing:</span>
                   <p className="font-medium text-gray-900">
                     {form.pricing.basePrice > 0 
-                      ? `$${form.pricing.basePrice.toFixed(2)} ${form.pricing.type ? `(${pricingTypes.find(p => p.value === form.pricing.type)?.label || form.pricing.type})` : ''}`
+                      ? `${formatCurrency(form.pricing.basePrice, 'PHP', { appSettings })} ${form.pricing.type ? `(${pricingTypes.find(p => p.value === form.pricing.type)?.label || form.pricing.type})` : ''}`
                       : "Not set"}
                   </p>
                 </div>
@@ -2053,7 +2058,7 @@ export default function CreateServicePage() {
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Pricing:</span>
-                    <p className="text-gray-600">${form.pricing.basePrice} {form.pricing.currency} ({form.pricing.type})</p>
+                    <p className="text-gray-600">{formatCurrency(form.pricing.basePrice, 'PHP', { appSettings })} ({form.pricing.type})</p>
                   </div>
                   <div>
                     <span className="font-medium text-gray-700">Duration:</span>

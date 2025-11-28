@@ -225,8 +225,8 @@ export default function AcademyPage() {
     const [featuredCourses, setFeaturedCourses] = useState<Course[]>([]);
     const [myEnrollments, setMyEnrollments] = useState<Enrollment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [loadingFeatured, setLoadingFeatured] = useState(false);
-    const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+    const [, setLoadingFeatured] = useState(false);
+    const [, setLoadingEnrollments] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("relevance");
@@ -284,7 +284,7 @@ export default function AcademyPage() {
                 return {
                     regularPrice: priceValue,
                     discountedPrice: (course.pricing as Course['pricing'])?.discountedPrice || course.price || undefined,
-                    currency: (course.pricing as Course['pricing'])?.currency || course.currency || 'USD'
+                    currency: (course.pricing as Course['pricing'])?.currency || course.currency || 'PHP'
                 };
             })(),
             // Handle instructor
@@ -1082,13 +1082,13 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
             return {
                 regular: pricing.regularPrice,
                 discounted: pricing.discountedPrice,
-                currency: pricing.currency || 'USD'
+                currency: pricing.currency || 'PHP'
             };
         }
         return {
             regular: pricing.price || pricing.regularPrice || 0,
             discounted: pricing.discountedPrice || pricing.originalPrice,
-            currency: pricing.currency || 'USD'
+            currency: pricing.currency || 'PHP'
         };
     };
     const priceDisplay = getPriceDisplay();

@@ -82,7 +82,7 @@ export default function CreateAdPage() {
     budget: {
       total: "",
       daily: "",
-      currency: "USD"
+      currency: "PHP"
     },
     // Bidding structure
     bidding: {
@@ -325,7 +325,7 @@ export default function CreateAdPage() {
         budget: {
           total: parseFloat(formData.budget.total),
           daily: formData.budget.daily ? parseFloat(formData.budget.daily) : undefined,
-          currency: formData.budget.currency || 'USD'
+          currency: formData.budget.currency || 'PHP'
         },
         bidding: {
           strategy: formData.bidding.strategy,
@@ -595,9 +595,6 @@ export default function CreateAdPage() {
                     value={formData.budget.currency}
                     onValueChange={(value) => handleNestedChange(['budget', 'currency'], value)}
                     options={[
-                      { value: "USD", label: "USD" },
-                      { value: "EUR", label: "EUR" },
-                      { value: "GBP", label: "GBP" },
                       { value: "PHP", label: "PHP" }
                     ]}
                   />
@@ -1145,7 +1142,7 @@ export default function CreateAdPage() {
               <div className="text-xs text-gray-500">
                 <p>Category: {categories.find(c => c.value === formData.category)?.label || formData.category || "Not selected"}</p>
                 <p>Type: {adTypes.find(t => t.value === formData.type)?.label || formData.type || "Not selected"}</p>
-                <p>Budget: {formData.budget.currency || 'USD'} {formData.budget.total || "0"}</p>
+                <p>Budget: {formData.budget.currency || 'PHP'} {formData.budget.total || "0"}</p>
                 {formData.content.headline && (
                   <p className="mt-2 font-medium text-gray-700">{formData.content.headline}</p>
                 )}

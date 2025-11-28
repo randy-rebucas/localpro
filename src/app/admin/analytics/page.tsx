@@ -233,7 +233,8 @@ export default function AdminAnalyticsPage() {
     setSearchTerm('');
   };
 
-  const hasActiveFilters = eventTypeFilter !== 'all' || 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _hasActiveFilters = eventTypeFilter !== 'all' || 
                           moduleFilter !== 'all' || 
                           startDate || 
                           endDate || 

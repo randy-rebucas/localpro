@@ -232,11 +232,11 @@ const normalizeAdCampaign = (data: Partial<AdCampaign> & Record<string, unknown>
       ? {
           total: ((data.budget as AdCampaign['budget']).total || 0) as number,
           daily: (data.budget as AdCampaign['budget']).daily,
-          currency: (data.budget as AdCampaign['budget']).currency || 'USD'
+          currency: (data.budget as AdCampaign['budget']).currency || 'PHP'
         }
       : {
           total: (typeof data.budget === 'number' ? data.budget : 0) as number,
-          currency: 'USD'
+          currency: 'PHP'
         },
     bidding: data.bidding as AdCampaign['bidding'],
     schedule: data.schedule
@@ -717,7 +717,7 @@ export default function AdDetailPage() {
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">
-                  {ad.budget.currency || 'USD'} {(ad.performance?.cpc || 0).toFixed(2)}
+                  {ad.budget.currency || 'PHP'} {(ad.performance?.cpc || 0).toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-600">CPC</div>
               </div>
@@ -729,13 +729,13 @@ export default function AdDetailPage() {
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">
-                  {ad.budget.currency || 'USD'} {(ad.performance?.cpm || 0).toFixed(2)}
+                  {ad.budget.currency || 'PHP'} {(ad.performance?.cpm || 0).toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-600">CPM</div>
               </div>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">
-                  {ad.budget.currency || 'USD'} {(ad.performance?.spend || 0).toLocaleString()}
+                  {ad.budget.currency || 'PHP'} {(ad.performance?.spend || 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-600">Total Spend</div>
               </div>
@@ -788,14 +788,14 @@ export default function AdDetailPage() {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm text-gray-600">Total Budget</span>
                   <span className="font-medium">
-                    {ad.budget.currency || 'USD'} {ad.budget.total.toLocaleString()}
+                    {ad.budget.currency || 'PHP'} {ad.budget.total.toLocaleString()}
                   </span>
                 </div>
                 {ad.budget.daily && (
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-gray-600">Daily Budget</span>
                     <span className="font-medium">
-                      {ad.budget.currency || 'USD'} {ad.budget.daily.toLocaleString()}
+                      {ad.budget.currency || 'PHP'} {ad.budget.daily.toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -807,7 +807,7 @@ export default function AdDetailPage() {
                 </div>
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>
-                    Spent: {ad.budget.currency || 'USD'} {(ad.performance?.spend || 0).toLocaleString()}
+                    Spent: {ad.budget.currency || 'PHP'} {(ad.performance?.spend || 0).toLocaleString()}
                   </span>
                   <span>
                     {ad.budget.total > 0 ? (((ad.performance?.spend || 0) / ad.budget.total) * 100).toFixed(1) : 0}%
@@ -827,7 +827,7 @@ export default function AdDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Bid Amount:</span>
                         <span className="font-medium">
-                          {ad.budget.currency || 'USD'} {ad.bidding.bidAmount.toLocaleString()}
+                          {ad.budget.currency || 'PHP'} {ad.bidding.bidAmount.toLocaleString()}
                         </span>
                       </div>
                     )}
@@ -835,7 +835,7 @@ export default function AdDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Max Bid:</span>
                         <span className="font-medium">
-                          {ad.budget.currency || 'USD'} {ad.bidding.maxBid.toLocaleString()}
+                          {ad.budget.currency || 'PHP'} {ad.bidding.maxBid.toLocaleString()}
                         </span>
                       </div>
                     )}
@@ -876,7 +876,7 @@ export default function AdDetailPage() {
                       <div className="flex justify-between">
                         <span className="text-gray-600">Budget:</span>
                         <span className="font-medium">
-                          {ad.budget.currency || 'USD'} {ad.promotion.budget.toLocaleString()}
+                          {ad.budget.currency || 'PHP'} {ad.promotion.budget.toLocaleString()}
                         </span>
                       </div>
                     )}

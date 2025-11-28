@@ -58,31 +58,10 @@ export function ServiceCard({
   const defaultCurrencyCode = getDefaultCurrency(appSettings);
   const defaultCurrencySymbol = getCurrencySymbol(defaultCurrencyCode);
   
-  // Normalize currency - ensure it's a symbol (convert code to symbol if needed)
+  // Normalize currency to PHP symbol only
   const normalizeCurrencyToSymbol = (curr: string | undefined): string => {
-    // Use default from app settings if not provided
-    if (!curr) return defaultCurrencySymbol;
-    
-    // If it's already a symbol, return it
-    const symbolMap: Record<string, string> = {
-      '₱': '₱', '$': '$', '€': '€', '£': '£', '¥': '¥', 'A$': 'A$', 'C$': 'C$', 'S$': 'S$'
-    };
-    if (symbolMap[curr]) return curr;
-    
-    // If it's a currency code, convert to symbol
-    if (CURRENCY_CONFIGS[curr.toUpperCase()]) {
-      return getCurrencySymbol(curr.toUpperCase());
-    }
-    
-    // Try to find by symbol in configs
-    for (const [, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === curr) {
-        return curr;
-      }
-    }
-    
-    // Default to app settings currency symbol
-    return defaultCurrencySymbol;
+    // Always return PHP symbol (₱) as the only supported currency
+    return '₱';
   };
   
   const currencySymbol = normalizeCurrencyToSymbol(currency);

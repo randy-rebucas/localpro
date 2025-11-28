@@ -96,7 +96,7 @@ const transformServiceData = (apiService: ApiServiceData): Service => {
     pricing: apiService.pricing || {
       type: 'fixed' as PricingType,
       basePrice: 0,
-      currency: 'USD'
+      currency: 'PHP'
     },
     serviceArea: apiService.serviceArea || [],
     images: apiService.images || [],
@@ -1410,12 +1410,7 @@ function CreateServiceForm({
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
-            <option value="USD">USD</option>
             <option value="PHP">PHP</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-            <option value="JPY">JPY</option>
           </select>
         </div>
       </div>
@@ -1573,12 +1568,7 @@ function EditServiceForm({
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value={getDefaultCurrency(appSettings)}>{getDefaultCurrency(appSettings)}</option>
-            <option value="USD">USD</option>
             <option value="PHP">PHP</option>
-            <option value="EUR">EUR</option>
-            <option value="GBP">GBP</option>
-            <option value="JPY">JPY</option>
           </select>
         </div>
       </div>

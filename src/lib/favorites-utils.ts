@@ -6,6 +6,7 @@
  * - 'provider' → Provider (uses /api/providers)
  * - 'course' → Course (uses /api/academy/courses)
  * - 'supply' → Product (uses /api/supplies/products)
+ * - 'job' → Job (uses /api/jobs)
  */
 
 import { API_BASE_URL, API_ENDPOINTS } from "./api";
@@ -13,7 +14,7 @@ import { createAuthFetchOptions } from "./auth-utils";
 import { logger } from "./logger";
 import toast from "react-hot-toast";
 
-export type ItemType = 'service' | 'provider' | 'course' | 'supply';
+export type ItemType = 'service' | 'provider' | 'course' | 'supply' | 'job';
 
 export interface FavoritePayload {
   itemType: ItemType;
@@ -24,7 +25,7 @@ export interface FavoritePayload {
 
 /**
  * Get the API endpoint for fetching an item by type and ID
- * @param itemType - The type of item ('service' | 'provider' | 'course' | 'supply')
+ * @param itemType - The type of item ('service' | 'provider' | 'course' | 'supply' | 'job')
  * @param itemId - The ID of the item
  * @returns The API endpoint path
  */
@@ -42,6 +43,9 @@ export function getItemEndpoint(itemType: ItemType, itemId: string): string {
     case 'supply':
       // Product (from supplies/products)
       return `${API_ENDPOINTS.suppliesProductsById.replace('[id]', itemId)}`;
+    case 'job':
+      // Job
+      return `${API_ENDPOINTS.jobsById}/${itemId}`;
   }
 }
 

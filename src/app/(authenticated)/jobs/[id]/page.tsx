@@ -36,6 +36,9 @@ import { Job as JobType, Language } from "@/types/jobs";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency, CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
+import { useToast, ToastContainer } from "@/components/ui/toast";
+import { useSession } from "@/hooks/useAuth";
+import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
 
 interface ApplicationForm {
   coverLetter: string;
@@ -57,6 +60,7 @@ export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { settings: appSettings } = useAppSettings();
+  const { data: session } = useSession();
   const [job, setJob] = useState<JobType | null>(null);
   const [relatedJobs, setRelatedJobs] = useState<RelatedJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +75,10 @@ export default function JobDetailPage() {
   const [applicationLoading, setApplicationLoading] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const [shareFeedback, setShareFeedback] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const { toasts, success: showSuccessToast, error: showErrorToast, removeToast } = useToast();
 
   // Get default currency from app settings
   const defaultCurrency = getDefaultCurrency(appSettings);
@@ -117,11 +124,19 @@ export default function JobDetailPage() {
       const jobData = data?.data || data?.job || data;
       setJob(jobData);
       
-      // Load favorite status from localStorage
+      // Load favorite status from API
       const fetchedJobId = jobData._id || jobData.id;
-      if (fetchedJobId) {
-        const favorites = JSON.parse(localStorage.getItem('favoriteJobs') || '[]');
-        setIsFavorited(favorites.includes(fetchedJobId));
+      if (fetchedJobId && getApiToken()) {
+        try {
+          const favorited = await checkFavorite('job', fetchedJobId);
+          setIsFavorited(favorited);
+        } catch (error) {
+          logger.error('Error loading favorite status', error instanceof Error ? error : new Error(String(error)), { jobId: fetchedJobId });
+          // Default to false if check fails
+          setIsFavorited(false);
+        }
+      } else {
+        setIsFavorited(false);
       }
     } catch (error) {
       logger.error("Error fetching job", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
@@ -155,37 +170,36 @@ export default function JobDetailPage() {
     }
   }, [params.id, fetchJob, fetchRelatedJobs]);
 
-  const handleToggleFavorite = useCallback(() => {
-    if (!job) return;
+  const handleToggleFavorite = useCallback(async () => {
+    if (!job || isTogglingFavorite) return;
     
     const jobId = job._id || (job as Partial<JobType> & { id?: string }).id;
     if (!jobId) return;
     
-    const newFavorited = !isFavorited;
+    // Check if user is authenticated
+    if (!getApiToken()) {
+      showErrorToast('Please log in to add favorites');
+      return;
+    }
     
+    setIsTogglingFavorite(true);
     try {
-      const favorites = JSON.parse(localStorage.getItem('favoriteJobs') || '[]');
+      const newFavorited = await toggleFavorite('job', jobId);
+      setIsFavorited(newFavorited);
       
       if (newFavorited) {
-        // Add to favorites if not already present
-        if (!favorites.includes(jobId)) {
-          favorites.push(jobId);
-        }
+        showSuccessToast('Added to favorites');
       } else {
-        // Remove from favorites
-        const index = favorites.indexOf(jobId);
-        if (index > -1) {
-          favorites.splice(index, 1);
-        }
+        showSuccessToast('Removed from favorites');
       }
-      
-      localStorage.setItem('favoriteJobs', JSON.stringify(favorites));
-      setIsFavorited(newFavorited);
     } catch (error) {
-      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { jobId: params.id, isFavorited: newFavorited });
+      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
+      showErrorToast('Failed to update favorite. Please try again.');
+    } finally {
+      setIsTogglingFavorite(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [job, isFavorited]);
+  }, [job, isTogglingFavorite]);
 
   const handleShare = useCallback(async () => {
     if (!job) return;
@@ -232,10 +246,23 @@ export default function JobDetailPage() {
     e.preventDefault();
     if (!job) return;
 
+    // Early validation: Prevent applying to own job before any processing
+    if (isJobOwner()) {
+      showErrorToast('You cannot apply to your own job posting');
+      setApplicationLoading(false);
+      setShowApplicationForm(false);
+      return;
+    }
+
     try {
       setApplicationLoading(true);
       if (!getApiToken()) {
         throw new Error('Please log in to apply for this job');
+      }
+
+      // Double-check: Prevent applying to own job (defense in depth)
+      if (isJobOwner()) {
+        throw new Error('You cannot apply to your own job posting');
       }
       
       const jobId = job._id || String(params.id);
@@ -321,43 +348,11 @@ export default function JobDetailPage() {
   };
 
 
-  // Normalize currency to code for conversion base, then format with symbol
+  // Normalize currency to PHP only
   const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
-    if (!currency) return defaultCurrency;
-    
-    // If it's already a valid currency code, return it
-    if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-      return currency.toUpperCase();
-    }
-    
-    // Map currency symbols to codes
-    const symbolToCode: Record<string, string> = {
-      '₱': 'PHP',
-      '$': 'USD',
-      '€': 'EUR',
-      '£': 'GBP',
-      '¥': 'JPY',
-      'A$': 'AUD',
-      'C$': 'CAD',
-      'S$': 'SGD',
-    };
-    
-    // Check if it's a symbol
-    const normalized = currency.trim();
-    if (symbolToCode[normalized]) {
-      return symbolToCode[normalized];
-    }
-    
-    // Try to find by symbol in configs
-    for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === normalized) {
-        return code;
-      }
-    }
-    
-    // Default to app settings currency if not found
-    return defaultCurrency;
-  }, [defaultCurrency]);
+    // Always return PHP as the only supported currency
+    return 'PHP';
+  }, []);
 
   const formatPrice = useCallback((price: number, currency?: string) => {
     // Normalize currency to code for conversion base
@@ -397,6 +392,44 @@ export default function JobDetailPage() {
     return job?.company?.location?.isRemote;
   };
 
+  // Check if current user is the job owner/employer
+  const isJobOwner = useCallback(() => {
+    if (!job || !session?.user) return false;
+    
+    // Get current user ID (handle different ID field formats)
+    const currentUserId = session.user.id || session.user._id || session.user.userId;
+    if (!currentUserId) return false;
+    
+    // Get job employer ID (handle both string and object formats)
+    let jobEmployerId: string | undefined;
+    if (typeof job.employer === 'string') {
+      jobEmployerId = job.employer;
+    } else if (job.employer && typeof job.employer === 'object') {
+      // Handle populated employer object
+      jobEmployerId = (job.employer as { _id?: string; id?: string; userId?: string })._id 
+        || (job.employer as { _id?: string; id?: string; userId?: string }).id
+        || (job.employer as { _id?: string; id?: string; userId?: string }).userId;
+    }
+    
+    if (!jobEmployerId) return false;
+    
+    // Compare IDs as strings (normalize to string for comparison)
+    return String(currentUserId) === String(jobEmployerId);
+  }, [job, session]);
+
+  // Update isOwner state when job or session changes
+  useEffect(() => {
+    setIsOwner(isJobOwner());
+  }, [isJobOwner]);
+
+  // Prevent application form from opening if user is job owner
+  useEffect(() => {
+    if (showApplicationForm && (isJobOwner() || isOwner)) {
+      setShowApplicationForm(false);
+      showErrorToast('You cannot apply to your own job posting');
+    }
+  }, [showApplicationForm, isJobOwner, isOwner, showErrorToast]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -423,6 +456,8 @@ export default function JobDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
@@ -491,14 +526,15 @@ export default function JobDetailPage() {
             </button>
             <button 
               onClick={handleToggleFavorite}
+              disabled={isTogglingFavorite}
               className={`p-3 rounded-full transition-all hover:scale-110 ${
                 isFavorited 
                   ? 'bg-red-100 text-red-600 hover:bg-red-200' 
                   : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-600'
-              }`}
+              } ${isTogglingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
               title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''} ${isTogglingFavorite ? 'animate-pulse' : ''}`} />
             </button>
           </div>
         </div>
@@ -578,12 +614,21 @@ export default function JobDetailPage() {
               </div>
             );
           })()}
-          <button
-            onClick={() => setShowApplicationForm(true)}
-            className="bg-green-600 text-white px-8 py-3.5 rounded-lg hover:bg-green-700 active:bg-green-800 transition-all font-semibold text-base shadow-md hover:shadow-lg w-full sm:w-auto"
-          >
-            Apply Now
-          </button>
+          {!isOwner && (
+            <button
+              onClick={() => {
+                // Double-check: prevent opening form if user is job owner
+                if (isJobOwner()) {
+                  showErrorToast('You cannot apply to your own job posting');
+                  return;
+                }
+                setShowApplicationForm(true);
+              }}
+              className="bg-green-600 text-white px-8 py-3.5 rounded-lg hover:bg-green-700 active:bg-green-800 transition-all font-semibold text-base shadow-md hover:shadow-lg w-full sm:w-auto"
+            >
+              Apply Now
+            </button>
+          )}
         </div>
       </div>
 
@@ -1082,7 +1127,7 @@ export default function JobDetailPage() {
       </div>
 
       {/* Application Modal */}
-      {showApplicationForm && (
+      {showApplicationForm && !isOwner && (
         <div 
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200"
           onClick={() => setShowApplicationForm(false)}

@@ -21,7 +21,10 @@ const hiringTips = [
   "Respond quickly to top applicants"
 ];
 
-export function JobMarketplace({ userName }: JobMarketplaceProps) {
+export function JobMarketplace({ 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  userName: _userName 
+}: JobMarketplaceProps) {
   const router = useRouter();
   const { isProvider, isAdmin } = useRoleAccess();
 

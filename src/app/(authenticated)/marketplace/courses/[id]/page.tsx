@@ -215,7 +215,7 @@ export default function CourseDetailPage() {
     const pricingObj = courseData.pricing as Course['pricing'];
     const legacyPrice = courseData.price as number;
     const legacyOriginalPrice = courseData.originalPrice as number;
-    const legacyCurrency = (courseData.currency as string) || 'USD';
+    const legacyCurrency = (courseData.currency as string) || 'PHP';
 
     // Handle instructor with nested profile
     let normalizedInstructor: Course['instructor'];
@@ -456,7 +456,7 @@ export default function CourseDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [course]);
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
+  const formatPrice = (price: number, currency: string = 'PHP') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
@@ -503,14 +503,14 @@ export default function CourseDetailPage() {
       return {
         price: course.pricing.discountedPrice,
         originalPrice: course.pricing.regularPrice,
-        currency: course.pricing.currency || 'USD'
+        currency: course.pricing.currency || 'PHP'
       };
     }
     if (course?.price !== undefined) {
       return {
         price: course.price,
         originalPrice: course.originalPrice,
-        currency: course.currency || 'USD'
+        currency: course.currency || 'PHP'
       };
     }
     return null;

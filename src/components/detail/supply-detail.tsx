@@ -122,11 +122,11 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
           {supply.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ${supply.pricing.retailPrice}
+                ₱{supply.pricing.retailPrice}
               </span>
               {supply.pricing.wholesalePrice && (
                 <span className="text-lg text-gray-500">
-                  (Wholesale: ${supply.pricing.wholesalePrice})
+                  (Wholesale: ₱{supply.pricing.wholesalePrice})
                 </span>
               )}
             </div>
@@ -245,17 +245,17 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Retail Price</span>
-                <span className="font-semibold">${supply.pricing.retailPrice}</span>
+                <span className="font-semibold">₱{supply.pricing.retailPrice}</span>
               </div>
               {supply.pricing.wholesalePrice && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Wholesale Price</span>
-                  <span className="font-semibold">${supply.pricing.wholesalePrice}</span>
+                  <span className="font-semibold">₱{supply.pricing.wholesalePrice}</span>
                 </div>
               )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Currency</span>
-                <span className="font-semibold">{supply.pricing.currency || "USD"}</span>
+                <span className="font-semibold">{supply.pricing.currency || "PHP"}</span>
               </div>
             </div>
           </Card>
