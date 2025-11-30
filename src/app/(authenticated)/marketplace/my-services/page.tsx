@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface Service {
   id: string;
@@ -292,8 +292,8 @@ export default function MyServicesPage() {
   };
 
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    // Always return PHP as the only supported currency
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+    void _currency;
     return 'PHP';
   };
 

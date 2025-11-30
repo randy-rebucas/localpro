@@ -4,9 +4,6 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
-import { getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
-import { useAppSettings } from "@/hooks/useAppSettings";
-import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface ServiceCardProps {
   id: number;
@@ -51,16 +48,12 @@ export function ServiceCard({
   viewMode = 'list',
 }: ServiceCardProps) {
   const router = useRouter();
-  const { settings: appSettings } = useAppSettings();
   const [isNavigating, setIsNavigating] = React.useState(false);
   
-  // Get default currency from app settings
-  const defaultCurrencyCode = getDefaultCurrency(appSettings);
-  const defaultCurrencySymbol = getCurrencySymbol(defaultCurrencyCode);
-  
   // Normalize currency to PHP symbol only
-  const normalizeCurrencyToSymbol = (curr: string | undefined): string => {
+  const normalizeCurrencyToSymbol = (_curr: string | undefined): string => {
     // Always return PHP symbol (₱) as the only supported currency
+    void _curr;
     return '₱';
   };
   

@@ -16,12 +16,7 @@ import {
   Sparkles,
   Loader2
 } from "lucide-react";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
@@ -339,16 +334,6 @@ export default function EditRentalPage() {
     }));
   };
 
-  const handleRequirementsChange = (field: string, value: string | number | boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      requirements: {
-        ...prev.requirements,
-        [field]: value
-      }
-    }));
-  };
-
   const handleFeatureToggle = (feature: string) => {
     setFormData(prev => ({
       ...prev,
@@ -358,22 +343,6 @@ export default function EditRentalPage() {
           ? prev.specifications.features.filter(f => f !== feature)
           : [...prev.specifications.features, feature]
       }
-    }));
-  };
-
-  const handleTagAdd = (tag: string) => {
-    if (tag.trim() && !formData.tags.includes(tag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag.trim()]
-      }));
-    }
-  };
-
-  const handleTagRemove = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -491,16 +460,104 @@ export default function EditRentalPage() {
       const url = `${API_BASE_URL}${API_ENDPOINTS.rentalsById}/${params.id}`;
       
       // Build payload according to API structure
-      const payload: any = {
+      interface RentalPayload {
+        name: string;
+        title: string;
+        description: string;
+        category: string;
+        subcategory: string;
+        pricing?: {
+          hourly?: number;
+          daily?: number;
+          weekly?: number;
+          monthly?: number;
+          currency: string;
+        };
+        location: {
+          address: {
+            street: string;
+            city: string;
+            state: string;
+            zipCode: string;
+            country: string;
+          };
+          pickupRequired: boolean;
+          deliveryAvailable: boolean;
+          coordinates?: {
+            lat: number;
+            lng: number;
+          };
+          deliveryFee?: number;
+        };
+        specifications?: {
+          brand?: string;
+          model?: string;
+          year?: number;
+          condition: string;
+          features?: string[];
+          dimensions?: {
+            length?: number;
+            width?: number;
+            height?: number;
+            unit: string;
+          };
+          weight?: {
+            value: number;
+            unit: string;
+          };
+        };
+        availability: {
+          isAvailable: boolean;
+          schedule: Array<{
+            startDate: string;
+            endDate: string;
+            reason: "rented" | "maintenance" | "unavailable";
+          }>;
+        };
+        requirements?: {
+          minAge?: number;
+          licenseRequired: boolean;
+          licenseType?: string;
+          deposit?: number;
+          insuranceRequired?: boolean;
+        };
+        tags?: string[];
+        isActive?: boolean;
+      }
+
+      const payload: RentalPayload = {
         name: formData.name.trim(),
         title: formData.title.trim() || formData.name.trim(),
         description: formData.description.trim(),
         category: formData.category,
         subcategory: formData.subcategory,
+        location: {
+          address: {
+            street: "",
+            city: "",
+            state: "",
+            zipCode: "",
+            country: ""
+          },
+          pickupRequired: false,
+          deliveryAvailable: false
+        },
+        availability: {
+          isAvailable: true,
+          schedule: []
+        }
       };
 
       // Add pricing if at least one option is provided
-      const pricing: any = {};
+      const pricing: {
+        hourly?: number;
+        daily?: number;
+        weekly?: number;
+        monthly?: number;
+        currency: string;
+      } = {
+        currency: formData.pricing.currency
+      };
       if (formData.pricing.hourly) pricing.hourly = parseFloat(formData.pricing.hourly);
       if (formData.pricing.daily) pricing.daily = parseFloat(formData.pricing.daily);
       if (formData.pricing.weekly) pricing.weekly = parseFloat(formData.pricing.weekly);
@@ -509,7 +566,22 @@ export default function EditRentalPage() {
       if (Object.keys(pricing).length > 1) payload.pricing = pricing;
 
       // Add location
-      const location: any = {
+      const location: {
+        address: {
+          street: string;
+          city: string;
+          state: string;
+          zipCode: string;
+          country: string;
+        };
+        pickupRequired: boolean;
+        deliveryAvailable: boolean;
+        coordinates?: {
+          lat: number;
+          lng: number;
+        };
+        deliveryFee?: number;
+      } = {
         address: {
           street: formData.location.address.street.trim(),
           city: formData.location.address.city.trim(),
@@ -529,14 +601,40 @@ export default function EditRentalPage() {
       if (formData.location.deliveryAvailable && formData.location.deliveryFee) {
         location.deliveryFee = parseFloat(formData.location.deliveryFee);
       }
-      payload.location = location;
+      // Update location with actual values
+      payload.location.address = location.address;
+      payload.location.pickupRequired = location.pickupRequired;
+      payload.location.deliveryAvailable = location.deliveryAvailable;
+      if (location.coordinates) {
+        payload.location.coordinates = location.coordinates;
+      }
+      if (location.deliveryFee !== undefined) {
+        payload.location.deliveryFee = location.deliveryFee;
+      }
 
       // Add specifications
-      const specifications: any = {};
+      const specifications: {
+        brand?: string;
+        model?: string;
+        year?: number;
+        condition: string;
+        features?: string[];
+        dimensions?: {
+          length?: number;
+          width?: number;
+          height?: number;
+          unit: string;
+        };
+        weight?: {
+          value: number;
+          unit: string;
+        };
+      } = {
+        condition: formData.specifications.condition
+      };
       if (formData.specifications.brand) specifications.brand = formData.specifications.brand;
       if (formData.specifications.model) specifications.model = formData.specifications.model;
       if (formData.specifications.year) specifications.year = parseInt(formData.specifications.year);
-      specifications.condition = formData.specifications.condition;
       if (formData.specifications.features.length > 0) {
         specifications.features = formData.specifications.features;
       }
@@ -563,9 +661,16 @@ export default function EditRentalPage() {
       };
 
       // Add requirements if any are provided
-      const requirements: any = {};
+      const requirements: {
+        minAge?: number;
+        licenseRequired: boolean;
+        licenseType?: string;
+        deposit?: number;
+        insuranceRequired?: boolean;
+      } = {
+        licenseRequired: formData.requirements.licenseRequired
+      };
       if (formData.requirements.minAge) requirements.minAge = parseInt(formData.requirements.minAge);
-      requirements.licenseRequired = formData.requirements.licenseRequired;
       if (formData.requirements.licenseType) requirements.licenseType = formData.requirements.licenseType;
       if (formData.requirements.deposit) requirements.deposit = parseFloat(formData.requirements.deposit);
       requirements.insuranceRequired = formData.requirements.insuranceRequired;

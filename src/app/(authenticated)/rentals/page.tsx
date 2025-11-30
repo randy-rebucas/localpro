@@ -19,8 +19,7 @@ import {
 } from "lucide-react";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { logger } from "@/lib/logger";
-import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
-import { getDefaultCurrency } from "@/lib/settings-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useRoleAccess } from "@/components/role-guard";
 
@@ -279,8 +278,9 @@ export default function RentalsPage() {
   });
 
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
     // Always return PHP as the only supported currency
+    void _currency;
     return 'PHP';
   };
 

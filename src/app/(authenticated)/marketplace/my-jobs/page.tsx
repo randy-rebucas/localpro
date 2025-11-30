@@ -23,7 +23,7 @@ import {
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Job, JobStatus } from "@/types/jobs";
@@ -150,8 +150,8 @@ export default function MyJobsPage() {
   }, [fetchJobs]);
 
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    // Always return PHP as the only supported currency
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+    void _currency;
     return 'PHP';
   };
 

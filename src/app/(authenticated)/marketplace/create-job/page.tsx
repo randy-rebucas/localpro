@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   X,
   Plus,
-  Clock,
   Calendar,
   MapPin,
   Briefcase,
@@ -20,11 +19,7 @@ import {
   DollarSign,
   Target,
   Users,
-  GraduationCap,
-  Award,
-  Globe,
-  Settings,
-  Tag
+  Settings
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -35,7 +30,6 @@ import { logger } from "@/lib/logger";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
-import { getDefaultCurrency } from "@/lib/settings-utils";
 import { useJobCategories } from "@/hooks/useJobCategories";
 
 interface JobForm {
@@ -250,7 +244,7 @@ export default function CreateJobPage() {
     };
 
     fetchSubcategories();
-  }, [form.category, jobCategories]);
+  }, [form.category, form.subcategory, jobCategories]);
 
   const availableSubcategories = subcategories.length > 0 
     ? subcategories 
@@ -402,15 +396,7 @@ export default function CreateJobPage() {
     }));
   };
 
-  const handleRequirementsChange = (field: string, value: any) => {
-    setForm(prev => ({
-      ...prev,
-      requirements: {
-        ...prev.requirements,
-        [field]: value
-      }
-    }));
-  };
+  // requirements handler removed (unused) to satisfy ESLint - keep logic available via form setters if needed
 
   const handleEducationChange = (field: string, value: string | boolean) => {
     setForm(prev => ({

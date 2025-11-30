@@ -26,7 +26,7 @@ import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getDefaultCurrency } from "@/lib/settings-utils";
-import { formatCurrency as formatCurrencyUtil, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 import { useRoleAccess } from "@/components/role-guard";
 import { CommunicationAPI } from "@/lib/communication-utils";
 
@@ -181,8 +181,9 @@ export default function BookingDetailPage() {
 
   const formatPrice = useCallback((price: number, currency?: string) => {
     // Normalize currency to PHP only
-    const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-      // Always return PHP as the only supported currency
+    const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+      // Mark param as intentionally unused and always return PHP
+      void _currency;
       return 'PHP';
     };
     
@@ -262,7 +263,7 @@ export default function BookingDetailPage() {
       
       // Normalize currency to PHP only
       const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-        // Always return PHP as the only supported currency
+        void currency;
         return 'PHP';
       };
       
@@ -560,7 +561,7 @@ export default function BookingDetailPage() {
       logger.error('Error generating PDF receipt', error instanceof Error ? error : new Error(String(error)), { bookingId: booking._id || booking.id });
       alert('Failed to generate PDF. Please ensure jspdf is installed: npm install jspdf');
     }
-  }, [booking, params.id, appSettings, formatPrice, formatTime]);
+  }, [booking, params.id, formatPrice, formatTime]);
 
   const handleViewService = useCallback(() => {
     if (!booking) return;

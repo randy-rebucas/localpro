@@ -10,8 +10,7 @@ import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { formatCurrency, CURRENCY_CONFIGS } from "@/lib/currency-utils";
-import { getDefaultCurrency } from "@/lib/settings-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // UserId Interface
 interface UserIdData {
@@ -330,7 +329,8 @@ export default function ProviderDetailPage() {
   
   // Normalize currency to PHP only
   const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
-    // Always return PHP as the only supported currency
+    // Mark param as intentionally unused and always return PHP
+    void currency;
     return 'PHP';
   }, []);
   

@@ -141,6 +141,7 @@ export default function MyOrdersPage() {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("All Payment");
   const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
 
   // Mock data for development - remove when API is integrated
   const mockOrders = useMemo((): SupplyOrder[] => [

@@ -35,7 +35,6 @@ import {
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
-import { AppSettings } from "@/types/app-settings";
 
 // Type for API service response (raw data from backend)
 interface ApiServiceData {
@@ -1167,7 +1166,6 @@ export default function MarketplacePage() {
         <CreateServiceForm 
           formData={createFormData}
           setFormData={setCreateFormData}
-          appSettings={appSettings}
         />
       </Modal>
 
@@ -1205,7 +1203,6 @@ export default function MarketplacePage() {
           <EditServiceForm 
             formData={editFormData}
             setFormData={setEditFormData}
-            appSettings={appSettings}
           />
         )}
       </Modal>
@@ -1297,10 +1294,8 @@ export default function MarketplacePage() {
 // Create Service Form Component
 function CreateServiceForm({ 
   formData, 
-  setFormData,
-  appSettings
+  setFormData
 }: {
-  appSettings: AppSettings | null; 
   formData: {
     title: string;
     description: string;
@@ -1455,10 +1450,8 @@ function CreateServiceForm({
 // Edit Service Form Component
 function EditServiceForm({ 
   formData, 
-  setFormData,
-  appSettings
+  setFormData
 }: {
-  appSettings: AppSettings | null; 
   formData: {
     title: string;
     description: string;

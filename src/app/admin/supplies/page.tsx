@@ -28,7 +28,6 @@ import { Product, ProductCategory, ProductImage } from "@/types/supplies";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
-import { AppSettings } from "@/types/app-settings";
 
 // Extended ProductImage interface for admin page (includes _id)
 type ProductImageWithId = ProductImage & { _id?: string };
@@ -1502,7 +1501,6 @@ export default function AdminSuppliesPage() {
         <CreateProductForm 
           formData={createFormData}
           setFormData={setCreateFormData}
-          appSettings={appSettings}
         />
       </Modal>
 
@@ -1540,7 +1538,6 @@ export default function AdminSuppliesPage() {
           <EditProductForm 
             formData={editFormData}
             setFormData={setEditFormData}
-            appSettings={appSettings}
           />
         )}
       </Modal>
@@ -1633,10 +1630,8 @@ export default function AdminSuppliesPage() {
 // Create Product Form Component
 function CreateProductForm({ 
   formData, 
-  setFormData,
-  appSettings
+  setFormData
 }: {
-  appSettings: AppSettings | null; 
   formData: {
     name: string;
     title: string;
@@ -1824,10 +1819,8 @@ function CreateProductForm({
 // Edit Product Form Component
 function EditProductForm({ 
   formData, 
-  setFormData,
-  appSettings
+  setFormData
 }: {
-  appSettings: AppSettings | null; 
   formData: {
     name: string;
     title: string;

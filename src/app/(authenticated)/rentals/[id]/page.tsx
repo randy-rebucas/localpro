@@ -23,8 +23,6 @@ import {
   Calendar,
   Package
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -147,7 +145,26 @@ interface Rental {
   isFeatured?: boolean;
   isFavorited?: boolean;
   tags?: string[];
-  bookings?: any[];
+  bookings?: Array<{
+    user?: string | {
+      _id?: string;
+      id?: string;
+      firstName?: string;
+      lastName?: string;
+    };
+    startDate?: string | Date;
+    endDate?: string | Date;
+    quantity?: number;
+    totalCost?: number;
+    specialRequests?: string;
+    contactInfo?: {
+      phone?: string;
+      email?: string;
+    };
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
+  }>;
   reviews?: Array<{
     _id?: string;
     user: {
@@ -205,7 +222,7 @@ export default function RentalDetailPage() {
   });
 
   // Helper to get image URL (handles both string and object formats)
-  const getImageUrl = (image: string | RentalImage | undefined, index: number = 0): string | null => {
+  const getImageUrl = (image: string | RentalImage | undefined): string | null => {
     if (!image) return null;
     if (typeof image === 'string') {
       return image.trim() !== '' ? image : null;
@@ -223,7 +240,7 @@ export default function RentalDetailPage() {
   };
 
   // Get rental ID (handles both _id and id)
-  const rentalId = rental?.id || rental?._id || params.id;
+  // Note: rentalId variable removed (unused) but params.id available where needed
 
   // Get status from availability
   const rentalStatus = rental?.availability?.isAvailable ? 'available' : 'unavailable';
@@ -275,7 +292,7 @@ export default function RentalDetailPage() {
 
         const responseData = await response.json();
         // Handle different response structures
-        let rentalData = responseData.data || responseData;
+        const rentalData = responseData.data || responseData;
 
         // Normalize _id to id for consistency
         if (rentalData._id && !rentalData.id) {
@@ -514,7 +531,7 @@ export default function RentalDetailPage() {
           <div className="flex-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-bold text-gray-900">{rental.name}</h1>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${getStatusColor(rentalStatus as any)}`}>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${getStatusColor(rentalStatus)}`}>
                 {rentalStatus}
               </span>
               {rental.isFeatured && (
@@ -597,7 +614,7 @@ export default function RentalDetailPage() {
                     <div className="p-4 bg-gradient-to-br from-gray-50 to-white">
                       <div className="flex gap-2 overflow-x-auto">
                         {rental.images.map((image, index) => {
-                          const imgUrl = getImageUrl(image, index);
+                          const imgUrl = getImageUrl(image);
                           if (!imgUrl) return null;
                           return (
                             <button

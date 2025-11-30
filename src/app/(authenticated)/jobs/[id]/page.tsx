@@ -34,7 +34,7 @@ import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { Job as JobType, Language } from "@/types/jobs";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import { formatCurrency, CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { useSession } from "@/hooks/useAuth";
@@ -349,8 +349,9 @@ export default function JobDetailPage() {
 
 
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
-    // Always return PHP as the only supported currency
+  const normalizeCurrencyCode = useCallback((_currency: string | undefined | null): string => {
+    // Mark param as intentionally unused to satisfy linter, always return PHP
+    void _currency;
     return 'PHP';
   }, []);
 

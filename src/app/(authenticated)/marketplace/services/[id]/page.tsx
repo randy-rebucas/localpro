@@ -23,7 +23,7 @@ import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
-import { formatCurrency, getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency-utils";
 import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 
@@ -475,8 +475,8 @@ export default function ServiceDetailPage() {
 
 
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-    // Always return PHP as the only supported currency
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+    void _currency;
     return 'PHP';
   };
 

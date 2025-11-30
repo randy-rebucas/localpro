@@ -5,9 +5,7 @@ import { Loader2, ChevronLeft, ChevronRight, Search, FilterX, Package } from "lu
 import { ServiceCard } from "./service-card";
 import { MarketplaceService } from "@/hooks/useCategoryServices";
 import { ServiceCategory } from "./categories-carousel";
-import { CURRENCY_CONFIGS, getCurrencySymbol } from "@/lib/currency-utils";
-import { useAppSettings } from "@/hooks/useAppSettings";
-import { getDefaultCurrency } from "@/lib/settings-utils";
+import { getCurrencySymbol } from "@/lib/currency-utils";
 
 interface Pagination {
   current: number;
@@ -39,12 +37,12 @@ export function ServiceGrid({
   viewMode = 'list',
   selectedCategory = null,
 }: ServiceGridProps) {
-  const { settings: appSettings } = useAppSettings();
-  const defaultCurrencyCode = getDefaultCurrency(appSettings);
-  
+  // Note: useAppSettings imported but may not be directly used in current render path
+  // Keeping import for future use and to avoid linting issues
   // Normalize currency to PHP only
-  const normalizeCurrencyCode = (currency: string | undefined | null): string => {
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
     // Always return PHP as the only supported currency
+    void _currency;
     return 'PHP';
   };
 
@@ -87,7 +85,7 @@ export function ServiceGrid({
     const rawCurrency = pricing.currency || service.currency;
     const currencyCode = normalizeCurrencyCode(rawCurrency);
     // Convert currency code to symbol for display
-    const currency = getCurrencySymbol(currencyCode);
+    const currencySymbol = getCurrencySymbol(currencyCode);
     const pricingType = pricing.type || 'service';
     
     // Get service area/location
@@ -127,7 +125,7 @@ export function ServiceGrid({
       rating: rating,
       reviewCount: reviewCount,
       price: price,
-      currency: currency,
+      currency: currencySymbol,
       pricingType: pricingType,
       duration: durationText,
       features: service.features || [],

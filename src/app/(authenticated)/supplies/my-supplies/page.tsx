@@ -159,6 +159,7 @@ export default function MySuppliesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
 
   useEffect(() => {
     const fetchMySupplies = async () => {
