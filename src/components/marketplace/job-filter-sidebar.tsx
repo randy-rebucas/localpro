@@ -237,14 +237,14 @@ export function JobFilterSidebar({
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Min</p>
                   <span className="text-base font-bold text-green-700">
-                    ${salaryRange[0].toLocaleString()}
+                    ₱{salaryRange[0].toLocaleString()}
                   </span>
                 </div>
                 <div className="w-px h-8 bg-green-200"></div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Max</p>
                   <span className="text-base font-bold text-green-700">
-                    ${salaryRange[1].toLocaleString()}
+                    ₱{salaryRange[1].toLocaleString()}
                   </span>
                 </div>
               </div>

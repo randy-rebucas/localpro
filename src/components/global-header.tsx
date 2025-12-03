@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSession, signOut } from "@/hooks/useAuth";
 import { Logo } from "@/components/ui/logo";
 import { useRoleAccess } from "@/components/role-guard";
+import { useAppSettings } from "@/hooks/useAppSettings";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
@@ -33,6 +34,11 @@ import {
   Wallet,
   Calendar,
   ShoppingCart,
+  Star,
+  Megaphone,
+  Home,
+  DollarSign,
+  Gift,
 } from "lucide-react";
 
 interface GlobalHeaderProps {
@@ -76,6 +82,22 @@ export function GlobalHeader({
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isBusinessRole: _isBusinessRole,
   } = useRoleAccess();
+  
+  // Fetch app settings for feature flags
+  const { settings: appSettings } = useAppSettings();
+
+  // Helper to check if a feature is enabled
+  const isFeatureEnabled = (featureKey: string): boolean => {
+    if (!appSettings?.features) return true; // Default to showing all if settings not loaded
+    const features = appSettings.features as Record<string, unknown>;
+    const feature = features[featureKey];
+    if (feature === undefined) return true; // Show by default if not defined
+    if (typeof feature === 'boolean') return feature;
+    if (typeof feature === 'object' && feature !== null) {
+      return (feature as { enabled?: boolean }).enabled !== false;
+    }
+    return true;
+  };
 
   // Get user roles and determine available role views
   const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
@@ -516,84 +538,6 @@ export function GlobalHeader({
               </button>
             )}
 
-            {/* Role-based Navigation Icons - Only show when not in client view */}
-            <div className="hidden sm:flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
-              {/* Marketplace/Store - Show if in provider view and user has provider role */}
-
-              <Link
-                href="/marketplace"
-                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                title="Marketplace"
-                aria-label="Navigate to Marketplace"
-                aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
-              >
-                <Store className="w-5 h-5" aria-hidden="true" />
-              </Link>
-
-              {/* Supplies - Show if in supplier view and user has supplier role */}
-              <Link
-                href="/supplies"
-                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/supplies")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                title="Supplies"
-                aria-label="Navigate to Supplies"
-                aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
-              >
-                <Package className="w-5 h-5" aria-hidden="true" />
-              </Link>
-
-              {/* Academy - Show if in instructor view and user has instructor role */}
-
-              <Link
-                href="/academy"
-                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/academy")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                title="Academy"
-                aria-label="Navigate to Academy"
-                aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
-              >
-                <GraduationCap className="w-5 h-5" aria-hidden="true" />
-              </Link>
-
-              {/* Rentals - Show if in provider view and user has provider role */}
-
-              <Link
-                href="/rentals"
-                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/rentals")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                title="Rentals"
-                aria-label="Navigate to Rentals"
-                aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
-              >
-                <Car className="w-5 h-5" aria-hidden="true" />
-              </Link>
-
-              {/* Jobs - Show if in provider view and user has provider role */}
-
-              <Link
-                href="/jobs"
-                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/jobs")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                title="Jobs"
-                aria-label="Navigate to Jobs"
-                aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
-              >
-                <Briefcase className="w-5 h-5" aria-hidden="true" />
-              </Link>
-
-            </div>
-
             {/* Notifications */}
             {session && (
               notificationsDropdown ? (
@@ -888,6 +832,173 @@ export function GlobalHeader({
             <SearchBar isMobile />
           </div>
         )}
+      </div>
+
+      {/* Subheader - Navigation Links (based on app settings features) */}
+      <div className="border-t border-gray-100 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide">
+            {/* Marketplace - check 'marketplace' feature */}
+            {isFeatureEnabled('marketplace') && (
+              <Link
+                href="/marketplace"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/marketplace")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
+              >
+                <Store className="w-4 h-4" aria-hidden="true" />
+                <span>Marketplace</span>
+              </Link>
+            )}
+
+            {/* Supplies - check 'supplies' feature */}
+            {isFeatureEnabled('supplies') && (
+              <Link
+                href="/supplies"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/supplies")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
+              >
+                <Package className="w-4 h-4" aria-hidden="true" />
+                <span>Supplies</span>
+              </Link>
+            )}
+
+            {/* Academy - check 'academy' feature */}
+            {isFeatureEnabled('academy') && (
+              <Link
+                href="/academy"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/academy")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
+              >
+                <GraduationCap className="w-4 h-4" aria-hidden="true" />
+                <span>Academy</span>
+              </Link>
+            )}
+
+            {/* Rentals - check 'rentals' feature */}
+            {isFeatureEnabled('rentals') && (
+              <Link
+                href="/rentals"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/rentals")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
+              >
+                <Car className="w-4 h-4" aria-hidden="true" />
+                <span>Rentals</span>
+              </Link>
+            )}
+
+            {/* Jobs - check 'jobBoard' feature */}
+            {isFeatureEnabled('jobBoard') && (
+              <Link
+                href="/jobs"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/jobs")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
+              >
+                <Briefcase className="w-4 h-4" aria-hidden="true" />
+                <span>Jobs</span>
+              </Link>
+            )}
+
+            {/* Facility Care - check 'facilityCare' feature */}
+            {isFeatureEnabled('facilityCare') && (
+              <Link
+                href="/facility-care"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/facility-care")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/facility-care") ? "page" : undefined}
+              >
+                <Home className="w-4 h-4" aria-hidden="true" />
+                <span>Facility Care</span>
+              </Link>
+            )}
+
+            {/* LocalPro Plus - check 'localProPlus' feature */}
+            {isFeatureEnabled('localProPlus') && (
+              <Link
+                href="/plus"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/plus")
+                    ? "text-yellow-700 bg-yellow-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/plus") ? "page" : undefined}
+              >
+                <Star className="w-4 h-4 text-yellow-500" aria-hidden="true" />
+                <span>LocalPro+</span>
+              </Link>
+            )}
+
+            {/* Ads - check 'ads' feature */}
+            {isFeatureEnabled('ads') && (
+              <Link
+                href="/ads"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/ads")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/ads") ? "page" : undefined}
+              >
+                <Megaphone className="w-4 h-4" aria-hidden="true" />
+                <span>Ads</span>
+              </Link>
+            )}
+
+            {/* Finance - check 'finance' feature */}
+            {isFeatureEnabled('finance') && (
+              <Link
+                href="/finance"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/finance")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+              >
+                <DollarSign className="w-4 h-4" aria-hidden="true" />
+                <span>Finance</span>
+              </Link>
+            )}
+
+            {/* Referrals - check 'referrals' feature */}
+            {isFeatureEnabled('referrals') && (
+              <Link
+                href="/referrals"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                  pathname?.startsWith("/referrals")
+                    ? "text-green-700 bg-green-100"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-current={pathname?.startsWith("/referrals") ? "page" : undefined}
+              >
+                <Gift className="w-4 h-4" aria-hidden="true" />
+                <span>Referrals</span>
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     </header>
   );

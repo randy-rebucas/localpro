@@ -97,11 +97,11 @@ export function CourseCard({ course, viewMode = "list", onEnroll, onFavorite }: 
               <div className="flex items-center gap-2">
                 {course.pricing.discountedPrice ? (
                   <>
-                    <span className="text-lg font-bold">${course.pricing.discountedPrice}</span>
-                    <span className="text-sm text-gray-500 line-through">${course.pricing.regularPrice}</span>
+                    <span className="text-lg font-bold">₱{course.pricing.discountedPrice}</span>
+                    <span className="text-sm text-gray-500 line-through">₱{course.pricing.regularPrice}</span>
                   </>
                 ) : (
-                  <span className="text-lg font-bold">${course.pricing.regularPrice}</span>
+                  <span className="text-lg font-bold">₱{course.pricing.regularPrice}</span>
                 )}
               </div>
             </div>

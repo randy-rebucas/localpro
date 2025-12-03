@@ -2,33 +2,30 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   Megaphone,
   Search,
   Eye,
-  MapPin,
   CheckCircle,
-  SlidersHorizontal,
-  Grid,
-  List,
-  RefreshCw,
   Plus,
   Edit,
   Clock,
   AlertCircle,
   X,
-  TrendingUp,
-  DollarSign,
-  Star
+  Star,
+  Headphones,
+  HelpCircle,
+  BarChart3,
+  Target,
+  Zap
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
-import { EmptyState } from "@/components/ui/empty-state";
-import { ListSkeleton } from "@/components/ui/loading";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { useRoleAccess } from "@/components/role-guard";
 
 type AdsPagination = {
   current: number;
@@ -46,7 +43,6 @@ type AdsResponse = {
   pagination?: AdsPagination;
 } | AdCampaign[];
 
-// Ad Campaign Image Interface
 interface AdImage {
   url: string;
   publicId?: string;
@@ -54,7 +50,6 @@ interface AdImage {
   alt?: string;
 }
 
-// Ad Campaign Entity Interface (matching data-entities.md)
 export interface AdCampaign {
   _id?: string;
   id?: string;
@@ -73,7 +68,7 @@ export interface AdCampaign {
     verification?: {
       isVerified?: boolean;
     };
-  } | string; // Can be populated object or just ID
+  } | string;
   title: string;
   description: string;
   type: 'banner' | 'sponsored_listing' | 'video' | 'text' | 'interactive';
@@ -99,7 +94,7 @@ export interface AdCampaign {
       longitude?: number;
     };
   };
-  images?: AdImage[] | string[]; // Support both formats
+  images?: AdImage[] | string[];
   content?: {
     headline?: string;
     body?: string;
@@ -173,8 +168,6 @@ export interface AdCampaign {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
-  
-  // Legacy fields for backward compatibility
   clickCount?: number;
   impressionCount?: number;
   spent?: number;
@@ -212,33 +205,51 @@ const statuses = [
   { value: "rejected", label: "Rejected" }
 ];
 
+const sortOptions = [
+  { value: "createdAt", label: "Newest First" },
+  { value: "title", label: "Title" },
+  { value: "budget", label: "Budget" },
+  { value: "spent", label: "Spent" },
+  { value: "ctr", label: "CTR" }
+];
+
+const adTips = [
+  "Use eye-catching images for better CTR",
+  "Target specific demographics for efficiency",
+  "A/B test different ad copies"
+];
+
 const getStatusColor = (status: AdCampaign['status']) => {
   switch (status) {
-    case 'active': return 'bg-green-100 text-green-800';
-    case 'pending': return 'bg-yellow-100 text-yellow-800';
-    case 'approved': return 'bg-blue-100 text-blue-800';
-    case 'paused': return 'bg-gray-100 text-gray-800';
-    case 'completed': return 'bg-purple-100 text-purple-800';
-    case 'rejected': return 'bg-red-100 text-red-800';
-    case 'draft': return 'bg-gray-100 text-gray-800';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'active': return 'bg-green-100 text-green-700 border-green-200';
+    case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+    case 'approved': return 'bg-blue-100 text-blue-700 border-blue-200';
+    case 'paused': return 'bg-gray-100 text-gray-700 border-gray-200';
+    case 'completed': return 'bg-purple-100 text-purple-700 border-purple-200';
+    case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
+    case 'draft': return 'bg-gray-100 text-gray-600 border-gray-200';
+    default: return 'bg-gray-100 text-gray-700 border-gray-200';
   }
 };
 
 const getStatusIcon = (status: AdCampaign['status']) => {
   switch (status) {
-    case 'active': return <CheckCircle className="w-4 h-4" />;
-    case 'pending': return <Clock className="w-4 h-4" />;
-    case 'approved': return <CheckCircle className="w-4 h-4" />;
-    case 'paused': return <AlertCircle className="w-4 h-4" />;
-    case 'completed': return <CheckCircle className="w-4 h-4" />;
-    case 'rejected': return <X className="w-4 h-4" />;
-    case 'draft': return <Edit className="w-4 h-4" />;
-    default: return <Clock className="w-4 h-4" />;
+    case 'active': return <CheckCircle className="w-3 h-3" />;
+    case 'pending': return <Clock className="w-3 h-3" />;
+    case 'approved': return <CheckCircle className="w-3 h-3" />;
+    case 'paused': return <AlertCircle className="w-3 h-3" />;
+    case 'completed': return <CheckCircle className="w-3 h-3" />;
+    case 'rejected': return <X className="w-3 h-3" />;
+    case 'draft': return <Edit className="w-3 h-3" />;
+    default: return <Clock className="w-3 h-3" />;
   }
 };
 
 export default function AdsPage() {
+  const { settings: appSettings } = useAppSettings();
+  const { isProvider, isAdmin } = useRoleAccess();
+  const canCreateAds = isProvider || isAdmin;
+  
   const [ads, setAds] = useState<AdCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,9 +257,8 @@ export default function AdsPage() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [sortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder] = useState<'asc' | 'desc'>('desc');
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [pagination, setPagination] = useState({
     current: 1,
     pages: 1,
@@ -261,19 +271,16 @@ export default function AdsPage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const paginationRef = useRef(pagination);
 
-  // Normalize ad campaign data from API response
   const normalizeAdCampaign = useCallback((campaign: Partial<AdCampaign> & Record<string, unknown>): AdCampaign => {
     return {
       ...campaign,
       _id: campaign._id || campaign.id,
       id: campaign.id || campaign._id,
-      // Ensure required fields have defaults
       title: campaign.title || (campaign.content?.headline as string) || 'Untitled Ad',
       description: campaign.description || (campaign.content?.body as string) || '',
       type: campaign.type || 'banner',
       category: campaign.category || 'products',
       status: campaign.status || 'draft',
-      // Handle images
       images: Array.isArray(campaign.images)
         ? campaign.images.map((img: string | AdImage | Record<string, unknown>) =>
             typeof img === 'string'
@@ -286,7 +293,6 @@ export default function AdsPage() {
                 }
           )
         : [],
-      // Handle advertiser
       advertiser: typeof campaign.advertiser === 'string'
         ? { id: campaign.advertiser }
         : {
@@ -297,7 +303,6 @@ export default function AdsPage() {
             businessType: campaign.advertiser?.businessType,
             verification: campaign.advertiser?.verification
           },
-      // Handle budget
       budget: (() => {
         if (campaign.budget && typeof campaign.budget === 'object' && 'total' in campaign.budget) {
           return campaign.budget as AdCampaign['budget'];
@@ -309,7 +314,6 @@ export default function AdsPage() {
           currency: (campaign as { currency?: string }).currency || 'PHP'
         };
       })(),
-      // Handle schedule
       schedule: (() => {
         if (campaign.schedule && typeof campaign.schedule === 'object' && 'startDate' in campaign.schedule) {
           return campaign.schedule as AdCampaign['schedule'];
@@ -320,7 +324,6 @@ export default function AdsPage() {
           timeSlots: []
         };
       })(),
-      // Handle performance
       performance: (() => {
         if (campaign.performance && typeof campaign.performance === 'object' && 'impressions' in campaign.performance) {
           return campaign.performance as AdCampaign['performance'];
@@ -336,13 +339,11 @@ export default function AdsPage() {
           cpm: (typeof campaign.cpm === 'number' ? campaign.cpm : (perf?.cpm ?? 0))
         };
       })(),
-      // Handle targetAudience (legacy array format support)
       targetAudience: campaign.targetAudience && typeof campaign.targetAudience === 'object' && !Array.isArray(campaign.targetAudience)
         ? campaign.targetAudience
         : campaign.targetAudience && Array.isArray(campaign.targetAudience)
           ? { demographics: { interests: campaign.targetAudience } }
           : campaign.targetAudience || {},
-      // Set defaults
       isActive: campaign.isActive !== undefined ? campaign.isActive : true,
       views: campaign.views || 0,
       clicks: campaign.clicks || campaign.clickCount || 0,
@@ -359,8 +360,6 @@ export default function AdsPage() {
       params.append('page', paginationRef.current.current.toString());
       params.append('limit', paginationRef.current.limit.toString());
       
-      // Don't filter by status - show all user's ads regardless of status
-      
       if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       if (selectedCategory) params.append('category', selectedCategory);
       if (selectedType) params.append('type', selectedType);
@@ -370,7 +369,6 @@ export default function AdsPage() {
 
       const data = await apiRequest<AdsResponse>(`${API_ENDPOINTS.ads}?${params.toString()}`);
       
-      // Handle different response formats
       let campaignsData: AdCampaign[] = [];
       let paginationData: AdsPagination | undefined;
       
@@ -390,19 +388,11 @@ export default function AdsPage() {
       
       setAds(campaignsData);
       if (paginationData) {
-        const newPagination = {
-          ...paginationRef.current,
-          ...paginationData
-        };
+        const newPagination = { ...paginationRef.current, ...paginationData };
         paginationRef.current = newPagination;
         setPagination(newPagination);
       } else {
-        const newPagination = {
-          ...paginationRef.current,
-          total: campaignsData.length,
-          count: campaignsData.length,
-          pages: 1
-        };
+        const newPagination = { ...paginationRef.current, total: campaignsData.length, count: campaignsData.length, pages: 1 };
         paginationRef.current = newPagination;
         setPagination(newPagination);
       }
@@ -415,54 +405,23 @@ export default function AdsPage() {
     }
   }, [debouncedSearchQuery, selectedCategory, selectedType, selectedStatus, sortBy, sortOrder, normalizeAdCampaign]);
 
-  // Debounce search query
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current); };
   }, [searchQuery]);
 
-  // Update pagination ref when pagination state changes
-  useEffect(() => {
-    paginationRef.current = pagination;
-  }, [pagination]);
+  useEffect(() => { paginationRef.current = pagination; }, [pagination]);
+  useEffect(() => { fetchAds(); }, [debouncedSearchQuery, selectedCategory, selectedType, selectedStatus, sortBy, sortOrder, fetchAds]);
 
-  // Fetch ads when filters or search change
-  useEffect(() => {
-    fetchAds();
-  }, [debouncedSearchQuery, selectedCategory, selectedType, selectedStatus, sortBy, sortOrder, fetchAds]);
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    return {
-      total: ads.length,
-      active: ads.filter(ad => ad.status === 'active').length,
-      totalBudget: ads.reduce((sum, ad) => sum + (ad.budget?.total || 0), 0),
-      totalSpent: ads.reduce((sum, ad) => sum + (ad.performance?.spend || ad.spent || 0), 0)
-    };
-  }, [ads]);
-
-  // Filter and sort ads
   const filteredAds = useMemo(() => {
     return ads.filter(ad => {
       const matchesSearch = !debouncedSearchQuery || 
                            ad.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-                           ad.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-                           (typeof ad.advertiser === 'object' && !Array.isArray(ad.advertiser) && 
-                            (ad.advertiser.businessName || '').toLowerCase().includes(debouncedSearchQuery.toLowerCase()));
+                           ad.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       const matchesCategory = !selectedCategory || ad.category === selectedCategory;
       const matchesType = !selectedType || ad.type === selectedType;
       const matchesStatus = !selectedStatus || ad.status === selectedStatus;
-      
       return matchesSearch && matchesCategory && matchesType && matchesStatus;
     });
   }, [ads, debouncedSearchQuery, selectedCategory, selectedType, selectedStatus]);
@@ -471,327 +430,264 @@ export default function AdsPage() {
     return [...filteredAds].sort((a, b) => {
       let aValue: string | number | Date;
       let bValue: string | number | Date;
-      
       switch (sortBy) {
-        case 'title':
-          aValue = a.title;
-          bValue = b.title;
-          break;
-        case 'budget':
-          aValue = a.budget?.total || 0;
-          bValue = b.budget?.total || 0;
-          break;
-        case 'spent':
-          aValue = a.performance?.spend || a.spent || 0;
-          bValue = b.performance?.spend || b.spent || 0;
-          break;
-        case 'ctr':
-          aValue = a.performance?.ctr || 0;
-          bValue = b.performance?.ctr || 0;
-          break;
-        case 'createdAt':
-        default:
-          aValue = new Date(a.createdAt || 0).getTime();
-          bValue = new Date(b.createdAt || 0).getTime();
-          break;
+        case 'title': aValue = a.title; bValue = b.title; break;
+        case 'budget': aValue = a.budget?.total || 0; bValue = b.budget?.total || 0; break;
+        case 'spent': aValue = a.performance?.spend || a.spent || 0; bValue = b.performance?.spend || b.spent || 0; break;
+        case 'ctr': aValue = a.performance?.ctr || 0; bValue = b.performance?.ctr || 0; break;
+        default: aValue = new Date(a.createdAt || 0).getTime(); bValue = new Date(b.createdAt || 0).getTime(); break;
       }
-      
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+      return sortOrder === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
     });
   }, [filteredAds, sortBy, sortOrder]);
 
-  const handleViewAd = (adId: string) => {
-    router.push(`/ads/${adId}`);
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory) count++;
+    if (selectedType) count++;
+    if (selectedStatus) count++;
+    return count;
+  }, [selectedCategory, selectedType, selectedStatus]);
+
+  const clearFilters = () => {
+    setSelectedCategory("");
+    setSelectedType("");
+    setSelectedStatus("");
+    setSearchQuery("");
   };
 
-  const handleCreateAd = () => {
-    router.push('/ads/create');
-  };
-
-  const handleEditAd = (adId: string) => {
-    router.push(`/ads/${adId}/edit`);
-  };
+  const formatPrice = (price: number) => formatCurrency(price, 'PHP', { appSettings, showSymbol: true });
 
   if (loading) {
     return (
-      <div className="p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ads</h1>
-            <p className="text-gray-600">Manage your advertising campaigns</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-4 animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-6">
+            <div className="w-64 flex-shrink-0">
+              <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse space-y-4">
+                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-200 rounded"></div>)}
+              </div>
+            </div>
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-4 animate-pulse">
+                  <div className="h-40 bg-gray-200 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-        <ListSkeleton />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <Card interactive={false}>
-          <EmptyState
-            icon={Megaphone}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
-            title="Unable to Load Ads"
-            description={error}
-            actions={[
-              {
-                type: "button",
-                onClick: fetchAds,
-                label: "Try Again",
-                icon: RefreshCw,
-                variant: "primary"
-              }
-            ]}
-          />
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Header */}
-      <PageHeader
-        title="Ads"
-        subtitle="Manage your advertising campaigns and reach your target audience"
-        actions={[
-          {
-            type: "button",
-            onClick: handleCreateAd,
-            label: "Create Ad",
-            icon: Plus,
-            variant: "primary"
-          }
-        ]}
-      />
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Ads</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <Megaphone className="w-8 h-8 text-blue-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Active Ads</p>
-              <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-            </div>
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Budget</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ${stats.totalBudget.toLocaleString()}
-              </p>
-            </div>
-            <DollarSign className="w-8 h-8 text-green-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Spent</p>
-              <p className="text-2xl font-bold text-gray-900">
-                ${stats.totalSpent.toLocaleString()}
-              </p>
-            </div>
-            <TrendingUp className="w-8 h-8 text-blue-600" />
-          </div>
-        </Card>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      {/* Main Layout: Filters on Left, Content on Right */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Left Sidebar - Filters */}
-        <aside className="w-full lg:w-64 flex-shrink-0">
-          <Card className="p-4 sticky top-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+      <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Ads — Promote Your Business
+              </h1>
+              <p className="text-gray-600">
+                Create and manage advertising campaigns to reach your target audience.
+              </p>
+            </div>
+            {canCreateAds && (
+              <button
+                onClick={() => router.push('/ads/create')}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg shadow-purple-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Create Ad
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Subheader Links */}
+        <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4 flex-wrap">
+          <Link href="/ads/analytics" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
+            <BarChart3 className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Analytics</span>
+          </Link>
+          <Link href="/ads/audiences" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
+            <Target className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Audiences</span>
+          </Link>
+          <Link href="/support" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
+            <Headphones className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Support</span>
+          </Link>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+            <Search className="w-5 h-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search ads by title, description, or advertiser..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md bg-white"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Main Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Sidebar */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                  {activeFiltersCount > 0 && (
+                    <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-medium rounded-full">{activeFiltersCount}</span>
+                  )}
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                    {categories.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Ad Type</label>
+                  <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                    {adTypes.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+                  </select>
+                </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                    {statuses.map(status => <option key={status.value} value={status.value}>{status.label}</option>)}
+                  </select>
+                </div>
+
+                {activeFiltersCount > 0 && (
+                  <button onClick={clearFilters} className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Clear Filters
+                  </button>
+                )}
               </div>
 
-              {/* Category Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {categories.map(category => (
-                    <option key={category.value} value={category.value}>
-                      {category.label}
-                    </option>
+              {/* Ad Tips */}
+              <div className="pt-6 border-t-2 border-gray-200">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Ad Tips</h2>
+                <ul className="space-y-3">
+                  {adTips.map((tip, index) => (
+                    <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                      <Zap className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                      <span>{tip}</span>
+                    </li>
                   ))}
-                </select>
+                </ul>
               </div>
 
-              {/* Type Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ad Type
-                </label>
-                <select
-                  value={selectedType}
-                  onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {adTypes.map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {statuses.map(status => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Clear Filters */}
-              <div>
-                <button
-                  onClick={() => {
-                    setSelectedCategory("");
-                    setSelectedType("");
-                    setSelectedStatus("");
-                    setSearchQuery("");
-                  }}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  Clear Filters
-                </button>
+              {/* Help Section */}
+              <div className="pt-6 border-t-2 border-gray-200">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+                  <div className="flex items-start gap-3 mb-3">
+                    <HelpCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
+                      <p className="text-xs text-gray-600 mt-1">Learn how to create effective ad campaigns.</p>
+                    </div>
+                  </div>
+                  <Link href="/support" className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-all border border-purple-200 font-medium text-sm">
+                    <Headphones className="w-4 h-4" />
+                    Get Support
+                  </Link>
+                </div>
               </div>
             </div>
-          </Card>
-        </aside>
+          </aside>
 
-        {/* Right Content Area */}
-        <div className="flex-1 space-y-4">
-          {/* Search and Controls */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search */}
-              <div className="flex-1">
-                <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Search ads, categories..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      ×
+          {/* Main Content */}
+          <div className="flex-1 min-w-0 space-y-6">
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600 text-sm">{sortedAds.length} ad{sortedAds.length !== 1 ? 's' : ''} found</p>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-white font-medium">
+                {sortOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+            </div>
+
+            {error ? (
+              <div className="bg-white rounded-xl border-2 border-red-200 p-8 text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Ads</h3>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <button onClick={fetchAds} className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium">
+                  Try Again
+                </button>
+              </div>
+            ) : sortedAds.length === 0 ? (
+              <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-8 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20">
+                  <Megaphone className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">No Ads Found</h3>
+                <p className="text-gray-600 mb-6">
+                  {searchQuery || activeFiltersCount > 0 ? "Try adjusting your filters." : "Create your first ad campaign to get started."}
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  {activeFiltersCount > 0 && (
+                    <button onClick={clearFilters} className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg font-semibold">
+                      Clear Filters
+                    </button>
+                  )}
+                  {canCreateAds && (
+                    <button onClick={() => router.push('/ads/create')} className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium">
+                      Create Your First Ad
                     </button>
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Results */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <p className="text-gray-600">
-                  {sortedAds.length} ad{sortedAds.length !== 1 ? 's' : ''} found
-                </p>
-              </div>
-              <button
-                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-              >
-                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-              </button>
-            </div>
-
-            {sortedAds.length === 0 ? (
-              <Card interactive={false}>
-                <EmptyState
-                  icon={Megaphone}
-                  iconColor="text-purple-600"
-                  iconBgColor="bg-purple-100"
-                  title="No Ads Found"
-                  description="We couldn't find any ads matching your criteria. Try adjusting your search terms or filters."
-                  actions={[
-                    {
-                      type: "button",
-                      onClick: () => {
-                        setSearchQuery("");
-                        setSelectedCategory("");
-                        setSelectedType("");
-                        setSelectedStatus("");
-                      },
-                      label: "Clear All Filters",
-                      variant: "primary"
-                    },
-                    {
-                      type: "button",
-                      onClick: handleCreateAd,
-                      label: "Create Your First Ad",
-                      variant: "secondary"
-                    }
-                  ]}
-                />
-              </Card>
             ) : (
-              <>
-                <div className={`grid gap-4 ${
-                  viewMode === "grid" 
-                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-                    : "grid-cols-1"
-                }`}>
-                  {sortedAds.map((ad, index) => (
-                    <AdCard
-                      key={ad.id || ad._id || `ad-${index}`}
-                      ad={ad}
-                      viewMode={viewMode}
-                      onView={handleViewAd}
-                      onEdit={handleEditAd}
-                    />
-                  ))}
-                </div>
-              </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedAds.map((ad, index) => (
+                  <AdCard key={ad.id || ad._id || `ad-${index}`} ad={ad} formatPrice={formatPrice} />
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -802,17 +698,14 @@ export default function AdsPage() {
 
 interface AdCardProps {
   ad: AdCampaign;
-  viewMode: "grid" | "list";
-  onView: (adId: string) => void;
-  onEdit: (adId: string) => void;
+  formatPrice: (price: number) => string;
 }
 
-const AdCard = React.memo(function AdCard({ ad, viewMode, onView, onEdit }: AdCardProps) {
+const AdCard = React.memo(function AdCard({ ad, formatPrice }: AdCardProps) {
+  const router = useRouter();
   const adId = ad.id || ad._id || '';
   
-  // Get image URL (handle both formats)
   const getImageUrl = () => {
-    // Check content.images first, then images
     const images = ad.content?.images || ad.images || [];
     if (!images || images.length === 0) return null;
     const firstImage = images[0];
@@ -820,183 +713,112 @@ const AdCard = React.memo(function AdCard({ ad, viewMode, onView, onEdit }: AdCa
   };
   const imageUrl = getImageUrl();
   
-  // Get advertiser name
   const advertiser = typeof ad.advertiser === 'string' 
     ? { businessName: 'Unknown Advertiser', verification: { isVerified: false } }
     : ad.advertiser || {};
   const advertiserName = advertiser.businessName || 'Unknown Advertiser';
   
-  // Get location
-  const locationCity = ad.location?.city || '';
-  const locationState = ad.location?.state || '';
-  
-  // Get schedule dates
-  const startDate = ad.schedule?.startDate ? new Date(ad.schedule.startDate) : null;
-  const endDate = ad.schedule?.endDate ? new Date(ad.schedule.endDate) : null;
-  
-  // Get performance metrics
   const clicks = ad.performance?.clicks || ad.clicks || ad.clickCount || 0;
+  const impressions = ad.performance?.impressions || ad.impressions || 0;
   const spend = ad.performance?.spend || ad.spent || 0;
-  const ctr = ad.performance?.ctr || 0;
   const budget = ad.budget?.total || 0;
 
   return (
-    <div
-      className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
-        viewMode === "list" ? "flex" : ""
-      }`}
+    <Link
+      href={`/ads/${adId}`}
+      className={`group bg-white rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 overflow-hidden`}
     >
-      <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
-        <div className={viewMode === "list" ? "flex gap-6" : ""}>
-          {/* Ad Image */}
-          <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300 relative`}>
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={
-                  (() => {
-                    const images = ad.content?.images || ad.images || [];
-                    if (Array.isArray(images) && images.length > 0) {
-                      const firstImg = images[0];
-                      if (typeof firstImg === 'object' && 'alt' in firstImg && typeof firstImg.alt === 'string') {
-                        return firstImg.alt;
-                      }
-                    }
-                    return ad.title || 'Ad image';
-                  })()
-                }
-                width={viewMode === "list" ? 192 : 400}
-                height={viewMode === "list" ? 128 : 192}
-                className="w-full h-full object-cover rounded-lg"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                    <Megaphone className="w-6 h-6" />
-                  </div>
-                  <span className="text-sm">No Image</span>
-                </div>
-              </div>
-            )}
-            {/* Status Badge */}
-            <div className="absolute top-2 right-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(ad.status)}`}>
-                {getStatusIcon(ad.status)}
-                <span className="capitalize">{ad.status}</span>
-              </span>
-            </div>
-            {/* Promoted Badge */}
-            {(ad.isPromoted || ad.isFeatured || ad.promotion?.status === 'active') && (
-              <div className="absolute top-2 left-2">
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium flex items-center gap-1">
-                  <Star className="w-3 h-3" />
-                  Promoted
-                </span>
-              </div>
-            )}
+      <div className="relative">
+        {imageUrl ? (
+          <div className="aspect-[16/9] bg-gray-100 overflow-hidden">
+            <Image src={imageUrl} alt={ad.title} width={400} height={225} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           </div>
+        ) : (
+          <div className="aspect-[16/9] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
+            <Megaphone className="w-12 h-12 text-purple-400" />
+          </div>
+        )}
+        
+        {/* Status Badge */}
+        <div className="absolute top-2 right-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 border ${getStatusColor(ad.status)}`}>
+            {getStatusIcon(ad.status)}
+            <span className="capitalize">{ad.status}</span>
+          </span>
+        </div>
+        
+        {/* Featured Badge */}
+        {(ad.isPromoted || ad.isFeatured || ad.promotion?.status === 'active') && (
+          <div className="absolute top-2 left-2">
+            <span className="px-2 py-1 bg-yellow-500 text-white rounded text-xs font-bold flex items-center gap-1">
+              <Star className="w-3 h-3 fill-current" />
+              Featured
+            </span>
+          </div>
+        )}
+      </div>
 
-          {/* Ad Details */}
-          <div className={viewMode === "list" ? "flex-1" : ""}>
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-semibold text-gray-700 line-clamp-1 flex-1">
-                {ad.content?.headline || ad.title}
-              </h3>
-              <div className="flex gap-1 ml-3">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onView(adId)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onEdit(adId)}
-                >
-                  <Edit className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-              {ad.content?.body || ad.description}
-            </p>
-
-            {/* Ad Meta */}
-            <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                {ad.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
-              </span>
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                {ad.type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
-              </span>
-              {(locationCity || locationState) && (
-                <span className="text-xs text-gray-500 flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  {locationCity && locationState ? `${locationCity}, ${locationState}` : locationCity || locationState}
-                </span>
-              )}
-            </div>
-
-            {/* Performance Stats */}
-            <div className="grid grid-cols-2 gap-4 text-sm mb-3 border-t pt-3">
-              <div>
-                <p className="text-gray-500 text-xs">Budget</p>
-                <p className="font-medium">₱{budget.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">Spent</p>
-                <p className="font-medium">₱{spend.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">Clicks</p>
-                <p className="font-medium">{clicks.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 text-xs">CTR</p>
-                <p className="font-medium">{ctr.toFixed(2)}%</p>
-              </div>
-            </div>
-
-            {/* Schedule Info */}
-            {startDate && endDate && (
-              <div className="text-xs text-gray-500 mb-2">
-                {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
-              </div>
-            )}
-
-            {/* Advertiser Info */}
-            <div className="mt-4 pt-3 border-t">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-medium">
-                      {advertiserName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">{advertiserName}</p>
-                    <p className="text-xs text-gray-500">
-                      {ad.createdAt ? new Date(ad.createdAt).toLocaleDateString() : 'N/A'}
-                    </p>
-                  </div>
-                  {advertiser.verification?.isVerified && (
-                    <div className="relative group">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
-                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-gray-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                        Verified Advertiser
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-bold text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors flex-1">
+            {ad.content?.headline || ad.title}
+          </h3>
+          <div className="flex gap-1 ml-2">
+            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}`); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-purple-600 transition-colors">
+              <Eye className="w-4 h-4" />
+            </button>
+            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}/edit`); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-purple-600 transition-colors">
+              <Edit className="w-4 h-4" />
+            </button>
           </div>
         </div>
+
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ad.content?.body || ad.description}</p>
+
+        {/* Tags */}
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-lg font-medium">
+            {ad.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
+          </span>
+          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">
+            {ad.type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Banner'}
+          </span>
+        </div>
+
+        {/* Performance Stats */}
+        <div className="grid grid-cols-2 gap-3 text-sm mb-3 pt-3 border-t border-gray-100">
+          <div>
+            <p className="text-gray-500 text-xs">Budget</p>
+            <p className="font-semibold text-gray-900">{formatPrice(budget)}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs">Spent</p>
+            <p className="font-semibold text-gray-900">{formatPrice(spend)}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs">Impressions</p>
+            <p className="font-semibold text-gray-900">{impressions.toLocaleString()}</p>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs">Clicks</p>
+            <p className="font-semibold text-gray-900">{clicks.toLocaleString()}</p>
+          </div>
+        </div>
+
+        {/* Advertiser */}
+        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+            {advertiserName.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900 truncate">{advertiserName}</p>
+            <p className="text-xs text-gray-500">{ad.createdAt ? new Date(ad.createdAt).toLocaleDateString() : ''}</p>
+          </div>
+          {advertiser.verification?.isVerified && (
+            <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+          )}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 });

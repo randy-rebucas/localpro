@@ -8,14 +8,14 @@ LocalPro Plus is the premium subscription service module that provides enhanced 
 
 ### Subscription Plans
 
-1. **LocalPro Basic** ($9.99/month)
+1. **LocalPro Basic** (₱499/month)
    - Priority customer support
    - Enhanced profile visibility
    - Basic analytics dashboard
    - Email notifications
    - Mobile app access
 
-2. **LocalPro Professional** ($19.99/month) - Most Popular
+2. **LocalPro Professional** (₱999/month) - Most Popular
    - Everything in Basic
    - Advanced analytics & insights
    - Priority booking placement
@@ -25,7 +25,7 @@ LocalPro Plus is the premium subscription service module that provides enhanced 
    - Advanced search filters
    - Performance reports
 
-3. **LocalPro Enterprise** ($49.99/month)
+3. **LocalPro Enterprise** (₱2,499/month)
    - Everything in Professional
    - Dedicated account manager
    - Custom integrations

@@ -115,7 +115,7 @@ export function FacilityCareDetail({
           {service.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ${service.pricing.basePrice}
+                ₱{service.pricing.basePrice}
               </span>
               <span className="text-gray-600">
                 /{service.pricing.type === "hourly" ? "hr" : service.pricing.type === "monthly" ? "month" : service.pricing.type}

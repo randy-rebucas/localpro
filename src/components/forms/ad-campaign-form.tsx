@@ -52,7 +52,7 @@ export function AdCampaignForm({
       category: initialData?.category || "services",
       budget: initialData?.budget || {
         total: 0,
-        currency: "USD",
+        currency: "PHP",
       },
       schedule: initialData?.schedule || {
         startDate: new Date(),
@@ -141,7 +141,7 @@ export function AdCampaignForm({
             <label className="block text-sm font-medium mb-2">Currency</label>
             <Input
               {...register("budget.currency")}
-              placeholder="USD"
+              placeholder="PHP"
             />
           </div>
         </div>

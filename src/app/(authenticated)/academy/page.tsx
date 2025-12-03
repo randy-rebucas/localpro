@@ -625,60 +625,80 @@ export default function AcademyPage() {
 
             <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {/* Header Section */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Academy — Learn skills that grow your career
-                    </h1>
-                    <p className="text-gray-600 mb-6">
-                        Expert-led courses, certifications, and hands-on training for service professionals.
-                    </p>
-                    
-                    {/* Search Bar */}
-                    <div className="relative mb-4">
-                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                            <Search className="w-5 h-5 text-gray-400" />
+                <div className="mb-6">
+                    <div className="flex items-start justify-between mb-2">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                Academy — Learn skills that grow your career
+                            </h1>
+                            <p className="text-gray-600">
+                                Expert-led courses, certifications, and hands-on training for service professionals.
+                            </p>
                         </div>
-                        <input
-                            type="text"
-                            placeholder="Search courses, skills, or instructors"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
-                        />
-                        {searchQuery && (
-                            <button
-                                onClick={() => setSearchQuery("")}
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Feature Buttons */}
-                    <div className="flex flex-wrap gap-3">
-                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-gray-700">Verified Instructors</span>
-                        </button>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
-                            <Award className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-gray-700">Certificates</span>
-                        </button>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
-                            <Headphones className="w-4 h-4 text-green-600" />
-                            <span className="text-sm font-medium text-gray-700">Support</span>
-                        </button>
                         {(isInstructor || isAdmin) && (
                             <button
                                 onClick={handleCreateCourse}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 ml-auto"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
                             >
                                 <Plus className="w-4 h-4" />
                                 Create Course
                             </button>
                         )}
                     </div>
+                </div>
+
+                {/* Subheader - Feature Links */}
+                <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4">
+                    <Link 
+                        href="/academy/instructors" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <CheckCircle2 className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Verified Instructors</span>
+                    </Link>
+                    <Link 
+                        href="/academy/certifications" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <Award className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Certificates</span>
+                    </Link>
+                    <Link 
+                        href="/support" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <Headphones className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Support</span>
+                    </Link>
+                    <Link 
+                        href="/academy/my-courses" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <BookOpen className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">My Courses</span>
+                    </Link>
+                </div>
+                    
+                {/* Search Bar */}
+                <div className="relative mb-6">
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                        <Search className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Search courses, skills, or instructors"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery("")}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
 
                 {/* Main Content Layout */}
@@ -824,6 +844,59 @@ export default function AcademyPage() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Popular Categories */}
+                            <div className="pt-6 border-t-2 border-gray-200">
+                                <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.filter(c => c.value).slice(0, 5).map((category) => (
+                                        <button
+                                            key={category.value}
+                                            onClick={() => setFilters(prev => ({ ...prev, category: prev.category === category.value ? "" : category.value }))}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                                                filters.category === category.value
+                                                    ? "bg-green-600 text-white border-green-600"
+                                                    : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {category.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Learning Tips */}
+                            <div className="pt-6 border-t-2 border-gray-200">
+                                <h2 className="text-lg font-bold text-gray-900 mb-4">Learning tips</h2>
+                                <ul className="space-y-3">
+                                    {learningTips.map((tip, index) => (
+                                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                                            <span className="text-green-600 mt-1">•</span>
+                                            <span>{tip}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Need Help Section */}
+                            <div className="pt-6 border-t-2 border-gray-200">
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <HelpCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
+                                            <p className="text-xs text-gray-600 mt-1">Our team is here to help you find the right course.</p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href="/support"
+                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all border border-green-200 font-medium text-sm"
+                                    >
+                                        <Zap className="w-4 h-4" />
+                                        Contact Support
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </aside>
 
@@ -1010,64 +1083,6 @@ export default function AcademyPage() {
                             </>
                         )}
                     </div>
-
-                    {/* Right Sidebar */}
-                    <aside className="lg:w-64 flex-shrink-0">
-                        <div className="space-y-6 sticky top-24">
-                            {/* Popular Categories */}
-                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
-                                <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
-                                <div className="flex flex-wrap gap-2">
-                                    {categories.filter(c => c.value).slice(0, 5).map((category) => (
-                                        <button
-                                            key={category.value}
-                                            onClick={() => setFilters(prev => ({ ...prev, category: prev.category === category.value ? "" : category.value }))}
-                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
-                                                filters.category === category.value
-                                                    ? "bg-green-600 text-white border-green-600"
-                                                    : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
-                                            }`}
-                                        >
-                                            {category.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Learning Tips */}
-                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
-                                <h2 className="text-lg font-bold text-gray-900 mb-4">Learning tips</h2>
-                                <ul className="space-y-3">
-                                    {learningTips.map((tip, index) => (
-                                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                                            <span className="text-green-600 mt-1">•</span>
-                                            <span>{tip}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-
-                            {/* Need Help Section */}
-                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
-                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-                                    <div className="flex items-start gap-3 mb-3">
-                                        <HelpCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                        <div>
-                                            <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
-                                            <p className="text-xs text-gray-600 mt-1">Our team is here to help you find the right course.</p>
-                                        </div>
-                                    </div>
-                                    <Link
-                                        href="/support"
-                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all border border-green-200 font-medium text-sm"
-                                    >
-                                        <Zap className="w-4 h-4" />
-                                        Contact Support
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
                 </div>
             </div>
         </div>

@@ -1468,7 +1468,7 @@ export default function CreateServicePage() {
                       leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Total insurance coverage amount in your selected currency (e.g., 1000000 for $1,000,000)
+                      Total insurance coverage amount in PHP (e.g., 1000000 for ₱1,000,000)
                     </p>
                   </div>
                 )}
@@ -1516,7 +1516,7 @@ export default function CreateServicePage() {
                         leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                       />
                       <p className="text-xs text-gray-500 mt-1">
-                        Additional fee for emergency service in your selected currency (e.g., 50 for $50)
+                        Additional fee for emergency service in PHP (e.g., 500 for ₱500)
                       </p>
                     </div>
                   </div>

@@ -79,7 +79,7 @@ export function BookingCard({ booking, viewMode = "list", onStatusChange }: Book
           {booking.pricing && (
             <div className="mb-2">
               <span className="text-lg font-bold">
-                ${booking.pricing.totalAmount || booking.pricing.basePrice}
+                ₱{booking.pricing.totalAmount || booking.pricing.basePrice}
               </span>
             </div>
           )}

@@ -230,7 +230,7 @@ const transformApiSupply = (apiData: ApiSupplyResponse['data']): Supply => {
     status,
     price: s.pricing?.retailPrice || 0,
     originalPrice: s.pricing?.wholesalePrice,
-    currency: s.pricing?.currency || 'USD',
+    currency: s.pricing?.currency || 'PHP',
     unit: 'piece',
     stock: s.inventory?.quantity ?? stats?.inventory?.quantity ?? 0,
     minOrder: s.inventory?.minStock || 1,

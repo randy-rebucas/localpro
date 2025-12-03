@@ -94,7 +94,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
           <div className="flex flex-wrap gap-1.5 mb-3">
             {job.category && (
               <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-md font-medium">
-                {String(job.category)}
+                {typeof job.category === 'object' ? job.category.name : job.category}
               </span>
             )}
             {job.jobType && (
@@ -137,8 +137,8 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
               <div>
                 <div className="flex items-baseline gap-1">
                   <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-green-600`}>
-                    ${job.salary.min?.toLocaleString()}
-                    {job.salary.max && ` - $${job.salary.max.toLocaleString()}`}
+                    ₱{job.salary.min?.toLocaleString()}
+                    {job.salary.max && ` - ₱${job.salary.max.toLocaleString()}`}
                   </span>
                   {job.salary.period && (
                     <span className="text-xs text-gray-500">/{job.salary.period}</span>

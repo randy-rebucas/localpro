@@ -1343,7 +1343,7 @@ export default function CreateSupplyPage() {
                   {/* Price Display */}
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xl font-bold text-emerald-600">
-                      {formatCurrency(parseFloat(formData.price) || 0, formData.currency || 'USD', { appSettings })}
+                      {formatCurrency(parseFloat(formData.price) || 0, formData.currency || 'PHP', { appSettings })}
                     </span>
                     <span className="text-sm text-gray-500">/ {formData.unit}</span>
                   </div>

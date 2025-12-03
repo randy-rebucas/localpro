@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Store,
@@ -14,8 +14,11 @@ import {
   CheckCircle2,
   Sparkles,
   X,
+  Briefcase,
+  Gift,
 } from "lucide-react";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 interface FeatureOption {
   id: PreferredFeature;
@@ -25,9 +28,10 @@ interface FeatureOption {
   iconBgColor: string;
   iconTextColor: string;
   route: string;
+  featureKey: string; // Key used in app settings
 }
 
-const featureOptions: FeatureOption[] = [
+const allFeatureOptions: FeatureOption[] = [
   {
     id: "marketplace",
     name: "Marketplace",
@@ -36,24 +40,7 @@ const featureOptions: FeatureOption[] = [
     iconBgColor: "bg-blue-100",
     iconTextColor: "text-blue-600",
     route: "/marketplace",
-  },
-  {
-    id: "academy",
-    name: "Academy",
-    description: "Learn & grow",
-    icon: <GraduationCap className="w-6 h-6" />,
-    iconBgColor: "bg-green-100",
-    iconTextColor: "text-green-600",
-    route: "/academy",
-  },
-  {
-    id: "ads",
-    name: "Ads",
-    description: "Promote business",
-    icon: <Megaphone className="w-6 h-6" />,
-    iconBgColor: "bg-teal-100",
-    iconTextColor: "text-teal-600",
-    route: "/ads",
+    featureKey: "marketplace",
   },
   {
     id: "supplies",
@@ -63,6 +50,17 @@ const featureOptions: FeatureOption[] = [
     iconBgColor: "bg-orange-100",
     iconTextColor: "text-orange-600",
     route: "/supplies",
+    featureKey: "supplies",
+  },
+  {
+    id: "academy",
+    name: "Academy",
+    description: "Learn & grow",
+    icon: <GraduationCap className="w-6 h-6" />,
+    iconBgColor: "bg-green-100",
+    iconTextColor: "text-green-600",
+    route: "/academy",
+    featureKey: "academy",
   },
   {
     id: "rentals",
@@ -72,6 +70,47 @@ const featureOptions: FeatureOption[] = [
     iconBgColor: "bg-red-100",
     iconTextColor: "text-red-600",
     route: "/rentals",
+    featureKey: "rentals",
+  },
+  {
+    id: "jobs",
+    name: "Jobs",
+    description: "Find work opportunities",
+    icon: <Briefcase className="w-6 h-6" />,
+    iconBgColor: "bg-indigo-100",
+    iconTextColor: "text-indigo-600",
+    route: "/jobs",
+    featureKey: "jobBoard",
+  },
+  {
+    id: "facility",
+    name: "Facility Care",
+    description: "Maintenance services",
+    icon: <Home className="w-6 h-6" />,
+    iconBgColor: "bg-emerald-100",
+    iconTextColor: "text-emerald-600",
+    route: "/facility-care",
+    featureKey: "facilityCare",
+  },
+  {
+    id: "plus",
+    name: "LocalPro+",
+    description: "Premium features",
+    icon: <Star className="w-6 h-6" />,
+    iconBgColor: "bg-yellow-100",
+    iconTextColor: "text-yellow-600",
+    route: "/plus",
+    featureKey: "localProPlus",
+  },
+  {
+    id: "ads",
+    name: "Ads",
+    description: "Promote business",
+    icon: <Megaphone className="w-6 h-6" />,
+    iconBgColor: "bg-teal-100",
+    iconTextColor: "text-teal-600",
+    route: "/ads",
+    featureKey: "ads",
   },
   {
     id: "finance",
@@ -81,24 +120,17 @@ const featureOptions: FeatureOption[] = [
     iconBgColor: "bg-purple-100",
     iconTextColor: "text-purple-600",
     route: "/finance",
+    featureKey: "finance",
   },
   {
-    id: "facility",
-    name: "FacilityCare",
-    description: "Maintenance services",
-    icon: <Home className="w-6 h-6" />,
-    iconBgColor: "bg-emerald-100",
-    iconTextColor: "text-emerald-600",
-    route: "/facility-care",
-  },
-  {
-    id: "plus",
-    name: "LocalPro Plus",
-    description: "Premium features",
-    icon: <Star className="w-6 h-6" />,
-    iconBgColor: "bg-yellow-100",
-    iconTextColor: "text-yellow-600",
-    route: "/plus",
+    id: "referrals",
+    name: "Referrals",
+    description: "Earn rewards",
+    icon: <Gift className="w-6 h-6" />,
+    iconBgColor: "bg-pink-100",
+    iconTextColor: "text-pink-600",
+    route: "/referrals",
+    featureKey: "referrals",
   },
 ];
 
@@ -111,6 +143,26 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
   const { preferredFeature, setPreferredFeature, clearPreferredFeature } = usePreferredFeature();
   const [selectedFeature, setSelectedFeature] = useState<PreferredFeature>(preferredFeature);
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
+
+  // Helper to check if a feature is enabled in app settings
+  const isFeatureEnabled = (featureKey: string): boolean => {
+    if (!appSettings?.features) return true; // Default to showing all if settings not loaded
+    const features = appSettings.features as Record<string, unknown>;
+    const feature = features[featureKey];
+    if (feature === undefined) return true; // Show by default if not defined
+    if (typeof feature === 'boolean') return feature;
+    if (typeof feature === 'object' && feature !== null) {
+      return (feature as { enabled?: boolean }).enabled !== false;
+    }
+    return true;
+  };
+
+  // Filter features based on app settings
+  const featureOptions = useMemo(() => {
+    return allFeatureOptions.filter(feature => isFeatureEnabled(feature.featureKey));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appSettings?.features]);
 
   // Sync selectedFeature with preferredFeature when modal opens
   useEffect(() => {
@@ -149,12 +201,14 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
   };
 
   const handleConfirm = () => {
-    // Only allow marketplace to be selected
-    if (selectedFeature === "marketplace") {
-      setPreferredFeature(selectedFeature);
-      onClose();
-      // Navigate to the marketplace
-      router.push("/marketplace");
+    if (selectedFeature) {
+      const selectedOption = featureOptions.find(f => f.id === selectedFeature);
+      if (selectedOption) {
+        setPreferredFeature(selectedFeature);
+        onClose();
+        // Navigate to the selected feature's route
+        router.push(selectedOption.route);
+      }
     }
   };
 
@@ -165,7 +219,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
   };
 
   const currentFeature = preferredFeature
-    ? featureOptions.find((f) => f.id === preferredFeature)
+    ? allFeatureOptions.find((f) => f.id === preferredFeature)
     : null;
 
   return (
@@ -227,32 +281,20 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
             {featureOptions.map((feature) => {
               const isSelected = selectedFeature === feature.id;
-              const isEnabled = feature.id === "marketplace";
               return (
                 <button
                   key={feature.id}
-                  onClick={() => isEnabled && handleFeatureSelect(feature)}
-                  disabled={!isEnabled}
+                  onClick={() => handleFeatureSelect(feature)}
                   className={`
                     relative p-4 rounded-lg border-2 transition-all duration-200 overflow-hidden
                     ${
                       isSelected
                         ? "border-green-500 bg-green-50 shadow-md"
-                        : isEnabled
-                        ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                        : "border-gray-100 bg-gray-50 cursor-not-allowed"
+                        : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                     }
-                    ${!isEnabled ? "blur-[0.5px]" : ""}
                   `}
                 >
-                  {!isEnabled && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-white/30 backdrop-blur-[2px]">
-                      <div className="bg-white/90 px-3 py-1 rounded-full border border-gray-300 shadow-sm">
-                        <span className="text-xs font-semibold text-gray-700">Coming Soon</span>
-                      </div>
-                    </div>
-                  )}
-                  <div className={`flex flex-col items-center text-center space-y-2 w-full ${!isEnabled ? "opacity-60" : ""}`}>
+                  <div className="flex flex-col items-center text-center space-y-2 w-full">
                     <div
                       className={`
                         w-12 h-12 ${feature.iconBgColor} rounded-lg flex items-center justify-center flex-shrink-0
@@ -301,11 +343,11 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
                 </button>
                 <button
                   onClick={handleConfirm}
-                  disabled={selectedFeature !== "marketplace"}
+                  disabled={!selectedFeature}
                   className={`
                     px-4 sm:px-6 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 whitespace-nowrap
                     ${
-                      selectedFeature === "marketplace"
+                      selectedFeature
                         ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg"
                         : "bg-gray-300 cursor-not-allowed"
                     }

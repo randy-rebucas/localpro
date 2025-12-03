@@ -45,7 +45,6 @@ export function JobGrid({
   }
 
   const allJobs = [...featuredJobs, ...jobs];
-  const totalCount = featuredJobs.length + jobs.length;
 
   if (allJobs.length === 0) {
     const EmptyIcon = hasActiveFilters ? FilterX : Briefcase;
@@ -79,14 +78,6 @@ export function JobGrid({
 
   return (
     <div className="space-y-8">
-      {/* Results Count */}
-      {hasActiveFilters && (
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span className="font-medium">{totalCount}</span>
-          <span>{totalCount === 1 ? 'job' : 'jobs'} found</span>
-        </div>
-      )}
-
       {/* Featured Jobs Section */}
       {featuredJobs.length > 0 && (
         <div>

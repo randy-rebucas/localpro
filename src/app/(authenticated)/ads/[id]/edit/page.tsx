@@ -417,7 +417,7 @@ export default function EditAdPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Budget (USD) *
+                  Budget (PHP) *
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -636,7 +636,7 @@ export default function EditAdPage() {
               <div className="text-xs text-gray-500">
                 <p>Category: {formData.category || "Not selected"}</p>
                 <p>Type: {formData.type || "Not selected"}</p>
-                <p>Budget: ${formData.budget || "0"}</p>
+                <p>Budget: ₱{formData.budget || "0"}</p>
               </div>
             </div>
           </Card>

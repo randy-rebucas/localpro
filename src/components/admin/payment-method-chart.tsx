@@ -47,7 +47,7 @@ export const PaymentMethodChart = memo(function PaymentMethodChart({ data, title
               </span>
               <div className="text-right">
                 <div className="font-semibold text-gray-900">
-                  ${item.amount.toLocaleString()}
+                  ₱{item.amount.toLocaleString()}
                 </div>
                 <div className="text-xs text-gray-500">
                   {item.count} transactions ({item.percentage.toFixed(1)}%)
@@ -82,7 +82,7 @@ export const PaymentMethodChart = memo(function PaymentMethodChart({ data, title
             </div>
             <div className="text-right">
               <div className="text-sm font-semibold text-gray-900">
-                ${item.amount.toLocaleString()}
+                ₱{item.amount.toLocaleString()}
               </div>
               <div className="text-xs text-gray-500">
                 {item.percentage.toFixed(1)}%

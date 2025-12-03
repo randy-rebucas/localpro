@@ -385,7 +385,7 @@ export default function RentalDetailPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-gray-900">
-                    ${rental.price}
+                    ₱{rental.price}
                     <span className="text-lg text-gray-500">/{rental.priceUnit}</span>
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -474,7 +474,7 @@ export default function RentalDetailPage() {
             <Card className="p-6">
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-gray-900 mb-2">
-                  ${rental.price}
+                  ₱{rental.price}
                   <span className="text-lg text-gray-500">/{rental.priceUnit}</span>
                 </div>
                 <Badge className={`${getStatusColor(rental.status)} flex items-center gap-1 justify-center`}>

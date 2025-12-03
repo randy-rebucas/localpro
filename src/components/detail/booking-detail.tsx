@@ -116,7 +116,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
               <div>
                 <p className="text-sm text-gray-600">Base Price</p>
                 <p className="font-semibold text-lg">
-                  ${booking.pricing.basePrice?.toLocaleString()}
+                  ₱{booking.pricing.basePrice?.toLocaleString()}
                 </p>
               </div>
               {booking.pricing.additionalFees && booking.pricing.additionalFees.length > 0 && (
@@ -125,7 +125,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
                   {booking.pricing.additionalFees.map((fee, index) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span>{fee.description}</span>
-                      <span>${fee.amount?.toLocaleString()}</span>
+                      <span>₱{fee.amount?.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -135,7 +135,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
                   <div className="flex justify-between">
                     <p className="font-semibold">Total</p>
                     <p className="font-bold text-lg">
-                      ${booking.pricing.totalAmount.toLocaleString()}
+                      ₱{booking.pricing.totalAmount.toLocaleString()}
                     </p>
                   </div>
                 </div>

@@ -15,6 +15,29 @@ A comprehensive super app platform that integrates multiple professional service
 7. **Ads** - Advertising opportunities (Advertising for hardware stores, Suppliers, Training schools)
 8. **Finance** - Financial services (Salary advance, Micro-loans, Partner with fintech.company)
 
+### Admin Panel
+
+The admin panel provides comprehensive management capabilities for platform administrators:
+
+| Module | Path | Description |
+|--------|------|-------------|
+| **Dashboard** | `/admin` | Overview statistics, recent activity, system health |
+| **User Management** | `/admin/users` | Manage users, roles, and permissions |
+| **Agencies** | `/admin/agencies` | Manage agencies, verify, view providers |
+| **Marketplace** | `/admin/marketplace` | Manage services, categories, and providers |
+| **Supplies** | `/admin/supplies` | Manage products, inventory, and orders |
+| **Academy** | `/admin/academy` | Manage courses, instructors, and enrollments |
+| **Rentals** | `/admin/rentals` | Manage rental items and bookings |
+| **Ads** | `/admin/ads` | Manage advertisements and promotions |
+| **Finance** | `/admin/finance` | Financial overview, withdrawals, top-ups |
+| **Subscriptions** | `/admin/subscriptions` | Manage LocalPro Plus subscriptions |
+| **Communication** | `/admin/communication` | Platform messaging and notifications |
+| **Broadcaster** | `/admin/broadcaster` | Mass communication tools |
+| **Announcements** | `/admin/announcements` | Create and manage platform announcements |
+| **Bookings** | `/admin/bookings` | View and manage all marketplace bookings |
+| **Activity Logs** | `/admin/activity` | Monitor platform activity and user actions |
+| **Settings** | `/admin/settings` | System configuration and feature flags |
+
 ### Technical Features
 
 - **Authentication**: Mobile-only authentication with phone verification
@@ -24,6 +47,7 @@ A comprehensive super app platform that integrates multiple professional service
 - **Type Safety**: Full TypeScript support
 - **Form Validation**: Zod schema validation
 - **State Management**: SWR for data fetching
+- **Role-Based Access Control**: Admin, Provider, Client, Supplier, Instructor roles
 
 ## Tech Stack
 
@@ -78,6 +102,39 @@ A comprehensive super app platform that integrates multiple professional service
 
 The application is configured to use the external API at `https://localpro-super-app.onrender.com`. All API requests are automatically proxied to this endpoint.
 
+## API Documentation
+
+### Postman Collection
+
+A comprehensive Postman collection is available for testing all API endpoints:
+
+- **File**: `LocalPro-Admin-API.postman_collection.json`
+- **Full API Docs**: `docs/API_ENDPOINTS_WITH_ROLES.md`
+
+#### Import into Postman:
+1. Open Postman
+2. Click **Import** → **Upload Files**
+3. Select `LocalPro-Admin-API.postman_collection.json`
+4. Set environment variables:
+   - `base_url`: Your API URL (e.g., `https://localpro-super-app.onrender.com`)
+   - `auth_token`: Your JWT authentication token
+
+#### Collection Contents:
+- **Admin - Agencies**: 12 requests for agency management
+- **Admin - Announcements**: 9 requests for announcement CRUD
+- **Admin - Bookings**: 9 requests for booking management
+- **Admin - Activities**: 12 requests for activity monitoring
+- **Admin - Facility Care**: 13 requests for facility services
+- **Admin - Users**: 10 requests for user management
+- **Admin - Providers**: 3 requests for provider management
+- **Admin - App Settings**: 5 requests for configuration
+- **Admin - Finance**: 2 requests for financial operations
+- **Admin - Audit Logs**: 8 requests for audit trail
+- **Admin - Logs**: 10 requests for system logs
+- **Admin - Error Monitoring**: 5 requests for error tracking
+- **Admin - Subscriptions**: 6 requests for subscription management
+- **Admin - Trust Verification**: 2 requests for verification
+
 ## API Endpoints
 
 ### Authentication
@@ -99,11 +156,54 @@ The application is configured to use the external API at `https://localpro-super
 - `POST /api/marketplace/services/:id/images` - Upload service images
 - `POST /api/marketplace/bookings` - Create booking
 - `GET /api/marketplace/bookings` - Get user bookings
+- `GET /api/marketplace/bookings/:id` - Get booking details
 - `PUT /api/marketplace/bookings/:id/status` - Update booking status
 - `POST /api/marketplace/bookings/:id/photos` - Upload booking photos
 - `POST /api/marketplace/bookings/:id/review` - Add review
 - `POST /api/marketplace/bookings/paypal/approve` - Approve PayPal booking
 - `GET /api/marketplace/bookings/paypal/order/:orderId` - Get PayPal order details
+
+### Agencies
+- `GET /api/agencies` - Get all agencies
+- `GET /api/agencies/:id` - Get agency details
+- `POST /api/agencies` - Create agency
+- `PUT /api/agencies/:id` - Update agency
+- `DELETE /api/agencies/:id` - Delete agency
+- `POST /api/agencies/:id/logo` - Upload agency logo
+- `POST /api/agencies/:id/providers` - Add provider to agency
+- `DELETE /api/agencies/:id/providers/:providerId` - Remove provider
+- `PUT /api/agencies/:id/providers/:providerId/status` - Update provider status
+- `POST /api/agencies/:id/admins` - Add admin to agency
+- `DELETE /api/agencies/:id/admins/:adminId` - Remove admin
+- `GET /api/agencies/:id/analytics` - Get agency analytics
+- `GET /api/agencies/my/agencies` - Get my agencies
+- `POST /api/agencies/join` - Join agency
+- `POST /api/agencies/leave` - Leave agency
+
+### Announcements
+- `GET /api/announcements` - Get announcements (Public)
+- `GET /api/announcements/:id` - Get announcement details
+- `GET /api/announcements/my/list` - Get my announcements
+- `POST /api/announcements` - Create announcement (Admin)
+- `PUT /api/announcements/:id` - Update announcement
+- `DELETE /api/announcements/:id` - Delete announcement
+- `POST /api/announcements/:id/acknowledge` - Acknowledge announcement
+- `POST /api/announcements/:id/comments` - Add comment
+- `GET /api/announcements/admin/statistics` - Get statistics (Admin)
+
+### Activities
+- `GET /api/activities/feed` - Get activity feed
+- `GET /api/activities/my` - Get my activities
+- `GET /api/activities/user/:userId` - Get user activities
+- `GET /api/activities/:id` - Get activity details
+- `POST /api/activities` - Create activity
+- `PUT /api/activities/:id` - Update activity
+- `DELETE /api/activities/:id` - Delete activity
+- `POST /api/activities/:id/interactions` - Add interaction
+- `DELETE /api/activities/:id/interactions` - Remove interaction
+- `GET /api/activities/stats/my` - Get my activity stats
+- `GET /api/activities/stats/global` - Get global stats (Admin)
+- `GET /api/activities/metadata` - Get activity metadata
 
 ### Supplies
 - `GET /api/supplies` - Get all supplies
@@ -152,6 +252,23 @@ The application is configured to use the external API at `https://localpro-super
 - `PUT /api/finance/withdrawals/:withdrawalId/process` - Process withdrawal (Admin)
 - `GET /api/finance/tax-documents` - Get tax documents
 - `PUT /api/finance/wallet/settings` - Update wallet settings
+- `POST /api/finance/top-up` - Request top-up
+- `PUT /api/finance/top-ups/:topUpId/process` - Process top-up (Admin)
+
+### Facility Care
+- `GET /api/facility-care` - Get facility care services
+- `GET /api/facility-care/nearby` - Get nearby services
+- `GET /api/facility-care/:id` - Get service details
+- `POST /api/facility-care` - Create service (Provider/Admin)
+- `PUT /api/facility-care/:id` - Update service
+- `DELETE /api/facility-care/:id` - Delete service
+- `POST /api/facility-care/:id/images` - Upload images
+- `DELETE /api/facility-care/:id/images/:imageId` - Delete image
+- `POST /api/facility-care/:id/book` - Book service
+- `PUT /api/facility-care/:id/bookings/:bookingId/status` - Update booking status
+- `POST /api/facility-care/:id/reviews` - Add review
+- `GET /api/facility-care/my-services` - Get my services
+- `GET /api/facility-care/my-bookings` - Get my bookings
 
 ### Analytics
 - `GET /api/analytics/overview` - Get analytics overview
@@ -199,10 +316,16 @@ The application is configured to use the external API at `https://localpro-super
 - `GET /api/communication/conversations/:id` - Get specific conversation
 - `POST /api/communication/conversations` - Create conversation
 - `DELETE /api/communication/conversations/:id` - Delete conversation
+- `GET /api/communication/conversations/:id/messages` - Get messages
 - `POST /api/communication/conversations/:id/messages` - Send message
 - `PUT /api/communication/conversations/:id/messages/:messageId` - Update message
 - `DELETE /api/communication/conversations/:id/messages/:messageId` - Delete message
 - `PUT /api/communication/conversations/:id/read` - Mark as read
+- `GET /api/communication/notifications` - Get notifications
+- `GET /api/communication/notifications/count` - Get notification count
+- `PUT /api/communication/notifications/:notificationId/read` - Mark notification read
+- `PUT /api/communication/notifications/read-all` - Mark all read
+- `DELETE /api/communication/notifications/:notificationId` - Delete notification
 - `GET /api/communication/unread-count` - Get unread count
 - `GET /api/communication/search` - Search conversations
 
@@ -238,24 +361,106 @@ The application is configured to use the external API at `https://localpro-super
 - `GET /api/providers/profile/me` - Get my provider profile
 - `POST /api/providers/profile` - Create provider profile
 - `PUT /api/providers/profile` - Update provider profile
+- `PUT /api/providers/onboarding/step` - Update onboarding step
+- `POST /api/providers/documents/upload` - Upload documents
 - `GET /api/providers/dashboard/overview` - Get provider dashboard
 - `GET /api/providers/analytics/performance` - Get provider analytics
 - `GET /api/providers/admin/all` - Get all providers for admin
 - `PUT /api/providers/admin/:id/status` - Update provider status (Admin)
 
+### Users (Admin)
+- `GET /api/users` - Get all users
+- `GET /api/users/stats` - Get user statistics
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create user
+- `PUT /api/users/:id` - Update user
+- `PATCH /api/users/:id/status` - Update user status
+- `PATCH /api/users/:id/verification` - Update verification
+- `POST /api/users/:id/badges` - Add badge
+- `PATCH /api/users/bulk` - Bulk update users
+- `DELETE /api/users/:id` - Delete user
+
 ### Settings
 - `GET /api/settings/user` - Get user settings
 - `PUT /api/settings/user` - Update user settings
-- `GET /api/settings/app` - Get app settings (Admin)
+- `PUT /api/settings/user/:category` - Update settings category
+- `POST /api/settings/user/reset` - Reset user settings
+- `DELETE /api/settings/user` - Delete user settings
+- `GET /api/settings/app` - Get app settings
 - `PUT /api/settings/app` - Update app settings (Admin)
+- `PUT /api/settings/app/:category` - Update app settings category (Admin)
+- `POST /api/settings/app/features/toggle` - Toggle feature flag (Admin)
 - `GET /api/settings/app/public` - Get public app settings
 - `GET /api/settings/app/health` - Get app health
 
+### LocalPro Plus (Subscriptions)
+- `GET /api/localpro-plus/plans` - Get subscription plans
+- `GET /api/localpro-plus/plans/:id` - Get plan details
+- `POST /api/localpro-plus/plans` - Create plan (Admin)
+- `PUT /api/localpro-plus/plans/:id` - Update plan (Admin)
+- `DELETE /api/localpro-plus/plans/:id` - Delete plan (Admin)
+- `POST /api/localpro-plus/subscribe/:planId` - Subscribe to plan
+- `POST /api/localpro-plus/confirm-payment` - Confirm payment
+- `POST /api/localpro-plus/cancel` - Cancel subscription
+- `POST /api/localpro-plus/renew` - Renew subscription
+- `GET /api/localpro-plus/my-subscription` - Get my subscription
+- `PUT /api/localpro-plus/settings` - Update subscription settings
+- `GET /api/localpro-plus/usage` - Get subscription usage
+- `GET /api/localpro-plus/analytics` - Get analytics (Admin)
+- `POST /api/localpro-plus/admin/subscriptions` - Create manual subscription (Admin)
+- `GET /api/localpro-plus/admin/subscriptions` - Get all subscriptions (Admin)
+- `GET /api/localpro-plus/admin/subscriptions/user/:userId` - Get subscription by user
+- `PUT /api/localpro-plus/admin/subscriptions/:subscriptionId` - Update subscription (Admin)
+- `DELETE /api/localpro-plus/admin/subscriptions/:subscriptionId` - Delete subscription (Admin)
+
+### Referrals
+- `POST /api/referrals/validate` - Validate referral code
+- `POST /api/referrals/track` - Track referral click
+- `GET /api/referrals/leaderboard` - Get referral leaderboard
+- `GET /api/referrals/me` - Get my referrals
+- `GET /api/referrals/stats` - Get referral stats
+- `GET /api/referrals/links` - Get referral links
+- `GET /api/referrals/rewards` - Get referral rewards
+- `POST /api/referrals/invite` - Send referral invitation
+- `PUT /api/referrals/preferences` - Update referral preferences
+- `POST /api/referrals/process` - Process referral (Admin)
+- `GET /api/referrals/analytics` - Get referral analytics (Admin)
+
+### Trust Verification
+- `GET /api/trust-verification/verified-users` - Get verified users
+- `GET /api/trust-verification/requests` - Get verification requests
+- `GET /api/trust-verification/requests/:id` - Get request details
+- `POST /api/trust-verification/requests` - Create verification request
+- `PUT /api/trust-verification/requests/:id` - Update request
+- `DELETE /api/trust-verification/requests/:id` - Delete request
+- `POST /api/trust-verification/requests/:id/documents` - Upload documents
+- `DELETE /api/trust-verification/requests/:id/documents/:documentId` - Delete document
+- `GET /api/trust-verification/my-requests` - Get my requests
+- `PUT /api/trust-verification/requests/:id/review` - Review request (Admin)
+- `GET /api/trust-verification/statistics` - Get statistics (Admin)
+
+### Monitoring & Logs (Admin)
+- `GET /api/monitoring/health` - Health check
+- `GET /api/monitoring/system-health` - Comprehensive system health
+- `GET /api/monitoring/metrics` - Prometheus metrics
+- `GET /api/audit-logs` - Get audit logs
+- `GET /api/audit-logs/stats` - Get audit statistics
+- `GET /api/logs` - Get system logs
+- `GET /api/logs/stats` - Get log statistics
+- `GET /api/error-monitoring/stats` - Get error statistics
+- `GET /api/error-monitoring/unresolved` - Get unresolved errors
+
 ## User Roles
 
-- **CLIENT**: Regular users who can book services, purchase supplies, etc.
-- **PROVIDER**: Service providers who offer marketplace services
-- **ADMIN**: Platform administrators with full access
+| Role | Description |
+|------|-------------|
+| **CLIENT** | Regular users who can book services, purchase supplies, etc. |
+| **PROVIDER** | Service providers who offer marketplace services |
+| **SUPPLIER** | Users who sell supplies and products |
+| **INSTRUCTOR** | Academy course instructors |
+| **AGENCY_ADMIN** | Agency administrator |
+| **AGENCY_OWNER** | Agency owner |
+| **ADMIN** | Platform administrators with full access |
 
 ## API Integration
 
@@ -270,6 +475,9 @@ The application integrates with the external API at `https://localpro-super-app.
 - **Facility Contracts**: Facility management services
 - **Advertisements**: Advertising platform
 - **Loans & Salary Advances**: Financial services
+- **Agencies**: Multi-provider agency management
+- **Announcements**: Platform-wide announcements
+- **Activity Tracking**: User activity monitoring
 
 ## Development
 
@@ -277,14 +485,52 @@ The application integrates with the external API at `https://localpro-super-app.
 
 ```
 src/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   ├── auth/              # Authentication pages
-│   └── globals.css        # Global styles
-├── components/            # React components
-├── lib/                   # Utility libraries
-├── types/                 # TypeScript type definitions
-└── prisma/                # Database schema
+├── app/                          # Next.js app directory
+│   ├── (auth)/                   # Authentication pages
+│   │   └── auth/                 # Login/Register
+│   ├── (authenticated)/          # Protected user pages
+│   │   ├── academy/              # Academy module
+│   │   ├── ads/                  # Advertisements
+│   │   ├── communication/        # Messaging
+│   │   ├── dashboard/            # User dashboard
+│   │   ├── facility-care/        # Facility services
+│   │   ├── finance/              # Financial services
+│   │   ├── jobs/                 # Job listings
+│   │   ├── marketplace/          # Service marketplace
+│   │   ├── profile/              # User profile
+│   │   ├── rentals/              # Equipment rentals
+│   │   ├── settings/             # User settings
+│   │   └── supplies/             # Supplies store
+│   ├── admin/                    # Admin panel
+│   │   ├── academy/              # Manage courses
+│   │   ├── activity/             # Activity logs
+│   │   ├── ads/                  # Manage ads
+│   │   ├── agencies/             # Manage agencies
+│   │   ├── announcements/        # Manage announcements
+│   │   ├── bookings/             # Manage bookings
+│   │   ├── broadcaster/          # Mass communication
+│   │   ├── communication/        # Platform messaging
+│   │   ├── finance/              # Financial management
+│   │   ├── marketplace/          # Manage services
+│   │   ├── rentals/              # Manage rentals
+│   │   ├── settings/             # System settings
+│   │   ├── subscriptions/        # Manage subscriptions
+│   │   ├── supplies/             # Manage products
+│   │   └── users/                # User management
+│   └── api/                      # API routes
+├── components/                   # React components
+│   ├── admin/                    # Admin-specific components
+│   ├── ui/                       # Reusable UI components
+│   └── ...                       # Feature components
+├── contexts/                     # React contexts
+├── hooks/                        # Custom React hooks
+├── lib/                          # Utility libraries
+│   ├── api.ts                    # API configuration
+│   ├── auth-utils.ts             # Authentication utilities
+│   ├── logger.ts                 # Logging utilities
+│   └── ...                       # Other utilities
+├── types/                        # TypeScript type definitions
+└── data/                         # Static data
 ```
 
 ### Key Components
@@ -292,8 +538,44 @@ src/
 - **Dashboard**: Main application interface with service modules
 - **Authentication**: Phone-only sign in with SMS verification
 - **User Profile**: Complete profile management with avatar and portfolio upload
+- **Admin Panel**: Comprehensive administrative interface
 - **Verification Modal**: Phone verification system
 - **Service Modules**: Individual components for each service area
+
+### Feature Documentation
+
+Detailed documentation for each feature is available in the `features/` directory:
+
+```
+features/
+├── academy/                # Academy feature docs
+├── activity/               # Activity tracking docs
+├── ads/                    # Advertising docs
+├── agencies/               # Agency management docs
+├── analytics/              # Analytics docs
+├── announcements/          # Announcements docs
+├── bookings/               # Bookings docs
+├── communication/          # Messaging docs
+├── facility-care/          # Facility care docs
+├── finance/                # Finance docs
+├── jobs/                   # Jobs docs
+├── providers/              # Provider docs
+├── referrals/              # Referral docs
+├── rentals/                # Rentals docs
+├── services/               # Services docs
+├── subscriptions/          # Subscription docs
+├── supplies/               # Supplies docs
+├── trust-verification/     # Verification docs
+├── user-settings/          # User settings docs
+└── users/                  # User management docs
+```
+
+Each feature folder contains:
+- `api-endpoints.md` - API endpoint documentation
+- `data-entities.md` - Data model documentation
+- `best-practices.md` - Implementation guidelines
+- `usage-examples.md` - Code examples
+- `README.md` - Feature overview
 
 ## Contributing
 

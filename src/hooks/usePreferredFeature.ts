@@ -11,6 +11,8 @@ export type PreferredFeature =
   | "finance"
   | "facility"
   | "plus"
+  | "jobs"
+  | "referrals"
   | null;
 
 const PREFERRED_FEATURE_KEY = "localpro_preferred_feature";

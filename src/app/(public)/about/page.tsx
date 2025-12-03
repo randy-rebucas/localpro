@@ -78,7 +78,7 @@ export default function About() {
     {
       year: "2022",
       title: "Series A Funding",
-      description: "Raised $10M in Series A funding to accelerate growth"
+      description: "Raised ₱500M in Series A funding to accelerate growth"
     },
     {
       year: "2023",

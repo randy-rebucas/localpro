@@ -57,7 +57,7 @@ export function FacilityCareForm({
       pricing: initialData?.pricing || {
         type: "hourly",
         basePrice: 0,
-        currency: "USD",
+        currency: "PHP",
       },
       serviceArea: initialData?.serviceArea || [],
     },
@@ -146,7 +146,7 @@ export function FacilityCareForm({
             <label className="block text-sm font-medium mb-2">Currency</label>
             <Input
               {...register("pricing.currency")}
-              placeholder="USD"
+              placeholder="PHP"
             />
           </div>
         </div>

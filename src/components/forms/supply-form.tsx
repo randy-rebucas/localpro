@@ -41,7 +41,7 @@ export function SupplyForm({ initialData, onSubmit, onCancel, loading = false }:
       sku: initialData?.sku || "",
       pricing: initialData?.pricing || {
         retailPrice: 0,
-        currency: "USD",
+        currency: "PHP",
       },
       inventory: initialData?.inventory || {
         quantity: 0,
@@ -158,7 +158,7 @@ export function SupplyForm({ initialData, onSubmit, onCancel, loading = false }:
             <label className="block text-sm font-medium mb-2">Currency</label>
             <Input
               {...register("pricing.currency")}
-              placeholder="USD"
+              placeholder="PHP"
             />
           </div>
         </div>

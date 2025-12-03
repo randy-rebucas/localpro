@@ -127,15 +127,15 @@ export function CourseDetail({
               {course.pricing.discountedPrice ? (
                 <>
                   <span className="text-3xl font-bold">
-                    ${course.pricing.discountedPrice}
+                    ₱{course.pricing.discountedPrice}
                   </span>
                   <span className="text-lg text-gray-500 line-through">
-                    ${course.pricing.regularPrice}
+                    ₱{course.pricing.regularPrice}
                   </span>
                 </>
               ) : (
                 <span className="text-3xl font-bold">
-                  ${course.pricing.regularPrice}
+                  ₱{course.pricing.regularPrice}
                 </span>
               )}
             </div>

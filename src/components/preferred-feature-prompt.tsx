@@ -16,6 +16,8 @@ const routeToFeatureId: Record<string, PreferredFeature> = {
   "/facility-care": "facility",
   "/facility": "facility",
   "/plus": "plus",
+  "/jobs": "jobs",
+  "/referrals": "referrals",
 };
 
 // Feature names for display
@@ -28,6 +30,8 @@ const featureNames: Record<Exclude<PreferredFeature, null>, string> = {
   finance: "Finance",
   facility: "FacilityCare",
   plus: "LocalPro Plus",
+  jobs: "Jobs",
+  referrals: "Referrals",
 };
 
 export function PreferredFeaturePrompt() {

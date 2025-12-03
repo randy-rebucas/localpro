@@ -123,7 +123,7 @@ export function RefundModal({ isOpen, onClose, onSubmit, transaction }: RefundMo
                 </div>
                 <div>
                   <span className="text-gray-500">Amount:</span>
-                  <span className="ml-2 font-medium">${transaction.amount.toFixed(2)}</span>
+                  <span className="ml-2 font-medium">₱{transaction.amount.toFixed(2)}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Method:</span>

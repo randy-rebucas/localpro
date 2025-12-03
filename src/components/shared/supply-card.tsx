@@ -74,10 +74,10 @@ export function SupplyCard({ supply, viewMode = "list", onAddToCart, onFavorite 
             <div className="mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold">
-                  ${supply.pricing.retailPrice}
+                  ₱{supply.pricing.retailPrice}
                   {supply.pricing.wholesalePrice && (
                     <span className="text-sm text-gray-500 ml-2">
-                      (Wholesale: ${supply.pricing.wholesalePrice})
+                      (Wholesale: ₱{supply.pricing.wholesalePrice})
                     </span>
                   )}
                 </span>

@@ -74,7 +74,7 @@ export default function AIFormPrefiller({ onPrefill }: AIFormPrefillerProps) {
                 handleGenerate();
               }
             }}
-            placeholder="Example: I offer professional house cleaning services in Manila. I provide deep cleaning, regular maintenance, and window cleaning. I work alone, bring all equipment and materials. I charge $25 per hour. I'm available Monday to Friday 9am to 5pm. I offer a 30-day satisfaction guarantee and have insurance coverage up to $100,000. I also offer emergency cleaning services with 2-hour response time for an extra $50..."
+            placeholder="Example: I offer professional house cleaning services in Manila. I provide deep cleaning, regular maintenance, and window cleaning. I work alone, bring all equipment and materials. I charge ₱500 per hour. I'm available Monday to Friday 9am to 5pm. I offer a 30-day satisfaction guarantee and have insurance coverage up to ₱5,000,000. I also offer emergency cleaning services with 2-hour response time for an extra ₱1,000..."
             rows={6}
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md resize-none"
           />

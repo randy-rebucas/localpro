@@ -56,7 +56,7 @@ export function CourseForm({ initialData, onSubmit, onCancel, loading = false }:
       },
       pricing: initialData?.pricing || {
         regularPrice: 0,
-        currency: "USD",
+        currency: "PHP",
       },
       learningOutcomes: initialData?.learningOutcomes || [],
     },
@@ -186,7 +186,7 @@ export function CourseForm({ initialData, onSubmit, onCancel, loading = false }:
             <label className="block text-sm font-medium mb-2">Currency</label>
             <Input
               {...register("pricing.currency")}
-              placeholder="USD"
+              placeholder="PHP"
             />
           </div>
         </div>

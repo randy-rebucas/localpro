@@ -96,7 +96,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
           {service.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ${service.pricing.basePrice}
+                ₱{service.pricing.basePrice}
               </span>
               <span className="text-gray-600">
                 /{service.pricing.type === "hourly" ? "hr" : service.pricing.type === "fixed" ? "service" : service.pricing.type}
@@ -207,7 +207,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Insurance</h2>
             <p className="text-gray-600">
-              Covered up to ${service.insurance.coverageAmount?.toLocaleString()}
+              Covered up to ₱{service.insurance.coverageAmount?.toLocaleString()}
             </p>
           </Card>
         )}

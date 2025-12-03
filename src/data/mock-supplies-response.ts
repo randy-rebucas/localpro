@@ -9,7 +9,7 @@ export const mockSuppliesApiResponse = {
       "pricing": {
         "retailPrice": 8.99,
         "wholesalePrice": 6.99,
-        "currency": "USD"
+        "currency": "PHP"
       },
       "inventory": {
         "quantity": 200,
@@ -58,7 +58,7 @@ export const mockSuppliesApiResponse = {
       "pricing": {
         "retailPrice": 15.99,
         "wholesalePrice": 12.99,
-        "currency": "USD"
+        "currency": "PHP"
       },
       "inventory": {
         "quantity": 100,
