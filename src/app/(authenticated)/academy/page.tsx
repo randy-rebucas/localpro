@@ -11,9 +11,6 @@ import {
     Search,
     Star,
     Clock,
-    Grid,
-    List,
-    SlidersHorizontal,
     Plus,
     Users,
     Play,
@@ -24,12 +21,14 @@ import {
     Sparkles,
     ChevronLeft,
     ChevronRight,
-    Filter,
     X,
     CheckCircle2,
+    Zap,
+    Headphones,
+    HelpCircle,
+    BookOpen,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { apiRequest, API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
@@ -203,6 +202,12 @@ const sortOptions = [
     { value: "duration", label: "Duration" }
 ];
 
+const learningTips = [
+    "Set a consistent study schedule",
+    "Take notes and practice regularly",
+    "Complete all quizzes for certification"
+];
+
 interface Enrollment {
     _id?: string;
     id?: string;
@@ -230,8 +235,6 @@ export default function AcademyPage() {
     const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("relevance");
-    const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-    const [showFilters, setShowFilters] = useState(false);
     const [pagination, setPagination] = useState({
         current: 1,
         pages: 1,
@@ -275,16 +278,16 @@ export default function AcademyPage() {
                     weeks: undefined
                 };
             })(),
-            // Handle pricing
+            // Handle pricing - Always normalize to PHP
             pricing: (() => {
                 if (course.pricing && typeof course.pricing === 'object' && 'regularPrice' in course.pricing) {
-                    return course.pricing as Course['pricing'];
+                    return { ...course.pricing as Course['pricing'], currency: 'PHP' };
                 }
                 const priceValue = typeof course.price === 'number' ? course.price : course.originalPrice || 0;
                 return {
                     regularPrice: priceValue,
                     discountedPrice: (course.pricing as Course['pricing'])?.discountedPrice || course.price || undefined,
-                    currency: (course.pricing as Course['pricing'])?.currency || course.currency || 'PHP'
+                    currency: 'PHP'
                 };
             })(),
             // Handle instructor
@@ -514,8 +517,16 @@ export default function AcademyPage() {
         }
     };
 
-    const handleCategoryFilter = (category: string) => {
-        setFilters(prev => ({ ...prev, category }));
+    const clearFilters = () => {
+        setFilters({
+            category: "",
+            level: "",
+            priceRange: [0, 1000],
+            rating: 0,
+            certification: false,
+            enrollment: true
+        });
+        setSearchQuery("");
     };
 
     const activeFiltersCount = useMemo(() => {
@@ -531,437 +542,400 @@ export default function AcademyPage() {
 
     if (loading) {
         return (
-            <div className="p-4 space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Academy</h1>
-                        <p className="text-gray-600">Browse courses and certifications</p>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+                {/* Animated Background Blobs */}
+                <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                    <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+                </div>
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+                    {/* Header Skeleton */}
+                    <div className="animate-pulse">
+                        <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+                        <div className="h-12 bg-gray-200 rounded-lg w-full mb-4"></div>
+                        <div className="flex gap-3">
+                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+                        </div>
+                    </div>
+
+                    {/* Content Skeleton */}
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        <div className="lg:w-64 flex-shrink-0">
+                            <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
+                                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+                                <div className="space-y-4">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <GridSkeleton count={6} columns={3} />
+                        </div>
                     </div>
                 </div>
-                <GridSkeleton count={6} columns={3} />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="p-4">
-                <Card interactive={false}>
-                    <EmptyState
-                        icon={GraduationCap}
-                        iconColor="text-red-600"
-                        iconBgColor="bg-red-100"
-                        title="Unable to Load Courses"
-                        description={error}
-                        actions={[
-                            {
-                                type: "button",
-                                onClick: fetchCourses,
-                                label: "Try Again",
-                                icon: RefreshCw,
-                                variant: "primary"
-                            }
-                        ]}
-                    />
-                </Card>
+            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+                <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                </div>
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                    <Card interactive={false}>
+                        <EmptyState
+                            icon={GraduationCap}
+                            iconColor="text-red-600"
+                            iconBgColor="bg-red-100"
+                            title="Unable to Load Courses"
+                            description={error}
+                            actions={[
+                                {
+                                    type: "button",
+                                    onClick: fetchCourses,
+                                    label: "Try Again",
+                                    icon: RefreshCw,
+                                    variant: "primary"
+                                }
+                            ]}
+                        />
+                    </Card>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
-            {/* Animated Background Blobs */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-100/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+            {/* Animated Background Elements */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
             </div>
 
-            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-                {/* Header */}
-                <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-                    <PageHeader
-                        title="Academy"
-                        subtitle="Browse courses, learn new skills, and earn certifications"
-                        actions={[
-                            ...(isInstructor || isAdmin ? [{
-                                type: "button" as const,
-                                onClick: handleCreateCourse,
-                                label: "Create Course",
-                                icon: Plus,
-                                variant: "primary" as const
-                            }] : [])
-                        ]}
-                    />
-                </div>
-
-            {/* My Enrolled Courses Section */}
-            {session && myEnrollments.length > 0 && (
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-bold text-gray-900">My Courses</h2>
-                        <Link 
-                            href="/academy/my-courses" 
-                            className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
-                        >
-                            View All
-                            <ArrowRight className="w-4 h-4" />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {myEnrollments.map((enrollment) => {
-                            const course = enrollment.course;
-                            if (!course) return null;
-                            const courseId = course.id || course._id || '';
-                            return (
-                                <Card key={enrollment._id || enrollment.id} className="p-4 bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 hover:border-green-300 hover:shadow-xl transition-all duration-300">
-                                    <div className="space-y-3">
-                                        <div className="flex items-start justify-between">
-                                            <h3 className="font-semibold text-gray-900 line-clamp-2">{course.title}</h3>
-                                            {enrollment.status === 'completed' && (
-                                                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 ml-2" />
-                                            )}
-                                        </div>
-                                        {enrollment.progress !== undefined && (
-                                            <div className="space-y-1">
-                                                <div className="flex items-center justify-between text-sm">
-                                                    <span className="text-gray-600">Progress</span>
-                                                    <span className="font-medium text-gray-900">{enrollment.progress}%</span>
-                                                </div>
-                                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                                    <div 
-                                                        className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all shadow-sm"
-                                                        style={{ width: `${enrollment.progress}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                        <button
-                                            onClick={() => handleViewCourse(courseId)}
-                                            className="w-full px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl font-medium text-sm flex items-center justify-center gap-2"
-                                        >
-                                            <Play className="w-4 h-4" />
-                                            {enrollment.status === 'completed' ? 'Review Course' : 'Continue Learning'}
-                                        </button>
-                                    </div>
-                                </Card>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* Featured Courses Section */}
-            {featuredCourses.length > 0 && (
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-yellow-500" />
-                            <h2 className="text-xl font-bold text-gray-900">Featured Courses</h2>
+            <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                {/* Header Section */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                        Academy — Learn skills that grow your career
+                    </h1>
+                    <p className="text-gray-600 mb-6">
+                        Expert-led courses, certifications, and hands-on training for service professionals.
+                    </p>
+                    
+                    {/* Search Bar */}
+                    <div className="relative mb-4">
+                        <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                            <Search className="w-5 h-5 text-gray-400" />
                         </div>
+                        <input
+                            type="text"
+                            placeholder="Search courses, skills, or instructors"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {featuredCourses.map((course, index) => (
-                            <CourseCard
-                                key={course.id || course._id || `featured-${index}`}
-                                course={course}
-                                viewMode="grid"
-                                onView={handleViewCourse}
-                                featured={true}
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
 
-            {/* Category Quick Filters */}
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm space-y-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-gray-900">Browse by Category</h2>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    {categories.filter(c => c.value).map(category => (
-                        <button
-                            key={category.value}
-                            onClick={() => handleCategoryFilter(filters.category === category.value ? "" : category.value)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md ${
-                                filters.category === category.value
-                                    ? "bg-gradient-to-r from-green-600 to-green-700 text-white shadow-lg shadow-green-500/30"
-                                    : "bg-white border-2 border-gray-300 text-gray-700 hover:border-green-500 hover:bg-green-50"
-                            }`}
-                        >
-                            {category.label}
+                    {/* Feature Buttons */}
+                    <div className="flex flex-wrap gap-3">
+                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">Verified Instructors</span>
                         </button>
-                    ))}
+                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
+                            <Award className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">Certificates</span>
+                        </button>
+                        <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all shadow-sm hover:shadow-md">
+                            <Headphones className="w-4 h-4 text-green-600" />
+                            <span className="text-sm font-medium text-gray-700">Support</span>
+                        </button>
+                        {(isInstructor || isAdmin) && (
+                            <button
+                                onClick={handleCreateCourse}
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 ml-auto"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Create Course
+                            </button>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            {/* Main Layout: Filters on Left, Content on Right */}
-            <div className="flex flex-col lg:flex-row gap-4">
-                {/* Left Sidebar - Filters */}
-                <aside className={`w-full lg:w-64 flex-shrink-0 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                    <Card className="p-6 bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 shadow-lg backdrop-blur-sm sticky top-24">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                                <div className="flex items-center gap-2">
+                {/* Main Content Layout */}
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Sidebar - Filters */}
+                    <aside className="lg:w-64 flex-shrink-0">
+                        <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+                            {/* Filters Section */}
+                            <div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold text-gray-900">Filters</h2>
                                     {activeFiltersCount > 0 && (
                                         <span className="px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded-full">
                                             {activeFiltersCount}
                                         </span>
                                     )}
-                                    <SlidersHorizontal className="w-5 h-5 text-gray-400" />
                                 </div>
-                            </div>
-
-                            {/* Category Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Category
-                                </label>
-                                <select
-                                    value={filters.category}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                >
-                                    {categories.map(category => (
-                                        <option key={category.value} value={category.value}>
-                                            {category.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Level Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Level
-                                </label>
-                                <select
-                                    value={filters.level}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                >
-                                    {levels.map(level => (
-                                        <option key={level.value} value={level.value}>
-                                            {level.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Price Range */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Price Range
-                                </label>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="number"
-                                        placeholder="Min"
-                                        value={filters.priceRange[0]}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [Number(e.target.value), prev.priceRange[1]] }))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    />
-                                    <span className="text-gray-500">to</span>
-                                    <input
-                                        type="number"
-                                        placeholder="Max"
-                                        value={filters.priceRange[1]}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [prev.priceRange[0], Number(e.target.value)] }))}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Rating Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Minimum Rating
-                                </label>
-                                <select
-                                    value={filters.rating}
-                                    onChange={(e) => setFilters(prev => ({ ...prev, rating: Number(e.target.value) }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                >
-                                    <option value={0}>Any Rating</option>
-                                    <option value={4}>4+ Stars</option>
-                                    <option value={3}>3+ Stars</option>
-                                    <option value={2}>2+ Stars</option>
-                                </select>
-                            </div>
-
-                            {/* Certification Filter */}
-                            <div>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={filters.certification}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, certification: e.target.checked }))}
-                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                    />
-                                    <span className="text-sm text-gray-700">With Certification</span>
-                                </label>
-                            </div>
-
-                            {/* Enrollment Filter */}
-                            <div>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={filters.enrollment}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, enrollment: e.target.checked }))}
-                                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                    />
-                                    <span className="text-sm text-gray-700">Open Enrollment</span>
-                                </label>
-                            </div>
-
-                            {/* Clear Filters */}
-                            <div>
-                                <button
-                                    onClick={() => {
-                                        setFilters({
-                                            category: "",
-                                            level: "",
-                                            priceRange: [0, 1000],
-                                            rating: 0,
-                                            certification: false,
-                                            enrollment: true
-                                        });
-                                        setSearchQuery("");
-                                    }}
-                                    className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                                >
-                                    Clear Filters
-                                </button>
-                            </div>
-                        </div>
-                    </Card>
-                </aside>
-
-                {/* Right Content Area */}
-                <div className="flex-1 space-y-4">
-                    {/* Search and Controls */}
-                    <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            {/* Search */}
-                            <div className="flex-1">
-                                <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search courses, instructors, categories..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
-                                    />
-                                    {searchQuery && (
-                                        <button
-                                            onClick={() => setSearchQuery("")}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                            {/* Sort and View Controls */}
-                            <div className="flex items-center gap-2">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                                >
-                                    {sortOptions.map(option => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                                <button
-                                    onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                                    title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-                                >
-                                    {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-                                </button>
-                                <button
-                                    onClick={() => setShowFilters(!showFilters)}
-                                    className="lg:hidden p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors relative"
-                                    title="Toggle filters"
-                                >
-                                    <Filter className="w-4 h-4" />
-                                    {activeFiltersCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                                            {activeFiltersCount}
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Call-out Card for Clients to Become Instructors */}
-                    {isClient && !isInstructor && !isAdmin && (
-                        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
-                            <div className="px-3 py-1">
-                                <div className="flex items-center justify-between gap-4">
-                                    <p className="text-lg font-medium text-gray-700 flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-green-600" />
-                                        <span>Share your expertise and create courses as an instructor</span>
-                                    </p>
-                                    <Link
-                                        href="/plus?upgrade=instructor"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap"
+                                
+                                {/* Category Filter */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                                    <select
+                                        value={filters.category}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
                                     >
-                                        Upgrade
-                                        <ArrowRight className="w-3.5 h-3.5" />
+                                        {categories.map(category => (
+                                            <option key={category.value} value={category.value}>
+                                                {category.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Level Filter */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Level</label>
+                                    <select
+                                        value={filters.level}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value }))}
+                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                                    >
+                                        {levels.map(level => (
+                                            <option key={level.value} value={level.value}>
+                                                {level.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            value={filters.priceRange[0] || ""}
+                                            onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [parseInt(e.target.value) || 0, prev.priceRange[1]] }))}
+                                            placeholder="Min"
+                                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                                        />
+                                        <span className="self-center text-gray-500">-</span>
+                                        <input
+                                            type="number"
+                                            value={filters.priceRange[1] || ""}
+                                            onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [prev.priceRange[0], parseInt(e.target.value) || 1000] }))}
+                                            placeholder="Max"
+                                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Rating Filter */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Minimum Rating</label>
+                                    <select
+                                        value={filters.rating}
+                                        onChange={(e) => setFilters(prev => ({ ...prev, rating: Number(e.target.value) }))}
+                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                                    >
+                                        <option value={0}>Any Rating</option>
+                                        <option value={4}>4+ Stars</option>
+                                        <option value={3}>3+ Stars</option>
+                                        <option value={2}>2+ Stars</option>
+                                    </select>
+                                </div>
+
+                                {/* Certification Filter */}
+                                <div className="mb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={filters.certification}
+                                            onChange={(e) => setFilters(prev => ({ ...prev, certification: e.target.checked }))}
+                                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">With Certification</span>
+                                    </label>
+                                </div>
+
+                                {/* Enrollment Filter */}
+                                <div className="mb-4">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={filters.enrollment}
+                                            onChange={(e) => setFilters(prev => ({ ...prev, enrollment: e.target.checked }))}
+                                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Open Enrollment</span>
+                                    </label>
+                                </div>
+
+                                {/* Clear Filters */}
+                                {activeFiltersCount > 0 && (
+                                    <button
+                                        onClick={clearFilters}
+                                        className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                    >
+                                        Clear Filters
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Become an Instructor Section */}
+                            {isClient && !isInstructor && !isAdmin && (
+                                <div className="pt-6 border-t-2 border-gray-200">
+                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                        <div className="flex items-start gap-3 mb-3">
+                                            <Sparkles className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900 text-sm">Become an Instructor</h3>
+                                                <p className="text-xs text-gray-600 mt-1">Share your expertise and earn by creating courses.</p>
+                                            </div>
+                                        </div>
+                                        <Link
+                                            href="/plus?upgrade=instructor"
+                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                        >
+                                            Upgrade Now
+                                            <ArrowRight className="w-4 h-4" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+
+                    {/* Main Content Area */}
+                    <div className="flex-1 min-w-0 space-y-6">
+                        {/* My Enrolled Courses Section */}
+                        {session && myEnrollments.length > 0 && (
+                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-lg font-bold text-gray-900">Continue Learning</h2>
+                                    <Link 
+                                        href="/academy/my-courses" 
+                                        className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                                    >
+                                        View All
+                                        <ArrowRight className="w-4 h-4" />
                                     </Link>
                                 </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {myEnrollments.slice(0, 3).map((enrollment) => {
+                                        const course = enrollment.course;
+                                        if (!course) return null;
+                                        const courseId = course.id || course._id || '';
+                                        return (
+                                            <div key={enrollment._id || enrollment.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-green-300 hover:shadow-md transition-all">
+                                                <div className="space-y-3">
+                                                    <div className="flex items-start justify-between">
+                                                        <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm">{course.title}</h3>
+                                                        {enrollment.status === 'completed' && (
+                                                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 ml-2" />
+                                                        )}
+                                                    </div>
+                                                    {enrollment.progress !== undefined && (
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center justify-between text-xs">
+                                                                <span className="text-gray-600">Progress</span>
+                                                                <span className="font-medium text-gray-900">{enrollment.progress}%</span>
+                                                            </div>
+                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                                <div 
+                                                                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
+                                                                    style={{ width: `${enrollment.progress}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleViewCourse(courseId)}
+                                                        className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium text-sm flex items-center justify-center gap-2"
+                                                    >
+                                                        <Play className="w-4 h-4" />
+                                                        {enrollment.status === 'completed' ? 'Review' : 'Continue'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </Card>
-                    )}
+                        )}
 
-                    {/* Results */}
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <p className="text-gray-600">
-                                    {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
-                                </p>
+                        {/* Featured Courses Section */}
+                        {featuredCourses.length > 0 && (
+                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Sparkles className="w-5 h-5 text-yellow-500" />
+                                    <h2 className="text-lg font-bold text-gray-900">Featured Courses</h2>
+                                </div>
+                                <div className="space-y-4">
+                                    {featuredCourses.slice(0, 3).map((course, index) => (
+                                        <CourseCard
+                                            key={course.id || course._id || `featured-${index}`}
+                                            course={course}
+                                            onView={handleViewCourse}
+                                            featured={true}
+                                        />
+                                    ))}
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                                title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
+                        )}
+
+                        {/* Sort and Results Count */}
+                        <div className="flex items-center justify-between">
+                            <p className="text-gray-600 text-sm">
+                                {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
+                            </p>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm bg-white font-medium"
                             >
-                                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-                            </button>
+                                {sortOptions.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
+                        {/* Course Grid */}
                         {filteredCourses.length === 0 ? (
                             <Card interactive={false}>
                                 <EmptyState
                                     icon={GraduationCap}
-                                    iconColor="text-purple-600"
-                                    iconBgColor="bg-purple-100"
+                                    iconColor="text-green-600"
+                                    iconBgColor="bg-green-100"
                                     title="No Courses Found"
                                     description="We couldn't find any courses matching your criteria. Try adjusting your search terms or filters."
                                     actions={[
                                         {
                                             type: "button",
-                                            onClick: () => {
-                                                setSearchQuery("");
-                                                setFilters({
-                                                    category: "",
-                                                    level: "",
-                                                    priceRange: [0, 1000],
-                                                    rating: 0,
-                                                    certification: false,
-                                                    enrollment: true
-                                                });
-                                            },
+                                            onClick: clearFilters,
                                             label: "Clear All Filters",
                                             variant: "primary"
                                         },
@@ -970,16 +944,11 @@ export default function AcademyPage() {
                             </Card>
                         ) : (
                             <>
-                                <div className={`grid gap-4 ${
-                                    viewMode === "grid" 
-                                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-                                        : "grid-cols-1"
-                                }`}>
+                                <div className="space-y-4">
                                     {filteredCourses.map((course, index) => (
                                         <CourseCard
                                             key={course.id || course._id || `course-${index}`}
                                             course={course}
-                                            viewMode={viewMode}
                                             onView={handleViewCourse}
                                         />
                                     ))}
@@ -1041,8 +1010,65 @@ export default function AcademyPage() {
                             </>
                         )}
                     </div>
+
+                    {/* Right Sidebar */}
+                    <aside className="lg:w-64 flex-shrink-0">
+                        <div className="space-y-6 sticky top-24">
+                            {/* Popular Categories */}
+                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                                <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {categories.filter(c => c.value).slice(0, 5).map((category) => (
+                                        <button
+                                            key={category.value}
+                                            onClick={() => setFilters(prev => ({ ...prev, category: prev.category === category.value ? "" : category.value }))}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                                                filters.category === category.value
+                                                    ? "bg-green-600 text-white border-green-600"
+                                                    : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                                            }`}
+                                        >
+                                            {category.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Learning Tips */}
+                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                                <h2 className="text-lg font-bold text-gray-900 mb-4">Learning tips</h2>
+                                <ul className="space-y-3">
+                                    {learningTips.map((tip, index) => (
+                                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
+                                            <span className="text-green-600 mt-1">•</span>
+                                            <span>{tip}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            {/* Need Help Section */}
+                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                    <div className="flex items-start gap-3 mb-3">
+                                        <HelpCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
+                                            <p className="text-xs text-gray-600 mt-1">Our team is here to help you find the right course.</p>
+                                        </div>
+                                    </div>
+                                    <Link
+                                        href="/support"
+                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all border border-green-200 font-medium text-sm"
+                                    >
+                                        <Zap className="w-4 h-4" />
+                                        Contact Support
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
-            </div>
             </div>
         </div>
     );
@@ -1050,12 +1076,11 @@ export default function AcademyPage() {
 
 interface CourseCardProps {
     course: Course;
-    viewMode: "grid" | "list";
     onView: (courseId: string) => void;
     featured?: boolean;
 }
 
-const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, featured = false }: CourseCardProps) {
+const CourseCard = React.memo(function CourseCard({ course, onView, featured = false }: CourseCardProps) {
     const courseId = course.id || course._id || '';
     
     // Get image URL
@@ -1075,20 +1100,18 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
             ? `${instructor.firstName} ${instructor.lastName}` 
             : instructor.firstName || instructor.lastName || 'Unknown Instructor');
     
-    // Get pricing display
+    // Get pricing display - Always use PHP
     const getPriceDisplay = () => {
         const pricing = course.pricing;
         if ('regularPrice' in pricing) {
             return {
                 regular: pricing.regularPrice,
-                discounted: pricing.discountedPrice,
-                currency: pricing.currency || 'PHP'
+                discounted: pricing.discountedPrice
             };
         }
         return {
             regular: pricing.price || pricing.regularPrice || 0,
-            discounted: pricing.discountedPrice || pricing.originalPrice,
-            currency: pricing.currency || 'PHP'
+            discounted: pricing.discountedPrice || pricing.originalPrice
         };
     };
     const priceDisplay = getPriceDisplay();
@@ -1096,10 +1119,9 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
     // Get duration display
     const getDurationDisplay = () => {
         if (typeof course.duration === 'number') {
-            return `${course.duration} hours`;
+            return `${course.duration}h`;
         }
-        const weeks = course.duration.weeks ? ` (${course.duration.weeks} weeks)` : '';
-        return `${course.duration.hours} hours${weeks}`;
+        return `${course.duration.hours}h`;
     };
     const durationDisplay = getDurationDisplay();
     
@@ -1107,18 +1129,27 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
     const courseRating = course.rating?.average || 0;
     const reviewCount = course.rating?.count || 0;
     
-    // Format price with currency
-    const formatPrice = (price: number, curr: string = priceDisplay.currency) => {
-        return new Intl.NumberFormat('en-US', {
+    // Format price - Always use PHP
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat('en-PH', {
             style: 'currency',
-            currency: curr
+            currency: 'PHP'
         }).format(price);
     };
     
     // Get enrollment count
     const enrollmentCount = course.enrollment?.current || course.studentsCount || 0;
-    const maxCapacity = course.enrollment?.maxCapacity;
-    const isEnrollmentOpen = course.enrollment?.isOpen !== false;
+    
+    // Get level badge color
+    const getLevelColor = (level: Course['level']) => {
+        switch (level) {
+            case 'beginner': return 'bg-green-100 text-green-800';
+            case 'intermediate': return 'bg-blue-100 text-blue-800';
+            case 'advanced': return 'bg-purple-100 text-purple-800';
+            case 'expert': return 'bg-red-100 text-red-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    };
     
     // Get category label
     const getCategoryLabel = (category: Course['category']) => {
@@ -1134,24 +1165,13 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
         return labels[category] || category;
     };
     
-    // Get level badge color
-    const getLevelColor = (level: Course['level']) => {
-        switch (level) {
-            case 'beginner': return 'bg-green-100 text-green-800';
-            case 'intermediate': return 'bg-blue-100 text-blue-800';
-            case 'advanced': return 'bg-purple-100 text-purple-800';
-            case 'expert': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-    
     const renderStars = (rating: number) => {
         return (
             <div className="flex">
                 {Array.from({ length: 5 }, (_, i) => (
                     <Star
                         key={`star-${i}`}
-                        className={`w-3 h-3 ${i < Math.floor(rating)
+                        className={`w-3.5 h-3.5 ${i < Math.floor(rating)
                             ? "text-yellow-400 fill-current"
                             : "text-gray-300"
                         }`}
@@ -1163,171 +1183,119 @@ const CourseCard = React.memo(function CourseCard({ course, viewMode, onView, fe
 
     return (
         <div
-            className={`bg-white rounded-lg shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group ${
-                viewMode === "list" ? "flex" : ""
-            } ${featured ? "ring-2 ring-yellow-400" : ""}`}
+            className={`bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-300 overflow-hidden group flex flex-row items-stretch ${
+                featured ? "ring-2 ring-yellow-400" : ""
+            }`}
         >
-            <div className={viewMode === "list" ? "flex-1 p-4" : "p-4"}>
-                <div className={viewMode === "list" ? "flex gap-6" : ""}>
-                    {/* Course Image */}
-                    <div className={`${viewMode === "list" ? "w-48 h-32" : "w-full h-40"} bg-gray-200 rounded-lg mb-3 flex-shrink-0 overflow-hidden group-hover:scale-105 transition-transform duration-300 relative`}>
-                        {imageUrl ? (
-                            <Image
-                                src={imageUrl}
-                                alt={course.title || 'Course image'}
-                                width={viewMode === "list" ? 192 : 400}
-                                height={viewMode === "list" ? 128 : 192}
-                                className="w-full h-full object-cover rounded-lg"
-                            />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gradient-to-br from-gray-100 to-gray-200">
-                                <div className="text-center">
-                                    <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                                        <GraduationCap className="w-6 h-6" />
-                                    </div>
-                                    <span className="text-sm">No Image</span>
-                                </div>
-                            </div>
-                        )}
-                        {featured && (
-                            <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                Featured
-                            </div>
-                        )}
-                        {course.partner && !featured && (
-                            <div className="absolute top-2 left-2 bg-white bg-opacity-90 px-2 py-1 rounded text-xs font-medium">
-                                {course.partner.name}
-                            </div>
-                        )}
-                        {!isEnrollmentOpen && (
-                            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
-                                Full
-                            </div>
-                        )}
+            {/* Course Image - Left Side */}
+            <div className="relative w-48 md:w-56 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                {imageUrl ? (
+                    <Image
+                        src={imageUrl}
+                        alt={course.title || 'Course image'}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 min-h-[10rem]">
+                        <div className="text-center">
+                            <BookOpen className="w-10 h-10 mx-auto mb-2" />
+                            <span className="text-xs">No Image</span>
+                        </div>
                     </div>
+                )}
+                {featured && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Featured
+                    </div>
+                )}
+            </div>
 
-                    {/* Course Details */}
-                    <div className={viewMode === "list" ? "flex-1" : ""}>
-                        <div className="flex items-center justify-between mb-1">
-                            <div className="flex-1 min-w-0">
-                                <h3 className="text-base font-semibold text-gray-700 line-clamp-1">
-                                    {course.title}
-                                </h3>
-                                {instructorName && (
-                                    <p className="text-xs text-gray-500 mt-0.5">by {instructorName}</p>
-                                )}
-                            </div>
-                            <div className="text-right ml-3 flex-shrink-0">
-                                {priceDisplay.regular !== undefined && priceDisplay.regular > 0 ? (
-                                    <div className="text-xl font-bold text-green-600">
-                                        {priceDisplay.discounted && priceDisplay.regular !== undefined && priceDisplay.discounted < priceDisplay.regular ? (
-                                            <>
-                                                <span className="text-sm text-gray-400 line-through mr-1">
-                                                    {formatPrice(priceDisplay.regular, priceDisplay.currency)}
-                                                </span>
-                                                {formatPrice(priceDisplay.discounted, priceDisplay.currency)}
-                                            </>
-                                        ) : (
-                                            priceDisplay.regular !== undefined && formatPrice(priceDisplay.regular, priceDisplay.currency)
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="text-xl font-bold text-green-600">Free</div>
-                                )}
-                            </div>
+            {/* Course Details - Right Side */}
+            <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
+                <div>
+                    {/* Title and Instructor */}
+                    <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0 pr-4">
+                            <h3 className="font-semibold text-gray-900 text-base group-hover:text-green-600 transition-colors line-clamp-1">
+                                {course.title}
+                            </h3>
+                            <p className="text-sm text-gray-500 mt-0.5">by {instructorName}</p>
                         </div>
-
-                        <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-                            {course.description || course.shortDescription || 'No description available'}
-                        </p>
-
-                        {/* Course Meta */}
-                        <div className="flex items-center gap-2 mb-3 flex-wrap">
-                            <span className={`text-xs px-2 py-1 rounded ${getLevelColor(course.level)}`}>
-                                {course.level}
-                            </span>
-                            <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                                {getCategoryLabel(course.category)}
-                            </span>
-                            {course.certification?.isAvailable && (
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded flex items-center gap-1">
-                                    <Award className="w-3 h-3" />
-                                    Certificate
-                                </span>
-                            )}
-                            <span className="text-xs text-gray-500 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {durationDisplay}
-                            </span>
-                        </div>
-
-                        {/* Instructor and Rating */}
-                        <div className="flex items-center gap-2 mb-2">
-                            {instructor.avatar ? (
-                                <Image
-                                    src={instructor.avatar}
-                                    alt={instructorName}
-                                    width={24}
-                                    height={24}
-                                    className="w-6 h-6 rounded-full"
-                                />
-                            ) : (
-                                <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-medium text-gray-600">
-                                        {instructorName.charAt(0).toUpperCase()}
-                                    </span>
-                                </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-600 truncate">{instructorName}</p>
-                                <div className="flex items-center gap-1">
-                                    {renderStars(courseRating)}
-                                    <span className="text-xs text-gray-500">
-                                        {courseRating.toFixed(1)} ({reviewCount})
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Enrollment Info */}
-                        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                            <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4" />
-                                <span>{enrollmentCount} {maxCapacity ? `of ${maxCapacity}` : ''} enrolled</span>
-                            </div>
-                        </div>
-
-                        {/* Course Badges */}
-                        {course.learningOutcomes && course.learningOutcomes.length > 0 && (
-                            <div className="mb-2">
-                                <div className="flex flex-wrap gap-1">
-                                    {course.learningOutcomes.slice(0, 2).map((outcome, idx) => (
-                                        <span key={idx} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                                            {outcome}
-                                        </span>
-                                    ))}
-                                    {course.learningOutcomes.length > 2 && (
-                                        <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                            +{course.learningOutcomes.length - 2} more
+                        {/* Price - Top Right */}
+                        <div className="text-right flex-shrink-0">
+                            {priceDisplay.regular !== undefined && priceDisplay.regular > 0 ? (
+                                <div>
+                                    {priceDisplay.discounted && priceDisplay.regular !== undefined && priceDisplay.discounted < priceDisplay.regular ? (
+                                        <>
+                                            <span className="text-xs text-gray-400 line-through block">
+                                                {formatPrice(priceDisplay.regular)}
+                                            </span>
+                                            <span className="text-lg font-bold text-green-600">{formatPrice(priceDisplay.discounted)}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-lg font-bold text-green-600">
+                                            {priceDisplay.regular !== undefined && formatPrice(priceDisplay.regular)}
                                         </span>
                                     )}
                                 </div>
-                            </div>
-                        )}
-
-                        {/* View Button */}
-                        <button
-                            onClick={() => onView(courseId)}
-                            className="w-full mt-3 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm flex items-center justify-center gap-2"
-                        >
-                            <Play className="w-4 h-4" />
-                            View Course
-                        </button>
+                            ) : (
+                                <span className="text-lg font-bold text-green-600">Free</span>
+                            )}
+                        </div>
                     </div>
+
+                    {/* Description */}
+                    {course.description && (
+                        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{course.description}</p>
+                    )}
+
+                    {/* Tags Row */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${getLevelColor(course.level)}`}>
+                            {course.level}
+                        </span>
+                        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-medium">
+                            {getCategoryLabel(course.category)}
+                        </span>
+                        {course.certification?.isAvailable && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+                                <Award className="w-3 h-3" />
+                                Certificate
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Bottom Row - Meta and Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    {/* Meta Info */}
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-1">
+                            {renderStars(courseRating)}
+                            <span className="ml-1">{courseRating.toFixed(1)} ({reviewCount})</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            <span>{durationDisplay}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span>{enrollmentCount} enrolled</span>
+                        </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                        onClick={() => onView(courseId)}
+                        className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium text-sm flex items-center gap-2 flex-shrink-0"
+                    >
+                        <Play className="w-4 h-4" />
+                        View Course
+                    </button>
                 </div>
             </div>
         </div>
     );
 });
-

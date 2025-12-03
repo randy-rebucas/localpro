@@ -29,7 +29,11 @@ import {
   Database,
   Target,
   Monitor,
-  Crown
+  Crown,
+  Building2,
+  Bell,
+  Calendar,
+  Activity
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -61,9 +65,19 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: Users,
     },
     {
+      name: "Agencies",
+      href: "/admin/agencies",
+      icon: Building2,
+    },
+    {
       name: "Marketplace",
       href: "/admin/marketplace",
       icon: Store,
+    },
+    {
+      name: "Bookings",
+      href: "/admin/bookings",
+      icon: Calendar,
     },
     {
       name: "Supplies",
@@ -96,6 +110,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       icon: Crown,
     },
     {
+      name: "Announcements",
+      href: "/admin/announcements",
+      icon: Bell,
+    },
+    {
       name: "Communication",
       href: "/admin/communication",
       icon: MessageSquare,
@@ -104,6 +123,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Broadcaster",
       href: "/admin/broadcaster",
       icon: Radio,
+    },
+    {
+      name: "Activity",
+      href: "/admin/activity",
+      icon: Activity,
     },
     {
       name: "Analytics",

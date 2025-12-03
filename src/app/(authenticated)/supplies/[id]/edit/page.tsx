@@ -9,7 +9,7 @@ import {
   Eye,
   X,
   Plus,
-  DollarSign,
+  Coins,
   Calendar,
   Package,
   Truck,
@@ -511,7 +511,7 @@ export default function EditSupplyPage() {
                     Price *
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold text-sm">₱</span>
                     <Input
                       type="number"
                       value={formData.price}
@@ -530,7 +530,7 @@ export default function EditSupplyPage() {
                     Original Price
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold text-sm">₱</span>
                     <Input
                       type="number"
                       value={formData.originalPrice}
@@ -793,7 +793,7 @@ export default function EditSupplyPage() {
                       Delivery Cost
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold text-sm">₱</span>
                       <Input
                         type="number"
                         value={formData.delivery.cost}
@@ -808,7 +808,7 @@ export default function EditSupplyPage() {
                       Free Shipping Threshold
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 font-semibold text-sm">₱</span>
                       <Input
                         type="number"
                         value={formData.delivery.freeShippingThreshold}
@@ -972,7 +972,7 @@ export default function EditSupplyPage() {
                 <p>Use high-quality images to showcase your supply</p>
               </div>
               <div className="flex items-start gap-2">
-                <DollarSign className="w-4 h-4 text-green-500 mt-0.5" />
+                <Coins className="w-4 h-4 text-green-500 mt-0.5" />
                 <p>Set competitive pricing based on market rates</p>
               </div>
               <div className="flex items-start gap-2">

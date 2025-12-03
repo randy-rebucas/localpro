@@ -2,54 +2,44 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   Search,
-  Filter,
   Plus,
-  MapPin,
   Star,
   Package,
-  Clock,
-  Grid3X3,
-  List,
-  SortAsc,
-  SortDesc,
-  Truck,
-  Shield,
+  X,
+  CheckCircle2,
   Zap,
-  Heart,
-  Share2,
-  Eye,
-  Edit,
-  ShoppingCart
+  Headphones,
+  HelpCircle,
+  Truck,
+  Navigation,
+  RefreshCw
 } from "lucide-react";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { ListSkeleton } from "@/components/ui/loading";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
-import { useRoleAccess } from "@/components/role-guard";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-// Removed unused imports: createAuthFetchOptions, getApiToken
 import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useRoleAccess } from "@/components/role-guard";
 
 export interface Supply {
   id: string;
   name: string;
   description: string;
   category: string;
+  subcategory?: string;
   type: 'cleaning' | 'tools' | 'materials' | 'equipment' | 'subscription';
   status: 'available' | 'out-of-stock' | 'discontinued' | 'pre-order';
   price: number;
   originalPrice?: number;
+  currency: string;
   unit: 'piece' | 'pack' | 'box' | 'kg' | 'liter' | 'set';
   stock: number;
   minOrder: number;
   maxOrder?: number;
+  sku?: string;
   location: {
     address: string;
     city: string;
@@ -79,6 +69,7 @@ export interface Supply {
     reviewCount: number;
     verified: boolean;
     location: string;
+    bio?: string;
   };
   delivery: {
     available: boolean;
@@ -89,55 +80,15 @@ export interface Supply {
   rating: number;
   reviewCount: number;
   viewsCount: number;
+  orderCount: number;
   isFeatured: boolean;
   isFavorited: boolean;
+  isSubscriptionEligible: boolean;
   tags: string[];
   createdAt: string;
   updatedAt: string;
 }
 
-// Categories will be fetched from API
-
-// Types and statuses will be fetched from API
-
-// const units = [
-//   "All Units",
-//   "Piece",
-//   "Pack",
-//   "Box",
-//   "Kg",
-//   "Liter",
-//   "Set"
-// ];
-
-const getStatusColor = (status: Supply['status']) => {
-  switch (status) {
-    case 'available': return 'bg-green-100 text-green-800';
-    case 'out-of-stock': return 'bg-red-100 text-red-800';
-    case 'discontinued': return 'bg-gray-100 text-gray-800';
-    case 'pre-order': return 'bg-blue-100 text-blue-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getTypeIcon = (type: Supply['type']) => {
-  switch (type) {
-    case 'cleaning': return <Shield className="w-4 h-4" />;
-    case 'tools': return <Zap className="w-4 h-4" />;
-    case 'materials': return <Package className="w-4 h-4" />;
-    case 'equipment': return <Truck className="w-4 h-4" />;
-    case 'subscription': return <Clock className="w-4 h-4" />;
-    default: return <Package className="w-4 h-4" />;
-  }
-};
-
-// Helper function to get placeholder image URL
-const getPlaceholderImage = (width: number = 400, height: number = 300, text?: string) => {
-  const baseUrl = 'https://placehold.co';
-  const size = `${width}x${height}`;
-  const textParam = text ? `?text=${encodeURIComponent(text)}` : '';
-  return `${baseUrl}/${size}${textParam}`;
-};
 
 // Helper function to validate and normalize supply data from API
 const validateSupplyData = (supply: unknown): Supply | null => {
@@ -145,10 +96,11 @@ const validateSupplyData = (supply: unknown): Supply | null => {
   
   const supplyObj = supply as Record<string, unknown>;
   
-  // Extract pricing data (API uses pricing object with retailPrice/wholesalePrice)
+  // Extract pricing data (API uses pricing object with retailPrice/wholesalePrice/currency)
   const pricingData = supplyObj.pricing as Record<string, unknown> || {};
   const retailPrice = typeof pricingData.retailPrice === 'number' ? pricingData.retailPrice : 0;
   const wholesalePrice = typeof pricingData.wholesalePrice === 'number' ? pricingData.wholesalePrice : undefined;
+  const currency = (pricingData.currency as string) || 'USD';
   
   // Extract inventory data (API uses inventory object with quantity, minStock, maxStock, location)
   const inventoryData = supplyObj.inventory as Record<string, unknown> || {};
@@ -160,16 +112,18 @@ const validateSupplyData = (supply: unknown): Supply | null => {
   // Extract specifications (API provides these directly)
   const specs = supplyObj.specifications as Record<string, unknown> || {};
   
-  // Extract supplier info (API uses firstName/lastName instead of name)
+  // Extract supplier info (API uses firstName/lastName instead of name, and has profile.bio)
   const supplierData = supplyObj.supplier as Record<string, unknown> || {};
   const supplierFirstName = (supplierData.firstName as string) || '';
   const supplierLastName = (supplierData.lastName as string) || '';
   const supplierName = `${supplierFirstName} ${supplierLastName}`.trim() || 'Unknown Supplier';
   const supplierId = (supplierData._id as string) || (supplierData.id as string) || '';
+  const supplierProfile = supplierData.profile as Record<string, unknown> || {};
+  const supplierBio = (supplierProfile.bio as string) || '';
   
   // Determine status based on isActive flag and stock level
   let status: 'available' | 'out-of-stock' | 'discontinued' | 'pre-order' = 'available';
-  if (!supplyObj.isActive) {
+  if (supplyObj.isActive === false) {
     status = 'discontinued';
   } else if (quantity === 0) {
     status = 'out-of-stock';
@@ -180,6 +134,7 @@ const validateSupplyData = (supply: unknown): Supply | null => {
   // Determine type based on category and subcategory
   let type: 'cleaning' | 'tools' | 'materials' | 'equipment' | 'subscription' = 'equipment';
   const category = (supplyObj.category as string) || 'Other';
+  const subcategory = (supplyObj.subcategory as string) || '';
   if (category.includes('cleaning') || category.toLowerCase() === 'cleaning_supplies') {
     type = 'cleaning';
   } else if (category.includes('tool')) {
@@ -188,8 +143,9 @@ const validateSupplyData = (supply: unknown): Supply | null => {
     type = 'materials';
   }
   
-  // Check if subscription eligible
-  if (supplyObj.isSubscriptionEligible) {
+  // Check if subscription eligible - set type but also keep the flag
+  const isSubscriptionEligible = Boolean(supplyObj.isSubscriptionEligible);
+  if (isSubscriptionEligible) {
     type = 'subscription';
   }
   
@@ -199,16 +155,19 @@ const validateSupplyData = (supply: unknown): Supply | null => {
     name: (supplyObj.name as string) || (supplyObj.title as string) || 'Unnamed Supply',
     description: (supplyObj.description as string) || '',
     category: category,
+    subcategory: subcategory,
     type: type,
     status: status,
     price: retailPrice,
     originalPrice: wholesalePrice,
+    currency: currency,
     unit: 'piece' as const,
     stock: quantity,
     minOrder: minStock || 1,
     maxOrder: maxStock,
+    sku: (supplyObj.sku as string) || '',
     location: {
-      address: '',
+      address: warehouseLocation,
       city: '',
       state: '',
       zipCode: '',
@@ -218,6 +177,7 @@ const validateSupplyData = (supply: unknown): Supply | null => {
     features: [],
     specifications: {
       brand: (specs.brand as string) || (supplyObj.brand as string),
+      model: (supplyObj.sku as string),
       weight: (specs.weight as string),
       dimensions: (specs.dimensions as string),
       material: (specs.material as string),
@@ -230,8 +190,9 @@ const validateSupplyData = (supply: unknown): Supply | null => {
       avatar: undefined,
       rating: 0,
       reviewCount: 0,
-      verified: false,
-      location: warehouseLocation
+      verified: true,
+      location: warehouseLocation,
+      bio: supplierBio
     },
     delivery: {
       available: status !== 'discontinued',
@@ -242,8 +203,10 @@ const validateSupplyData = (supply: unknown): Supply | null => {
     rating: (supplyObj.averageRating as number) || 0,
     reviewCount: Array.isArray(supplyObj.reviews) ? (supplyObj.reviews as unknown[]).length : 0,
     viewsCount: (supplyObj.views as number) || 0,
+    orderCount: 0,
     isFeatured: Boolean(supplyObj.isFeatured),
     isFavorited: false,
+    isSubscriptionEligible: isSubscriptionEligible,
     tags: Array.isArray(supplyObj.tags) ? (supplyObj.tags as string[]) : [],
     createdAt: (supplyObj.createdAt as string) || new Date().toISOString(),
     updatedAt: (supplyObj.updatedAt as string) || new Date().toISOString()
@@ -252,37 +215,30 @@ const validateSupplyData = (supply: unknown): Supply | null => {
 
 export default function SuppliesPage() {
   const { settings: appSettings } = useAppSettings();
+  const { canCreateSupplies } = useRoleAccess();
   const [supplies, setSupplies] = useState<Supply[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [types, setTypes] = useState<string[]>([]);
-  const [statuses, setStatuses] = useState<string[]>([]);
-  const [featuredSupplies, setFeaturedSupplies] = useState<Supply[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [selectedType, setSelectedType] = useState("All Types");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [location, setLocation] = useState("");
+  const [useNearby, setUseNearby] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<'all' | 'featured' | 'nearby'>('all');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pages: 1,
-    total: 0,
-    count: 0
-  });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [types, setTypes] = useState<string[]>([]);
+  const [sortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
-  const { canCreateSupplies } = useRoleAccess();
+
+  // Filter options
+  const typeOptions = types.length > 0 ? ['All Types', ...types] : ['All Types', 'cleaning', 'tools', 'materials', 'equipment', 'subscription'];
+  const categoryOptions = categories.length > 0 ? ['All Categories', ...categories] : ['All Categories'];
 
   // Get user location for nearby search
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (navigator.geolocation && useNearby) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -292,19 +248,19 @@ export default function SuppliesPage() {
         },
         (error) => {
           logger.warn('Could not get user location', { 
-            error: error instanceof Error ? error.message : String(error),
-            code: (error as GeolocationPositionError)?.code,
-            message: (error as GeolocationPositionError)?.message
+            error: error instanceof Error ? error.message : String(error)
           });
+          setUseNearby(false);
         }
       );
     }
-  }, []);
+  }, [useNearby]);
 
   // Fetch categories
   const fetchCategories = useCallback(async () => {
+    const fallbackCategories = ['cleaning_supplies', 'tools', 'materials', 'equipment', 'chemicals', 'safety_gear'];
+    
     try {
-      // Supplies categories is PUBLIC endpoint
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesCategories}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -312,29 +268,34 @@ export default function SuppliesPage() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch categories');
+        setCategories(fallbackCategories);
+        return;
       }
 
       const data = await response.json();
-      
-      // Handle different API response structures
       const categoriesData = data.categories || data.data || data.items || data.results || [];
+      const rawCategories = Array.isArray(categoriesData) ? categoriesData : [];
       
-      // Ensure categories is an array
-      const categories = Array.isArray(categoriesData) ? categoriesData : [];
+      const normalizedCategories = rawCategories.map((cat: unknown) => {
+        if (typeof cat === 'string') return cat;
+        if (cat && typeof cat === 'object') {
+          const obj = cat as Record<string, unknown>;
+          return obj._id || obj.id || obj.name || obj.value || obj.category || '';
+        }
+        return '';
+      }).filter((cat): cat is string => typeof cat === 'string' && cat.length > 0);
       
-      setCategories(categories);
-    } catch (error) {
-      logger.error('Error fetching categories', error instanceof Error ? error : new Error(String(error)));
-      setError('Failed to fetch categories');
-      setCategories([]);
+      setCategories(normalizedCategories.length > 0 ? normalizedCategories : fallbackCategories);
+    } catch {
+      setCategories(fallbackCategories);
     }
   }, []);
 
   // Fetch types
   const fetchTypes = useCallback(async () => {
+    const fallbackTypes = ['cleaning', 'tools', 'materials', 'equipment', 'subscription'];
+    
     try {
-      // Supplies types is PUBLIC endpoint
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesTypes}`;
       const response = await fetch(url, {
         method: 'GET',
@@ -342,275 +303,74 @@ export default function SuppliesPage() {
       });
 
       if (!response.ok) {
-        // Try to extract a safe error message from the response body
-        const bodyText = await response.text();
-        let parsed: unknown = null;
-        try {
-          parsed = JSON.parse(bodyText);
-        } catch {
-          // not JSON
-        }
-
-        const apiMessage = ((): string => {
-          if (parsed && typeof parsed === 'object') {
-            try {
-              const p = parsed as Record<string, unknown>;
-              const m = p.message ?? p.error;
-              if (typeof m === 'string') return m;
-            } catch {}
-          }
-          return typeof bodyText === 'string' && bodyText.length > 0 ? bodyText : 'Unknown error';
-        })();
-
-        // Handle known backend misrouting where 'types' is being interpreted as an ID
-        if (typeof apiMessage === 'string' && apiMessage.toLowerCase().includes('invalid supply id')) {
-          // Backend appears to be interpreting the 'types' path as a supply id (server routing issue).
-          // Fall back to a reasonable client-side default and warn instead of throwing.
-          logger.warn('Supplies types endpoint returned invalid id error; using local fallback types', { url, status: response.status, apiMessage });
-          setTypes(['cleaning', 'tools', 'materials', 'equipment', 'subscription']);
-          return;
-        }
-
-        throw new Error(`Failed to fetch types: ${response.status} ${apiMessage}`);
+        setTypes(fallbackTypes);
+        return;
       }
 
       const data = await response.json();
-      
-      // Handle different API response structures
       const typesData = data.types || data.data || data.items || data.results || [];
+      const rawTypes = Array.isArray(typesData) ? typesData : [];
       
-      // Ensure types is an array
-      const types = Array.isArray(typesData) ? typesData : [];
+      const normalizedTypes = rawTypes.map((type: unknown) => {
+        if (typeof type === 'string') return type;
+        if (type && typeof type === 'object') {
+          const obj = type as Record<string, unknown>;
+          return obj._id || obj.id || obj.name || obj.value || obj.type || '';
+        }
+        return '';
+      }).filter((type): type is string => typeof type === 'string' && type.length > 0);
       
-      setTypes(types);
-    } catch (error) {
-      // Log a safe, structured error and provide minimal context
-      const context = { url: `${API_BASE_URL}${API_ENDPOINTS.suppliesTypes}` };
-      if (error instanceof Error) {
-        logger.error('Error fetching types', error, context);
-      } else {
-        logger.error('Error fetching types', new Error(String(error)), context);
-      }
-
-      setError('Failed to fetch types');
-      setTypes([]);
+      setTypes(normalizedTypes.length > 0 ? normalizedTypes : fallbackTypes);
+    } catch {
+      setTypes(fallbackTypes);
     }
   }, []);
 
-  // Fetch statuses
-  const fetchStatuses = useCallback(async () => {
-    try {
-      // Supplies statuses is PUBLIC endpoint
-      const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesStatuses}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch statuses');
+  // Fetch supplies
+  useEffect(() => {
+    const fetchSupplies = async () => {
+      try {
+        setLoading(true);
+        
+        let url = `${API_BASE_URL}${API_ENDPOINTS.supplies}`;
+        
+        // If nearby is enabled and we have location, use nearby endpoint
+        if (useNearby && userLocation) {
+          url = `${API_BASE_URL}${API_ENDPOINTS.suppliesNearby}?lat=${userLocation.lat}&lng=${userLocation.lng}`;
+        }
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch supplies');
+        }
+
+        const data = await response.json();
+        const suppliesData = data.supplies || data.data || data.items || data.results || [];
+        const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
+        const validatedSupplies = rawSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
+        
+        setSupplies(validatedSupplies);
+      } catch (error) {
+        logger.error('Error fetching supplies', error instanceof Error ? error : new Error(String(error)));
+        // Set empty array to show "No supplies found" state
+        setSupplies([]);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      
-      // Handle different API response structures
-      const statusesData = data.statuses || data.data || data.items || data.results || [];
-      
-      // Ensure statuses is an array
-      const statuses = Array.isArray(statusesData) ? statusesData : [];
-      
-      setStatuses(statuses);
-    } catch (error) {
-      logger.error('Error fetching statuses', error instanceof Error ? error : new Error(String(error)));
-      setError('Failed to fetch statuses');
-      setStatuses([]);
-    }
-  }, []);
+    fetchSupplies();
+  }, [useNearby, userLocation]);
 
-  // Fetch featured supplies
-  const fetchFeaturedSupplies = useCallback(async () => {
-    try {
-      // Featured supplies is PUBLIC endpoint
-      const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesFeatured}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch featured supplies');
-      }
-
-      const data = await response.json();
-      
-      // Handle different API response structures
-      const featuredData = data.supplies || data.data || data.items || data.results || [];
-      
-      // Ensure featured supplies is an array and validate each item
-      const rawFeaturedSupplies = Array.isArray(featuredData) ? featuredData : [];
-      const featuredSupplies = rawFeaturedSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
-      
-      logger.debug('Processed featured supplies', { processed: featuredSupplies.length, raw: rawFeaturedSupplies.length });
-      
-      setFeaturedSupplies(featuredSupplies);
-    } catch (error) {
-      logger.error('Error fetching featured supplies', error instanceof Error ? error : new Error(String(error)));
-      setFeaturedSupplies([]);
-    }
-  }, []);
-
-  // Fetch nearby supplies
-  const fetchNearbySupplies = useCallback(async () => {
-    if (!userLocation) {
-      setError('Location is required for nearby search');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Nearby supplies is PUBLIC endpoint
-      const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesNearby}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch nearby supplies');
-      }
-
-      const data = await response.json();
-      
-      // Handle different API response structures
-      const suppliesData = data.supplies || data.data || data.items || data.results || [];
-      const paginationData = data.pagination || data.meta || {};
-      
-      // Ensure supplies is an array and validate each item
-      const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
-      const supplies = rawSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
-      
-      logger.debug('Processed nearby supplies', { processed: supplies.length, raw: rawSupplies.length });
-      
-      setSupplies(supplies);
-      setPagination({
-        page: paginationData.page || 1,
-        pages: paginationData.pages || paginationData.totalPages || 1,
-        total: paginationData.total || paginationData.count || supplies.length,
-        count: paginationData.count || supplies.length
-      });
-    } catch (error) {
-      logger.error('Error fetching nearby supplies', error instanceof Error ? error : new Error(String(error)));
-      setError('Failed to fetch nearby supplies');
-    } finally {
-      setLoading(false);
-    }
-  }, [userLocation]);
-
-  // Fetch all supplies with filters
-  const fetchSupplies = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '12'
-      });
-
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedCategory !== 'All Categories') params.append('category', selectedCategory);
-      if (selectedType !== 'All Types') params.append('type', selectedType);
-      if (selectedStatus !== 'All Status') params.append('status', selectedStatus);
-      if (priceRange.min) params.append('minPrice', priceRange.min);
-      if (priceRange.max) params.append('maxPrice', priceRange.max);
-      if (location) params.append('location', location);
-      if (sortBy) params.append('sortBy', sortBy);
-      if (sortOrder) params.append('sortOrder', sortOrder);
-
-      // Supplies list is PUBLIC endpoint with query params
-      const queryString = params.toString();
-      const url = `${API_BASE_URL}${API_ENDPOINTS.supplies}${queryString ? `?${queryString}` : ''}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch supplies');
-      }
-
-      const data = await response.json();
-      
-      // Log API response for debugging
-      logger.debug('Supplies API Response', { response: data });
-      
-      // Handle different API response structures
-      const suppliesData = data.supplies || data.data || data.items || data.results || [];
-      const paginationData = data.pagination || data.meta || {};
-      
-      // Ensure supplies is an array and validate each item
-      const rawSupplies = Array.isArray(suppliesData) ? suppliesData : [];
-      const supplies = rawSupplies.map(validateSupplyData).filter(Boolean) as Supply[];
-      
-      logger.debug('Processed supplies', { processed: supplies.length, raw: rawSupplies.length });
-      
-      // Check if we have actual data
-      if (supplies.length === 0 && !data.error) {
-        logger.debug('No supplies found in API response', { data });
-      }
-      
-      setSupplies(supplies);
-      setPagination({
-        page: paginationData.page || 1,
-        pages: paginationData.pages || paginationData.totalPages || 1,
-        total: paginationData.total || paginationData.count || supplies.length,
-        count: paginationData.count || supplies.length
-      });
-    } catch (error) {
-      logger.error('Error fetching supplies', error instanceof Error ? error : new Error(String(error)), { 
-        filters: { 
-          category: selectedCategory, 
-          type: selectedType, 
-          status: selectedStatus, 
-          searchQuery 
-        } 
-      });
-      setError('Failed to fetch supplies. Please try again later.');
-      setSupplies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, selectedCategory, selectedType, selectedStatus, priceRange, location, sortBy, sortOrder]);
-
-  // Main useEffect to load initial data
+  // Fetch metadata on mount
   useEffect(() => {
     fetchCategories();
     fetchTypes();
-    fetchStatuses();
-    fetchFeaturedSupplies();
-  }, [fetchCategories, fetchTypes, fetchStatuses, fetchFeaturedSupplies]);
-
-  // Refetch supplies when filters change
-  useEffect(() => {
-    if (activeTab === 'all') {
-      fetchSupplies();
-    } else if (activeTab === 'nearby') {
-      fetchNearbySupplies();
-    }
-  }, [activeTab, fetchSupplies, fetchNearbySupplies]);
-
-  // Handle tab changes
-  const handleTabChange = (tab: 'all' | 'featured' | 'nearby') => {
-    setActiveTab(tab);
-    if (tab === 'featured') {
-      setSupplies(featuredSupplies);
-    } else if (tab === 'nearby') {
-      fetchNearbySupplies();
-    } else {
-      fetchSupplies();
-    }
-  };
+  }, [fetchCategories, fetchTypes]);
 
   const filteredSupplies = supplies.filter(supply => {
     const matchesSearch = supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -622,10 +382,34 @@ export default function SuppliesPage() {
     const matchesLocation = !location || supply.location.city.toLowerCase().includes(location.toLowerCase()) ||
                            supply.location.state.toLowerCase().includes(location.toLowerCase());
     const matchesPrice = (!priceRange.min || supply.price >= parseFloat(priceRange.min)) &&
-                         (!priceRange.max || supply.price <= parseFloat(priceRange.max));
+                     (!priceRange.max || supply.price <= parseFloat(priceRange.max));
     
     return matchesSearch && matchesCategory && matchesType && matchesStatus && matchesLocation && matchesPrice;
   });
+
+  const formatPrice = (price: number) => {
+    return formatCurrency(price, 'PHP', {
+      appSettings,
+      showSymbol: true,
+    });
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    if (key === 'category') setSelectedCategory(value);
+    else if (key === 'type') setSelectedType(value);
+    else if (key === 'status') setSelectedStatus(value);
+    else if (key === 'location') setLocation(value);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory("All Categories");
+    setSelectedType("All Types");
+    setSelectedStatus("All Status");
+    setLocation("");
+    setPriceRange({ min: "", max: "" });
+    setSearchQuery("");
+    setUseNearby(false);
+  };
 
   const sortedSupplies = [...filteredSupplies].sort((a, b) => {
     let aValue, bValue;
@@ -642,10 +426,6 @@ export default function SuppliesPage() {
       case 'rating':
         aValue = a.rating;
         bValue = b.rating;
-        break;
-      case 'stock':
-        aValue = a.stock;
-        bValue = b.stock;
         break;
       case 'createdAt':
       default:
@@ -665,620 +445,440 @@ export default function SuppliesPage() {
     router.push('/supplies/create');
   };
 
-  const handleViewSupply = (supplyId: string) => {
-    router.push(`/supplies/${supplyId}`);
-  };
-
-  const handleEditSupply = (supplyId: string) => {
-    router.push(`/supplies/${supplyId}/edit`);
-  };
-
-  const handleToggleFavorite = async (supplyId: string) => {
-    // Implement favorite toggle
-    logger.debug('Toggle favorite for supply', { supplyId });
-  };
-
-  const handleAddToCart = async (supplyId: string) => {
-    // Implement add to cart
-    logger.debug('Add to cart', { supplyId });
-  };
-
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Supplies & Materials</h1>
-            <p className="text-gray-600">Find tools, materials, and supplies for your projects</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
-        <ListSkeleton />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Supplies & Materials</h1>
-            <p className="text-gray-600">Find tools, materials, and supplies for your projects</p>
+        <div className="relative z-10 p-6 space-y-6">
+          {/* Header Skeleton */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
           </div>
-        </div>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading supplies</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error}</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={() => {
-                    setError(null);
-                    if (activeTab === 'nearby') {
-                      fetchNearbySupplies();
-                    } else {
-                      fetchSupplies();
-                    }
-                  }}
-                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
-                >
-                  Try again
-                </button>
-              </div>
+
+          {/* Search and Filters Skeleton */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+            <div className="flex gap-4">
+              <div className="flex-1 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-24 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-20 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
             </div>
           </div>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: 'Marketplace', href: '/marketplace' },
-          { label: 'Supplies & Materials', href: '/supplies' }
-        ]}
-      />
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Supplies & Materials</h1>
-          <p className="text-gray-600">Find tools, materials, and supplies for your projects</p>
-        </div>
-        {canCreateSupplies && (
-          <Button onClick={handleCreateSupply} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            List Supply
-          </Button>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => handleTabChange('all')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'all'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          All Supplies
-        </button>
-        <button
-          onClick={() => handleTabChange('featured')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'featured'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Featured
-        </button>
-        <button
-          onClick={() => handleTabChange('nearby')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'nearby'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Nearby
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total Supplies</p>
-              <p className="text-2xl font-bold text-gray-900">{supplies.length}</p>
-            </div>
-            <Package className="w-8 h-8 text-blue-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Available</p>
-              <p className="text-2xl font-bold text-green-600">
-                {supplies.filter(supply => supply.status === 'available').length}
-              </p>
-            </div>
-            <Clock className="w-8 h-8 text-green-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Featured</p>
-              <p className="text-2xl font-bold text-yellow-600">
-                {supplies.filter(supply => supply.isFeatured).length}
-              </p>
-            </div>
-            <Star className="w-8 h-8 text-yellow-600" />
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Categories</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {new Set(supplies.map(supply => supply.category)).size}
-              </p>
-            </div>
-            <Filter className="w-8 h-8 text-purple-600" />
-          </div>
-        </Card>
-      </div>
-
-      {/* Main Content with Sidebar */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar Filters */}
-        <div className="w-full lg:w-64 flex-shrink-0">
-          <Card className="p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900">Filters</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden"
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className={`space-y-4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-                
-                {/* Search */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search supplies..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+          {/* Supplies Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm animate-pulse">
+                <div className="space-y-4">
+                  <div className="h-48 bg-gray-200 rounded-lg"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded-full w-20"></div>
                   </div>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-                {/* Location */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Location</label>
-                  <Input
-                    placeholder="City, State"
+  // Get featured supply
+  const featuredSupply = sortedSupplies.length > 0 
+    ? (sortedSupplies.find(s => s.isFeatured) || sortedSupplies[0])
+    : null;
+  const regularSupplies = featuredSupply 
+    ? sortedSupplies.filter(s => s.id !== featuredSupply.id)
+    : sortedSupplies;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Find quality supplies — tools, materials, equipment & more
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Verified suppliers, competitive prices, and LocalPro support for every order.
+          </p>
+          
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <Search className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search supplies, tools, equipment, or supplier"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Feature Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Verified Suppliers</span>
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <Zap className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Fast Delivery</span>
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <Headphones className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Local Support</span>
+            </button>
+            {canCreateSupplies && (
+              <button
+                onClick={handleCreateSupply}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 ml-auto"
+              >
+                <Plus className="w-4 h-4" />
+                List Supply
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Main Content Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar - Filters */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+              {/* Filters Section */}
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Filters</h2>
+                
+                {/* Nearby Toggle */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setUseNearby(!useNearby)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                      useNearby 
+                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                        : 'border-gray-300 hover:border-emerald-500 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <Navigation className={`w-4 h-4 ${useNearby ? 'text-emerald-600' : 'text-gray-500'}`} />
+                    <span className="text-sm font-medium">Use my location</span>
+                  </button>
+                </div>
+
+                {/* Type Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                  <select
+                    value={selectedType}
+                    onChange={(e) => handleFilterChange("type", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                  >
+                    {typeOptions.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => handleFilterChange("category", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                  >
+                    {categoryOptions.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Location Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                  <input
+                    type="text"
+                    placeholder="City or area"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
                   />
                 </div>
 
                 {/* Price Range */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Price Range</label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Min"
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+                  <div className="space-y-2">
+                    <input
+                      type="number"
+                      placeholder="Min price"
                       value={priceRange.min}
                       onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                      className="text-sm"
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
                     />
-                    <Input
-                      placeholder="Max"
+                    <input
+                      type="number"
+                      placeholder="Max price"
                       value={priceRange.max}
                       onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                      className="text-sm"
+                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
                     />
                   </div>
                 </div>
 
-                {/* Category */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={(value) => setSelectedCategory(value)}
-                    options={[
-                      { value: "All Categories", label: "All Categories" },
-                      ...categories.map(cat => ({ value: cat, label: cat }))
-                    ]}
-                  />
-                </div>
-
-                {/* Type */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Type</label>
-                  <Select
-                    value={selectedType}
-                    onValueChange={(value) => setSelectedType(value)}
-                    options={[
-                      { value: "All Types", label: "All Types" },
-                      ...types.map(type => ({ value: type, label: type }))
-                    ]}
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Status</label>
-                  <Select
-                    value={selectedStatus}
-                    onValueChange={(value) => setSelectedStatus(value)}
-                    options={[
-                      { value: "All Status", label: "All Status" },
-                      ...statuses.map(status => ({ value: status, label: status }))
-                    ]}
-                  />
-                </div>
-
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1">
-          {/* Sort and Display Controls */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value)}
-                  options={[
-                    { value: 'createdAt', label: 'Date Created' },
-                    { value: 'name', label: 'Name' },
-                    { value: 'price', label: 'Price' },
-                    { value: 'rating', label: 'Rating' },
-                    { value: 'stock', label: 'Stock' }
-                  ]}
-                  className="w-36"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="px-2 py-1 h-8"
-                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                {/* Clear Filters */}
+                <button
+                  onClick={clearFilters}
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all"
                 >
-                  {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                  className="px-2 py-1 h-8"
-                  title={`Switch to ${viewMode === 'grid' ? 'List' : 'Grid'} view`}
-                >
-                  {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
-                </Button>
+                  Clear all filters
+                </button>
               </div>
-            </div>
-            <div className="text-sm text-gray-500">
-              {sortedSupplies.length} suppl{sortedSupplies.length !== 1 ? 'ies' : 'y'} found
-            </div>
-          </div>
 
-          {/* Supplies List */}
-          {sortedSupplies.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {error ? 'Failed to load supplies' : 'No supplies found'}
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {error 
-                  ? 'There was an error loading supplies. Please try again.' 
-                  : searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
-                    ? "Try adjusting your filters to see more results."
-                    : "Get started by listing your first supply item."
-                }
-              </p>
-              <div className="flex gap-2 justify-center">
-                {!error && canCreateSupplies && (
-                  <Button onClick={handleCreateSupply}>
-                    List Your First Supply
-                  </Button>
-                )}
-                {error && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setError(null);
-                      if (activeTab === 'nearby') {
-                        fetchNearbySupplies();
-                      } else {
-                        fetchSupplies();
-                      }
-                    }}
-                  >
-                    Retry
-                  </Button>
-                )}
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setSelectedCategory("All Categories");
-                    setSelectedType("All Types");
-                    setSelectedStatus("All Status");
-                    setPriceRange({ min: "", max: "" });
-                    setLocation("");
-                    setError(null);
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" 
-              : "space-y-4"
-            }>
-              {sortedSupplies.map((supply) => (
-                <Card key={supply.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    <div className="aspect-video bg-gray-100">
-                      <Image
-                        src={supply.images && supply.images.length > 0 ? supply.images[0] : getPlaceholderImage(400, 225, supply.name)}
-                        alt={supply.name}
-                        width={400}
-                        height={225}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = getPlaceholderImage(400, 225, supply.name);
-                        }}
-                      />
-                    </div>
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(supply.status)}`}>
-                        {supply.status}
-                      </span>
-                      {supply.isFeatured && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                          <Star className="w-3 h-3 inline mr-1" />
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleToggleFavorite(supply.id)}
-                        className={`p-1 ${supply.isFavorited ? 'text-red-500' : 'text-gray-400'}`}
-                      >
-                        <Heart className={`w-4 h-4 ${supply.isFavorited ? 'fill-current' : ''}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="p-1 text-gray-400"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {/* Need Help Section */}
+              <div className="pt-6 border-t-2 border-gray-200">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                  <div className="flex items-start gap-3 mb-3">
+                    <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">
+                      Contact LocalPro support for ordering assistance.
+                    </p>
                   </div>
-                  
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900 line-clamp-1">{supply.name}</h3>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleViewSupply(supply.id)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        {canCreateSupplies && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditSupply(supply.id)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                  <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                    Help center
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+
+            {/* Supplies Content */}
+            {sortedSupplies.length === 0 ? (
+              <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-8 backdrop-blur-sm">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/20">
+                    <Package className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">No supplies found</h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
+                      ? "Try adjusting your filters to see more results."
+                      : "Get started by listing your first supply item."}
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status" ? (
+                      <button
+                        onClick={clearFilters}
+                        className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    ) : null}
+                    {canCreateSupplies && (
+                      <button
+                        onClick={handleCreateSupply}
+                        className="px-6 py-3 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        List Your First Supply
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Featured Supply - Hero Card */}
+                {featuredSupply && (
+                  <Link
+                    href={`/supplies/${featuredSupply.id}`}
+                    className="block bg-white rounded-xl border-2 border-emerald-300 shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300"
+                  >
+                    <div className="flex flex-col md:flex-row">
+                      {/* Featured Image */}
+                      <div className="md:w-2/5 relative">
+                        <div className="absolute top-4 left-4 z-10">
+                          <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-lg">
+                            Featured
+                          </span>
+                        </div>
+                        {featuredSupply.images.length > 0 ? (
+                          <div className="h-48 md:h-full md:min-h-[280px] bg-gray-100 overflow-hidden">
+                            <Image
+                              src={featuredSupply.images[0]}
+                              alt={featuredSupply.name}
+                              width={500}
+                              height={300}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-48 md:h-full md:min-h-[280px] bg-gradient-to-br from-orange-200 via-yellow-200 to-orange-300 flex items-center justify-center">
+                            <Package className="w-20 h-20 text-orange-600" />
+                          </div>
                         )}
                       </div>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{supply.description}</p>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded flex items-center gap-1">
-                        {getTypeIcon(supply.type)}
-                        {supply.type}
-                      </span>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                        {supply.category}
-                      </span>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                        Stock: {supply.stock}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{supply.rating}</span>
-                        <span className="text-sm text-gray-500">({supply.reviewCount})</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">
-                          {formatCurrency(supply.price, 'PHP', { appSettings })}
-                          {supply.originalPrice && (
-                            <span className="text-sm text-gray-500 line-through ml-1">
-                              {formatCurrency(supply.originalPrice || 0, 'PHP', { appSettings })}
+                      {/* Featured Content */}
+                      <div className="md:w-3/5 p-6 flex flex-col justify-center">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                          {featuredSupply.name}
+                        </h3>
+                        <p className="text-gray-600 mb-4 line-clamp-2">
+                          {featuredSupply.description || `Quality ${featuredSupply.category} from ${featuredSupply.supplier.name}`}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-4 mb-4">
+                          <span className="text-2xl font-bold text-emerald-600">
+                            {formatPrice(featuredSupply.price)}
+                            <span className="text-sm font-normal text-gray-500"> / {featuredSupply.unit}</span>
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Star className="w-5 h-5 text-yellow-500 fill-current" />
+                            <span className="font-semibold text-gray-700">{featuredSupply.rating}</span>
+                            <span className="text-gray-500">({featuredSupply.reviewCount} reviews)</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          <span className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
+                            {featuredSupply.stock} in stock
+                          </span>
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                            {featuredSupply.category}
+                            {featuredSupply.subcategory && ` • ${featuredSupply.subcategory}`}
+                          </span>
+                          {featuredSupply.isSubscriptionEligible && (
+                            <span className="flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              Subscribe & Save
+                            </span>
+                          )}
+                          {featuredSupply.delivery.available && (
+                            <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+                              <Truck className="w-4 h-4" />
+                              {featuredSupply.delivery.estimatedDays} day delivery
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500">/{supply.unit}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{supply.location.city}, {supply.location.state}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{supply.viewsCount} views</span>
-                      </div>
-                    </div>
-
-                    {supply.delivery.available && (
-                      <div className="text-xs text-green-600 mb-3 flex items-center gap-1">
-                        <Truck className="w-3 h-3" />
-                        Delivery: {supply.delivery.estimatedDays} days
-                        {supply.delivery.cost === 0 ? ' (Free)' : ` ($${supply.delivery.cost})`}
-                      </div>
-                    )}
-                    
-                    <div className="mt-4 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium">
-                              {supply.supplier.name.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{supply.supplier.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {supply.supplier.rating} ⭐ ({supply.supplier.reviewCount} reviews)
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewSupply(supply.id)}
-                          >
-                            View
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => handleAddToCart(supply.id)}
-                            className="flex items-center gap-1"
-                          >
-                            <ShoppingCart className="w-3 h-3" />
-                            Add
-                          </Button>
+                        <div className="flex items-center gap-3">
+                          <span className="px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-lg font-semibold shadow-lg">
+                            Order Now
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            by {featuredSupply.supplier.name}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+                  </Link>
+                )}
 
-          {/* Pagination */}
-          {pagination.pages > 1 && (
-            <div className="mt-8 flex items-center justify-between">
-              <div className="text-sm text-gray-700">
-                Showing {((pagination.page - 1) * 12) + 1} to {Math.min(pagination.page * 12, pagination.total)} of {pagination.total} results
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (activeTab === 'nearby') {
-                      fetchNearbySupplies();
-                    } else {
-                      fetchSupplies(pagination.page - 1);
-                    }
-                  }}
-                  disabled={pagination.page <= 1}
-                >
-                  Previous
-                </Button>
-                
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                    let pageNum: number;
-                    if (pagination.pages <= 5) {
-                      pageNum = i + 1;
-                    } else if (pagination.page <= 3) {
-                      pageNum = i + 1;
-                    } else if (pagination.page >= pagination.pages - 2) {
-                      pageNum = pagination.pages - 4 + i;
-                    } else {
-                      pageNum = pagination.page - 2 + i;
-                    }
-
-                    return (
-                      <Button
-                        key={pageNum}
-                        size="sm"
-                        variant={pagination.page === pageNum ? undefined : 'outline'}
-                        onClick={() => fetchSupplies(pageNum)}
-                        className={`px-3 py-1 rounded text-sm font-medium ${pagination.page === pageNum ? 'bg-purple-600 text-white' : 'text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
-                      >
-                        {pageNum}
-                      </Button>
-                    );
-                  })}
+                {/* Section Header */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {featuredSupply ? 'All Supplies' : 'Available Supplies'}
+                  </h2>
+                  <span className="text-sm text-gray-500">
+                    {sortedSupplies.length} item{sortedSupplies.length !== 1 ? 's' : ''} found
+                  </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (activeTab === 'nearby') {
-                      fetchNearbySupplies();
-                    } else {
-                      fetchSupplies(pagination.page + 1);
-                    }
-                  }}
-                  disabled={pagination.page >= pagination.pages}
-                >
-                  Next
-                </Button>
+
+                {/* All Supplies Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(featuredSupply ? regularSupplies : sortedSupplies).map((supply) => (
+                    <Link
+                      key={supply.id}
+                      href={`/supplies/${supply.id}`}
+                      className="group bg-white rounded-xl border-2 border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                    >
+                      <div className="relative">
+                        {supply.images.length > 0 ? (
+                          <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                            <Image
+                              src={supply.images[0]}
+                              alt={supply.name}
+                              width={400}
+                              height={300}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        ) : (
+                          <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <Package className="w-12 h-12 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="absolute top-3 right-3">
+                          <span className="px-3 py-1.5 bg-white/95 backdrop-blur-sm rounded-lg text-sm font-bold text-gray-900 shadow-md">
+                            {formatPrice(supply.price)}
+                          </span>
+                        </div>
+                        <div className="absolute top-3 left-3 flex flex-col gap-1">
+                          {supply.isFeatured && (
+                            <span className="px-2 py-1 bg-emerald-600 text-white rounded text-xs font-bold">
+                              Featured
+                            </span>
+                          )}
+                          {supply.isSubscriptionEligible && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded text-xs font-bold">
+                              <RefreshCw className="w-3 h-3" />
+                              Subscribe
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-gray-900 mb-1.5 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                          {supply.name}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-1">
+                          {supply.supplier.name} • {supply.stock} in stock
+                        </p>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span className="text-sm font-semibold text-gray-700">{supply.rating}</span>
+                          </div>
+                          <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                            {supply.category}
+                            {supply.subcategory && ` • ${supply.subcategory}`}
+                          </span>
+                        </div>
+                        <button className="w-full px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                          Order
+                        </button>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

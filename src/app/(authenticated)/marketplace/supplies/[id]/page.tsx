@@ -22,6 +22,7 @@ import {
 import { Loading } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { useSession } from "@/hooks/useAuth";
 import { logger } from "@/lib/logger";
 
 // Product Image Interface
@@ -84,6 +85,7 @@ interface Product {
     name?: string;
     firstName?: string;
     lastName?: string;
+    businessName?: string;
   } | string;
   orders?: Array<{
     _id?: string;
@@ -134,6 +136,7 @@ interface Product {
 
 export default function SupplyDetailPage() {
   const params = useParams();
+  const { data: session } = useSession();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +147,8 @@ export default function SupplyDetailPage() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState<string | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartFeedback, setCartFeedback] = useState<string | null>(null);
   const [orderForm, setOrderForm] = useState({
     deliveryAddress: {
       street: '',
@@ -402,6 +407,66 @@ export default function SupplyDetailPage() {
     }
   }, [product]);
 
+  // Handle add to cart
+  const handleAddToCart = useCallback(() => {
+    if (!product || isAddingToCart) return;
+    
+    // Get supplier ID to check if it's own supply
+    const productSupplierId = typeof product.supplier === 'string' 
+      ? product.supplier 
+      : (product.supplier?.id || product.supplier?._id);
+    const userId = session?.user?.id || session?.user?._id || session?.user?.userId;
+    
+    if (userId && productSupplierId && userId === productSupplierId) {
+      setCartFeedback('You cannot add your own supply to cart');
+      setTimeout(() => setCartFeedback(null), 2000);
+      return;
+    }
+    
+    setIsAddingToCart(true);
+    try {
+      // Save to localStorage for cart functionality
+      const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      const productId = product.id || product._id;
+      const existingIndex = cartItems.findIndex((item: { itemId: string; itemType: string }) => 
+        item.itemId === productId && item.itemType === 'supply'
+      );
+      
+      if (existingIndex >= 0) {
+        // Update quantity if item already in cart
+        cartItems[existingIndex].quantity += quantity;
+      } else {
+        // Add new item to cart
+        const primaryImage = product.images?.[0];
+        cartItems.push({
+          id: `supply-${productId}-${Date.now()}`,
+          itemType: 'supply',
+          itemId: productId,
+          name: product.name || product.title,
+          image: typeof primaryImage === 'string' ? primaryImage : primaryImage?.url,
+          price: product.pricing?.retailPrice || 0,
+          quantity: quantity,
+          maxQuantity: product.inventory?.quantity || 99,
+          sellerId: typeof product.supplier === 'string' ? product.supplier : product.supplier?.id || product.supplier?._id,
+          sellerName: typeof product.supplier === 'string' ? undefined : (product.supplier?.businessName || product.supplier?.name),
+        });
+      }
+      
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      // Dispatch event to update header cart count
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+      setCartFeedback(`Added ${quantity} item(s) to cart!`);
+      setTimeout(() => setCartFeedback(null), 2000);
+    } catch (error) {
+      logger.error('Failed to add to cart', error instanceof Error ? error : new Error(String(error)));
+      setCartFeedback('Failed to add to cart');
+      setTimeout(() => setCartFeedback(null), 2000);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  }, [product, quantity, isAddingToCart, session]);
+
   const formatPrice = (price: number, currency: string = 'PHP') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -485,6 +550,13 @@ export default function SupplyDetailPage() {
   const isInStock = product.inventory.quantity > 0;
   const images = product.images || [];
   const hasImages = images.length > 0;
+  
+  // Check if the current user is the owner of this supply
+  const currentUserId = session?.user?.id || session?.user?._id || session?.user?.userId;
+  const supplierId = typeof product.supplier === 'string' 
+    ? product.supplier 
+    : (product.supplier?.id || product.supplier?._id);
+  const isOwnSupply = Boolean(currentUserId && supplierId && currentUserId === supplierId);
 
   return (
     <div className="p-6 space-y-6">
@@ -684,29 +756,43 @@ export default function SupplyDetailPage() {
           {/* Action Buttons */}
           <div className="flex gap-3">
             <button
-              className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                isInStock
+              onClick={handleAddToCart}
+              className={`relative flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
+                isInStock && !isAddingToCart && !isOwnSupply
                   ? 'bg-green-600 text-white hover:bg-green-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              disabled={!isInStock}
+              disabled={!isInStock || isAddingToCart || isOwnSupply}
             >
               <ShoppingCart className="w-5 h-5" />
-              Add to Cart
+              {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+              {cartFeedback && (
+                <span className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap z-10">
+                  {cartFeedback}
+                </span>
+              )}
             </button>
             <button
               onClick={() => setShowOrderModal(true)}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
-                isInStock
+                isInStock && !isOwnSupply
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              disabled={!isInStock}
+              disabled={!isInStock || isOwnSupply}
             >
               <Truck className="w-5 h-5" />
               Order Now
             </button>
           </div>
+          
+          {/* Own Supply Warning */}
+          {isOwnSupply && (
+            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">This is your own listing. You cannot order or add your own supplies to cart.</span>
+            </div>
+          )}
 
           {/* Quick Info */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
@@ -1080,6 +1166,17 @@ export default function SupplyDetailPage() {
                   onClick={async () => {
                     if (!product) return;
                     
+                    // Check if it's own supply
+                    const productSupplierId = typeof product.supplier === 'string' 
+                      ? product.supplier 
+                      : (product.supplier?.id || product.supplier?._id);
+                    const userId = session?.user?.id || session?.user?._id || session?.user?.userId;
+                    
+                    if (userId && productSupplierId && userId === productSupplierId) {
+                      setOrderError('You cannot order your own supply');
+                      return;
+                    }
+                    
                     setOrderLoading(true);
                     setOrderError(null);
                     
@@ -1125,7 +1222,7 @@ export default function SupplyDetailPage() {
                       setOrderLoading(false);
                     }
                   }}
-                  disabled={orderLoading || !isInStock}
+                  disabled={orderLoading || !isInStock || isOwnSupply}
                   className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {orderLoading ? 'Placing Order...' : 'Place Order'}

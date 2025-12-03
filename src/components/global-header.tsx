@@ -32,6 +32,7 @@ import {
   Filter,
   Wallet,
   Calendar,
+  ShoppingCart,
 } from "lucide-react";
 
 interface GlobalHeaderProps {
@@ -152,6 +153,7 @@ export function GlobalHeader({
   const [_favoritesCount, _setFavoritesCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   // Refs for click outside detection
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -186,6 +188,31 @@ export function GlobalHeader({
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('favoritesUpdated', handleStorageChange);
+    };
+  }, []);
+
+  // Load cart count from localStorage and listen for updates
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems') || '[]');
+        const totalItems = cartItems.reduce((sum: number, item: { quantity?: number }) => sum + (item.quantity || 1), 0);
+        setCartCount(totalItems);
+      } catch (error) {
+        logger.error('Error loading cart count', error instanceof Error ? error : new Error(String(error)));
+        setCartCount(0);
+      }
+    };
+
+    updateCartCount();
+    const handleStorageChange = () => updateCartCount();
+    const handleCartUpdated = () => updateCartCount();
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleCartUpdated);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleCartUpdated);
     };
   }, []);
 
@@ -675,6 +702,26 @@ export function GlobalHeader({
                 aria-label="Favorites"
               >
                 <Heart className="w-5 h-5" aria-hidden="true" />
+              </Link>
+            )}
+
+            {/* Shopping Cart */}
+            {session && (
+              <Link
+                href="/cart"
+                className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/cart")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Shopping Cart"
+                aria-label={`Shopping Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
+              >
+                <ShoppingCart className="w-5 h-5" aria-hidden="true" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-green-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </Link>
             )}
 
