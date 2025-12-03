@@ -69,7 +69,7 @@ export function VerificationModal({
         setIsVerified(true);
         toast.success("Verification successful!");
         // Store redirect destination before closing modal
-        const redirectTo = result.isNewUser === true ? "/onboarding" : "/marketplace";
+        const redirectTo = result.isNewUser === true ? "/onboarding" : "/dashboard";
         setTimeout(() => {
           onSuccess();
           onClose();

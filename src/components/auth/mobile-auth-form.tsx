@@ -46,6 +46,20 @@ export function MobileAuthForm() {
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Check if user already has api-token and redirect (only on initial mount)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isRedirecting) {
+      const hasToken = document.cookie.split(';').some(c => c.trim().startsWith('api-token='));
+      if (hasToken) {
+        setIsRedirecting(true);
+        // User already authenticated, redirect to dashboard
+        window.location.href = '/dashboard';
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -189,14 +203,12 @@ export function MobileAuthForm() {
         if (result.user) {
           try { localStorage.setItem('user', JSON.stringify(result.user)); } catch {}
         }
+        setIsRedirecting(true);
         toast.success("Signed in successfully!");
+        // Store redirect destination before timeout
+        const destination = result.isNewUser === true ? '/onboarding' : '/dashboard';
         setTimeout(() => {
-          // Redirect to onboarding if new user, otherwise reload to current page
-          if (result.isNewUser === true) {
-            window.location.href = '/onboarding';
-          } else {
-            window.location.reload();
-          }
+          window.location.href = destination;
         }, 1000);
       } else {
         if (response.status === 400) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -63,7 +63,7 @@ function SignInForm() {
   const [countdown, setCountdown] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isAnimating, setIsAnimating] = useState(false);
-  const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const searchParams = useSearchParams();
 
   // Get redirect parameter from URL
@@ -73,6 +73,22 @@ function SignInForm() {
       setRedirectTo(redirect);
     }
   }, [searchParams]);
+
+  // Check if user already has api-token and redirect (only on initial mount)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !isRedirecting) {
+      const hasToken = document.cookie.split(';').some(c => c.trim().startsWith('api-token='));
+      if (hasToken) {
+        setIsRedirecting(true);
+        // User already authenticated, redirect to intended destination
+        const redirect = searchParams.get("redirect") || "/dashboard";
+        // Avoid redirecting back to auth pages to prevent infinite loops
+        const safeRedirect = redirect.startsWith('/auth') ? '/dashboard' : redirect;
+        window.location.href = safeRedirect;
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Countdown timer for resend code
   useEffect(() => {
@@ -319,12 +335,10 @@ function SignInForm() {
         }
         toast.success("Signed in successfully!");
         // Redirect to onboarding if new user, otherwise to intended destination
+        // Use window.location.href for reliable navigation after authentication
+        const destination = result.isNewUser === true ? '/onboarding' : redirectTo;
         setTimeout(() => {
-          if (result.isNewUser === true) {
-            router.push('/onboarding');
-          } else {
-            router.push(redirectTo);
-          }
+          window.location.href = destination;
         }, 1000);
       } else {
         if (response.status === 400) {
