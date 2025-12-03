@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
 import { Phone, ArrowLeft, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { makeClientPublicRequest } from "@/lib/client-api-utils";
@@ -30,7 +29,6 @@ export function VerificationModal({
   onSuccess, 
   contact 
 }: VerificationModalProps) {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
@@ -70,15 +68,13 @@ export function VerificationModal({
         }
         setIsVerified(true);
         toast.success("Verification successful!");
+        // Store redirect destination before closing modal
+        const redirectTo = result.isNewUser === true ? "/onboarding" : "/marketplace";
         setTimeout(() => {
           onSuccess();
           onClose();
-          // Redirect to onboarding if new user, otherwise to marketplace
-          if (result.isNewUser === true) {
-            router.push("/onboarding");
-          } else {
-            router.push("/marketplace");
-          }
+          // Use window.location.href for reliable navigation after modal closes
+          window.location.href = redirectTo;
         }, 1500);
       } else {
         toast.error(result.error || "Invalid verification code");

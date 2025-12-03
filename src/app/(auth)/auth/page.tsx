@@ -555,9 +555,6 @@ function SignInForm() {
                     <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
                   )}
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Didn&apos;t receive the code? Check your spam folder or try again.
-                </p>
               </div>
             </div>
           </div>
