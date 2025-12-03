@@ -29,6 +29,8 @@ import { Skeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 const categories = [
   "Cleaning Supplies",
@@ -84,6 +86,7 @@ const features = [
 export default function EditSupplyPage() {
   const params = useParams();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -953,7 +956,7 @@ export default function EditSupplyPage() {
               <div className="text-xs text-gray-500">
                 <p>Category: {formData.category || "Not selected"}</p>
                 <p>Type: {formData.type || "Not selected"}</p>
-                <p>Price: ${formData.price || "0"}/{formData.unit}</p>
+                <p>Price: {formatCurrency(parseFloat(formData.price) || 0, 'PHP', { appSettings })}/{formData.unit}</p>
                 <p>Stock: {formData.stock || "0"}</p>
                 <p>Status: {formData.status}</p>
                 <p>Location: {formData.location.city || "Not specified"}</p>

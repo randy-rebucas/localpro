@@ -53,14 +53,16 @@ export function ProviderFilterSidebar({
       )}
 
       <div
-        className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden sticky top-24 ${
+        className={`bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border-2 border-gray-200/50 overflow-hidden sticky top-24 backdrop-blur-sm ${
           isOpen ? "fixed lg:relative inset-y-0 right-0 z-50 lg:z-auto w-80 lg:w-full overflow-y-auto" : ""
         }`}
       >
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50/50 to-blue-50/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <h2 className="font-semibold text-gray-900">Filters</h2>
+            <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
+              <Filter className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="font-bold text-gray-900 text-lg">Filters</h2>
           </div>
           <button
             onClick={onClose}
@@ -79,7 +81,7 @@ export function ProviderFilterSidebar({
             <select
               value={status}
               onChange={(e) => onStatusChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
             >
               <option value="">All Statuses</option>
               {providerStatuses.map((s) => (
@@ -138,7 +140,7 @@ export function ProviderFilterSidebar({
               value={location}
               onChange={(e) => onLocationChange(e.target.value)}
               placeholder="Enter location..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
             />
           </div>
 
@@ -146,7 +148,7 @@ export function ProviderFilterSidebar({
           {hasActiveFilters && (
             <button
               onClick={onClearFilters}
-              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              className="w-full px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-xl hover:from-red-50 hover:to-red-100 hover:text-red-700 hover:border-2 hover:border-red-300 transition-all text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
             >
               <X className="w-4 h-4" />
               Clear All Filters

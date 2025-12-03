@@ -8,7 +8,7 @@ import { JobCategory } from "@/types/jobs";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
 
 // Convert JobCategory to ServiceCategory format for MarketplaceHero compatibility
-function convertJobCategoryToServiceCategory(jobCat: JobCategory): ServiceCategory {
+function convertJobCategoryToServiceCategory(jobCat: JobCategory & { subcategories?: string[] }): ServiceCategory {
   const categoryId = (jobCat as { id?: string; _id?: string }).id || jobCat._id;
   // Ensure id is always provided (required by ServiceCategory interface)
   if (!categoryId) {
@@ -23,6 +23,7 @@ function convertJobCategoryToServiceCategory(jobCat: JobCategory): ServiceCatego
     slug: jobCat.name.toLowerCase().replace(/\s+/g, '-'),
     displayOrder: jobCat.displayOrder,
     metadata: jobCat.metadata,
+    subcategories: (jobCat as { subcategories?: string[] }).subcategories,
   };
 }
 

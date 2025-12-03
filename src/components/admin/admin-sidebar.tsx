@@ -17,6 +17,7 @@ import {
   BarChart3,
   Settings,
   MessageSquare,
+  Radio,
   Shield,
   FileText,
   AlertTriangle,
@@ -98,6 +99,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Communication",
       href: "/admin/communication",
       icon: MessageSquare,
+    },
+    {
+      name: "Broadcaster",
+      href: "/admin/broadcaster",
+      icon: Radio,
     },
     {
       name: "Analytics",

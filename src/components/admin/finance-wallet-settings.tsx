@@ -27,7 +27,7 @@ interface FinanceWalletSettingsProps {
 
 export function FinanceWalletSettings({ onSave, className = "" }: FinanceWalletSettingsProps) {
   const [settings, setSettings] = useState<WalletSettings>({
-    currency: 'USD',
+    currency: 'PHP',
     autoWithdraw: false,
     withdrawThreshold: 1000,
     withdrawMethod: 'bank',
@@ -129,9 +129,6 @@ export function FinanceWalletSettings({ onSave, className = "" }: FinanceWalletS
                 onChange={(e) => handleSettingChange('currency', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
               >
-                <option value="USD">USD - US Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
                 <option value="PHP">PHP - Philippine Peso</option>
               </select>
             </div>

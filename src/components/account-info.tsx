@@ -14,8 +14,8 @@ export function AccountInfo({ profile, formattedCreatedAt }: AccountInfoProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Account Info</h3>
+    <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Account Info</h3>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Member since</span>

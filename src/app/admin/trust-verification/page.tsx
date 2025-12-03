@@ -368,13 +368,13 @@ export default function AdminTrustVerificationPage() {
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           <button
             onClick={fetchData}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className="w-3 h-3 mr-1" />
             Refresh
           </button>
-          <button className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <Download className="w-4 h-4 mr-2" />
+          <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <Download className="w-3 h-3 mr-1" />
             Export
           </button>
         </div>
@@ -441,11 +441,11 @@ export default function AdminTrustVerificationPage() {
 
           {/* Statistics Breakdown */}
           {(stats.requestsByStatus?.length > 0 || stats.requestsByType?.length > 0 || stats.monthlyTrends?.length > 0) && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {stats.requestsByStatus && stats.requestsByStatus.length > 0 && (
-                <div className="bg-white rounded shadow p-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Requests by Status</h3>
-                  <div className="space-y-2">
+                <div className="bg-white rounded shadow p-3">
+                  <h3 className="text-xs font-medium text-gray-900 mb-2">Requests by Status</h3>
+                  <div className="space-y-1">
                     {stats.requestsByStatus.map((statusItem) => (
                       <div key={statusItem.status} className="flex items-center justify-between">
                         <span className="text-xs text-gray-700 capitalize">{statusItem.status.replace(/_/g, ' ')}</span>
@@ -457,9 +457,9 @@ export default function AdminTrustVerificationPage() {
               )}
 
               {stats.requestsByType && stats.requestsByType.length > 0 && (
-                <div className="bg-white rounded shadow p-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Requests by Type</h3>
-                  <div className="space-y-2">
+                <div className="bg-white rounded shadow p-3">
+                  <h3 className="text-xs font-medium text-gray-900 mb-2">Requests by Type</h3>
+                  <div className="space-y-1">
                     {stats.requestsByType.map((typeItem) => (
                       <div key={typeItem.type} className="flex items-center justify-between">
                         <span className="text-xs text-gray-700 capitalize">{typeItem.type.replace(/_/g, ' ')}</span>
@@ -471,9 +471,9 @@ export default function AdminTrustVerificationPage() {
               )}
 
               {stats.averageProcessingTime !== undefined && (
-                <div className="bg-white rounded shadow p-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Processing Metrics</h3>
-                  <div className="space-y-2">
+                <div className="bg-white rounded shadow p-3">
+                  <h3 className="text-xs font-medium text-gray-900 mb-2">Processing Metrics</h3>
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-700">Average Processing Time</span>
                       <span className="text-xs font-medium text-gray-900">
@@ -483,8 +483,8 @@ export default function AdminTrustVerificationPage() {
                       </span>
                     </div>
                     {stats.monthlyTrends && stats.monthlyTrends.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs text-gray-700 mb-2">Recent Trends</p>
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-700 mb-1">Recent Trends</p>
                         <div className="space-y-1">
                           {stats.monthlyTrends.slice(-3).map((trend, idx) => (
                             <div key={idx} className="flex items-center justify-between text-xs">
@@ -533,7 +533,7 @@ export default function AdminTrustVerificationPage() {
                   <button
                     onClick={handleBulkAction}
                     disabled={!bulkAction}
-                    className="px-2 py-1 bg-blue-600 text-white text-xs rounded disabled:opacity-50"
+                    className="px-2 py-1 bg-blue-600 text-white text-xs rounded disabled:opacity-50 hover:bg-blue-700"
                   >
                     Apply
                   </button>
@@ -544,8 +544,8 @@ export default function AdminTrustVerificationPage() {
         </div>
         
         {showFilters && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="p-4 border-b border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
                 <select
@@ -576,7 +576,6 @@ export default function AdminTrustVerificationPage() {
                 </select>
               </div>
               
-              
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Date Range</label>
                 <select
@@ -591,36 +590,49 @@ export default function AdminTrustVerificationPage() {
                   <option value="quarter">This Quarter</option>
                 </select>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex-1">
+
+              <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-2 top-2.5 text-gray-400" />
+                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
                   <input
                     type="text"
                     value={filters.search}
                     onChange={(e) => setFilters({...filters, search: e.target.value})}
                     placeholder="Search by name, email, or ID..."
-                    className="w-full pl-8 pr-3 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
+
+              <div className="flex items-end">
                 <button
                   onClick={() => setFilters({status: 'all', type: 'all', search: '', dateRange: 'all'})}
-                  className="px-3 py-1 text-xs border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Clear
                 </button>
+              </div>
+
+              <div className="flex items-end">
                 <button
                   onClick={fetchData}
-                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="w-full px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
                   Apply
                 </button>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <button
+                onClick={() => setFilters({status: 'all', type: 'all', search: '', dateRange: 'all'})}
+                className="text-xs text-gray-600 hover:text-gray-800"
+              >
+                Clear all filters
+              </button>
+              <div className="text-xs text-gray-500">
+                {requests.length} requests found
               </div>
             </div>
           </div>
@@ -657,34 +669,14 @@ export default function AdminTrustVerificationPage() {
         </div>
         
         {requests.length === 0 ? (
-          <div className="p-6 text-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Shield className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-1">No Verification Requests</h3>
-            <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+          <div className="text-center py-8">
+            <Shield className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <h3 className="text-sm font-medium text-gray-900 mb-1">No verification requests found</h3>
+            <p className="text-xs text-gray-500">
               {filters.status !== 'all' || filters.type !== 'all' || filters.search || filters.dateRange !== 'all'
-                ? "No verification requests match your current filters. Try adjusting your search criteria or clearing filters to see more results."
-                : "There are no verification requests at this time. New requests will appear here as users submit their verification documents."}
+                ? "Try adjusting your filters or date range."
+                : "There are no verification requests at this time."}
             </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              {filters.status !== 'all' || filters.type !== 'all' || filters.search || filters.dateRange !== 'all' ? (
-                <button
-                  onClick={() => setFilters({status: 'all', type: 'all', search: '', dateRange: 'all'})}
-                  className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors inline-flex items-center justify-center gap-2"
-                >
-                  <Filter className="w-4 h-4" />
-                  Clear Filters
-                </button>
-              ) : null}
-              <button
-                onClick={fetchData}
-                className="px-4 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors inline-flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Refresh
-              </button>
-            </div>
           </div>
         ) : (
           <>
@@ -692,7 +684,7 @@ export default function AdminTrustVerificationPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-3 py-2 text-left">
                       <input
                         type="checkbox"
                         checked={selectedRequests.length === requests.length && requests.length > 0}
@@ -706,18 +698,18 @@ export default function AdminTrustVerificationPage() {
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {requests.map((request) => (
                     <tr key={request._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={selectedRequests.includes(request._id)}
@@ -731,14 +723,14 @@ export default function AdminTrustVerificationPage() {
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center">
                           {request.user.profile?.avatar ? (
                             <Image 
                               src={request.user.profile.avatar || '/default-avatar.png'} 
                               alt={`${request.user.firstName} ${request.user.lastName}`}
-                              width={40}
-                              height={40}
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -746,70 +738,70 @@ export default function AdminTrustVerificationPage() {
                               <User className="w-4 h-4 text-gray-500" />
                             </div>
                           )}
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
+                          <div className="ml-2">
+                            <div className="text-xs font-semibold text-gray-900">
                               {request.user.firstName} {request.user.lastName}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-600">
                               Rating: {request.user.profile?.rating?.toFixed(1) || 'N/A'}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <span className="text-xs font-medium text-gray-900 capitalize">
                           {request.type.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
                           {request.status.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
                         {formatDate(request.submittedAt)}
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="px-3 py-2 whitespace-nowrap">
                         <div className="flex items-center space-x-1">
-                          <FileText className="w-4 h-4 text-gray-400" />
+                          <FileText className="w-3 h-3 text-gray-400" />
                           <span className="text-xs text-gray-500">{request.documents?.length || 0}</span>
                           {request.documents && request.documents.length > 0 && request.documents.some(doc => doc.isVerified) && (
                             <CheckCircle className="w-3 h-3 text-green-600" />
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="flex items-center space-x-2">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                        <div className="flex items-center space-x-1">
                           <button
                             onClick={() => {/* View details modal */}}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
+                            className="text-blue-600 hover:text-blue-900"
                             title="View Details"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3" />
                           </button>
                           {request.status === 'pending' && (
                             <>
                               <button
                                 onClick={() => handleStatusChange(request._id, 'approved')}
-                                className="text-green-600 hover:text-green-800 transition-colors"
+                                className="text-green-600 hover:text-green-900"
                                 title="Approve"
                               >
-                                <Check className="w-4 h-4" />
+                                <Check className="w-3 h-3" />
                               </button>
                               <button
                                 onClick={() => handleStatusChange(request._id, 'rejected')}
-                                className="text-red-600 hover:text-red-800 transition-colors"
+                                className="text-red-600 hover:text-red-900"
                                 title="Reject"
                               >
-                                <X className="w-4 h-4" />
+                                <X className="w-3 h-3" />
                               </button>
                             </>
                           )}
                           <button 
-                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                            className="text-gray-400 hover:text-gray-600"
                             title="More Options"
                           >
-                            <MoreHorizontal className="w-4 h-4" />
+                            <MoreHorizontal className="w-3 h-3" />
                           </button>
                         </div>
                       </td>
@@ -823,14 +815,14 @@ export default function AdminTrustVerificationPage() {
             {pagination.pages > 1 && (
               <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs text-gray-500">
                     Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => setPagination({...pagination, page: pagination.page - 1})}
                       disabled={pagination.page <= 1}
-                      className="px-3 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                      className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                     >
                       Previous
                     </button>
@@ -840,7 +832,7 @@ export default function AdminTrustVerificationPage() {
                     <button
                       onClick={() => setPagination({...pagination, page: pagination.page + 1})}
                       disabled={pagination.page >= pagination.pages}
-                      className="px-3 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                      className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                     >
                       Next
                     </button>

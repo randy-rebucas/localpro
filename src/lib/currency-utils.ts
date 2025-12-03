@@ -8,54 +8,12 @@ export interface CurrencyConfig {
   decimalPlaces: number;
 }
 
-// Common currency configurations
+// Common currency configurations - PHP only
 export const CURRENCY_CONFIGS: Record<string, CurrencyConfig> = {
   PHP: {
     code: 'PHP',
     symbol: '₱',
     locale: 'en-PH',
-    decimalPlaces: 2
-  },
-  USD: {
-    code: 'USD',
-    symbol: '$',
-    locale: 'en-US',
-    decimalPlaces: 2
-  },
-  EUR: {
-    code: 'EUR',
-    symbol: '€',
-    locale: 'en-EU',
-    decimalPlaces: 2
-  },
-  GBP: {
-    code: 'GBP',
-    symbol: '£',
-    locale: 'en-GB',
-    decimalPlaces: 2
-  },
-  JPY: {
-    code: 'JPY',
-    symbol: '¥',
-    locale: 'ja-JP',
-    decimalPlaces: 0
-  },
-  AUD: {
-    code: 'AUD',
-    symbol: 'A$',
-    locale: 'en-AU',
-    decimalPlaces: 2
-  },
-  CAD: {
-    code: 'CAD',
-    symbol: 'C$',
-    locale: 'en-CA',
-    decimalPlaces: 2
-  },
-  SGD: {
-    code: 'SGD',
-    symbol: 'S$',
-    locale: 'en-SG',
     decimalPlaces: 2
   }
 };

@@ -151,7 +151,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
           {/* Right Side - CTA Buttons */}
           <div className={`flex ${isGrid ? 'flex-col gap-2 w-full' : 'gap-2 flex-shrink-0'}`}>
             <button 
-              onClick={() => router.push(`/marketplace/jobs/${job._id}`)}
+              onClick={() => router.push(`/jobs/${job._id}`)}
               className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-all`}
             >
               View Details

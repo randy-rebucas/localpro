@@ -255,12 +255,12 @@ export default function BookingsPage() {
         ...booking.pricing,
         basePrice: booking.pricing.basePrice ?? booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.pricing.totalAmount ?? booking.totalPrice ?? 0,
-        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
         additionalFees: booking.pricing.additionalFees ?? []
       } : {
         basePrice: booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.totalPrice ?? 0,
-        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'USD',
+        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
         additionalFees: []
       },
       // Handle payment
@@ -658,7 +658,7 @@ export default function BookingsPage() {
               
               // Get total price
               const totalPrice = booking.pricing?.totalAmount || booking.totalPrice || 0;
-              const currency = booking.pricing?.currency || 'USD';
+              const currency = booking.pricing?.currency || 'PHP';
               
               // Get payment status
               const paymentStatus = booking.payment?.status || booking.paymentStatus || 'pending';

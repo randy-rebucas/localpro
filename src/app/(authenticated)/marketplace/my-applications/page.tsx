@@ -129,7 +129,7 @@ export default function MyApplicationsPage() {
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link
-            href="/marketplace/jobs"
+            href="/jobs"
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Back to jobs"
           >
@@ -232,7 +232,7 @@ export default function MyApplicationsPage() {
             actions={[
               {
                 type: "link",
-                href: "/marketplace/jobs",
+                href: "/jobs",
                 label: "Browse Jobs",
                 variant: "primary"
               }
@@ -364,7 +364,7 @@ export default function MyApplicationsPage() {
                   {/* Action Buttons - Outside the clickable area */}
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-100 mt-4">
                     <Link
-                      href={jobId ? `/marketplace/jobs/${jobId}` : "#"}
+                      href={jobId ? `/jobs/${jobId}` : "#"}
                       className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
                     >
                       <Eye className="w-4 h-4" />

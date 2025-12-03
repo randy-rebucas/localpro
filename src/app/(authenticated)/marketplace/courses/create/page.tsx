@@ -43,7 +43,7 @@ export default function CreateCoursePage() {
         subcategory: '',
         level: 'beginner',
         price: 0,
-        currency: 'USD',
+        currency: 'PHP',
         language: 'en',
         tags: [],
         prerequisites: [],
@@ -74,11 +74,7 @@ export default function CreateCoursePage() {
     ];
 
     const currencies = [
-        { value: 'USD', label: 'USD ($)' },
-        { value: 'EUR', label: 'EUR (€)' },
-        { value: 'GBP', label: 'GBP (£)' },
-        { value: 'CAD', label: 'CAD (C$)' },
-        { value: 'AUD', label: 'AUD (A$)' }
+        { value: 'PHP', label: 'PHP (₱)' }
     ];
 
     const languages = [
@@ -571,7 +567,7 @@ export default function CreateCoursePage() {
                                     <div className="text-sm">
                                         <span className="text-gray-600">Price:</span>
                                         <p className="font-medium">
-                                            {formData.price === 0 ? 'Free' : `${formData.currency} ${formData.price}`}
+                                            {formData.price === 0 ? 'Free' : `₱${formData.price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                         </p>
                                     </div>
                                     <div className="text-sm">

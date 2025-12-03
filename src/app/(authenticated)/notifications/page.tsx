@@ -259,22 +259,22 @@ const NotificationItemComponent = ({
 
   return (
     <div 
-      className={`group relative bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-200 p-5 border-l-4 ${
+      className={`group relative bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-l-4 backdrop-blur-sm ${
         notification.isRead 
           ? "opacity-70 border-gray-200" 
-          : `${getBorderColor()} ${notification.priority === 'urgent' ? 'ring-2 ring-red-50 shadow-md' : ''}`
-      } ${notification.href && !isExpired ? "cursor-pointer hover:scale-[1.01]" : ""}`}
+          : `${getBorderColor()} ${notification.priority === 'urgent' ? 'ring-2 ring-red-50 shadow-lg' : ''}`
+      } ${notification.href && !isExpired ? "cursor-pointer hover:scale-[1.02]" : ""}`}
       onClick={notification.href && !isExpired ? handleClick : undefined}
     >
       {/* Unread indicator dot */}
       {!notification.isRead && (
-        <div className="absolute top-5 right-5 w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse" />
+        <div className="absolute top-5 right-5 w-3 h-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full animate-pulse shadow-md shadow-blue-500/50" />
       )}
       
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-4 flex-1 min-w-0">
           {/* Icon */}
-          <div className={`flex-shrink-0 w-11 h-11 rounded-xl ${iconData.bgColor} flex items-center justify-center ${notification.isRead ? 'opacity-60' : ''}`}>
+          <div className={`flex-shrink-0 w-11 h-11 rounded-xl ${iconData.bgColor} flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform ${notification.isRead ? 'opacity-60' : ''}`}>
             <div className={iconData.iconColor}>
               {iconData.icon}
             </div>
@@ -289,7 +289,7 @@ const NotificationItemComponent = ({
                 </h3>
                 {getPriorityBadge(notification.priority)}
                 {isExpired && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border border-gray-300 shadow-sm">
                     Expired
                   </span>
                 )}
@@ -300,11 +300,11 @@ const NotificationItemComponent = ({
             
             {/* Metadata */}
             <div className="flex items-center gap-3 flex-wrap mb-4">
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gray-50 px-2.5 py-1 rounded-md">
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
                 {getTypeLabel(notification.type)}
               </span>
               {(notification.channels.email || notification.channels.sms || notification.channels.push) && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 px-2 py-1 rounded-md border border-blue-100">
                   <Mail className="w-3.5 h-3.5" />
                   {[
                     notification.channels.email && 'Email',
@@ -313,7 +313,7 @@ const NotificationItemComponent = ({
                   ].filter(Boolean).join(', ')}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50/50 px-2 py-1 rounded-md">
                 <Clock className="w-3.5 h-3.5" />
                 {formatNotificationDate(notification.createdAt)}
               </span>
@@ -328,7 +328,7 @@ const NotificationItemComponent = ({
                     onMarkAsRead(notificationId);
                   }} 
                   disabled={actionLoading.has(notificationId)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-lg transition-all border border-emerald-200 hover:border-emerald-300 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {actionLoading.has(notificationId) ? (
                     <>
@@ -349,7 +349,7 @@ const NotificationItemComponent = ({
                   onDelete(notificationId);
                 }} 
                 disabled={actionLoading.has(notificationId)}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-red-50 hover:to-pink-50 hover:text-red-600 rounded-lg transition-all border border-gray-200 hover:border-red-200 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 {actionLoading.has(notificationId) ? (
                   <>
@@ -609,200 +609,230 @@ export default function NotificationsPage() {
   // Show loading state while notifications are loading
   if (loading) {
     return (
-      <div className="space-y-6">
-
-        {/* Header Skeleton */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Skeleton className="w-10 h-10 rounded-lg" />
-            <div>
-              <Skeleton className="h-6 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-          </div>
-          <Skeleton className="h-9 w-24 rounded-lg" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
-        {/* Notifications List Skeleton */}
-        <div className="space-y-4">
-          <ListSkeleton count={5} />
+        <div className="max-w-7xl mx-auto relative z-10 space-y-6">
+          {/* Header Skeleton */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-12 h-12 rounded-xl" />
+              <div>
+                <Skeleton className="h-7 w-40 mb-2" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-24 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Filters Skeleton */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 p-4 shadow-lg">
+            <Skeleton className="h-5 w-20 mb-3" />
+            <div className="flex flex-wrap gap-4">
+              <Skeleton className="h-10 w-32 rounded-lg" />
+              <Skeleton className="h-10 w-48 rounded-lg" />
+              <Skeleton className="h-10 w-36 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Notifications List Skeleton */}
+          <div className="space-y-4">
+            <ListSkeleton count={5} />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <Bell className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-1">Notifications</h1>
-              <div className="flex items-center gap-3 text-sm text-gray-600">
-                <span className="font-medium">
-                  {stats.unreadCount > 0 ? (
-                    <span className="text-emerald-600">{stats.unreadCount} unread</span>
-                  ) : (
-                    <span>All caught up!</span>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 transform hover:scale-105 transition-transform">
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">Notifications</h1>
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <span className="font-medium">
+                    {stats.unreadCount > 0 ? (
+                      <span className="text-emerald-600 font-semibold">{stats.unreadCount} unread</span>
+                    ) : (
+                      <span>All caught up!</span>
+                    )}
+                  </span>
+                  {stats.urgentCount > 0 && (
+                    <>
+                      <span className="text-gray-400">•</span>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-red-100 to-pink-100 text-red-700 border border-red-200 shadow-sm">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        {stats.urgentCount} urgent
+                      </span>
+                    </>
                   )}
-                </span>
-                {stats.urgentCount > 0 && (
-                  <>
-                    <span className="text-gray-400">•</span>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      {stats.urgentCount} urgent
-                    </span>
-                  </>
-                )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {stats.unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  disabled={markAllLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {markAllLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Mark all as read</span>
+                    </>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={load}
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-lg hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all shadow-md hover:shadow-lg hover:scale-105"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Refresh</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 p-4 shadow-lg backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-3">
+              <Filter className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-sm font-semibold text-gray-700">Filters</h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Read status filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600">Status:</label>
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value as 'all' | 'unread' | 'read')}
+                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer shadow-sm hover:shadow-md hover:border-gray-400"
+                >
+                  <option value="all">All</option>
+                  <option value="unread">Unread</option>
+                  <option value="read">Read</option>
+                </select>
+              </div>
+
+              {/* Type filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600">Type:</label>
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
+                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer min-w-[180px] shadow-sm hover:shadow-md hover:border-gray-400"
+                >
+                  <option value="all">All Types</option>
+                  <option value="booking_created">Booking Created</option>
+                  <option value="booking_confirmed">Booking Confirmed</option>
+                  <option value="booking_cancelled">Booking Cancelled</option>
+                  <option value="booking_completed">Booking Completed</option>
+                  <option value="job_application">Job Application</option>
+                  <option value="application_status_update">Application Update</option>
+                  <option value="job_posted">Job Posted</option>
+                  <option value="message_received">New Message</option>
+                  <option value="payment_received">Payment Received</option>
+                  <option value="payment_failed">Payment Failed</option>
+                  <option value="referral_reward">Referral Reward</option>
+                  <option value="course_enrollment">Course Enrollment</option>
+                  <option value="order_confirmation">Order Confirmation</option>
+                  <option value="subscription_renewal">Subscription Renewal</option>
+                  <option value="subscription_cancelled">Subscription Cancelled</option>
+                  <option value="system_announcement">System Announcement</option>
+                </select>
+              </div>
+
+              {/* Priority filter */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-600">Priority:</label>
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value as NotificationPriority | 'all')}
+                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer shadow-sm hover:shadow-md hover:border-gray-400"
+                >
+                  <option value="all">All Priorities</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {stats.unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                disabled={markAllLoading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {markAllLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Mark all as read</span>
-                  </>
-                )}
-              </button>
-            )}
-            <button
-              onClick={load}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
-            >
-              <RefreshCw className="w-4 h-4" />
-              <span>Refresh</span>
-            </button>
-          </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <h2 className="text-sm font-semibold text-gray-700">Filters</h2>
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            {/* Read status filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-600">Status:</label>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as 'all' | 'unread' | 'read')}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
-              >
-                <option value="all">All</option>
-                <option value="unread">Unread</option>
-                <option value="read">Read</option>
-              </select>
+        {/* Notifications List */}
+        <div className="space-y-4">
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-16 bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg backdrop-blur-sm">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-md">
+                <Bell className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {items.length === 0 ? "No notifications" : "No notifications match your filters"}
+              </h3>
+              <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+                {items.length === 0 
+                  ? "You're all caught up! No new notifications at this time." 
+                  : "Try adjusting your filters to see more notifications."}
+              </p>
+              {items.length > 0 && filteredItems.length === 0 && (
+                <button
+                  onClick={() => {
+                    setFilter('all');
+                    setTypeFilter('all');
+                    setPriorityFilter('all');
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-lg transition-all border-2 border-emerald-200 hover:border-emerald-300 shadow-md hover:shadow-lg hover:scale-105"
+                >
+                  <X className="w-4 h-4" />
+                  Clear Filters
+                </button>
+              )}
             </div>
-
-            {/* Type filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-600">Type:</label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer min-w-[180px]"
-              >
-                <option value="all">All Types</option>
-                <option value="booking_created">Booking Created</option>
-                <option value="booking_confirmed">Booking Confirmed</option>
-                <option value="booking_cancelled">Booking Cancelled</option>
-                <option value="booking_completed">Booking Completed</option>
-                <option value="job_application">Job Application</option>
-                <option value="application_status_update">Application Update</option>
-                <option value="job_posted">Job Posted</option>
-                <option value="message_received">New Message</option>
-                <option value="payment_received">Payment Received</option>
-                <option value="payment_failed">Payment Failed</option>
-                <option value="referral_reward">Referral Reward</option>
-                <option value="course_enrollment">Course Enrollment</option>
-                <option value="order_confirmation">Order Confirmation</option>
-                <option value="subscription_renewal">Subscription Renewal</option>
-                <option value="subscription_cancelled">Subscription Cancelled</option>
-                <option value="system_announcement">System Announcement</option>
-              </select>
-            </div>
-
-            {/* Priority filter */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-600">Priority:</label>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value as NotificationPriority | 'all')}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer"
-              >
-                <option value="all">All Priorities</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-          </div>
+          ) : (
+            filteredItems.map((notification) => {
+              const notificationId = notification.id || notification._id;
+              return (
+                <NotificationItemComponent
+                  key={notificationId}
+                  notification={notification}
+                  onMarkAsRead={markAsRead}
+                  onDelete={deleteNotification}
+                  actionLoading={actionLoading}
+                />
+              );
+            })
+          )}
         </div>
-      </div>
-
-      {/* Notifications List */}
-      <div className="space-y-4">
-        {filteredItems.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <Bell className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {items.length === 0 ? "No notifications" : "No notifications match your filters"}
-            </h3>
-            <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
-              {items.length === 0 
-                ? "You're all caught up! No new notifications at this time." 
-                : "Try adjusting your filters to see more notifications."}
-            </p>
-            {items.length > 0 && filteredItems.length === 0 && (
-              <button
-                onClick={() => {
-                  setFilter('all');
-                  setTypeFilter('all');
-                  setPriorityFilter('all');
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors border border-emerald-200"
-              >
-                <X className="w-4 h-4" />
-                Clear Filters
-              </button>
-            )}
-          </div>
-        ) : (
-          filteredItems.map((notification) => {
-            const notificationId = notification.id || notification._id;
-            return (
-              <NotificationItemComponent
-                key={notificationId}
-                notification={notification}
-                onMarkAsRead={markAsRead}
-                onDelete={deleteNotification}
-                actionLoading={actionLoading}
-              />
-            );
-          })
-        )}
       </div>
     </div>
   );

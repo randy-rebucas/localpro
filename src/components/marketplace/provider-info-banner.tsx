@@ -17,7 +17,7 @@ export function ProviderInfoBanner() {
             View applications, update listings, and manage your job postings from your jobs dashboard.
           </p>
           <Link
-            href="/marketplace/jobs/my-jobs"
+            href="/marketplace/my-jobs"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-700 hover:text-blue-900 underline"
           >
             Go to My Jobs

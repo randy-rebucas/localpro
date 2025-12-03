@@ -119,25 +119,25 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               <div className="flex flex-wrap gap-4">
                 {rental.pricing.hourly && (
                   <div>
-                    <span className="text-2xl font-bold">${rental.pricing.hourly}</span>
+                    <span className="text-2xl font-bold">₱{rental.pricing.hourly}</span>
                     <span className="text-gray-600">/hour</span>
                   </div>
                 )}
                 {rental.pricing.daily && (
                   <div>
-                    <span className="text-2xl font-bold">${rental.pricing.daily}</span>
+                    <span className="text-2xl font-bold">₱{rental.pricing.daily}</span>
                     <span className="text-gray-600">/day</span>
                   </div>
                 )}
                 {rental.pricing.weekly && (
                   <div>
-                    <span className="text-2xl font-bold">${rental.pricing.weekly}</span>
+                    <span className="text-2xl font-bold">₱{rental.pricing.weekly}</span>
                     <span className="text-gray-600">/week</span>
                   </div>
                 )}
                 {rental.pricing.monthly && (
                   <div>
-                    <span className="text-2xl font-bold">${rental.pricing.monthly}</span>
+                    <span className="text-2xl font-bold">₱{rental.pricing.monthly}</span>
                     <span className="text-gray-600">/month</span>
                   </div>
                 )}
@@ -231,7 +231,7 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               {rental.requirements.deposit && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Deposit</span>
-                  <span className="font-semibold">${rental.requirements.deposit}</span>
+                  <span className="font-semibold">₱{rental.requirements.deposit}</span>
                 </div>
               )}
               {rental.requirements.insuranceRequired !== undefined && (
@@ -254,30 +254,30 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               {rental.pricing.hourly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Hourly Rate</span>
-                  <span className="font-semibold">${rental.pricing.hourly}</span>
+                  <span className="font-semibold">₱{rental.pricing.hourly}</span>
                 </div>
               )}
               {rental.pricing.daily && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Daily Rate</span>
-                  <span className="font-semibold">${rental.pricing.daily}</span>
+                  <span className="font-semibold">₱{rental.pricing.daily}</span>
                 </div>
               )}
               {rental.pricing.weekly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Weekly Rate</span>
-                  <span className="font-semibold">${rental.pricing.weekly}</span>
+                  <span className="font-semibold">₱{rental.pricing.weekly}</span>
                 </div>
               )}
               {rental.pricing.monthly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Monthly Rate</span>
-                  <span className="font-semibold">${rental.pricing.monthly}</span>
+                  <span className="font-semibold">₱{rental.pricing.monthly}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t">
                 <span className="text-gray-600">Currency</span>
-                <span className="font-semibold">{rental.pricing.currency || "USD"}</span>
+                <span className="font-semibold">{rental.pricing.currency || "PHP"}</span>
               </div>
             </div>
           </Card>

@@ -27,6 +27,8 @@ import { Select } from "@/components/ui/select";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export interface SupplyOrder {
   id: string;
@@ -139,6 +141,7 @@ export default function MyOrdersPage() {
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState("All Payment");
   const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
 
   // Mock data for development - remove when API is integrated
   const mockOrders = useMemo((): SupplyOrder[] => [
@@ -422,7 +425,7 @@ export default function MyOrdersPage() {
             <div>
               <p className="text-sm text-gray-600">Total Spent</p>
               <p className="text-2xl font-bold text-purple-600">
-                ${orders.reduce((sum, order) => sum + order.totalPrice, 0).toFixed(2)}
+                {formatCurrency(orders.reduce((sum, order) => sum + order.totalPrice, 0), 'PHP', { appSettings })}
               </p>
             </div>
             <DollarSign className="w-8 h-8 text-purple-600" />
@@ -528,9 +531,9 @@ export default function MyOrdersPage() {
                           <div className="flex items-center gap-4 text-sm text-gray-500">
                             <span>Qty: {order.quantity}</span>
                             <span>•</span>
-                            <span>${order.supply.price}/{order.supply.unit}</span>
+                            <span>{formatCurrency(order.supply.price, 'PHP', { appSettings })}/{order.supply.unit}</span>
                             <span>•</span>
-                            <span>Total: ${order.totalPrice.toFixed(2)}</span>
+                            <span>Total: {formatCurrency(order.totalPrice, 'PHP', { appSettings })}</span>
                           </div>
                         </div>
                       </div>

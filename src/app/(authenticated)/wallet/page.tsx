@@ -87,6 +87,9 @@ export default function WalletPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [earnings, setEarnings] = useState<EarningsData | null>(null);
   const [expenses, setExpenses] = useState<ExpenseData[]>([]);
+  const [topUpRequests, setTopUpRequests] = useState<Record<string, unknown>[]>([]);
+  const [loadingTopUps, setLoadingTopUps] = useState(false);
+  const [activeTab, setActiveTab] = useState<'transactions' | 'topups'>('transactions');
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -271,13 +274,69 @@ export default function WalletPage() {
         }
 
         // Handle transactions data
-        if (transactionsData?.success && transactionsData.data) {
-          const transactionsArray = Array.isArray(transactionsData.data) 
-            ? transactionsData.data 
-            : transactionsData.data.transactions || [];
+        if (transactionsData?.success) {
+          let transactionsArray: TransactionDetails[] = [];
+          let totalPagesValue = 1;
+          
+          if (transactionsData.data) {
+            let rawTransactions: Record<string, unknown>[] = [];
+            
+            // Handle different response structures
+            if (Array.isArray(transactionsData.data)) {
+              // Direct array response
+              rawTransactions = transactionsData.data;
+            } else if (transactionsData.data.transactions && Array.isArray(transactionsData.data.transactions)) {
+              // Nested transactions array
+              rawTransactions = transactionsData.data.transactions;
+              totalPagesValue = transactionsData.data.pages || transactionsData.data.totalPages || 1;
+            } else if (transactionsData.data.results && Array.isArray(transactionsData.data.results)) {
+              // Alternative nested structure
+              rawTransactions = transactionsData.data.results;
+              totalPagesValue = transactionsData.data.pages || transactionsData.data.totalPages || 1;
+            }
+            
+            // Transform API response to TransactionDetails format
+            transactionsArray = rawTransactions.map((tx: Record<string, unknown>) => {
+              // Map Transaction to TransactionDetails
+              return {
+                type: tx.type || tx.category || 'transaction',
+                amount: tx.amount || 0,
+                category: tx.category || tx.type || 'transaction',
+                description: tx.description || tx.category || 'Transaction',
+                paymentMethod: tx.paymentMethod || tx.method || '',
+                status: tx.status || 'pending',
+                timestamp: tx.timestamp || tx.createdAt || tx.date || new Date(),
+                reference: tx.reference || tx.transactionId || tx._id || tx.id || '',
+                accountDetails: tx.accountDetails,
+                adminNotes: tx.adminNotes,
+                processedAt: tx.processedAt,
+                processedBy: tx.processedBy,
+              } as TransactionDetails;
+            });
+            
+            // Try to get pagination from root level if not found in data
+            if (totalPagesValue === 1 && transactionsData.pages) {
+              totalPagesValue = transactionsData.pages;
+            }
+          }
+          
+          logger.debug('Transactions loaded', { 
+            count: transactionsArray.length, 
+            totalPages: totalPagesValue,
+            hasData: !!transactionsData.data,
+            dataType: transactionsData.data ? typeof transactionsData.data : 'null',
+            isArray: Array.isArray(transactionsData.data),
+            sampleTransaction: transactionsArray[0] || null
+          });
+          
           setTransactions(transactionsArray);
-          setTotalPages(transactionsData.data.pages || transactionsData.pages || 1);
+          setTotalPages(totalPagesValue);
         } else {
+          logger.debug('No transactions data in response', { 
+            success: transactionsData?.success,
+            hasData: !!transactionsData?.data,
+            transactionsData 
+          });
           setTransactions([]);
           setTotalPages(1);
         }
@@ -347,10 +406,52 @@ export default function WalletPage() {
       }
     }, [currentPage]);
 
+  // Fetch top-up requests
+  const fetchTopUpRequests = useCallback(async () => {
+    try {
+      setLoadingTopUps(true);
+      const token = getApiToken();
+      
+      if (!token) {
+        setTopUpRequests([]);
+        return;
+      }
+
+      // GET /api/finance/top-ups/my-requests?page=1&limit=20
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.financeTopUpsMyRequests}?page=1&limit=20`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok && data.success && data.data) {
+        // Handle response structure: { success, data: [...] } or { success, data: { topUps: [...] } }
+        const requestsArray = Array.isArray(data.data) 
+          ? data.data 
+          : data.data.topUps || data.data.requests || [];
+        setTopUpRequests(requestsArray);
+      } else {
+        setTopUpRequests([]);
+      }
+    } catch (error) {
+      logger.error("Error fetching top-up requests", error instanceof Error ? error : new Error(String(error)));
+      setTopUpRequests([]);
+    } finally {
+      setLoadingTopUps(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!mounted) return;
     fetchWalletData(false, currentPage);
-  }, [mounted, currentPage, fetchWalletData]);
+    fetchTopUpRequests();
+  }, [mounted, currentPage, fetchWalletData, fetchTopUpRequests]);
 
   const refreshWalletData = useCallback(() => {
     fetchWalletData(true, currentPage);
@@ -382,10 +483,13 @@ export default function WalletPage() {
   };
 
   const getTransactionIcon = (type: string | undefined) => {
-    switch (type) {
+    const normalizedType = type?.toLowerCase() || '';
+    switch (normalizedType) {
       case 'income':
       case 'bonus':
       case 'referral':
+      case 'topup':
+      case 'top-up':
         return <ArrowDownRight className="w-5 h-5 text-green-600" />;
       case 'expense':
       case 'withdrawal':
@@ -398,10 +502,13 @@ export default function WalletPage() {
   };
 
   const getTransactionColor = (type: string | undefined) => {
-    switch (type) {
+    const normalizedType = type?.toLowerCase() || '';
+    switch (normalizedType) {
       case 'income':
       case 'bonus':
       case 'referral':
+      case 'topup':
+      case 'top-up':
         return 'text-green-600 bg-green-50';
       case 'expense':
       case 'withdrawal':
@@ -524,38 +631,81 @@ export default function WalletPage() {
 
       // Make request
       const url = `${API_BASE_URL}${API_ENDPOINTS.financeTopUp}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+      let response: Response;
+      
+      try {
+        response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+      } catch (fetchError) {
+        // Handle network errors
+        if (fetchError instanceof TypeError && (fetchError.message.includes('fetch') || fetchError.message.includes('Failed to fetch'))) {
+          throw new Error('Network error: Unable to connect to the server. Please check your internet connection and try again.');
+        }
+        throw fetchError;
+      }
 
-      const data = await response.json();
+      // Check if response is ok before trying to parse JSON
+      const contentType = response.headers.get('content-type');
+      let data: Record<string, unknown>;
+      
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          // If not JSON, read as text to get error message
+          const text = await response.text();
+          throw new Error(text || `Server error: ${response.status} ${response.statusText}`);
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, provide a helpful error message
+        if (parseError instanceof Error && parseError.message.includes('Server error')) {
+          throw parseError;
+        }
+        throw new Error(`Server error: ${response.status} ${response.statusText}. Please try again later.`);
+      }
 
       if (!response.ok) {
         // Handle specific error messages from API
-        const errorMessage = data.message || data.error || "Failed to submit top-up request";
+        const message = typeof data?.message === 'string' ? data.message : (typeof data?.error === 'string' ? data.error : null);
+        const errorMessage = message || `Server error: ${response.status} ${response.statusText}`;
+        logger.error('Top-up request failed', new Error(errorMessage), {
+          status: response.status,
+          statusText: response.statusText,
+          responseData: data
+        });
         throw new Error(errorMessage);
       }
 
-      if (data.success) {
-        toast.success(data.message || "Top-up request submitted successfully. Please wait for admin approval.");
+      if (data?.success) {
+        const message = typeof data.message === 'string' ? data.message : "Top-up request submitted successfully. Please wait for admin approval.";
+        toast.success(message);
         // Reset form
         setShowAddFundsModal(false);
         resetTopUpForm();
         
-        // Refresh wallet data
+        // Refresh wallet data and top-up requests
         setTimeout(() => {
           fetchWalletData(true);
+          fetchTopUpRequests();
         }, 500);
       } else {
-        throw new Error(data.message || "Failed to submit top-up request");
+        const message = typeof data?.message === 'string' ? data.message : null;
+        const errorMessage = message || "Failed to submit top-up request";
+        logger.error('Top-up request unsuccessful', new Error(errorMessage), { responseData: data });
+        throw new Error(errorMessage);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to submit top-up request. Please try again.";
-      logger.error('Error submitting top-up request', err instanceof Error ? err : new Error(String(err)));
+      logger.error('Error submitting top-up request', err instanceof Error ? err : new Error(String(err)), {
+        url: `${API_BASE_URL}${API_ENDPOINTS.financeTopUp}`,
+        amount: addFundsAmount,
+        paymentMethod: addFundsPaymentMethod
+      });
       toast.error(errorMessage);
     } finally {
       setProcessing(false);
@@ -566,6 +716,12 @@ export default function WalletPage() {
     const amount = parseFloat(withdrawAmount);
     if (!withdrawAmount || isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
+      return;
+    }
+
+    // Validate payment method is selected
+    if (!withdrawMethod) {
+      toast.error("Please select a withdrawal method");
       return;
     }
 
@@ -588,6 +744,12 @@ export default function WalletPage() {
 
     setProcessing(true);
     try {
+      // Prepare account details - always send as object, not undefined
+      const accountDetails = withdrawMethod === "bank_transfer" 
+        ? bankAccount 
+        : {}; // Empty object for other payment methods
+
+      // Use the correct withdrawal endpoint: /api/finance/withdraw
       const response = await fetch(
         `${API_BASE_URL}${API_ENDPOINTS.financeWithdraw}`,
         createAuthFetchOptions({
@@ -598,7 +760,7 @@ export default function WalletPage() {
           body: JSON.stringify({
             amount: amount,
             paymentMethod: withdrawMethod,
-            accountDetails: withdrawMethod === "bank_transfer" ? bankAccount : undefined,
+            accountDetails: accountDetails,
           }),
         })
       );
@@ -727,24 +889,33 @@ export default function WalletPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Wallet className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Wallet</h1>
-            <p className="text-sm text-gray-600">Manage your finances and transactions</p>
-          </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
-        {/* Loading State */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
-          <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading wallet...</p>
-            <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+        <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
+              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md p-12">
+            <div className="flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading wallet...</p>
+              <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+            </div>
           </div>
         </div>
       </div>
@@ -752,53 +923,62 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Wallet className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Wallet</h1>
-            <p className="text-sm text-gray-600">Manage your finances and transactions</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowExpenseModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-            title="Add expense"
-          >
-            <span className="text-base font-semibold">{currencySymbol}</span>
-            Add Expense
-          </button>
-          <button
-            onClick={() => setShowWalletSettingsModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            title="Wallet settings"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </button>
-          <button
-            onClick={refreshWalletData}
-            disabled={refreshing || loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Refresh wallet data"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6 relative z-10">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Wallet className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
+              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowExpenseModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+              title="Add expense"
+            >
+              <span className="text-base font-semibold">{currencySymbol}</span>
+              <span className="hidden sm:inline">Add Expense</span>
+              <span className="sm:hidden">Expense</span>
+            </button>
+            <button
+              onClick={() => setShowWalletSettingsModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md"
+              title="Wallet settings"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+            <button
+              onClick={refreshWalletData}
+              disabled={refreshing || loading}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh wallet data"
+            >
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+          </div>
+        </div>
 
       {/* Error State */}
       {error && (
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm p-6">
+        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-red-200 shadow-md hover:shadow-lg transition-all p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+              <AlertCircle className="w-5 h-5" />
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Wallet</h3>
@@ -808,7 +988,7 @@ export default function WalletPage() {
                   setError(null);
                   fetchWalletData(false, currentPage);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
               >
                 <RefreshCw className="w-4 h-4" />
                 Try Again
@@ -822,48 +1002,52 @@ export default function WalletPage() {
       {!error && (
         <>
           {/* Main Balance Card with Actions */}
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-8 text-white">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <p className="text-emerald-100 text-sm mb-2">Available Balance</p>
-                <p className="text-4xl font-bold">{formatCurrency(balance)}</p>
-                {pendingBalance > 0 && (
-                  <p className="text-emerald-100 text-sm mt-2">
-                    {formatCurrency(pendingBalance)} pending
-                  </p>
-                )}
+          <div className="bg-gradient-to-br from-emerald-500 via-emerald-600 to-green-600 rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 p-8 text-white relative overflow-hidden">
+            {/* Decorative gradient overlay */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-emerald-100 text-sm mb-2">Available Balance</p>
+                  <p className="text-4xl font-bold">{formatCurrency(balance)}</p>
+                  {pendingBalance > 0 && (
+                    <p className="text-emerald-100 text-sm mt-2">
+                      {formatCurrency(pendingBalance)} pending
+                    </p>
+                  )}
+                </div>
+                <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                  <Wallet className="w-8 h-8" />
+                </div>
               </div>
-              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                <Wallet className="w-8 h-8" />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => setShowAddFundsModal(true)}
+                  className="flex-1 bg-white text-emerald-600 font-semibold py-3 px-4 rounded-lg hover:bg-emerald-50 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>Add Funds</span>
+                </button>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={balance === 0}
+                  className="flex-1 bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-4 rounded-lg hover:bg-white/30 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  <Minus className="w-5 h-5" />
+                  <span>Withdraw</span>
+                </button>
               </div>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAddFundsModal(true)}
-                className="flex-1 bg-white text-emerald-600 font-semibold py-3 px-4 rounded-lg hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Add Funds
-              </button>
-              <button
-                onClick={() => setShowWithdrawModal(true)}
-                disabled={balance === 0}
-                className="flex-1 bg-emerald-600/20 text-white font-semibold py-3 px-4 rounded-lg hover:bg-emerald-600/30 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Minus className="w-5 h-5" />
-                Withdraw
-              </button>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
             {/* Monthly Earnings */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md">
+                  <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -884,10 +1068,10 @@ export default function WalletPage() {
             </div>
 
             {/* Referral Earnings */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                  <span className="text-lg font-semibold text-purple-600">{currencySymbol}</span>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-md">
+                  <span className="text-lg font-semibold">{currencySymbol}</span>
                 </div>
               </div>
               <div>
@@ -908,10 +1092,10 @@ export default function WalletPage() {
             </div>
 
             {/* Pending Balance */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-yellow-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-yellow-600" />
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white flex items-center justify-center shadow-md">
+                  <Clock className="w-5 h-5" />
                 </div>
               </div>
               <div>
@@ -939,186 +1123,420 @@ export default function WalletPage() {
       )}
 
 
-      {/* Earnings & Expenses Summary */}
+      {/* Earnings Summary - 3 Blocks */}
       {!error && (earnings || expenses.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Total Earnings Block */}
           {earnings && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-green-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Earnings Summary</h3>
-                <TrendingUp className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Total Earnings</span>
-                  <span className="font-semibold text-gray-900">
-                    {formatCurrency(
-                      (earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
-                        ? earnings.totalEarnings 
-                        : (earnings.total && !isNaN(earnings.total)) 
-                          ? earnings.total 
-                          : 0
-                    )}
-                  </span>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center shadow-md">
+                  <TrendingUp className="w-5 h-5" />
                 </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    (earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
+                      ? earnings.totalEarnings 
+                      : (earnings.total && !isNaN(earnings.total)) 
+                        ? earnings.total 
+                        : 0
+                  )}
+                </p>
                 {earnings.bookingCount && !isNaN(earnings.bookingCount) && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Bookings</span>
-                    <span className="text-sm text-gray-900">{earnings.bookingCount}</span>
-                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {earnings.bookingCount} bookings
+                  </p>
                 )}
               </div>
             </div>
           )}
+          
+          {/* Expenses Summary Block */}
           {expenses.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Expenses</h3>
-                <Receipt className="w-5 h-5 text-red-600" />
-              </div>
-              <div className="space-y-3">
-                {expenses.slice(0, 3).map((expense: ExpenseData, index: number) => {
-                  const expenseAmount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
-                  return (
-                    <div key={expense._id || expense.id || `expense-${index}`} className="flex justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{expense.description || expense.category}</p>
-                        <p className="text-xs text-gray-500">{expense.category}</p>
-                      </div>
-                      <span className="font-semibold text-red-600">
-                        {formatCurrency(expenseAmount)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              {expenses.length > 3 && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center">
-                    Showing 3 of {expenses.length} expenses
-                  </p>
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-md">
+                  <Receipt className="w-5 h-5" />
                 </div>
-              )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    expenses.reduce((sum: number, expense: ExpenseData) => {
+                      const amount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
+                      return sum + amount;
+                    }, 0)
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+          )}
+          
+          {/* Net Earnings Block */}
+          {earnings && (
+            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md">
+                  <DollarSign className="w-5 h-5" />
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Net Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(
+                    ((earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
+                      ? earnings.totalEarnings 
+                      : (earnings.total && !isNaN(earnings.total)) 
+                        ? earnings.total 
+                        : 0) - 
+                    (expenses.length > 0 
+                      ? expenses.reduce((sum: number, expense: ExpenseData) => {
+                          const amount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
+                          return sum + amount;
+                        }, 0)
+                      : 0)
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  After expenses
+                </p>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Transactions Section */}
-      {!error && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-            <p className="text-sm text-gray-600 mt-1">View your transaction history</p>
+      {/* Transactions & Top-Up Requests Tabs */}
+      {!error && mounted && !loading && (
+        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50/50 to-white">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 pt-4 pb-0 gap-3">
+              <div className="flex space-x-0.5 overflow-x-auto">
+                <button
+                  onClick={() => setActiveTab('transactions')}
+                  className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
+                    activeTab === 'transactions'
+                      ? 'bg-white text-emerald-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                  }`}
+                >
+                  {activeTab === 'transactions' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Recent Transactions</span>
+                    <span className="sm:hidden">Transactions</span>
+                    {transactions.length > 0 && (
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
+                        activeTab === 'transactions'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {transactions.length}
+                      </span>
+                    )}
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('topups')}
+                  className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
+                    activeTab === 'topups'
+                      ? 'bg-white text-emerald-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                  }`}
+                >
+                  {activeTab === 'topups' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-t-full"></div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <ArrowUpRight className="w-4 h-4 flex-shrink-0" />
+                    <span className="hidden sm:inline">Top-Up Requests</span>
+                    <span className="sm:hidden">Top-Ups</span>
+                    {topUpRequests.length > 0 && (
+                      <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
+                        activeTab === 'topups'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}>
+                        {topUpRequests.length}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </div>
+              {activeTab === 'topups' && (
+                <button
+                  onClick={fetchTopUpRequests}
+                  disabled={loadingTopUps}
+                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all self-start sm:self-auto"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingTopUps ? 'animate-spin' : ''} ${topUpRequests.length > 0 ? 'mr-2' : ''}`} />
+                  {topUpRequests.length > 0 && <span>Refresh</span>}
+                </button>
+              )}
+            </div>
           </div>
 
-          {transactions.length === 0 ? (
-            <div className="p-12 text-center">
-              <Wallet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 font-medium">No transactions yet</p>
-              <p className="text-sm text-gray-500 mt-1">Your transaction history will appear here</p>
-            </div>
-          ) : (
-            <>
-              <div className="divide-y divide-gray-200">
-                {transactions.map((transaction, index) => {
-                  const transactionKey = transaction.reference 
-                    || (transaction.timestamp ? (typeof transaction.timestamp === 'string' ? transaction.timestamp : transaction.timestamp.toString()) : null)
-                    || `transaction-${index}`;
-                  return (
-                    <div key={transactionKey} className="p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getTransactionColor(transaction.type)}`}>
-                            {getTransactionIcon(transaction.type)}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {transaction.description || transaction.category || 'Transaction'}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="text-xs text-gray-500 capitalize">
-                                {transaction.type || 'transaction'}
-                              </span>
-                              {transaction.reference && (
-                                <>
-                                  <span className="text-gray-300">•</span>
-                                  <span className="text-xs text-gray-500">
-                                    {transaction.reference}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {formatDate(transaction.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`font-semibold ${
-                            transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund'
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                          }`}>
-                            {transaction.type === 'income' || transaction.type === 'bonus' || transaction.type === 'referral' || transaction.type === 'refund'
-                              ? '+'
-                              : '-'
-                            }
-                            {formatCurrency(
-                              (transaction.amount && !isNaN(transaction.amount)) 
-                                ? Math.abs(transaction.amount) 
-                                : 0
-                            )}
-                          </p>
-                          <p className={`text-xs mt-1 px-2 py-1 rounded-full inline-block ${
-                            transaction.status === 'completed'
-                              ? 'bg-green-100 text-green-700'
-                              : transaction.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : transaction.status === 'failed'
-                              ? 'bg-red-100 text-red-700'
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {transaction.status || 'pending'}
-                          </p>
-                        </div>
-                      </div>
+          {/* Tab Content */}
+          <div className="bg-white">
+            {/* Transactions Tab Content */}
+            {activeTab === 'transactions' && (
+              <>
+                {transactions.length === 0 ? (
+                  <div className="p-16 text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                      <Wallet className="w-10 h-10 text-gray-400" />
                     </div>
-                  );
-                })}
-              </div>
+                    <p className="text-lg font-semibold text-gray-700 mb-1.5">No transactions yet</p>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto">Your transaction history will appear here once you start making transactions</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="divide-y divide-gray-100">
+                      {transactions.map((transaction, index) => {
+                        const transactionKey = transaction.reference 
+                          || (transaction.timestamp ? (typeof transaction.timestamp === 'string' ? transaction.timestamp : transaction.timestamp.toString()) : null)
+                          || `transaction-${index}`;
+                        // Determine if transaction is income (money coming in) or expense (money going out)
+                        // Income types: income, bonus, referral, refund, topup/top-up (money added to wallet)
+                        // Expense types: expense, withdrawal (money removed from wallet)
+                        const transactionType = transaction.type?.toLowerCase() || '';
+                        const isIncome = transactionType === 'income' 
+                          || transactionType === 'bonus' 
+                          || transactionType === 'referral' 
+                          || transactionType === 'refund'
+                          || transactionType === 'topup'
+                          || transactionType === 'top-up';
+                        
+                        // Get the raw amount value
+                        const rawAmount = (transaction.amount && !isNaN(transaction.amount)) ? transaction.amount : 0;
+                        
+                        // Normalize amount based on transaction type
+                        // Income types should always display as positive (green)
+                        // Expense/withdrawal types should always display as negative (red)
+                        // This handles cases where amounts might be stored inconsistently in the database
+                        const displayAmount = isIncome 
+                          ? Math.abs(rawAmount) // Income: always positive (money coming in)
+                          : -Math.abs(rawAmount); // Expenses/withdrawals: always negative (money going out)
+                        
+                        return (
+                          <div key={transactionKey} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                              <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full sm:w-auto">
+                                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${getTransactionColor(transaction.type)}`}>
+                                  {getTransactionIcon(transaction.type)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 text-sm sm:text-base mb-1.5 truncate">
+                                    {transaction.description || transaction.category || 'Transaction'}
+                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                                    <span className="text-xs font-medium text-gray-500 capitalize px-2 py-0.5 bg-gray-100 rounded-md">
+                                      {transaction.type || 'transaction'}
+                                    </span>
+                                    {transaction.reference && (
+                                      <>
+                                        <span className="text-gray-300 text-xs hidden sm:inline">•</span>
+                                        <span className="text-xs text-gray-500 font-mono truncate max-w-[100px] sm:max-w-[120px]">
+                                          {transaction.reference}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                                    <Clock className="w-3 h-3 flex-shrink-0" />
+                                    <span className="truncate">{formatDate(transaction.timestamp)}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-left sm:text-right flex-shrink-0 w-full sm:w-auto flex items-center sm:items-end justify-between sm:flex-col gap-2">
+                                <p className={`text-base sm:text-lg font-bold ${
+                                  isIncome
+                                    ? 'text-emerald-600'
+                                    : 'text-red-600'
+                                }`}>
+                                  {formatCurrency(displayAmount)}
+                                </p>
+                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full inline-block ${
+                                  transaction.status === 'completed'
+                                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                                    : transaction.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
+                                    : transaction.status === 'failed'
+                                    ? 'bg-red-100 text-red-700 border border-red-200'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}>
+                                  {transaction.status || 'pending'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="p-6 border-t border-gray-200 flex items-center justify-between">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm font-medium text-gray-600 text-center">
+                          Page <span className="text-emerald-600 font-semibold">{currentPage}</span> of <span className="text-gray-900 font-semibold">{totalPages}</span>
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {/* Top-Up Requests Tab Content */}
+            {activeTab === 'topups' && (
+              <>
+                {loadingTopUps ? (
+                  <div className="p-16 text-center">
+                    <RefreshCw className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 font-medium">Loading top-up requests...</p>
+                    <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your data</p>
+                  </div>
+                ) : topUpRequests.length === 0 ? (
+                  <div className="p-16 text-center">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-100 to-green-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                      <Receipt className="w-10 h-10 text-emerald-400" />
+                    </div>
+                    <p className="text-lg font-semibold text-gray-700 mb-1.5">No top-up requests yet</p>
+                    <p className="text-sm text-gray-500 max-w-sm mx-auto">Your top-up request history will appear here once you submit a request</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {topUpRequests.map((request) => {
+                      const receiptUrl = request.receipt && typeof request.receipt === 'object' && request.receipt !== null
+                        ? ((request.receipt as { url?: string; thumbnail?: string }).url || (request.receipt as { url?: string; thumbnail?: string }).thumbnail)
+                        : typeof request.receipt === 'string' 
+                        ? request.receipt 
+                        : request.accountDetails && typeof request.accountDetails === 'object' && request.accountDetails !== null && 'receipt' in request.accountDetails && request.accountDetails.receipt
+                        ? (typeof request.accountDetails.receipt === 'string' 
+                          ? request.accountDetails.receipt 
+                          : request.accountDetails.receipt && typeof request.accountDetails.receipt === 'object' && request.accountDetails.receipt !== null
+                          ? ((request.accountDetails.receipt as { url?: string; thumbnail?: string }).url || (request.accountDetails.receipt as { url?: string; thumbnail?: string }).thumbnail)
+                          : null)
+                        : null;
+
+                      const statusColors = {
+                        pending: 'bg-amber-100 text-amber-700 border border-amber-200',
+                        approved: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
+                        rejected: 'bg-red-100 text-red-700 border border-red-200',
+                        completed: 'bg-blue-100 text-blue-700 border border-blue-200',
+                        cancelled: 'bg-gray-100 text-gray-700 border border-gray-200',
+                        failed: 'bg-red-100 text-red-700 border border-red-200'
+                      };
+
+                      return (
+                        <div key={String(request._id || request.id || `request-${topUpRequests.indexOf(request)}`)} className="p-4 sm:p-5 hover:bg-gradient-to-r hover:from-emerald-50/30 hover:to-green-50/30 transition-all duration-200 group">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                            <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0 w-full">
+                              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-emerald-500/20">
+                                <ArrowUpRight className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2.5 mb-3 flex-wrap">
+                                  <p className="font-semibold text-gray-900 text-sm sm:text-base">
+                                    Top-Up Request
+                                  </p>
+                                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[request.status as keyof typeof statusColors] || statusColors.pending}`}>
+                                    {typeof request.status === 'string' ? request.status : 'pending'}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-3">
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Amount</p>
+                                    <p className="text-base font-bold text-gray-900">{formatCurrency(typeof request.amount === 'number' ? request.amount : 0)}</p>
+                                  </div>
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Payment Method</p>
+                                    <p className="text-sm font-semibold text-gray-700 capitalize">{typeof request.paymentMethod === 'string' ? request.paymentMethod.replace('_', ' ') : 'N/A'}</p>
+                                  </div>
+                                  {(typeof request.reference === 'string' || typeof request.reference === 'number') && (
+                                    <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                      <p className="text-xs font-medium text-gray-500 mb-1">Reference</p>
+                                      <p className="text-xs font-mono font-semibold text-gray-700 truncate">{String(request.reference)}</p>
+                                    </div>
+                                  )}
+                                  <div className="bg-gray-50/50 rounded-lg p-2.5">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Requested</p>
+                                    <p className="text-xs font-semibold text-gray-700">
+                                      {formatDate(
+                                        (typeof request.createdAt === 'string' || request.createdAt instanceof Date) ? request.createdAt
+                                        : (typeof request.timestamp === 'string' || request.timestamp instanceof Date) ? request.timestamp
+                                        : new Date()
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                                {((typeof request.notes === 'string' && request.notes) || (typeof request.description === 'string' && request.description)) && (
+                                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-xs font-medium text-gray-500 mb-1">Notes</p>
+                                    <p className="text-sm text-gray-700 leading-relaxed">{typeof request.notes === 'string' ? request.notes : (typeof request.description === 'string' ? request.description : '')}</p>
+                                  </div>
+                                )}
+                                {typeof request.adminNotes === 'string' && request.adminNotes && (
+                                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <p className="text-xs font-semibold text-blue-900 mb-1.5">Admin Notes</p>
+                                    <p className="text-sm text-blue-800 leading-relaxed">{request.adminNotes}</p>
+                                  </div>
+                                )}
+                                {receiptUrl && (
+                                  <div className="mt-3">
+                                    <a
+                                      href={receiptUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all hover:shadow-sm"
+                                    >
+                                      <Receipt className="w-3.5 h-3.5" />
+                                      View Receipt
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       )}
 
       {/* Add Funds Modal */}
       {showAddFundsModal && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget && !processing) {
               setShowAddFundsModal(false);
@@ -1126,7 +1544,7 @@ export default function WalletPage() {
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col relative border border-gray-100">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] my-4 flex flex-col relative border border-gray-100">
             {processing && (
               <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center">
@@ -1136,8 +1554,8 @@ export default function WalletPage() {
               </div>
             )}
             {/* Header - Fixed */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-emerald-50 to-transparent">
-              <h2 className="text-xl font-bold text-gray-900">Request Top-Up</h2>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 flex-shrink-0 bg-gradient-to-r from-emerald-50 to-transparent">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Request Top-Up</h2>
               <button
                 onClick={() => {
                   setShowAddFundsModal(false);
@@ -1221,8 +1639,9 @@ export default function WalletPage() {
                         mobile_money: "Mobile Money",
                         card: "Credit/Debit Card"
                       };
-                      // Include enabled methods plus mobile_money and card for add funds
-                      const allMethods = [...enabledMethods, "mobile_money", "card"].filter((v, i, a) => a.indexOf(v) === i);
+                      // Include all top-up payment methods from API: bank_transfer, mobile_money, card, cash, paypal, paymaya
+                      const topUpMethods = ["bank_transfer", "mobile_money", "card", "cash", "paypal", "paymaya"];
+                      const allMethods = [...enabledMethods, ...topUpMethods].filter((v, i, a) => a.indexOf(v) === i);
                       return allMethods.map(method => (
                         <option key={method} value={method}>
                           {methodLabels[method] || method}
@@ -1359,7 +1778,7 @@ export default function WalletPage() {
       {/* Withdraw Modal */}
       {showWithdrawModal && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
           onClick={(e) => {
             if (e.target === e.currentTarget && !processing) {
               setShowWithdrawModal(false);
@@ -1368,7 +1787,7 @@ export default function WalletPage() {
             }
           }}
         >
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-4 sm:p-6 my-4 relative">
             {processing && (
               <div className="absolute inset-0 bg-white/80 rounded-xl flex items-center justify-center z-10">
                 <div className="flex flex-col items-center">
@@ -1378,7 +1797,7 @@ export default function WalletPage() {
               </div>
             )}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Withdraw Funds</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Withdraw Funds</h2>
               <button
                 onClick={() => {
                   setShowWithdrawModal(false);
@@ -1514,21 +1933,21 @@ export default function WalletPage() {
                   )}
                 </div>
               )}
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   onClick={() => {
                     setShowWithdrawModal(false);
                     setWithdrawAmount("");
                     setBankAccount({ bankName: "", accountNumber: "", routingNumber: "" });
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleWithdraw}
                   disabled={processing || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > balance || (minPayout > 0 && parseFloat(withdrawAmount) < minPayout)}
-                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {processing ? "Processing..." : "Request Withdrawal"}
                 </button>
@@ -1775,6 +2194,7 @@ export default function WalletPage() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }

@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
   // Marketplace Services
   marketplaceServices: "/api/marketplace/services",
   marketplaceServiceById: "/api/marketplace/services",
+  marketplaceServiceDeactivate: "/api/marketplace/services",
+  marketplaceServiceActivate: "/api/marketplace/services",
   marketplaceServicesCategories: "/api/marketplace/services/categories",
   marketplaceMyServices: "/api/marketplace/my-services",
   marketplaceMyBookings: "/api/marketplace/my-bookings",
@@ -66,6 +68,7 @@ export const API_ENDPOINTS = {
   aiReviewSentiment: "/api/ai/marketplace/review-sentiment",
   aiBookingAssistant: "/api/ai/marketplace/booking-assistant",
   aiDescriptionGenerator: "/api/ai/marketplace/description-generator",
+  aiDescriptionFromTitle: "/api/ai/marketplace/description-from-title",
   aiPricingOptimizer: "/api/ai/marketplace/pricing-optimizer",
   aiDemandForecast: "/api/ai/marketplace/demand-forecast",
   aiReviewInsights: "/api/ai/marketplace/review-insights",
@@ -73,6 +76,7 @@ export const API_ENDPOINTS = {
   aiListingOptimizer: "/api/ai/marketplace/listing-optimizer",
   aiSchedulingAssistant: "/api/ai/marketplace/scheduling-assistant",
   aiBioGenerator: "/api/ai/users/bio-generator",
+  aiFormPrefiller: "/api/ai/marketplace/form-prefiller",
 
   
   // Job Board
@@ -157,6 +161,7 @@ export const API_ENDPOINTS = {
   rentalsCreate: "/api/rentals",
   rentalsUpdate: "/api/rentals",
   rentalsDelete: "/api/rentals",
+  rentalsGenerateDescription: "/api/rentals/generate-description",
   
   // Facility Care Services
   facilityCare: "/api/facility-care",
@@ -261,6 +266,9 @@ export const API_ENDPOINTS = {
   financeWalletSettings: "/api/finance/wallet/settings",
   financeWithdrawalsProcess: "/api/finance/withdrawals",
   financeTopUp: "/api/finance/top-up",
+  financeTopUps: "/api/finance/top-ups",
+  financeTopUpsMyRequests: "/api/finance/top-ups/my-requests",
+  financeTopUpProcess: "/api/finance/top-ups",
   
   // Google Maps Integration
   maps: "/api/maps",
@@ -357,6 +365,14 @@ export const API_ENDPOINTS = {
   analyticsReferrals: "/api/analytics/referrals",
   analyticsAgencies: "/api/analytics/agencies",
   analyticsTrack: "/api/analytics/track",
+  
+  // Broadcaster
+  broadcaster: "/api/broadcaster",
+  broadcasterById: "/api/broadcaster",
+  broadcasterActive: "/api/broadcaster/active",
+  broadcasterStats: "/api/broadcaster/stats",
+  broadcasterView: "/api/broadcaster",
+  broadcasterClick: "/api/broadcaster",
   analyticsRealTime: "/api/analytics/real-time",
   analyticsPerformance: "/api/analytics/performance",
   analyticsUserBehavior: "/api/analytics/user-behavior",
@@ -452,6 +468,14 @@ export const API_ENDPOINTS = {
   usersDelete: "/api/users",
 
   registrationEarlyAccess: "/api/registration/early",
+  
+  // Favorites
+  favorites: "/api/favorites",
+  favoritesStats: "/api/favorites/stats",
+  favoritesByType: "/api/favorites/type",
+  favoritesCheck: "/api/favorites/check",
+  favoritesById: "/api/favorites",
+  favoritesByItem: "/api/favorites",
   
   // Monitoring Endpoints
   monitoringSystemHealth: "/api/monitoring/system-health",

@@ -292,6 +292,11 @@ export default function ProvidersPage() {
   const [activeTab, setActiveTab] = useState<'basic' | 'business' | 'professional' | 'verification' | 'financial' | 'preferences' | 'onboarding' | 'metadata' | 'performance'>('basic');
   const [loadingProviderData, setLoadingProviderData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Provider view modal states
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedProviderForView, setSelectedProviderForView] = useState<ProviderWithUser | null>(null);
+  const [loadingViewData, setLoadingViewData] = useState(false);
   // Note: providerData state is kept for potential future use but currently not read
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [providerData, setProviderData] = useState<{
@@ -869,9 +874,44 @@ export default function ProvidersPage() {
     }
   };
 
-  const handleViewProvider = (providerId: string) => {
-    // TODO: Implement provider view modal or navigation
-    logger.debug('View provider', { providerId });
+  const handleViewProvider = async (providerId: string) => {
+    try {
+      setLoadingViewData(true);
+      setShowViewModal(true);
+      
+      // Find provider in current list first
+      const existingProvider = providers.find(p => p._id === providerId);
+      if (existingProvider) {
+        setSelectedProviderForView(existingProvider);
+        setLoadingViewData(false);
+        return;
+      }
+      
+      // If not found, fetch from API
+      const endpoint = `/api/providers/admin/${providerId}`;
+      const url = `${API_BASE_URL}${endpoint}`;
+      
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || `Failed to fetch provider: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (result.success && result.data) {
+        const transformedProvider = transformProviderData(result.data);
+        setSelectedProviderForView(transformedProvider);
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (err) {
+      logger.error('Error fetching provider for view', err instanceof Error ? err : new Error(String(err)));
+      toast.error(err instanceof Error ? err.message : 'Failed to load provider details');
+      setShowViewModal(false);
+    } finally {
+      setLoadingViewData(false);
+    }
   };
 
   // Fetch provider data for editing
@@ -1597,18 +1637,50 @@ export default function ProvidersPage() {
 
   const handleUpdateProviderStatus = async (providerId: string, status: string, reason?: string) => {
     try {
-      // Use the new endpoint: /api/providers/admin/[id]/status
-      const endpoint = API_ENDPOINTS.providersAdminStatusById.replace("[id]", providerId);
+      // Use the endpoint: /api/providers/admin/[id]/status (as specified)
+      const endpoint = `/api/providers/admin/${providerId}/status`;
       const url = `${API_BASE_URL}${endpoint}`;
+      
+      logger.debug('Updating provider status', { url, providerId, status, reason });
       
       const response = await fetch(url, createAuthFetchOptions({
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ status, reason }),
       }));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Failed to update provider status');
+        const errorMessage = errorData.error || errorData.message || `Failed to update provider status: ${response.status} ${response.statusText}`;
+        
+        // If 404, the endpoint might not be implemented yet - try fallback
+        if (response.status === 404) {
+          logger.debug('Status endpoint returned 404, trying fallback to PUT /api/providers/admin/[id]');
+          const fallbackEndpoint = `/api/providers/admin/${providerId}`;
+          const fallbackUrl = `${API_BASE_URL}${fallbackEndpoint}`;
+          
+          const fallbackResponse = await fetch(fallbackUrl, createAuthFetchOptions({
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status, reason }),
+          }));
+          
+          if (!fallbackResponse.ok) {
+            const fallbackErrorData = await fallbackResponse.json().catch(() => ({}));
+            throw new Error(fallbackErrorData.error || fallbackErrorData.message || `Failed to update provider status: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
+          }
+          
+          const fallbackResult = await fallbackResponse.json();
+          toast.success(fallbackResult.message || `Provider status updated to ${status}`);
+          await fetchData();
+          return;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -4236,6 +4308,255 @@ export default function ProvidersPage() {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* View Provider Modal */}
+      <Modal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedProviderForView(null);
+        }}
+        title={`Provider Details: ${selectedProviderForView?.firstName || ''} ${selectedProviderForView?.lastName || ''}`}
+        size="xl"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setShowViewModal(false);
+                setSelectedProviderForView(null);
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Close
+            </button>
+            {selectedProviderForView?._id && (
+              <button
+                onClick={() => {
+                  setShowViewModal(false);
+                  if (selectedProviderForView._id) {
+                    handleEditProvider(selectedProviderForView._id);
+                  }
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                Edit Provider
+              </button>
+            )}
+          </div>
+        }
+      >
+        {loadingViewData ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : selectedProviderForView ? (
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
+            {/* Basic Information */}
+            <div className="border-b border-gray-200 pb-3">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Name</p>
+                  <p className="text-xs font-medium text-gray-900">
+                    {selectedProviderForView.firstName} {selectedProviderForView.lastName}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Email</p>
+                  <p className="text-xs font-medium text-gray-900">{selectedProviderForView.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Phone</p>
+                  <p className="text-xs font-medium text-gray-900">{selectedProviderForView.phoneNumber || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Provider Type</p>
+                  <p className="text-xs font-medium text-gray-900 capitalize">
+                    {selectedProviderForView.providerType || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Status</p>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                    selectedProviderForView.status === 'active' ? 'bg-green-100 text-green-800' :
+                    selectedProviderForView.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    selectedProviderForView.status === 'suspended' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedProviderForView.status || 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Verification Status</p>
+                  <p className="text-xs font-medium text-gray-900 capitalize">
+                    {selectedProviderForView.verificationStatus || 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Business Information */}
+            {selectedProviderForView.businessInfo && (
+              <div className="border-b border-gray-200 pb-3">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Business Information</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Business Name</p>
+                    <p className="text-xs font-medium text-gray-900">
+                      {selectedProviderForView.businessInfo.businessName || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Business Type</p>
+                    <p className="text-xs font-medium text-gray-900">
+                      {selectedProviderForView.businessInfo.businessType || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Business Email</p>
+                    <p className="text-xs font-medium text-gray-900">
+                      {selectedProviderForView.businessInfo.businessEmail || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Business Phone</p>
+                    <p className="text-xs font-medium text-gray-900">
+                      {selectedProviderForView.businessInfo.businessPhone || 'N/A'}
+                    </p>
+                  </div>
+                  {selectedProviderForView.businessInfo.businessAddress && (
+                    <>
+                      <div>
+                        <p className="text-xs text-gray-600 mb-0.5">Address</p>
+                        <p className="text-xs font-medium text-gray-900">
+                          {selectedProviderForView.businessInfo.businessAddress.street || 'N/A'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 mb-0.5">City, State</p>
+                        <p className="text-xs font-medium text-gray-900">
+                          {selectedProviderForView.businessInfo.businessAddress.city || ''}{' '}
+                          {selectedProviderForView.businessInfo.businessAddress.state || ''}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Professional Information */}
+            {selectedProviderForView.professionalInfo && (
+              <div className="border-b border-gray-200 pb-3">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Professional Information</h3>
+                <div className="space-y-2">
+                  {selectedProviderForView.professionalInfo.specialties && selectedProviderForView.professionalInfo.specialties.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Specialties</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedProviderForView.professionalInfo.specialties.map((spec, idx) => (
+                          <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                            {typeof spec === 'string' ? spec : 
+                             (spec as { name?: string; category?: { name?: string } }).name || 
+                             (spec as { category?: { name?: string } }).category?.name || 
+                             'N/A'}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {selectedProviderForView.professionalInfo.languages && selectedProviderForView.professionalInfo.languages.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Languages</p>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedProviderForView.professionalInfo.languages.map((lang, idx) => (
+                          <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-800 rounded text-xs">
+                            {lang}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Performance Metrics */}
+            {selectedProviderForView.performance && (
+              <div className="border-b border-gray-200 pb-3">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Performance Metrics</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedProviderForView.profile?.rating && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Rating</p>
+                      <p className="text-xs font-medium text-gray-900">
+                        {selectedProviderForView.profile.rating.toFixed(1)} ⭐
+                      </p>
+                    </div>
+                  )}
+                  {selectedProviderForView.profile?.totalReviews !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Total Reviews</p>
+                      <p className="text-xs font-medium text-gray-900">
+                        {selectedProviderForView.profile.totalReviews}
+                      </p>
+                    </div>
+                  )}
+                  {selectedProviderForView.performance.completionRate !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Completion Rate</p>
+                      <p className="text-xs font-medium text-gray-900">
+                        {selectedProviderForView.performance.completionRate}%
+                      </p>
+                    </div>
+                  )}
+                  {selectedProviderForView.metadata?.profileViews !== undefined && (
+                    <div>
+                      <p className="text-xs text-gray-600 mb-0.5">Profile Views</p>
+                      <p className="text-xs font-medium text-gray-900">
+                        {selectedProviderForView.metadata.profileViews}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Additional Info */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Additional Information</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Trust Score</p>
+                  <p className="text-xs font-medium text-gray-900">
+                    {selectedProviderForView.trustScore || 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 mb-0.5">Created At</p>
+                  <p className="text-xs font-medium text-gray-900">
+                    {selectedProviderForView.createdAt ? new Date(selectedProviderForView.createdAt).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                {selectedProviderForView.subscription && (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-0.5">Subscription</p>
+                    <p className="text-xs font-medium text-gray-900">
+                      {selectedProviderForView.subscription.type || 'N/A'} - {
+                        selectedProviderForView.subscription.isActive ? 'Active' : 'Inactive'
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 text-sm">
+            No provider data available
+          </div>
+        )}
       </Modal>
     </div>
   );

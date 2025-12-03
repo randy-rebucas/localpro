@@ -2,7 +2,7 @@ export type Environment = "development" | "staging" | "production";
 export type EmailProvider = "nodemailer" | "sendgrid" | "mailgun" | "ses";
 export type SmsProvider = "twilio" | "vonage" | "aws_sns";
 export type PushProvider = "firebase" | "onesignal" | "pusher";
-export type Currency = "PHP" | "USD" | "EUR" | "GBP" | "JPY" | "KRW" | "CNY";
+export type Currency = "PHP";
 export type Frequency = "daily" | "weekly" | "monthly";
 export type SocialProvider = "google" | "facebook";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Shield, 
@@ -11,431 +11,351 @@ import {
   Home, 
   Megaphone, 
   DollarSign,
-  Search,
-  ArrowRight,
-  Filter,
-  Grid3X3,
-  List,
-  X,
+  CheckCircle2,
+  XCircle,
   Users,
-  Clock
+  Briefcase,
+  Wallet,
+  ShoppingCart,
+  Building,
+  Clock,
+  ArrowRight,
+  LucideIcon
 } from "lucide-react";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
-interface ServiceModule {
-  id: string;
+interface Feature {
+  key: string;
   name: string;
-  description: string;
+  enabled: boolean;
   icon: React.ReactNode;
   color: string;
-  services: string[];
-  route: string;
-  category: string;
-  status: "active" | "coming-soon" | "beta";
+  description?: string;
+  services?: string[];
+  route?: string;
+  category?: string;
   users?: number;
   lastUpdated?: string;
   featured?: boolean;
 }
 
-const serviceModules: ServiceModule[] = [
-  {
-    id: "marketplace",
-    name: "Marketplace",
-    description: "Connect with service providers and customers",
-    icon: <Shield className="w-8 h-8" />,
-    color: "bg-gray-100 text-gray-700",
-    services: ["Cleaning", "Plumbing", "Electrical", "Moving"],
-    route: "/marketplace",
-    category: "Services",
-    status: "active",
-    users: 1250,
-    lastUpdated: "2 hours ago",
-    featured: true
-  },
-  {
-    id: "supplies",
-    name: "Supplies & Materials",
-    description: "Source tools and materials for your projects",
-    icon: <Package className="w-8 h-8" />,
-    color: "bg-amber-100 text-amber-700",
-    services: ["Cleaning supplies", "Tools", "Subscription kits"],
-    route: "/supplies",
-    category: "Resources",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "academy",
-    name: "Academy",
-    description: "Learn new skills and get certified",
-    icon: <GraduationCap className="w-8 h-8" />,
-    color: "bg-green-100 text-green-700",
-    services: ["Partner with TES", "Run courses", "Certification"],
-    route: "/academy",
-    category: "Education",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "rentals",
-    name: "Rentals",
-    description: "Rent equipment and vehicles",
-    icon: <Car className="w-8 h-8" />,
-    color: "bg-blue-100 text-blue-700",
-    services: ["Tool and vehicle rentals"],
-    route: "/rentals",
-    category: "Resources",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "plus",
-    name: "LocalPro Plus",
-    description: "Premium features and priority support",
-    icon: <Star className="w-8 h-8" />,
-    color: "bg-yellow-100 text-yellow-700",
-    services: ["Premium subscriptions", "Providers", "Clients"],
-    route: "/plus",
-    category: "Premium",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "facility",
-    name: "FacilityCare",
-    description: "Professional facility management services",
-    icon: <Home className="w-8 h-8" />,
-    color: "bg-emerald-100 text-emerald-700",
-    services: ["Janitorial contracts", "Landscaping maintenance", "Pest control subscriptions"],
-    route: "/facility",
-    category: "Services",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "ads",
-    name: "Ads",
-    description: "Promote your business and reach customers",
-    icon: <Megaphone className="w-8 h-8" />,
-    color: "bg-purple-100 text-purple-700",
-    services: ["Advertising for hardware stores", "Suppliers", "Training schools"],
-    route: "/ads",
-    category: "Marketing",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
-  },
-  {
-    id: "finance",
-    name: "Finance",
-    description: "Financial services and payment solutions",
-    icon: <DollarSign className="w-8 h-8" />,
-    color: "bg-red-100 text-red-700",
-    services: ["Salary advance", "Micro-loans", "Partner with fintech.company"],
-    route: "/finance",
-    category: "Financial",
-    status: "coming-soon",
-    users: 0,
-    lastUpdated: "Coming soon",
-    featured: false
+// Icon mapping function - maps icon names to Lucide icons
+const getIconComponent = (iconName?: string): LucideIcon => {
+  const iconMap: Record<string, LucideIcon> = {
+    Shield,
+    Package,
+    GraduationCap,
+    Car,
+    Star,
+    Home,
+    Megaphone,
+    DollarSign,
+    Users,
+    Briefcase,
+    Wallet,
+    ShoppingCart,
+    Building,
+  };
+  
+  if (iconName && iconMap[iconName]) {
+    return iconMap[iconName];
   }
-];
+  return Shield; // Default icon
+};
+
+// Icon and color mapping for features
+const featureConfig: Record<string, { name: string; icon: React.ReactNode; color: string }> = {
+  marketplace: {
+    name: "Marketplace",
+    icon: <Shield className="w-6 h-6" />,
+    color: "bg-gray-100 text-gray-700"
+  },
+  supplies: {
+    name: "Supplies",
+    icon: <Package className="w-6 h-6" />,
+    color: "bg-amber-100 text-amber-700"
+  },
+  academy: {
+    name: "Academy",
+    icon: <GraduationCap className="w-6 h-6" />,
+    color: "bg-green-100 text-green-700"
+  },
+  rentals: {
+    name: "Rentals",
+    icon: <Car className="w-6 h-6" />,
+    color: "bg-blue-100 text-blue-700"
+  },
+  localProPlus: {
+    name: "LocalPro Plus",
+    icon: <Star className="w-6 h-6" />,
+    color: "bg-yellow-100 text-yellow-700"
+  },
+  facilityCare: {
+    name: "Facility Care",
+    icon: <Home className="w-6 h-6" />,
+    color: "bg-emerald-100 text-emerald-700"
+  },
+  ads: {
+    name: "Ads",
+    icon: <Megaphone className="w-6 h-6" />,
+    color: "bg-purple-100 text-purple-700"
+  },
+  finance: {
+    name: "Finance",
+    icon: <DollarSign className="w-6 h-6" />,
+    color: "bg-red-100 text-red-700"
+  },
+  jobBoard: {
+    name: "Job Board",
+    icon: <Shield className="w-6 h-6" />,
+    color: "bg-indigo-100 text-indigo-700"
+  },
+  referrals: {
+    name: "Referrals",
+    icon: <Star className="w-6 h-6" />,
+    color: "bg-pink-100 text-pink-700"
+  },
+  analytics: {
+    name: "Analytics",
+    icon: <Shield className="w-6 h-6" />,
+    color: "bg-cyan-100 text-cyan-700"
+  },
+  payments: {
+    name: "Payments",
+    icon: <DollarSign className="w-6 h-6" />,
+    color: "bg-teal-100 text-teal-700"
+  }
+};
+
+interface AppSettingsFeatures {
+  [key: string]: {
+    enabled: boolean;
+    [key: string]: unknown;
+  } | boolean;
+}
+
+interface AppSettingsResponse {
+  success: boolean;
+  data: {
+    features?: AppSettingsFeatures;
+    [key: string]: unknown;
+  };
+}
 
 export default function ServicesPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
+  const [features, setFeatures] = useState<Feature[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get unique categories
-  const categories = useMemo(() => {
-    const cats = ["all", ...new Set(serviceModules.map(module => module.category))];
-    return cats;
+  // Fetch app settings to get all features
+  useEffect(() => {
+    const fetchAppSettings = async () => {
+      try {
+        setLoading(true);
+        const url = `${API_BASE_URL}${API_ENDPOINTS.settingsApp}`;
+        const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+        if (response.ok) {
+          const data: AppSettingsResponse = await response.json();
+          const featuresData = data?.data?.features || {};
+
+          // Convert all features to Feature array
+          const featuresList: Feature[] = Object.entries(featuresData)
+            .filter(([key]) => {
+              // Skip nested objects like payments.paypal, payments.paymaya, etc.
+              // Only include top-level features
+              return !key.includes('.') && key !== 'payments' && key !== 'analytics';
+            })
+            .map(([key, value]) => {
+              // Determine if feature is enabled and extract details
+              let enabled = false;
+              let featureDetails: Record<string, unknown> = {};
+              
+              if (typeof value === 'boolean') {
+                enabled = value;
+              } else if (typeof value === 'object' && value !== null) {
+                enabled = (value as { enabled: boolean }).enabled ?? false;
+                featureDetails = value as Record<string, unknown>;
+              }
+
+              // Get icon from settings or fallback to config
+              let iconElement: React.ReactNode;
+              if (featureDetails.icon && typeof featureDetails.icon === 'string') {
+                const IconComponent = getIconComponent(featureDetails.icon);
+                iconElement = <IconComponent className="w-6 h-6" />;
+              } else {
+                iconElement = featureConfig[key]?.icon || <Shield className="w-6 h-6" />;
+              }
+
+              // Get color from settings or fallback to config
+              const color = (typeof featureDetails.color === 'string' ? featureDetails.color : null) || 
+                featureConfig[key]?.color || 
+                "bg-gray-100 text-gray-700";
+              
+              // Get name from settings or fallback to config
+              const name = (typeof featureDetails.name === 'string' ? featureDetails.name : null) || 
+                featureConfig[key]?.name || 
+                key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').trim();
+
+              return {
+                key,
+                name,
+                enabled,
+                icon: iconElement,
+                color,
+                description: typeof featureDetails.description === 'string' ? featureDetails.description : undefined,
+                services: Array.isArray(featureDetails.services) ? featureDetails.services : [],
+                route: typeof featureDetails.route === 'string' ? featureDetails.route : undefined,
+                category: typeof featureDetails.category === 'string' ? featureDetails.category : undefined,
+                users: typeof featureDetails.users === 'number' ? featureDetails.users : undefined,
+                lastUpdated: typeof featureDetails.lastUpdated === 'string' ? featureDetails.lastUpdated : undefined,
+                featured: typeof featureDetails.featured === 'boolean' ? featureDetails.featured : false,
+              };
+            })
+            .sort((a, b) => {
+              // Sort by featured first, then enabled, then by name
+              if (a.featured !== b.featured) {
+                return a.featured ? -1 : 1;
+              }
+              if (a.enabled !== b.enabled) {
+                return a.enabled ? -1 : 1;
+              }
+              return a.name.localeCompare(b.name);
+            });
+
+          setFeatures(featuresList);
+        } else {
+          setFeatures([]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch app settings:", error);
+        setFeatures([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAppSettings();
   }, []);
 
-  // Filter modules based on search and category
-  const filteredModules = useMemo(() => {
-    let filtered = serviceModules;
-
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(module =>
-        module.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        module.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        module.services.some(service => service.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(module => module.category === selectedCategory);
-    }
-
-    // Sort by status priority, then featured, then by name
-    return filtered.sort((a, b) => {
-      // Define status priority order
-      const statusPriority = { 'active': 1, 'beta': 2, 'coming-soon': 3 };
-      const aPriority = statusPriority[a.status as keyof typeof statusPriority] || 4;
-      const bPriority = statusPriority[b.status as keyof typeof statusPriority] || 4;
-      
-      // First sort by status priority
-      if (aPriority !== bPriority) {
-        return aPriority - bPriority;
-      }
-      
-      // Then by featured status
-      if (a.featured && !b.featured) return -1;
-      if (!a.featured && b.featured) return 1;
-      
-      // Finally by name
-      return a.name.localeCompare(b.name);
-    });
-  }, [searchQuery, selectedCategory]);
-
-  const handleModuleClick = (module: ServiceModule) => {
-    if (module.status === "coming-soon") {
-      return; // Don't navigate for coming soon items
-    }
-    router.push(module.route);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Active</span>;
-      case "beta":
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Beta</span>;
-      case "coming-soon":
-        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">Coming Soon</span>;
-      default:
-        return null;
-    }
-  };
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+            <p className="text-gray-600">Loading features...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
-      {/* Header with search and filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <div>
-          <h3 className="text-2xl font-bold text-gray-800">Service Modules</h3>
-          <p className="text-gray-600 mt-1">
-            {filteredModules.length} of {serviceModules.length} services available
-          </p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent w-64"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* View mode toggle */}
-          <div className="flex items-center bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === "grid" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <Grid3X3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded-lg transition-colors ${
-                viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500"
-              }`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Filter toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+      {/* Features Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {features.map((feature) => (
+          <div
+            key={feature.key}
+            className={`bg-white rounded-xl shadow-sm p-4 border transition-all duration-200 cursor-pointer hover:shadow-md ${
+              feature.featured 
+                ? "border-amber-300 border-2" 
+                : "border-gray-200"
+            } ${feature.enabled ? "hover:border-blue-300" : "opacity-75"}`}
+            onClick={() => {
+              if (feature.enabled && feature.route) {
+                router.push(feature.route);
+              }
+            }}
           >
-            <Filter className="w-4 h-4" />
-            <span className="text-sm">Filter</span>
-          </button>
-        </div>
+            <div className="flex items-start justify-between mb-3">
+              <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center`}>
+                {feature.icon}
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {feature.featured && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <Star className="w-3 h-3" />
+                    <span>Featured</span>
+                  </div>
+                )}
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  feature.enabled 
+                    ? "bg-green-100 text-green-800" 
+                    : "bg-gray-100 text-gray-600"
+                }`}>
+                  {feature.enabled ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>Enabled</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-3 h-3" />
+                      <span>Disabled</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <h3 className="text-base font-semibold text-gray-800 mb-1">
+              {feature.name}
+            </h3>
+            
+            {feature.description && (
+              <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                {feature.description}
+              </p>
+            )}
+            
+            <div className="flex flex-wrap gap-1 mb-2">
+              {feature.category && (
+                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                  {feature.category}
+                </span>
+              )}
+              {feature.services && feature.services.length > 0 && (
+                <span className="text-xs bg-gray-50 text-gray-700 px-2 py-0.5 rounded-md border border-gray-200">
+                  {feature.services.length} {feature.services.length === 1 ? 'service' : 'services'}
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                {feature.users !== undefined && feature.users > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Users className="w-3 h-3" />
+                    <span>{feature.users.toLocaleString()}</span>
+                  </div>
+                )}
+                {feature.lastUpdated && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>{feature.lastUpdated}</span>
+                  </div>
+                )}
+              </div>
+              {feature.enabled && feature.route && (
+                <ArrowRight className="w-4 h-4 text-gray-400" />
+              )}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Category filters */}
-      {showFilters && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-xl">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === category
-                    ? "bg-green-600 text-white"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {category === "all" ? "All Services" : category}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Services grid/list */}
-      {viewMode === "grid" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredModules.map((module) => (
-            <div
-              key={module.id}
-              className={`group bg-white rounded-2xl shadow-sm p-6 transition-all duration-300 transform hover:-translate-y-1 ${
-                module.status === "coming-soon" 
-                  ? "opacity-60 cursor-not-allowed" 
-                  : "hover:shadow-xl cursor-pointer"
-              }`}
-              onClick={() => handleModuleClick(module)}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className={`w-16 h-16 rounded-2xl ${module.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                  {module.icon}
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(module.status)}
-                  {module.featured && (
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                  )}
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2 group-hover:text-green-700 transition-colors">
-                  {module.name}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {module.description}
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  {module.services.slice(0, 3).map((service, index) => (
-                    <div key={index} className="flex items-center text-sm text-gray-600">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></div>
-                      {service}
-                    </div>
-                  ))}
-                  {module.services.length > 3 && (
-                    <div className="text-xs text-gray-400">
-                      +{module.services.length - 3} more services
-                    </div>
-                  )}
-                </div>
-
-                {/* Stats */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Users className="w-3 h-3" />
-                    <span>{module.users?.toLocaleString() || 0} users</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{module.lastUpdated}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {filteredModules.map((module) => (
-            <div
-              key={module.id}
-              className={`group bg-white rounded-xl shadow-sm p-6 transition-all duration-300 ${
-                module.status === "coming-soon" 
-                  ? "opacity-60 cursor-not-allowed" 
-                  : "hover:shadow-md cursor-pointer"
-              }`}
-              onClick={() => handleModuleClick(module)}
-            >
-              <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl ${module.color} flex items-center justify-center shadow-sm`}>
-                  {module.icon}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-lg font-semibold text-gray-800 group-hover:text-green-700 transition-colors">
-                      {module.name}
-                    </h3>
-                    {getStatusBadge(module.status)}
-                    {module.featured && (
-                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{module.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <Users className="w-3 h-3" />
-                      {module.users?.toLocaleString() || 0} users
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {module.lastUpdated}
-                    </span>
-                    <span className="px-2 py-1 bg-gray-100 rounded-full">
-                      {module.category}
-                    </span>
-                  </div>
-                </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Empty state */}
-      {filteredModules.length === 0 && (
+      {features.length === 0 && !loading && (
         <div className="text-center py-12">
-          <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-gray-700 mb-2">No services found</h3>
-          <p className="text-gray-500 mb-4">
-            Try adjusting your search terms or filters
+          <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">No features found</h3>
+          <p className="text-gray-500">
+            Unable to load features from the API
           </p>
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedCategory("all");
-            }}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Clear filters
-          </button>
         </div>
       )}
     </div>

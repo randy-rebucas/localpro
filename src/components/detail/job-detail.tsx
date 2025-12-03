@@ -164,7 +164,7 @@ export function JobDetail({
             )}
             {hasApplied && (
               <Button
-                onClick={() => router.push(`/marketplace/jobs/${job._id}/application`)}
+                onClick={() => router.push(`/jobs/${job._id}/application`)}
                 variant="outline"
                 size="lg"
                 className="flex-1"

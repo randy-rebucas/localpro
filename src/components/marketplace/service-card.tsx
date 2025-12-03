@@ -4,9 +4,6 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, Star, CheckCircle2, Heart, Clock, User, Image as ImageIcon } from "lucide-react";
-import { getCurrencySymbol, CURRENCY_CONFIGS } from "@/lib/currency-utils";
-import { useAppSettings } from "@/hooks/useAppSettings";
-import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface ServiceCardProps {
   id: number;
@@ -51,38 +48,13 @@ export function ServiceCard({
   viewMode = 'list',
 }: ServiceCardProps) {
   const router = useRouter();
-  const { settings: appSettings } = useAppSettings();
   const [isNavigating, setIsNavigating] = React.useState(false);
   
-  // Get default currency from app settings
-  const defaultCurrencyCode = getDefaultCurrency(appSettings);
-  const defaultCurrencySymbol = getCurrencySymbol(defaultCurrencyCode);
-  
-  // Normalize currency - ensure it's a symbol (convert code to symbol if needed)
-  const normalizeCurrencyToSymbol = (curr: string | undefined): string => {
-    // Use default from app settings if not provided
-    if (!curr) return defaultCurrencySymbol;
-    
-    // If it's already a symbol, return it
-    const symbolMap: Record<string, string> = {
-      '₱': '₱', '$': '$', '€': '€', '£': '£', '¥': '¥', 'A$': 'A$', 'C$': 'C$', 'S$': 'S$'
-    };
-    if (symbolMap[curr]) return curr;
-    
-    // If it's a currency code, convert to symbol
-    if (CURRENCY_CONFIGS[curr.toUpperCase()]) {
-      return getCurrencySymbol(curr.toUpperCase());
-    }
-    
-    // Try to find by symbol in configs
-    for (const [, config] of Object.entries(CURRENCY_CONFIGS)) {
-      if (config.symbol === curr) {
-        return curr;
-      }
-    }
-    
-    // Default to app settings currency symbol
-    return defaultCurrencySymbol;
+  // Normalize currency to PHP symbol only
+  const normalizeCurrencyToSymbol = (_curr: string | undefined): string => {
+    // Always return PHP symbol (₱) as the only supported currency
+    void _curr;
+    return '₱';
   };
   
   const currencySymbol = normalizeCurrencyToSymbol(currency);

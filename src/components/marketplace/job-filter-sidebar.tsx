@@ -32,12 +32,6 @@ const experienceLevels = [
 interface JobFilterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  search: string;
-  onSearchChange: (search: string) => void;
-  category: string;
-  onCategoryChange: (category: string) => void;
-  subcategory: string;
-  onSubcategoryChange: (subcategory: string) => void;
   jobType: string;
   onJobTypeChange: (jobType: string) => void;
   experienceLevel: string;
@@ -60,12 +54,6 @@ interface JobFilterSidebarProps {
 export function JobFilterSidebar({
   isOpen,
   onClose,
-  search,
-  onSearchChange,
-  category,
-  onCategoryChange,
-  subcategory,
-  onSubcategoryChange,
   jobType,
   onJobTypeChange,
   experienceLevel,
@@ -127,45 +115,6 @@ export function JobFilterSidebar({
 
         {/* Filter Content */}
         <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-          {/* Search */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-900">Search</label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search jobs..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="border-t border-gray-100"></div>
-
-          {/* Category */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-900">Category</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => onCategoryChange(e.target.value)}
-              placeholder="e.g., Technology"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Subcategory */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-900">Subcategory</label>
-            <input
-              type="text"
-              value={subcategory}
-              onChange={(e) => onSubcategoryChange(e.target.value)}
-              placeholder="e.g., Software Development"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div className="border-t border-gray-100"></div>
 
           {/* Job Type */}
           <div className="space-y-3">

@@ -218,7 +218,7 @@ export default function MarketplaceSuppliesPage() {
         const priceValue = (product.price as number | undefined) ?? (product.retailPrice as number | undefined);
         const retailPrice = pricingData?.retailPrice ?? priceValue ?? 0;
         const wholesalePrice = pricingData?.wholesalePrice ?? (product.wholesalePrice as number | undefined);
-        const currency = pricingData?.currency ?? getString(product.currency, 'USD');
+        const currency = pricingData?.currency ?? getString(product.currency, 'PHP');
 
         // Extract inventory data
         const inventoryData = product.inventory as Product['inventory'] | undefined;
@@ -970,7 +970,7 @@ const SupplyCard = React.memo(function SupplyCard({
     const reviewCount = supply.reviews?.length || 0;
     const retailPrice = supply.pricing?.retailPrice || 0;
     const wholesalePrice = supply.pricing?.wholesalePrice;
-    const currency = supply.pricing?.currency || 'USD';
+    const currency = supply.pricing?.currency || 'PHP';
     const stockStatus = getStockStatus(supply);
     const stockQuantity = supply.inventory?.quantity || 0;
     

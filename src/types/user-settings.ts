@@ -48,7 +48,7 @@ export interface UserSettings {
     timezone: string;
     dateFormat: "MM/DD/YYYY" | "DD/MM/YYYY" | "YYYY-MM-DD";
     timeFormat: "12h" | "24h";
-    currency: "PHP" | "USD" | "EUR" | "GBP" | "JPY" | "KRW" | "CNY";
+    currency: "PHP";
     autoReply: {
       enabled: boolean;
       message: string;

@@ -270,14 +270,14 @@ export default function MarketplaceCoursesPage() {
             normalizedPricing = {
                 regularPrice: (pricingObj.regularPrice as number | undefined) ?? (pricingObj.price as number | undefined) ?? priceValue ?? 0,
                 discountedPrice: (pricingObj.discountedPrice as number | undefined) ?? originalPriceValue,
-                currency: (pricingObj.currency as string | undefined) ?? currencyValue ?? 'USD'
+                currency: (pricingObj.currency as string | undefined) ?? currencyValue ?? 'PHP'
             };
         } else {
             // Create new pricing object from legacy fields
             normalizedPricing = {
                 regularPrice: priceValue ?? 0,
                 discountedPrice: originalPriceValue,
-                currency: currencyValue ?? 'USD'
+                currency: currencyValue ?? 'PHP'
             };
         }
         
@@ -685,7 +685,7 @@ export default function MarketplaceCoursesPage() {
             regularPrice = 0;
         }
         
-        const currency = ('currency' in pricing ? pricing.currency : 'USD') || 'USD';
+        const currency = ('currency' in pricing ? pricing.currency : 'PHP') || 'PHP';
         
         if (regularPrice === 0) {
             return 'Free';

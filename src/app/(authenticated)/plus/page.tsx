@@ -284,7 +284,8 @@ export default function PlusPage() {
             type: "button",
             label: `Currency: ${currency}`,
             onClick: () => {
-              const currencies = ['PHP', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'SGD'];
+              // Only PHP currency is supported
+              const currencies = ['PHP'];
               const currentIndex = currencies.indexOf(currency);
               const nextIndex = (currentIndex + 1) % currencies.length;
               setCurrency(currencies[nextIndex]);

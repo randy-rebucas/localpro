@@ -306,7 +306,7 @@ export default function AdsPage() {
         return {
           total: budgetValue || 0,
           daily: undefined,
-          currency: (campaign as { currency?: string }).currency || 'USD'
+          currency: (campaign as { currency?: string }).currency || 'PHP'
         };
       })(),
       // Handle schedule
@@ -945,11 +945,11 @@ const AdCard = React.memo(function AdCard({ ad, viewMode, onView, onEdit }: AdCa
             <div className="grid grid-cols-2 gap-4 text-sm mb-3 border-t pt-3">
               <div>
                 <p className="text-gray-500 text-xs">Budget</p>
-                <p className="font-medium">${budget.toLocaleString()}</p>
+                <p className="font-medium">₱{budget.toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-xs">Spent</p>
-                <p className="font-medium">${spend.toLocaleString()}</p>
+                <p className="font-medium">₱{spend.toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-xs">Clicks</p>

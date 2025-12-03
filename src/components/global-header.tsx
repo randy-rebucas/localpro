@@ -27,7 +27,6 @@ import {
   Car,
   Briefcase,
   BarChart3,
-  CreditCard,
   Shield,
   HelpCircle,
   Filter,
@@ -57,7 +56,8 @@ interface GlobalHeaderProps {
 }
 
 export function GlobalHeader({
-  showRoleNavigation = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  showRoleNavigation: _showRoleNavigation = false,
   showFavorites = true,
   notificationsDropdown = true,
   logoHref,
@@ -72,12 +72,13 @@ export function GlobalHeader({
   const pathname = usePathname();
   const {
     isAdmin,
-    isBusinessRole,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isBusinessRole: _isBusinessRole,
   } = useRoleAccess();
 
   // Get user roles and determine available role views
   const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
-  
+
   // Show switcher if user has multiple roles (client + at least one business role, or multiple business roles)
   const hasMultipleRoles = userRoles.length > 1;
   const shouldShowSwitcher = hasMultipleRoles && session;
@@ -140,7 +141,8 @@ export function GlobalHeader({
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_showQuickActions, setShowQuickActions] = useState(false);
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);
@@ -210,12 +212,12 @@ export function GlobalHeader({
       } catch (error) {
         // Only log if it's not a network error (Failed to fetch, NetworkError, etc.)
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const isNetworkError = 
-          errorMessage.includes('Failed to fetch') || 
+        const isNetworkError =
+          errorMessage.includes('Failed to fetch') ||
           errorMessage.includes('NetworkError') ||
           errorMessage.includes('Network request failed') ||
           errorMessage.includes('Load failed');
-        
+
         if (!isNetworkError) {
           logger.error('Error fetching notification count', error instanceof Error ? error : new Error(String(error)));
         }
@@ -469,10 +471,10 @@ export function GlobalHeader({
               aria-label="Toggle search"
             >
               {mobileSearchOpen ? (
-              <X className="w-5 h-5 text-gray-700" aria-hidden="true" />
-            ) : (
-              <Search className="w-5 h-5 text-gray-700" aria-hidden="true" />
-            )}
+                <X className="w-5 h-5 text-gray-700" aria-hidden="true" />
+              ) : (
+                <Search className="w-5 h-5 text-gray-700" aria-hidden="true" />
+              )}
             </button>
 
             {/* Filter Icon */}
@@ -487,172 +489,83 @@ export function GlobalHeader({
               </button>
             )}
 
-            {/* Marketplace with Quick Actions Submenu - Always visible for authenticated users */}
-            {session && (
-              <div className="hidden sm:flex items-center border-r border-gray-300 pr-2 mr-2">
-                <div className="relative" ref={quickActionsRef}>
-                  <button
-                    onClick={() => setShowQuickActions(!showQuickActions)}
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace") || showQuickActions
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Marketplace"
-                    aria-label="Marketplace Menu"
-                    aria-expanded={showQuickActions}
-                  >
-                    <Store className="w-5 h-5" aria-hidden="true" />
-                  </button>
-                  
-                  {showQuickActions && (
-                    <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 py-2 z-[9999]">
-                      <Link
-                        href="/marketplace"
-                        className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors group"
-                        onClick={() => setShowQuickActions(false)}
-                      >
-                        <Store className="w-5 h-5 text-green-600 group-hover:scale-110 transition-transform" />
-                        <span className="font-medium">Marketplace</span>
-                      </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      {/* Show "My Bookings" only in client view */}
-                      {roleView === 'client' && (
-                        <Link
-                          href="/marketplace/my-bookings"
-                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors group"
-                          onClick={() => setShowQuickActions(false)}
-                        >
-                          <Calendar className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-                          <span className="font-medium">My Bookings</span>
-                        </Link>
-                      )}
-                      {/* Show "My Services" only in provider view (provider, agency_owner, agency_admin, admin) */}
-                      {roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView) && userRoles.includes(roleView) && (
-                        <Link
-                          href="/marketplace/my-services"
-                          className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors group"
-                          onClick={() => setShowQuickActions(false)}
-                        >
-                          <BarChart3 className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
-                          <span className="font-medium">My Services</span>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Role-based Navigation Icons - Only show when not in client view */}
-            {showRoleNavigation && session && roleView !== 'client' && (
-              <div className="hidden sm:flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
-                {/* Marketplace/Store - Show if in provider view and user has provider role */}
-                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && !pathname?.startsWith("/marketplace") && (
-                  <Link
-                    href="/marketplace"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Marketplace"
-                    aria-label="Navigate to Marketplace"
-                    aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
-                  >
-                    <Store className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Supplies - Show if in supplier view and user has supplier role */}
-                {roleView === 'supplier' && userRoles.includes('supplier') && (
-                  <Link
-                    href="/supplies"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/supplies")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Supplies"
-                    aria-label="Navigate to Supplies"
-                    aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
-                  >
-                    <Package className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Academy - Show if in instructor view and user has instructor role */}
-                {roleView === 'instructor' && userRoles.includes('instructor') && (
-                  <Link
-                    href="/academy"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/academy")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Academy"
-                    aria-label="Navigate to Academy"
-                    aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
-                  >
-                    <GraduationCap className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Rentals - Show if in provider view and user has provider role */}
-                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
-                  <Link
-                    href="/rentals"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/rentals")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Rentals"
-                    aria-label="Navigate to Rentals"
-                    aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
-                  >
-                    <Car className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Jobs - Show if in provider view and user has provider role */}
-                {roleView === 'provider' && userRoles.some(r => ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(r)) && (
-                  <Link
-                    href="/marketplace/jobs"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace/jobs")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Jobs"
-                    aria-label="Navigate to Jobs"
-                    aria-current={pathname?.startsWith("/marketplace/jobs") ? "page" : undefined}
-                  >
-                    <Briefcase className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Analytics - Show if in any business role view (not client) */}
-                {roleView !== 'client' && isBusinessRole && userRoles.includes(roleView) && (
-                  <Link
-                    href="/analytics"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/analytics")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Analytics"
-                    aria-label="Navigate to Analytics"
-                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-                {/* Finance - Show if in any business role view (not client) */}
-                {roleView !== 'client' && isBusinessRole && userRoles.includes(roleView) && (
-                  <Link
-                    href="/finance"
-                    className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/finance")
-                        ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                      }`}
-                    title="Finance"
-                    aria-label="Navigate to Finance"
-                    aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
-                  >
-                    <CreditCard className="w-5 h-5" aria-hidden="true" />
-                  </Link>
-                )}
-              </div>
-            )}
+            <div className="hidden sm:flex items-center space-x-1 border-r border-gray-300 pr-2 mr-2">
+              {/* Marketplace/Store - Show if in provider view and user has provider role */}
+
+              <Link
+                href="/marketplace"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/marketplace")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Marketplace"
+                aria-label="Navigate to Marketplace"
+                aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
+              >
+                <Store className="w-5 h-5" aria-hidden="true" />
+              </Link>
+
+              {/* Supplies - Show if in supplier view and user has supplier role */}
+              <Link
+                href="/supplies"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/supplies")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Supplies"
+                aria-label="Navigate to Supplies"
+                aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
+              >
+                <Package className="w-5 h-5" aria-hidden="true" />
+              </Link>
+
+              {/* Academy - Show if in instructor view and user has instructor role */}
+
+              <Link
+                href="/academy"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/academy")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Academy"
+                aria-label="Navigate to Academy"
+                aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
+              >
+                <GraduationCap className="w-5 h-5" aria-hidden="true" />
+              </Link>
+
+              {/* Rentals - Show if in provider view and user has provider role */}
+
+              <Link
+                href="/rentals"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/rentals")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Rentals"
+                aria-label="Navigate to Rentals"
+                aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
+              >
+                <Car className="w-5 h-5" aria-hidden="true" />
+              </Link>
+
+              {/* Jobs - Show if in provider view and user has provider role */}
+
+              <Link
+                href="/jobs"
+                className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/jobs")
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                title="Jobs"
+                aria-label="Navigate to Jobs"
+                aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
+              >
+                <Briefcase className="w-5 h-5" aria-hidden="true" />
+              </Link>
+
+            </div>
 
             {/* Notifications */}
             {session && (
@@ -719,8 +632,8 @@ export function GlobalHeader({
                 <Link
                   href="/notifications"
                   className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/notifications")
-                      ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                     }`}
                   title="Notifications"
                 >
@@ -739,8 +652,8 @@ export function GlobalHeader({
               <Link
                 href="/messages"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/messages")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 title="Chat"
                 aria-label="Messages"
@@ -755,8 +668,8 @@ export function GlobalHeader({
               <Link
                 href="/favorites"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/favorites")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 title="Favorites"
                 aria-label="Favorites"
@@ -779,7 +692,7 @@ export function GlobalHeader({
                       'agency_admin': 'Agency Admin',
                       'admin': 'Admin',
                     };
-                    
+
                     return (
                       <button
                         key={role}
@@ -794,11 +707,10 @@ export function GlobalHeader({
                             router.refresh();
                           }
                         }}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${
-                          roleView === role
-                            ? 'bg-white text-green-700 shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${roleView === role
+                          ? 'bg-white text-green-700 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                          }`}
                         title={`Switch to ${roleLabels[role] || role} view`}
                         aria-label={`Switch to ${roleLabels[role] || role} view`}
                       >
@@ -842,6 +754,28 @@ export function GlobalHeader({
                       <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
                       <span>Profile</span>
                     </Link>
+                    {/* Show "My Bookings" only in client view */}
+                    {roleView === 'client' && (
+                      <Link
+                        href="/marketplace/my-bookings"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <Calendar className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                        <span>My Bookings</span>
+                      </Link>
+                    )}
+                    {/* Show "My Services" only in provider view (provider, agency_owner, agency_admin, admin) */}
+                    {roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView) && userRoles.includes(roleView) && (
+                      <Link
+                        href="/marketplace/my-services"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <BarChart3 className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                        <span>My Services</span>
+                      </Link>
+                    )}
                     <Link
                       href="/wallet"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"

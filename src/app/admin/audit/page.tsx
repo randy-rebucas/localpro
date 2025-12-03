@@ -10,7 +10,6 @@ import {
   User,
   Activity,
   AlertTriangle,
-  XCircle,
   Clock,
   Eye,
   FileText,
@@ -26,6 +25,7 @@ import {
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
+import { Modal } from "@/components/ui/modal";
 import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
@@ -968,170 +968,152 @@ export default function AdminAuditPage() {
       </div>
 
       {/* Log Detail Modal */}
-      {selectedLog && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-4 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded bg-white">
-            <div className="mt-2">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-900">Log Details</h3>
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
+      <Modal
+        isOpen={!!selectedLog}
+        onClose={() => setSelectedLog(null)}
+        title="Log Details"
+        size="xl"
+      >
+        {selectedLog && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Timestamp</label>
+                <p className="text-xs text-gray-900">{new Date(selectedLog.timestamp).toLocaleString()}</p>
               </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Timestamp</label>
-                    <p className="text-xs text-gray-900">{new Date(selectedLog.timestamp).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Severity</label>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(selectedLog.severity)}`}>
-                      {selectedLog.severity}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">Actor</label>
-                  <div className="mt-1">
-                    <p className="text-xs text-gray-900">
-                      {selectedLog.user?.name || selectedLog.target?.name || selectedLog.actor?.email?.split('@')[0] || 'Unknown'} 
-                      ({selectedLog.user?.email || selectedLog.actor?.email || 'N/A'})
-                    </p>
-                    <p className="text-xs text-gray-500">Role: {selectedLog.user?.role || selectedLog.actor?.role || 'N/A'}</p>
-                    {selectedLog.actor?.ip && (
-                      <p className="text-xs text-gray-500">IP: {selectedLog.actor.ip}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">Action</label>
-                  <p className="text-xs text-gray-900">{selectedLog.action}</p>
-                </div>
-
-                {selectedLog.target && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Target</label>
-                    <div className="mt-1">
-                      <p className="text-xs text-gray-900">
-                        {selectedLog.target.type} - {selectedLog.target.name || selectedLog.target.id}
-                      </p>
-                      {selectedLog.target.description && (
-                        <p className="text-xs text-gray-500">{selectedLog.target.description}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">Description</label>
-                  <p className="text-xs text-gray-900">{selectedLog.description || selectedLog.details || 'No description'}</p>
-                </div>
-
-                {selectedLog.request && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Request</label>
-                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
-                      <p><span className="font-medium">{selectedLog.request.method || 'N/A'}</span> {selectedLog.request.url || 'N/A'}</p>
-                    </div>
-                  </div>
-                )}
-
-                {selectedLog.response && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Response</label>
-                    <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
-                      <p>Status: {selectedLog.response.statusCode || 'N/A'}</p>
-                      {selectedLog.response.message && (
-                        <p>Message: {selectedLog.response.message}</p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Metadata</label>
-                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32">
-                      {JSON.stringify(selectedLog.metadata, null, 2)}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">IP Address</label>
-                    <p className="text-xs text-gray-900">{selectedLog.actor?.ip || selectedLog.ipAddress || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Session ID</label>
-                    <p className="text-xs text-gray-900 font-mono">{selectedLog.actor?.sessionId || selectedLog.sessionId || 'N/A'}</p>
-                  </div>
-                </div>
-
-                {selectedLog.changes && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Changes</label>
-                    <div className="mt-1">
-                      {selectedLog.changes.fields && Array.isArray(selectedLog.changes.fields) && (
-                        <div className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
-                          <p className="font-medium">Modified Fields:</p>
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {selectedLog.changes.fields.map((field: string, index: number) => (
-                              <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
-                                {field}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {Object.keys(selectedLog.changes).filter(key => key !== 'fields').length > 0 && (
-                        <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32 mt-2">
-                          {JSON.stringify(selectedLog.changes, null, 2)}
-                        </pre>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700">User Agent</label>
-                  <p className="text-xs text-gray-900 break-all">{selectedLog.actor?.userAgent || selectedLog.userAgent || 'N/A'}</p>
-                </div>
-
-                {selectedLog.environment && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Environment</label>
-                    <p className="text-xs text-gray-900">{selectedLog.environment}</p>
-                  </div>
-                )}
-
-                {selectedLog.retentionDate && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700">Retention Date</label>
-                    <p className="text-xs text-gray-900">{new Date(selectedLog.retentionDate).toLocaleString()}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => setSelectedLog(null)}
-                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-xs"
-                >
-                  Close
-                </button>
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Severity</label>
+                <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getSeverityColor(selectedLog.severity)}`}>
+                  {selectedLog.severity}
+                </span>
               </div>
             </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700">Actor</label>
+              <div className="mt-1">
+                <p className="text-xs text-gray-900">
+                  {selectedLog.user?.name || selectedLog.target?.name || selectedLog.actor?.email?.split('@')[0] || 'Unknown'} 
+                  ({selectedLog.user?.email || selectedLog.actor?.email || 'N/A'})
+                </p>
+                <p className="text-xs text-gray-500">Role: {selectedLog.user?.role || selectedLog.actor?.role || 'N/A'}</p>
+                {selectedLog.actor?.ip && (
+                  <p className="text-xs text-gray-500">IP: {selectedLog.actor.ip}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700">Action</label>
+              <p className="text-xs text-gray-900">{selectedLog.action}</p>
+            </div>
+
+            {selectedLog.target && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Target</label>
+                <div className="mt-1">
+                  <p className="text-xs text-gray-900">
+                    {selectedLog.target.type} - {selectedLog.target.name || selectedLog.target.id}
+                  </p>
+                  {selectedLog.target.description && (
+                    <p className="text-xs text-gray-500">{selectedLog.target.description}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700">Description</label>
+              <p className="text-xs text-gray-900">{selectedLog.description || selectedLog.details || 'No description'}</p>
+            </div>
+
+            {selectedLog.request && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Request</label>
+                <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                  <p><span className="font-medium">{selectedLog.request.method || 'N/A'}</span> {selectedLog.request.url || 'N/A'}</p>
+                </div>
+              </div>
+            )}
+
+            {selectedLog.response && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Response</label>
+                <div className="mt-1 text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                  <p>Status: {selectedLog.response.statusCode || 'N/A'}</p>
+                  {selectedLog.response.message && (
+                    <p>Message: {selectedLog.response.message}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Metadata</label>
+                <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32">
+                  {JSON.stringify(selectedLog.metadata, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700">IP Address</label>
+                <p className="text-xs text-gray-900">{selectedLog.actor?.ip || selectedLog.ipAddress || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Session ID</label>
+                <p className="text-xs text-gray-900 font-mono">{selectedLog.actor?.sessionId || selectedLog.sessionId || 'N/A'}</p>
+              </div>
+            </div>
+
+            {selectedLog.changes && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Changes</label>
+                <div className="mt-1">
+                  {selectedLog.changes.fields && Array.isArray(selectedLog.changes.fields) && (
+                    <div className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                      <p className="font-medium">Modified Fields:</p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {selectedLog.changes.fields.map((field: string, index: number) => (
+                          <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                            {field}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {Object.keys(selectedLog.changes).filter(key => key !== 'fields').length > 0 && (
+                    <pre className="text-xs bg-gray-50 p-2 rounded overflow-x-auto max-h-32 mt-2">
+                      {JSON.stringify(selectedLog.changes, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700">User Agent</label>
+              <p className="text-xs text-gray-900 break-all">{selectedLog.actor?.userAgent || selectedLog.userAgent || 'N/A'}</p>
+            </div>
+
+            {selectedLog.environment && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Environment</label>
+                <p className="text-xs text-gray-900">{selectedLog.environment}</p>
+              </div>
+            )}
+
+            {selectedLog.retentionDate && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700">Retention Date</label>
+                <p className="text-xs text-gray-900">{new Date(selectedLog.retentionDate).toLocaleString()}</p>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

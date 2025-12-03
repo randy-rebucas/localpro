@@ -174,10 +174,10 @@ export default function SupplyDetailPage() {
       pricing: productData.pricing ? {
         retailPrice: (productData.pricing as Product['pricing']).retailPrice || 0,
         wholesalePrice: (productData.pricing as Product['pricing']).wholesalePrice,
-        currency: (productData.pricing as Product['pricing']).currency || 'USD'
+        currency: (productData.pricing as Product['pricing']).currency || 'PHP'
       } : {
         retailPrice: (productData.price as number) || 0,
-        currency: 'USD'
+        currency: 'PHP'
       },
       inventory: productData.inventory ? {
         quantity: (productData.inventory as Product['inventory']).quantity || 0,
@@ -402,7 +402,7 @@ export default function SupplyDetailPage() {
     }
   }, [product]);
 
-  const formatPrice = (price: number, currency: string = 'USD') => {
+  const formatPrice = (price: number, currency: string = 'PHP') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency

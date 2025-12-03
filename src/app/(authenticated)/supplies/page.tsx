@@ -34,6 +34,8 @@ import { useRoleAccess } from "@/components/role-guard";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 // Removed unused imports: createAuthFetchOptions, getApiToken
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export interface Supply {
   id: string;
@@ -143,57 +145,113 @@ const validateSupplyData = (supply: unknown): Supply | null => {
   
   const supplyObj = supply as Record<string, unknown>;
   
+  // Extract pricing data (API uses pricing object with retailPrice/wholesalePrice)
+  const pricingData = supplyObj.pricing as Record<string, unknown> || {};
+  const retailPrice = typeof pricingData.retailPrice === 'number' ? pricingData.retailPrice : 0;
+  const wholesalePrice = typeof pricingData.wholesalePrice === 'number' ? pricingData.wholesalePrice : undefined;
+  
+  // Extract inventory data (API uses inventory object with quantity, minStock, maxStock, location)
+  const inventoryData = supplyObj.inventory as Record<string, unknown> || {};
+  const quantity = typeof inventoryData.quantity === 'number' ? inventoryData.quantity : 0;
+  const minStock = typeof inventoryData.minStock === 'number' ? inventoryData.minStock : undefined;
+  const maxStock = typeof inventoryData.maxStock === 'number' ? inventoryData.maxStock : undefined;
+  const warehouseLocation = (inventoryData.location as string) || 'Warehouse';
+  
+  // Extract specifications (API provides these directly)
+  const specs = supplyObj.specifications as Record<string, unknown> || {};
+  
+  // Extract supplier info (API uses firstName/lastName instead of name)
+  const supplierData = supplyObj.supplier as Record<string, unknown> || {};
+  const supplierFirstName = (supplierData.firstName as string) || '';
+  const supplierLastName = (supplierData.lastName as string) || '';
+  const supplierName = `${supplierFirstName} ${supplierLastName}`.trim() || 'Unknown Supplier';
+  const supplierId = (supplierData._id as string) || (supplierData.id as string) || '';
+  
+  // Determine status based on isActive flag and stock level
+  let status: 'available' | 'out-of-stock' | 'discontinued' | 'pre-order' = 'available';
+  if (!supplyObj.isActive) {
+    status = 'discontinued';
+  } else if (quantity === 0) {
+    status = 'out-of-stock';
+  } else if (quantity < (minStock || 10)) {
+    status = 'pre-order';
+  }
+  
+  // Determine type based on category and subcategory
+  let type: 'cleaning' | 'tools' | 'materials' | 'equipment' | 'subscription' = 'equipment';
+  const category = (supplyObj.category as string) || 'Other';
+  if (category.includes('cleaning') || category.toLowerCase() === 'cleaning_supplies') {
+    type = 'cleaning';
+  } else if (category.includes('tool')) {
+    type = 'tools';
+  } else if (category.includes('material')) {
+    type = 'materials';
+  }
+  
+  // Check if subscription eligible
+  if (supplyObj.isSubscriptionEligible) {
+    type = 'subscription';
+  }
+  
   // Ensure required fields exist with defaults
   return {
-    id: (supplyObj.id as string) || '',
-    name: (supplyObj.name as string) || 'Unnamed Supply',
+    id: (supplyObj._id as string) || (supplyObj.id as string) || '',
+    name: (supplyObj.name as string) || (supplyObj.title as string) || 'Unnamed Supply',
     description: (supplyObj.description as string) || '',
-    category: (supplyObj.category as string) || 'Other',
-    type: (supplyObj.type as 'cleaning' | 'tools' | 'materials' | 'equipment' | 'subscription') || 'equipment',
-    status: (supplyObj.status as 'available' | 'out-of-stock' | 'discontinued' | 'pre-order') || 'available',
-    price: typeof supplyObj.price === 'number' ? supplyObj.price : 0,
-    originalPrice: supplyObj.originalPrice as number,
-    unit: (supplyObj.unit as 'piece' | 'pack' | 'box' | 'kg' | 'liter' | 'set') || 'piece',
-    stock: typeof supplyObj.stock === 'number' ? supplyObj.stock : 0,
-    minOrder: (supplyObj.minOrder as number) || 1,
-    maxOrder: supplyObj.maxOrder as number,
+    category: category,
+    type: type,
+    status: status,
+    price: retailPrice,
+    originalPrice: wholesalePrice,
+    unit: 'piece' as const,
+    stock: quantity,
+    minOrder: minStock || 1,
+    maxOrder: maxStock,
     location: {
-      address: (supplyObj.location as { address?: string })?.address || '',
-      city: (supplyObj.location as { city?: string })?.city || '',
-      state: (supplyObj.location as { state?: string })?.state || '',
-      zipCode: (supplyObj.location as { zipCode?: string })?.zipCode || '',
-      coordinates: (supplyObj.location as { coordinates?: { lat: number; lng: number } })?.coordinates
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      coordinates: undefined
     },
-    images: Array.isArray(supplyObj.images) ? supplyObj.images : [],
-    features: Array.isArray(supplyObj.features) ? supplyObj.features : [],
-    specifications: supplyObj.specifications || {},
+    images: Array.isArray(supplyObj.images) ? (supplyObj.images as string[]) : [],
+    features: [],
+    specifications: {
+      brand: (specs.brand as string) || (supplyObj.brand as string),
+      weight: (specs.weight as string),
+      dimensions: (specs.dimensions as string),
+      material: (specs.material as string),
+      color: (specs.color as string),
+      warranty: (specs.warranty as string)
+    },
     supplier: {
-      id: (supplyObj.supplier as { id?: string })?.id || '',
-      name: (supplyObj.supplier as { name?: string })?.name || 'Unknown Supplier',
-      avatar: (supplyObj.supplier as { avatar?: string })?.avatar,
-      rating: (supplyObj.supplier as { rating?: number })?.rating ?? 0,
-      reviewCount: (supplyObj.supplier as { reviewCount?: number })?.reviewCount || 0,
-      verified: Boolean((supplyObj.supplier as { verified?: boolean })?.verified),
-      location: (supplyObj.supplier as { location?: string })?.location || ''
+      id: supplierId,
+      name: supplierName,
+      avatar: undefined,
+      rating: 0,
+      reviewCount: 0,
+      verified: false,
+      location: warehouseLocation
     },
     delivery: {
-      available: Boolean((supplyObj.delivery as { available?: boolean })?.available),
-      estimatedDays: (supplyObj.delivery as { estimatedDays?: number })?.estimatedDays || 0,
-      cost: (supplyObj.delivery as { cost?: number })?.cost || 0,
-      freeShippingThreshold: (supplyObj.delivery as { freeShippingThreshold?: number })?.freeShippingThreshold
+      available: status !== 'discontinued',
+      estimatedDays: 3,
+      cost: 0,
+      freeShippingThreshold: undefined
     },
-    rating: typeof supplyObj.rating === 'number' ? supplyObj.rating : 0,
-    reviewCount: (supplyObj.reviewCount as number) || 0,
-    viewsCount: (supplyObj.viewsCount as number) || 0,
+    rating: (supplyObj.averageRating as number) || 0,
+    reviewCount: Array.isArray(supplyObj.reviews) ? (supplyObj.reviews as unknown[]).length : 0,
+    viewsCount: (supplyObj.views as number) || 0,
     isFeatured: Boolean(supplyObj.isFeatured),
-    isFavorited: Boolean(supplyObj.isFavorited),
-    tags: Array.isArray(supplyObj.tags) ? supplyObj.tags : [],
+    isFavorited: false,
+    tags: Array.isArray(supplyObj.tags) ? (supplyObj.tags as string[]) : [],
     createdAt: (supplyObj.createdAt as string) || new Date().toISOString(),
     updatedAt: (supplyObj.updatedAt as string) || new Date().toISOString()
   };
 };
 
 export default function SuppliesPage() {
+  const { settings: appSettings } = useAppSettings();
   const [supplies, setSupplies] = useState<Supply[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [types, setTypes] = useState<string[]>([]);
@@ -282,9 +340,38 @@ export default function SuppliesPage() {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch types');
+        // Try to extract a safe error message from the response body
+        const bodyText = await response.text();
+        let parsed: unknown = null;
+        try {
+          parsed = JSON.parse(bodyText);
+        } catch {
+          // not JSON
+        }
+
+        const apiMessage = ((): string => {
+          if (parsed && typeof parsed === 'object') {
+            try {
+              const p = parsed as Record<string, unknown>;
+              const m = p.message ?? p.error;
+              if (typeof m === 'string') return m;
+            } catch {}
+          }
+          return typeof bodyText === 'string' && bodyText.length > 0 ? bodyText : 'Unknown error';
+        })();
+
+        // Handle known backend misrouting where 'types' is being interpreted as an ID
+        if (typeof apiMessage === 'string' && apiMessage.toLowerCase().includes('invalid supply id')) {
+          // Backend appears to be interpreting the 'types' path as a supply id (server routing issue).
+          // Fall back to a reasonable client-side default and warn instead of throwing.
+          logger.warn('Supplies types endpoint returned invalid id error; using local fallback types', { url, status: response.status, apiMessage });
+          setTypes(['cleaning', 'tools', 'materials', 'equipment', 'subscription']);
+          return;
+        }
+
+        throw new Error(`Failed to fetch types: ${response.status} ${apiMessage}`);
       }
 
       const data = await response.json();
@@ -297,7 +384,14 @@ export default function SuppliesPage() {
       
       setTypes(types);
     } catch (error) {
-      logger.error('Error fetching types', error instanceof Error ? error : new Error(String(error)));
+      // Log a safe, structured error and provide minimal context
+      const context = { url: `${API_BASE_URL}${API_ENDPOINTS.suppliesTypes}` };
+      if (error instanceof Error) {
+        logger.error('Error fetching types', error, context);
+      } else {
+        logger.error('Error fetching types', new Error(String(error)), context);
+      }
+
       setError('Failed to fetch types');
       setTypes([]);
     }
@@ -1050,10 +1144,10 @@ export default function SuppliesPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-gray-900">
-                          ${supply.price}
+                          {formatCurrency(supply.price, 'PHP', { appSettings })}
                           {supply.originalPrice && (
                             <span className="text-sm text-gray-500 line-through ml-1">
-                              ${supply.originalPrice}
+                              {formatCurrency(supply.originalPrice || 0, 'PHP', { appSettings })}
                             </span>
                           )}
                         </div>
@@ -1144,27 +1238,30 @@ export default function SuppliesPage() {
                 
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                    const pageNum = i + 1;
+                    let pageNum: number;
+                    if (pagination.pages <= 5) {
+                      pageNum = i + 1;
+                    } else if (pagination.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (pagination.page >= pagination.pages - 2) {
+                      pageNum = pagination.pages - 4 + i;
+                    } else {
+                      pageNum = pagination.page - 2 + i;
+                    }
+
                     return (
                       <Button
                         key={pageNum}
-                        variant={pagination.page === pageNum ? "default" : "outline"}
                         size="sm"
-                        onClick={() => {
-                          if (activeTab === 'nearby') {
-                            fetchNearbySupplies();
-                          } else {
-                            fetchSupplies(pageNum);
-                          }
-                        }}
-                        className="w-8 h-8 p-0"
+                        variant={pagination.page === pageNum ? undefined : 'outline'}
+                        onClick={() => fetchSupplies(pageNum)}
+                        className={`px-3 py-1 rounded text-sm font-medium ${pagination.page === pageNum ? 'bg-purple-600 text-white' : 'text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
                       >
                         {pageNum}
                       </Button>
                     );
                   })}
                 </div>
-                
                 <Button
                   variant="outline"
                   size="sm"

@@ -37,6 +37,7 @@ interface PaymentTransactionsTableProps {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   className?: string;
+  formatAmount?: (amount: number, currency?: string) => string; // Currency formatting function
 }
 
 export function PaymentTransactionsTable({
@@ -47,7 +48,8 @@ export function PaymentTransactionsTable({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
-  className = ""
+  className = "",
+  formatAmount: formatAmountProp
 }: PaymentTransactionsTableProps) {
 
   const getStatusIcon = (status: string) => {
@@ -95,7 +97,12 @@ export function PaymentTransactionsTable({
     }
   };
 
-  const formatAmount = (amount: number) => {
+  // Use provided formatAmount function or fallback to default formatting
+  const formatAmount = (amount: number, currency?: string) => {
+    if (formatAmountProp) {
+      return formatAmountProp(amount, currency);
+    }
+    // Fallback to basic formatting if no formatter provided
     return `$${amount.toFixed(2)}`;
   };
 
@@ -181,7 +188,7 @@ export function PaymentTransactionsTable({
                         </div>
                         {transaction.fees && (
                           <div className="text-xs text-gray-400">
-                            Fees: ${transaction.fees.toFixed(2)}
+                            Fees: {formatAmount(transaction.fees)}
                           </div>
                         )}
                       </div>

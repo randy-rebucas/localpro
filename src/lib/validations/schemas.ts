@@ -15,7 +15,7 @@ export const serviceSchema = z.object({
   pricing: z.object({
     type: z.enum(["hourly", "fixed", "per_sqft", "per_item"]),
     basePrice: z.number().min(0, "Price must be positive"),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }),
   serviceArea: z.array(z.string()).min(1, "At least one service area is required"),
   features: z.array(z.string()).optional(),
@@ -61,7 +61,7 @@ export const supplySchema = z.object({
   pricing: z.object({
     retailPrice: z.number().min(0, "Price must be positive"),
     wholesalePrice: z.number().min(0).optional(),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }),
   inventory: z.object({
     quantity: z.number().min(0, "Quantity cannot be negative"),
@@ -83,7 +83,7 @@ export const rentalSchema = z.object({
     daily: z.number().min(0).optional(),
     weekly: z.number().min(0).optional(),
     monthly: z.number().min(0).optional(),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }).refine(
     (data) => data.hourly || data.daily || data.weekly || data.monthly,
     "At least one pricing option is required"
@@ -111,7 +111,7 @@ export const courseSchema = z.object({
   pricing: z.object({
     regularPrice: z.number().min(0, "Price must be positive"),
     discountedPrice: z.number().min(0).optional(),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }),
   learningOutcomes: z.array(z.string()).min(1, "At least one learning outcome is required").optional(),
 });
@@ -149,7 +149,7 @@ export const facilityCareSchema = z.object({
   pricing: z.object({
     type: z.enum(["hourly", "monthly", "per_sqft", "per_visit", "contract"]).optional(),
     basePrice: z.number().min(0, "Price must be positive"),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }).optional(),
   serviceArea: z.array(z.string()).min(1, "At least one service area is required").optional(),
 });
@@ -163,7 +163,7 @@ export const adCampaignSchema = z.object({
   budget: z.object({
     total: z.number().min(1, "Budget must be at least 1"),
     daily: z.number().min(0).optional(),
-    currency: z.string().default("USD"),
+    currency: z.string().default("PHP"),
   }),
   schedule: z.object({
     startDate: z.date(),
@@ -223,7 +223,7 @@ export const userSettingsSchema = z.object({
     timezone: z.string(),
     dateFormat: z.enum(["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]),
     timeFormat: z.enum(["12h", "24h"]),
-    currency: z.enum(["PHP", "USD", "EUR", "GBP", "JPY", "KRW", "CNY"]),
+    currency: z.enum(["PHP"]),
   }),
 });
 

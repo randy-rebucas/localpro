@@ -27,6 +27,8 @@ import { Skeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export interface Supply {
   id: string;
@@ -111,6 +113,7 @@ const getStatusColor = (status: Supply['status']) => {
 export default function SupplyDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const [supply, setSupply] = useState<Supply | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
@@ -341,15 +344,15 @@ export default function SupplyDetailPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-3xl font-bold text-gray-900">${supply.price}</span>
+                  <span className="text-3xl font-bold text-gray-900">{formatCurrency(supply.price, 'PHP', { appSettings })}</span>
                   {supply.originalPrice && (
-                    <span className="text-lg text-gray-500 line-through">${supply.originalPrice}</span>
+                    <span className="text-lg text-gray-500 line-through">{formatCurrency(supply.originalPrice, 'PHP', { appSettings })}</span>
                   )}
                   <span className="text-sm text-gray-500">/{supply.unit}</span>
                 </div>
                 {supply.originalPrice && (
                   <div className="text-sm text-green-600 font-medium">
-                    Save ${(supply.originalPrice - supply.price).toFixed(2)} ({Math.round(((supply.originalPrice - supply.price) / supply.originalPrice) * 100)}% off)
+                    Save {formatCurrency(supply.originalPrice - supply.price, 'PHP', { appSettings })} ({Math.round(((supply.originalPrice - supply.price) / supply.originalPrice) * 100)}% off)
                   </div>
                 )}
               </div>

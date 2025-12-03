@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,6 +9,8 @@ import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // UserId Interface
 interface UserIdData {
@@ -314,14 +316,29 @@ interface MarketplaceService {
 
 export default function ProviderDetailPage() {
   const params = useParams();
+  const { settings: appSettings } = useAppSettings();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [services, setServices] = useState<MarketplaceService[]>([]);
   const [loading, setLoading] = useState(true);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusWarning, setStatusWarning] = useState<string | null>(null);
+  const [servicesPopulatedFromResponse, setServicesPopulatedFromResponse] = useState(false);
 
   const providerId = params?.id as string;
+  
+  // Normalize currency to PHP only
+  const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
+    // Mark param as intentionally unused and always return PHP
+    void currency;
+    return 'PHP';
+  }, []);
+  
+  // Format price with currency
+  const formatPrice = useCallback((price: number, currency?: string | null): string => {
+    const currencyCode = normalizeCurrencyCode(currency);
+    return formatCurrency(price, currencyCode, { appSettings });
+  }, [normalizeCurrencyCode, appSettings]);
 
   useEffect(() => {
     const fetchProvider = async () => {
@@ -330,6 +347,10 @@ export default function ProviderDetailPage() {
         setLoading(false);
         return;
       }
+      
+      // Reset services state when provider changes
+      setServices([]);
+      setServicesPopulatedFromResponse(false);
 
       const normalizeProviderData = (providerData: unknown, isStatusError: boolean = false): Provider | null => {
         if (!providerData || typeof providerData !== 'object') {
@@ -364,6 +385,22 @@ export default function ProviderDetailPage() {
         // If we don't have an _id but have other data, try to use what we have
         const providerId = data._id || data.id || ((userId as { _id?: string; id?: string } | null)?._id || (userId as { _id?: string; id?: string } | null)?.id) || undefined;
         
+        // Explicitly extract verification to ensure it's preserved
+        const verification = data.verification || undefined;
+        
+        // Debug logging for verification in development
+        if (process.env.NODE_ENV === 'development' && verification) {
+          logger.debug('Verification data found in provider response', {
+            hasVerification: !!verification,
+            identityVerified: (verification as { identityVerified?: boolean })?.identityVerified,
+            businessVerified: (verification as { businessVerified?: boolean })?.businessVerified,
+            hasBackgroundCheck: !!(verification as { backgroundCheck?: unknown })?.backgroundCheck,
+            hasInsurance: !!(verification as { insurance?: unknown })?.insurance,
+            hasLicenses: !!(verification as { licenses?: unknown[] })?.licenses,
+            verificationKeys: verification && typeof verification === 'object' ? Object.keys(verification) : [],
+          });
+        }
+        
         return {
           ...data,
           _id: providerId,
@@ -374,6 +411,7 @@ export default function ProviderDetailPage() {
           userId: userId,
           status: data.status || (isStatusError ? 'pending' : undefined),
           trust: trustData || data.trust,
+          verification: verification as Provider['verification'],
         } as Provider;
       };
 
@@ -433,20 +471,51 @@ export default function ProviderDetailPage() {
 
         // If we have data from marketplace endpoint (even with an error), try to use it
         let normalizedProvider: Provider | null = null;
+        let servicesFromResponse: MarketplaceService[] = [];
         if (data) {
-          // Try multiple possible data structures
-          const providerData = data.data || data.provider || data.result || data;
+          // Extract services from response if available
+          // Response structure: { success: true, data: { provider: {...}, services: [...] } }
+          const responseData = typeof data === 'object' && data !== null && 'data' in data 
+            ? (data.data as Record<string, unknown>)
+            : null;
+          
+          // Extract services from the response data
+          if (responseData && 'services' in responseData && Array.isArray(responseData.services)) {
+            servicesFromResponse = responseData.services as MarketplaceService[];
+          } else if (data && typeof data === 'object' && 'services' in data && Array.isArray(data.services)) {
+            servicesFromResponse = data.services as MarketplaceService[];
+          }
+          
+          // Try multiple possible data structures for provider
+          // If responseData exists and has a provider field, use that; otherwise try other structures
+          let providerData: unknown;
+          if (responseData && 'provider' in responseData) {
+            providerData = responseData.provider;
+          } else if (responseData && !('provider' in responseData)) {
+            // If responseData exists but doesn't have provider, it might be the provider itself
+            providerData = responseData;
+          } else {
+            // Fallback to other structures
+            providerData = data.data || data.provider || data.result || data;
+          }
           
           // Log the structure we received for debugging
           if (process.env.NODE_ENV === 'development') {
+            const providerDataObj = providerData && typeof providerData === 'object' ? providerData as Record<string, unknown> : null;
             logger.debug('Provider data structure', {
               hasData: !!data,
               hasSuccess: !!data.success,
               hasDataField: !!data.data,
               hasProviderField: !!data.provider,
               hasResultField: !!data.result,
+              hasResponseData: !!responseData,
+              hasServices: servicesFromResponse.length > 0,
+              servicesCount: servicesFromResponse.length,
+              hasVerification: !!(providerDataObj?.verification),
+              verificationType: providerDataObj?.verification ? typeof providerDataObj.verification : 'none',
               dataKeys: data ? Object.keys(data) : [],
-              providerDataKeys: providerData && typeof providerData === 'object' ? Object.keys(providerData) : [],
+              responseDataKeys: responseData ? Object.keys(responseData) : [],
+              providerDataKeys: providerDataObj ? Object.keys(providerDataObj) : [],
             });
           }
           
@@ -456,6 +525,11 @@ export default function ProviderDetailPage() {
         // If we got provider data, use it (even if there was a status error)
         if (normalizedProvider) {
           setProvider(normalizedProvider);
+          // Set services if they were included in the response
+          if (servicesFromResponse.length > 0) {
+            setServices(servicesFromResponse);
+            setServicesPopulatedFromResponse(true);
+          }
           providerDataFetched = true;
           if (isStatusError) {
             // Don't log error for status issues when we have data to display
@@ -545,10 +619,15 @@ export default function ProviderDetailPage() {
     fetchProvider();
   }, [providerId]);
 
-  // Fetch provider services
+  // Fetch provider services (only if not already populated from provider response)
   useEffect(() => {
     const fetchServices = async () => {
       if (!providerId) return;
+      
+      // Skip if services are already populated from provider response
+      if (servicesPopulatedFromResponse) {
+        return;
+      }
 
       try {
         setServicesLoading(true);
@@ -570,10 +649,10 @@ export default function ProviderDetailPage() {
       }
     };
 
-    if (providerId && provider) {
+    if (providerId && provider && !servicesPopulatedFromResponse) {
       fetchServices();
     }
-  }, [providerId, provider]);
+  }, [providerId, provider, servicesPopulatedFromResponse]);
 
   if (loading) {
     return <Loading />;
@@ -627,45 +706,58 @@ export default function ProviderDetailPage() {
   const totalJobs = provider.performance?.totalJobs || 0;
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-4 mb-4">
-          <Link
-            href="/marketplace"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Back to providers"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <User className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">{fullName}</h1>
-            <p className="text-sm text-gray-600">
-              {provider.businessInfo?.businessName || location}
-              {rating > 0 && ` • ${rating.toFixed(1)} (${reviewCount} reviews)`}
-            </p>
-          </div>
-        </div>
-
-        {/* Status Warning Banner */}
-        {statusWarning && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">
-              <strong>Note:</strong> {statusWarning}
-            </p>
-          </div>
-        )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
       </div>
+      
+      <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <Link
+              href="/marketplace"
+              className="p-2.5 hover:bg-gradient-to-br hover:from-green-50 hover:to-blue-50 rounded-xl transition-all hover:scale-105 hover:shadow-md"
+              title="Back to providers"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700 hover:text-green-700" />
+            </Link>
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
+              <User className="w-7 h-7" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">{fullName}</h1>
+              <p className="text-sm sm:text-base text-gray-700 font-medium">
+                {provider.businessInfo?.businessName || location}
+                {rating > 0 && (
+                  <span className="ml-2 inline-flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200">
+                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span>
+                    <span className="text-gray-600">({reviewCount} reviews)</span>
+                  </span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Status Warning Banner */}
+          {statusWarning && (
+            <div className="bg-gradient-to-r from-yellow-50 via-yellow-100/50 to-yellow-50 border-2 border-yellow-300 rounded-xl p-4 shadow-lg">
+              <p className="text-yellow-900 font-medium">
+                <strong className="text-yellow-950">Note:</strong> {statusWarning}
+              </p>
+            </div>
+          )}
+        </div>
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           {/* Provider Avatar & Quick Info */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <div className="flex flex-col items-center text-center mb-4">
               <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-purple-600 mb-4 flex items-center justify-center">
             {hasAvatar && avatarUrl ? (
@@ -699,7 +791,7 @@ export default function ProviderDetailPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-4">Quick Stats</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
@@ -728,7 +820,7 @@ export default function ProviderDetailPage() {
       </div>
 
       {/* Contact Info */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
         <div className="space-y-3">
           {provider.email && (
@@ -747,7 +839,7 @@ export default function ProviderDetailPage() {
           </div>
 
           {/* Verification Summary */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Verification
@@ -783,20 +875,25 @@ export default function ProviderDetailPage() {
                   <span className="text-sm text-gray-700">Background Check</span>
                 </div>
               )}
+              {/* Show message if no verification data is available */}
+              {!provider.verification && 
+               !userId?.trust?.verification && (
+                <p className="text-sm text-gray-500">No verification information available</p>
+              )}
             </div>
           </div>
 
           {/* Trust Score */}
           {provider.trust?.trustScore && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
               <h3 className="font-semibold text-gray-900 mb-3">Trust Score</h3>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-2xl font-bold text-gray-900">{provider.trust.trustScore}</span>
                 <span className="text-sm text-gray-500">/100</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                 <div
-                  className="bg-blue-600 h-2 rounded-full"
+                  className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full shadow-lg transition-all duration-500"
                   style={{ width: `${provider.trust.trustScore}%` }}
                 />
               </div>
@@ -807,7 +904,7 @@ export default function ProviderDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Services */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Wrench className="w-5 h-5" />
               Services
@@ -828,7 +925,7 @@ export default function ProviderDetailPage() {
                     <Link
                       key={serviceId}
                       href={`/marketplace/services/${serviceId}`}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                      className="border-2 border-gray-200 rounded-xl p-4 hover:border-green-300 hover:shadow-xl hover:bg-gradient-to-br hover:from-green-50/50 hover:to-blue-50/50 transition-all duration-300 transform hover:-translate-y-1"
                     >
                       {serviceImage && (
                         <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-200 mb-3">
@@ -847,8 +944,7 @@ export default function ProviderDetailPage() {
                       <div className="flex items-center justify-between">
                         {servicePrice && (
                           <div className="text-lg font-bold text-gray-900">
-                            ${servicePrice}
-                            {service.currency && <span className="text-sm font-normal text-gray-600"> {service.currency}</span>}
+                            {formatPrice(servicePrice, service.currency || service.pricing?.currency)}
                           </div>
                         )}
                         {serviceRating && (
@@ -876,7 +972,7 @@ export default function ProviderDetailPage() {
 
       {/* About */}
       {userId?.profile?.bio && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
           <p className="text-gray-700">{userId.profile.bio}</p>
         </div>
@@ -884,7 +980,7 @@ export default function ProviderDetailPage() {
 
       {/* Business Description */}
       {provider.businessInfo?.businessDescription && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Business Description</h2>
           <p className="text-gray-700">{provider.businessInfo.businessDescription}</p>
         </div>
@@ -892,7 +988,7 @@ export default function ProviderDetailPage() {
 
       {/* Specialties */}
       {provider.professionalInfo?.specialties && provider.professionalInfo.specialties.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Specialties & Services</h2>
               <div className="space-y-6">
             {provider.professionalInfo.specialties.map((specialty, idx) => {
@@ -919,13 +1015,13 @@ export default function ProviderDetailPage() {
                     <div className="text-right">
                       {hourlyRate && (
                         <div className="text-lg font-semibold text-gray-900">
-                          ${hourlyRate}
+                          {formatPrice(hourlyRate, specialty.pricing?.currency)}
                           <span className="text-sm font-normal text-gray-600">/hr</span>
                         </div>
                       )}
                       {specialty.pricing?.minimumCharge && (
                         <div className="text-sm text-gray-600">
-                          Min: ${specialty.pricing.minimumCharge}
+                          Min: {formatPrice(specialty.pricing.minimumCharge, specialty.pricing?.currency)}
                         </div>
                       )}
                     </div>
@@ -1103,7 +1199,7 @@ export default function ProviderDetailPage() {
 
       {/* Languages */}
       {provider.professionalInfo?.languages && provider.professionalInfo.languages.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Languages</h2>
           <div className="flex flex-wrap gap-2">
             {provider.professionalInfo.languages.map((lang, idx) => (
@@ -1116,7 +1212,7 @@ export default function ProviderDetailPage() {
       )}
 
           {/* Verification Details */}
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Shield className="w-5 h-5" />
               Verification & Credentials
@@ -1251,7 +1347,7 @@ export default function ProviderDetailPage() {
 
           {/* Trust & Badges */}
           {(provider.trust?.trustScore || provider.trust?.badges) && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Award className="w-5 h-5" />
             Trust & Badges
@@ -1264,9 +1360,9 @@ export default function ProviderDetailPage() {
                   <span className="text-2xl font-bold text-gray-900">{provider.trust.trustScore}</span>
                   <span className="text-sm text-gray-500">/100</span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
                   <div
-                    className="bg-blue-600 h-2 rounded-full"
+                    className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 h-3 rounded-full shadow-lg transition-all duration-500"
                     style={{ width: `${provider.trust.trustScore}%` }}
                   />
                 </div>
@@ -1294,7 +1390,7 @@ export default function ProviderDetailPage() {
 
           {/* Availability */}
           {provider.professionalInfo?.availability && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             Availability
@@ -1324,7 +1420,7 @@ export default function ProviderDetailPage() {
 
           {/* Agency Info */}
           {provider.agency && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Building2 className="w-5 h-5" />
             Agency Information
@@ -1353,7 +1449,7 @@ export default function ProviderDetailPage() {
       )}
 
           {/* Performance Statistics */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5" />
           Performance Statistics
@@ -1400,12 +1496,12 @@ export default function ProviderDetailPage() {
             )}
           </div>
         )}
-        {(provider.performance?.totalEarnings || provider.performance?.averageJobValue) && (
+        {(provider.performance?.totalEarnings !== undefined || provider.performance?.averageJobValue !== undefined) && (
           <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
             {provider.performance.totalEarnings !== undefined && (
               <div>
                 <div className="text-xl font-bold text-gray-900">
-                  ${provider.performance.totalEarnings.toLocaleString()}
+                  {formatPrice(provider.performance.totalEarnings)}
                 </div>
                 <div className="text-sm text-gray-600">Total Earnings</div>
               </div>
@@ -1413,7 +1509,7 @@ export default function ProviderDetailPage() {
             {provider.performance.averageJobValue !== undefined && (
               <div>
                 <div className="text-xl font-bold text-gray-900">
-                  ${provider.performance.averageJobValue.toFixed(0)}
+                  {formatPrice(provider.performance.averageJobValue)}
                 </div>
                 <div className="text-sm text-gray-600">Avg Job Value</div>
               </div>
@@ -1424,7 +1520,7 @@ export default function ProviderDetailPage() {
 
           {/* Metadata */}
           {provider.metadata && (
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Additional Information</h2>
           <div className="space-y-3">
             {provider.metadata.profileViews && (
@@ -1460,6 +1556,7 @@ export default function ProviderDetailPage() {
           </div>
         </div>
       )}
+        </div>
         </div>
       </div>
     </div>

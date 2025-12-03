@@ -2,33 +2,26 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import {
   Search,
   Plus,
   MapPin,
   Star,
-  Eye,
-  Edit,
-  Heart,
-  Share2,
-  Grid3X3,
-  List,
-  SortAsc,
-  SortDesc,
   Calendar,
-  Clock,
-  Filter
+  X,
+  Building2,
+  CheckCircle2,
+  Zap,
+  Headphones,
+  HelpCircle
 } from "lucide-react";
-import Breadcrumbs from "@/components/ui/breadcrumbs";
-import { ListSkeleton } from "@/components/ui/loading";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-// Removed unused imports: createAuthFetchOptions, getApiToken
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { useRoleAccess } from "@/components/role-guard";
 
 export interface Rental {
   id: string;
@@ -82,62 +75,10 @@ export interface Rental {
   updatedAt: string;
 }
 
-const categories = [
-  "All Categories",
-  "Construction Equipment",
-  "Vehicles",
-  "Tools",
-  "Event Equipment",
-  "Office Space",
-  "Storage",
-  "Other"
-];
-
-const types = [
-  "All Types",
-  "Equipment",
-  "Vehicle",
-  "Space",
-  "Tool"
-];
-
-const statuses = [
-  "All Status",
-  "Available",
-  "Rented",
-  "Maintenance",
-  "Unavailable"
-];
-
-// const priceUnits = [
-//   "All Units",
-//   "Per Hour",
-//   "Per Day",
-//   "Per Week",
-//   "Per Month"
-// ];
-
-const getStatusColor = (status: Rental['status']) => {
-  switch (status) {
-    case 'available': return 'bg-green-100 text-green-800';
-    case 'rented': return 'bg-blue-100 text-blue-800';
-    case 'maintenance': return 'bg-yellow-100 text-yellow-800';
-    case 'unavailable': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const getConditionColor = (condition: Rental['specifications']['condition']) => {
-  switch (condition) {
-    case 'excellent': return 'bg-green-100 text-green-800';
-    case 'good': return 'bg-blue-100 text-blue-800';
-    case 'fair': return 'bg-yellow-100 text-yellow-800';
-    case 'poor': return 'bg-red-100 text-red-800';
-    default: return 'bg-gray-100 text-gray-800';
-  }
-};
 
 export default function RentalsPage() {
+  const { settings: appSettings } = useAppSettings();
+  const { isProvider, isAdmin } = useRoleAccess();
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,11 +87,15 @@ export default function RentalsPage() {
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [location, setLocation] = useState("");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showFilters, setShowFilters] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [guests, setGuests] = useState(1);
+  const [sortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
   const router = useRouter();
+
+  // Filter options
+  const types = ['All Types', 'equipment', 'vehicle', 'space', 'tool'];
 
   useEffect(() => {
     const fetchRentals = async () => {
@@ -332,6 +277,37 @@ export default function RentalsPage() {
     return matchesSearch && matchesCategory && matchesType && matchesStatus && matchesLocation && matchesPrice;
   });
 
+  // Normalize currency to PHP only
+  const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+    // Always return PHP as the only supported currency
+    void _currency;
+    return 'PHP';
+  };
+
+  const formatPrice = (price: number, currency: string = 'PHP') => {
+    const currencyCode = normalizeCurrencyCode(currency);
+    return formatCurrency(price, currencyCode, {
+      appSettings,
+      showSymbol: true,
+    });
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    if (key === 'category') setSelectedCategory(value);
+    else if (key === 'type') setSelectedType(value);
+    else if (key === 'status') setSelectedStatus(value);
+    else if (key === 'location') setLocation(value);
+  };
+
+  const clearFilters = () => {
+    setSelectedCategory("All Categories");
+    setSelectedType("All Types");
+    setSelectedStatus("All Status");
+    setLocation("");
+    setPriceRange({ min: "", max: "" });
+    setSearchQuery("");
+  };
+
   const sortedRentals = [...filteredRentals].sort((a, b) => {
     let aValue, bValue;
     
@@ -366,393 +342,470 @@ export default function RentalsPage() {
     router.push('/rentals/create');
   };
 
-  const handleViewRental = (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleViewRental = (rentalId: string) => {
     router.push(`/rentals/${rentalId}`);
   };
 
-  const handleEditRental = (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleEditRental = (rentalId: string) => {
     router.push(`/rentals/${rentalId}/edit`);
   };
 
-  const handleToggleFavorite = async (rentalId: string) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleToggleFavorite = async (rentalId: string) => {
     // Implement favorite toggle
     logger.debug('Toggle favorite for rental', { rentalId });
   };
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Rentals</h1>
-            <p className="text-gray-600">Find equipment, vehicles, and spaces to rent</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        </div>
+        <div className="relative z-10 p-6 space-y-6">
+          {/* Header Skeleton */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+
+          {/* Search and Filters Skeleton */}
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+            <div className="flex gap-4">
+              <div className="flex-1 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-24 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-20 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Rentals Grid Skeleton */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm animate-pulse">
+                <div className="space-y-4">
+                  <div className="h-48 bg-gray-200 rounded-lg"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                  <div className="flex gap-2">
+                    <div className="h-6 bg-gray-200 rounded-full w-16"></div>
+                    <div className="h-6 bg-gray-200 rounded-full w-20"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <ListSkeleton />
       </div>
     );
   }
 
+  // Get featured rental
+  const featuredRental = sortedRentals.length > 0 
+    ? (sortedRentals.find(r => r.isFeatured) || sortedRentals[0])
+    : null;
+  const regularRentals = featuredRental 
+    ? sortedRentals.filter(r => r.id !== featuredRental.id)
+    : sortedRentals;
+
   return (
-    <div className="space-y-6">
-      <Breadcrumbs
-        items={[
-          { label: 'Marketplace', href: '/marketplace' },
-          { label: 'Rentals', href: '/rentals' }
-        ]}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      </div>
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Rentals</h1>
-          <p className="text-gray-600">Find equipment, vehicles, and spaces to rent</p>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Find trusted rentals — equipment, tools, spaces & more
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Verified providers, flexible durations, and LocalPro support for every rental.
+          </p>
+          
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <Search className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search equipment, tools, spaces, provider, or feature"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Feature Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Verified Providers</span>
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <Zap className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Instant Booking</span>
+            </button>
+            <button className="inline-flex items-center gap-2 px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:border-emerald-500 hover:bg-emerald-50 transition-all shadow-sm hover:shadow-md">
+              <Headphones className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-gray-700">Local Support</span>
+            </button>
+            {/* Only show "List Rental" button for providers and admins */}
+            {(isAdmin || isProvider) && (
+              <button
+                onClick={handleCreateRental}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 ml-auto"
+              >
+                <Plus className="w-4 h-4" />
+                List Rental
+              </button>
+            )}
+          </div>
         </div>
-        <Button onClick={handleCreateRental} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          List Rental
-        </Button>
-      </div>
 
-      {/* Compact Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-3">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-blue-600" />
-            <div>
-              <p className="text-xs text-gray-600">Total</p>
-              <p className="text-lg font-bold text-gray-900">{rentals.length}</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-3">
-          <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-xs text-gray-600">Available</p>
-              <p className="text-lg font-bold text-green-600">
-                {rentals.filter(rental => rental.status === 'available').length}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-3">
-          <div className="flex items-center gap-3">
-            <Star className="w-5 h-5 text-yellow-600" />
-            <div>
-              <p className="text-xs text-gray-600">Featured</p>
-              <p className="text-lg font-bold text-yellow-600">
-                {rentals.filter(rental => rental.isFeatured).length}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-3">
-          <div className="flex items-center gap-3">
-            <Filter className="w-5 h-5 text-purple-600" />
-            <div>
-              <p className="text-xs text-gray-600">Categories</p>
-              <p className="text-lg font-bold text-gray-900">
-                {new Set(rentals.map(rental => rental.category)).size}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Main Content with Sidebar */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar Filters */}
-        <div className="w-full lg:w-64 flex-shrink-0">
-          <Card className="p-4">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-gray-900">Filters</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="lg:hidden"
-                >
-                  <Filter className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className={`space-y-4 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+        {/* Main Content Layout */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Sidebar - Filters */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+              {/* Filters Section */}
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Filters</h2>
                 
-                {/* Search */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Search</label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      placeholder="Search rentals..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Location</label>
-                  <Input
-                    placeholder="City, State"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                  />
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Price Range</label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Min"
-                      value={priceRange.min}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                      className="text-sm"
-                    />
-                    <Input
-                      placeholder="Max"
-                      value={priceRange.max}
-                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                      className="text-sm"
-                    />
-                  </div>
-                </div>
-
-                {/* Category */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Category</label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={(value) => setSelectedCategory(value)}
-                    options={categories.map(cat => ({ value: cat, label: cat }))}
-                  />
-                </div>
-
-                {/* Type */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Type</label>
-                  <Select
+                {/* Type Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                  <select
                     value={selectedType}
-                    onValueChange={(value) => setSelectedType(value)}
-                    options={types.map(type => ({ value: type, label: type }))}
-                  />
+                    onChange={(e) => handleFilterChange("type", e.target.value)}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                  >
+                    {types.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Status */}
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Status</label>
-                  <Select
-                    value={selectedStatus}
-                    onValueChange={(value) => setSelectedStatus(value)}
-                    options={statuses.map(status => ({ value: status, label: status }))}
-                  />
-                </div>
-
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1">
-          {/* Sort and Display Controls */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => setSortBy(value)}
-                  options={[
-                    { value: 'createdAt', label: 'Date Created' },
-                    { value: 'name', label: 'Name' },
-                    { value: 'price', label: 'Price' },
-                    { value: 'rating', label: 'Rating' }
-                  ]}
-                  className="w-36"
-                />
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="px-2 py-1 h-8"
-                  title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-                >
-                  {sortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-                  className="px-2 py-1 h-8"
-                  title={`Switch to ${viewMode === 'grid' ? 'List' : 'Grid'} view`}
-                >
-                  {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="text-sm text-gray-500">
-              {sortedRentals.length} rental{sortedRentals.length !== 1 ? 's' : ''} found
-            </div>
-          </div>
-          {/* Rentals List */}
-          {sortedRentals.length === 0 ? (
-            <Card className="p-8 text-center">
-              <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No rentals found</h3>
-              <p className="text-gray-600 mb-4">
-                {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
-                  ? "Try adjusting your filters to see more results."
-                  : "Get started by listing your first rental item."}
-              </p>
-              <Button onClick={handleCreateRental}>
-                List Your First Rental
-              </Button>
-            </Card>
-          ) : (
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" 
-              : "space-y-4"
-            }>
-              {sortedRentals.map((rental) => (
-                <Card key={rental.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="relative">
-                    {rental.images.length > 0 && (
-                      <div className="aspect-video bg-gray-100">
-                        <Image
-                          src={rental.images[0]}
-                          alt={rental.name}
-                          width={400}
-                          height={225}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(rental.status)}`}>
-                        {rental.status}
-                      </span>
-                      {rental.isFeatured && (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                          <Star className="w-3 h-3 inline mr-1" />
-                          Featured
-                        </span>
-                      )}
+                {/* Dates Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Dates</label>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">From</label>
+                      <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
+                      />
                     </div>
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleToggleFavorite(rental.id)}
-                        className={`p-1 ${rental.isFavorited ? 'text-red-500' : 'text-gray-400'}`}
-                      >
-                        <Heart className={`w-4 h-4 ${rental.isFavorited ? 'fill-current' : ''}`} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="p-1 text-gray-400"
-                      >
-                        <Share2 className="w-4 h-4" />
-                      </Button>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">To</label>
+                      <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
+                      />
                     </div>
                   </div>
-                  
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900 line-clamp-1">{rental.name}</h3>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleViewRental(rental.id)}
+                </div>
+
+                {/* Guests Filter */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Guests</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={guests}
+                    onChange={(e) => setGuests(parseInt(e.target.value) || 1)}
+                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white"
+                  />
+                </div>
+              </div>
+
+              {/* Need Help Section */}
+              <div className="pt-6 border-t-2 border-gray-200">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                  <div className="flex items-start gap-3 mb-3">
+                    <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-700">
+                      Contact LocalPro support for rental assistance.
+                    </p>
+                  </div>
+                  <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                    Help center
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+
+            {/* Featured Listing and Regular Listings */}
+            {sortedRentals.length === 0 ? (
+              <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-8 backdrop-blur-sm">
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-orange-500/20">
+                    <Calendar className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">No rentals found</h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status"
+                      ? "Try adjusting your filters to see more results."
+                      : "Get started by listing your first rental item."}
+                  </p>
+                  <div className="flex items-center justify-center gap-3">
+                    {searchQuery || selectedCategory !== "All Categories" || selectedType !== "All Types" || selectedStatus !== "All Status" ? (
+                      <button
+                        onClick={clearFilters}
+                        className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+                      >
+                        Clear Filters
+                      </button>
+                    ) : null}
+                    {(isAdmin || isProvider) && (
+                      <button
+                        onClick={handleCreateRental}
+                        className="px-6 py-3 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md font-medium"
+                      >
+                        List Your First Rental
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Featured Listing */}
+                {featuredRental ? (
+                  <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Regular Listings - Left Side */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {regularRentals.slice(0, 3).map((rental) => (
+                        <Link
+                          key={rental.id}
+                          href={`/rentals/${rental.id}`}
+                          className="group bg-white rounded-xl border-2 border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
                         >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditRental(rental.id)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
+                          <div className="relative">
+                            {rental.images.length > 0 ? (
+                              <div className="aspect-video bg-gray-100 overflow-hidden">
+                                <Image
+                                  src={rental.images[0]}
+                                  alt={rental.name}
+                                  width={400}
+                                  height={225}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                <Building2 className="w-12 h-12 text-gray-400" />
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2">
+                              <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-bold text-gray-900 shadow-md">
+                                {formatPrice(rental.price)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="p-4">
+                            <h3 className="font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                              {rental.name}
+                            </h3>
+                            <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+                              {rental.owner.name} • {rental.specifications.capacity || 'N/A'} • {rental.features.slice(0, 2).join(' • ')}
+                            </p>
+                            <div className="flex items-center gap-1 mb-3">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-sm font-semibold text-gray-700">{rental.rating}</span>
+                            </div>
+                            <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                              Book
+                            </button>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{rental.description}</p>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
-                        {rental.category}
-                      </span>
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                        {rental.type}
-                      </span>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-                        {getConditionColor(rental.specifications.condition)}
-                        {rental.specifications.condition}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-medium">{rental.rating}</span>
-                        <span className="text-sm text-gray-500">({rental.reviewCount})</span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">
-                          ${rental.price}
-                          <span className="text-sm text-gray-500">/{rental.priceUnit}</span>
+
+                    {/* Featured Listing - Right Side */}
+                    <div className="lg:w-96 flex-shrink-0">
+                      <div className="bg-white rounded-xl border-2 border-emerald-300 shadow-xl overflow-hidden relative">
+                        <div className="absolute top-4 left-4 z-10">
+                          <span className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs font-bold shadow-lg">
+                            Featured
+                          </span>
+                        </div>
+                        <div className="relative">
+                          {featuredRental.images.length > 0 ? (
+                            <div className="aspect-[4/3] bg-gray-100 overflow-hidden">
+                              <Image
+                                src={featuredRental.images[0]}
+                                alt={featuredRental.name}
+                                width={400}
+                                height={300}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-[4/3] bg-gradient-to-br from-orange-200 via-yellow-200 to-orange-300 flex items-center justify-center">
+                              <Building2 className="w-16 h-16 text-orange-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            {featuredRental.name}
+                          </h3>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-bold text-emerald-600">
+                              {formatPrice(featuredRental.price)} / {featuredRental.priceUnit}
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="text-sm font-semibold text-gray-700">{featuredRental.rating}</span>
+                            </div>
+                          </div>
+                          <button className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-lg hover:from-orange-600 hover:to-yellow-600 transition-all shadow-lg hover:shadow-xl font-semibold">
+                            Book Now
+                          </button>
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-sm text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{rental.location.city}, {rental.location.state}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4" />
-                        <span>{rental.viewsCount} views</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-3 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-xs font-medium">
-                              {rental.owner.name.charAt(0)}
+                  </div>
+                ) : (
+                  /* All Listings Grid when no featured */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {sortedRentals.map((rental) => (
+                      <Link
+                        key={rental.id}
+                        href={`/rentals/${rental.id}`}
+                        className="group bg-white rounded-xl border-2 border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                      >
+                        <div className="relative">
+                          {rental.images.length > 0 ? (
+                            <div className="aspect-video bg-gray-100 overflow-hidden">
+                              <Image
+                                src={rental.images[0]}
+                                alt={rental.name}
+                                width={400}
+                                height={225}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                              <Building2 className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2">
+                            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-bold text-gray-900 shadow-md">
+                              {formatPrice(rental.price)}
                             </span>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{rental.owner.name}</p>
-                            <p className="text-xs text-gray-500">
-                              {rental.owner.rating} ⭐ ({rental.owner.reviewCount} reviews)
-                            </p>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                            {rental.name}
+                          </h3>
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+                            {rental.owner.name} • {rental.specifications.capacity || 'N/A'} • {rental.features.slice(0, 2).join(' • ')}
+                          </p>
+                          <div className="flex items-center gap-1 mb-3">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span className="text-sm font-semibold text-gray-700">{rental.rating}</span>
+                          </div>
+                          <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                            Book
+                          </button>
+                        </div>
+                        </Link>
+                      ))}
+                  </div>
+                )}
+
+                {/* Additional Listings (only show if featured exists) */}
+                {featuredRental && regularRentals.length > 3 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {regularRentals.slice(3).map((rental) => (
+                      <Link
+                        key={rental.id}
+                        href={`/rentals/${rental.id}`}
+                        className="group bg-white rounded-xl border-2 border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                      >
+                        <div className="relative">
+                          {rental.images.length > 0 ? (
+                            <div className="aspect-video bg-gray-100 overflow-hidden">
+                              <Image
+                                src={rental.images[0]}
+                                alt={rental.name}
+                                width={400}
+                                height={225}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                              <Building2 className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute top-2 right-2">
+                            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-sm font-bold text-gray-900 shadow-md">
+                              {formatPrice(rental.price)}
+                            </span>
                           </div>
                         </div>
-                        <Button
-                          size="sm"
-                          onClick={() => handleViewRental(rental.id)}
-                        >
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
+                        <div className="p-4">
+                          <h3 className="font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                            {rental.name}
+                          </h3>
+                          <p className="text-xs text-gray-600 mb-2 line-clamp-1">
+                            {rental.owner.name} • {rental.specifications.capacity || 'N/A'} • {rental.features.slice(0, 2).join(' • ')}
+                          </p>
+                          <div className="flex items-center gap-1 mb-3">
+                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                            <span className="text-sm font-semibold text-gray-700">{rental.rating}</span>
+                          </div>
+                          <button className="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md font-medium text-sm">
+                            Book
+                          </button>
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                </Card>
-              ))}
-            </div>
-          )}
+                )}
+
+                {/* Map Placeholder */}
+                <div className="bg-gray-200 rounded-xl border-2 border-gray-300 h-96 flex items-center justify-center">
+                  <div className="text-center">
+                    <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-500 font-medium">Map (placeholder)</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -32,6 +32,8 @@ import { Select } from "@/components/ui/select";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
 
 export interface Supply {
   id: string;
@@ -157,6 +159,7 @@ export default function MySuppliesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
 
   useEffect(() => {
     const fetchMySupplies = async () => {
@@ -731,10 +734,10 @@ export default function MySuppliesPage() {
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-gray-900">
-                          ${supply.price}
+                          {formatCurrency(supply.price, 'PHP', { appSettings })}
                           {supply.originalPrice && (
                             <span className="text-sm text-gray-500 line-through ml-1">
-                              ${supply.originalPrice}
+                              {formatCurrency(supply.originalPrice, 'PHP', { appSettings })}
                             </span>
                           )}
                         </div>

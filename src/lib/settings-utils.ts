@@ -63,7 +63,7 @@ export function getDefaultCurrency(appSettings: AppSettings | null): string {
  * Get supported currencies from app settings
  */
 export function getSupportedCurrencies(appSettings: AppSettings | null): string[] {
-  return appSettings?.payments?.supportedCurrencies || ["PHP", "USD", "EUR", "GBP", "JPY", "KRW", "CNY"];
+  return appSettings?.payments?.supportedCurrencies || ["PHP"];
 }
 
 /**

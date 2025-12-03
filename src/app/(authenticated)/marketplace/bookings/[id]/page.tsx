@@ -26,7 +26,7 @@ import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getDefaultCurrency } from "@/lib/settings-utils";
-import { formatCurrency as formatCurrencyUtil, CURRENCY_CONFIGS } from "@/lib/currency-utils";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 import { useRoleAccess } from "@/components/role-guard";
 import { CommunicationAPI } from "@/lib/communication-utils";
 
@@ -180,43 +180,11 @@ export default function BookingDetailPage() {
   };
 
   const formatPrice = useCallback((price: number, currency?: string) => {
-    // Normalize currency to ensure it's a currency code (not symbol)
-    const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-      if (!currency) return getDefaultCurrency(appSettings);
-      
-      // If it's already a valid currency code, return it
-      if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-        return currency.toUpperCase();
-      }
-      
-      // Map currency symbols to codes
-      const symbolToCode: Record<string, string> = {
-        '₱': 'PHP',
-        '$': 'USD',
-        '€': 'EUR',
-        '£': 'GBP',
-        '¥': 'JPY',
-        'A$': 'AUD',
-        'C$': 'CAD',
-        'S$': 'SGD',
-        '±': 'PHP', // Fallback for unrecognized symbols
-      };
-      
-      // Check if it's a symbol
-      const normalized = currency.trim();
-      if (symbolToCode[normalized]) {
-        return symbolToCode[normalized];
-      }
-      
-      // Try to find by symbol in configs
-      for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-        if (config.symbol === normalized) {
-          return code;
-        }
-      }
-      
-      // Default to app settings currency
-      return getDefaultCurrency(appSettings);
+    // Normalize currency to PHP only
+    const normalizeCurrencyCode = (_currency: string | undefined | null): string => {
+      // Mark param as intentionally unused and always return PHP
+      void _currency;
+      return 'PHP';
     };
     
     // Priority: 1. Provided currency, 2. Booking pricing currency, 3. Service pricing currency, 4. App settings default
@@ -293,42 +261,10 @@ export default function BookingDetailPage() {
       const servicePrice = booking.service?.price || booking.pricing?.basePrice || 0;
       const platformFee = totalAmount - servicePrice;
       
-      // Normalize currency to ensure it's a currency code (not symbol)
+      // Normalize currency to PHP only
       const normalizeCurrencyCode = (currency: string | undefined | null): string => {
-        if (!currency) return getDefaultCurrency(appSettings);
-        
-        // If it's already a valid currency code, return it
-        if (CURRENCY_CONFIGS[currency.toUpperCase()]) {
-          return currency.toUpperCase();
-        }
-        
-        // Map currency symbols to codes
-        const symbolToCode: Record<string, string> = {
-          '₱': 'PHP',
-          '$': 'USD',
-          '€': 'EUR',
-          '£': 'GBP',
-          '¥': 'JPY',
-          'A$': 'AUD',
-          'C$': 'CAD',
-          'S$': 'SGD',
-        };
-        
-        // Check if it's a symbol
-        const normalized = currency.trim();
-        if (symbolToCode[normalized]) {
-          return symbolToCode[normalized];
-        }
-        
-        // Try to find by symbol in configs
-        for (const [code, config] of Object.entries(CURRENCY_CONFIGS)) {
-          if (config.symbol === normalized) {
-            return code;
-          }
-        }
-        
-        // Default to app settings currency
-        return getDefaultCurrency(appSettings);
+        void currency;
+        return 'PHP';
       };
       
       const rawCurrency = booking.pricing?.currency || booking.service?.pricing?.currency;
@@ -625,7 +561,7 @@ export default function BookingDetailPage() {
       logger.error('Error generating PDF receipt', error instanceof Error ? error : new Error(String(error)), { bookingId: booking._id || booking.id });
       alert('Failed to generate PDF. Please ensure jspdf is installed: npm install jspdf');
     }
-  }, [booking, params.id, appSettings, formatPrice, formatTime]);
+  }, [booking, params.id, formatPrice, formatTime]);
 
   const handleViewService = useCallback(() => {
     if (!booking) return;

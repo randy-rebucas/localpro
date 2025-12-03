@@ -9,7 +9,6 @@ import {
   Upload,
   X,
   Plus,
-  DollarSign,
   Clock,
   Calendar,
   MapPin,
@@ -22,6 +21,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface Job {
   id: string;
@@ -74,6 +76,7 @@ interface JobForm {
 export default function EditJobPage() {
   const params = useParams();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   const [job, setJob] = useState<Job | null>(null);
   const [form, setForm] = useState<JobForm>({
     title: "",
@@ -305,7 +308,7 @@ export default function EditJobPage() {
         throw new Error("Failed to update job");
       }
 
-      router.push(`/marketplace/jobs/${params.id}`);
+      router.push(`/jobs/${params.id}`);
     } catch (error) {
       logger.error("Error updating job", error instanceof Error ? error : new Error(String(error)), { jobId: params.id });
       setError("Failed to update job. Please try again.");
@@ -329,7 +332,7 @@ export default function EditJobPage() {
         <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
         <p className="text-gray-600 mb-6">{error}</p>
         <Link
-          href="/marketplace/jobs"
+          href="/jobs"
           className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
           Back to Jobs
@@ -343,7 +346,7 @@ export default function EditJobPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href={`/marketplace/jobs/${params.id}`}
+          href={`/jobs/${params.id}`}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -400,7 +403,7 @@ export default function EditJobPage() {
 
                 <div>
                   <Input
-                    label="Budget (USD) *"
+                    label={`Budget (${getDefaultCurrency(appSettings)}) *`}
                     type="number"
                     required
                     min="0"
@@ -408,7 +411,7 @@ export default function EditJobPage() {
                     value={form.budget}
                     onChange={(e) => handleInputChange("budget", Number(e.target.value))}
                     placeholder="0.00"
-                    leftIcon={<DollarSign />}
+                    leftIcon={<span className="text-gray-500 font-semibold">₱</span>}
                   />
                 </div>
 
@@ -732,8 +735,8 @@ export default function EditJobPage() {
                       {form.isRemote ? "Remote" : `${form.location.city || "City"}, ${form.location.state || "State"}`}
                     </span>
                     <span className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      {form.budget ? `$${form.budget.toLocaleString()}` : "Budget"}
+                      <span className="text-gray-600 font-semibold">₱</span>
+                      {form.budget ? formatCurrency(form.budget, getDefaultCurrency(appSettings), { appSettings }) : "Budget"}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -773,7 +776,7 @@ export default function EditJobPage() {
             {/* Submit Button */}
             <div className="flex justify-end gap-4">
               <Link
-                href={`/marketplace/jobs/${params.id}`}
+                href={`/jobs/${params.id}`}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
