@@ -14,7 +14,6 @@ import {
 import toast from "react-hot-toast";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { VerificationCodeInput } from "@/components/ui/verification-code-input";
-import Image from "next/image";
 import { phoneFormatter } from "@/lib/phone-formatter";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { makeClientPublicRequest } from "@/lib/client-api-utils";
@@ -404,35 +403,23 @@ function SignInForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8" role="main" aria-label="Authentication form">
-        {/* Header with enhanced design */}
-        <div className={`transition-all duration-500 ${isAnimating ? 'scale-105' : 'scale-100'}`}>
-          <div className="flex justify-center">
-            <Image
-              src="/logo-only.svg"
-              alt="LocalPro logo"
-              width={80}
-              height={80}
-              priority
-              className="rounded-md object-contain"
-              unoptimized
-            />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            Welcome to LocalPro
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {step === "phone"
-              ? "Enter your phone number to get started"
-              : "Enter the verification code sent to your phone"
-            }
-          </p>
-        </div>
+    <div className="w-full space-y-6" role="main" aria-label="Authentication form">
+      {/* Header */}
+      <div className={`transition-all duration-500 ${isAnimating ? 'scale-105' : 'scale-100'}`}>
+        <h2 className="text-center text-2xl font-bold text-white">
+          Welcome Back
+        </h2>
+        <p className="mt-2 text-center text-sm text-slate-400">
+          {step === "phone"
+            ? "Enter your phone number to get started"
+            : "Enter the verification code sent to your phone"
+          }
+        </p>
+      </div>
 
         {step === "phone" ? (
           <div className={`transition-all duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <form className="mt-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
                 <div>
                   <PhoneInput
@@ -447,10 +434,9 @@ function SignInForm() {
                       clearErrors();
                     }}
                     error={phoneErrors.phone?.message || errors.phone}
-                    className="text-lg"
                     autoComplete="tel"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-slate-500">
                     We&apos;ll send you a verification code via SMS
                   </p>
                 </div>
@@ -460,7 +446,7 @@ function SignInForm() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="group relative w-full flex justify-center items-center py-3.5 px-6 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200"
                 >
                   {isLoading ? (
                     <>
@@ -479,23 +465,23 @@ function SignInForm() {
           </div>
         ) : (
           <div className={`transition-all duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
-            <div className="mt-8 space-y-6">
+            <div className="mt-6 space-y-6">
               {/* Phone number confirmation */}
-              <div className="text-center bg-green-50 rounded-xl p-4 border border-green-200">
+              <div className="text-center bg-emerald-500/10 rounded-xl p-4 border border-emerald-500/20">
                 <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                  <p className="text-sm font-medium text-green-800">Code sent successfully!</p>
+                  <CheckCircle className="w-5 h-5 text-emerald-400 mr-2" />
+                  <p className="text-sm font-medium text-emerald-400">Code sent successfully!</p>
                 </div>
-                <p className="text-sm text-gray-600 mb-1">
+                <p className="text-sm text-slate-400 mb-1">
                   We&apos;ve sent a verification code to:
                 </p>
-                <p className="font-semibold text-gray-800">{phoneNumber}</p>
+                <p className="font-semibold text-white">{phoneNumber}</p>
               </div>
 
               {/* Verification code input */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+                  <label className="block text-sm font-medium text-slate-300 mb-3 text-center">
                     Verification Code
                   </label>
                   <VerificationCodeInput
@@ -514,7 +500,7 @@ function SignInForm() {
                     disabled={isLoading}
                     length={6}
                   />
-                  <p className="mt-3 text-xs text-gray-500 text-center">
+                  <p className="mt-3 text-xs text-slate-500 text-center">
                     Enter the 6-digit code from your SMS message
                   </p>
                 </div>
@@ -530,7 +516,7 @@ function SignInForm() {
                     setVerificationCode("");
                     setErrors({});
                   }}
-                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all duration-200"
+                  className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 rounded-xl hover:bg-slate-800 hover:text-white focus:outline-none focus:ring-2 focus:ring-slate-600 transition-all duration-200"
                 >
                   Back
                 </button>
@@ -538,7 +524,7 @@ function SignInForm() {
                   type="button"
                   onClick={verifyAndSignIn}
                   disabled={isLoading || verificationCode.length !== 6}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-200"
                 >
                   {isLoading ? (
                     <>
@@ -561,20 +547,18 @@ function SignInForm() {
                       sendVerificationCode(phoneNumber);
                     }}
                     disabled={isLoading || countdown > 0}
-                    className="text-sm text-green-600 hover:text-green-500 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="text-sm text-emerald-400 hover:text-emerald-300 disabled:text-slate-600 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {countdown > 0 ? `Resend in ${countdown}s` : "Resend Code"}
                   </button>
                   {countdown > 0 && (
-                    <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                   )}
                 </div>
               </div>
             </div>
           </div>
         )}
-
-      </div>
     </div>
   );
 }
@@ -582,14 +566,14 @@ function SignInForm() {
 export default function SignIn() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50">
+      <div className="w-full flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Shield className="text-white w-10 h-10" />
+          <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/25">
+            <Shield className="text-white w-8 h-8" />
           </div>
           <div className="flex items-center justify-center space-x-2">
-            <Loader2 className="w-5 h-5 animate-spin text-green-600" />
-            <p className="text-gray-600 font-medium">Loading...</p>
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+            <p className="text-slate-400 font-medium">Loading...</p>
           </div>
         </div>
       </div>

@@ -131,7 +131,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-slate-300">
           {label}
         </label>
       )}
@@ -139,8 +139,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           {isDetectingCountry ? (
-            <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-          ) : leftIcon || <Phone className="w-5 h-5 text-gray-400" />}
+            <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
+          ) : leftIcon || <Phone className="w-5 h-5 text-slate-500" />}
         </div>
         
         <input
@@ -156,12 +156,13 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           autoComplete={autoComplete}
           className={`
             block w-full pl-10 pr-10 py-3 border rounded-xl text-lg
-            focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent
-            disabled:bg-gray-50 disabled:cursor-not-allowed
+            bg-slate-800 !text-white placeholder:text-slate-500
+            focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent
+            disabled:bg-slate-900 disabled:text-slate-500 disabled:cursor-not-allowed
             transition-all duration-200
             ${error 
-              ? 'border-red-300 focus:ring-red-500' 
-              : 'border-gray-300 focus:border-green-500'
+              ? 'border-red-500/50 focus:ring-red-500' 
+              : 'border-slate-700 focus:border-emerald-500'
             }
             ${className}
           `}
@@ -174,7 +175,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCountryInfo(!showCountryInfo)}
-                className="flex items-center space-x-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                className="flex items-center space-x-1 text-xs text-slate-400 hover:text-emerald-400 transition-colors"
                 title={`Detected: ${detectedCountry.name}`}
               >
                 <Globe className="w-4 h-4" />
@@ -187,15 +188,15 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {/* Country info tooltip */}
       {showCountryInfo && detectedCountry && (
-        <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+        <div className="absolute z-10 mt-1 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-3">
           <div className="flex items-center space-x-2">
-            <Globe className="w-4 h-4 text-green-600" />
+            <Globe className="w-4 h-4 text-emerald-400" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{detectedCountry.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-medium text-white">{detectedCountry.name}</p>
+              <p className="text-xs text-slate-400">
                 Format: {detectedCountry.format}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-400">
                 Example: {detectedCountry.example}
               </p>
             </div>
@@ -205,14 +206,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {/* Error message */}
       {error && (
-        <p className="text-sm text-red-600 flex items-center space-x-1">
+        <p className="text-sm text-red-400 flex items-center space-x-1">
           <span>⚠</span>
           <span>{error}</span>
         </p>
       )}
       
       {/* Helper text */}
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-slate-500">
         {detectedCountry 
           ? `Enter your number without spaces - we'll format it for ${detectedCountry.name}`
           : "Enter your number without spaces - we'll automatically detect your country and format it"

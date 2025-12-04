@@ -127,14 +127,14 @@ export function VerificationCodeInput({
             onKeyDown={(e) => handleKeyDown(index, e)}
             onPaste={handlePaste}
             disabled={disabled}
-            className="w-12 h-12 text-center text-2xl font-mono border-2 focus:border-green-500 focus:ring-2 focus:ring-green-200"
+            className="w-12 h-12 text-center text-2xl font-mono border-2 bg-slate-800 !text-white border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 placeholder:text-slate-500"
             maxLength={1}
             autoComplete="one-time-code"
           />
         ))}
       </div>
       {error && (
-        <p className="text-sm text-red-600 text-center">{error}</p>
+        <p className="text-sm text-red-400 text-center">{error}</p>
       )}
     </div>
   );

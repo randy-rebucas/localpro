@@ -321,13 +321,14 @@ export function isExpiredTokenResponse(response: Response): boolean {
 
 /**
  * Enhanced authenticated request with automatic token expiry handling
- * Supports query parameters via options.query (custom extension to RequestInit)
+ * Supports query parameters via options.query and path parameters via options.pathParams
+ * Path params replace placeholders like [id] or [sessionId] in the endpoint URL
  */
 export async function makeClientAuthenticatedRequestWithEndpointSafe(
   endpoint: keyof typeof API_ENDPOINTS,
-  options: RequestInit & { query?: Record<string, string> } = {}
+  options: RequestInit & { query?: Record<string, string>; pathParams?: Record<string, string> } = {}
 ): Promise<Response> {
-  const { query, ...fetchOptions } = options;
+  const { query, pathParams, ...fetchOptions } = options;
   
   // Validate API_BASE_URL
   if (!API_BASE_URL || typeof API_BASE_URL !== 'string' || API_BASE_URL.trim() === '') {
@@ -341,8 +342,16 @@ export async function makeClientAuthenticatedRequestWithEndpointSafe(
     throw new Error(`Invalid API endpoint: ${String(endpoint)}`);
   }
   
+  // Build URL with path parameters replaced (e.g., [sessionId] -> actual value)
+  let endpointPath: string = API_ENDPOINTS[endpoint];
+  if (pathParams && Object.keys(pathParams).length > 0) {
+    Object.entries(pathParams).forEach(([key, value]) => {
+      endpointPath = endpointPath.replace(`[${key}]`, encodeURIComponent(value));
+    });
+  }
+  
   // Build URL with query parameters if provided
-  let url = `${API_BASE_URL}${API_ENDPOINTS[endpoint]}`;
+  let url = `${API_BASE_URL}${endpointPath}`;
   if (query && Object.keys(query).length > 0) {
     const queryString = new URLSearchParams(query).toString();
     url += `?${queryString}`;

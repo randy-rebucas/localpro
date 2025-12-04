@@ -20,14 +20,12 @@ import {
   AlertCircle,
   Loader2,
   Download,
-  Image as ImageIcon,
   File,
   ExternalLink,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { makeClientAuthenticatedRequestWithEndpointSafe } from "@/lib/client-api-utils";
-import { API_ENDPOINTS } from "@/lib/api";
 import { liveChatWS } from "@/components/live-chat/live-chat-api";
 import * as DemoBridge from "@/components/live-chat/demo-bridge";
 import type { ChatAttachment } from "@/components/live-chat";
@@ -295,6 +293,10 @@ function ChatMessageBubble({ message, userName }: { message: ChatMessage; userNa
     );
   }
 
+  // Separate image and non-image attachments
+  const imageAttachments = message.attachments?.filter(att => att.type.startsWith("image/")) || [];
+  const fileAttachments = message.attachments?.filter(att => !att.type.startsWith("image/")) || [];
+
   return (
     <div className={`flex gap-2 ${isUser ? "flex-row" : "flex-row-reverse"} mb-3`}>
       <div
@@ -318,25 +320,61 @@ function ChatMessageBubble({ message, userName }: { message: ChatMessage; userNa
             isUser ? "bg-emerald-100 text-gray-800" : "bg-blue-100 text-gray-800"
           }`}
         >
-          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-          {message.attachments && message.attachments.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {message.attachments.map((att) => (
+          {message.content && (
+            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+          )}
+          
+          {/* Image Attachments - Show as thumbnails */}
+          {imageAttachments.length > 0 && (
+            <div className={`${message.content ? "mt-2" : ""} grid gap-2 ${imageAttachments.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+              {imageAttachments.map((att) => (
                 <a
                   key={att.id}
                   href={att.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 p-1.5 bg-white/50 rounded text-xs hover:bg-white transition-colors"
+                  className="group relative block rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors"
                 >
-                  {att.type.startsWith("image/") ? (
-                    <ImageIcon className="w-3 h-3" />
-                  ) : (
-                    <File className="w-3 h-3" />
-                  )}
-                  <span className="truncate flex-1">{att.name}</span>
-                  <span className="text-gray-400">{formatFileSize(att.size)}</span>
-                  <Download className="w-3 h-3" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={att.url}
+                    alt={att.name}
+                    className="w-full h-auto max-h-48 object-cover"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full p-2">
+                      <ExternalLink className="w-4 h-4 text-gray-700" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                    <p className="text-xs text-white truncate">{att.name}</p>
+                    <p className="text-xs text-white/70">{formatFileSize(att.size)}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
+          
+          {/* File Attachments - Show as list */}
+          {fileAttachments.length > 0 && (
+            <div className={`${message.content || imageAttachments.length > 0 ? "mt-2" : ""} space-y-1`}>
+              {fileAttachments.map((att) => (
+                <a
+                  key={att.id}
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 p-2 bg-white/50 rounded-lg text-xs hover:bg-white transition-colors border border-gray-200"
+                >
+                  <div className="p-1.5 bg-gray-100 rounded">
+                    <File className="w-4 h-4 text-gray-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-700 truncate">{att.name}</p>
+                    <p className="text-gray-400">{formatFileSize(att.size)}</p>
+                  </div>
+                  <Download className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </a>
               ))}
             </div>
@@ -935,17 +973,14 @@ export default function AdminLiveChat() {
   const fetchSessionMessages = useCallback(async (sessionId: string) => {
     setLoadingMessages(true);
     try {
-      // Build URL with sessionId
-      const endpoint = API_ENDPOINTS.adminLiveChatSessionById.replace("[sessionId]", sessionId);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${endpoint}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          // Auth headers would be added by auth interceptor in production
-        },
-        credentials: "include",
-      });
+      // Use the authenticated request helper with sessionId in the path
+      const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+        "adminLiveChatSessionById",
+        {
+          method: "GET",
+          pathParams: { sessionId },
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: Failed to fetch session details`);
@@ -961,6 +996,7 @@ export default function AdminLiveChat() {
           type: (m.type as string) as ChatMessage["type"],
         }));
         setSessionMessages(mappedMessages);
+        setUseMockData(false);
         
         // Update selected session with full details
         if (result.data.session) {
@@ -976,27 +1012,12 @@ export default function AdminLiveChat() {
               : prev
           );
         }
-      } else if (useMockData) {
-        // Check demo bridge for real messages first
-        const demoBridgeMessages = DemoBridge.getMessages(sessionId);
-        if (demoBridgeMessages.length > 0) {
-          const mappedMessages: ChatMessage[] = demoBridgeMessages.map((m) => ({
-            _id: m._id,
-            type: m.type,
-            content: m.content,
-            agentName: m.agentName,
-            createdAt: m.createdAt,
-            attachments: m.attachments,
-          }));
-          setSessionMessages(mappedMessages);
-        } else {
-          // Fall back to mock messages for demo sessions
-          setSessionMessages(mockMessages);
-        }
+      } else {
+        throw new Error(result.message || "Failed to load messages");
       }
     } catch (err) {
       console.debug("[Admin LiveChat] Error fetching messages, using demo bridge:", err);
-      // Check demo bridge for real messages
+      // Check demo bridge for real messages first
       const demoBridgeMessages = DemoBridge.getMessages(sessionId);
       if (demoBridgeMessages.length > 0) {
         const mappedMessages: ChatMessage[] = demoBridgeMessages.map((m) => ({
@@ -1009,7 +1030,11 @@ export default function AdminLiveChat() {
         }));
         setSessionMessages(mappedMessages);
       } else if (useMockData) {
+        // Fall back to mock messages for demo sessions
         setSessionMessages(mockMessages);
+      } else {
+        // API failed but not in mock mode - show empty with error
+        setSessionMessages([]);
       }
     } finally {
       setLoadingMessages(false);
@@ -1097,13 +1122,15 @@ export default function AdminLiveChat() {
       if (!useMockData) {
         // Also try to send via API
         try {
-          const endpoint = API_ENDPOINTS.adminLiveChatReply.replace("[sessionId]", selectedSession.sessionId);
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${endpoint}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ content }),
-          });
+          const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+            "adminLiveChatReply",
+            {
+              method: "POST",
+              pathParams: { sessionId: selectedSession.sessionId },
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content }),
+            }
+          );
           
           const result = await response.json();
           if (result.success) {
@@ -1134,13 +1161,15 @@ export default function AdminLiveChat() {
         );
       } else {
         // Use adminLiveChatStatus endpoint
-        const endpoint = API_ENDPOINTS.adminLiveChatStatus.replace("[sessionId]", selectedSession.sessionId);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${endpoint}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ status }),
-        });
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          "adminLiveChatStatus",
+          {
+            method: "PATCH",
+            pathParams: { sessionId: selectedSession.sessionId },
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          }
+        );
         
         const result = await response.json();
         if (result.success) {
@@ -1170,13 +1199,15 @@ export default function AdminLiveChat() {
         );
       } else {
         // Use adminLiveChatNotes endpoint
-        const endpoint = API_ENDPOINTS.adminLiveChatNotes.replace("[sessionId]", selectedSession.sessionId);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ content: note }),
-        });
+        const response = await makeClientAuthenticatedRequestWithEndpointSafe(
+          "adminLiveChatNotes",
+          {
+            method: "POST",
+            pathParams: { sessionId: selectedSession.sessionId },
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: note }),
+          }
+        );
         
         const result = await response.json();
         if (result.success) {
