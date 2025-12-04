@@ -45,7 +45,9 @@ import {
   ChevronRight,
   Quote,
   MapPin,
-  Phone
+  Phone,
+  Facebook,
+  Linkedin
 } from "lucide-react";
 
 function HomeContent() {
@@ -279,7 +281,7 @@ function HomeContent() {
                     <Button
                       variant="outline"
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center space-x-2 border-slate-700 text-slate-300 hover:bg-slate-800"
+                      className="flex items-center space-x-2 border-slate-700"
                     >
                       <User className="w-4 h-4" />
                       <span>Account</span>
@@ -305,12 +307,12 @@ function HomeContent() {
                 ) : (
                   <>
                     <Link href="/auth">
-                      <Button variant="outline" size="sm" className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400 font-semibold">
+                      <Button size="sm" className="bg-transparent text-white border border-slate-600 hover:bg-slate-800 font-semibold rounded-full px-5">
                         Sign In
                       </Button>
                     </Link>
                     <Link href="/auth">
-                      <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/30">
+                      <Button size="sm" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold shadow-lg shadow-emerald-500/30 rounded-full px-5">
                         Get Started
                       </Button>
                     </Link>
@@ -358,10 +360,10 @@ function HomeContent() {
                       </>
                     ) : (
                       <>
-                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium text-emerald-400 hover:text-emerald-300 hover:bg-slate-800">
+                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium text-slate-300 hover:text-emerald-400 hover:bg-slate-800">
                           Sign In
                         </Link>
-                        <Link href="/auth" className="block px-4 py-3 rounded-lg text-base font-bold bg-emerald-500 text-slate-950 text-center hover:bg-emerald-400">
+                        <Link href="/auth" className="block px-4 py-3 rounded-full text-base font-bold bg-emerald-500 text-white text-center hover:bg-emerald-600 shadow-lg shadow-emerald-500/30">
                           Get Started
                         </Link>
                       </>
@@ -406,14 +408,14 @@ function HomeContent() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
                   <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
+                    <Button size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-emerald-500/30 group">
                       <Rocket className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
                       {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="outline" size="lg" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 font-semibold px-8 py-6 text-lg rounded-xl group">
+                    <Button size="lg" className="bg-slate-900 text-white hover:bg-slate-800 font-bold px-8 py-6 text-lg rounded-full border border-slate-600 group">
                       <Play className="mr-2 w-5 h-5" />
                       Learn More
                     </Button>
@@ -492,7 +494,8 @@ function HomeContent() {
                   </div>
 
                   <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl group">
+                    <Button size="lg" className="bg-slate-950 text-white hover:bg-slate-800 font-bold px-8 py-4 rounded-xl shadow-2xl border-2 border-slate-950 group">
+                      <Sparkles className="mr-2 w-5 h-5 text-amber-400" />
                       {currentContent.cta}
                       <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Button>
@@ -628,14 +631,14 @@ function HomeContent() {
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href={isAuthenticated ? "/plus" : "/auth"}>
-                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-8 py-6 text-lg rounded-xl shadow-xl group">
+                  <Button size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-emerald-500/30 group">
                     <Sparkles className="mr-2 w-5 h-5" />
                     Explore Plans
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <Link href="/about">
-                  <Button variant="outline" size="lg" className="border-white/50 bg-white/10 text-white hover:bg-white/20 hover:border-white font-semibold px-8 py-6 text-lg rounded-xl">
+                  <Button size="lg" className="bg-slate-900 text-white hover:bg-slate-800 font-bold px-8 py-6 text-lg rounded-full border border-slate-600">
                     Compare Features
                   </Button>
                 </Link>
@@ -654,7 +657,7 @@ function HomeContent() {
                 Create your free account today.
               </p>
               <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-10 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
+                <Button size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-10 py-6 text-lg rounded-full shadow-2xl shadow-emerald-500/30 group">
                   <Rocket className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
                   {isAuthenticated ? "Go to Dashboard" : "Create Free Account"}
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -677,11 +680,12 @@ function HomeContent() {
                   Your all-in-one platform for professional services, supplies, education, and business growth.
                 </p>
                 <div className="flex space-x-4">
-                  {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
-                    <a key={social} href="#" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
-                      <Globe className="w-5 h-5" />
-                    </a>
-                  ))}
+                  <a href="https://www.facebook.com/localproasia" target="_blank" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                    <Facebook className="w-5 h-5" />
+                  </a>
+                  <a href="https://www.linkedin.com/company/107116413/admin/dashboard/" target="_blank" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                    <Linkedin className="w-5 h-5" />
+                  </a>
                 </div>
               </div>
               
