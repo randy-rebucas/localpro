@@ -131,6 +131,7 @@ export const metadata: Metadata = {
     // yahoo: 'your-yahoo-verification',
     other: {
       'facebook-domain-verification': process.env.NEXT_PUBLIC_FACEBOOK_DOMAIN_VERIFICATION || '',
+      'msvalidate.01': process.env.NEXT_PUBLIC_BING_WEBSITE_VERIFICATION || '', // Bing Webmaster verification
     },
   },
   
