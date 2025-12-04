@@ -29,7 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.460.0",
-    "next": "15.5.5",
+    "next": "15.5.7",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.53.0",
@@ -50,7 +50,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.5",
+    "eslint-config-next": "15.5.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
