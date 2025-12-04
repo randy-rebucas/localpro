@@ -221,9 +221,9 @@ export default function HeaderPage() {
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                   {greeting}, {getUserDisplayName()}! 👋
-                </h2>
+                </h1>
                 <p className="text-gray-600 text-lg">
                   {formatDate(currentTime)} • {formatTime(currentTime)}
                 </p>
