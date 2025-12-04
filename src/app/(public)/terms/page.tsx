@@ -1,3 +1,5 @@
+"use client";
+
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
 import { 
@@ -20,7 +22,8 @@ export default function TermsOfService() {
   const sections = [
     {
       title: "Acceptance of Terms",
-      icon: <CheckCircle className="w-6 h-6" />,
+      icon: <CheckCircle className="w-5 h-5" />,
+      color: "from-emerald-500 to-teal-600",
       content: [
         "By accessing or using LocalPro, you agree to be bound by these Terms of Service",
         "If you do not agree to these terms, you may not use our services",
@@ -31,7 +34,8 @@ export default function TermsOfService() {
     },
     {
       title: "Description of Service",
-      icon: <Globe className="w-6 h-6" />,
+      icon: <Globe className="w-5 h-5" />,
+      color: "from-blue-500 to-indigo-600",
       content: [
         "LocalPro is a platform connecting service providers with customers",
         "We provide marketplace, academy, financial, and other professional services",
@@ -42,7 +46,8 @@ export default function TermsOfService() {
     },
     {
       title: "User Accounts",
-      icon: <Users className="w-6 h-6" />,
+      icon: <Users className="w-5 h-5" />,
+      color: "from-purple-500 to-pink-600",
       content: [
         "You must create an account to use most features of our platform",
         "You are responsible for maintaining the security of your account",
@@ -53,7 +58,8 @@ export default function TermsOfService() {
     },
     {
       title: "Service Provider Obligations",
-      icon: <Shield className="w-6 h-6" />,
+      icon: <Shield className="w-5 h-5" />,
+      color: "from-amber-500 to-orange-600",
       content: [
         "Service providers must provide accurate information about their services",
         "All services must be performed professionally and in accordance with applicable laws",
@@ -63,19 +69,9 @@ export default function TermsOfService() {
       ]
     },
     {
-      title: "Customer Obligations",
-      icon: <Users className="w-6 h-6" />,
-      content: [
-        "Customers must provide accurate information when requesting services",
-        "Customers must pay for services as agreed upon",
-        "Customers must treat service providers with respect and professionalism",
-        "Customers must provide access to work areas as needed",
-        "Customers must provide feedback and ratings in good faith"
-      ]
-    },
-    {
       title: "Payment Terms",
-      icon: <CreditCard className="w-6 h-6" />,
+      icon: <CreditCard className="w-5 h-5" />,
+      color: "from-rose-500 to-red-600",
       content: [
         "All payments are processed securely through our payment partners",
         "Service providers receive payment minus our platform fees",
@@ -86,7 +82,8 @@ export default function TermsOfService() {
     },
     {
       title: "Prohibited Activities",
-      icon: <AlertTriangle className="w-6 h-6" />,
+      icon: <AlertTriangle className="w-5 h-5" />,
+      color: "from-cyan-500 to-blue-600",
       content: [
         "You may not use our platform for illegal activities",
         "You may not harass, abuse, or harm other users",
@@ -97,7 +94,8 @@ export default function TermsOfService() {
     },
     {
       title: "Intellectual Property",
-      icon: <FileText className="w-6 h-6" />,
+      icon: <FileText className="w-5 h-5" />,
+      color: "from-emerald-500 to-teal-600",
       content: [
         "LocalPro owns all rights to our platform, software, and content",
         "Users retain ownership of their own content and intellectual property",
@@ -108,24 +106,14 @@ export default function TermsOfService() {
     },
     {
       title: "Limitation of Liability",
-      icon: <Scale className="w-6 h-6" />,
+      icon: <Scale className="w-5 h-5" />,
+      color: "from-blue-500 to-indigo-600",
       content: [
         "LocalPro is not liable for the quality of services provided by third parties",
         "Our liability is limited to the amount you paid for our services",
         "We are not responsible for indirect, incidental, or consequential damages",
         "We do not guarantee the availability or accuracy of our platform",
         "Some jurisdictions may not allow limitation of liability"
-      ]
-    },
-    {
-      title: "Termination",
-      icon: <AlertTriangle className="w-6 h-6" />,
-      content: [
-        "Either party may terminate this agreement at any time",
-        "We may suspend or terminate accounts for violations of these terms",
-        "Upon termination, your right to use our services ceases immediately",
-        "We may retain certain information as required by law",
-        "Termination does not relieve you of obligations incurred before termination"
       ]
     }
   ];
@@ -145,7 +133,7 @@ export default function TermsOfService() {
     },
     {
       title: "Governing Law",
-      description: "These terms are governed by the laws of the State of California"
+      description: "These terms are governed by the laws of the Republic of the Philippines"
     }
   ];
 
@@ -156,199 +144,176 @@ export default function TermsOfService() {
         title="Terms of Service"
         subtitle="Please read these terms carefully before using our platform"
         highlightText="Terms"
-        gradientFrom="from-[#1A5276]"
-        gradientTo="to-[#34A853]"
+        badge="Legal Agreement"
       >
-        <div className="flex items-center justify-center space-x-4 text-white/90">
+        <div className="flex items-center justify-center space-x-2 text-slate-400">
           <Calendar className="w-5 h-5" />
           <span>Last updated: {lastUpdated}</span>
         </div>
       </HeroSection>
 
       {/* Introduction */}
-      <section className="py-8 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-gradient-to-br from-[#1A5276]/10 to-[#34A853]/10 rounded-lg p-6 mb-6">
-              <div className="flex items-start space-x-3">
-                <FileText className="w-6 h-6 text-[#1A5276] mt-1" />
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-6 h-6 text-emerald-400" />
+                </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-3">
+                  <h2 className="text-2xl font-bold text-white mb-4">
                     Agreement Overview
                   </h2>
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+                  <p className="text-slate-300 leading-relaxed mb-4">
                     These Terms of Service (&quot;Terms&quot;) govern your use of LocalPro&apos;s platform and services. 
                     By using our platform, you agree to be bound by these terms. If you do not agree to 
                     these terms, please do not use our services.
                   </p>
+                  <p className="text-slate-400 leading-relaxed">
+                    LocalPro provides a platform that connects service providers with customers, facilitates 
+                    transactions, and offers various professional services. These terms outline the rights and 
+                    responsibilities of all users on our platform.
+                  </p>
                 </div>
               </div>
-            </div>
-            
-            <div className="prose prose-lg max-w-none dark:prose-invert">
-              <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                LocalPro provides a platform that connects service providers with customers, facilitates 
-                transactions, and offers various professional services. These terms outline the rights and 
-                responsibilities of all users on our platform.
-              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Key Points */}
-      <section className="py-8 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                Key Points
-              </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300">
-                Important highlights from our terms
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {keyPoints.map((point, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {point.title}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    {point.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Key Points
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Important highlights from our terms
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {keyPoints.map((point, index) => (
+              <div key={index} className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50">
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  {point.title}
+                </h3>
+                <p className="text-slate-400">
+                  {point.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-8 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="space-y-8">
-              {sections.map((section, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-6">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center text-white">
-                      {section.icon}
-                    </div>
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                      {section.title}
-                    </h2>
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {sections.map((section, index) => (
+              <div key={index} className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className={`w-10 h-10 bg-gradient-to-r ${section.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                    {section.icon}
                   </div>
-                  <ul className="space-y-2">
-                    {section.content.map((item, itemIndex) => (
-                      <li key={itemIndex} className="flex items-start space-x-3">
-                        <CheckCircle className="w-4 h-4 text-[#34A853] mt-1 flex-shrink-0" />
-                        <span className="text-slate-600 dark:text-slate-300 text-sm">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <h2 className="text-xl font-bold text-white">
+                    {section.title}
+                  </h2>
                 </div>
-              ))}
-            </div>
+                <ul className="space-y-3">
+                  {section.content.map((item, itemIndex) => (
+                    <li key={itemIndex} className="flex items-start space-x-3">
+                      <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-slate-400 text-sm">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Dispute Resolution */}
-      <section className="py-8 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                Dispute Resolution
-              </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300">
-                How we handle disputes and conflicts
-              </p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-8 shadow-lg">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">1</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Direct Resolution
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    Try to resolve disputes directly with the other party first
-                  </p>
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Dispute Resolution
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              How we handle disputes and conflicts
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { step: "1", title: "Direct Resolution", desc: "Try to resolve disputes directly with the other party first", color: "from-blue-500 to-indigo-600" },
+              { step: "2", title: "Platform Mediation", desc: "Use our dispute resolution process if direct resolution fails", color: "from-emerald-500 to-teal-600" },
+              { step: "3", title: "Legal Action", desc: "As a last resort, disputes may be resolved through legal channels", color: "from-purple-500 to-pink-600" }
+            ].map((item, index) => (
+              <div key={index} className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 text-center">
+                <div className={`w-14 h-14 bg-gradient-to-r ${item.color} rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+                  <span className="text-2xl font-bold text-white">{item.step}</span>
                 </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">2</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Platform Mediation
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    Use our dispute resolution process if direct resolution fails
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">3</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Legal Action
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    As a last resort, disputes may be resolved through legal channels
-                  </p>
-                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-slate-400 text-sm">
+                  {item.desc}
+                </p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Contact Information */}
-      <section className="py-8 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                Questions About These Terms?
-              </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300">
-                Contact our legal team for clarification
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Questions About These Terms?
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Contact our legal team for clarification
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 text-center">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Email Us
+              </h3>
+              <p className="text-emerald-400 text-sm">
+                legal@localpro.com
               </p>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <Mail className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Email Us
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    legal@localpro.com
-                  </p>
-                </div>
-                <div className="text-center">
-                  <Phone className="w-6 h-6 text-[#34A853] mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Call Us
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    +1 (555) 123-4567
-                  </p>
-                </div>
-                <div className="text-center">
-                  <FileText className="w-6 h-6 text-[#1A5276] mx-auto mb-3" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Legal Notice
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm">
-                    Submit a legal inquiry
-                  </p>
-                </div>
+            <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 text-center">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-6 h-6 text-emerald-400" />
               </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Call Us
+              </h3>
+              <p className="text-slate-400 text-sm">
+                +63 (2) 8888-LPRO
+              </p>
+            </div>
+            <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 text-center">
+              <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <FileText className="w-6 h-6 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">
+                Legal Notice
+              </h3>
+              <p className="text-slate-400 text-sm">
+                Submit a legal inquiry
+              </p>
             </div>
           </div>
         </div>

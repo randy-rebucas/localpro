@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
+import { Button } from "@/components/ui/button";
 import { 
   Mail, 
   Phone, 
@@ -17,90 +20,87 @@ import {
 export default function Contact() {
   const contactMethods = [
     {
-      icon: <MessageCircle className="w-6 h-6 text-[#1A5276]" />,
+      icon: <MessageCircle className="w-6 h-6" />,
       title: "Live Chat",
       description: "Get instant help from our support team",
       contact: "Available 24/7",
       responseTime: "Usually within minutes",
-      action: "Start Chat"
+      action: "Start Chat",
+      href: "/support",
+      color: "from-emerald-500 to-teal-600"
     },
     {
-      icon: <Mail className="w-6 h-6 text-[#34A853]" />,
+      icon: <Mail className="w-6 h-6" />,
       title: "Email Support",
       description: "Send us a detailed message",
-      contact: "support@localpro.com",
+      contact: "admin@localpro.asia",
       responseTime: "Within 24 hours",
-      action: "Send Email"
+      action: "Send Email",
+      href: "mailto:admin@localpro.asia",
+      color: "from-blue-500 to-indigo-600"
     },
     {
-      icon: <Phone className="w-6 h-6 text-[#1A5276]" />,
+      icon: <Phone className="w-6 h-6" />,
       title: "Phone Support",
       description: "Speak directly with our team",
-      contact: "+1 (555) 123-4567",
-      responseTime: "Mon-Fri 9AM-6PM PST",
-      action: "Call Now"
+      contact: "+63 917 915 7515",
+      responseTime: "Mon-Fri 9AM-6PM PHT",
+      action: "Call Now",
+      href: "tel:+639179157515",
+      color: "from-purple-500 to-pink-600"
     }
   ];
 
   const offices = [
     {
-      city: "San Francisco",
-      address: "123 Market Street, Suite 100",
-      cityState: "San Francisco, CA 94105",
-      phone: "+1 (555) 123-4567",
-      email: "sf@localpro.com",
-      hours: "Mon-Fri 9AM-6PM PST",
-      image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+      city: "Baybay City",
+      address: "A. Bonifacio St, Zone 2",
+      cityState: "Baybay City, Leyte, Philippines",
+      phone: "+63 917 915 7515",
+      email: "admin@localpro.asia",
+      hours: "Mon-Fri 9AM-6PM PHT",
+      isOpen: true
     },
     {
-      city: "New York",
-      address: "456 Broadway, Floor 15",
-      cityState: "New York, NY 10013",
-      phone: "+1 (555) 234-5678",
-      email: "ny@localpro.com",
-      hours: "Mon-Fri 9AM-6PM EST",
-      image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
-    },
-    {
-      city: "Austin",
-      address: "789 Congress Ave, Suite 200",
-      cityState: "Austin, TX 78701",
-      phone: "+1 (555) 345-6789",
-      email: "austin@localpro.com",
-      hours: "Mon-Fri 9AM-6PM CST",
-      image: "https://images.unsplash.com/photo-1519904981063-b0cf448d479e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+      city: "Ormoc City",
+      address: "Coming Soon",
+      cityState: "Ormoc City, Leyte, Philippines",
+      phone: "+63 917 915 7515",
+      email: "admin@localpro.asia",
+      hours: "Opening Soon",
+      isOpen: false
     }
   ];
 
   const departments = [
     {
       name: "General Inquiries",
-      email: "hello@localpro.com",
+      email: "admin@localpro.asia",
       description: "General questions about our platform and services"
     },
     {
       name: "Technical Support",
-      email: "support@localpro.com",
+      email: "support@localpro.asia",
       description: "Technical issues, bugs, and platform problems"
     },
     {
       name: "Partnership",
-      email: "partners@localpro.com",
+      email: "partners@localpro.asia",
       description: "Partnership opportunities and business development"
     },
     {
       name: "Media & Press",
-      email: "press@localpro.com",
+      email: "press@localpro.asia",
       description: "Media inquiries, press releases, and interviews"
     },
     {
       name: "Legal",
-      email: "legal@localpro.com",
+      email: "legal@localpro.asia",
       description: "Legal matters, compliance, and policy questions"
     },
     {
       name: "Careers",
-      email: "careers@localpro.com",
+      email: "careers@localpro.asia",
       description: "Job opportunities and recruitment inquiries"
     }
   ];
@@ -112,107 +112,116 @@ export default function Contact() {
         title="Contact Us"
         subtitle="We're here to help! Get in touch with our team for any questions or support"
         highlightText="Contact"
-        gradientFrom="from-[#1A5276]"
-        gradientTo="to-[#34A853]"
+        badge="Get in Touch"
       />
 
       {/* Contact Methods */}
-      <section className="py-8 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                Get in Touch
-              </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-300">
-                Choose the best way to reach us
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {contactMethods.map((method, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-lg p-6 text-center hover:shadow-lg transition-shadow">
-                  <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-lg flex items-center justify-center mx-auto mb-4 shadow-md">
-                    {method.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {method.title}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 mb-3 text-sm">
-                    {method.description}
-                  </p>
-                  <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400 mb-4">
-                    <div className="font-medium text-slate-700 dark:text-slate-300">
-                      {method.contact}
-                    </div>
-                    <div className="flex items-center justify-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {method.responseTime}
-                    </div>
-                  </div>
-                  <button className="w-full bg-gradient-to-r from-[#1A5276] to-[#34A853] hover:from-[#1A5276]/90 hover:to-[#34A853]/90 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm">
-                    {method.action}
-                  </button>
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Get in Touch
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Choose the best way to reach us
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {contactMethods.map((method, index) => (
+              <div key={index} className="group p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/30 transition-all text-center">
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-r ${method.color} text-white mb-4 shadow-lg`}>
+                  {method.icon}
                 </div>
-              ))}
-            </div>
+                <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                  {method.title}
+                </h3>
+                <p className="text-slate-400 mb-4 text-sm">
+                  {method.description}
+                </p>
+                <div className="space-y-1 text-sm mb-6">
+                  <div className="font-medium text-white">
+                    {method.contact}
+                  </div>
+                  <div className="flex items-center justify-center text-slate-500">
+                    <Clock className="w-3 h-3 mr-1" />
+                    {method.responseTime}
+                  </div>
+                </div>
+                {method.href.startsWith('/') ? (
+                  <Link href={method.href} className="block">
+                    <Button className="w-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-xl">
+                      {method.action}
+                    </Button>
+                  </Link>
+                ) : (
+                  <a href={method.href} className="block">
+                    <Button className="w-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-xl">
+                      {method.action}
+                    </Button>
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Contact Form */}
-      <section className="py-8 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-                Send us a Message
-              </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
-                Fill out the form below and we&apos;ll get back to you as soon as possible
-              </p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Send us a Message
+            </h2>
+            <p className="text-lg text-slate-400">
+              Fill out the form below and we&apos;ll get back to you as soon as possible
+            </p>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-3xl blur-2xl"></div>
+            <div className="relative bg-slate-800/50 border border-slate-700/50 rounded-2xl p-8">
               <form className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
                       First Name *
                     </label>
                     <input
                       type="text"
                       required
-                      className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
                       placeholder="Enter your first name"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
                       Last Name *
                     </label>
                     <input
                       type="text"
                       required
-                      className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
                       placeholder="Enter your last name"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Email Address *
                   </label>
                   <input
                     type="email"
                     required
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
                     placeholder="Enter your email address"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Subject *
                   </label>
-                  <select className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white">
+                  <select className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white">
+                    <option value="">Select a subject</option>
                     <option>General Inquiry</option>
                     <option>Technical Support</option>
                     <option>Partnership</option>
@@ -223,13 +232,13 @@ export default function Contact() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
                     Message *
                   </label>
                   <textarea
                     required
                     rows={6}
-                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
+                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
                     placeholder="Tell us how we can help you..."
                   ></textarea>
                 </div>
@@ -237,19 +246,19 @@ export default function Contact() {
                   <input
                     type="checkbox"
                     id="newsletter"
-                    className="mt-1 w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
+                    className="mt-1 w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700 rounded focus:ring-emerald-500"
                   />
-                  <label htmlFor="newsletter" className="text-sm text-slate-600 dark:text-slate-300">
+                  <label htmlFor="newsletter" className="text-sm text-slate-400">
                     I&apos;d like to receive updates about LocalPro&apos;s new features and services
                   </label>
                 </div>
-                <button
+                <Button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-8 rounded-lg transition-colors flex items-center justify-center"
+                  className="w-full bg-emerald-500 text-white hover:bg-emerald-600 font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/30"
                 >
                   <Send className="w-5 h-5 mr-2" />
                   Send Message
-                </button>
+                </Button>
               </form>
             </div>
           </div>
@@ -257,148 +266,156 @@ export default function Contact() {
       </section>
 
       {/* Office Locations */}
-      <section className="py-12 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-                Our Offices
-              </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
-                Visit us at one of our locations worldwide
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {offices.map((office, index) => (
-                <div key={index} className="bg-slate-50 dark:bg-slate-700 rounded-xl p-6 hover:shadow-lg transition-shadow relative overflow-hidden">
-                  <div 
-                    className="absolute top-0 right-0 w-32 h-32 opacity-10"
-                    style={{
-                      backgroundImage: `url('${office.image}')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  />
-                  <div className="relative z-10">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
-                        <Building className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-                        {office.city}
-                      </h3>
-                    </div>
-                    <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                      <div className="flex items-start space-x-3">
-                        <MapPin className="w-4 h-4 mt-1 text-slate-400" />
-                        <div>
-                          <div>{office.address}</div>
-                          <div>{office.cityState}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Phone className="w-4 h-4 text-slate-400" />
-                        <span>{office.phone}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Mail className="w-4 h-4 text-slate-400" />
-                        <span>{office.email}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span>{office.hours}</span>
-                      </div>
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Our Offices
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Visit us at our locations in Leyte, Philippines
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {offices.map((office, index) => (
+              <div key={index} className={`p-6 rounded-2xl border transition-all relative ${
+                office.isOpen 
+                  ? 'bg-slate-800/30 border-slate-700/50 hover:border-emerald-500/30' 
+                  : 'bg-slate-800/20 border-slate-700/30'
+              }`}>
+                {!office.isOpen && (
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full text-xs font-medium border border-amber-500/20">
+                      Coming Soon
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    office.isOpen ? 'bg-emerald-500/10' : 'bg-amber-500/10'
+                  }`}>
+                    <Building className={`w-6 h-6 ${office.isOpen ? 'text-emerald-400' : 'text-amber-400'}`} />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white">
+                    {office.city}
+                  </h3>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="w-4 h-4 mt-1 text-slate-500" />
+                    <div className={office.isOpen ? 'text-slate-300' : 'text-slate-500'}>
+                      <div>{office.address}</div>
+                      <div>{office.cityState}</div>
                     </div>
                   </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-4 h-4 text-slate-500" />
+                    <a 
+                      href={`tel:${office.phone.replace(/\s/g, '')}`} 
+                      className={`hover:underline ${office.isOpen ? 'text-slate-300 hover:text-emerald-400' : 'text-slate-500'}`}
+                    >
+                      {office.phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Mail className="w-4 h-4 text-slate-500" />
+                    <a 
+                      href={`mailto:${office.email}`} 
+                      className={`hover:underline ${office.isOpen ? 'text-emerald-400 hover:text-emerald-300' : 'text-slate-500'}`}
+                    >
+                      {office.email}
+                    </a>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Clock className="w-4 h-4 text-slate-500" />
+                    <span className={office.isOpen ? 'text-slate-400' : 'text-amber-400'}>{office.hours}</span>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Departments */}
-      <section className="py-12 bg-slate-50 dark:bg-slate-900">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
-                Contact by Department
-              </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-300">
-                Reach out to the right team for your specific needs
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {departments.map((dept, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    {dept.name}
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
-                    {dept.description}
-                  </p>
-                  <div className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 font-medium">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{dept.email}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Contact by Department
+            </h2>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Reach out to the right team for your specific needs
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {departments.map((dept, index) => (
+              <div key={index} className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/30 transition-all group">
+                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                  {dept.name}
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">
+                  {dept.description}
+                </p>
+                <a 
+                  href={`mailto:${dept.email}`}
+                  className="flex items-center space-x-2 text-emerald-400 font-medium hover:text-emerald-300 transition-colors"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span className="text-sm hover:underline">{dept.email}</span>
+                </a>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* FAQ Quick Links */}
-      <section className="py-8 bg-white dark:bg-slate-800">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-              Quick Help
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-300 mb-6">
-              Find answers to common questions before reaching out
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Link
-                href="/help-center"
-                className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 hover:shadow-lg transition-shadow group"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#1A5276] to-[#34A853] rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+            Quick Help
+          </h2>
+          <p className="text-lg text-slate-400 mb-10">
+            Find answers to common questions before reaching out
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link href="/help-center" className="group">
+              <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <FileText className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-[#34A853] transition-colors">
+                  <div className="text-left flex-1">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors">
                       Help Center
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm">
+                    <p className="text-slate-400 text-sm">
                       Browse our comprehensive help articles
                     </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#34A853] transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                 </div>
-              </Link>
-              <Link
-                href="/community"
-                className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 hover:shadow-lg transition-shadow group"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#34A853] to-[#1A5276] rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-white" />
+              </div>
+            </Link>
+            <Link href="/community" className="group">
+              <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Users className="w-6 h-6 text-white" />
                   </div>
-                  <div className="text-left">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-[#34A853] transition-colors">
+                  <div className="text-left flex-1">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-emerald-400 transition-colors">
                       Community Forum
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm">
+                    <p className="text-slate-400 text-sm">
                       Connect with other users and experts
                     </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#34A853] transition-colors" />
+                  <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                 </div>
-              </Link>
-            </div>
+              </div>
+            </Link>
           </div>
         </div>
       </section>

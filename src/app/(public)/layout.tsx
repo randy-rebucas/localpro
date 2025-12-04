@@ -4,23 +4,28 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/ui/logo";
 import { useSession } from "@/hooks/useAuth";
+import { getApiToken } from "@/lib/auth-utils";
 import { Button } from "@/components/ui/button";
+import { SessionProvider } from "@/contexts/session-context";
 import { 
   Menu, 
   X, 
   User, 
-  ChevronDown
+  ChevronDown,
+  Facebook,
+  Linkedin
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import ErrorBoundary from "@/components/error-boundary";
 
-export default function PublicLayout({
+function PublicLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const apiToken = getApiToken();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -50,8 +55,11 @@ export default function PublicLayout({
   const navigation = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
-    { name: "Services", href: "/marketplace" },
     { name: "Blog", href: "/blog" },
+    { name: "Careers", href: "/careers" },
+    { name: "Community", href: "/community" },
+    { name: "Partners", href: "/partners" },
+    { name: "Support", href: "/support" },
     { name: "Contact", href: "/contact" },
   ];
 
@@ -62,18 +70,20 @@ export default function PublicLayout({
     return pathname?.startsWith(href);
   };
 
+  const isAuthenticated = (status === 'authenticated' && (session || apiToken)) || apiToken;
+
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-white flex flex-col">
-        {/* Public Header */}
-        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+      <div className="min-h-screen bg-slate-950 flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/50">
           <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16 lg:h-20">
               {/* Logo */}
               <div className="flex-shrink-0">
                 <Link href="/" className="flex items-center space-x-2 group">
-                  <Logo className="h-8 w-8 text-green-600 group-hover:text-green-700 transition-colors" />
-                  <span className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">
+                  <Logo size={32} />
+                  <span className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
                     LocalPro
                   </span>
                 </Link>
@@ -87,48 +97,42 @@ export default function PublicLayout({
                     href={item.href}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive(item.href)
-                        ? "text-green-600 bg-green-50"
-                        : "text-gray-700 hover:text-green-600 hover:bg-gray-50"
+                        ? "text-emerald-400 bg-emerald-500/10"
+                        : "text-slate-300 hover:text-emerald-400 hover:bg-slate-800/50"
                     }`}
                   >
                     {item.name}
-                </Link>
+                  </Link>
                 ))}
               </div>
 
               {/* Auth Buttons */}
               <div className="hidden md:flex md:items-center md:space-x-3">
                 {status === "loading" ? (
-                  <div className="h-9 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
-                ) : session ? (
+                  <div className="h-9 w-24 bg-slate-800 rounded-lg animate-pulse"></div>
+                ) : isAuthenticated ? (
                   <div className="relative" ref={userMenuRef}>
                     <Button
                       variant="outline"
                       onClick={() => setShowUserMenu(!showUserMenu)}
-                      className="flex items-center space-x-2"
+                      className="flex items-center space-x-2 border-slate-700"
                     >
                       <User className="w-4 h-4" />
                       <span>Account</span>
                       <ChevronDown className="w-4 h-4" />
                     </Button>
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                        <Link
-                          href="/marketplace"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
+                      <div className="absolute right-0 mt-2 w-48 bg-slate-900 rounded-lg shadow-xl border border-slate-700 py-1 z-50">
+                        <Link href="/dashboard" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400">
+                          Dashboard
+                        </Link>
+                        <Link href="/marketplace" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400">
                           Marketplace
                         </Link>
-                        <Link
-                          href="/profile"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
+                        <Link href="/profile" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400">
                           Profile
                         </Link>
-                        <Link
-                          href="/settings"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
+                        <Link href="/settings" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-emerald-400">
                           Settings
                         </Link>
                       </div>
@@ -137,12 +141,12 @@ export default function PublicLayout({
                 ) : (
                   <>
                     <Link href="/auth">
-                      <Button variant="ghost" size="sm">
+                      <Button size="sm" className="bg-transparent text-white border border-slate-600 hover:bg-slate-800 font-semibold rounded-full px-5">
                         Sign In
                       </Button>
                     </Link>
                     <Link href="/auth">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Button size="sm" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold shadow-lg shadow-emerald-500/30 rounded-full px-5">
                         Get Started
                       </Button>
                     </Link>
@@ -156,20 +160,16 @@ export default function PublicLayout({
                   variant="ghost"
                   size="sm"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="p-2"
+                  className="p-2 text-slate-300"
                 >
-                  {mobileMenuOpen ? (
-                    <X className="w-6 h-6" />
-                  ) : (
-                    <Menu className="w-6 h-6" />
-                  )}
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </Button>
               </div>
             </div>
 
             {/* Mobile Navigation */}
             {mobileMenuOpen && (
-              <div className="md:hidden py-4 border-t border-gray-200">
+              <div className="md:hidden py-4 border-t border-slate-800">
                 <div className="space-y-1">
                   {navigation.map((item) => (
                     <Link
@@ -177,41 +177,29 @@ export default function PublicLayout({
                       href={item.href}
                       className={`block px-4 py-2 rounded-lg text-base font-medium ${
                         isActive(item.href)
-                          ? "text-green-600 bg-green-50"
-                          : "text-gray-700 hover:text-green-600 hover:bg-gray-50"
+                          ? "text-emerald-400 bg-emerald-500/10"
+                          : "text-slate-300 hover:text-emerald-400 hover:bg-slate-800"
                       }`}
                     >
                       {item.name}
                     </Link>
                   ))}
-                  <div className="pt-4 border-t border-gray-200 space-y-2">
-                    {session ? (
+                  <div className="pt-4 border-t border-slate-800 space-y-2">
+                    {isAuthenticated ? (
                       <>
-                        <Link
-                          href="/marketplace"
-                          className="block px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
-                        >
-                          Marketplace
+                        <Link href="/dashboard" className="block px-4 py-2 rounded-lg text-base font-medium text-slate-300 hover:text-emerald-400 hover:bg-slate-800">
+                          Dashboard
                         </Link>
-                        <Link
-                          href="/profile"
-                          className="block px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
-                        >
+                        <Link href="/profile" className="block px-4 py-2 rounded-lg text-base font-medium text-slate-300 hover:text-emerald-400 hover:bg-slate-800">
                           Profile
                         </Link>
                       </>
                     ) : (
                       <>
-                        <Link
-                          href="/auth"
-                          className="block px-4 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50"
-                        >
+                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium text-slate-300 hover:text-emerald-400 hover:bg-slate-800">
                           Sign In
                         </Link>
-                        <Link
-                          href="/auth"
-                          className="block px-4 py-2 rounded-lg text-base font-medium bg-green-600 text-white text-center hover:bg-green-700"
-                        >
+                        <Link href="/auth" className="block px-4 py-3 rounded-full text-base font-bold bg-emerald-500 text-white text-center hover:bg-emerald-600 shadow-lg shadow-emerald-500/30">
                           Get Started
                         </Link>
                       </>
@@ -225,96 +213,91 @@ export default function PublicLayout({
 
         {/* Main Content */}
         <main className="flex-1">
-          {/* Background decoration for certain pages */}
-          {pathname === "/" && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-green-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
-            </div>
-          )}
-          <div className="relative z-10">
-            {children}
-          </div>
+          {children}
         </main>
 
-        {/* Public Footer */}
-        <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div>
+        {/* Footer */}
+        <footer className="bg-slate-900 border-t border-slate-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+              <div className="col-span-2">
                 <Link href="/" className="flex items-center space-x-2 mb-4">
-                  <Logo className="h-8 w-8 text-green-600" />
-                  <span className="text-xl font-bold text-gray-900">LocalPro</span>
+                  <Logo size={32} />
+                  <span className="text-xl font-bold text-white">LocalPro</span>
                 </Link>
-                <p className="text-gray-600 text-sm">
-                  Your all-in-one platform for professional services, supplies, education, and more.
+                <p className="text-slate-400 text-sm mb-6 max-w-xs">
+                  Your all-in-one platform for professional services, supplies, education, and business growth.
                 </p>
+                <div className="flex space-x-4">
+                  <a href="https://www.facebook.com/localproasia" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                    <Facebook className="w-5 h-5" />
+                  </a>
+                  <a href="https://www.linkedin.com/company/localproasia/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                    <Linkedin className="w-5 h-5" />
+                  </a>
+                </div>
               </div>
+              
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Company</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/about" className="text-sm text-gray-600 hover:text-green-600">
-                      About Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/blog" className="text-sm text-gray-600 hover:text-green-600">
-                      Blog
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/careers" className="text-sm text-gray-600 hover:text-green-600">
-                      Careers
-                    </Link>
-                  </li>
+                <h3 className="text-sm font-semibold text-white mb-4">Platform</h3>
+                <ul className="space-y-3">
+                  {['Marketplace', 'Supplies', 'Rentals', 'Academy', 'Jobs'].map((item) => (
+                    <li key={item}>
+                      <Link href={`/${item.toLowerCase()}`} className="text-sm text-slate-400 hover:text-emerald-400 transition-colors">
+                        {item}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
+              
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Support</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/help-center" className="text-sm text-gray-600 hover:text-green-600">
-                      Help Center
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/contact" className="text-sm text-gray-600 hover:text-green-600">
-                      Contact Us
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/help-center#faqs" className="text-sm text-gray-600 hover:text-green-600">
-                      FAQs
-                    </Link>
-                  </li>
+                <h3 className="text-sm font-semibold text-white mb-4">Company</h3>
+                <ul className="space-y-3">
+                  {[
+                    { name: 'About Us', href: '/about' },
+                    { name: 'Blog', href: '/blog' },
+                    { name: 'Careers', href: '/careers' },
+                    { name: 'Contact', href: '/contact' },
+                    { name: 'Partners', href: '/partners' }
+                  ].map((item) => (
+                    <li key={item.name}>
+                      <Link href={item.href} className="text-sm text-slate-400 hover:text-emerald-400 transition-colors">
+                        {item.name}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
+              
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">Legal</h3>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href="/privacy" className="text-sm text-gray-600 hover:text-green-600">
-                      Privacy Policy
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/terms" className="text-sm text-gray-600 hover:text-green-600">
-                      Terms of Service
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/security" className="text-sm text-gray-600 hover:text-green-600">
-                      Security
-                    </Link>
-                  </li>
+                <h3 className="text-sm font-semibold text-white mb-4">Legal</h3>
+                <ul className="space-y-3">
+                  {[
+                    { name: 'Privacy Policy', href: '/privacy' },
+                    { name: 'Terms of Service', href: '/terms' },
+                    { name: 'Security', href: '/security' },
+                    { name: 'Help Center', href: '/help-center' }
+                  ].map((item) => (
+                    <li key={item.name}>
+                      <Link href={item.href} className="text-sm text-slate-400 hover:text-emerald-400 transition-colors">
+                        {item.name}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <p className="text-center text-sm text-gray-600">
+            
+            <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center">
+              <p className="text-sm text-slate-500">
                 © {new Date().getFullYear()} LocalPro. All rights reserved.
               </p>
+              <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                <span className="text-sm text-slate-500">Made with</span>
+                <span className="text-emerald-400">♥</span>
+                <span className="text-sm text-slate-500">in Philippines</span>
+              </div>
             </div>
           </div>
         </footer>
@@ -323,3 +306,14 @@ export default function PublicLayout({
   );
 }
 
+export default function PublicLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SessionProvider>
+      <PublicLayoutContent>{children}</PublicLayoutContent>
+    </SessionProvider>
+  );
+}

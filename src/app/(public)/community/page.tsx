@@ -1,5 +1,8 @@
+"use client";
+
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
+import { Button } from "@/components/ui/button";
 import { 
   Users, 
   MessageCircle, 
@@ -7,7 +10,6 @@ import {
   Star, 
   Award,
   Search,
-  Filter,
   Plus,
   Heart,
   Share2,
@@ -131,6 +133,13 @@ export default function Community() {
     "General"
   ];
 
+  const stats = [
+    { value: "2,847", label: "Active Members", icon: <Users className="w-6 h-6" /> },
+    { value: "1,234", label: "Discussions", icon: <MessageCircle className="w-6 h-6" /> },
+    { value: "45", label: "Events This Month", icon: <Calendar className="w-6 h-6" /> },
+    { value: "156", label: "Expert Contributors", icon: <Award className="w-6 h-6" /> }
+  ];
+
   return (
     <StaticPageLayout>
       {/* Hero Section */}
@@ -138,274 +147,244 @@ export default function Community() {
         title="LocalPro Community"
         subtitle="Connect, learn, and grow with fellow professionals in our vibrant community"
         highlightText="Community"
-        gradientFrom="from-emerald-600"
-        gradientTo="to-blue-600"
+        badge="Join the Conversation"
       >
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search discussions..."
-              className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-emerald-200 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center">
-            <Filter className="w-5 h-5 mr-2" />
-            Filter
-          </button>
         </div>
       </HeroSection>
 
       {/* Community Stats */}
-      <section className="py-12 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+      <section className="py-12 bg-slate-900/50 border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center p-6 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-emerald-500/10 text-emerald-400 mb-4">
+                  {stat.icon}
                 </div>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">2,847</div>
-                <div className="text-slate-600 dark:text-slate-400">Active Members</div>
+                <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
+                <div className="text-sm text-slate-400">{stat.label}</div>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">1,234</div>
-                <div className="text-slate-600 dark:text-slate-400">Discussions</div>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">45</div>
-                <div className="text-slate-600 dark:text-slate-400">Events This Month</div>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Award className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-                </div>
-                <div className="text-3xl font-bold text-slate-900 dark:text-white mb-2">156</div>
-                <div className="text-slate-600 dark:text-slate-400">Expert Contributors</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              {/* Categories */}
-              <div className="mb-8">
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category, index) => (
-                    <button
-                      key={index}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        index === 0
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-slate-600"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Create Discussion Button */}
-              <div className="mb-6">
-                <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center">
-                  <Plus className="w-5 h-5 mr-2" />
-                  Start New Discussion
-                </button>
-              </div>
-
-              {/* Discussions List */}
-              <div className="space-y-4">
-                {discussions.map((discussion) => (
-                  <div
-                    key={discussion.id}
-                    className={`bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow ${
-                      discussion.isPinned ? "ring-2 ring-yellow-400" : ""
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Categories */}
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category, index) => (
+                  <button
+                    key={index}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      index === 0
+                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                        : "bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-700/50"
                     }`}
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                        {discussion.authorAvatar}
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Create Discussion Button */}
+            <div className="mb-6">
+              <Button className="bg-emerald-500 text-white hover:bg-emerald-600 font-semibold rounded-xl shadow-lg shadow-emerald-500/30">
+                <Plus className="w-5 h-5 mr-2" />
+                Start New Discussion
+              </Button>
+            </div>
+
+            {/* Discussions List */}
+            <div className="space-y-4">
+              {discussions.map((discussion) => (
+                <div
+                  key={discussion.id}
+                  className={`rounded-2xl bg-slate-800/30 border hover:border-emerald-500/30 transition-all p-6 ${
+                    discussion.isPinned ? "border-amber-500/50" : "border-slate-700/50"
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                      {discussion.authorAvatar}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <h3 className="text-lg font-semibold text-white hover:text-emerald-400 transition-colors cursor-pointer">
+                            {discussion.title}
+                          </h3>
+                          {discussion.isPinned && (
+                            <span className="bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full text-xs font-medium border border-amber-500/20">
+                              Pinned
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center text-slate-500 text-sm">
+                          <Clock className="w-4 h-4 mr-1" />
+                          {discussion.lastActivity}
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                              {discussion.title}
-                            </h3>
-                            {discussion.isPinned && (
-                              <span className="bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full text-xs font-medium">
-                                Pinned
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center text-slate-500 dark:text-slate-400 text-sm">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {discussion.lastActivity}
-                          </div>
+                      <div className="flex items-center space-x-4 mb-3">
+                        <span className="text-sm text-slate-400">
+                          by {discussion.author}
+                        </span>
+                        <span className="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs font-medium border border-emerald-500/20">
+                          {discussion.category}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-6 text-sm text-slate-500">
+                        <div className="flex items-center">
+                          <MessageCircle className="w-4 h-4 mr-1" />
+                          {discussion.replies} replies
                         </div>
-                        <div className="flex items-center space-x-4 mb-3">
-                          <span className="text-sm text-slate-600 dark:text-slate-400">
-                            by {discussion.author}
-                          </span>
-                          <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-medium">
-                            {discussion.category}
-                          </span>
+                        <div className="flex items-center">
+                          <ThumbsUp className="w-4 h-4 mr-1" />
+                          {discussion.likes} likes
                         </div>
-                        <div className="flex items-center space-x-6 text-sm text-slate-500 dark:text-slate-400">
-                          <div className="flex items-center">
-                            <MessageCircle className="w-4 h-4 mr-1" />
-                            {discussion.replies} replies
-                          </div>
-                          <div className="flex items-center">
-                            <ThumbsUp className="w-4 h-4 mr-1" />
-                            {discussion.likes} likes
-                          </div>
-                          <div className="flex items-center">
-                            <Eye className="w-4 h-4 mr-1" />
-                            {discussion.views} views
-                          </div>
+                        <div className="flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          {discussion.views} views
                         </div>
-                        <div className="flex items-center justify-between mt-4">
-                          <div className="flex flex-wrap gap-2">
-                            {discussion.tags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-full text-xs"
-                              >
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <button className="p-2 text-slate-500 hover:text-red-500 transition-colors">
-                              <Heart className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 text-slate-500 hover:text-blue-500 transition-colors">
-                              <Share2 className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 text-slate-500 hover:text-orange-500 transition-colors">
-                              <Flag className="w-4 h-4" />
-                            </button>
-                          </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex flex-wrap gap-2">
+                          {discussion.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="bg-slate-700/50 text-slate-400 px-2 py-1 rounded-full text-xs"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button className="p-2 text-slate-500 hover:text-rose-400 transition-colors">
+                            <Heart className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-slate-500 hover:text-blue-400 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 text-slate-500 hover:text-amber-400 transition-colors">
+                            <Flag className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Upcoming Events */}
+            <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Calendar className="w-5 h-5 mr-2 text-emerald-400" />
+                Upcoming Events
+              </h3>
+              <div className="space-y-4">
+                {events.map((event) => (
+                  <div key={event.id} className="border-l-2 border-emerald-500 pl-4">
+                    <h4 className="font-medium text-white mb-1">
+                      {event.title}
+                    </h4>
+                    <div className="text-sm text-slate-400 space-y-1">
+                      <div className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {new Date(event.date).toLocaleDateString()} at {event.time}
+                      </div>
+                      <div className="flex items-center">
+                        <Globe className="w-4 h-4 mr-2" />
+                        {event.location}
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-2" />
+                        {event.attendees} attendees
+                      </div>
+                    </div>
+                    <span className="inline-block mt-2 bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-full text-xs font-medium border border-emerald-500/20">
+                      {event.type}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <Button className="w-full mt-4 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-xl">
+                View All Events
+              </Button>
+            </div>
+
+            {/* Top Contributors */}
+            <div className="rounded-2xl bg-slate-800/30 border border-slate-700/50 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Award className="w-5 h-5 mr-2 text-amber-400" />
+                Top Contributors
+              </h3>
+              <div className="space-y-3">
+                {[
+                  { name: "Maria Rodriguez", points: 2450, avatar: "M" },
+                  { name: "James Chen", points: 2180, avatar: "J" },
+                  { name: "Sarah Johnson", points: 1950, avatar: "S" },
+                  { name: "David Kim", points: 1820, avatar: "D" },
+                  { name: "Lisa Wang", points: 1650, avatar: "L" }
+                ].map((contributor, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {contributor.avatar}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-white text-sm">
+                        {contributor.name}
+                      </div>
+                      <div className="text-slate-500 text-xs">
+                        {contributor.points} points
+                      </div>
+                    </div>
+                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Upcoming Events */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                  <Calendar className="w-5 h-5 mr-2 text-blue-600" />
-                  Upcoming Events
-                </h3>
-                <div className="space-y-4">
-                  {events.map((event) => (
-                    <div key={event.id} className="border-l-4 border-blue-500 pl-4">
-                      <h4 className="font-medium text-slate-900 dark:text-white mb-1">
-                        {event.title}
-                      </h4>
-                      <div className="text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                        <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-2" />
-                          {new Date(event.date).toLocaleDateString()} at {event.time}
-                        </div>
-                        <div className="flex items-center">
-                          <Globe className="w-4 h-4 mr-2" />
-                          {event.location}
-                        </div>
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-2" />
-                          {event.attendees} attendees
-                        </div>
-                      </div>
-                      <span className="inline-block mt-2 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full text-xs font-medium">
-                        {event.type}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <button className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                  View All Events
-                </button>
-              </div>
-
-              {/* Top Contributors */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                  <Award className="w-5 h-5 mr-2 text-yellow-600" />
-                  Top Contributors
-                </h3>
-                <div className="space-y-3">
-                  {[
-                    { name: "Maria Rodriguez", points: 2450, avatar: "M" },
-                    { name: "James Chen", points: 2180, avatar: "J" },
-                    { name: "Sarah Johnson", points: 1950, avatar: "S" },
-                    { name: "David Kim", points: 1820, avatar: "D" },
-                    { name: "Lisa Wang", points: 1650, avatar: "L" }
-                  ].map((contributor, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        {contributor.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium text-slate-900 dark:text-white text-sm">
-                          {contributor.name}
-                        </div>
-                        <div className="text-slate-500 dark:text-slate-400 text-xs">
-                          {contributor.points} points
-                        </div>
-                      </div>
-                      <div className="text-yellow-500">
-                        <Star className="w-4 h-4 fill-current" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Community Guidelines */}
-              <div className="bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-blue-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                  <Shield className="w-5 h-5 mr-2 text-blue-600" />
-                  Community Guidelines
-                </h3>
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                  <li className="flex items-start">
-                    <Zap className="w-4 h-4 mr-2 mt-0.5 text-blue-500" />
-                    Be respectful and professional
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="w-4 h-4 mr-2 mt-0.5 text-blue-500" />
-                    Share knowledge and help others
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="w-4 h-4 mr-2 mt-0.5 text-blue-500" />
-                    Keep discussions relevant
-                  </li>
-                  <li className="flex items-start">
-                    <Zap className="w-4 h-4 mr-2 mt-0.5 text-blue-500" />
-                    Report inappropriate content
-                  </li>
-                </ul>
-              </div>
+            {/* Community Guidelines */}
+            <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Shield className="w-5 h-5 mr-2 text-emerald-400" />
+                Community Guidelines
+              </h3>
+              <ul className="space-y-2 text-sm text-slate-300">
+                <li className="flex items-start">
+                  <Zap className="w-4 h-4 mr-2 mt-0.5 text-emerald-400" />
+                  Be respectful and professional
+                </li>
+                <li className="flex items-start">
+                  <Zap className="w-4 h-4 mr-2 mt-0.5 text-emerald-400" />
+                  Share knowledge and help others
+                </li>
+                <li className="flex items-start">
+                  <Zap className="w-4 h-4 mr-2 mt-0.5 text-emerald-400" />
+                  Keep discussions relevant
+                </li>
+                <li className="flex items-start">
+                  <Zap className="w-4 h-4 mr-2 mt-0.5 text-emerald-400" />
+                  Report inappropriate content
+                </li>
+              </ul>
             </div>
           </div>
         </div>

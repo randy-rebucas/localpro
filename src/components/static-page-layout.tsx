@@ -7,7 +7,7 @@ interface StaticPageLayoutProps {
 
 export function StaticPageLayout({ children, className = "" }: StaticPageLayoutProps) {
   return (
-    <div className={`min-h-screen bg-white dark:bg-slate-900 ${className}`}>
+    <div className={`min-h-full ${className}`}>
       {/* Header and Footer are handled by PublicLayout */}
       {children}
     </div>
