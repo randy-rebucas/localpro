@@ -17,6 +17,7 @@ import {
   BarChart3,
   Settings,
   MessageSquare,
+  MessagesSquare,
   Radio,
   Shield,
   FileText,
@@ -118,6 +119,12 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Communication",
       href: "/admin/communication",
       icon: MessageSquare,
+    },
+    {
+      name: "Live Chat",
+      href: "/admin/live-chat",
+      icon: MessagesSquare,
+      badge: "New",
     },
     {
       name: "Broadcaster",

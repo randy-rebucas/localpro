@@ -174,11 +174,11 @@ export default function HelpCenter() {
         badge="We're Here to Help"
       >
         <div className="relative max-w-2xl mx-auto">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-300 w-5 h-5" />
           <input
             type="text"
             placeholder="Search for help articles, guides, and FAQs..."
-            className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
+            className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-700 border-2 border-slate-400 text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-lg shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600"
           />
         </div>
       </HeroSection>

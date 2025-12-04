@@ -479,4 +479,26 @@ export const API_ENDPOINTS = {
   
   // Monitoring Endpoints
   monitoringSystemHealth: "/api/monitoring/system-health",
+
+  // Live Chat Endpoints (Public)
+  liveChatSessions: "/api/live-chat/sessions",
+  liveChatSessionById: "/api/live-chat/sessions/[sessionId]",
+  liveChatMessages: "/api/live-chat/sessions/[sessionId]/messages",
+  liveChatUpload: "/api/live-chat/upload",
+  liveChatEndSession: "/api/live-chat/sessions/[sessionId]/end",
+  liveChatRateSession: "/api/live-chat/sessions/[sessionId]/rate",
+  liveChatTyping: "/api/live-chat/sessions/[sessionId]/typing",
+
+  // Live Chat Endpoints (Admin)
+  adminLiveChatSessions: "/api/admin/live-chat/sessions",
+  adminLiveChatSessionById: "/api/admin/live-chat/sessions/[sessionId]",
+  adminLiveChatReply: "/api/admin/live-chat/sessions/[sessionId]/reply",
+  adminLiveChatAssign: "/api/admin/live-chat/sessions/[sessionId]/assign",
+  adminLiveChatStatus: "/api/admin/live-chat/sessions/[sessionId]/status",
+  adminLiveChatNotes: "/api/admin/live-chat/sessions/[sessionId]/notes",
+  adminLiveChatTransfer: "/api/admin/live-chat/sessions/[sessionId]/transfer",
+  adminLiveChatAnalytics: "/api/admin/live-chat/analytics",
+  adminLiveChatCustomerHistory: "/api/admin/live-chat/customers/[email]/history",
+  adminLiveChatDeleteSession: "/api/admin/live-chat/sessions/[sessionId]",
+  
 } as const;

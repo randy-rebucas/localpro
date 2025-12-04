@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StaticPageLayout } from "@/components/static-page-layout";
 import { HeroSection } from "@/components/static-hero";
 import { Button } from "@/components/ui/button";
+import { useLiveChat } from "@/components/live-chat";
 import { 
   Mail, 
   Phone, 
@@ -18,6 +19,8 @@ import {
 } from "lucide-react";
 
 export default function Contact() {
+  const { openChat } = useLiveChat();
+
   const contactMethods = [
     {
       icon: <MessageCircle className="w-6 h-6" />,
@@ -26,7 +29,8 @@ export default function Contact() {
       contact: "Available 24/7",
       responseTime: "Usually within minutes",
       action: "Start Chat",
-      href: "/support",
+      href: "#chat",
+      isLiveChat: true,
       color: "from-emerald-500 to-teal-600"
     },
     {
@@ -147,7 +151,14 @@ export default function Contact() {
                     {method.responseTime}
                   </div>
                 </div>
-                {method.href.startsWith('/') ? (
+                {'isLiveChat' in method && method.isLiveChat ? (
+                  <Button 
+                    onClick={openChat}
+                    className="w-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-xl"
+                  >
+                    {method.action}
+                  </Button>
+                ) : method.href.startsWith('/') ? (
                   <Link href={method.href} className="block">
                     <Button className="w-full bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/30 rounded-xl">
                       {method.action}
@@ -189,7 +200,7 @@ export default function Contact() {
                     <input
                       type="text"
                       required
-                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
+                      className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-slate-400 shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600"
                       placeholder="Enter your first name"
                     />
                   </div>
@@ -200,7 +211,7 @@ export default function Contact() {
                     <input
                       type="text"
                       required
-                      className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
+                      className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-slate-400 shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600"
                       placeholder="Enter your last name"
                     />
                   </div>
@@ -212,7 +223,7 @@ export default function Contact() {
                   <input
                     type="email"
                     required
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
+                    className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-slate-400 shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -220,7 +231,7 @@ export default function Contact() {
                   <label className="block text-sm font-medium text-slate-300 mb-2">
                     Subject *
                   </label>
-                  <select className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white">
+                  <select className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600 cursor-pointer">
                     <option value="">Select a subject</option>
                     <option>General Inquiry</option>
                     <option>Technical Support</option>
@@ -238,7 +249,7 @@ export default function Contact() {
                   <textarea
                     required
                     rows={6}
-                    className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-white placeholder-slate-500"
+                    className="w-full px-4 py-3 bg-slate-700 border-2 border-slate-500 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-white placeholder-slate-400 shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600 resize-none"
                     placeholder="Tell us how we can help you..."
                   ></textarea>
                 </div>
@@ -246,7 +257,7 @@ export default function Contact() {
                   <input
                     type="checkbox"
                     id="newsletter"
-                    className="mt-1 w-4 h-4 text-emerald-500 bg-slate-900 border-slate-700 rounded focus:ring-emerald-500"
+                    className="mt-1 w-5 h-5 text-emerald-500 bg-slate-600 border-2 border-slate-400 rounded focus:ring-emerald-500 cursor-pointer accent-emerald-500"
                   />
                   <label htmlFor="newsletter" className="text-sm text-slate-400">
                     I&apos;d like to receive updates about LocalPro&apos;s new features and services

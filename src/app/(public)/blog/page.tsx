@@ -122,11 +122,11 @@ export default function Blog() {
       >
         <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-300 w-5 h-5" />
             <input
               type="text"
               placeholder="Search articles..."
-              className="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-slate-700 border-2 border-slate-400 text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 shadow-lg shadow-emerald-500/10 transition-all hover:border-emerald-500/50 hover:bg-slate-600"
             />
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function Blog() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-emerald-100 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+              className="flex-1 w-full px-4 py-3.5 rounded-xl bg-white/30 border-2 border-white/60 text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-white focus:border-white shadow-lg transition-all hover:border-white hover:bg-white/40"
             />
             <Button className="bg-white !text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl px-6 py-3 h-auto">
               Subscribe

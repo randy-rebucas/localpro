@@ -335,7 +335,7 @@ export default function Connect() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-emerald-100 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+              className="flex-1 px-4 py-3.5 rounded-xl bg-white/30 border-2 border-white/60 text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-white focus:border-white shadow-lg transition-all hover:border-white hover:bg-white/40"
             />
             <Button className="bg-white text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl">
               <Send className="w-5 h-5 mr-2" />
