@@ -419,7 +419,7 @@ export default function Security() {
                 Security Hotline
               </h3>
               <p className="text-slate-400 text-sm">
-                +63 (2) 8888-LPRO
+                +63 917 915 7515
               </p>
             </div>
             <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 text-center">

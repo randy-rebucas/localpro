@@ -21,29 +21,29 @@ import {
 export default function About() {
   const milestones = [
     {
-      year: "2020",
+      year: "2025",
       title: "Company Founded",
-      description: "LocalPro was founded with a vision to revolutionize professional services"
+      description: "LocalPro was founded in Ormoc City with a mission to empower local service providers through technology"
     },
     {
-      year: "2021",
-      title: "First 1,000 Users",
-      description: "Reached our first major milestone with 1,000 active professionals"
+      year: "2025",
+      title: "LGU-Ormoc Partnership",
+      description: "Established official partnership with LGU-Ormoc City to support local entrepreneurs and skilled workers"
     },
     {
-      year: "2022",
-      title: "Series A Funding",
-      description: "Raised ₱500M in Series A funding to accelerate growth"
+      year: "2025",
+      title: "Platform Launch",
+      description: "Launched our marketplace platform connecting service providers with customers across Eastern Visayas"
     },
     {
-      year: "2023",
-      title: "Platform Expansion",
-      description: "Launched Academy, Finance, and Supplies modules"
+      year: "2025",
+      title: "Education Partnerships",
+      description: "Initiated partnerships with TESDC and EVSU for training programs and certification integration"
     },
     {
-      year: "2024",
-      title: "Global Expansion",
-      description: "Expanded to 5 countries with 10,000+ active users"
+      year: "2026",
+      title: "Regional Expansion",
+      description: "Planned expansion to cover more regions in the Philippines with enhanced platform features"
     }
   ];
 
@@ -87,10 +87,10 @@ export default function About() {
   ];
 
   const stats = [
-    { number: "10,000+", label: "Active Professionals", icon: <Users className="w-6 h-6" /> },
-    { number: "50,000+", label: "Services Completed", icon: <Briefcase className="w-6 h-6" /> },
-    { number: "5", label: "Countries", icon: <Globe className="w-6 h-6" /> },
-    { number: "4.9★", label: "Average Rating", icon: <Star className="w-6 h-6" /> }
+    { number: "500+", label: "Active Professionals", icon: <Users className="w-6 h-6" /> },
+    { number: "1,000+", label: "Services Completed", icon: <Briefcase className="w-6 h-6" /> },
+    { number: "3", label: "Active Partnerships", icon: <Globe className="w-6 h-6" /> },
+    { number: "4.8★", label: "Average Rating", icon: <Star className="w-6 h-6" /> }
   ];
 
   return (
@@ -103,7 +103,7 @@ export default function About() {
         badge="Our Story"
       >
         <Link href="/contact">
-          <Button size="lg" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-emerald-500/30 group">
+          <Button size="lg" variant="default" className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-emerald-500/30 group">
             Get in Touch
             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Button>
@@ -261,13 +261,13 @@ export default function About() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/marketplace">
-              <Button size="lg" className="bg-white text-emerald-600 hover:bg-white/90 font-bold px-8 py-6 text-lg rounded-full shadow-2xl group">
+              <Button size="lg" className="bg-white !text-emerald-700 hover:bg-emerald-50 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-black/20 group">
                 Explore Marketplace
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
             <Link href="/contact">
-              <Button size="lg" className="bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 text-lg rounded-full border border-white/20">
+              <Button size="lg" variant="ghost" className="text-white hover:bg-white/10 hover:text-white font-bold px-8 py-6 text-lg rounded-full border border-white/30">
                 Get in Touch
               </Button>
             </Link>

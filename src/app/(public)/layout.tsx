@@ -141,7 +141,7 @@ function PublicLayoutContent({
                 ) : (
                   <>
                     <Link href="/auth">
-                      <Button size="sm" className="bg-transparent text-white border border-slate-600 hover:bg-slate-800 font-semibold rounded-full px-5">
+                      <Button size="sm" variant="ghost" className="text-white hover:bg-slate-800/50 hover:text-white font-semibold rounded-full px-5 border border-slate-600">
                         Sign In
                       </Button>
                     </Link>

@@ -392,7 +392,7 @@ export default function Support() {
                   Shop with confidence knowing you&apos;re protected. Our buyer protection covers eligible purchases, ensuring you receive what you ordered or get your money back.
                 </p>
                 <Link href="/help-center">
-                  <Button className="bg-white text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl">
+                  <Button className="bg-white !text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl">
                     Learn More
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>

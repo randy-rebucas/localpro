@@ -14,7 +14,7 @@ import {
   Award,
   Coffee,
   Laptop,
-  DollarSign,
+  Wallet,
   Search
 } from "lucide-react";
 
@@ -120,7 +120,7 @@ export default function Careers() {
       color: "from-rose-500 to-red-600"
     },
     {
-      icon: <DollarSign className="w-6 h-6" />,
+      icon: <Wallet className="w-6 h-6" />,
       title: "Competitive Salary",
       description: "Market-competitive compensation with regular performance reviews and raises",
       color: "from-emerald-500 to-teal-600"
@@ -222,10 +222,10 @@ export default function Careers() {
             {departments.map((department, index) => (
               <button
                 key={index}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
                   index === 0
-                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                    : "bg-slate-800/50 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-700/50"
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 border border-emerald-400/30"
+                    : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-600"
                 }`}
               >
                 {department}
@@ -256,7 +256,7 @@ export default function Careers() {
                         {job.type}
                       </div>
                       <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1" />
+                        <Wallet className="w-4 h-4 mr-1" />
                         {job.salary}
                       </div>
                       <div className="flex items-center">
@@ -269,7 +269,7 @@ export default function Careers() {
                     </p>
                   </div>
                   <div className="mt-4 lg:mt-0 lg:ml-6">
-                    <Button className="bg-emerald-500 text-white hover:bg-emerald-600 font-semibold rounded-xl shadow-lg shadow-emerald-500/30">
+                    <Button className="bg-emerald-500 text-white hover:bg-emerald-600 font-bold px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-500/30 border border-emerald-400/20">
                       Apply Now
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -351,10 +351,11 @@ export default function Careers() {
             Send us your resume and let&apos;s start a conversation.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-emerald-600 hover:bg-white/90 font-bold px-8 py-6 text-lg rounded-full shadow-2xl">
+            <Button size="lg" className="bg-white !text-emerald-700 hover:bg-emerald-50 font-bold px-8 py-6 text-lg rounded-full shadow-2xl shadow-black/20">
               View All Jobs
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button size="lg" className="bg-white/10 text-white hover:bg-white/20 font-bold px-8 py-6 text-lg rounded-full border border-white/20">
+            <Button size="lg" variant="ghost" className="text-white hover:bg-white/10 hover:text-white font-bold px-8 py-6 text-lg rounded-full border border-white/30">
               General Application
             </Button>
           </div>

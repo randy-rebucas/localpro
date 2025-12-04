@@ -289,13 +289,13 @@ export default function Blog() {
           <p className="text-lg text-emerald-100 mb-10">
             Get the latest articles, insights, and industry updates delivered to your inbox.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+          <div className="flex flex-col sm:flex-row items-center gap-4 max-w-md mx-auto">
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-emerald-100 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+              className="flex-1 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-emerald-100 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
             />
-            <Button className="bg-white text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl">
+            <Button className="bg-white !text-emerald-600 hover:bg-white/90 font-bold rounded-xl shadow-2xl px-6 py-3 h-auto">
               Subscribe
               <ArrowRight className="ml-2 w-4 h-4" />
             </Button>

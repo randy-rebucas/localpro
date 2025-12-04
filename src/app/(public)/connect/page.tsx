@@ -62,7 +62,7 @@ export default function Connect() {
       icon: <Phone className="w-6 h-6" />,
       title: "Phone Support",
       description: "Speak directly with our team",
-      contact: "+63 (2) 8888-LPRO",
+      contact: "+63 917 915 7515",
       responseTime: "Mon-Fri 9AM-6PM PHT",
       action: "Call Now",
       color: "from-purple-500 to-pink-600"
