@@ -683,7 +683,7 @@ function HomeContent() {
                   <a href="https://www.facebook.com/localproasia" target="_blank" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
                     <Facebook className="w-5 h-5" />
                   </a>
-                  <a href="https://www.linkedin.com/company/107116413/admin/dashboard/" target="_blank" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
+                  <a href="https://www.linkedin.com/company/localproasia/" target="_blank" className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-400 transition-colors">
                     <Linkedin className="w-5 h-5" />
                   </a>
                 </div>
