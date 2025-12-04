@@ -113,42 +113,48 @@ function HomeContent() {
       title: "Professional Services",
       description: "Access 500+ service categories from verified professionals",
       color: "from-emerald-500 to-teal-600",
-      link: "/marketplace"
+      link: "/marketplace",
+      image: "https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
     {
       icon: <ShoppingBag className="w-7 h-7" />,
       title: "Supplies Marketplace",
       description: "Buy and sell equipment, materials, and business supplies",
       color: "from-blue-500 to-indigo-600",
-      link: "/supplies"
+      link: "/supplies",
+      image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
     {
       icon: <HomeIcon className="w-7 h-7" />,
       title: "Rentals",
       description: "Rent equipment, spaces, and tools for your projects",
       color: "from-amber-500 to-orange-600",
-      link: "/rentals"
+      link: "/rentals",
+      image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
     {
       icon: <GraduationCap className="w-7 h-7" />,
       title: "Academy",
       description: "Learn new skills with courses from industry experts",
       color: "from-purple-500 to-pink-600",
-      link: "/academy"
+      link: "/academy",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
     {
       icon: <Wrench className="w-7 h-7" />,
       title: "Facility Care",
       description: "Janitorial, landscaping, pest control, and maintenance",
       color: "from-cyan-500 to-blue-600",
-      link: "/facility-care"
+      link: "/facility-care",
+      image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
     {
       icon: <Target className="w-7 h-7" />,
       title: "Job Board",
       description: "Find opportunities or hire skilled professionals",
       color: "from-rose-500 to-red-600",
-      link: "/jobs"
+      link: "/jobs",
+      image: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     }
   ];
 
@@ -209,21 +215,24 @@ function HomeContent() {
       quote: "LocalPro helped me triple my client base in just 6 months. The platform is incredibly easy to use and the support team is amazing.",
       author: "Maria Santos",
       role: "Cleaning Service Provider",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+      initials: "MS",
+      bgColor: "bg-emerald-500",
       rating: 5
     },
     {
       quote: "Finding reliable contractors used to be a nightmare. Now I have a trusted network of professionals just a click away.",
       author: "James Rodriguez",
       role: "Property Manager",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+      initials: "JR",
+      bgColor: "bg-blue-500",
       rating: 5
     },
     {
       quote: "As a hotel, we needed a scalable solution for managing multiple service vendors. LocalPro's Business Partner program is exactly what we needed.",
       author: "Ana Reyes",
       role: "Hotel Operations Director",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80",
+      initials: "AR",
+      bgColor: "bg-purple-500",
       rating: 5
     }
   ];
@@ -296,12 +305,12 @@ function HomeContent() {
                 ) : (
                   <>
                     <Link href="/auth">
-                      <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white hover:bg-slate-800">
+                      <Button variant="outline" size="sm" className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400 font-semibold">
                         Sign In
                       </Button>
                     </Link>
                     <Link href="/auth">
-                      <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25">
+                      <Button size="sm" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/30">
                         Get Started
                       </Button>
                     </Link>
@@ -349,10 +358,10 @@ function HomeContent() {
                       </>
                     ) : (
                       <>
-                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium text-slate-300 hover:text-emerald-400 hover:bg-slate-800">
+                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium text-emerald-400 hover:text-emerald-300 hover:bg-slate-800">
                           Sign In
                         </Link>
-                        <Link href="/auth" className="block px-4 py-2 rounded-lg text-base font-medium bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-center">
+                        <Link href="/auth" className="block px-4 py-3 rounded-lg text-base font-bold bg-emerald-500 text-slate-950 text-center hover:bg-emerald-400">
                           Get Started
                         </Link>
                       </>
@@ -397,14 +406,14 @@ function HomeContent() {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
                   <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                    <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-8 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
+                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
                       <Rocket className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
                       {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
                       <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </Link>
                   <Link href="/about">
-                    <Button variant="outline" size="lg" className="border-slate-700 text-slate-300 hover:bg-slate-800 px-8 py-6 text-lg rounded-xl group">
+                    <Button variant="outline" size="lg" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:border-white/50 font-semibold px-8 py-6 text-lg rounded-xl group">
                       <Play className="mr-2 w-5 h-5" />
                       Learn More
                     </Button>
@@ -483,7 +492,7 @@ function HomeContent() {
                   </div>
 
                   <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                    <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl group">
+                    <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl group">
                       {currentContent.cta}
                       <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Button>
@@ -526,19 +535,32 @@ function HomeContent() {
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {platformFeatures.map((feature, index) => (
                   <Link key={index} href={isAuthenticated ? feature.link : "/auth"}>
-                    <div className="group relative p-6 rounded-2xl bg-slate-900/50 border border-slate-800/50 hover:border-emerald-500/30 transition-all duration-300 h-full">
-                      <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className={`relative inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-r ${feature.color} text-white mb-4 group-hover:scale-110 transition-transform`}>
-                        {feature.icon}
+                    <div className="group relative rounded-2xl bg-slate-900/50 border border-slate-800/50 hover:border-emerald-500/30 transition-all duration-300 h-full overflow-hidden">
+                      {/* Feature Image */}
+                      <div className="relative h-40 overflow-hidden">
+                        <Image
+                          src={feature.image}
+                          alt={feature.title}
+                          width={600}
+                          height={300}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent"></div>
+                        <div className={`absolute bottom-4 left-4 inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} text-white shadow-lg`}>
+                          {feature.icon}
+                        </div>
                       </div>
-                      <h3 className="relative text-xl font-semibold text-white mb-2 group-hover:text-emerald-400 transition-colors">
-                        {feature.title}
-                      </h3>
-                      <p className="relative text-slate-400 text-sm leading-relaxed">
-                        {feature.description}
-                      </p>
-                      <div className="relative mt-4 flex items-center text-emerald-400 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                        Explore <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                      {/* Feature Content */}
+                      <div className="p-6">
+                        <h3 className="relative text-xl font-semibold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                          {feature.title}
+                        </h3>
+                        <p className="relative text-slate-400 text-sm leading-relaxed mb-4">
+                          {feature.description}
+                        </p>
+                        <div className="relative flex items-center text-emerald-400 text-sm font-medium">
+                          Explore <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
                     </div>
                   </Link>
@@ -561,7 +583,7 @@ function HomeContent() {
 
               <div className="grid md:grid-cols-3 gap-8">
                 {testimonials.map((testimonial, index) => (
-                  <div key={index} className="relative p-8 rounded-2xl bg-slate-800/30 border border-slate-700/50">
+                  <div key={index} className="relative p-8 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/20 transition-colors">
                     <Quote className="absolute top-6 right-6 w-10 h-10 text-emerald-500/20" />
                     <div className="flex items-center mb-4">
                       {[...Array(testimonial.rating)].map((_, i) => (
@@ -572,13 +594,9 @@ function HomeContent() {
                       &ldquo;{testimonial.quote}&rdquo;
                     </p>
                     <div className="flex items-center">
-                      <Image
-                        src={testimonial.avatar}
-                        alt={testimonial.author}
-                        width={48}
-                        height={48}
-                        className="w-12 h-12 rounded-full object-cover mr-4"
-                      />
+                      <div className={`w-12 h-12 rounded-full ${testimonial.bgColor} flex items-center justify-center mr-4 shadow-lg`}>
+                        <span className="text-white font-bold text-lg">{testimonial.initials}</span>
+                      </div>
                       <div>
                         <div className="font-semibold text-white">{testimonial.author}</div>
                         <div className="text-sm text-slate-400">{testimonial.role}</div>
@@ -610,14 +628,14 @@ function HomeContent() {
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href={isAuthenticated ? "/plus" : "/auth"}>
-                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-6 text-lg rounded-xl shadow-xl group">
+                  <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold px-8 py-6 text-lg rounded-xl shadow-xl group">
                     <Sparkles className="mr-2 w-5 h-5" />
                     Explore Plans
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <Link href="/about">
-                  <Button variant="outline" size="lg" className="border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl">
+                  <Button variant="outline" size="lg" className="border-white/50 bg-white/10 text-white hover:bg-white/20 hover:border-white font-semibold px-8 py-6 text-lg rounded-xl">
                     Compare Features
                   </Button>
                 </Link>
@@ -636,7 +654,7 @@ function HomeContent() {
                 Create your free account today.
               </p>
               <Link href={isAuthenticated ? "/dashboard" : "/auth"}>
-                <Button size="lg" className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-10 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
+                <Button size="lg" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-10 py-6 text-lg rounded-xl shadow-2xl shadow-emerald-500/30 group">
                   <Rocket className="mr-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
                   {isAuthenticated ? "Go to Dashboard" : "Create Free Account"}
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
