@@ -21,6 +21,9 @@ import {
 import { makeClientAuthenticatedRequestWithEndpointSafe, makeClientAuthenticatedRequestWithPathSafe } from "@/lib/client-api-utils";
 import { API_ENDPOINTS } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 // Types
 interface TopUpRequest {
@@ -91,6 +94,7 @@ type RequestStatus = 'all' | 'pending' | 'approved' | 'rejected' | 'completed' |
 export default function FinanceAdmin() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
   
   // State
   const [activeTab, setActiveTab] = useState<'withdrawals' | 'topups'>('withdrawals');
@@ -362,13 +366,13 @@ export default function FinanceAdmin() {
     return userObj.profile?.avatar || null;
   };
 
-  const formatAmount = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 2
-    }).format(Math.abs(amount));
-  };
+  const formatAmount = useCallback((amount: number, currency?: string): string => {
+    const currencyCode = currency || getDefaultCurrency(appSettings);
+    return formatCurrency(Math.abs(amount), currencyCode, {
+      appSettings,
+      showSymbol: true,
+    });
+  }, [appSettings]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _formatDate = (dateString: string): string => {
@@ -457,29 +461,29 @@ export default function FinanceAdmin() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Error Display */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-2.5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-red-800">{error}</p>
+            <p className="text-xs text-red-800">{error}</p>
             <button
               onClick={() => setError(null)}
               className="text-red-600 hover:text-red-800"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3 h-3" />
             </button>
           </div>
         </div>
       )}
 
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             Finance Management
           </h1>
-          <p className="text-gray-600 text-sm">Review and process withdrawal and top-up requests</p>
+          <p className="text-gray-500 text-xs mt-0.5">Review and process withdrawal and top-up requests</p>
         </div>
         <button
           onClick={handleRefresh}
@@ -491,12 +495,12 @@ export default function FinanceAdmin() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded shadow">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
           <nav className="flex -mb-px">
             <button
               onClick={() => setActiveTab('withdrawals')}
-              className={`py-4 px-6 text-sm font-medium border-b-2 ${
+              className={`py-1.5 px-3 text-xs font-medium border-b-2 ${
                 activeTab === 'withdrawals'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -504,14 +508,14 @@ export default function FinanceAdmin() {
             >
               Withdrawal Requests
               {withdrawalRequests.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 rounded-full">
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-gray-100 rounded-full">
                   {withdrawalRequests.length}
                 </span>
               )}
             </button>
             <button
               onClick={() => setActiveTab('topups')}
-              className={`py-4 px-6 text-sm font-medium border-b-2 ${
+              className={`py-1.5 px-3 text-xs font-medium border-b-2 ${
                 activeTab === 'topups'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -519,7 +523,7 @@ export default function FinanceAdmin() {
             >
               Top-Up Requests
               {topUpRequests.length > 0 && (
-                <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 rounded-full">
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-gray-100 rounded-full">
                   {topUpRequests.length}
                 </span>
               )}
@@ -528,7 +532,7 @@ export default function FinanceAdmin() {
         </div>
 
         {/* Filters and Controls */}
-        <div className="px-4 py-3 border-b border-gray-200">
+        <div className="px-3 py-2 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
             <div className="flex items-center space-x-2">

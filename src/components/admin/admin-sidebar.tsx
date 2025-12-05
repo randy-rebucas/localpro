@@ -34,7 +34,9 @@ import {
   Building2,
   Bell,
   Calendar,
-  Activity
+  Activity,
+  Lock,
+  Zap
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -196,6 +198,16 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "System Health",
       href: "/admin/health",
       icon: Monitor,
+    },
+    {
+      name: "Escrow Management",
+      href: "/admin/escrows",
+      icon: Lock,
+    },
+    {
+      name: "Database Optimization",
+      href: "/admin/database",
+      icon: Zap,
     },
   ];
 

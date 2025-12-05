@@ -15,19 +15,27 @@ import {
   Clock,
   X,
   Filter,
+  Package,
+  BarChart3,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
 import { Modal } from "@/components/ui/modal";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { useAdminSubscriptions } from "@/hooks/useAdminSubscriptions";
-import { useSubscriptionPlans } from "@/hooks/useSubscriptions";
-import { UserSubscription } from "@/types/subscriptions";
+import { useSubscriptionPlans, useAdminSubscriptionPlans } from "@/hooks/useSubscriptions";
+import { UserSubscription, SubscriptionPlan } from "@/types/subscriptions";
 import { Pagination } from "@/components/shared/pagination";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { logger } from "@/lib/logger";
+import toast from "react-hot-toast";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 export default function AdminSubscriptionsPage() {
+  const { settings: appSettings } = useAppSettings();
   const {
     subscriptions,
     loading,
@@ -40,7 +48,19 @@ export default function AdminSubscriptionsPage() {
   } = useAdminSubscriptions();
 
   const { plans } = useSubscriptionPlans();
+  const { 
+    plans: adminPlans, 
+    loading: plansLoading, 
+    error: plansError,
+    createPlan,
+    updatePlan,
+    deletePlan,
+    refetch: refetchPlans
+  } = useAdminSubscriptionPlans();
   const { toasts, success, error: showError, removeToast } = useToast();
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'plans' | 'analytics'>('subscriptions');
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -79,6 +99,30 @@ export default function AdminSubscriptionsPage() {
   });
 
   const [cancelReason, setCancelReason] = useState("");
+
+  // Plan management states
+  const [showPlanCreateModal, setShowPlanCreateModal] = useState(false);
+  const [showPlanEditModal, setShowPlanEditModal] = useState(false);
+  const [showPlanDeleteModal, setShowPlanDeleteModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+  const [planFormData, setPlanFormData] = useState<Partial<SubscriptionPlan>>({
+    name: '',
+    description: '',
+    price: {
+      monthly: 0,
+      yearly: 0,
+      currency: getDefaultCurrency(null) // Will be updated when appSettings loads
+    },
+    features: [],
+    limits: {},
+    benefits: [],
+    isActive: true,
+    isPopular: false,
+    sortOrder: 0
+  });
+  const [submittingPlan, setSubmittingPlan] = useState(false);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   // User autosuggest state
   const [userSearchTerm, setUserSearchTerm] = useState("");
@@ -351,6 +395,113 @@ export default function AdminSubscriptionsPage() {
     }
   };
 
+  // Plan management handlers
+  const handleCreatePlan = async () => {
+    try {
+      setSubmittingPlan(true);
+      await createPlan(planFormData);
+      success("Plan created successfully");
+      setShowPlanCreateModal(false);
+      setPlanFormData({
+        name: '',
+        description: '',
+        price: { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
+        features: [],
+        limits: {},
+        benefits: [],
+        isActive: true,
+        isPopular: false,
+        sortOrder: 0
+      });
+      refetchPlans();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      showError(errorMessage);
+    } finally {
+      setSubmittingPlan(false);
+    }
+  };
+
+  const handleUpdatePlan = async () => {
+    if (!selectedPlan?._id) return;
+    
+    try {
+      setSubmittingPlan(true);
+      await updatePlan(selectedPlan._id, planFormData);
+      success("Plan updated successfully");
+      setShowPlanEditModal(false);
+      setSelectedPlan(null);
+      refetchPlans();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      showError(errorMessage);
+    } finally {
+      setSubmittingPlan(false);
+    }
+  };
+
+  const handleDeletePlan = async () => {
+    if (!selectedPlan?._id) return;
+    
+    try {
+      setSubmittingPlan(true);
+      await deletePlan(selectedPlan._id);
+      success("Plan deleted successfully");
+      setShowPlanDeleteModal(false);
+      setSelectedPlan(null);
+      refetchPlans();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      showError(errorMessage);
+    } finally {
+      setSubmittingPlan(false);
+    }
+  };
+
+  const openPlanEditModal = (plan: SubscriptionPlan) => {
+    setSelectedPlan(plan);
+    setPlanFormData({
+      name: plan.name,
+      description: plan.description,
+      price: plan.price || { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
+      features: plan.features || [],
+      limits: plan.limits || {},
+      benefits: plan.benefits || [],
+      isActive: plan.isActive ?? true,
+      isPopular: plan.isPopular ?? false,
+      sortOrder: plan.sortOrder || 0
+    });
+    setShowPlanEditModal(true);
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoadingAnalytics(true);
+      if (!getApiToken()) return;
+
+      const url = `${API_BASE_URL}${API_ENDPOINTS.localProPlusAnalytics}`;
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics');
+      }
+
+      const result = await response.json();
+      setAnalyticsData(result.data || result);
+    } catch (err) {
+      logger.error('Error fetching subscription analytics', err instanceof Error ? err : new Error(String(err)));
+      showError('Failed to fetch analytics');
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      fetchAnalytics();
+    }
+  }, [activeTab]);
+
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case "active":
@@ -387,25 +538,92 @@ export default function AdminSubscriptionsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <ToastContainer toasts={toasts} onClose={removeToast} />
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manual Subscriptions</h1>
-          <p className="text-gray-600 text-sm">Manage LocalPro Plus manual subscriptions</p>
+          <h1 className="text-xl font-bold text-gray-900">Subscriptions Management</h1>
+          <p className="text-gray-500 text-xs mt-0.5">Manage LocalPro Plus subscriptions, plans, and analytics</p>
         </div>
-        <div className="mt-2 sm:mt-0">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Create Manual Subscription
-          </button>
+        <div className="mt-2 sm:mt-0 flex items-center space-x-2">
+          {activeTab === 'subscriptions' && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Create Manual Subscription
+            </button>
+          )}
+          {activeTab === 'plans' && (
+            <button
+              onClick={() => {
+                setPlanFormData({
+                  name: '',
+                  description: '',
+                  price: { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
+                  features: [],
+                  limits: {},
+                  benefits: [],
+                  isActive: true,
+                  isPopular: false,
+                  sortOrder: 0
+                });
+                setShowPlanCreateModal(true);
+              }}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Create Plan
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-4">
+          <button
+            onClick={() => setActiveTab('subscriptions')}
+            className={`py-1.5 px-2 border-b-2 font-medium text-xs ${
+              activeTab === 'subscriptions'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <User className="w-3 h-3 inline mr-1" />
+            Subscriptions
+          </button>
+          <button
+            onClick={() => setActiveTab('plans')}
+            className={`py-1.5 px-2 border-b-2 font-medium text-xs ${
+              activeTab === 'plans'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <Package className="w-3 h-3 inline mr-1" />
+            Plans
+          </button>
+          <button
+            onClick={() => setActiveTab('analytics')}
+            className={`py-1.5 px-2 border-b-2 font-medium text-xs ${
+              activeTab === 'analytics'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <BarChart3 className="w-3 h-3 inline mr-1" />
+            Analytics
+          </button>
+        </nav>
+      </div>
+
+      {/* Subscriptions Tab Content */}
+      {activeTab === 'subscriptions' && (
+        <>
 
       {/* Filters and Controls */}
       <div className="bg-white rounded shadow">
@@ -1136,6 +1354,421 @@ export default function AdminSubscriptionsPage() {
             </div>
           </div>
         </div>
+      </Modal>
+        </>
+      )}
+
+      {/* Plans Tab Content */}
+      {activeTab === 'plans' && (
+        <div className="space-y-3">
+          {plansLoading ? (
+            <Loading />
+          ) : plansError ? (
+            <AdminErrorState error={plansError} onRetry={refetchPlans} />
+          ) : (
+            <>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="px-3 py-2 border-b border-gray-200">
+                  <h3 className="text-sm font-medium text-gray-900">Subscription Plans</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Monthly Price</th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Yearly Price</th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {adminPlans.map((plan) => (
+                        <tr key={plan._id} className="hover:bg-gray-50">
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {plan.isPopular && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
+                                  Popular
+                                </span>
+                              )}
+                              <span className="text-sm font-medium text-gray-900">{plan.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <p className="text-xs text-gray-500 line-clamp-2">{plan.description}</p>
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap text-xs text-gray-900">
+                            {formatCurrency(plan.price?.monthly || 0, plan.price?.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap text-xs text-gray-900">
+                            {formatCurrency(plan.price?.yearly || 0, plan.price?.currency || getDefaultCurrency(appSettings), { appSettings })}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              plan.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {plan.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap text-xs font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => openPlanEditModal(plan)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edit plan"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedPlan(plan);
+                                  setShowPlanDeleteModal(true);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete plan"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {adminPlans.length === 0 && (
+                    <div className="text-center py-8">
+                      <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <h3 className="text-sm font-medium text-gray-900 mb-1">No plans found</h3>
+                      <p className="text-xs text-gray-500">Create your first subscription plan to get started.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Analytics Tab Content */}
+      {activeTab === 'analytics' && (
+        <div className="space-y-3">
+          {loadingAnalytics ? (
+            <Loading />
+          ) : analyticsData ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Total Subscriptions</p>
+                    <p className="text-lg font-bold text-gray-900">{analyticsData.totalSubscriptions || 0}</p>
+                  </div>
+                  <User className="w-6 h-6 text-blue-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Active Subscriptions</p>
+                    <p className="text-lg font-bold text-green-600">{analyticsData.activeSubscriptions || 0}</p>
+                  </div>
+                  <CheckCircle2 className="w-6 h-6 text-green-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Monthly Revenue</p>
+                    <p className="text-lg font-bold text-yellow-600">
+                      {formatCurrency(analyticsData.monthlyRevenue || 0, analyticsData.currency || getDefaultCurrency(appSettings), { appSettings })}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-6 h-6 text-yellow-500" />
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-500">Total Revenue</p>
+                    <p className="text-lg font-bold text-purple-600">
+                      {formatCurrency(analyticsData.totalRevenue || 0, analyticsData.currency || getDefaultCurrency(appSettings), { appSettings })}
+                    </p>
+                  </div>
+                  <BarChart3 className="w-6 h-6 text-purple-500" />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">No analytics data available</h3>
+              <p className="text-xs text-gray-500">Analytics will appear here once subscriptions are created.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Plan Create Modal */}
+      <Modal
+        isOpen={showPlanCreateModal}
+        onClose={() => {
+          setShowPlanCreateModal(false);
+          setPlanFormData({
+            name: '',
+            description: '',
+            price: { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
+            features: [],
+            limits: {},
+            benefits: [],
+            isActive: true,
+            isPopular: false,
+            sortOrder: 0
+          });
+        }}
+        title="Create Subscription Plan"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setShowPlanCreateModal(false);
+                setPlanFormData({
+                  name: '',
+                  description: '',
+                  price: { monthly: 0, yearly: 0, currency: getDefaultCurrency(appSettings) },
+                  features: [],
+                  limits: {},
+                  benefits: [],
+                  isActive: true,
+                  isPopular: false,
+                  sortOrder: 0
+                });
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleCreatePlan}
+              disabled={submittingPlan || !planFormData.name || !planFormData.description}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submittingPlan ? 'Creating...' : 'Create Plan'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
+            <input
+              type="text"
+              value={planFormData.name || ''}
+              onChange={(e) => setPlanFormData({ ...planFormData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="e.g., LocalPro Basic"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={planFormData.description || ''}
+              onChange={(e) => setPlanFormData({ ...planFormData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Plan description..."
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price</label>
+              <input
+                type="number"
+                min="0"
+                value={planFormData.price?.monthly || 0}
+                onChange={(e) => setPlanFormData({
+                  ...planFormData,
+                  price: { ...planFormData.price!, monthly: Number(e.target.value) }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Yearly Price</label>
+              <input
+                type="number"
+                min="0"
+                value={planFormData.price?.yearly || 0}
+                onChange={(e) => setPlanFormData({
+                  ...planFormData,
+                  price: { ...planFormData.price!, yearly: Number(e.target.value) }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={planFormData.isActive ?? true}
+                onChange={(e) => setPlanFormData({ ...planFormData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Active</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={planFormData.isPopular ?? false}
+                onChange={(e) => setPlanFormData({ ...planFormData, isPopular: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Popular</span>
+            </label>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Plan Edit Modal */}
+      <Modal
+        isOpen={showPlanEditModal}
+        onClose={() => {
+          setShowPlanEditModal(false);
+          setSelectedPlan(null);
+        }}
+        title="Edit Subscription Plan"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setShowPlanEditModal(false);
+                setSelectedPlan(null);
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdatePlan}
+              disabled={submittingPlan || !planFormData.name || !planFormData.description}
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submittingPlan ? 'Updating...' : 'Update Plan'}
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Plan Name</label>
+            <input
+              type="text"
+              value={planFormData.name || ''}
+              onChange={(e) => setPlanFormData({ ...planFormData, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea
+              value={planFormData.description || ''}
+              onChange={(e) => setPlanFormData({ ...planFormData, description: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price</label>
+              <input
+                type="number"
+                min="0"
+                value={planFormData.price?.monthly || 0}
+                onChange={(e) => setPlanFormData({
+                  ...planFormData,
+                  price: { ...planFormData.price!, monthly: Number(e.target.value) }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Yearly Price</label>
+              <input
+                type="number"
+                min="0"
+                value={planFormData.price?.yearly || 0}
+                onChange={(e) => setPlanFormData({
+                  ...planFormData,
+                  price: { ...planFormData.price!, yearly: Number(e.target.value) }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={planFormData.isActive ?? true}
+                onChange={(e) => setPlanFormData({ ...planFormData, isActive: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Active</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={planFormData.isPopular ?? false}
+                onChange={(e) => setPlanFormData({ ...planFormData, isPopular: e.target.checked })}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Popular</span>
+            </label>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Plan Delete Modal */}
+      <Modal
+        isOpen={showPlanDeleteModal}
+        onClose={() => {
+          setShowPlanDeleteModal(false);
+          setSelectedPlan(null);
+        }}
+        title="Delete Subscription Plan"
+        size="md"
+        footer={
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={() => {
+                setShowPlanDeleteModal(false);
+                setSelectedPlan(null);
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDeletePlan}
+              disabled={submittingPlan}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              {submittingPlan ? 'Deleting...' : 'Delete Plan'}
+            </button>
+          </div>
+        }
+      >
+        {selectedPlan && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete the plan <strong>{selectedPlan.name}</strong>? 
+              This action cannot be undone and may affect existing subscriptions.
+            </p>
+          </div>
+        )}
       </Modal>
     </div>
   );

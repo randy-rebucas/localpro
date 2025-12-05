@@ -94,11 +94,15 @@ export default function AdminJobsPage() {
   const [showLogoModal, setShowLogoModal] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [showApplicationsModal, setShowApplicationsModal] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [selectedJobStats, setSelectedJobStats] = useState<JobStats | null>(null);
   const [selectedJobApplications, setSelectedJobApplications] = useState<(Application & { _id?: string })[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const [createForm, setCreateForm] = useState({
     title: "",
@@ -316,6 +320,88 @@ export default function AdminJobsPage() {
       const errorMessage = err instanceof Error ? err.message : String(err);
       showError(errorMessage);
       logger.error("Error updating job", err instanceof Error ? err : new Error(errorMessage));
+    }
+  };
+
+  const handleApproveJob = async () => {
+    if (!selectedJob?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.jobsApprove.replace('[id]', selectedJob._id)}/approve`,
+        createAuthFetchOptions({ method: 'PUT' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to approve job');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        success('Job approved successfully');
+        setShowApproveModal(false);
+        setSelectedJob(null);
+        await fetchJobs();
+      } else {
+        throw new Error(result.error || 'Failed to approve job');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error approving job', error);
+      showError(`Failed to approve job: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectJob = async () => {
+    if (!selectedJob?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.jobsReject.replace('[id]', selectedJob._id)}/reject`,
+        createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify({
+            rejectionReason: rejectionReason || 'Job rejected by administrator'
+          })
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to reject job');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        success('Job rejected successfully');
+        setShowRejectModal(false);
+        setSelectedJob(null);
+        setRejectionReason('');
+        await fetchJobs();
+      } else {
+        throw new Error(result.error || 'Failed to reject job');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error rejecting job', error);
+      showError(`Failed to reject job: ${error.message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -996,6 +1082,27 @@ export default function AdminJobsPage() {
                           <Eye className="w-3 h-3" />
                         </button>
                         <button
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setShowApproveModal(true);
+                          }}
+                          className="text-green-600 hover:text-green-900"
+                          title="Approve Job"
+                        >
+                          <CheckCircle2 className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedJob(job);
+                            setRejectionReason('');
+                            setShowRejectModal(true);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Reject Job"
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </button>
+                        <button
                           onClick={() => handleViewStats(job)}
                           className="text-purple-600 hover:text-purple-900"
                           title="View Stats"
@@ -1004,7 +1111,7 @@ export default function AdminJobsPage() {
                         </button>
                         <button
                           onClick={() => handleViewApplications(job)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-indigo-600 hover:text-indigo-900"
                           title="View Applications"
                         >
                           <Users className="w-3 h-3" />
@@ -1639,6 +1746,96 @@ export default function AdminJobsPage() {
             </div>
           )}
         </div>
+      </Modal>
+
+      {/* Approve Job Modal */}
+      <Modal
+        isOpen={showApproveModal}
+        onClose={() => {
+          setShowApproveModal(false);
+          setSelectedJob(null);
+        }}
+        title="Approve Job"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                setShowApproveModal(false);
+                setSelectedJob(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApproveJob}
+              disabled={submitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {submitting ? 'Approving...' : 'Approve Job'}
+            </Button>
+          </div>
+        }
+      >
+        {selectedJob && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to approve <strong>{selectedJob.title}</strong>?
+            </p>
+            <p className="text-xs text-gray-500">
+              This job will be made available to job seekers.
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      {/* Reject Job Modal */}
+      <Modal
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setSelectedJob(null);
+          setRejectionReason('');
+        }}
+        title="Reject Job"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                setShowRejectModal(false);
+                setSelectedJob(null);
+                setRejectionReason('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRejectJob}
+              disabled={submitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {submitting ? 'Rejecting...' : 'Reject Job'}
+            </Button>
+          </div>
+        }
+      >
+        {selectedJob && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to reject <strong>{selectedJob.title}</strong>?
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Rejection Reason</label>
+              <Textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                placeholder="Provide a reason for rejection..."
+              />
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

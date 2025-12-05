@@ -501,4 +501,28 @@ export const API_ENDPOINTS = {
   adminLiveChatCustomerHistory: "/api/admin/live-chat/customers/[email]/history",
   adminLiveChatDeleteSession: "/api/admin/live-chat/sessions/[sessionId]",
   
+  // Escrow Management
+  escrowsAdminAll: "/api/escrows/admin/all",
+  escrowsAdminStats: "/api/escrows/admin/stats",
+  escrowsDisputeResolve: "/api/escrows/[id]/dispute/resolve",
+  
+  // Database Optimization
+  databaseOptimizationReport: "/api/database/optimization/report",
+  databaseOptimizationRecommendations: "/api/database/optimization/recommendations",
+  databaseOptimizationCreateIndexes: "/api/database/optimization/create-indexes",
+  databaseOptimizationQueryStats: "/api/database/optimization/query-stats",
+  databaseOptimizationHealth: "/api/database/optimization/health",
+  databaseOptimizationCollections: "/api/database/optimization/collections",
+  databaseOptimizationSlowQueries: "/api/database/optimization/slow-queries",
+  databaseOptimizationClearCache: "/api/database/optimization/clear-cache",
+  databaseOptimizationResetStats: "/api/database/optimization/reset-stats",
+  
+  // Content Moderation
+  marketplaceServiceApprove: "/api/marketplace/services/[id]/approve",
+  marketplaceServiceReject: "/api/marketplace/services/[id]/reject",
+  jobsApprove: "/api/jobs/[id]/approve",
+  jobsReject: "/api/jobs/[id]/reject",
+  academyCourseApprove: "/api/academy/courses/[id]/approve",
+  academyCourseReject: "/api/academy/courses/[id]/reject",
+  
 } as const;

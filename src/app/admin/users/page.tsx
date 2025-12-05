@@ -1547,14 +1547,14 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             User Management
           </h1>
-          <p className="text-gray-600 text-sm">Manage user accounts, roles, and permissions</p>
+          <p className="text-gray-500 text-xs mt-0.5">Manage user accounts, roles, and permissions</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           {lastUpdated && (
@@ -1591,12 +1591,12 @@ export default function UsersPage() {
 
       {/* Stats Overview */}
       {(stats || loading) && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-2.5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Users</p>
-                <p className="text-lg font-bold text-gray-900">
+                <p className="text-base font-bold text-gray-900">
                   {loading ? '...' : (stats?.totalUsers || 0).toLocaleString()}
                 </p>
                 <p className="text-xs text-gray-500">

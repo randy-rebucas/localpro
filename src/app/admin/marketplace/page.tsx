@@ -15,6 +15,8 @@ import {
   ChevronUp,
   Image as ImageIcon,
   X,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -166,11 +168,14 @@ export default function MarketplacePage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [imageUploadModalOpen, setImageUploadModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedServiceDetails, setSelectedServiceDetails] = useState<Service | null>(null);
   const [loadingServiceDetails, setLoadingServiceDetails] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [rejectionReason, setRejectionReason] = useState('');
   
   // Form data states
   const [createFormData, setCreateFormData] = useState({
@@ -572,6 +577,88 @@ export default function MarketplacePage() {
     } catch (err) {
       logger.error('Error deleting service', err instanceof Error ? err : new Error(String(err)));
       toast.error(err instanceof Error ? err.message : 'Failed to delete service');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleApproveService = async () => {
+    if (!selectedService?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceApprove.replace('[id]', selectedService._id)}/approve`,
+        createAuthFetchOptions({ method: 'PUT' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to approve service');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Service approved successfully');
+        setApproveModalOpen(false);
+        setSelectedService(null);
+        await fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to approve service');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error approving service', error);
+      toast.error(`Failed to approve service: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectService = async () => {
+    if (!selectedService?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServiceReject.replace('[id]', selectedService._id)}/reject`,
+        createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify({
+            rejectionReason: rejectionReason || 'Service rejected by administrator'
+          })
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to reject service');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Service rejected successfully');
+        setRejectModalOpen(false);
+        setSelectedService(null);
+        setRejectionReason('');
+        await fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to reject service');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error rejecting service', error);
+      toast.error(`Failed to reject service: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -1026,6 +1113,27 @@ export default function MarketplacePage() {
                             <Eye className="w-3 h-3" />
                           </button>
                           <button 
+                            onClick={() => {
+                              setSelectedService(service);
+                              setApproveModalOpen(true);
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                            title="Approve service"
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedService(service);
+                              setRejectionReason('');
+                              setRejectModalOpen(true);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Reject service"
+                          >
+                            <XCircle className="w-3 h-3" />
+                          </button>
+                          <button 
                           onClick={() => {
                             setSelectedService(service);
                             setEditFormData({
@@ -1042,7 +1150,7 @@ export default function MarketplacePage() {
                             });
                             setEditModalOpen(true);
                           }}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-yellow-600 hover:text-yellow-900"
                             title="Edit service"
                           >
                             <Edit className="w-3 h-3" />
@@ -1673,6 +1781,99 @@ function ImageUploadForm({
           </div>
         </div>
       )}
+
+      {/* Approve Service Modal */}
+      <Modal
+        isOpen={approveModalOpen}
+        onClose={() => {
+          setApproveModalOpen(false);
+          setSelectedService(null);
+        }}
+        title="Approve Service"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setApproveModalOpen(false);
+                setSelectedService(null);
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleApproveService}
+              disabled={submitting}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              {submitting ? 'Approving...' : 'Approve Service'}
+            </button>
+          </div>
+        }
+      >
+        {selectedService && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to approve <strong>{selectedService.title}</strong>?
+            </p>
+            <p className="text-xs text-gray-500">
+              This service will be made available to users.
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      {/* Reject Service Modal */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => {
+          setRejectModalOpen(false);
+          setSelectedService(null);
+          setRejectionReason('');
+        }}
+        title="Reject Service"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setRejectModalOpen(false);
+                setSelectedService(null);
+                setRejectionReason('');
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRejectService}
+              disabled={submitting}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {submitting ? 'Rejecting...' : 'Reject Service'}
+            </button>
+          </div>
+        }
+      >
+        {selectedService && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to reject <strong>{selectedService.title}</strong>?
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Rejection Reason</label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                placeholder="Provide a reason for rejection..."
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

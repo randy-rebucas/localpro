@@ -16,7 +16,9 @@ import {
   TrendingUp,
   Eye,
   X,
-  Filter
+  Filter,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -64,8 +66,11 @@ export default function AcademyPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [thumbnailModalOpen, setThumbnailModalOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Form states
   const [courseFormData, setCourseFormData] = useState({
@@ -335,6 +340,88 @@ export default function AcademyPage() {
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Error updating course', error);
       toast.error(`Failed to update course: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleApproveCourse = async () => {
+    if (!selectedCourse?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCourseApprove.replace('[id]', selectedCourse._id)}/approve`,
+        createAuthFetchOptions({ method: 'PUT' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to approve course');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Course approved successfully');
+        setApproveModalOpen(false);
+        setSelectedCourse(null);
+        await fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to approve course');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error approving course', error);
+      toast.error(`Failed to approve course: ${error.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRejectCourse = async () => {
+    if (!selectedCourse?._id) return;
+
+    try {
+      setSubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCourseReject.replace('[id]', selectedCourse._id)}/reject`,
+        createAuthFetchOptions({
+          method: 'PUT',
+          body: JSON.stringify({
+            rejectionReason: rejectionReason || 'Course rejected by administrator'
+          })
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to reject course');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Course rejected successfully');
+        setRejectModalOpen(false);
+        setSelectedCourse(null);
+        setRejectionReason('');
+        await fetchData();
+      } else {
+        throw new Error(result.error || 'Failed to reject course');
+      }
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error rejecting course', error);
+      toast.error(`Failed to reject course: ${error.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -1220,8 +1307,29 @@ export default function AcademyPage() {
                           <Eye className="w-3 h-3" />
                         </button>
                         <button
-                          onClick={() => openEditModal(course)}
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setApproveModalOpen(true);
+                          }}
                           className="text-green-600 hover:text-green-900"
+                          title="Approve course"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedCourse(course);
+                            setRejectionReason('');
+                            setRejectModalOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Reject course"
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => openEditModal(course)}
+                          className="text-yellow-600 hover:text-yellow-900"
                           title="Edit course"
                         >
                           <Edit className="w-3 h-3" />
@@ -1970,6 +2078,99 @@ export default function AcademyPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Approve Course Modal */}
+      <Modal
+        isOpen={approveModalOpen}
+        onClose={() => {
+          setApproveModalOpen(false);
+          setSelectedCourse(null);
+        }}
+        title="Approve Course"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setApproveModalOpen(false);
+                setSelectedCourse(null);
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleApproveCourse}
+              disabled={submitting}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded hover:bg-green-700 disabled:opacity-50"
+            >
+              {submitting ? 'Approving...' : 'Approve Course'}
+            </button>
+          </div>
+        }
+      >
+        {selectedCourse && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to approve <strong>{selectedCourse.title}</strong>?
+            </p>
+            <p className="text-xs text-gray-500">
+              This course will be made available to students.
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      {/* Reject Course Modal */}
+      <Modal
+        isOpen={rejectModalOpen}
+        onClose={() => {
+          setRejectModalOpen(false);
+          setSelectedCourse(null);
+          setRejectionReason('');
+        }}
+        title="Reject Course"
+        size="md"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => {
+                setRejectModalOpen(false);
+                setSelectedCourse(null);
+                setRejectionReason('');
+              }}
+              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleRejectCourse}
+              disabled={submitting}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {submitting ? 'Rejecting...' : 'Reject Course'}
+            </button>
+          </div>
+        }
+      >
+        {selectedCourse && (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to reject <strong>{selectedCourse.title}</strong>?
+            </p>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Rejection Reason</label>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                placeholder="Provide a reason for rejection..."
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
           </div>
         )}
       </Modal>

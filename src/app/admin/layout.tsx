@@ -94,10 +94,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <main className="flex-1 overflow-y-auto overflow-x-hidden bg-transparent min-h-0">
                 {/* Content */}
                 <div className="w-full">
-                  <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 w-full">
+                  <div className="px-3 sm:px-4 lg:px-5 py-3 sm:py-4 w-full">
                     {/* Content wrapper - full width */}
                     <div className="w-full">
-                      <div className="bg-white/60 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/50 p-6 lg:p-8 w-full">
+                      <div className="bg-white/60 backdrop-blur-sm rounded-lg shadow-sm border border-gray-200/50 p-3 sm:p-4 w-full">
                         {children}
                       </div>
                     </div>

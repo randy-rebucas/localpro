@@ -38,6 +38,9 @@ import { useRoleAccess } from "@/components/role-guard";
 import { useSession } from "@/hooks/useAuth";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { formatCurrency } from "@/lib/currency-utils";
+import { getDefaultCurrency } from "@/lib/settings-utils";
 
 interface DashboardStats {
   totalUsers: number;
@@ -83,6 +86,7 @@ interface ModuleStats {
 }
 
 export default function AdminDashboard() {
+  const { settings: appSettings } = useAppSettings();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
@@ -542,10 +546,10 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-3">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 text-sm">LocalPro administration panel</p>
+          <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-500 text-xs mt-0.5">LocalPro administration panel</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           {lastUpdated && (
@@ -669,27 +673,27 @@ export default function AdminDashboard() {
       )}
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-blue-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Total Users</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-lg font-bold text-gray-900">
                 {stats?.totalUsers.toLocaleString() || '0'}
               </p>
               <p className="text-xs text-gray-500">
                 +{stats?.newUsersToday || 0} today
               </p>
             </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="p-1.5 bg-blue-100 rounded-lg">
+              <Users className="w-4 h-4 text-blue-600" />
             </div>
           </div>
-          <div className="mt-2 flex items-center text-xs">
+          <div className="mt-1.5 flex items-center text-xs">
             {stats?.growthRate && stats.growthRate > 0 ? (
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+              <TrendingUp className="w-3 h-3 text-green-500 mr-0.5" />
             ) : (
-              <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
+              <TrendingDown className="w-3 h-3 text-red-500 mr-0.5" />
             )}
             <span className={`font-medium ${stats?.growthRate && stats.growthRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
               {stats?.growthRate && stats.growthRate > 0 ? '+' : ''}{stats?.growthRate || 0}%
@@ -697,123 +701,123 @@ export default function AdminDashboard() {
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-green-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Active Services</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-lg font-bold text-gray-900">
                 {stats?.activeServices.toLocaleString() || '0'}
               </p>
               <p className="text-xs text-gray-500">
                 {stats?.activeBookings || 0} bookings
               </p>
             </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <ShoppingCart className="w-5 h-5 text-green-600" />
+            <div className="p-1.5 bg-green-100 rounded-lg">
+              <ShoppingCart className="w-4 h-4 text-green-600" />
             </div>
           </div>
-          <div className="mt-2 flex items-center text-xs">
-            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+          <div className="mt-1.5 flex items-center text-xs">
+            <TrendingUp className="w-3 h-3 text-green-500 mr-0.5" />
             <span className="text-green-600 font-medium">+8.2%</span>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-yellow-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Total Revenue</p>
-              <p className="text-xl font-bold text-gray-900">
-                ${stats?.totalRevenue.toLocaleString() || '0'}
+              <p className="text-lg font-bold text-gray-900">
+                {formatCurrency(stats?.totalRevenue || 0, getDefaultCurrency(appSettings), { appSettings })}
               </p>
               <p className="text-xs text-gray-500">
                 {stats?.conversionRate || 0}% conversion
               </p>
             </div>
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-yellow-600" />
+            <div className="p-1.5 bg-yellow-100 rounded-lg">
+              <DollarSign className="w-4 h-4 text-yellow-600" />
             </div>
           </div>
-          <div className="mt-2 flex items-center text-xs">
-            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+          <div className="mt-1.5 flex items-center text-xs">
+            <TrendingUp className="w-3 h-3 text-green-500 mr-0.5" />
             <span className="text-green-600 font-medium">+12.5%</span>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-red-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Pending Approvals</p>
-              <p className="text-xl font-bold text-gray-900">
+              <p className="text-lg font-bold text-gray-900">
                 {stats?.pendingApprovals || '0'}
               </p>
               <p className="text-xs text-gray-500">
                 High priority
               </p>
             </div>
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+            <div className="p-1.5 bg-red-100 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-red-600" />
             </div>
           </div>
-          <div className="mt-2 flex items-center text-xs">
+          <div className="mt-1.5 flex items-center text-xs">
             <span className="text-red-600 font-medium">Attention</span>
           </div>
         </div>
       </div>
 
       {/* System Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-purple-500">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-purple-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">System Health</p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-base font-bold text-gray-900">
                 {stats?.serverUptime || 0}%
               </p>
               <p className="text-xs text-gray-500">
                 {stats?.systemHealth || 'Unknown'}
               </p>
             </div>
-            <div className="p-2 bg-purple-100 rounded-lg">
+            <div className="p-1.5 bg-purple-100 rounded-lg">
               <Shield className="w-4 h-4 text-purple-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-cyan-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-cyan-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Response Time</p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-base font-bold text-gray-900">
                 {stats?.avgResponseTime || 0}s
               </p>
               <p className="text-xs text-gray-500">
                 {stats?.avgResponseTime && stats.avgResponseTime < 2 ? 'Excellent' : 'Good'}
               </p>
             </div>
-            <div className="p-2 bg-cyan-100 rounded-lg">
+            <div className="p-1.5 bg-cyan-100 rounded-lg">
               <Zap className="w-4 h-4 text-cyan-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-orange-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-orange-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Error Rate</p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-base font-bold text-gray-900">
                 {stats?.errorRate || 0}%
               </p>
               <p className="text-xs text-gray-500">
                 {stats?.errorRate && stats.errorRate < 1 ? 'Low' : 'High'}
               </p>
             </div>
-            <div className="p-2 bg-orange-100 rounded-lg">
+            <div className="p-1.5 bg-orange-100 rounded-lg">
               <Activity className="w-4 h-4 text-orange-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-indigo-500">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-indigo-500 p-2.5">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Active Alerts</p>
@@ -1001,25 +1005,25 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
           {modules.map((module) => (
             <Link
               key={module.name}
               href={module.href}
-              className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-200 p-4 group border border-gray-200 hover:border-blue-300 hover:-translate-y-0.5"
+              className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-2.5 group border border-gray-200 hover:border-blue-300 hover:-translate-y-0.5"
             >
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className={`p-3 rounded-lg ${module.color} text-white group-hover:scale-105 transition-transform duration-200`}>
-                  <module.icon className="w-5 h-5" />
+              <div className="flex flex-col items-center text-center space-y-1.5">
+                <div className={`p-2 rounded-lg ${module.color} text-white group-hover:scale-105 transition-transform duration-200`}>
+                  <module.icon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors duration-200">
+                  <h3 className="text-xs font-semibold text-gray-700 group-hover:text-blue-600 transition-colors duration-200">
                     {module.name}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                  <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
                     {module.description}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-1">
                     <p className="text-xs text-gray-400 font-medium">
                       {module.stats}
                     </p>
