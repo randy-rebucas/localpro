@@ -9,10 +9,8 @@ import {
   Phone, 
   MapPin, 
   Briefcase, 
-  Edit3,
   CheckCircle,
   AlertCircle,
-  Edit,
   Shield,
   Award,
   Star,
@@ -771,48 +769,6 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
 
   return (
     <div>
-      {/* Welcome Section with Edit Button */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-br from-white via-blue-50/30 to-green-50/30 rounded-2xl p-6 lg:p-8 border border-gray-200/50 shadow-xl">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex-1">
-              <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-2">
-                Profile Settings
-              </h2>
-              <p className="text-gray-700 text-lg font-medium">
-                Manage your personal information and preferences
-              </p>
-              <p className="text-sm text-gray-600 mt-2 flex items-center">
-                <Edit className="w-4 h-4 mr-1 text-blue-600" />
-                Click the edit button to make changes to your profile
-              </p>
-            </div>
-            
-            {/* Edit Profile Button */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <button
-                onClick={handleEditProfile}
-                className="flex items-center justify-center space-x-2 px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-300 text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Edit Profile</span>
-              </button>
-              
-              {/* Last updated info */}
-              <div className="hidden lg:flex items-center space-x-4" aria-label="Last updated">
-                <div className="text-right">
-                  <p className="text-sm text-gray-600 font-medium">Last updated</p>
-                  <p className="text-sm font-bold text-gray-900">{formattedUpdatedAt}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-purple-600 to-purple-700 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform duration-300">
-                  <UserIcon className="w-7 h-7 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Profile Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Profile Display */}
@@ -820,42 +776,49 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
           {/* Basic Information */}
           <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
             {/* Avatar Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-8 pb-6 border-b border-gray-200">
-              <div className="flex-shrink-0">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Profile"
-                    width={80}
-                    height={80}
-                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
-                  />
-                ) : (
-                  <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-2xl">
-                      {profile?.name?.charAt(0) || profile?.firstName?.charAt(0) || "U"}
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="text-center sm:text-left">
-                <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                  <h3 className="text-xl font-semibold text-gray-700">{profile?.name || "User"}</h3>
-                  {getVerificationBadge(profile?.verification)}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-8 pb-6 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <div className="flex-shrink-0">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Profile"
+                      width={80}
+                      height={80}
+                      className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-2xl">
+                        {profile?.name?.charAt(0) || profile?.firstName?.charAt(0) || "U"}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-gray-600 capitalize mt-1">{primaryRole || "User"}</p>
-                {profile?.isVerified && (
-                  <div className="flex items-center justify-center sm:justify-start mt-1">
-                    <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
-                    <span className="text-xs text-green-600 font-medium">Verified Account</span>
+                <div className="text-center sm:text-left">
+                  <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                    <h3 className="text-xl font-semibold text-gray-700">{profile?.name || "User"}</h3>
+                    {getVerificationBadge(profile?.verification)}
                   </div>
-                )}
-                {profile?.trustScore !== undefined && profile.trustScore > 0 && (
-                  <div className="flex items-center justify-center sm:justify-start mt-1">
-                    <Shield className="w-3 h-3 text-blue-600 mr-1" />
-                    <span className="text-xs text-blue-600 font-medium">Trust Score: {profile.trustScore}/100</span>
-                  </div>
-                )}
+                  <p className="text-gray-600 capitalize mt-1">{primaryRole || "User"}</p>
+                  {profile?.isVerified && (
+                    <div className="flex items-center justify-center sm:justify-start mt-1">
+                      <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
+                      <span className="text-xs text-green-600 font-medium">Verified Account</span>
+                    </div>
+                  )}
+                  {profile?.trustScore !== undefined && profile.trustScore > 0 && (
+                    <div className="flex items-center justify-center sm:justify-start mt-1">
+                      <Shield className="w-3 h-3 text-blue-600 mr-1" />
+                      <span className="text-xs text-blue-600 font-medium">Trust Score: {profile.trustScore}/100</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Last Updated - Right Side */}
+              <div className="flex items-center gap-2 text-sm text-gray-500 self-start sm:self-center">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span>Last updated: <span className="font-medium text-gray-700">{formattedUpdatedAt}</span></span>
               </div>
             </div>
 

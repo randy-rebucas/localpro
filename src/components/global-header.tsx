@@ -238,14 +238,21 @@ export function GlobalHeader({
     };
   }, []);
 
-  // Fetch unread notification count
+  // Fetch unread notification count using new endpoint
   useEffect(() => {
     if (!session || !getApiToken()) return;
 
     const fetchUnreadCount = async () => {
       try {
-        const url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotificationCount}?isRead=false`;
-        const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+        // Try new endpoint first, fallback to legacy endpoint
+        let url = `${API_BASE_URL}${API_ENDPOINTS.notificationsUnreadCount}`;
+        let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+        // Fallback to legacy endpoint if new endpoint fails
+        if (!response.ok) {
+          url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotificationCount}?isRead=false`;
+          response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+        }
 
         if (response.ok) {
           const data = await response.json();
@@ -279,15 +286,22 @@ export function GlobalHeader({
     return () => clearInterval(interval);
   }, [session]);
 
-  // Fetch notifications when dropdown opens
+  // Fetch notifications when dropdown opens using new endpoint
   useEffect(() => {
     const fetchNotifications = async () => {
       if (!session || !getApiToken() || !showNotifications) return;
 
       try {
         setLoadingNotifications(true);
-        const url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotifications}?limit=5&page=1`;
-        const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+        // Try new endpoint first, fallback to legacy endpoint
+        let url = `${API_BASE_URL}${API_ENDPOINTS.notifications}?limit=5&page=1`;
+        let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+
+        // Fallback to legacy endpoint if new endpoint fails
+        if (!response.ok) {
+          url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotifications}?limit=5&page=1`;
+          response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
+        }
 
         if (response.ok) {
           const data = await response.json();

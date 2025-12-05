@@ -15,13 +15,17 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  LucideIcon
+  LucideIcon,
+  X,
+  RefreshCw,
+  TestTube2
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
 import { useUserSettings } from "@/hooks/useUserSettings";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useFCMDevices, useNotificationAdmin } from "@/hooks/useNotifications";
 import { getEnabledPaymentMethods } from "@/lib/settings-utils";
 import { logger } from "@/lib/logger";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,17 +57,17 @@ function SettingsSection({
     <section className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden backdrop-blur-sm">
       <button
         onClick={onToggle}
-        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-4 border-b border-gray-200 hover:from-green-50/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
+        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-5 border-b border-gray-200 hover:from-green-50/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
-              <Icon className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
+              <Icon className="w-6 h-6" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-gray-900 text-base">{title}</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">{title}</h3>
               {description && (
-                <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+                <p className="text-sm text-gray-500 mt-1">{description}</p>
               )}
             </div>
           </div>
@@ -71,7 +75,7 @@ function SettingsSection({
         </div>
       </button>
       {expanded && (
-        <div className="p-6 transition-all duration-200 ease-in-out animate-fade-in-up">
+        <div className="px-6 py-7 transition-all duration-200 ease-in-out animate-fade-in-up">
           {children}
         </div>
       )}
@@ -82,6 +86,14 @@ function SettingsSection({
 export default function SettingsPage() {
   const { settings: fetchedSettings, loading, updateSettings: updateUserSettings } = useUserSettings();
   const { settings: appSettings } = useAppSettings();
+  const { 
+    devices, 
+    loading: devicesLoading, 
+    refetch: refetchDevices, 
+    removeToken
+  } = useFCMDevices();
+  const { sendTestNotification, loading: testLoading } = useNotificationAdmin();
+  
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
   const [hasChanges, setHasChanges] = useState<boolean>(false);
@@ -89,6 +101,7 @@ export default function SettingsPage() {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     privacy: true, // Privacy expanded by default
     notifications: false,
+    devices: false,
     communication: false,
     service: false,
     payment: false,
@@ -236,9 +249,9 @@ export default function SettingsPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 relative z-10">
         {/* Header with Save Button */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
               <SettingsIcon className="w-7 h-7" />
@@ -277,9 +290,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings Column */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-8">
           {/* Privacy Settings */}
           <SettingsSection
             icon={Lock}
@@ -391,6 +404,170 @@ export default function SettingsPage() {
                     <ToggleRow key={path as string} label={label as string} checked={getAtPath(settings, path as string) as boolean} onChange={onToggle(path as string)} />
                   ))}
                 </div>
+              </div>
+            </div>
+          </SettingsSection>
+
+          {/* Registered Devices Section */}
+          <SettingsSection
+            icon={Smartphone}
+            title="Registered Devices"
+            description="Manage devices registered for push notifications"
+            isExpanded={expandedSections.devices}
+            onToggle={() => toggleSection('devices')}
+          >
+            <div className="space-y-4">
+              {/* Actions */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  {devices.length} device{devices.length !== 1 ? 's' : ''} registered for push notifications
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      sendTestNotification({
+                        title: "Test Notification",
+                        message: "Your push notifications are working correctly!",
+                        type: "system_announcement"
+                      }).then(success => {
+                        if (success) {
+                          toast.success("Test notification sent!");
+                        } else {
+                          toast.error("Failed to send test notification");
+                        }
+                      });
+                    }}
+                    disabled={testLoading}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-all border border-purple-200"
+                  >
+                    {testLoading ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <TestTube2 className="w-4 h-4" />
+                    )}
+                    Test Notification
+                  </button>
+                  <button
+                    onClick={() => refetchDevices()}
+                    disabled={devicesLoading}
+                    className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all border border-gray-200"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${devicesLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Device List */}
+              {devicesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-green-500" />
+                  <span className="ml-2 text-gray-500">Loading devices...</span>
+                </div>
+              ) : devices.length === 0 ? (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Smartphone className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium text-gray-700">No devices registered</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Push notifications will be enabled when you allow notifications in your browser.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {devices.map((device) => {
+                    const deviceId = device._id || device.id || '';
+                    const formatDate = (dateStr: string | Date | undefined) => {
+                      if (!dateStr) return 'Unknown';
+                      const date = new Date(dateStr);
+                      const now = new Date();
+                      const diffMs = now.getTime() - date.getTime();
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMs / 3600000);
+                      const diffDays = Math.floor(diffMs / 86400000);
+                      
+                      if (diffMins < 1) return 'Just now';
+                      if (diffMins < 60) return `${diffMins}m ago`;
+                      if (diffHours < 24) return `${diffHours}h ago`;
+                      if (diffDays < 7) return `${diffDays}d ago`;
+                      return date.toLocaleDateString();
+                    };
+                    
+                    return (
+                      <div 
+                        key={deviceId} 
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            device.deviceType === 'ios' ? 'bg-gray-100' :
+                            device.deviceType === 'android' ? 'bg-green-100' :
+                            'bg-blue-100'
+                          }`}>
+                            <Smartphone className={`w-5 h-5 ${
+                              device.deviceType === 'ios' ? 'text-gray-600' :
+                              device.deviceType === 'android' ? 'text-green-600' :
+                              'text-blue-600'
+                            }`} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{device.deviceName || 'Unknown Device'}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span className="capitalize">{device.deviceType || 'web'}</span>
+                              {device.browser && (
+                                <>
+                                  <span>•</span>
+                                  <span>{device.browser}</span>
+                                </>
+                              )}
+                              {device.os && (
+                                <>
+                                  <span>•</span>
+                                  <span>{device.os}</span>
+                                </>
+                              )}
+                              {device.lastUsed && (
+                                <>
+                                  <span>•</span>
+                                  <span>Last used: {formatDate(device.lastUsed)}</span>
+                                </>
+                              )}
+                              {device.isActive && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-green-600 font-medium">Active</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            removeToken(deviceId).then(success => {
+                              if (success) {
+                                toast.success("Device removed");
+                              } else {
+                                toast.error("Failed to remove device");
+                              }
+                            });
+                          }}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="Remove device"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Info */}
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>Tip:</strong> Push notifications help you stay updated on important events like new bookings, 
+                  messages, and payment updates. Enable notifications in your browser to receive them even when you&apos;re 
+                  not actively using the app.
+                </p>
               </div>
             </div>
           </SettingsSection>
@@ -744,7 +921,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-8 lg:sticky lg:top-8">
           <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
             <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>

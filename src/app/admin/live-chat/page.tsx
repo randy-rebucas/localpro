@@ -12,7 +12,6 @@ import {
   User,
   ChevronDown,
   ChevronUp,
-  X,
   FileText,
   CheckCircle,
   XCircle,

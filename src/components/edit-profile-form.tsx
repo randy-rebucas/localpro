@@ -2351,14 +2351,6 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
   logger.debug('Initial values', { hasInitialValues: !!initialValues });
   return (
     <div className="bg-white rounded-xl shadow-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-700">Edit Profile</h2>
-          <p className="text-sm text-gray-600 mt-1">Update your personal information and preferences</p>
-        </div>
-      </div>
-
           {/* Auto-save Status */}
           {(autoSaveStatus !== 'idle' || hasUnsavedChanges) && (
             <div className="px-6 py-2 bg-gray-50 border-b border-gray-100">

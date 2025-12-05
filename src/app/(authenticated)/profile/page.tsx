@@ -7,7 +7,8 @@ import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { UserProfileData } from "@/components/user-profile";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
-import { User, RefreshCw, AlertCircle } from "lucide-react";
+import { User, RefreshCw, AlertCircle, Edit3 } from "lucide-react";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfileData | null>(null);
@@ -67,14 +68,23 @@ export default function ProfilePage() {
       
       <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 transition-transform duration-300">
-            <User className="w-7 h-7" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 transition-transform duration-300">
+              <User className="w-7 h-7" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-1">Profile</h1>
+              <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your account information and settings</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-1">Profile</h1>
-            <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your account information and settings</p>
-          </div>
+          <Link
+            href="/profile/edit"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105"
+          >
+            <Edit3 className="w-4 h-4" />
+            Edit Profile
+          </Link>
         </div>
 
       {/* Loading State */}

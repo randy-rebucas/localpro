@@ -14,29 +14,21 @@ import {
   Filter,
   Clock,
   CheckCircle2,
-  Trash2
+  Trash2,
+  TestTube2,
+  Smartphone
 } from "lucide-react";
-import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
-import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
+import { 
+  useNotifications, 
+  useNotificationAdmin,
+  useFCMDevices,
+  type NotificationType, 
+  type NotificationPriority,
+  type NotificationChannels
+} from "@/hooks/useNotifications";
 import { logger } from "@/lib/logger";
-
-// Notification Data Entity (from features/communication/data-entities.md)
-
-export type NotificationType =
-  | 'booking_created' | 'booking_confirmed' | 'booking_cancelled' | 'booking_completed'
-  | 'job_application' | 'application_status_update' | 'job_posted'
-  | 'message_received' | 'payment_received' | 'payment_failed'
-  | 'referral_reward' | 'course_enrollment' | 'order_confirmation'
-  | 'subscription_renewal' | 'subscription_cancelled' | 'system_announcement';
-
-export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
-
-export interface NotificationChannels {
-  inApp: boolean;
-  email: boolean;
-  sms: boolean;
-  push: boolean;
-}
+import toast from "react-hot-toast";
+import { useSession } from "@/hooks/useAuth";
 
 export interface NotificationItem {
   _id: string;
@@ -58,6 +50,8 @@ export interface NotificationItem {
   // Computed/helper fields
   href?: string | null; // computed from data or type
 }
+
+export { type NotificationType, type NotificationPriority, type NotificationChannels };
 
 // Helper function to normalize notification from API
 const normalizeNotification = (notification: Record<string, unknown>): NotificationItem => {
@@ -372,36 +366,45 @@ const NotificationItemComponent = ({
 };
 
 export default function NotificationsPage() {
+  useSession();
+  
+  // Use the new notifications hook
+  const {
+    notifications,
+    loading,
+    refetch: load,
+    markAsRead: hookMarkAsRead,
+    markAllAsRead: hookMarkAllAsRead,
+    deleteNotification: hookDeleteNotification,
+    deleteAllNotifications,
+  } = useNotifications({ limit: 100 });
+
+  // Admin notification functions
+  const { 
+    sendTestNotification, 
+    loading: adminLoading 
+  } = useNotificationAdmin();
+
+  // FCM Devices
+  const {
+    devices,
+    loading: devicesLoading,
+    removeToken,
+  } = useFCMDevices();
+
   const [items, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [markAllLoading, setMarkAllLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [typeFilter, setTypeFilter] = useState<NotificationType | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<NotificationPriority | 'all'>('all');
+  const [showDevices, setShowDevices] = useState(false);
 
-  // Load notifications
-  const load = useCallback(async () => {
-    if (!getApiToken()) return;
-    
-    setLoading(true);
-    try {
-      const url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotifications}`;
-      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-      logger.debug("Notifications API response", { status: response.status, ok: response.ok });
-      if (!response.ok) {
-        const errorText = await response.text();
-        logger.error("Notifications API error", undefined, { status: response.status, errorText });
-        throw new Error(`Failed to fetch notifications: ${response.status} ${response.statusText}`);
-      }
-      
-      const responseData = await response.json();
-      // Handle API response structure: { success, data: { notifications: [...], pagination:{...} } }
-      const notificationsData = responseData?.data?.notifications || responseData?.notifications || responseData?.data || [];
-      
-      // Normalize notifications and filter out expired ones
-      const normalizedNotifications = notificationsData
-        .map((notif: Record<string, unknown>) => normalizeNotification(notif))
+  // Sync notifications from hook to local state with normalization
+  useEffect(() => {
+    if (notifications) {
+      const normalizedNotifications = notifications
+        .map((notif) => normalizeNotification(notif as unknown as Record<string, unknown>))
         .filter((notif: NotificationItem) => {
           // Filter out expired notifications
           if (notif.expiresAt) {
@@ -424,31 +427,8 @@ export default function NotificationsPage() {
         });
       
       setItems(normalizedNotifications);
-    } catch (err) {
-      logger.error("Error loading notifications", err instanceof Error ? err : new Error(String(err)));
-     
-      // For network errors, show user-friendly message but keep empty state
-      if (err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('Failed to fetch'))) {
-        logger.warn("Network error - unable to connect to API server");
-        // Show empty state - the error details are logged for debugging
-        setItems([]);
-      } else if (err instanceof Error && err.message.includes('API base URL')) {
-        logger.error("Configuration error - API_BASE_URL not set");
-        setItems([]);
-      } else {
-        // Other errors - still show empty state
-        logger.error("Unexpected error loading notifications", err instanceof Error ? err : new Error(String(err)));
-        setItems([]);
-      }
-    } finally {
-      setLoading(false);
     }
-  }, []);
-
-  // Load notifications on mount and when session changes
-  useEffect(() => {
-      load();
-  }, [load]);
+  }, [notifications]);
 
   // Mark notification as read
   const markAsRead = useCallback(async (id: string) => {
@@ -464,12 +444,9 @@ export default function NotificationsPage() {
     }));
     
     try {
-      const endpoint = API_ENDPOINTS.communicationNotificationsRead.replace('[id]', id);
-      const url = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(url, createAuthFetchOptions({ method: 'PUT' }));
-      
-      if (!response.ok) {
-        throw new Error(`Failed to mark notification as read: ${response.status}`);
+      const success = await hookMarkAsRead(id);
+      if (!success) {
+        throw new Error("Failed to mark notification as read");
       }
     } catch (err) {
       logger.error("Error marking notification as read", err instanceof Error ? err : new Error(String(err)), { notificationId: id });
@@ -481,6 +458,7 @@ export default function NotificationsPage() {
         }
         return item;
       }));
+      toast.error("Failed to mark notification as read");
     } finally {
       setActionLoading(prev => {
         const newSet = new Set(prev);
@@ -488,7 +466,7 @@ export default function NotificationsPage() {
         return newSet;
       });
     }
-  }, []);
+  }, [hookMarkAsRead]);
 
   // Delete notification
   const deleteNotification = useCallback(async (id: string) => {
@@ -507,13 +485,11 @@ export default function NotificationsPage() {
     }));
     
     try {
-      const endpoint = API_ENDPOINTS.communicationNotificationsById.replace('[id]', id);
-      const url = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(url, createAuthFetchOptions({ method: 'DELETE' }));
-      
-      if (!response.ok) {
-        throw new Error(`Failed to delete notification: ${response.status}`);
+      const success = await hookDeleteNotification(id);
+      if (!success) {
+        throw new Error("Failed to delete notification");
       }
+      toast.success("Notification deleted");
     } catch (err) {
       logger.error("Error deleting notification", err instanceof Error ? err : new Error(String(err)), { notificationId: id });
       // Revert optimistic update on error
@@ -534,6 +510,7 @@ export default function NotificationsPage() {
           });
         });
       }
+      toast.error("Failed to delete notification");
     } finally {
       setActionLoading(prev => {
         const newSet = new Set(prev);
@@ -541,7 +518,7 @@ export default function NotificationsPage() {
         return newSet;
       });
     }
-  }, [items]);
+  }, [items, hookDeleteNotification]);
 
   // Mark all notifications as read
   const markAllAsRead = useCallback(async () => {
@@ -555,12 +532,11 @@ export default function NotificationsPage() {
     setItems(prev => prev.map(item => ({ ...item, isRead: true, readAt })));
     
     try {
-      const url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotificationsReadAll}`;
-      const response = await fetch(url, createAuthFetchOptions({ method: 'PUT' }));
-      
-      if (!response.ok) {
-        throw new Error(`Failed to mark all notifications as read: ${response.status}`);
+      const success = await hookMarkAllAsRead();
+      if (!success) {
+        throw new Error("Failed to mark all notifications as read");
       }
+      toast.success("All notifications marked as read");
     } catch (err) {
       logger.error("Error marking all notifications as read", err instanceof Error ? err : new Error(String(err)), { unreadCount: unreadItems.length });
       // Revert optimistic update on error
@@ -572,10 +548,66 @@ export default function NotificationsPage() {
         });
         return shouldRevert ? { ...item, isRead: false, readAt: undefined } : item;
       }));
+      toast.error("Failed to mark all notifications as read");
     } finally {
       setMarkAllLoading(false);
     }
-  }, [items]);
+  }, [items, hookMarkAllAsRead]);
+
+  // Delete all notifications
+  const handleDeleteAll = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete all notifications? This cannot be undone.")) {
+      return;
+    }
+    
+    try {
+      const success = await deleteAllNotifications();
+      if (success) {
+        setItems([]);
+        toast.success("All notifications deleted");
+      } else {
+        toast.error("Failed to delete all notifications");
+      }
+    } catch (err) {
+      logger.error("Error deleting all notifications", err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to delete all notifications");
+    }
+  }, [deleteAllNotifications]);
+
+  // Send test notification
+  const handleSendTestNotification = useCallback(async () => {
+    try {
+      const success = await sendTestNotification({
+        title: "Test Notification",
+        message: "This is a test notification to verify your notification setup is working correctly.",
+        type: "system_announcement"
+      });
+      if (success) {
+        toast.success("Test notification sent! Refresh to see it.");
+        setTimeout(() => load(), 1000);
+      } else {
+        toast.error("Failed to send test notification");
+      }
+    } catch (err) {
+      logger.error("Error sending test notification", err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to send test notification");
+    }
+  }, [sendTestNotification, load]);
+
+  // Remove FCM device
+  const handleRemoveDevice = useCallback(async (deviceId: string) => {
+    try {
+      const success = await removeToken(deviceId);
+      if (success) {
+        toast.success("Device removed successfully");
+      } else {
+        toast.error("Failed to remove device");
+      }
+    } catch (err) {
+      logger.error("Error removing device", err instanceof Error ? err : new Error(String(err)));
+      toast.error("Failed to remove device");
+    }
+  }, [removeToken]);
 
   // Filter notifications based on current filters
   const filteredItems = useMemo(() => {
@@ -691,7 +723,39 @@ export default function NotificationsPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Test Notification Button */}
+              <button
+                onClick={handleSendTestNotification}
+                disabled={adminLoading}
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-700 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg hover:from-purple-100 hover:to-purple-200 hover:border-purple-300 transition-all shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Send a test notification to yourself"
+              >
+                {adminLoading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <TestTube2 className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">Test</span>
+              </button>
+
+              {/* Devices Button */}
+              <button
+                onClick={() => setShowDevices(!showDevices)}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-105 ${
+                  showDevices 
+                    ? "text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300" 
+                    : "text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:from-gray-50 hover:to-gray-100 hover:border-gray-300"
+                }`}
+                title="Manage registered devices"
+              >
+                <Smartphone className="w-4 h-4" />
+                <span className="hidden sm:inline">Devices</span>
+                {devices.length > 0 && (
+                  <span className="px-1.5 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">{devices.length}</span>
+                )}
+              </button>
+
               {stats.unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
@@ -711,6 +775,18 @@ export default function NotificationsPage() {
                   )}
                 </button>
               )}
+
+              {items.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-lg hover:from-red-100 hover:to-red-200 hover:border-red-300 transition-all shadow-md hover:shadow-lg hover:scale-105"
+                  title="Delete all notifications"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Clear All</span>
+                </button>
+              )}
+
               <button
                 onClick={load}
                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-lg hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all shadow-md hover:shadow-lg hover:scale-105"
@@ -787,6 +863,85 @@ export default function NotificationsPage() {
               </div>
             </div>
           </div>
+
+          {/* Registered Devices Panel */}
+          {showDevices && (
+            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-xl border-2 border-blue-200 p-5 shadow-lg backdrop-blur-sm transition-all animate-fade-in-up">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-blue-600" />
+                  <h2 className="text-lg font-semibold text-gray-900">Registered Devices</h2>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {devices.length} device{devices.length !== 1 ? 's' : ''} registered
+                </span>
+              </div>
+              
+              {devicesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+                  <span className="ml-2 text-gray-500">Loading devices...</span>
+                </div>
+              ) : devices.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Smartphone className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-medium">No devices registered</p>
+                  <p className="text-sm mt-1">Push notifications will be enabled when you allow notifications in your browser.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {devices.map((device) => {
+                    const deviceId = device._id || device.id || '';
+                    return (
+                      <div 
+                        key={deviceId} 
+                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                            device.deviceType === 'ios' ? 'bg-gray-100' :
+                            device.deviceType === 'android' ? 'bg-green-100' :
+                            'bg-blue-100'
+                          }`}>
+                            <Smartphone className={`w-5 h-5 ${
+                              device.deviceType === 'ios' ? 'text-gray-600' :
+                              device.deviceType === 'android' ? 'text-green-600' :
+                              'text-blue-600'
+                            }`} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{device.deviceName || 'Unknown Device'}</p>
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <span className="capitalize">{device.deviceType || 'web'}</span>
+                              {device.browser && (
+                                <>
+                                  <span>•</span>
+                                  <span>{device.browser}</span>
+                                </>
+                              )}
+                              {device.lastUsed && (
+                                <>
+                                  <span>•</span>
+                                  <span>Last used: {formatNotificationDate(device.lastUsed as string)}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveDevice(deviceId)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                          title="Remove device"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Notifications List */}

@@ -581,7 +581,7 @@ export function LiveChatWidget() {
     <>
       {/* Chat Window */}
       <div
-        className={`fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[600px] bg-slate-800 rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50 overflow-hidden transition-all duration-300 z-[9998] ${
+        className={`fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] max-h-[600px] bg-slate-800 rounded-2xl shadow-2xl shadow-black/40 border border-slate-700/50 overflow-hidden transition-all duration-300 z-[9999] ${
           isOpen && !isMinimized
             ? "opacity-100 translate-y-0 scale-100"
             : "opacity-0 translate-y-4 scale-95 pointer-events-none"
@@ -869,12 +869,12 @@ export function LiveChatWidget() {
         )}
         
         {/* Main button */}
-        <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 shadow-2xl shadow-emerald-500/30 flex items-center justify-center hover:scale-110 hover:shadow-emerald-500/50 transition-all group-hover:from-emerald-400 group-hover:to-teal-400">
+        <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 shadow-2xl shadow-emerald-500/30 flex items-center justify-center hover:scale-110 hover:shadow-emerald-500/50 transition-all group-hover:from-emerald-400 group-hover:to-teal-400">
           <div className={`transition-transform duration-300 ${isOpen && !isMinimized ? "rotate-90 scale-0" : "rotate-0 scale-100"}`}>
-            <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            <MessageCircle className="w-6 h-6 text-white" />
           </div>
           <div className={`absolute transition-transform duration-300 ${isOpen && !isMinimized ? "rotate-0 scale-100" : "-rotate-90 scale-0"}`}>
-            <ChevronDown className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+            <ChevronDown className="w-6 h-6 text-white" />
           </div>
         </div>
 
@@ -899,7 +899,7 @@ export function LiveChatWidget() {
       {isMinimized && (
         <button
           onClick={openChat}
-          className="fixed bottom-24 right-4 sm:right-6 z-[9998] bg-slate-800 border border-slate-700 rounded-full px-4 py-2 flex items-center gap-2 shadow-xl hover:border-emerald-500/50 transition-all"
+          className="fixed bottom-24 right-4 sm:right-6 z-[9999] bg-slate-800 border border-slate-700 rounded-full px-4 py-2 flex items-center gap-2 shadow-xl hover:border-emerald-500/50 transition-all"
         >
           <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
           <span className="text-sm text-slate-300">Chat minimized</span>

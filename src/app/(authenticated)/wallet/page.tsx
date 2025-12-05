@@ -897,15 +897,15 @@ export default function WalletPage() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-8 relative z-10">
           {/* Header */}
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Wallet className="w-6 h-6" />
+          <div className="flex items-center gap-4 mb-10">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Wallet className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
-              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">Wallet</h1>
+              <p className="text-sm text-gray-500 mt-1">Manage your finances and transactions</p>
             </div>
           </div>
 
@@ -931,16 +931,16 @@ export default function WalletPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 space-y-8 relative z-10">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-              <Wallet className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <Wallet className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
-              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">Wallet</h1>
+              <p className="text-sm text-gray-500 mt-1">Manage your finances and transactions</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -1041,7 +1041,7 @@ export default function WalletPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
             {/* Monthly Earnings */}
             <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
@@ -1218,7 +1218,7 @@ export default function WalletPage() {
         <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
           {/* Tab Navigation */}
           <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50/50 to-white">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 pt-4 pb-0 gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-5 sm:px-6 pt-5 pb-0 gap-4">
               <div className="flex space-x-0.5 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('transactions')}

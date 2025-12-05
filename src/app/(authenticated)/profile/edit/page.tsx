@@ -160,7 +160,15 @@ export default function EditProfilePage() {
 
   if (!mounted || loading) {
     return (
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        </div>
+
+        <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link
@@ -170,21 +178,22 @@ export default function EditProfilePage() {
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
-            <Edit3 className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
+            <Edit3 className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Profile</h1>
-            <p className="text-sm text-gray-600">Update your account information</p>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">Edit Profile</h1>
+            <p className="text-sm sm:text-base text-gray-700 font-medium">Update your account information and settings</p>
           </div>
         </div>
 
         {/* Loading State */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12">
-          <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading profile...</p>
-            <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-12">
+            <div className="flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600 mb-4"></div>
+              <p className="text-gray-600 font-medium">Loading profile...</p>
+              <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+            </div>
           </div>
         </div>
       </div>
@@ -192,51 +201,60 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/profile"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Back to profile"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <Edit3 className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Edit Profile</h1>
-          <p className="text-sm text-gray-600">Update your account information and settings</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-pink-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="bg-white rounded-xl border border-red-200 shadow-sm p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Profile</h3>
-              <p className="text-red-600 mb-4">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Try Again
-              </button>
-            </div>
+      <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/profile"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to profile"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-pink-600 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
+            <Edit3 className="w-7 h-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">Edit Profile</h1>
+            <p className="text-sm sm:text-base text-gray-700 font-medium">Update your account information and settings</p>
           </div>
         </div>
-      )}
 
-      {/* Edit Form */}
-      {!error && (
-        <EditProfileForm initialProfile={profile} />
-      )}
+        {/* Error State */}
+        {error && (
+          <div className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl border-2 border-red-300 shadow-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Profile</h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Form */}
+        {!error && (
+          <EditProfileForm initialProfile={profile} />
+        )}
+      </div>
     </div>
   );
 }

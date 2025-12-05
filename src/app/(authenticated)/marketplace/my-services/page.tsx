@@ -8,7 +8,8 @@ import {
   Trash2,
   Eye,
   Star,
-  AlertCircle
+  AlertCircle,
+  Briefcase
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -339,30 +340,31 @@ export default function MyServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
 
-        <div className="p-4 space-y-4 relative z-10">
+        <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           {/* Header Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gray-200 animate-pulse"></div>
               <div className="space-y-2">
                 <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
                 <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg w-48 animate-pulse"></div>
             </div>
+            <div className="h-10 bg-gray-200 rounded-xl w-48 animate-pulse"></div>
           </div>
 
           {/* Stats Skeleton */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-md p-4">
+              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
                 <div className="h-7 bg-gray-200 rounded w-12 animate-pulse mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
               </div>
@@ -370,15 +372,15 @@ export default function MyServicesPage() {
           </div>
 
           {/* Filters Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
             <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
           </div>
 
           {/* Services Skeleton */}
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md p-5 border-2 border-gray-200">
+              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl p-5 border border-gray-200/50">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
@@ -420,34 +422,37 @@ export default function MyServicesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
 
-        <div className="p-4 relative z-10">
+        <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           {/* Header */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Services</h1>
-                <p className="text-gray-600">Manage your service listings</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform duration-300">
+                <Briefcase className="w-7 h-7" />
               </div>
-              <Link
-                href="/marketplace/create-service"
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-              >
-                <Plus className="w-4 h-4" />
-                Create New Service
-              </Link>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-gray-900 bg-clip-text text-transparent mb-1">My Services</h1>
+                <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service listings</p>
+              </div>
             </div>
+            <Link
+              href="/marketplace/create-service"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Service
+            </Link>
           </div>
 
           {/* Error State */}
-          <Card interactive={false} className="bg-gradient-to-br from-white to-red-50/30 border-2 border-red-200 shadow-lg">
+          <Card interactive={false} className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl border-2 border-red-300 shadow-xl">
             <EmptyState
               icon={AlertCircle}
               iconColor="text-red-600"
@@ -476,52 +481,55 @@ export default function MyServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="p-4 space-y-4 relative z-10">
+      <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Services</h1>
-              <p className="text-gray-600">Manage your service listings</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform duration-300">
+              <Briefcase className="w-7 h-7" />
             </div>
-            <Link
-              href="/marketplace/create-service"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-            >
-              <Plus className="w-4 h-4" />
-              Create New Service
-            </Link>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-gray-900 bg-clip-text text-transparent mb-1">My Services</h1>
+              <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service listings</p>
+            </div>
           </div>
+          <Link
+            href="/marketplace/create-service"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
+          >
+            <Plus className="w-4 h-4" />
+            Create New Service
+          </Link>
         </div>
 
         {/* Stats Summary */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
               <div className="text-2xl font-bold text-gray-700">{stats.totalServices}</div>
               <div className="text-sm text-gray-500">Total Services</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-green-50/50 rounded-xl border-2 border-green-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white to-green-50/50 rounded-2xl border border-green-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
               <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.activeServices}</div>
               <div className="text-sm text-gray-500">Active</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
               <div className="text-2xl font-bold text-gray-600">{stats.inactiveServices}</div>
               <div className="text-sm text-gray-500">Inactive</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-xl border-2 border-blue-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-2xl border border-blue-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
               <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{stats.totalBookings}</div>
               <div className="text-sm text-gray-500">Total Bookings</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-yellow-50/50 rounded-xl border-2 border-yellow-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-white to-yellow-50/50 rounded-2xl border border-yellow-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
               <div className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
                 {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}
               </div>
@@ -531,7 +539,7 @@ export default function MyServicesPage() {
         )}
 
         {/* Filters */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -540,7 +548,7 @@ export default function MyServicesPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
               >
                 <option value="all">All Services</option>
                 <option value="ACTIVE">Active</option>
@@ -554,7 +562,7 @@ export default function MyServicesPage() {
         {/* Services List */}
         <div className="space-y-4">
           {services.length === 0 ? (
-            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 shadow-lg">
+            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-xl rounded-2xl">
               <EmptyState
                 icon={Plus}
                 iconColor="text-green-600"
@@ -588,7 +596,7 @@ export default function MyServicesPage() {
           ) : (
           <div className="grid gap-4">
             {services.map((service, index) => (
-              <div key={service.id || `service-${index}`} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200 backdrop-blur-sm">
+              <div key={service.id || `service-${index}`} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-5 border border-gray-200/50">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
@@ -651,7 +659,7 @@ export default function MyServicesPage() {
                   <div className="flex flex-col gap-2 mt-3 lg:mt-0 lg:ml-4">
                     <Link
                       href={`/marketplace/services/${service.id}`}
-                      className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                     >
                       <Eye className="w-4 h-4" />
                       View
@@ -659,7 +667,7 @@ export default function MyServicesPage() {
                     
                     <Link
                       href={`/marketplace/services/${service.id}/edit`}
-                      className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-300 text-blue-700 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-blue-300 text-blue-700 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                     >
                       <Edit className="w-4 h-4" />
                       Edit
@@ -668,14 +676,14 @@ export default function MyServicesPage() {
                     {service.status === "ACTIVE" ? (
                       <button
                         onClick={() => updateServiceStatus(service.id, "INACTIVE")}
-                        className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-yellow-300 text-yellow-700 rounded-lg bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-yellow-300 text-yellow-700 rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                       >
                         Deactivate
                       </button>
                     ) : (
                       <button
                         onClick={() => updateServiceStatus(service.id, "ACTIVE")}
-                        className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-green-300 text-green-700 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-green-300 text-green-700 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                       >
                         Activate
                       </button>
@@ -683,7 +691,7 @@ export default function MyServicesPage() {
 
                     <button
                       onClick={() => deleteService(service.id)}
-                      className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-red-300 text-red-700 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete

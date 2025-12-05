@@ -154,6 +154,10 @@ export function useMessages(conversationId: string | null) {
   };
 }
 
+/**
+ * Legacy notification hook - prefer useNotifications from @/hooks/useNotifications
+ * This hook maintains backward compatibility with the communication notifications endpoint
+ */
 export function useNotifications(params: { isRead?: boolean; page?: number; limit?: number } = {}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -176,20 +180,33 @@ export function useNotifications(params: { isRead?: boolean; page?: number; limi
       queryParams.append("page", page.toString());
       queryParams.append("limit", limit.toString());
 
-      const url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotifications}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-      const response = await fetch(url, createAuthFetchOptions());
+      // Try new endpoint first, fallback to legacy
+      let url = `${API_BASE_URL}${API_ENDPOINTS.notifications}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      let response = await fetch(url, createAuthFetchOptions());
+
+      if (!response.ok) {
+        // Fallback to legacy endpoint
+        url = `${API_BASE_URL}${API_ENDPOINTS.communicationNotifications}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+        response = await fetch(url, createAuthFetchOptions());
+      }
 
       if (!response.ok) {
         throw new Error(`Failed to fetch notifications: ${response.status}`);
       }
 
       const data = await response.json();
-      const notificationsData = data?.data || data?.notifications || [];
+      const notificationsData = data?.data?.notifications || data?.data || data?.notifications || [];
 
-      // Fetch unread count
+      // Fetch unread count using new endpoint with fallback
       try {
-        const countUrl = `${API_BASE_URL}${API_ENDPOINTS.communicationNotificationCount}`;
-        const countResponse = await fetch(countUrl, createAuthFetchOptions());
+        let countUrl = `${API_BASE_URL}${API_ENDPOINTS.notificationsUnreadCount}`;
+        let countResponse = await fetch(countUrl, createAuthFetchOptions());
+        
+        if (!countResponse.ok) {
+          countUrl = `${API_BASE_URL}${API_ENDPOINTS.communicationNotificationCount}`;
+          countResponse = await fetch(countUrl, createAuthFetchOptions());
+        }
+        
         if (countResponse.ok) {
           const countData = await countResponse.json();
           setUnreadCount(countData?.data?.count || countData?.count || 0);
