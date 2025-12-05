@@ -90,9 +90,9 @@ export default function AgenciesPage() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Breadcrumbs items={[{ label: "Home", href: "/dashboard" }, { label: "Agencies" }]} />
+        <Breadcrumbs items={[{ label: "Home", href: "/dashboard" }, { label: "Agencies" }]} className="text-slate-400" />
         <div className="text-center py-12">
-          <p className="text-red-600 mb-4">Error loading agencies</p>
+          <p className="text-red-400 mb-4">Error loading agencies</p>
           <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </div>
@@ -101,24 +101,24 @@ export default function AgenciesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Breadcrumbs items={[{ label: "Home", href: "/dashboard" }, { label: "Agencies" }]} />
+      <Breadcrumbs items={[{ label: "Home", href: "/dashboard" }, { label: "Agencies" }]} className="text-slate-400" />
       
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Agencies</h1>
-        <p className="text-gray-600">Discover and connect with service agencies</p>
+        <h1 className="text-3xl font-bold mb-2 text-white">Agencies</h1>
+        <p className="text-slate-400">Discover and connect with service agencies</p>
       </div>
 
       {/* Search and Filters */}
       <div className="mb-6 space-y-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-5 h-5" />
             <Input
               type="text"
               placeholder="Search agencies..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:ring-emerald-500 focus:border-emerald-500"
             />
           </div>
           <div className="flex gap-2">
@@ -131,7 +131,7 @@ export default function AgenciesPage() {
               Filters
             </Button>
             {hasAccess(["agency_owner", "admin"]) && (
-              <Button onClick={() => router.push("/agencies/create")} className="flex items-center gap-2">
+              <Button onClick={() => router.push("/agencies/create")} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600">
                 <Plus className="w-4 h-4" />
                 Create Agency
               </Button>
@@ -140,7 +140,7 @@ export default function AgenciesPage() {
         </div>
 
         {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-900/80 rounded-lg border border-slate-800">
             <Select
               value={selectedStatus}
               onValueChange={(value) => handleStatusChange(value)}
@@ -178,7 +178,7 @@ export default function AgenciesPage() {
             </Button>
           </div>
           {pagination && (
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-400">
               Showing {((page - 1) * 12) + 1}-{Math.min(page * 12, pagination.total)} of {pagination.total} agencies
             </p>
           )}
@@ -190,10 +190,10 @@ export default function AgenciesPage() {
         <ListSkeleton count={12} />
       ) : agencies.length === 0 ? (
         <div className="text-center py-12">
-          <Building2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">No agencies found</p>
+          <Building2 className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+          <p className="text-slate-400 mb-4">No agencies found</p>
           {hasAccess(["agency_owner", "admin"]) && (
-            <Button onClick={() => router.push("/agencies/create")}>
+            <Button onClick={() => router.push("/agencies/create")} className="bg-emerald-500 hover:bg-emerald-600">
               Create Your First Agency
             </Button>
           )}
@@ -202,37 +202,37 @@ export default function AgenciesPage() {
         <>
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
             {agencies.map((agency) => (
-              <Card key={agency._id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <Card key={agency._id} className="overflow-hidden hover:shadow-xl transition-shadow bg-slate-900/80 border-slate-800">
                 <div className={viewMode === "grid" ? "" : "flex gap-4"}>
                   {agency.contact?.address && (
-                    <div className={viewMode === "grid" ? "relative h-48 w-full bg-gray-200" : "relative h-32 w-32 flex-shrink-0 bg-gray-200"}>
-                      <Building2 className="absolute inset-0 m-auto w-12 h-12 text-gray-400" />
+                    <div className={viewMode === "grid" ? "relative h-48 w-full bg-slate-800" : "relative h-32 w-32 flex-shrink-0 bg-slate-800"}>
+                      <Building2 className="absolute inset-0 m-auto w-12 h-12 text-slate-500" />
                     </div>
                   )}
                   <div className="p-4 flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold text-lg mb-1">{agency.name}</h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">{agency.description}</p>
+                        <h3 className="font-semibold text-lg mb-1 text-white">{agency.name}</h3>
+                        <p className="text-sm text-slate-400 line-clamp-2">{agency.description}</p>
                       </div>
                       {agency.analytics && (
                         <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm">{agency.analytics.averageRating?.toFixed(1) || 0}</span>
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                          <span className="text-sm text-white">{agency.analytics.averageRating?.toFixed(1) || 0}</span>
                         </div>
                       )}
                     </div>
                     {agency.services && agency.services.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {agency.services.slice(0, 3).map((service, idx) => (
-                          <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          <span key={idx} className="inline-block px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded">
                             {service.category}
                           </span>
                         ))}
                       </div>
                     )}
                     {agency.providers && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                      <div className="flex items-center gap-2 text-sm text-slate-400 mt-2">
                         <Users className="w-4 h-4" />
                         <span>{agency.providers.length} providers</span>
                       </div>
@@ -277,7 +277,7 @@ export default function AgenciesPage() {
                 .filter(p => p === 1 || p === pagination.pages || Math.abs(p - page) <= 2)
                 .map((p, idx, arr) => (
                   <div key={p} className="flex items-center gap-2">
-                    {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-2">...</span>}
+                    {idx > 0 && arr[idx - 1] !== p - 1 && <span className="px-2 text-slate-400">...</span>}
                     <Button
                       variant={page === p ? "default" : "outline"}
                       onClick={() => setPage(p)}

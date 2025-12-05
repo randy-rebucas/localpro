@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/supplies";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface SupplyDetailProps {
   supply: Product;
@@ -122,11 +123,11 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
           {supply.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ₱{supply.pricing.retailPrice}
+                {formatCurrency(supply.pricing.retailPrice, 'PHP')}
               </span>
               {supply.pricing.wholesalePrice && (
                 <span className="text-lg text-gray-500">
-                  (Wholesale: ₱{supply.pricing.wholesalePrice})
+                  (Wholesale: {formatCurrency(supply.pricing.wholesalePrice, 'PHP')})
                 </span>
               )}
             </div>
@@ -245,12 +246,12 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-gray-600">Retail Price</span>
-                <span className="font-semibold">₱{supply.pricing.retailPrice}</span>
+                <span className="font-semibold">{formatCurrency(supply.pricing.retailPrice, 'PHP')}</span>
               </div>
               {supply.pricing.wholesalePrice && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Wholesale Price</span>
-                  <span className="font-semibold">₱{supply.pricing.wholesalePrice}</span>
+                  <span className="font-semibold">{formatCurrency(supply.pricing.wholesalePrice, 'PHP')}</span>
                 </div>
               )}
               <div className="flex justify-between">

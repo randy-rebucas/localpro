@@ -221,14 +221,14 @@ const adTips = [
 
 const getStatusColor = (status: AdCampaign['status']) => {
   switch (status) {
-    case 'active': return 'bg-green-100 text-green-700 border-green-200';
-    case 'pending': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-    case 'approved': return 'bg-blue-100 text-blue-700 border-blue-200';
-    case 'paused': return 'bg-gray-100 text-gray-700 border-gray-200';
-    case 'completed': return 'bg-purple-100 text-purple-700 border-purple-200';
-    case 'rejected': return 'bg-red-100 text-red-700 border-red-200';
-    case 'draft': return 'bg-gray-100 text-gray-600 border-gray-200';
-    default: return 'bg-gray-100 text-gray-700 border-gray-200';
+    case 'active': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    case 'pending': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    case 'approved': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    case 'paused': return 'bg-slate-800 text-slate-400 border-slate-700';
+    case 'completed': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+    case 'rejected': return 'bg-red-500/20 text-red-400 border-red-500/30';
+    case 'draft': return 'bg-slate-800 text-slate-400 border-slate-700';
+    default: return 'bg-slate-800 text-slate-400 border-slate-700';
   }
 };
 
@@ -460,36 +460,36 @@ export default function AdsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+            <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2 mb-6"></div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-4 animate-pulse">
-                <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+              <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 p-4 animate-pulse">
+                <div className="h-8 bg-slate-800 rounded w-1/2 mb-2"></div>
+                <div className="h-6 bg-slate-800 rounded w-3/4"></div>
               </div>
             ))}
           </div>
           <div className="flex gap-6">
             <div className="w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-gray-200 rounded"></div>)}
+              <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse space-y-4">
+                {[1, 2, 3].map(i => <div key={i} className="h-10 bg-slate-800 rounded"></div>)}
               </div>
             </div>
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-4 animate-pulse">
-                  <div className="h-40 bg-gray-200 rounded-lg mb-4"></div>
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 p-4 animate-pulse">
+                  <div className="h-40 bg-slate-800 rounded-lg mb-4"></div>
+                  <div className="h-6 bg-slate-800 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-slate-800 rounded w-full"></div>
                 </div>
               ))}
             </div>
@@ -500,12 +500,12 @@ export default function AdsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -513,10 +513,10 @@ export default function AdsPage() {
         <div className="mb-6">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-white mb-2">
                 Ads — Promote Your Business
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Create and manage advertising campaigns to reach your target audience.
               </p>
             </div>
@@ -533,17 +533,17 @@ export default function AdsPage() {
         </div>
 
         {/* Subheader Links */}
-        <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4 flex-wrap">
-          <Link href="/ads/analytics" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
-            <BarChart3 className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+        <div className="mb-6 flex items-center gap-6 border-b border-slate-800 pb-4 flex-wrap">
+          <Link href="/ads/analytics" className="inline-flex items-center gap-2 text-slate-400 hover:text-purple-400 transition-colors group">
+            <BarChart3 className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">Analytics</span>
           </Link>
-          <Link href="/ads/audiences" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
-            <Target className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+          <Link href="/ads/audiences" className="inline-flex items-center gap-2 text-slate-400 hover:text-purple-400 transition-colors group">
+            <Target className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">Audiences</span>
           </Link>
-          <Link href="/support" className="inline-flex items-center gap-2 text-gray-600 hover:text-purple-600 transition-colors group">
-            <Headphones className="w-4 h-4 text-purple-500 group-hover:scale-110 transition-transform" />
+          <Link href="/support" className="inline-flex items-center gap-2 text-slate-400 hover:text-purple-400 transition-colors group">
+            <Headphones className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">Support</span>
           </Link>
         </div>
@@ -551,17 +551,17 @@ export default function AdsPage() {
         {/* Search Bar */}
         <div className="relative mb-6">
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-            <Search className="w-5 h-5 text-gray-400" />
+            <Search className="w-5 h-5 text-slate-500" />
           </div>
           <input
             type="text"
             placeholder="Search ads by title, description, or advertiser..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md bg-white"
+            className="w-full pl-12 pr-4 py-3 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -571,50 +571,50 @@ export default function AdsPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
           <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6 space-y-6 sticky top-24">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                  <h2 className="text-lg font-bold text-white">Filters</h2>
                   {activeFiltersCount > 0 && (
                     <span className="px-2 py-0.5 bg-purple-500 text-white text-xs font-medium rounded-full">{activeFiltersCount}</span>
                   )}
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-                  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Category</label>
+                  <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-slate-800 text-white font-medium">
                     {categories.map(cat => <option key={cat.value} value={cat.value}>{cat.label}</option>)}
                   </select>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Ad Type</label>
-                  <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Ad Type</label>
+                  <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-slate-800 text-white font-medium">
                     {adTypes.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
                   </select>
                 </div>
 
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Status</label>
-                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white font-medium">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Status</label>
+                  <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-slate-800 text-white font-medium">
                     {statuses.map(status => <option key={status.value} value={status.value}>{status.label}</option>)}
                   </select>
                 </div>
 
                 {activeFiltersCount > 0 && (
-                  <button onClick={clearFilters} className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                  <button onClick={clearFilters} className="w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors">
                     Clear Filters
                   </button>
                 )}
               </div>
 
               {/* Ad Tips */}
-              <div className="pt-6 border-t-2 border-gray-200">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Ad Tips</h2>
+              <div className="pt-6 border-t-2 border-slate-800">
+                <h2 className="text-lg font-bold text-white mb-4">Ad Tips</h2>
                 <ul className="space-y-3">
                   {adTips.map((tip, index) => (
-                    <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                      <Zap className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <li key={index} className="text-sm text-slate-400 flex items-start gap-2">
+                      <Zap className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
                       <span>{tip}</span>
                     </li>
                   ))}
@@ -622,16 +622,16 @@ export default function AdsPage() {
               </div>
 
               {/* Help Section */}
-              <div className="pt-6 border-t-2 border-gray-200">
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+              <div className="pt-6 border-t-2 border-slate-800">
+                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                   <div className="flex items-start gap-3 mb-3">
-                    <HelpCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <HelpCircle className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
-                      <p className="text-xs text-gray-600 mt-1">Learn how to create effective ad campaigns.</p>
+                      <h3 className="font-semibold text-white text-sm">Need Help?</h3>
+                      <p className="text-xs text-slate-400 mt-1">Learn how to create effective ad campaigns.</p>
                     </div>
                   </div>
-                  <Link href="/support" className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-50 transition-all border border-purple-200 font-medium text-sm">
+                  <Link href="/support" className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-purple-400 rounded-lg hover:bg-slate-700 transition-all border border-slate-700 font-medium text-sm">
                     <Headphones className="w-4 h-4" />
                     Get Support
                   </Link>
@@ -643,30 +643,30 @@ export default function AdsPage() {
           {/* Main Content */}
           <div className="flex-1 min-w-0 space-y-6">
             <div className="flex items-center justify-between">
-              <p className="text-gray-600 text-sm">{sortedAds.length} ad{sortedAds.length !== 1 ? 's' : ''} found</p>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-white font-medium">
+              <p className="text-slate-400 text-sm">{sortedAds.length} ad{sortedAds.length !== 1 ? 's' : ''} found</p>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm bg-slate-800 text-white font-medium">
                 {sortOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
             </div>
 
             {error ? (
-              <div className="bg-white rounded-xl border-2 border-red-200 p-8 text-center">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <AlertCircle className="w-8 h-8 text-red-600" />
+              <div className="bg-slate-900/80 rounded-xl border border-red-500/20 p-8 text-center">
+                <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle className="w-8 h-8 text-red-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Ads</h3>
-                <p className="text-gray-600 mb-4">{error}</p>
+                <h3 className="text-xl font-bold text-white mb-2">Unable to Load Ads</h3>
+                <p className="text-slate-400 mb-4">{error}</p>
                 <button onClick={fetchAds} className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium">
                   Try Again
                 </button>
               </div>
             ) : sortedAds.length === 0 ? (
-              <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20">
-                  <Megaphone className="w-8 h-8 text-purple-600" />
+              <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-8 text-center">
+                <div className="w-16 h-16 bg-slate-800 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-purple-500/20">
+                  <Megaphone className="w-8 h-8 text-slate-500" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No Ads Found</h3>
-                <p className="text-gray-600 mb-6">
+                <h3 className="text-xl font-bold text-white mb-2">No Ads Found</h3>
+                <p className="text-slate-400 mb-6">
                   {searchQuery || activeFiltersCount > 0 ? "Try adjusting your filters." : "Create your first ad campaign to get started."}
                 </p>
                 <div className="flex items-center justify-center gap-3">
@@ -676,7 +676,7 @@ export default function AdsPage() {
                     </button>
                   )}
                   {canCreateAds && (
-                    <button onClick={() => router.push('/ads/create')} className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-medium">
+                    <button onClick={() => router.push('/ads/create')} className="px-6 py-3 bg-slate-800 border-2 border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 transition-all font-medium">
                       Create Your First Ad
                     </button>
                   )}
@@ -726,16 +726,16 @@ const AdCard = React.memo(function AdCard({ ad, formatPrice }: AdCardProps) {
   return (
     <Link
       href={`/ads/${adId}`}
-      className={`group bg-white rounded-xl border-2 border-gray-200 hover:border-purple-300 hover:shadow-xl transition-all duration-300 overflow-hidden`}
+      className={`group bg-slate-900/80 rounded-xl border border-slate-800 hover:border-purple-500 hover:shadow-xl transition-all duration-300 overflow-hidden`}
     >
       <div className="relative">
         {imageUrl ? (
-          <div className="aspect-[16/9] bg-gray-100 overflow-hidden">
+          <div className="aspect-[16/9] bg-slate-800 overflow-hidden">
             <Image src={imageUrl} alt={ad.title} width={400} height={225} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           </div>
         ) : (
-          <div className="aspect-[16/9] bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-            <Megaphone className="w-12 h-12 text-purple-400" />
+          <div className="aspect-[16/9] bg-slate-800 to-slate-700 flex items-center justify-center">
+            <Megaphone className="w-12 h-12 text-slate-500" />
           </div>
         )}
         
@@ -750,7 +750,7 @@ const AdCard = React.memo(function AdCard({ ad, formatPrice }: AdCardProps) {
         {/* Featured Badge */}
         {(ad.isPromoted || ad.isFeatured || ad.promotion?.status === 'active') && (
           <div className="absolute top-2 left-2">
-            <span className="px-2 py-1 bg-yellow-500 text-white rounded text-xs font-bold flex items-center gap-1">
+            <span className="px-2 py-1 bg-amber-400 text-white rounded text-xs font-bold flex items-center gap-1">
               <Star className="w-3 h-3 fill-current" />
               Featured
             </span>
@@ -760,62 +760,62 @@ const AdCard = React.memo(function AdCard({ ad, formatPrice }: AdCardProps) {
 
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-bold text-gray-900 line-clamp-1 group-hover:text-purple-600 transition-colors flex-1">
+          <h3 className="font-bold text-white line-clamp-1 group-hover:text-purple-400 transition-colors flex-1">
             {ad.content?.headline || ad.title}
           </h3>
           <div className="flex gap-1 ml-2">
-            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}`); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-purple-600 transition-colors">
+            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}`); }} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-purple-400 transition-colors">
               <Eye className="w-4 h-4" />
             </button>
-            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}/edit`); }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-purple-600 transition-colors">
+            <button onClick={(e) => { e.preventDefault(); router.push(`/ads/${adId}/edit`); }} className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-purple-400 transition-colors">
               <Edit className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{ad.content?.body || ad.description}</p>
+        <p className="text-sm text-slate-400 mb-3 line-clamp-2">{ad.content?.body || ad.description}</p>
 
         {/* Tags */}
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-lg font-medium">
+          <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-lg font-medium">
             {ad.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
           </span>
-          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">
+          <span className="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded-lg">
             {ad.type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Banner'}
           </span>
         </div>
 
         {/* Performance Stats */}
-        <div className="grid grid-cols-2 gap-3 text-sm mb-3 pt-3 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-3 text-sm mb-3 pt-3 border-t border-slate-800">
           <div>
-            <p className="text-gray-500 text-xs">Budget</p>
-            <p className="font-semibold text-gray-900">{formatPrice(budget)}</p>
+            <p className="text-slate-500 text-xs">Budget</p>
+            <p className="font-semibold text-white">{formatPrice(budget)}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-xs">Spent</p>
-            <p className="font-semibold text-gray-900">{formatPrice(spend)}</p>
+            <p className="text-slate-500 text-xs">Spent</p>
+            <p className="font-semibold text-white">{formatPrice(spend)}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-xs">Impressions</p>
-            <p className="font-semibold text-gray-900">{impressions.toLocaleString()}</p>
+            <p className="text-slate-500 text-xs">Impressions</p>
+            <p className="font-semibold text-white">{impressions.toLocaleString()}</p>
           </div>
           <div>
-            <p className="text-gray-500 text-xs">Clicks</p>
-            <p className="font-semibold text-gray-900">{clicks.toLocaleString()}</p>
+            <p className="text-slate-500 text-xs">Clicks</p>
+            <p className="font-semibold text-white">{clicks.toLocaleString()}</p>
           </div>
         </div>
 
         {/* Advertiser */}
-        <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-2 pt-3 border-t border-slate-800">
           <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
             {advertiserName.charAt(0).toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{advertiserName}</p>
-            <p className="text-xs text-gray-500">{ad.createdAt ? new Date(ad.createdAt).toLocaleDateString() : ''}</p>
+            <p className="text-sm font-medium text-white truncate">{advertiserName}</p>
+            <p className="text-xs text-slate-500">{ad.createdAt ? new Date(ad.createdAt).toLocaleDateString() : ''}</p>
           </div>
           {advertiser.verification?.isVerified && (
-            <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0" />
+            <CheckCircle className="w-4 h-4 text-purple-400 flex-shrink-0" />
           )}
         </div>
       </div>

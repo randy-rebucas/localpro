@@ -24,6 +24,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
+import { formatCurrency } from "@/lib/currency-utils";
 
 type Pagination = {
     current?: number;
@@ -620,11 +621,11 @@ export default function MarketplaceCoursesPage() {
 
     const getLevelColor = (level: Course['level']) => {
         switch (level) {
-            case 'beginner': return 'bg-green-100 text-green-800';
-            case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-            case 'advanced': return 'bg-orange-100 text-orange-800';
-            case 'expert': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'beginner': return 'bg-emerald-500/20 text-emerald-400';
+            case 'intermediate': return 'bg-amber-500/20 text-amber-400';
+            case 'advanced': return 'bg-orange-500/20 text-orange-400';
+            case 'expert': return 'bg-red-500/20 text-red-400';
+            default: return 'bg-slate-800 text-slate-400';
         }
     };
 
@@ -632,7 +633,7 @@ export default function MarketplaceCoursesPage() {
         return Array.from({ length: 5 }, (_, i) => (
             <Star
                 key={i}
-                className={`w-3 h-3 ${i < difficulty ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                className={`w-3 h-3 ${i < difficulty ? "text-amber-400 fill-current" : "text-slate-600"}`}
             />
         ));
     };
@@ -644,8 +645,8 @@ export default function MarketplaceCoursesPage() {
                     <Star
                         key={`${courseId || 'default'}-star-${i}`}
                         className={`w-4 h-4 ${i < Math.floor(rating)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
+                            ? "text-amber-400 fill-current"
+                            : "text-slate-600"
                             }`}
                     />
                 ))}
@@ -685,18 +686,12 @@ export default function MarketplaceCoursesPage() {
             regularPrice = 0;
         }
         
-        const currency = ('currency' in pricing ? pricing.currency : 'PHP') || 'PHP';
-        
         if (regularPrice === 0) {
             return 'Free';
         }
         
-        const formatted = new Intl.NumberFormat('en-US', {
-            style: showCurrency ? 'currency' : 'decimal',
-            currency: currency
-        }).format(regularPrice);
-        
-        return formatted;
+        // Always use PHP currency for consistency
+        return formatCurrency(regularPrice, 'PHP', { showSymbol: showCurrency });
     };
 
     if (loading) {
@@ -705,61 +700,61 @@ export default function MarketplaceCoursesPage() {
                 {/* Header Skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-2">
-                        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+                        <div className="h-8 bg-slate-800 rounded w-48 animate-pulse"></div>
+                        <div className="h-4 bg-slate-800 rounded w-64 animate-pulse"></div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        <div className="h-10 bg-slate-800 rounded w-32 animate-pulse"></div>
                     </div>
                 </div>
 
                 {/* Tabs Skeleton */}
-                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
-                    <div className="px-4 py-2 bg-gray-200 rounded-md w-24 h-8 animate-pulse"></div>
-                    <div className="px-4 py-2 bg-gray-200 rounded-md w-20 h-8 animate-pulse"></div>
+                <div className="flex space-x-1 bg-slate-900 p-1 rounded-lg w-fit">
+                    <div className="px-4 py-2 bg-slate-800 rounded-md w-24 h-8 animate-pulse"></div>
+                    <div className="px-4 py-2 bg-slate-800 rounded-md w-20 h-8 animate-pulse"></div>
                 </div>
 
                 {/* Search and Filters Skeleton */}
-                <div className="bg-white rounded-lg shadow-sm p-4">
+                <div className="bg-slate-900/80 rounded-lg shadow-sm p-4 border border-slate-800">
                     <div className="flex flex-col lg:flex-row gap-3">
                         <div className="flex-1">
-                            <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
+                            <div className="h-12 bg-slate-800 rounded-lg animate-pulse"></div>
                         </div>
                         <div className="flex gap-2">
-                            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-                            <div className="h-10 bg-gray-200 rounded w-20 animate-pulse"></div>
-                            <div className="h-10 bg-gray-200 rounded w-10 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-32 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-20 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-10 animate-pulse"></div>
                         </div>
                     </div>
                 </div>
 
                 {/* Results Count Skeleton */}
                 <div className="flex items-center justify-between">
-                    <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                    <div className="h-4 bg-slate-800 rounded w-48 animate-pulse"></div>
                 </div>
 
                 {/* Course Grid Skeleton */}
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                     {Array.from({ length: 6 }).map((_, index) => (
-                        <div key={index} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                            <div className="w-full h-40 bg-gray-200 rounded-lg mb-3"></div>
+                        <div key={index} className="bg-slate-900/80 rounded-lg shadow-sm p-4 animate-pulse border border-slate-800">
+                            <div className="w-full h-40 bg-slate-800 rounded-lg mb-3"></div>
                             <div className="space-y-2">
-                                <div className="h-5 bg-gray-200 rounded w-3/4"></div>
-                                <div className="h-4 bg-gray-200 rounded w-full"></div>
-                                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                                <div className="h-5 bg-slate-800 rounded w-3/4"></div>
+                                <div className="h-4 bg-slate-800 rounded w-full"></div>
+                                <div className="h-4 bg-slate-800 rounded w-2/3"></div>
                                 <div className="flex items-center gap-2 mt-3">
-                                    <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                                    <div className="w-8 h-8 bg-slate-800 rounded-full"></div>
                                     <div className="space-y-1 flex-1">
-                                        <div className="h-3 bg-gray-200 rounded w-24"></div>
-                                        <div className="h-3 bg-gray-200 rounded w-16"></div>
+                                        <div className="h-3 bg-slate-800 rounded w-24"></div>
+                                        <div className="h-3 bg-slate-800 rounded w-16"></div>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between mt-3">
                                     <div className="flex gap-2">
-                                        <div className="h-5 bg-gray-200 rounded w-16"></div>
-                                        <div className="h-5 bg-gray-200 rounded w-12"></div>
+                                        <div className="h-5 bg-slate-800 rounded w-16"></div>
+                                        <div className="h-5 bg-slate-800 rounded w-12"></div>
                                     </div>
-                                    <div className="h-4 bg-gray-200 rounded w-20"></div>
+                                    <div className="h-4 bg-slate-800 rounded w-20"></div>
                                 </div>
                             </div>
                         </div>
@@ -775,8 +770,8 @@ export default function MarketplaceCoursesPage() {
                 <Card interactive={false}>
                     <EmptyState
                         icon={BookOpen}
-                        iconColor="text-red-600"
-                        iconBgColor="bg-red-100"
+                        iconColor="text-red-400"
+                        iconBgColor="bg-red-500/20"
                         title="Unable to Load Courses"
                         description={error}
                         actions={[
@@ -820,12 +815,12 @@ export default function MarketplaceCoursesPage() {
             />
 
             {/* Tabs */}
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+            <div className="flex space-x-1 bg-slate-900 p-1 rounded-lg w-fit">
                 <button
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "all"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                            ? "bg-slate-800 text-white shadow-sm"
+                            : "text-slate-400 hover:text-white"
                         }`}
                 >
                     All Courses
@@ -833,8 +828,8 @@ export default function MarketplaceCoursesPage() {
                 <button
                     onClick={() => setActiveTab("featured")}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === "featured"
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:text-gray-900"
+                            ? "bg-slate-800 text-white shadow-sm"
+                            : "text-slate-400 hover:text-white"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -848,10 +843,10 @@ export default function MarketplaceCoursesPage() {
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Sidebar - Filters */}
                 <aside className="w-full lg:w-64 flex-shrink-0">
-                    <Card className="p-4 sticky top-4">
+                    <Card className="p-4 sticky top-4 bg-slate-900/80 border-slate-800">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                                <h2 className="text-lg font-semibold text-white">Filters</h2>
                                 <SlidersHorizontal className="w-5 h-5 text-gray-400" />
                             </div>
 

@@ -509,13 +509,13 @@ export default function BookServicePage() {
   if (error && !service) {
     return (
       <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-white mb-2">Error</h2>
+          <p className="text-slate-400 mb-6">{error}</p>
           <Link
             href={`/marketplace/services/${serviceIdFromUrl}`}
-            className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Service
@@ -546,19 +546,19 @@ export default function BookServicePage() {
       <div className="flex items-center gap-4">
           <Link
             href={`/marketplace/services/${serviceIdFromUrl}`}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
             title="Back to service"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-slate-400" />
           </Link>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Book Service</h1>
-          <p className="text-sm text-gray-600">{service?.title || 'Loading...'}</p>
+          <h1 className="text-2xl font-bold text-white">Book Service</h1>
+          <p className="text-sm text-slate-400">{service?.title || 'Loading...'}</p>
         </div>
       </div>
 
       {/* Progress Steps */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-slate-900/80 rounded-lg shadow-sm p-6 border border-slate-800">
         <div className="flex items-center justify-between">
           {[1, 2, 3, 4, 5].map((step) => (
             <div key={step} className="flex items-center flex-1">
@@ -566,13 +566,13 @@ export default function BookServicePage() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
                     currentStep >= step
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-800 text-slate-500'
                   }`}
                 >
                   {currentStep > step ? <CheckCircle2 className="w-5 h-5" /> : step}
                 </div>
-                <span className={`text-xs mt-2 ${currentStep >= step ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                <span className={`text-xs mt-2 ${currentStep >= step ? 'text-emerald-400 font-medium' : 'text-slate-500'}`}>
                   {step === 1 && 'Date & Time'}
                   {step === 2 && 'Address'}
                   {step === 3 && 'Summary'}
@@ -583,7 +583,7 @@ export default function BookServicePage() {
               {step < 5 && (
                 <div
                   className={`h-1 flex-1 mx-2 ${
-                    currentStep > step ? 'bg-green-600' : 'bg-gray-200'
+                    currentStep > step ? 'bg-emerald-500' : 'bg-slate-800'
                   }`}
                 />
               )}
@@ -594,28 +594,28 @@ export default function BookServicePage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <p className="text-sm text-red-800">{error}</p>
+            <p className="text-sm text-red-400">{error}</p>
           </div>
         </div>
       )}
 
       {/* Step Content */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-slate-900/80 rounded-lg shadow-sm p-6 border border-slate-800">
         {/* Step 1: Date, Time, and Location */}
         {currentStep === 1 && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Select Date, Time & Location
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Date <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="date"
@@ -623,27 +623,27 @@ export default function BookServicePage() {
                   min={new Date().toISOString().split('T')[0]}
                   value={formData.bookingDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, bookingDate: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Time <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Time <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="time"
                   required
                   value={formData.bookingTime}
                   onChange={(e) => setFormData(prev => ({ ...prev, bookingTime: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location/Service Area <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Location/Service Area <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"

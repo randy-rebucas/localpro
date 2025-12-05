@@ -6,6 +6,7 @@ import { MapPin, Calendar, Clock, CheckCircle2, XCircle, AlertCircle } from "luc
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/bookings";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface BookingCardProps {
   booking: Booking;
@@ -79,7 +80,7 @@ export function BookingCard({ booking, viewMode = "list", onStatusChange }: Book
           {booking.pricing && (
             <div className="mb-2">
               <span className="text-lg font-bold">
-                ₱{booking.pricing.totalAmount || booking.pricing.basePrice}
+                {formatCurrency(booking.pricing.totalAmount || booking.pricing.basePrice || 0, 'PHP')}
               </span>
             </div>
           )}

@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Booking } from "@/types/bookings";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface BookingDetailProps {
   booking: Booking;
@@ -116,7 +117,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
               <div>
                 <p className="text-sm text-gray-600">Base Price</p>
                 <p className="font-semibold text-lg">
-                  ₱{booking.pricing.basePrice?.toLocaleString()}
+                  {formatCurrency(booking.pricing.basePrice || 0, 'PHP')}
                 </p>
               </div>
               {booking.pricing.additionalFees && booking.pricing.additionalFees.length > 0 && (
@@ -125,7 +126,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
                   {booking.pricing.additionalFees.map((fee, index) => (
                     <div key={index} className="flex justify-between text-sm">
                       <span>{fee.description}</span>
-                      <span>₱{fee.amount?.toLocaleString()}</span>
+                      <span>{formatCurrency(fee.amount || 0, 'PHP')}</span>
                     </div>
                   ))}
                 </div>
@@ -135,7 +136,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
                   <div className="flex justify-between">
                     <p className="font-semibold">Total</p>
                     <p className="font-bold text-lg">
-                      ₱{booking.pricing.totalAmount.toLocaleString()}
+                      {formatCurrency(booking.pricing.totalAmount, 'PHP')}
                     </p>
                   </div>
                 </div>

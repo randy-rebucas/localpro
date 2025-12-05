@@ -7,6 +7,7 @@ import { MapPin, Star, Package, ShoppingCart, Heart, Share2 } from "lucide-react
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Product } from "@/types/supplies";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface SupplyCardProps {
   supply: Product;
@@ -74,10 +75,10 @@ export function SupplyCard({ supply, viewMode = "list", onAddToCart, onFavorite 
             <div className="mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold">
-                  ₱{supply.pricing.retailPrice}
+                  {formatCurrency(supply.pricing.retailPrice, 'PHP')}
                   {supply.pricing.wholesalePrice && (
                     <span className="text-sm text-gray-500 ml-2">
-                      (Wholesale: ₱{supply.pricing.wholesalePrice})
+                      (Wholesale: {formatCurrency(supply.pricing.wholesalePrice, 'PHP')})
                     </span>
                   )}
                 </span>

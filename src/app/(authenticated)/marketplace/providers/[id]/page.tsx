@@ -661,9 +661,9 @@ export default function ProviderDetailPage() {
   if (error && !provider) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">{error || "Provider not found"}</p>
-          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+          <p className="text-red-400">{error || "Provider not found"}</p>
+          <Link href="/marketplace" className="text-emerald-400 hover:underline mt-2 inline-block">
             ← Back to Providers
           </Link>
         </div>
@@ -674,9 +674,9 @@ export default function ProviderDetailPage() {
   if (!provider) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800">Provider not found</p>
-          <Link href="/marketplace" className="text-blue-600 hover:underline mt-2 inline-block">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+          <p className="text-red-400">Provider not found</p>
+          <Link href="/marketplace" className="text-emerald-400 hover:underline mt-2 inline-block">
             ← Back to Providers
           </Link>
         </div>
@@ -706,11 +706,11 @@ export default function ProviderDetailPage() {
   const totalJobs = provider.performance?.totalJobs || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
       </div>
       
       <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6">
@@ -719,23 +719,23 @@ export default function ProviderDetailPage() {
           <div className="flex items-center gap-4 mb-4">
             <Link
               href="/marketplace"
-              className="p-2.5 hover:bg-gradient-to-br hover:from-green-50 hover:to-blue-50 rounded-xl transition-all hover:scale-105 hover:shadow-md"
+              className="p-2.5 hover:bg-slate-800 rounded-xl transition-all hover:scale-105 hover:shadow-md"
               title="Back to providers"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700 hover:text-green-700" />
+              <ArrowLeft className="w-5 h-5 text-slate-400 hover:text-emerald-400" />
             </Link>
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
               <User className="w-7 h-7" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">{fullName}</h1>
-              <p className="text-sm sm:text-base text-gray-700 font-medium">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">{fullName}</h1>
+              <p className="text-sm sm:text-base text-slate-400 font-medium">
                 {provider.businessInfo?.businessName || location}
                 {rating > 0 && (
-                  <span className="ml-2 inline-flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200">
-                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span>
-                    <span className="text-gray-600">({reviewCount} reviews)</span>
+                  <span className="ml-2 inline-flex items-center gap-1 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-white">{rating.toFixed(1)}</span>
+                    <span className="text-slate-400">({reviewCount} reviews)</span>
                   </span>
                 )}
               </p>
@@ -744,9 +744,9 @@ export default function ProviderDetailPage() {
 
           {/* Status Warning Banner */}
           {statusWarning && (
-            <div className="bg-gradient-to-r from-yellow-50 via-yellow-100/50 to-yellow-50 border-2 border-yellow-300 rounded-xl p-4 shadow-lg">
-              <p className="text-yellow-900 font-medium">
-                <strong className="text-yellow-950">Note:</strong> {statusWarning}
+            <div className="bg-amber-500/10 border-2 border-amber-500/30 rounded-xl p-4 shadow-lg">
+              <p className="text-amber-400 font-medium">
+                <strong className="text-amber-300">Note:</strong> {statusWarning}
               </p>
             </div>
           )}

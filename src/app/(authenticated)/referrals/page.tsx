@@ -173,11 +173,8 @@ export default function ReferralsPage() {
   }, []);
 
   const formatCurrency = useCallback((amount: number) => {
-    try {
-      return formatCurrencyUtil(amount, 'PHP');
-    } catch {
-      return `₱${amount?.toLocaleString() || '0'}`;
-    }
+    // Always use PHP currency through the utility
+    return formatCurrencyUtil(amount, 'PHP');
   }, []);
 
   // Use the stable mock referral code

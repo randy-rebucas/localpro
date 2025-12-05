@@ -463,11 +463,11 @@ export default function RentalDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
         <div className="relative z-10 p-6 space-y-6">
           <div className="flex items-center gap-4">
@@ -482,21 +482,21 @@ export default function RentalDetailPage() {
 
   if (error || !rental) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
-          <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border-2 border-red-200 shadow-lg p-8 backdrop-blur-sm text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/20">
-              <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="bg-slate-900/80 rounded-xl border border-red-500/20 shadow-lg p-8 backdrop-blur-sm text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-red-500/20 to-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/20">
+              <AlertCircle className="w-8 h-8 text-red-400" />
             </div>
-            <h3 className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent mb-2">Rental not found</h3>
-            <p className="text-gray-600 mb-6">The rental you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+            <h3 className="text-xl font-bold text-white mb-2">Rental not found</h3>
+            <p className="text-slate-400 mb-6">The rental you&apos;re looking for doesn&apos;t exist or has been removed.</p>
             <button
               onClick={() => router.push('/rentals')}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
             >
               Back to Rentals
             </button>
@@ -507,12 +507,12 @@ export default function RentalDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -520,33 +520,33 @@ export default function RentalDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/rentals"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
             title="Back to rentals"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-slate-400" />
           </Link>
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Package className="w-6 h-6" />
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-gray-900">{rental.name}</h1>
+              <h1 className="text-2xl font-bold text-white">{rental.name}</h1>
               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${getStatusColor(rentalStatus)}`}>
                 {rentalStatus}
               </span>
               {rental.isFeatured && (
-                <span className="px-2.5 py-1 bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 rounded-full text-xs font-semibold border-2 border-yellow-300 shadow-sm">
+                <span className="px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-amber-500/30 text-amber-400 rounded-full text-xs font-semibold border border-amber-500/30 shadow-sm">
                   <Star className="w-3 h-3 inline mr-1" />
                   Featured
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 mt-1">Listed by {rental.owner.name}</p>
+            <p className="text-sm text-slate-400 mt-1">Listed by {rental.owner.name}</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleToggleFavorite}
-              className={`flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md font-medium ${rental.isFavorited ? 'text-red-500 border-red-300' : ''
+              className={`flex items-center gap-2 px-4 py-2 bg-slate-800 border-2 border-slate-700 text-slate-300 rounded-lg hover:bg-slate-700 transition-all shadow-sm hover:shadow-md font-medium ${rental.isFavorited ? 'text-pink-400 border-pink-500/30' : ''
                 }`}
             >
               <Heart className={`w-4 h-4 ${rental.isFavorited ? 'fill-current' : ''}`} />

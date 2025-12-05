@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Job } from "@/types/jobs";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface JobDetailProps {
   job: Job;
@@ -132,8 +133,8 @@ export function JobDetail({
               <div className="flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-gray-600" />
                 <span className="font-semibold">
-                  ₱{job.salary.min?.toLocaleString()}
-                  {job.salary.max && ` - ₱${job.salary.max.toLocaleString()}`}
+                  {formatCurrency(job.salary.min || 0, 'PHP')}
+                  {job.salary.max && ` - ${formatCurrency(job.salary.max, 'PHP')}`}
                   {job.salary.period && `/${job.salary.period}`}
                 </span>
               </div>
@@ -228,8 +229,8 @@ export function JobDetail({
               <div>
                 <p className="text-gray-600">Salary Range</p>
                 <p className="font-semibold text-lg">
-                  ₱{job.salary.min?.toLocaleString()}
-                  {job.salary.max && ` - ₱${job.salary.max.toLocaleString()}`}
+                  {formatCurrency(job.salary.min || 0, 'PHP')}
+                  {job.salary.max && ` - ${formatCurrency(job.salary.max, 'PHP')}`}
                   {job.salary.period && ` per ${job.salary.period}`}
                 </p>
               </div>

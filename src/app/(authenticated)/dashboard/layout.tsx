@@ -58,7 +58,7 @@ export default function DashboardLayout({
     
         {/* Main Content (children) - for any additional content */}
         {children && (
-          <Suspense fallback={<div className="h-32 bg-gray-100 rounded-lg animate-pulse" />}>
+          <Suspense fallback={<div className="h-32 bg-slate-800 rounded-lg animate-pulse" />}>
             {children}
           </Suspense>
         )}

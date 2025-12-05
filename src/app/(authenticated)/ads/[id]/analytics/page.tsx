@@ -210,14 +210,14 @@ export default function AdAnalyticsPage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ad Analytics</h1>
-            <p className="text-gray-600">Performance insights and metrics</p>
+            <h1 className="text-2xl font-bold text-white">Ad Analytics</h1>
+            <p className="text-slate-400">Performance insights and metrics</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -242,17 +242,17 @@ export default function AdAnalyticsPage() {
       </div>
 
       {/* Period Selector */}
-      <Card className="p-4">
+      <Card className="p-4 bg-slate-900/80 border-slate-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h3 className="font-medium text-gray-900">Analytics Period</h3>
+            <h3 className="font-medium text-white">Analytics Period</h3>
             <Select
               value={selectedPeriod}
               onValueChange={(value) => setSelectedPeriod(value)}
               options={timePeriods}
             />
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-slate-400">
             Last updated: {new Date().toLocaleString()}
           </div>
         </div>
@@ -260,121 +260,121 @@ export default function AdAnalyticsPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-6">
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Impressions</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.impressions.toLocaleString()}</p>
+              <p className="text-sm text-slate-400">Impressions</p>
+              <p className="text-2xl font-bold text-white">{analytics.impressions.toLocaleString()}</p>
             </div>
-            <Eye className="w-8 h-8 text-blue-600" />
+            <Eye className="w-8 h-8 text-blue-400" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+12.5%</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400 mr-1" />
+            <span className="text-emerald-400">+12.5%</span>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Clicks</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.clicks.toLocaleString()}</p>
+              <p className="text-sm text-slate-400">Clicks</p>
+              <p className="text-2xl font-bold text-white">{analytics.clicks.toLocaleString()}</p>
             </div>
-            <MousePointer className="w-8 h-8 text-green-600" />
+            <MousePointer className="w-8 h-8 text-emerald-400" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+8.3%</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400 mr-1" />
+            <span className="text-emerald-400">+8.3%</span>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">CTR</p>
-              <p className="text-2xl font-bold text-gray-900">{analytics.ctr.toFixed(2)}%</p>
+              <p className="text-sm text-slate-400">CTR</p>
+              <p className="text-2xl font-bold text-white">{analytics.ctr.toFixed(2)}%</p>
             </div>
-            <Target className="w-8 h-8 text-purple-600" />
+            <Target className="w-8 h-8 text-purple-400" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
-            <span className="text-red-600">-0.2%</span>
+            <TrendingDown className="w-4 h-4 text-red-400 mr-1" />
+            <span className="text-red-400">-0.2%</span>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Spend</p>
-              <p className="text-2xl font-bold text-gray-900">${analytics.spend.toLocaleString()}</p>
+              <p className="text-sm text-slate-400">Spend</p>
+              <p className="text-2xl font-bold text-white">${analytics.spend.toLocaleString()}</p>
             </div>
-            <DollarSign className="w-8 h-8 text-yellow-600" />
+            <DollarSign className="w-8 h-8 text-amber-400" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+15.2%</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400 mr-1" />
+            <span className="text-emerald-400">+15.2%</span>
           </div>
         </Card>
       </div>
 
       {/* Performance Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance</h3>
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Performance</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">CPC</span>
-              <span className="font-medium">${analytics.cpc.toFixed(2)}</span>
+              <span className="text-sm text-slate-400">CPC</span>
+              <span className="font-medium text-white">${analytics.cpc.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">CPM</span>
-              <span className="font-medium">${analytics.cpm.toFixed(2)}</span>
+              <span className="text-sm text-slate-400">CPM</span>
+              <span className="font-medium text-white">${analytics.cpm.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Conversions</span>
-              <span className="font-medium">{analytics.conversions}</span>
+              <span className="text-sm text-slate-400">Conversions</span>
+              <span className="font-medium text-white">{analytics.conversions}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Conversion Rate</span>
-              <span className="font-medium">{analytics.conversionRate.toFixed(2)}%</span>
+              <span className="text-sm text-slate-400">Conversion Rate</span>
+              <span className="font-medium text-white">{analytics.conversionRate.toFixed(2)}%</span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue</h3>
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Revenue</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Revenue</span>
-              <span className="font-medium">${analytics.revenue.toLocaleString()}</span>
+              <span className="text-sm text-slate-400">Revenue</span>
+              <span className="font-medium text-white">${analytics.revenue.toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">ROI</span>
-              <span className="font-medium text-green-600">{analytics.roi.toFixed(1)}%</span>
+              <span className="text-sm text-slate-400">ROI</span>
+              <span className="font-medium text-emerald-400">{analytics.roi.toFixed(1)}%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Profit</span>
-              <span className="font-medium text-green-600">
+              <span className="text-sm text-slate-400">Profit</span>
+              <span className="font-medium text-emerald-400">
                 ${(analytics.revenue - analytics.spend).toLocaleString()}
               </span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Efficiency</h3>
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Efficiency</h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg. Session Duration</span>
-              <span className="font-medium">2m 34s</span>
+              <span className="text-sm text-slate-400">Avg. Session Duration</span>
+              <span className="font-medium text-white">2m 34s</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Bounce Rate</span>
-              <span className="font-medium">45.2%</span>
+              <span className="text-sm text-slate-400">Bounce Rate</span>
+              <span className="font-medium text-white">45.2%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Pages per Session</span>
-              <span className="font-medium">2.8</span>
+              <span className="text-sm text-slate-400">Pages per Session</span>
+              <span className="font-medium text-white">2.8</span>
             </div>
           </div>
         </Card>
@@ -383,19 +383,19 @@ export default function AdAnalyticsPage() {
       {/* Charts and Breakdowns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Audience Breakdown */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Audience Breakdown</h3>
+        <Card className="p-6 bg-slate-900/80 border-slate-800">
+          <h3 className="text-lg font-semibold text-white mb-4">Audience Breakdown</h3>
           <div className="space-y-3">
             {analytics.audienceBreakdown.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm font-medium">{item.audience}</span>
-                    <span className="text-sm text-gray-600">{item.ctr.toFixed(2)}% CTR</span>
+                    <span className="text-sm font-medium text-slate-300">{item.audience}</span>
+                    <span className="text-sm text-slate-400">{item.ctr.toFixed(2)}% CTR</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-slate-800 rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-blue-500 h-2 rounded-full"
                       style={{ width: `${(item.impressions / analytics.impressions) * 100}%` }}
                     />
                   </div>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, DollarSign, AlertTriangle } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface Transaction {
   id: string;
@@ -123,7 +124,7 @@ export function RefundModal({ isOpen, onClose, onSubmit, transaction }: RefundMo
                 </div>
                 <div>
                   <span className="text-gray-500">Amount:</span>
-                  <span className="ml-2 font-medium">₱{transaction.amount.toFixed(2)}</span>
+                  <span className="ml-2 font-medium">{formatCurrency(transaction.amount, 'PHP')}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Method:</span>

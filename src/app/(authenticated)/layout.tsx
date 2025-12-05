@@ -252,9 +252,9 @@ export default function AuthenticatedLayout({
 
   return (
     <Providers>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="min-h-screen bg-slate-950">
         {/* Global Header */}
-        <div className="bg-white/80 backdrop-blur-md border-gray-200/50 shadow-sm relative z-50">
+        <div className="bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/50 shadow-lg shadow-black/10 relative z-50">
           <GlobalHeader
             showRoleNavigation={true}
             showFavorites={true}
@@ -268,8 +268,9 @@ export default function AuthenticatedLayout({
         <main className="relative">
           {/* Background decoration */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
+            <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full filter blur-3xl"></div>
+            <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-teal-500/10 rounded-full filter blur-3xl"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-emerald-600/10 rounded-full filter blur-2xl"></div>
           </div>
 
           {/* Content Container */}
@@ -281,7 +282,7 @@ export default function AuthenticatedLayout({
               </div>
             ) : (
               // Standard content layout with container
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="space-y-6">
                   {children}
                 </div>

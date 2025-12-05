@@ -1991,10 +1991,10 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
+      <div className="h-[calc(100vh-8rem)] bg-slate-900/80 rounded-lg shadow-lg border border-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading conversations...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading conversations...</p>
         </div>
       </div>
     );
@@ -2012,17 +2012,17 @@ export default function MessagesPage() {
     }
     
     return (
-      <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
+      <div className="h-[calc(100vh-8rem)] bg-slate-900/80 rounded-lg shadow-lg border border-slate-800 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MessageSquare className="w-8 h-8 text-red-500" />
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <MessageSquare className="w-8 h-8 text-red-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load conversations</h3>
-          <p className="text-red-500 mb-4">{error}</p>
+          <h3 className="text-lg font-medium text-white mb-2">Unable to load conversations</h3>
+          <p className="text-red-400 mb-4">{error}</p>
           
           {isAuthError && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <div className="mb-4 p-3 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+              <p className="text-sm text-amber-400">
                 Redirecting to login page...
               </p>
             </div>
@@ -2031,18 +2031,18 @@ export default function MessagesPage() {
           {isRetrying && !isAuthError && (
             <div className="mb-4">
               <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
-                <span className="text-sm text-gray-500">Retrying... (Attempt {retryCount + 1}/3)</span>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-500"></div>
+                <span className="text-sm text-slate-400">Retrying... (Attempt {retryCount + 1}/3)</span>
               </div>
             </div>
           )}
           
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 justify-center">
             {!isAuthError && (
               <button 
                 onClick={fetchConversations}
                 disabled={isRetrying}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isRetrying ? 'Retrying...' : 'Try Again'}
               </button>
@@ -2065,7 +2065,7 @@ export default function MessagesPage() {
                     clearTimeout(retryTimeoutRef.current);
                   }
                 }}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
               >
                 Cancel Retry
               </button>
@@ -2077,7 +2077,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col lg:flex-row relative overflow-hidden">
+    <div className="h-[calc(100vh-8rem)] bg-slate-900/80 rounded-2xl shadow-xl border border-slate-800 flex flex-col lg:flex-row relative overflow-hidden">
       {/* Mobile overlay */}
       {showMobileConversations && (
         <div 
@@ -2087,18 +2087,18 @@ export default function MessagesPage() {
       )}
       
       {/* Left Sidebar - Conversations */}
-      <div className={`w-full lg:w-96 border-r border-gray-200 bg-gradient-to-b from-white to-gray-50/50 flex flex-col transition-transform duration-300 ease-in-out z-30 ${
+      <div className={`w-full lg:w-96 border-r border-slate-800 bg-slate-900/50 flex flex-col transition-transform duration-300 ease-in-out z-30 ${
         showMobileConversations ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         {/* Header */}
-        <div className="p-6 border-b border-gray-200/80 bg-white/95 backdrop-blur-sm shadow-sm">
+        <div className="p-6 border-b border-slate-800 bg-slate-900/95 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-500/20">
                 <MessageSquare className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900 tracking-tight">Messages</h1>
+                <h1 className="text-xl font-bold text-white tracking-tight">Messages</h1>
                 {unreadCount > 0 && (
                   <span className="inline-flex items-center justify-center px-2.5 py-1 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-rose-500 rounded-full mt-1 shadow-sm">
                     {unreadCount} unread
@@ -2109,14 +2109,14 @@ export default function MessagesPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowMessageSearch(!showMessageSearch)}
-                className="p-2.5 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                className="p-2.5 hover:bg-slate-800 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
                 title="Search messages"
               >
-                <Search className="w-4 h-4 text-gray-600" />
+                <Search className="w-4 h-4 text-slate-400" />
               </button>
               <button
                 onClick={() => {/* TODO: Add new conversation */}}
-                className="p-2.5 hover:bg-emerald-50 rounded-xl transition-all duration-200 text-emerald-600 hover:scale-105 active:scale-95 hover:shadow-sm"
+                className="p-2.5 hover:bg-emerald-500/20 rounded-xl transition-all duration-200 text-emerald-400 hover:scale-105 active:scale-95"
                 title="New conversation"
               >
                 <MessageSquare className="w-4 h-4" />
@@ -2127,43 +2127,43 @@ export default function MessagesPage() {
           {/* Search Bar - Toggle between conversation and message search */}
           {!showMessageSearch ? (
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
+                className="w-full pl-11 pr-4 py-3 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm bg-slate-800 text-white placeholder:text-slate-500"
               />
             </div>
           ) : (
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search messages..."
                 value={messageSearchQuery}
                 onChange={(e) => setMessageSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
+                className="w-full pl-11 pr-4 py-3 border border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-sm bg-slate-800 text-white placeholder:text-slate-500"
               />
             </div>
           )}
         </div>
 
         {/* Conversations List */}
-        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {loading ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-slate-400">
               <div className="animate-spin rounded-full h-8 w-8 border-3 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
               <p className="text-sm font-medium">Loading conversations...</p>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="w-8 h-8 text-gray-400" />
+            <div className="p-8 text-center text-slate-400">
+              <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-slate-600" />
               </div>
-              <p className="text-sm font-semibold text-gray-700 mb-1">No conversations found</p>
-              <p className="text-xs text-gray-400">Start a new conversation to begin messaging</p>
+              <p className="text-sm font-semibold text-slate-300 mb-1">No conversations found</p>
+              <p className="text-xs text-slate-500">Start a new conversation to begin messaging</p>
             </div>
           ) : (
             filteredConversations.map((conversation) => {
@@ -2176,8 +2176,8 @@ export default function MessagesPage() {
                   onClick={() => handleConversationSelect(conversation)}
                   className={`px-5 py-4 cursor-pointer transition-all duration-200 border-l-4 ${
                     isActive
-                      ? "bg-gradient-to-r from-emerald-50/50 to-white border-emerald-500 shadow-sm"
-                      : "border-transparent hover:bg-white/70 hover:shadow-sm"
+                      ? "bg-emerald-500/10 border-emerald-500"
+                      : "border-transparent hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex items-center gap-3">

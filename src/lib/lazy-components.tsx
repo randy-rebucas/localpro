@@ -11,21 +11,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 // Loading fallback components
 const ChartSkeleton = () => (
-  <div className="h-64 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
+  <div className="h-64 bg-slate-800 rounded-lg animate-pulse flex items-center justify-center">
     <div className="text-center">
-      <div className="w-12 h-12 bg-gray-300 rounded mx-auto mb-2"></div>
-      <p className="text-sm text-gray-500">Loading chart...</p>
+      <div className="w-12 h-12 bg-slate-700 rounded mx-auto mb-2"></div>
+      <p className="text-sm text-slate-400">Loading chart...</p>
     </div>
   </div>
 );
 
 const ModalSkeleton = () => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white rounded-lg p-6 w-full max-w-md animate-pulse">
-      <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+    <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 w-full max-w-md animate-pulse">
+      <div className="h-6 bg-slate-800 rounded w-3/4 mb-4"></div>
       <div className="space-y-3">
-        <div className="h-4 bg-gray-200 rounded"></div>
-        <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+        <div className="h-4 bg-slate-800 rounded"></div>
+        <div className="h-4 bg-slate-800 rounded w-5/6"></div>
       </div>
     </div>
   </div>
@@ -166,7 +166,7 @@ export const LazyAIServiceRecommendations = dynamic(
     default: mod.AIServiceRecommendations
   })),
   {
-    loading: () => <div className="h-64 bg-gray-50 rounded-lg animate-pulse" />,
+    loading: () => <div className="h-64 bg-slate-800 rounded-lg animate-pulse" />,
     ssr: false,
   }
 );
@@ -179,7 +179,7 @@ export const LazyAIServiceMatcher = dynamic(
     default: mod.AIServiceMatcher
   })),
   {
-    loading: () => <div className="h-64 bg-gray-50 rounded-lg animate-pulse" />,
+    loading: () => <div className="h-64 bg-slate-800 rounded-lg animate-pulse" />,
     ssr: false,
   }
 );
@@ -192,7 +192,7 @@ export const LazyAIPriceEstimator = dynamic(
     default: mod.AIPriceEstimator
   })),
   {
-    loading: () => <div className="h-32 bg-gray-50 rounded-lg animate-pulse" />,
+    loading: () => <div className="h-32 bg-slate-800 rounded-lg animate-pulse" />,
     ssr: false,
   }
 );
@@ -205,7 +205,7 @@ export const LazyAINaturalLanguageSearch = dynamic(
     default: mod.AINaturalLanguageSearch
   })),
   {
-    loading: () => <div className="h-20 bg-gray-50 rounded-lg animate-pulse" />,
+    loading: () => <div className="h-20 bg-slate-800 rounded-lg animate-pulse" />,
     ssr: false,
   }
 );
@@ -243,7 +243,7 @@ export const LazyPortfolioGallery = dynamic(
     loading: () => (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+          <div key={i} className="aspect-square bg-slate-800 rounded-lg animate-pulse" />
         ))}
       </div>
     ),
@@ -261,9 +261,9 @@ export const LazyFileUpload = dynamic(
   })),
   {
     loading: () => (
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 animate-pulse">
-        <div className="h-12 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-        <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto"></div>
+      <div className="border-2 border-dashed border-slate-700 rounded-lg p-8 animate-pulse">
+        <div className="h-12 bg-slate-800 rounded w-3/4 mx-auto mb-4"></div>
+        <div className="h-8 bg-slate-800 rounded w-1/2 mx-auto"></div>
       </div>
     ),
     ssr: false,
@@ -284,15 +284,15 @@ export const LazyMarketplaceFooter = dynamic(
   })),
   {
     loading: () => (
-      <footer className="bg-white border-t border-gray-200 mt-16">
+      <footer className="bg-slate-900 border-t border-slate-800 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-3">
-                <div className="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
+                <div className="h-5 bg-slate-800 rounded w-24 animate-pulse"></div>
                 <div className="space-y-2">
                   {Array.from({ length: 3 }).map((_, j) => (
-                    <div key={j} className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                    <div key={j} className="h-4 bg-slate-800 rounded w-32 animate-pulse"></div>
                   ))}
                 </div>
               </div>

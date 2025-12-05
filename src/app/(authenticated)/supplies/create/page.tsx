@@ -554,12 +554,12 @@ export default function CreateSupplyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -567,23 +567,23 @@ export default function CreateSupplyPage() {
         <div className="flex items-center gap-4 mb-6">
           <Link
             href="/supplies"
-            className="p-2.5 hover:bg-white rounded-lg transition-all border-2 border-transparent hover:border-gray-200 hover:shadow-sm"
+            className="p-2.5 hover:bg-slate-800 rounded-lg transition-all border-2 border-transparent hover:border-slate-700 hover:shadow-sm"
             title="Back to supplies"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-slate-400" />
           </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Package className="w-6 h-6" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Create New Supply</h1>
-            <p className="text-sm text-gray-600">List your supplies and materials for sale</p>
+            <h1 className="text-2xl font-bold text-white mb-1">Create New Supply</h1>
+            <p className="text-sm text-slate-400">List your supplies and materials for sale</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setPreviewMode(!previewMode)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50 text-gray-700 font-medium transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 border-2 border-slate-700 rounded-lg hover:border-emerald-500 hover:bg-slate-800 text-slate-300 font-medium transition-all"
             >
               <Eye className="w-4 h-4" />
               {previewMode ? 'Edit' : 'Preview'}
@@ -592,7 +592,7 @@ export default function CreateSupplyPage() {
               type="button"
               onClick={() => handleSave('draft')}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-lg hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-medium transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2.5 border-2 border-slate-700 rounded-lg hover:border-slate-600 hover:bg-slate-800 text-slate-300 font-medium transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Draft
@@ -601,7 +601,7 @@ export default function CreateSupplyPage() {
               type="button"
               onClick={() => handleSave('publish')}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/30 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-xl transition-all disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
               Publish
@@ -613,30 +613,30 @@ export default function CreateSupplyPage() {
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information */}
-            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Info className="w-5 h-5 text-emerald-600" />
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6">
+              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Info className="w-5 h-5 text-emerald-400" />
                 Basic Information
               </h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">
                     Supply Name *
                   </label>
                   <input
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="Enter a descriptive name for your supply"
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-white ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500 ${errors.name ? 'border-red-500' : 'border-slate-700'}`}
                   />
                   {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    <p className="text-red-400 text-sm mt-1">{errors.name}</p>
                   )}
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-slate-300">
                       Description *
                     </label>
                     <button
@@ -645,7 +645,7 @@ export default function CreateSupplyPage() {
                       disabled={isGeneratingDescription || !formData.name.trim()}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                         isGeneratingDescription
-                          ? 'bg-purple-100 text-purple-400 cursor-wait'
+                          ? 'bg-purple-500/20 text-purple-400 cursor-wait'
                           : formData.name.trim()
                             ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:from-purple-600 hover:to-indigo-600 shadow-md hover:shadow-lg'
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'

@@ -394,8 +394,8 @@ export default function CategoryServicesPage() {
         key={i}
         className={`w-3 h-3 ${
           i < Math.floor(rating)
-            ? "text-yellow-400 fill-current"
-            : "text-gray-300"
+            ? "text-amber-400 fill-current"
+            : "text-slate-600"
         }`}
       />
     ));

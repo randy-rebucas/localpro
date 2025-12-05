@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RentalItem } from "@/types/rentals";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface RentalDetailProps {
   rental: RentalItem;
@@ -119,25 +120,25 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               <div className="flex flex-wrap gap-4">
                 {rental.pricing.hourly && (
                   <div>
-                    <span className="text-2xl font-bold">₱{rental.pricing.hourly}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(rental.pricing.hourly, 'PHP')}</span>
                     <span className="text-gray-600">/hour</span>
                   </div>
                 )}
                 {rental.pricing.daily && (
                   <div>
-                    <span className="text-2xl font-bold">₱{rental.pricing.daily}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(rental.pricing.daily, 'PHP')}</span>
                     <span className="text-gray-600">/day</span>
                   </div>
                 )}
                 {rental.pricing.weekly && (
                   <div>
-                    <span className="text-2xl font-bold">₱{rental.pricing.weekly}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(rental.pricing.weekly, 'PHP')}</span>
                     <span className="text-gray-600">/week</span>
                   </div>
                 )}
                 {rental.pricing.monthly && (
                   <div>
-                    <span className="text-2xl font-bold">₱{rental.pricing.monthly}</span>
+                    <span className="text-2xl font-bold">{formatCurrency(rental.pricing.monthly, 'PHP')}</span>
                     <span className="text-gray-600">/month</span>
                   </div>
                 )}
@@ -231,7 +232,7 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               {rental.requirements.deposit && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Deposit</span>
-                  <span className="font-semibold">₱{rental.requirements.deposit}</span>
+                  <span className="font-semibold">{formatCurrency(rental.requirements.deposit, 'PHP')}</span>
                 </div>
               )}
               {rental.requirements.insuranceRequired !== undefined && (
@@ -254,25 +255,25 @@ export function RentalDetail({ rental, onBook, onEdit, onFavorite }: RentalDetai
               {rental.pricing.hourly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Hourly Rate</span>
-                  <span className="font-semibold">₱{rental.pricing.hourly}</span>
+                  <span className="font-semibold">{formatCurrency(rental.pricing.hourly, 'PHP')}</span>
                 </div>
               )}
               {rental.pricing.daily && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Daily Rate</span>
-                  <span className="font-semibold">₱{rental.pricing.daily}</span>
+                  <span className="font-semibold">{formatCurrency(rental.pricing.daily, 'PHP')}</span>
                 </div>
               )}
               {rental.pricing.weekly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Weekly Rate</span>
-                  <span className="font-semibold">₱{rental.pricing.weekly}</span>
+                  <span className="font-semibold">{formatCurrency(rental.pricing.weekly, 'PHP')}</span>
                 </div>
               )}
               {rental.pricing.monthly && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Monthly Rate</span>
-                  <span className="font-semibold">₱{rental.pricing.monthly}</span>
+                  <span className="font-semibold">{formatCurrency(rental.pricing.monthly, 'PHP')}</span>
                 </div>
               )}
               <div className="flex justify-between pt-2 border-t">

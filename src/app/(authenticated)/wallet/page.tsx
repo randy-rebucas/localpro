@@ -889,32 +889,32 @@ export default function WalletPage() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
           {/* Header */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25">
               <Wallet className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
-              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-1">Wallet</h1>
+              <p className="text-sm text-slate-400">Manage your finances and transactions</p>
             </div>
           </div>
 
           {/* Loading State */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md p-12">
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-12">
             <div className="flex flex-col items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">Loading wallet...</p>
-              <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500 mb-4"></div>
+              <p className="text-slate-300 font-medium">Loading wallet...</p>
+              <p className="text-sm text-slate-500 mt-1">Please wait while we fetch your information</p>
             </div>
           </div>
         </div>
@@ -923,30 +923,30 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 space-y-6 relative z-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25">
               <Wallet className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent mb-1">Wallet</h1>
-              <p className="text-sm text-gray-600">Manage your finances and transactions</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent mb-1">Wallet</h1>
+              <p className="text-sm text-slate-400">Manage your finances and transactions</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => setShowExpenseModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md shadow-emerald-500/25 hover:shadow-lg"
               title="Add expense"
             >
               <span className="text-base font-semibold">{currencySymbol}</span>
@@ -955,7 +955,7 @@ export default function WalletPage() {
             </button>
             <button
               onClick={() => setShowWalletSettingsModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700 hover:text-white transition-all"
               title="Wallet settings"
             >
               <Settings className="w-4 h-4" />
@@ -964,7 +964,7 @@ export default function WalletPage() {
             <button
               onClick={refreshWalletData}
               disabled={refreshing || loading}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border border-gray-300 rounded-lg hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700 hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               title="Refresh wallet data"
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -975,20 +975,20 @@ export default function WalletPage() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-red-200 shadow-md hover:shadow-lg transition-all p-6">
+        <div className="bg-slate-900/80 to-red-500/10 rounded-xl border border-red-500/30 shadow-lg p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+            <div className="w-10 h-10 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center flex-shrink-0">
               <AlertCircle className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Wallet</h3>
-              <p className="text-red-600 mb-4">{error}</p>
+              <h3 className="text-lg font-semibold text-white mb-1">Unable to Load Wallet</h3>
+              <p className="text-red-400 mb-4">{error}</p>
               <button
                 onClick={() => {
                   setError(null);
                   fetchWalletData(false, currentPage);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-green-600 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg hover:from-emerald-600 hover:to-teal-600 transition-all shadow-md shadow-emerald-500/25"
               >
                 <RefreshCw className="w-4 h-4" />
                 Try Again
@@ -1044,22 +1044,22 @@ export default function WalletPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
             {/* Monthly Earnings */}
-            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Monthly Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-slate-400 mb-1">Monthly Earnings</p>
+                <p className="text-2xl font-bold text-white">
                   {formatCurrency(
                     (overview?.monthlyEarnings?.totalEarnings && !isNaN(overview.monthlyEarnings.totalEarnings))
                       ? overview.monthlyEarnings.totalEarnings
                       : 0
                   )}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {(overview?.monthlyEarnings?.bookingCount && !isNaN(overview.monthlyEarnings.bookingCount))
                     ? overview.monthlyEarnings.bookingCount
                     : 0} bookings
@@ -1068,22 +1068,22 @@ export default function WalletPage() {
             </div>
 
             {/* Referral Earnings */}
-            <div className="bg-gradient-to-br from-white to-purple-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white flex items-center justify-center shadow-md">
                   <span className="text-lg font-semibold">{currencySymbol}</span>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Referral Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-slate-400 mb-1">Referral Earnings</p>
+                <p className="text-2xl font-bold text-white">
                   {formatCurrency(
                     (overview?.referralEarnings?.totalEarnings && !isNaN(overview.referralEarnings.totalEarnings))
                       ? overview.referralEarnings.totalEarnings
                       : 0
                   )}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {(overview?.referralEarnings?.count && !isNaN(overview.referralEarnings.count))
                     ? overview.referralEarnings.count
                     : 0} referrals
@@ -1092,21 +1092,21 @@ export default function WalletPage() {
             </div>
 
             {/* Pending Balance */}
-            <div className="bg-gradient-to-br from-white to-yellow-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white flex items-center justify-center shadow-md">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center shadow-md">
                   <Clock className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Pending Balance</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(pendingBalance)}</p>
+                <p className="text-sm text-slate-400 mb-1">Pending Balance</p>
+                <p className="text-2xl font-bold text-white">{formatCurrency(pendingBalance)}</p>
                 {payoutSchedule && (
-                  <div className="mt-2 pt-2 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-1">Payout Schedule</p>
-                    <p className="text-xs font-medium text-gray-700">{payoutSchedule}</p>
+                  <div className="mt-2 pt-2 border-t border-slate-700">
+                    <p className="text-xs text-slate-500 mb-1">Payout Schedule</p>
+                    <p className="text-xs font-medium text-slate-300">{payoutSchedule}</p>
                     {nextPayoutDate && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-slate-500 mt-1">
                         Next payout: {nextPayoutDate.toLocaleDateString('en-US', { 
                           month: 'short', 
                           day: 'numeric', 
@@ -1128,15 +1128,15 @@ export default function WalletPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Total Earnings Block */}
           {earnings && (
-            <div className="bg-gradient-to-br from-white to-green-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center shadow-md">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md">
                   <TrendingUp className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-slate-400 mb-1">Total Earnings</p>
+                <p className="text-2xl font-bold text-white">
                   {formatCurrency(
                     (earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
                       ? earnings.totalEarnings 
@@ -1146,7 +1146,7 @@ export default function WalletPage() {
                   )}
                 </p>
                 {earnings.bookingCount && !isNaN(earnings.bookingCount) && (
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     {earnings.bookingCount} bookings
                   </p>
                 )}
@@ -1156,15 +1156,15 @@ export default function WalletPage() {
           
           {/* Expenses Summary Block */}
           {expenses.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white flex items-center justify-center shadow-md">
                   <Receipt className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-slate-400 mb-1">Total Expenses</p>
+                <p className="text-2xl font-bold text-white">
                   {formatCurrency(
                     expenses.reduce((sum: number, expense: ExpenseData) => {
                       const amount = (expense.amount && !isNaN(expense.amount)) ? expense.amount : 0;
@@ -1172,7 +1172,7 @@ export default function WalletPage() {
                     }, 0)
                   )}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {expenses.length} expense{expenses.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -1181,15 +1181,15 @@ export default function WalletPage() {
           
           {/* Net Earnings Block */}
           {earnings && (
-            <div className="bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 p-6">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center shadow-md">
                   <DollarSign className="w-5 h-5" />
                 </div>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Net Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-slate-400 mb-1">Net Earnings</p>
+                <p className="text-2xl font-bold text-white">
                   {formatCurrency(
                     ((earnings.totalEarnings && !isNaN(earnings.totalEarnings)) 
                       ? earnings.totalEarnings 
@@ -1204,7 +1204,7 @@ export default function WalletPage() {
                       : 0)
                   )}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   After expenses
                 </p>
               </div>
@@ -1215,17 +1215,17 @@ export default function WalletPage() {
 
       {/* Transactions & Top-Up Requests Tabs */}
       {!error && mounted && !loading && (
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
           {/* Tab Navigation */}
-          <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50/50 to-white">
+          <div className="border-b border-slate-800 bg-slate-900/50">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between px-4 sm:px-6 pt-4 pb-0 gap-3">
               <div className="flex space-x-0.5 overflow-x-auto">
                 <button
                   onClick={() => setActiveTab('transactions')}
                   className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
                     activeTab === 'transactions'
-                      ? 'bg-white text-emerald-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                      ? 'bg-slate-800 text-emerald-400 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
                   }`}
                 >
                   {activeTab === 'transactions' && (
@@ -1238,8 +1238,8 @@ export default function WalletPage() {
                     {transactions.length > 0 && (
                       <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
                         activeTab === 'transactions'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-gray-200 text-gray-600'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-slate-700 text-slate-400'
                       }`}>
                         {transactions.length}
                       </span>
@@ -1250,8 +1250,8 @@ export default function WalletPage() {
                   onClick={() => setActiveTab('topups')}
                   className={`relative px-4 sm:px-5 py-2.5 text-sm font-semibold rounded-t-lg transition-all duration-200 whitespace-nowrap ${
                     activeTab === 'topups'
-                      ? 'bg-white text-emerald-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/70'
+                      ? 'bg-slate-800 text-emerald-400 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
                   }`}
                 >
                   {activeTab === 'topups' && (
@@ -1264,8 +1264,8 @@ export default function WalletPage() {
                     {topUpRequests.length > 0 && (
                       <span className={`px-2 py-0.5 text-xs rounded-full font-medium flex-shrink-0 ${
                         activeTab === 'topups'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-gray-200 text-gray-600'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-slate-700 text-slate-400'
                       }`}>
                         {topUpRequests.length}
                       </span>
@@ -1277,7 +1277,7 @@ export default function WalletPage() {
                 <button
                   onClick={fetchTopUpRequests}
                   disabled={loadingTopUps}
-                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all self-start sm:self-auto"
+                  className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-slate-300 bg-slate-800 border border-slate-700 rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-all self-start sm:self-auto"
                 >
                   <RefreshCw className={`w-4 h-4 ${loadingTopUps ? 'animate-spin' : ''} ${topUpRequests.length > 0 ? 'mr-2' : ''}`} />
                   {topUpRequests.length > 0 && <span>Refresh</span>}

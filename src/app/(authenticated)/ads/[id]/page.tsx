@@ -385,9 +385,9 @@ export default function AdDetailPage() {
   if (error || !ad) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Ad not found</h3>
-        <p className="text-gray-600 mb-4">The ad you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-white mb-2">Ad not found</h3>
+        <p className="text-slate-400 mb-4">The ad you&apos;re looking for doesn&apos;t exist or has been removed.</p>
         <Button onClick={() => router.push('/ads')}>
           Back to Ads
         </Button>
@@ -411,32 +411,32 @@ export default function AdDetailPage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{ad.title}</h1>
+              <h1 className="text-2xl font-bold text-white">{ad.title}</h1>
               <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusColor(ad.status)}`}>
                 {getStatusIcon(ad.status)}
                 <span className="capitalize">{ad.status}</span>
               </span>
               {ad.isFeatured && (
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full text-sm font-medium">
                   <Star className="w-4 h-4 inline mr-1" />
                   Featured
                 </span>
               )}
               {ad.promotion?.type && ad.promotion.status === 'active' && (
-                <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm font-medium">
                   <Star className="w-4 h-4 inline mr-1" />
                   {ad.promotion.type.charAt(0).toUpperCase() + ad.promotion.type.slice(1)}
                 </span>
               )}
             </div>
-            <p className="text-gray-600">
+            <p className="text-slate-400">
               Created by {typeof ad.advertiser === 'string' ? 'Advertiser' : (ad.advertiser.businessName || ad.advertiser.name || 'Unknown')}
             </p>
           </div>
@@ -533,38 +533,38 @@ export default function AdDetailPage() {
           })()}
 
           {/* Ad Details */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Ad Details</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Ad Details</h2>
             <div className="space-y-4">
               {ad.content?.headline && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Headline</h3>
-                  <p className="text-gray-700 text-lg">{ad.content.headline}</p>
+                  <h3 className="font-medium text-white mb-2">Headline</h3>
+                  <p className="text-slate-300 text-lg">{ad.content.headline}</p>
                 </div>
               )}
               
               <div>
-                <h3 className="font-medium text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-600 whitespace-pre-line">{ad.description}</p>
+                <h3 className="font-medium text-white mb-2">Description</h3>
+                <p className="text-slate-400 whitespace-pre-line">{ad.description}</p>
               </div>
 
               {ad.content?.body && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Body Text</h3>
-                  <p className="text-gray-600 whitespace-pre-line">{ad.content.body}</p>
+                  <h3 className="font-medium text-white mb-2">Body Text</h3>
+                  <p className="text-slate-400 whitespace-pre-line">{ad.content.body}</p>
                 </div>
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Category</h3>
-                  <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
+                  <h3 className="font-medium text-white mb-2">Category</h3>
+                  <span className="inline-block bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-sm">
                     {getCategoryLabel(ad.category)}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Type</h3>
-                  <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                  <h3 className="font-medium text-white mb-2">Type</h3>
+                  <span className="inline-block bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm">
                     {getTypeLabel(ad.type)}
                   </span>
                 </div>
@@ -572,10 +572,10 @@ export default function AdDetailPage() {
 
               {ad.content?.callToAction && (ad.content.callToAction.text || ad.content.callToAction.url) && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Call to Action</h3>
+                  <h3 className="font-medium text-white mb-2">Call to Action</h3>
                   <div className="flex items-center gap-2">
                     {ad.content.callToAction.text && (
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-medium">
+                      <span className="bg-blue-500/20 text-blue-400 px-3 py-1 rounded text-sm font-medium">
                         {ad.content.callToAction.text}
                       </span>
                     )}
@@ -584,7 +584,7 @@ export default function AdDetailPage() {
                         href={ad.content.callToAction.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 text-sm underline"
+                        className="text-blue-400 hover:text-blue-300 text-sm underline"
                       >
                         {ad.content.callToAction.url}
                       </a>
@@ -595,8 +595,8 @@ export default function AdDetailPage() {
 
               {ad.location && (
                 <div>
-                  <h3 className="font-medium text-gray-900 mb-2">Location</h3>
-                  <div className="flex items-center gap-2 text-gray-600">
+                  <h3 className="font-medium text-white mb-2">Location</h3>
+                  <div className="flex items-center gap-2 text-slate-400">
                     <MapPin className="w-4 h-4" />
                     <span>
                       {[ad.location.city, ad.location.state, ad.location.country]

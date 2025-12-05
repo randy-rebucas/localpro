@@ -226,47 +226,47 @@ const normalizeAnnouncement = (announcement: Record<string, unknown>, currentUse
 const getAnnouncementIcon = (type: AnnouncementType) => {
   switch (type) {
     case 'system':
-      return <AlertCircle className="w-5 h-5 text-blue-600" />;
+      return <AlertCircle className="w-5 h-5 text-blue-400" />;
     case 'maintenance':
-      return <Wrench className="w-5 h-5 text-orange-600" />;
+      return <Wrench className="w-5 h-5 text-orange-400" />;
     case 'feature':
-      return <Star className="w-5 h-5 text-purple-600" />;
+      return <Star className="w-5 h-5 text-purple-400" />;
     case 'security':
-      return <Shield className="w-5 h-5 text-red-600" />;
+      return <Shield className="w-5 h-5 text-red-400" />;
     case 'promotion':
-      return <Gift className="w-5 h-5 text-yellow-600" />;
+      return <Gift className="w-5 h-5 text-amber-400" />;
     case 'policy':
-      return <FileText className="w-5 h-5 text-indigo-600" />;
+      return <FileText className="w-5 h-5 text-indigo-400" />;
     case 'event':
-      return <Calendar className="w-5 h-5 text-green-600" />;
+      return <Calendar className="w-5 h-5 text-emerald-400" />;
     case 'emergency':
-      return <AlertTriangle className="w-5 h-5 text-red-600" />;
+      return <AlertTriangle className="w-5 h-5 text-red-400" />;
     case 'update':
-      return <Bell className="w-5 h-5 text-blue-600" />;
+      return <Bell className="w-5 h-5 text-blue-400" />;
     default:
-      return <Megaphone className="w-5 h-5 text-gray-600" />;
+      return <Megaphone className="w-5 h-5 text-slate-400" />;
   }
 };
 
 // Helper function to get announcement styles based on type and priority
 const getAnnouncementStyles = (type: AnnouncementType, priority: AnnouncementPriority) => {
   const typeStyles: Record<AnnouncementType, string> = {
-    system: "bg-blue-50 border-blue-200",
-    maintenance: "bg-orange-50 border-orange-200",
-    feature: "bg-purple-50 border-purple-200",
-    security: "bg-red-50 border-red-200",
-    promotion: "bg-yellow-50 border-yellow-200",
-    policy: "bg-indigo-50 border-indigo-200",
-    event: "bg-green-50 border-green-200",
-    emergency: "bg-red-100 border-red-500 ring-2 ring-red-200",
-    update: "bg-blue-50 border-blue-200",
-    general: "bg-gray-50 border-gray-200"
+    system: "bg-blue-500/10 border-blue-500/30",
+    maintenance: "bg-orange-500/10 border-orange-500/30",
+    feature: "bg-purple-500/10 border-purple-500/30",
+    security: "bg-red-500/10 border-red-500/30",
+    promotion: "bg-amber-500/10 border-amber-500/30",
+    policy: "bg-indigo-500/10 border-indigo-500/30",
+    event: "bg-emerald-500/10 border-emerald-500/30",
+    emergency: "bg-red-500/20 border-red-500 ring-2 ring-red-500/20",
+    update: "bg-blue-500/10 border-blue-500/30",
+    general: "bg-slate-800 border-slate-700"
   };
   
   const priorityBorder = {
     urgent: "border-l-4 border-red-500",
     high: "border-l-4 border-orange-500",
-    medium: "border-l-4 border-yellow-500",
+    medium: "border-l-4 border-amber-500",
     low: "border-l-4 border-blue-500"
   };
   
@@ -277,13 +277,13 @@ const getAnnouncementStyles = (type: AnnouncementType, priority: AnnouncementPri
 const getPriorityBadge = (priority: AnnouncementPriority) => {
   switch (priority) {
     case 'urgent':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Urgent</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-500/20 text-red-400">Urgent</span>;
     case 'high':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">High</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-500/20 text-orange-400">High</span>;
     case 'medium':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Medium</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Low</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400">Low</span>;
   }
 };
 
@@ -441,7 +441,7 @@ export default function AnnouncementsPage() {
       <div className="space-y-6">
         {/* Breadcrumbs */}
         <Breadcrumbs
-          className="text-sm text-gray-500 mb-4"
+          className="text-sm text-slate-400 mb-4"
           items={[
             { label: "Marketplace", href: "/marketplace" },
             { label: "Announcements" },
@@ -472,7 +472,7 @@ export default function AnnouncementsPage() {
     <div>
       {/* Breadcrumbs */}
       <Breadcrumbs
-        className="text-sm text-gray-500 mb-4"
+        className="text-sm text-slate-400 mb-4"
         items={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Announcements" },
@@ -483,16 +483,16 @@ export default function AnnouncementsPage() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <Megaphone className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-gray-800">Announcements</h1>
-            <span className="text-sm text-gray-500">
+            <Megaphone className="w-5 h-5 text-blue-400" />
+            <h1 className="text-xl font-bold text-white">Announcements</h1>
+            <span className="text-sm text-slate-400">
               ({filteredAnnouncements.length} of {announcements.length})
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
             >
               <Filter className="w-4 h-4" />
               Filters
@@ -500,7 +500,7 @@ export default function AnnouncementsPage() {
             <button
               onClick={() => fetchAnnouncements()}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -510,28 +510,28 @@ export default function AnnouncementsPage() {
 
         {/* Search */}
         <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-4 h-4" />
           <input
             type="text"
             placeholder="Search announcements..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-shadow"
+            className="w-full pl-10 pr-4 py-2 border border-slate-700 bg-slate-800 text-white placeholder-slate-500 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-shadow"
           />
         </div>
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="mb-4 p-4 bg-slate-900/80 rounded-lg border border-slate-800">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-700">Filters</h3>
+              <h3 className="text-sm font-semibold text-white">Filters</h3>
               <button
                 onClick={() => {
                   setTypeFilter('all');
                   setPriorityFilter('all');
                   setStatusFilter('all');
                 }}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs text-slate-400 hover:text-white"
               >
                 Clear all
               </button>
@@ -539,11 +539,11 @@ export default function AnnouncementsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Type Filter */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Type</label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as AnnouncementType | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
                   <option value="all">All Types</option>
                   {availableTypes.map(type => (
@@ -554,11 +554,11 @@ export default function AnnouncementsPage() {
 
               {/* Priority Filter */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Priority</label>
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value as AnnouncementPriority | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
                   <option value="all">All Priorities</option>
                   <option value="urgent">Urgent</option>
@@ -570,11 +570,11 @@ export default function AnnouncementsPage() {
 
               {/* Status Filter */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as AnnouncementStatus | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                 >
                   <option value="all">All Statuses</option>
                   <option value="published">Published</option>
@@ -592,9 +592,9 @@ export default function AnnouncementsPage() {
       <div className="space-y-3">
         {filteredAnnouncements.length === 0 ? (
           <div className="text-center py-8">
-            <Megaphone className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-base font-semibold text-gray-800 mb-1">No Announcements</h3>
-            <p className="text-gray-600">
+            <Megaphone className="w-10 h-10 text-slate-500 mx-auto mb-3" />
+            <h3 className="text-base font-semibold text-white mb-1">No Announcements</h3>
+            <p className="text-slate-400">
               {searchQuery || typeFilter !== 'all' || priorityFilter !== 'all' || statusFilter !== 'all'
                 ? "No announcements match your filters."
                 : "No announcements available."}
@@ -607,7 +607,7 @@ export default function AnnouncementsPage() {
                   setPriorityFilter('all');
                   setStatusFilter('all');
                 }}
-                className="mt-4 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                className="mt-4 px-4 py-2 text-sm font-medium text-emerald-400 bg-emerald-500/10 rounded-lg hover:bg-emerald-500/20 transition-colors"
               >
                 Clear Filters
               </button>
@@ -622,7 +622,7 @@ export default function AnnouncementsPage() {
             return (
               <div
                 key={announcementId}
-                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-all ${getAnnouncementStyles(announcement.type, announcement.priority)}`}
+                className={`bg-slate-900/80 rounded-lg shadow-lg hover:shadow-xl transition-all ${getAnnouncementStyles(announcement.type, announcement.priority)}`}
               >
                 <div className="p-4">
                   <div className="flex items-start gap-3">
@@ -634,37 +634,37 @@ export default function AnnouncementsPage() {
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
-                            <h3 className="text-base font-semibold text-gray-800">
+                            <h3 className="text-base font-semibold text-white">
                               {announcement.title}
                               {announcement.isSticky && (
-                                <span className="ml-2 text-xs text-blue-600">📌 Pinned</span>
+                                <span className="ml-2 text-xs text-blue-400">📌 Pinned</span>
                               )}
                             </h3>
                             {getPriorityBadge(announcement.priority)}
                             {announcement.isExpired && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-400">
                                 Expired
                               </span>
                             )}
                             {announcement.isScheduled && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400">
                                 Scheduled
                               </span>
                             )}
                           </div>
                           
-                          <p className="text-gray-600 text-sm mb-2">
+                          <p className="text-slate-400 text-sm mb-2">
                             {announcement.summary}
                           </p>
                           
                           {isExpanded && hasMoreContent && (
-                            <div className="text-gray-700 text-sm mb-2 whitespace-pre-wrap">
+                            <div className="text-slate-300 text-sm mb-2 whitespace-pre-wrap">
                               {announcement.content}
                             </div>
                           )}
                           
                           {/* Metadata Row */}
-                          <div className="flex items-center gap-3 flex-wrap text-xs text-gray-500 mb-2">
+                          <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500 mb-2">
                             <span className="capitalize">{announcement.type}</span>
                             {announcement.publishedAt && (
                               <span className="flex items-center gap-1">
@@ -685,7 +685,7 @@ export default function AnnouncementsPage() {
                               </span>
                             )}
                             {announcement.analytics?.totalAcknowledged !== undefined && announcement.analytics.totalAcknowledged > 0 && (
-                              <span className="flex items-center gap-1 text-green-600">
+                              <span className="flex items-center gap-1 text-emerald-400">
                                 <CheckCircle className="w-3 h-3" />
                                 {announcement.analytics.totalAcknowledged} acknowledged
                               </span>
@@ -701,11 +701,11 @@ export default function AnnouncementsPage() {
                           {/* Tags */}
                           {announcement.tags && announcement.tags.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <Tag className="w-3 h-3 text-gray-400" />
+                              <Tag className="w-3 h-3 text-slate-500" />
                               {announcement.tags.map((tag, idx) => (
                                 <span
                                   key={idx}
-                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700"
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400"
                                 >
                                   #{tag}
                                 </span>
@@ -716,14 +716,14 @@ export default function AnnouncementsPage() {
                           {/* Attachments */}
                           {announcement.attachments && announcement.attachments.length > 0 && (
                             <div className="flex items-center gap-2 flex-wrap mb-2">
-                              <FileText className="w-3 h-3 text-gray-400" />
+                              <FileText className="w-3 h-3 text-slate-500" />
                               {announcement.attachments.map((attachment, idx) => (
                                 <a
                                   key={idx}
                                   href={attachment.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                                  className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
                                 >
                                   {attachment.filename}
                                   <ExternalLink className="w-2 h-2" />
@@ -733,11 +733,11 @@ export default function AnnouncementsPage() {
                           )}
 
                           {/* Actions */}
-                          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-200">
+                          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-800">
                             {hasMoreContent && (
                               <button
                                 onClick={() => setExpandedId(isExpanded ? null : announcementId)}
-                                className="text-xs text-blue-600 hover:text-blue-800"
+                                className="text-xs text-emerald-400 hover:text-emerald-300"
                               >
                                 {isExpanded ? 'Show less' : 'Read more'}
                               </button>
@@ -745,14 +745,14 @@ export default function AnnouncementsPage() {
                             {announcement.canAcknowledge && (
                               <button
                                 onClick={() => handleAcknowledge(announcementId)}
-                                className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+                                className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
                               >
                                 <CheckCircle className="w-3 h-3" />
                                 Acknowledge
                               </button>
                             )}
                             {announcement.isAcknowledged && (
-                              <span className="flex items-center gap-1 text-xs text-green-600">
+                              <span className="flex items-center gap-1 text-xs text-emerald-400">
                                 <CheckCircle className="w-3 h-3" />
                                 Acknowledged
                               </span>
@@ -763,7 +763,7 @@ export default function AnnouncementsPage() {
                         {announcement.isActive && (
                           <button
                             onClick={() => handleDismiss(announcementId)}
-                            className="p-1 text-gray-400 hover:text-gray-600 rounded flex-shrink-0"
+                            className="p-1 text-slate-500 hover:text-white rounded flex-shrink-0"
                             title="Dismiss"
                           >
                             <X className="w-4 h-4" />

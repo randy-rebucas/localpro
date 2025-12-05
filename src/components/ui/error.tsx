@@ -41,17 +41,17 @@ export function Error({
 
   const content = (
     <div className={`text-center ${className}`}>
-      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Activity className="w-8 h-8 text-red-600" />
+      <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Activity className="w-8 h-8 text-red-400" />
       </div>
-      <h2 className="text-xl font-semibold text-gray-700 mb-2">{title}</h2>
-      <p className="text-gray-500 mb-6">{message}</p>
+      <h2 className="text-xl font-semibold text-white mb-2">{title}</h2>
+      <p className="text-slate-400 mb-6">{message}</p>
       {(showRetry || showGoHome) && (
         <div className="flex space-x-4 justify-center">
           {showRetry && (
             <button
               onClick={handleRetry}
-              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow-lg shadow-emerald-500/25"
             >
               Try Again
             </button>
@@ -59,7 +59,7 @@ export function Error({
           {showGoHome && (
             <button
               onClick={handleGoHome}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+              className="bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
             >
               Go to Dashboard
             </button>
@@ -71,7 +71,7 @@ export function Error({
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="max-w-md mx-auto px-4">
           {content}
         </div>
@@ -81,7 +81,7 @@ export function Error({
 
   if (variant === "card") {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-slate-900/80 rounded-xl shadow-lg border border-slate-800 p-6">
         {content}
       </div>
     );
@@ -89,16 +89,16 @@ export function Error({
 
   if (variant === "inline") {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
         <div className="flex items-center mb-4">
-          <Activity className="w-6 h-6 text-red-600 mr-3" />
-          <h3 className="text-lg font-semibold text-red-800">{title}</h3>
+          <Activity className="w-6 h-6 text-red-400 mr-3" />
+          <h3 className="text-lg font-semibold text-red-400">{title}</h3>
         </div>
-        <p className="text-red-700 mb-4">{message}</p>
+        <p className="text-slate-300 mb-4">{message}</p>
         {showRetry && (
           <button
             onClick={handleRetry}
-            className="flex items-center text-red-600 hover:text-red-700 font-medium"
+            className="flex items-center text-red-400 hover:text-red-300 font-medium"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
             Try again

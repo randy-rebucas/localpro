@@ -304,24 +304,24 @@ export default function VerifiedSuppliersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded-lg w-full mb-4"></div>
+            <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2 mb-6"></div>
+            <div className="h-12 bg-slate-800 rounded-lg w-full mb-4"></div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
+              <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
                 <div className="space-y-4">
-                  <div className="h-48 bg-gray-200 rounded-lg"></div>
-                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="h-48 bg-slate-800 rounded-lg"></div>
+                  <div className="h-6 bg-slate-800 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-800 rounded w-full"></div>
                 </div>
               </div>
             ))}
@@ -332,19 +332,19 @@ export default function VerifiedSuppliersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Back Link */}
         <Link
           href="/supplies"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors mb-6 group"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-400 transition-colors mb-6 group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Back to All Supplies</span>
@@ -357,10 +357,10 @@ export default function VerifiedSuppliersPage() {
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-white">
                 Verified Suppliers
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Shop with confidence from LocalPro-verified suppliers
               </p>
             </div>
@@ -369,31 +369,31 @@ export default function VerifiedSuppliersPage() {
 
         {/* Trust Badges */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Identity Verified</p>
-              <p className="text-xs text-gray-600">All suppliers are background checked</p>
+              <p className="font-semibold text-white text-sm">Identity Verified</p>
+              <p className="text-xs text-slate-400">All suppliers are background checked</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-blue-600" />
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-blue-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Quality Assured</p>
-              <p className="text-xs text-gray-600">Products meet quality standards</p>
+              <p className="font-semibold text-white text-sm">Quality Assured</p>
+              <p className="text-xs text-slate-400">Products meet quality standards</p>
             </div>
           </div>
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Truck className="w-5 h-5 text-orange-600" />
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <Truck className="w-5 h-5 text-orange-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-900 text-sm">Reliable Delivery</p>
-              <p className="text-xs text-gray-600">Consistent delivery performance</p>
+              <p className="font-semibold text-white text-sm">Reliable Delivery</p>
+              <p className="text-xs text-slate-400">Consistent delivery performance</p>
             </div>
           </div>
         </div>
@@ -402,19 +402,19 @@ export default function VerifiedSuppliersPage() {
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-              <Search className="w-5 h-5 text-gray-400" />
+              <Search className="w-5 h-5 text-slate-400" />
             </div>
             <input
               type="text"
               placeholder="Search verified suppliers or products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+              className="w-full pl-12 pr-4 py-3 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -423,7 +423,7 @@ export default function VerifiedSuppliersPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white font-medium min-w-[180px]"
+            className="px-4 py-3 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-slate-800 text-white font-medium min-w-[180px]"
           >
             {categoryOptions.map(cat => (
               <option key={cat} value={cat}>{cat}</option>
@@ -432,7 +432,7 @@ export default function VerifiedSuppliersPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white font-medium min-w-[180px]"
+            className="px-4 py-3 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-slate-800 text-white font-medium min-w-[180px]"
           >
             {sortOptions.map(option => (
               <option key={option.value} value={option.value}>
@@ -444,7 +444,7 @@ export default function VerifiedSuppliersPage() {
 
         {/* Results Count */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-gray-600 text-sm">
+          <p className="text-slate-400 text-sm">
             {supplierGroups.length} verified supplier{supplierGroups.length !== 1 ? 's' : ''} • {sortedSupplies.length} product{sortedSupplies.length !== 1 ? 's' : ''}
           </p>
         </div>

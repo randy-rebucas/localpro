@@ -395,14 +395,14 @@ export default function EditSupplyPage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Supply</h1>
-            <p className="text-gray-600">Update your supply listing</p>
+            <h1 className="text-2xl font-bold text-white">Edit Supply</h1>
+            <p className="text-slate-400">Update your supply listing</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -429,11 +429,11 @@ export default function EditSupplyPage() {
         {/* Main Form */}
         <div className="lg:col-span-2 space-y-6">
           {/* Basic Information */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Basic Information</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Supply Name *
                 </label>
                 <Input

@@ -467,34 +467,34 @@ export default function SuppliesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* Header Skeleton */}
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded-lg w-full mb-4"></div>
+            <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2 mb-6"></div>
+            <div className="h-12 bg-slate-800 rounded-lg w-full mb-4"></div>
             <div className="flex gap-3">
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
             </div>
           </div>
 
           {/* Content Skeleton */}
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
+                <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
                 <div className="space-y-4">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                    <div key={i} className="h-10 bg-slate-800 rounded"></div>
                   ))}
                 </div>
               </div>
@@ -502,12 +502,12 @@ export default function SuppliesPage() {
             <div className="flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
+                  <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
                     <div className="space-y-4">
-                      <div className="h-48 bg-gray-200 rounded-lg"></div>
-                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-48 bg-slate-800 rounded-lg"></div>
+                      <div className="h-6 bg-slate-800 rounded w-3/4"></div>
+                      <div className="h-4 bg-slate-800 rounded w-full"></div>
+                      <div className="h-4 bg-slate-800 rounded w-2/3"></div>
                     </div>
                   </div>
                 ))}
@@ -520,12 +520,12 @@ export default function SuppliesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-yellow-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-orange-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -533,10 +533,10 @@ export default function SuppliesPage() {
         <div className="mb-6">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-white mb-2">
                 Supplies — Tools, Materials & Equipment
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Verified suppliers, competitive prices, and LocalPro support for every order.
               </p>
             </div>
@@ -553,26 +553,26 @@ export default function SuppliesPage() {
         </div>
 
         {/* Subheader - Feature Links */}
-        <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4">
+        <div className="mb-6 flex items-center gap-6 border-b border-slate-800 pb-4">
           <Link 
             href="/supplies/my-orders" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-400 transition-colors group"
           >
-            <ClipboardList className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
+            <ClipboardList className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">My Orders</span>
           </Link>
           <Link 
             href="/supplies/verified" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-400 transition-colors group"
           >
-            <CheckCircle2 className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
+            <CheckCircle2 className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">Verified Suppliers</span>
           </Link>
           <Link 
             href="/support" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-orange-400 transition-colors group"
           >
-            <Headphones className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
+            <Headphones className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">Support</span>
           </Link>
         </div>
@@ -580,19 +580,19 @@ export default function SuppliesPage() {
         {/* Search Bar */}
         <div className="relative mb-6">
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-            <Search className="w-5 h-5 text-gray-400" />
+            <Search className="w-5 h-5 text-slate-500" />
           </div>
           <input
             type="text"
             placeholder="Search supplies, tools, equipment, or suppliers"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+            className="w-full pl-12 pr-4 py-3 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white placeholder:text-slate-500"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -603,11 +603,11 @@ export default function SuppliesPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Left Sidebar - Filters */}
           <aside className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6 space-y-6 sticky top-24">
               {/* Filters Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                  <h2 className="text-lg font-bold text-white">Filters</h2>
                   {activeFiltersCount > 0 && (
                     <span className="px-2 py-0.5 bg-orange-500 text-white text-xs font-medium rounded-full">
                       {activeFiltersCount}
@@ -619,75 +619,75 @@ export default function SuppliesPage() {
                 <div className="mb-4">
                   <button
                     onClick={() => setUseNearby(!useNearby)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
                       useNearby 
-                        ? 'border-orange-500 bg-orange-50 text-orange-700' 
-                        : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50'
+                        ? 'border-orange-500 bg-orange-500/20 text-orange-400' 
+                        : 'border-slate-700 hover:border-orange-500/50 hover:bg-slate-800 text-slate-300'
                     }`}
                   >
-                    <Navigation className={`w-4 h-4 ${useNearby ? 'text-orange-600' : 'text-gray-500'}`} />
+                    <Navigation className={`w-4 h-4 ${useNearby ? 'text-orange-400' : 'text-slate-500'}`} />
                     <span className="text-sm font-medium">Use my location</span>
                   </button>
                 </div>
 
                 {/* Type Filter */}
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Type</label>
                   <select
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                    className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white font-medium"
                   >
                     {typeOptions.map(type => (
-                      <option key={type} value={type}>{type}</option>
+                      <option key={type} value={type} className="bg-slate-800">{type}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Category Filter */}
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Category</label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                    className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white font-medium"
                   >
                     {categoryOptions.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat} className="bg-slate-800">{cat}</option>
                     ))}
                   </select>
                 </div>
 
                 {/* Location Filter */}
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Location</label>
                   <input
                     type="text"
                     placeholder="City or area"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
-                    className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+                    className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white placeholder:text-slate-500"
                   />
                 </div>
 
                 {/* Price Range */}
                 <div className="mb-4">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-2">Price Range</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
                       placeholder="Min"
                       value={priceRange.min}
                       onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+                      className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white placeholder:text-slate-500"
                     />
-                    <span className="self-center text-gray-500">-</span>
+                    <span className="self-center text-slate-500">-</span>
                     <input
                       type="number"
                       placeholder="Max"
                       value={priceRange.max}
                       onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                      className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+                      className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all bg-slate-800 text-white placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -696,7 +696,7 @@ export default function SuppliesPage() {
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    className="w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                   >
                     Clear Filters
                   </button>

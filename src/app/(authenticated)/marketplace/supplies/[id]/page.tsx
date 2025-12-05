@@ -490,8 +490,8 @@ export default function SupplyDetailPage() {
         key={i}
         className={`w-4 h-4 ${
           i < Math.floor(rating)
-            ? "text-yellow-400 fill-current"
-            : "text-gray-300"
+            ? "text-amber-400 fill-current"
+            : "text-slate-600"
         }`}
       />
     ));
@@ -534,12 +534,12 @@ export default function SupplyDetailPage() {
   if (error || !product) {
     return (
       <div className="text-center py-12">
-        <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Supply Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The supply you're looking for doesn't exist."}</p>
+        <Package className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Supply Not Found</h2>
+        <p className="text-slate-400 mb-6">{error || "The supply you're looking for doesn't exist."}</p>
         <Link
           href="/marketplace/supplies"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-block"
+          className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors inline-block"
         >
           Back to Supplies
         </Link>
@@ -561,16 +561,16 @@ export default function SupplyDetailPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center space-x-2 text-sm text-gray-500">
-        <Link href="/marketplace" className="hover:text-gray-700">
+      <nav className="flex items-center space-x-2 text-sm text-slate-400">
+        <Link href="/marketplace" className="hover:text-white">
           Marketplace
         </Link>
         <span>/</span>
-        <Link href="/marketplace/supplies" className="hover:text-gray-700">
+        <Link href="/marketplace/supplies" className="hover:text-white">
           Supplies
         </Link>
         <span>/</span>
-        <span className="text-gray-700">{product.name}</span>
+        <span className="text-white">{product.name}</span>
       </nav>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -579,7 +579,7 @@ export default function SupplyDetailPage() {
           {hasImages ? (
             <>
               {/* Main Image */}
-              <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group">
+              <div className="relative aspect-square bg-slate-800 rounded-lg overflow-hidden group">
                 <Image
                   src={getImageUrl(images[selectedImageIndex])}
                   alt={getImageAlt(images[selectedImageIndex], selectedImageIndex)}

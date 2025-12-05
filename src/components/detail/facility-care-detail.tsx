@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FacilityCareService } from "@/types/facility-care";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface FacilityCareDetailProps {
   service: FacilityCareService;
@@ -115,7 +116,7 @@ export function FacilityCareDetail({
           {service.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ₱{service.pricing.basePrice}
+                {formatCurrency(service.pricing.basePrice || 0, 'PHP')}
               </span>
               <span className="text-gray-600">
                 /{service.pricing.type === "hourly" ? "hr" : service.pricing.type === "monthly" ? "month" : service.pricing.type}
@@ -190,7 +191,7 @@ export function FacilityCareDetail({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Base Price</span>
-                <span className="font-semibold">₱{service.pricing.basePrice}</span>
+                <span className="font-semibold">{formatCurrency(service.pricing.basePrice || 0, 'PHP')}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Currency</span>

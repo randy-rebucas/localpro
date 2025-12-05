@@ -320,7 +320,7 @@ export default function EditJobPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
@@ -328,12 +328,12 @@ export default function EditJobPage() {
   if (error && !job) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
-        <p className="text-gray-600 mb-6">{error}</p>
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Job Not Found</h2>
+        <p className="text-slate-400 mb-6">{error}</p>
         <Link
           href="/jobs"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
         >
           Back to Jobs
         </Link>
@@ -347,7 +347,7 @@ export default function EditJobPage() {
       <div className="flex items-center gap-4">
         <Link
           href={`/jobs/${params.id}`}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Job
@@ -355,13 +355,13 @@ export default function EditJobPage() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-2xl font-bold text-gray-700 mb-6">Edit Job</h1>
+        <div className="bg-slate-900/80 rounded-lg shadow-lg p-6 border border-slate-800">
+          <h1 className="text-2xl font-bold text-white mb-6">Edit Job</h1>
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Job Details</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Job Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                   <Input
@@ -476,7 +476,7 @@ export default function EditJobPage() {
 
             {/* Location */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Location</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Location</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <Input
@@ -513,7 +513,7 @@ export default function EditJobPage() {
 
             {/* Skills Required */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Skills Required</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Skills Required</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -533,19 +533,19 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addSkill}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.skills.map((skill, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                      <span className="flex-1 text-sm">{skill}</span>
+                    <div key={index} className="flex items-center gap-2 bg-slate-800 px-3 py-2 rounded-lg">
+                      <span className="flex-1 text-sm text-slate-300">{skill}</span>
                       <button
                         type="button"
                         onClick={() => removeSkill(index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-400 hover:text-red-300"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -557,7 +557,7 @@ export default function EditJobPage() {
 
             {/* Requirements */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Requirements</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Requirements</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -577,19 +577,19 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addRequirement}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.requirements.map((requirement, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                      <span className="flex-1 text-sm">{requirement}</span>
+                    <div key={index} className="flex items-center gap-2 bg-slate-800 px-3 py-2 rounded-lg">
+                      <span className="flex-1 text-sm text-slate-300">{requirement}</span>
                       <button
                         type="button"
                         onClick={() => removeRequirement(index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-400 hover:text-red-300"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -601,7 +601,7 @@ export default function EditJobPage() {
 
             {/* Deliverables */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Expected Deliverables</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Expected Deliverables</h2>
               <div className="space-y-4">
                 <div className="flex gap-2">
                   <div className="flex-1">
@@ -621,19 +621,19 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addDeliverable}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="space-y-2">
                   {form.deliverables.map((deliverable, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg">
-                      <span className="flex-1 text-sm">{deliverable}</span>
+                    <div key={index} className="flex items-center gap-2 bg-slate-800 px-3 py-2 rounded-lg">
+                      <span className="flex-1 text-sm text-slate-300">{deliverable}</span>
                       <button
                         type="button"
                         onClick={() => removeDeliverable(index)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-400 hover:text-red-300"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -645,7 +645,7 @@ export default function EditJobPage() {
 
             {/* Images */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Project Images</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Project Images</h2>
               <div className="space-y-4">
                 {/* Existing Images */}
                 {form.existingImages.length > 0 && (

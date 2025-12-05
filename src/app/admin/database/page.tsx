@@ -263,7 +263,7 @@ export default function DatabaseOptimizationPage() {
         error: err instanceof Error ? err.message : String(err)
       });
     }
-  }, []);
+  }, [normalizeQuery]);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -683,18 +683,32 @@ export default function DatabaseOptimizationPage() {
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Slow Queries</h3>
               <div className="space-y-2">
                 {slowQueries.slice(0, 10).map((queryItem, index) => {
+                  // Safety function to ensure value is always renderable (string/number)
+                  const safeString = (val: unknown, fallback: string = ''): string => {
+                    if (typeof val === 'string') return val;
+                    if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+                    if (val && typeof val === 'object') {
+                      try {
+                        return JSON.stringify(val).substring(0, 200);
+                      } catch {
+                        return fallback;
+                      }
+                    }
+                    return fallback;
+                  };
+                  
                   // Re-normalize to ensure we never render objects
                   const normalized = normalizeQuery(queryItem);
                   if (!normalized) {
                     return null; // Skip invalid entries
                   }
                   
-                  // Extract all values as primitives with fallbacks
-                  const queryText = typeof normalized.query === 'string' ? normalized.query : 'N/A';
-                  const collectionText = typeof normalized.collection === 'string' ? normalized.collection : 'Unknown';
+                  // Extract all values as primitives with fallbacks - use safeString for extra safety
+                  const queryText = safeString(normalized.query, 'N/A');
+                  const collectionText = safeString(normalized.collection, 'Unknown');
                   const executionTimeNum = typeof normalized.executionTime === 'number' ? normalized.executionTime : 0;
                   const countNum = typeof normalized.count === 'number' ? normalized.count : 1;
-                  const lastExecutedText = typeof normalized.lastExecuted === 'string' ? normalized.lastExecuted : '';
+                  const lastExecutedText = safeString(normalized.lastExecuted, '');
                   
                   return (
                     <div key={index} className="border border-gray-200 rounded p-2">

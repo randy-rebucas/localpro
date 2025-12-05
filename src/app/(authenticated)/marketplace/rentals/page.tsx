@@ -579,8 +579,8 @@ export default function MarketplaceRentalsPage() {
                     <Star
                         key={`${rentalId || 'default'}-star-${i}`}
                         className={`w-4 h-4 ${i < Math.floor(rating)
-                                ? "text-yellow-400 fill-current"
-                                : "text-gray-300"
+                                ? "text-amber-400 fill-current"
+                                : "text-slate-600"
                             }`}
                     />
                 ))}
@@ -593,24 +593,24 @@ export default function MarketplaceRentalsPage() {
                 {/* Header Skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div className="space-y-2">
-                        <div className="h-8 bg-gray-200 rounded w-48 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-64 animate-pulse"></div>
+                        <div className="h-8 bg-slate-800 rounded w-48 animate-pulse"></div>
+                        <div className="h-4 bg-slate-800 rounded w-64 animate-pulse"></div>
                     </div>
                     <div className="mt-4 sm:mt-0">
-                        <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        <div className="h-10 bg-slate-800 rounded w-32 animate-pulse"></div>
                     </div>
                 </div>
 
                 {/* Search and Filters Skeleton */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="bg-slate-900/80 rounded-lg shadow-sm p-6 border border-slate-800">
                     <div className="flex flex-col lg:flex-row gap-4">
                         <div className="flex-1">
-                            <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded animate-pulse"></div>
                         </div>
                         <div className="flex gap-2">
-                            <div className="h-10 bg-gray-200 rounded w-32 animate-pulse"></div>
-                            <div className="h-10 bg-gray-200 rounded w-10 animate-pulse"></div>
-                            <div className="h-10 bg-gray-200 rounded w-20 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-32 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-10 animate-pulse"></div>
+                            <div className="h-10 bg-slate-800 rounded w-20 animate-pulse"></div>
                         </div>
                     </div>
                 </div>
@@ -627,8 +627,8 @@ export default function MarketplaceRentalsPage() {
                 <Card interactive={false}>
                     <EmptyState
                         icon={Search}
-                        iconColor="text-red-600"
-                        iconBgColor="bg-red-100"
+                        iconColor="text-red-400"
+                        iconBgColor="bg-red-500/20"
                         title="Unable to Load Rentals"
                         description={error}
                         actions={[
@@ -677,7 +677,7 @@ export default function MarketplaceRentalsPage() {
                         label: "Use Current Location",
                         icon: MapPin,
                         variant: "outline",
-                        className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                        className: "text-sm bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20"
                     },
                     // Only show "List Your Rental" button for admin or provider roles
                     ...(isAdmin || isProvider ? [{
@@ -694,7 +694,7 @@ export default function MarketplaceRentalsPage() {
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Left Sidebar - Filters */}
                 <aside className="w-full lg:w-64 flex-shrink-0">
-                    <Card className="p-4 sticky top-4">
+                    <Card className="p-4 sticky top-4 bg-slate-900/80 border-slate-800">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold text-gray-900">Filters</h2>

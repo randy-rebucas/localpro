@@ -50,24 +50,24 @@ function SettingsSection({
   const ChevronIcon = expanded ? ChevronUp : ChevronDown;
 
   return (
-    <section className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden backdrop-blur-sm">
+    <section className="bg-slate-900/80 border border-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden backdrop-blur-sm">
       <button
         onClick={onToggle}
-        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-4 border-b border-gray-200 hover:from-green-50/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
+        className="w-full bg-slate-900/50 px-6 py-4 border-b border-slate-800 hover:bg-slate-800/50 transition-all duration-300"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 shadow-md shadow-emerald-500/25 flex items-center justify-center text-white">
               <Icon className="w-5 h-5" />
             </div>
             <div className="text-left">
-              <h3 className="font-semibold text-gray-900 text-base">{title}</h3>
+              <h3 className="font-semibold text-white text-base">{title}</h3>
               {description && (
-                <p className="text-xs text-gray-500 mt-0.5">{description}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{description}</p>
               )}
             </div>
           </div>
-          <ChevronIcon className="w-5 h-5 text-gray-500 flex-shrink-0 transition-transform duration-300" />
+          <ChevronIcon className="w-5 h-5 text-slate-400 flex-shrink-0 transition-transform duration-300" />
         </div>
       </button>
       {expanded && (
@@ -228,35 +228,35 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-8 relative z-10">
         {/* Header with Save Button */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25">
               <SettingsIcon className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Settings</h1>
-              <p className="text-sm text-gray-500 mt-1">Manage your account preferences and privacy</p>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Settings</h1>
+              <p className="text-sm text-slate-400 mt-1">Manage your account preferences and privacy</p>
             </div>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
           {lastSaved && (
-            <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+            <span className="text-xs text-slate-400 flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               <span className="hidden sm:inline">Saved {lastSaved.toLocaleTimeString()}</span>
             </span>
           )}
           {hasChanges && (
-            <span className="text-xs text-amber-600 flex items-center gap-1.5">
+            <span className="text-xs text-amber-400 flex items-center gap-1.5">
               <AlertCircle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Unsaved changes</span>
             </span>
@@ -266,8 +266,8 @@ export default function SettingsPage() {
             disabled={!hasChanges || saving}
             className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm ${
               hasChanges
-                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/25 hover:shadow-xl disabled:opacity-50 transform hover:scale-105'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
           >
             <Save className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
@@ -299,8 +299,8 @@ export default function SettingsPage() {
                   { value: "private", label: "Private" }
                 ]}
               />
-              <div className="pt-4 border-t border-gray-100 space-y-1">
-                <p className="text-xs font-medium text-gray-500 mb-3 uppercase tracking-wide">Visibility Controls</p>
+              <div className="pt-4 border-t border-slate-800 space-y-1">
+                <p className="text-xs font-medium text-slate-500 mb-3 uppercase tracking-wide">Visibility Controls</p>
                 {[
                   ["Show phone number", "privacy.showPhoneNumber"],
                   ["Show email", "privacy.showEmail"],
@@ -330,8 +330,8 @@ export default function SettingsPage() {
             <div className="space-y-6">
               {/* Push Notifications */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                   Push Notifications
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -351,9 +351,9 @@ export default function SettingsPage() {
               </div>
 
               {/* Email Notifications */}
-              <div className="pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+              <div className="pt-4 border-t border-slate-800">
+                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                   Email Notifications
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -373,9 +373,9 @@ export default function SettingsPage() {
               </div>
 
               {/* SMS Notifications */}
-              <div className="pt-4 border-t border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+              <div className="pt-4 border-t border-slate-800">
+                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                   SMS Notifications
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -453,7 +453,7 @@ export default function SettingsPage() {
             </div>
             {/* Auto-reply: Non-client only (business roles) */}
             {isBusinessRole && !isClient && (
-              <div className="mt-5 pt-5 border-t border-gray-100">
+              <div className="mt-5 pt-5 border-t border-slate-800">
                 <div className="space-y-1">
                   <ToggleRow label="Auto-reply enabled" checked={currentSettings.communication.autoReply.enabled} onChange={onToggle("communication.autoReply.enabled")} />
                   {currentSettings.communication.autoReply.enabled && (
@@ -482,12 +482,12 @@ export default function SettingsPage() {
               <div className="space-y-1">
                 <RowNumberInput label="Service radius (km)" value={currentSettings.service.defaultServiceRadius} onChange={onInput("service.defaultServiceRadius", (v) => Number(v))} min={1} max={100} />
                 <ToggleRow label="Auto-accept jobs" checked={currentSettings.service.autoAcceptJobs} onChange={onToggle("service.autoAcceptJobs")} />
-                <div className="pt-3 border-t border-gray-100 space-y-1">
+                <div className="pt-3 border-t border-slate-800 space-y-1">
                   <RowNumberInput label="Minimum job value" value={currentSettings.service.minimumJobValue} onChange={onInput("service.minimumJobValue", (v) => Number(v))} min={0} />
                   <RowNumberInput label="Maximum job value" value={currentSettings.service.maximumJobValue} onChange={onInput("service.maximumJobValue", (v) => Number(v))} min={0} />
                 </div>
-                <div className="pt-3 border-t border-gray-100">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred job types</label>
+                <div className="pt-3 border-t border-slate-800">
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Preferred job types</label>
                   <div className="flex flex-wrap gap-2">
                     {(["cleaning", "maintenance", "repair", "installation", "consultation", "other"] as const).map((jobType) => (
                       <Checkbox
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                     ))}
                   </div>
                 </div>
-                <div className="pt-3 border-t border-gray-100 space-y-1">
+                <div className="pt-3 border-t border-slate-800 space-y-1">
                   <RowInput
                     label="Working hours start"
                     type="time"
@@ -513,7 +513,7 @@ export default function SettingsPage() {
                     onChange={onInput("service.workingHours.end")}
                   />
                   <div className="flex items-start gap-4 py-2">
-                    <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0 pt-2">Working days</label>
+                    <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0 pt-2">Working days</label>
                     <div className="flex flex-wrap gap-2 flex-1">
                       {(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const).map((d) => (
                         <Checkbox
@@ -526,7 +526,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="pt-3 border-t border-gray-100 space-y-1">
+                <div className="pt-3 border-t border-slate-800 space-y-1">
                   <ToggleRow label="Emergency service" checked={currentSettings.service.emergencyService.enabled} onChange={onToggle("service.emergencyService.enabled")} />
                   <RowNumberInput label="Emergency surcharge (%)" value={currentSettings.service.emergencyService.surcharge} onChange={onInput("service.emergencyService.surcharge", (v) => Number(v))} min={0} />
                 </div>
@@ -565,8 +565,8 @@ export default function SettingsPage() {
               {/* Auto-withdrawal and Invoice settings: Non-client only (business roles) */}
               {isBusinessRole && !isClient && (
                 <>
-                  <div className="pt-3 border-t border-gray-100 space-y-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Auto-Withdrawal</p>
+                  <div className="pt-3 border-t border-slate-800 space-y-1">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Auto-Withdrawal</p>
                     <ToggleRow label="Enable auto-withdraw" checked={currentSettings.payment.autoWithdraw.enabled} onChange={onToggle("payment.autoWithdraw.enabled")} />
                     {currentSettings.payment.autoWithdraw.enabled && (
                       <>
@@ -584,8 +584,8 @@ export default function SettingsPage() {
                       </>
                     )}
                   </div>
-                  <div className="pt-3 border-t border-gray-100 space-y-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Invoice Settings</p>
+                  <div className="pt-3 border-t border-slate-800 space-y-1">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Invoice Settings</p>
                     <ToggleRow label="Include tax" checked={currentSettings.payment.invoiceSettings.includeTax} onChange={onToggle("payment.invoiceSettings.includeTax")} />
                     <RowNumberInput label="Tax rate (%)" value={currentSettings.payment.invoiceSettings.taxRate} onChange={onInput("payment.invoiceSettings.taxRate", (v) => Number(v))} min={0} max={100} />
                     <RowSelect
@@ -626,13 +626,13 @@ export default function SettingsPage() {
                   ]}
                 />
               )}
-              <div className="pt-3 border-t border-gray-100 space-y-1">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Login Alerts</p>
+              <div className="pt-3 border-t border-slate-800 space-y-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Login Alerts</p>
                 <ToggleRow label="Enable login alerts" checked={currentSettings.security.loginAlerts.enabled} onChange={onToggle("security.loginAlerts.enabled")} />
                 <ToggleRow label="Alert on new device" checked={currentSettings.security.loginAlerts.newDevice} onChange={onToggle("security.loginAlerts.newDevice")} />
                 <ToggleRow label="Alert on suspicious activity" checked={currentSettings.security.loginAlerts.suspiciousActivity} onChange={onToggle("security.loginAlerts.suspiciousActivity")} />
               </div>
-              <div className="pt-3 border-t border-gray-100 space-y-1">
+              <div className="pt-3 border-t border-slate-800 space-y-1">
                 <RowNumberInput label="Session timeout (hours)" value={currentSettings.security.sessionTimeout} onChange={onInput("security.sessionTimeout", (v) => Number(v))} min={1} max={168} />
                 <ToggleRow label="Password change reminder" checked={currentSettings.security.passwordChangeReminder.enabled} onChange={onToggle("security.passwordChangeReminder.enabled")} />
                 {currentSettings.security.passwordChangeReminder.enabled && (
@@ -671,21 +671,21 @@ export default function SettingsPage() {
                   { value: "large", label: "Large" }
                 ]}
               />
-              <div className="pt-3 border-t border-gray-100 space-y-1">
+              <div className="pt-3 border-t border-slate-800 space-y-1">
                 <ToggleRow label="Sound effects" checked={currentSettings.app.soundEffects.enabled} onChange={onToggle("app.soundEffects.enabled")} />
                 {currentSettings.app.soundEffects.enabled && (
                   <div className="flex items-center gap-4 py-2">
-                    <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">Sound volume</label>
+                    <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0">Sound volume</label>
                     <div className="flex items-center gap-3 flex-1">
                       <input 
                         type="range" 
                         min={0} 
                         max={100} 
-                        className="flex-1 accent-green-600" 
+                        className="flex-1 accent-emerald-500" 
                         value={currentSettings.app.soundEffects.volume} 
                         onChange={onInput("app.soundEffects.volume", (v) => Number(v))} 
                       />
-                      <span className="text-sm text-gray-600 w-12 text-right">{currentSettings.app.soundEffects.volume}%</span>
+                      <span className="text-sm text-slate-400 w-12 text-right">{currentSettings.app.soundEffects.volume}%</span>
                     </div>
                   </div>
                 )}
@@ -695,8 +695,8 @@ export default function SettingsPage() {
                   <RowNumberInput label="Auto-save interval (sec)" value={currentSettings.app.autoSave.interval} onChange={onInput("app.autoSave.interval", (v) => Number(v))} min={10} max={300} />
                 )}
               </div>
-              <div className="pt-3 border-t border-gray-100 space-y-1">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Data Usage</p>
+              <div className="pt-3 border-t border-slate-800 space-y-1">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Data Usage</p>
                 <RowSelect
                   label="Image quality"
                   value={currentSettings.app.dataUsage.imageQuality}
@@ -745,10 +745,10 @@ export default function SettingsPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300">
-            <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
-            <button className="w-full px-4 py-2 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:from-green-50 hover:to-emerald-50 transition-all duration-300 border border-gray-200 hover:border-green-300 shadow-sm hover:shadow-md transform hover:scale-105">
+          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 className="font-semibold text-white mb-2">Need Help?</h3>
+            <p className="text-sm text-slate-400 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
+            <button className="w-full px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-700 hover:text-white transition-all duration-300 border border-slate-700 hover:border-emerald-500/50 shadow-sm hover:shadow-md transform hover:scale-105">
               Contact Support
             </button>
           </div>
@@ -761,12 +761,12 @@ export default function SettingsPage() {
 
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="flex items-center justify-between py-2 px-1 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 rounded-lg transition-all duration-300 cursor-pointer group">
-      <span className="text-sm text-gray-700 font-medium group-hover:text-gray-900 transition-colors">{props.label}</span>
+    <label className="flex items-center justify-between py-2 px-1 hover:bg-slate-800/50 rounded-lg transition-all duration-300 cursor-pointer group">
+      <span className="text-sm text-slate-300 font-medium group-hover:text-white transition-colors">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
         <span className={`w-11 h-6 rounded-full transition-all duration-200 relative shadow-inner ${
-          props.checked ? 'bg-gradient-to-r from-green-600 to-emerald-600 shadow-green-500/30' : 'bg-gray-300'
+          props.checked ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/25' : 'bg-slate-700'
         }`}>
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200 ${
             props.checked ? 'translate-x-5' : 'translate-x-0'
@@ -781,10 +781,10 @@ function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React
 function RowInput(props: { label: string; value: string; onChange: (e: ChangeEvent) => void; type?: string; placeholder?: string }) {
   return (
     <div className="flex items-center gap-4 py-2">
-      <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
+      <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type={props.type || "text"}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
+        className="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-800 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
         value={props.value} 
         onChange={props.onChange} 
         placeholder={props.placeholder}
@@ -796,14 +796,14 @@ function RowInput(props: { label: string; value: string; onChange: (e: ChangeEve
 function RowSelect(props: { label: string; value: string; onChange: (value: string) => void; options: Array<{ value: string; label: string }> }) {
   return (
     <div className="flex items-center gap-4 py-2">
-      <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
+      <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0">{props.label}</label>
       <select
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg"
+        className="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all bg-slate-800 text-white"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
         {props.options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} className="bg-slate-800">
             {option.label}
           </option>
         ))}
@@ -815,10 +815,10 @@ function RowSelect(props: { label: string; value: string; onChange: (value: stri
 function RowNumberInput(props: { label: string; value: number; onChange: (e: ChangeEvent) => void; min?: number; max?: number }) {
   return (
     <div className="flex items-center gap-4 py-2">
-      <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
+      <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type="number" 
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
+        className="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-800 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
         value={Number.isFinite(props.value) ? props.value : 0} 
         onChange={props.onChange} 
         min={props.min} 
@@ -831,9 +831,9 @@ function RowNumberInput(props: { label: string; value: number; onChange: (e: Cha
 function RowTextarea(props: { label: string; value: string; onChange: (e: ChangeEvent) => void; rows?: number; placeholder?: string }) {
   return (
     <div className="flex items-start gap-4 py-2">
-      <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0 pt-2">{props.label}</label>
+      <label className="text-sm font-medium text-slate-300 w-32 flex-shrink-0 pt-2">{props.label}</label>
       <textarea
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none shadow-sm hover:shadow-md focus:shadow-lg"
+        className="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm bg-slate-800 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
         value={props.value}
         onChange={props.onChange}
         rows={props.rows || 3}

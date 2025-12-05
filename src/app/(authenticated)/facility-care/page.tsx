@@ -355,34 +355,34 @@ export default function FacilityCarePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* Header Skeleton */}
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-            <div className="h-12 bg-gray-200 rounded-lg w-full mb-4"></div>
+            <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-slate-800 rounded w-1/2 mb-6"></div>
+            <div className="h-12 bg-slate-800 rounded-lg w-full mb-4"></div>
             <div className="flex gap-3">
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-              <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
             </div>
           </div>
 
           {/* Content Skeleton */}
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="lg:w-64 flex-shrink-0">
-              <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+              <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
+                <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
                 <div className="space-y-4">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                    <div key={i} className="h-10 bg-slate-800 rounded"></div>
                   ))}
                 </div>
               </div>
@@ -390,12 +390,12 @@ export default function FacilityCarePage() {
             <div className="flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
+                  <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
                     <div className="space-y-4">
-                      <div className="h-48 bg-gray-200 rounded-lg"></div>
-                      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-full"></div>
-                      <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                      <div className="h-48 bg-slate-800 rounded-lg"></div>
+                      <div className="h-6 bg-slate-800 rounded w-3/4"></div>
+                      <div className="h-4 bg-slate-800 rounded w-full"></div>
+                      <div className="h-4 bg-slate-800 rounded w-2/3"></div>
                     </div>
                   </div>
                 ))}
@@ -408,12 +408,12 @@ export default function FacilityCarePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -421,10 +421,10 @@ export default function FacilityCarePage() {
         <div className="mb-6">
           <div className="flex items-start justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold text-white mb-2">
                 Facility Care — Maintenance & Services
               </h1>
-              <p className="text-gray-600">
+              <p className="text-slate-400">
                 Professional facility maintenance, cleaning, and care services for your property.
               </p>
             </div>
@@ -441,10 +441,10 @@ export default function FacilityCarePage() {
         </div>
 
         {/* Subheader - Feature Links */}
-        <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4 flex-wrap">
+        <div className="mb-6 flex items-center gap-6 border-b border-slate-800 pb-4 flex-wrap">
           <Link 
             href="/facility-care/my-requests" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-emerald-600 transition-colors group"
+            className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group"
           >
             <ClipboardList className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-medium">My Requests</span>

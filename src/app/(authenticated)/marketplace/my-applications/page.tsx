@@ -79,17 +79,17 @@ export default function MyApplicationsPage() {
   const getStatusColor = (status?: ApplicationStatus) => {
     switch (status) {
       case "hired":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
       case "shortlisted":
       case "interviewed":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
       case "reviewing":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-amber-500/20 text-amber-400 border-amber-500/30";
       case "rejected":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-500/20 text-red-400 border-red-500/30";
       case "pending":
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-slate-800 text-slate-400 border-slate-700";
     }
   };
 
@@ -130,26 +130,26 @@ export default function MyApplicationsPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/jobs"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
             title="Back to jobs"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-slate-400" />
           </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <FileText className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">My Applications</h1>
-            <p className="text-sm text-gray-600">View and manage your job applications</p>
+            <h1 className="text-2xl font-bold text-white mb-1">My Applications</h1>
+            <p className="text-sm text-slate-400">View and manage your job applications</p>
           </div>
         </div>
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} interactive={false}>
               <div className="p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-6 bg-slate-800 rounded w-1/3 mb-4"></div>
+                <div className="h-4 bg-slate-800 rounded w-2/3 mb-2"></div>
+                <div className="h-4 bg-slate-800 rounded w-1/2"></div>
               </div>
             </Card>
           ))}
@@ -164,17 +164,17 @@ export default function MyApplicationsPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/marketplace/jobs"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           title="Back to jobs"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-slate-400" />
         </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
           <FileText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">My Applications</h1>
-          <p className="text-sm text-gray-600">View and manage your job applications</p>
+          <h1 className="text-2xl font-bold text-white mb-1">My Applications</h1>
+          <p className="text-sm text-slate-400">View and manage your job applications</p>
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function MyApplicationsPage() {
             setStatusFilter(e.target.value);
             setCurrentPage(1);
           }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="px-4 py-2 border border-slate-700 rounded-lg bg-slate-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
         >
           <option value="">All Statuses</option>
           <option value="pending">Pending</option>

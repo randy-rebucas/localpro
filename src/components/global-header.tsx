@@ -434,7 +434,7 @@ export function GlobalHeader({
 
   const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <form onSubmit={handleSearch} className="relative w-full" ref={searchRef}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" aria-hidden="true" />
       <input
         type="text"
         value={searchQuery}
@@ -448,14 +448,14 @@ export function GlobalHeader({
           if (searchSuggestions.length > 0) setShowSearchSuggestions(true);
         }}
         placeholder="Search services, providers, or jobs…"
-        className={`w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition ${isMobile ? 'text-sm' : ''
+        className={`w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition ${isMobile ? 'text-sm' : ''
           }`}
       />
 
       {showSearchSuggestions && (searchSuggestions.length > 0 || loadingSearch) && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border-2 border-gray-200 max-h-64 overflow-y-auto z-50">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 rounded-lg shadow-xl border border-slate-700 max-h-64 overflow-y-auto z-50">
           {loadingSearch ? (
-            <div className="p-4 text-center text-sm text-gray-500">
+            <div className="p-4 text-center text-sm text-slate-400">
               <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
               Searching...
             </div>
@@ -466,15 +466,15 @@ export function GlobalHeader({
                   key={idx}
                   type="button"
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  className="w-full text-left px-4 py-2 hover:bg-slate-700 transition-colors border-b border-slate-700 last:border-b-0"
                 >
-                  <div className="font-medium text-gray-900">{suggestion.label}</div>
-                  <div className="text-xs text-gray-500 capitalize">{suggestion.type}</div>
+                  <div className="font-medium text-white">{suggestion.label}</div>
+                  <div className="text-xs text-slate-400 capitalize">{suggestion.type}</div>
                 </button>
               ))}
               <button
                 type="submit"
-                className="w-full text-left px-4 py-2 hover:bg-green-50 transition-colors border-t border-gray-200 text-green-600 font-medium"
+                className="w-full text-left px-4 py-2 hover:bg-emerald-500/10 transition-colors border-t border-slate-700 text-emerald-400 font-medium"
               >
                 View all results for &quot;{searchQuery}&quot;
               </button>
@@ -486,7 +486,7 @@ export function GlobalHeader({
   );
 
   return (
-    <header className={`bg-white relative z-50 ${className}`}>
+    <header className={`bg-transparent relative z-50 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Left: Logo and Mobile Menu */}
@@ -494,7 +494,7 @@ export function GlobalHeader({
             {showMobileMenu && onMobileMenuToggle && (
               <button
                 onClick={() => onMobileMenuToggle(true)}
-                className="md:hidden p-2 rounded-lg text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                className="md:hidden p-2 rounded-lg text-slate-400 hover:text-slate-300 hover:bg-slate-800 transition-colors"
                 aria-label="Toggle menu"
               >
                 <Menu className="w-6 h-6" />
@@ -502,7 +502,7 @@ export function GlobalHeader({
             )}
             <Link href={logoLink} className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <Logo withText={false} size={32} />
-              <span className="hidden sm:block text-xl font-bold text-gray-900">LocalPro</span>
+              <span className="hidden sm:block text-xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">LocalPro</span>
             </Link>
           </div>
 
@@ -516,13 +516,13 @@ export function GlobalHeader({
             {/* Mobile Search Icon */}
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="md:hidden p-2 rounded-lg hover:bg-slate-800 transition-colors"
               aria-label="Toggle search"
             >
               {mobileSearchOpen ? (
-                <X className="w-5 h-5 text-gray-700" aria-hidden="true" />
+                <X className="w-5 h-5 text-slate-300" aria-hidden="true" />
               ) : (
-                <Search className="w-5 h-5 text-gray-700" aria-hidden="true" />
+                <Search className="w-5 h-5 text-slate-300" aria-hidden="true" />
               )}
             </button>
 
@@ -530,11 +530,11 @@ export function GlobalHeader({
             {showFilter && onFilterClick && (
               <button
                 onClick={onFilterClick}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-slate-800 transition-colors"
                 aria-label="Open filters"
                 title="Filters"
               >
-                <Filter className="w-5 h-5 text-gray-700" aria-hidden="true" />
+                <Filter className="w-5 h-5 text-slate-300" aria-hidden="true" />
               </button>
             )}
 
@@ -544,25 +544,25 @@ export function GlobalHeader({
                 <div className="relative" ref={notificationsRef}>
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="relative p-2 rounded-lg hover:bg-slate-800 transition-colors"
                     aria-label={`View notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                     aria-expanded={showNotifications}
                   >
-                    <Bell className="w-5 h-5 text-gray-700" aria-hidden="true" />
+                    <Bell className="w-5 h-5 text-slate-300" aria-hidden="true" />
                     {unreadCount > 0 && (
-                      <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
+                      <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-slate-950">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                   </button>
 
                   {showNotifications && (
-                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border-2 border-gray-200 z-[9999]">
-                      <div className="p-3 border-b border-gray-200 flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-800 text-sm">Notifications</h3>
+                    <div className="absolute right-0 mt-2 w-80 bg-slate-800 rounded-lg shadow-xl border border-slate-700 z-[9999]">
+                      <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+                        <h3 className="font-semibold text-white text-sm">Notifications</h3>
                         <Link
                           href="/notifications"
-                          className="text-xs text-green-600 hover:text-green-700 font-medium"
+                          className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                           onClick={() => setShowNotifications(false)}
                         >
                           View all
@@ -571,29 +571,29 @@ export function GlobalHeader({
                       <div className="max-h-64 overflow-y-auto">
                         {loadingNotifications ? (
                           <div className="p-4 text-center">
-                            <Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-400" />
+                            <Loader2 className="w-5 h-5 animate-spin mx-auto text-slate-400" />
                           </div>
                         ) : notifications.length > 0 ? (
                           notifications.map((notification) => (
                             <button
                               key={notification.id}
                               onClick={() => handleNotificationClick(notification.id)}
-                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${!notification.isRead ? 'bg-blue-50' : ''
+                              className={`w-full text-left px-4 py-3 hover:bg-slate-700 transition-colors border-b border-slate-700 last:border-b-0 ${!notification.isRead ? 'bg-emerald-500/10' : ''
                                 }`}
                             >
                               <div className="flex items-start gap-2">
                                 <div className={`flex-1 ${!notification.isRead ? 'font-semibold' : ''}`}>
-                                  <p className="text-sm text-gray-900">{notification.title}</p>
-                                  <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                                  <p className="text-sm text-white">{notification.title}</p>
+                                  <p className="text-xs text-slate-400 mt-1">{notification.message}</p>
                                 </div>
                                 {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                                  <div className="w-2 h-2 bg-emerald-400 rounded-full flex-shrink-0 mt-1"></div>
                                 )}
                               </div>
                             </button>
                           ))
                         ) : (
-                          <div className="p-4 text-center text-sm text-gray-500">No notifications</div>
+                          <div className="p-4 text-center text-sm text-slate-400">No notifications</div>
                         )}
                       </div>
                     </div>
@@ -603,14 +603,14 @@ export function GlobalHeader({
                 <Link
                   href="/notifications"
                   className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/notifications")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                    : "text-slate-300 hover:text-white hover:bg-slate-800"
                     }`}
                   title="Notifications"
                 >
                   <Bell className="w-5 h-5" aria-hidden="true" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
+                    <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-slate-950">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -623,8 +623,8 @@ export function GlobalHeader({
               <Link
                 href="/messages"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/messages")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
                   }`}
                 title="Chat"
                 aria-label="Messages"
@@ -639,8 +639,8 @@ export function GlobalHeader({
               <Link
                 href="/favorites"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/favorites")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
                   }`}
                 title="Favorites"
                 aria-label="Favorites"
@@ -654,15 +654,15 @@ export function GlobalHeader({
               <Link
                 href="/cart"
                 className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/cart")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
-                  : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  ? "text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20"
+                  : "text-slate-300 hover:text-white hover:bg-slate-800"
                   }`}
                 title="Shopping Cart"
                 aria-label={`Shopping Cart${cartCount > 0 ? ` (${cartCount} items)` : ''}`}
               >
                 <ShoppingCart className="w-5 h-5" aria-hidden="true" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-green-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-emerald-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-slate-950">
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
@@ -671,8 +671,8 @@ export function GlobalHeader({
 
             {/* Role Toggle - Show options based on user's actual roles, hide if only client */}
             {shouldShowSwitcher && (
-              <div className="hidden sm:flex items-center border-r border-gray-300 pr-3 mr-1">
-                <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+              <div className="hidden sm:flex items-center border-r border-slate-700 pr-3 mr-1">
+                <div className="flex items-center bg-slate-800 rounded-lg p-1 gap-1">
                   {userRoles.map((role) => {
                     const roleLabels: Record<string, string> = {
                       'client': 'Client',
@@ -699,8 +699,8 @@ export function GlobalHeader({
                           }
                         }}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${roleView === role
-                          ? 'bg-white text-green-700 shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'text-slate-400 hover:text-white'
                           }`}
                         title={`Switch to ${roleLabels[role] || role} view`}
                         aria-label={`Switch to ${roleLabels[role] || role} view`}
@@ -718,41 +718,41 @@ export function GlobalHeader({
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-slate-800 transition-colors"
                   aria-label={`User menu for ${getUserDisplayName()}`}
                   aria-expanded={showUserMenu}
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">{getUserInitial()}</span>
                   </div>
-                  <span className="hidden lg:block text-sm font-medium text-gray-700">
+                  <span className="hidden lg:block text-sm font-medium text-slate-300">
                     {getUserDisplayName()}
                   </span>
-                  <ChevronDown className="hidden lg:block w-4 h-4 text-gray-500" />
+                  <ChevronDown className="hidden lg:block w-4 h-4 text-slate-500" />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border-2 border-gray-200 py-2 z-[9999]">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
-                      <p className="text-xs text-gray-500">{session?.user?.email || session?.user?.phone}</p>
+                  <div className="absolute right-0 mt-2 w-56 bg-slate-800 rounded-lg shadow-xl border border-slate-700 py-2 z-[9999]">
+                    <div className="px-4 py-3 border-b border-slate-700">
+                      <p className="text-sm font-semibold text-white">{getUserDisplayName()}</p>
+                      <p className="text-xs text-slate-400">{session?.user?.email || session?.user?.phone}</p>
                     </div>
                     <Link
                       href="/profile"
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <User className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <User className="w-4 h-4 text-slate-500" aria-hidden="true" />
                       <span>Profile</span>
                     </Link>
                     {/* Show "My Bookings" only in client view */}
                     {roleView === 'client' && (
                       <Link
                         href="/marketplace/my-bookings"
-                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        <Calendar className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                        <Calendar className="w-4 h-4 text-slate-500" aria-hidden="true" />
                         <span>My Bookings</span>
                       </Link>
                     )}
@@ -760,56 +760,56 @@ export function GlobalHeader({
                     {roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView) && userRoles.includes(roleView) && (
                       <Link
                         href="/marketplace/my-services"
-                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                         onClick={() => setShowUserMenu(false)}
                       >
-                        <BarChart3 className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                        <BarChart3 className="w-4 h-4 text-slate-500" aria-hidden="true" />
                         <span>My Services</span>
                       </Link>
                     )}
                     <Link
                       href="/wallet"
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <Wallet className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <Wallet className="w-4 h-4 text-slate-500" aria-hidden="true" />
                       <span>Wallet</span>
                     </Link>
                     <Link
                       href="/settings"
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <Settings className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <Settings className="w-4 h-4 text-slate-500" aria-hidden="true" />
                       <span>Settings</span>
                     </Link>
                     <Link
                       href="/help-center"
-                      className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >
-                      <HelpCircle className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                      <HelpCircle className="w-4 h-4 text-slate-500" aria-hidden="true" />
                       <span>Help</span>
                     </Link>
                     {isAdmin && (
                       <>
-                        <div className="border-t border-gray-100 my-1"></div>
+                        <div className="border-t border-slate-700 my-1"></div>
                         <Link
                           href="/admin"
-                          className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="flex items-center space-x-3 px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <Shield className="w-4 h-4 text-gray-500" aria-hidden="true" />
+                          <Shield className="w-4 h-4 text-slate-500" aria-hidden="true" />
                           <span>Admin Dashboard</span>
                         </Link>
                       </>
                     )}
-                    <div className="border-t border-gray-100 my-1"></div>
+                    <div className="border-t border-slate-700 my-1"></div>
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                     >
-                      <LogOut className="w-4 h-4 text-red-600" aria-hidden="true" />
+                      <LogOut className="w-4 h-4 text-red-400" aria-hidden="true" />
                       <span>Sign Out</span>
                     </button>
                   </div>
@@ -818,7 +818,7 @@ export function GlobalHeader({
             ) : (
               <Link
                 href="/"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
               >
                 Sign In
               </Link>
@@ -828,14 +828,14 @@ export function GlobalHeader({
 
         {/* Mobile Search Bar */}
         {mobileSearchOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
+          <div className="md:hidden py-4 border-t border-slate-800">
             <SearchBar isMobile />
           </div>
         )}
       </div>
 
       {/* Subheader - Navigation Links (based on app settings features) */}
-      <div className="border-t border-gray-100 bg-gray-50/50">
+      <div className="border-t border-slate-800/50 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide">
             {/* Marketplace - check 'marketplace' feature */}
@@ -844,8 +844,8 @@ export function GlobalHeader({
                 href="/marketplace"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/marketplace")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
               >
@@ -860,8 +860,8 @@ export function GlobalHeader({
                 href="/supplies"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/supplies")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
               >
@@ -876,8 +876,8 @@ export function GlobalHeader({
                 href="/academy"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/academy")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
               >
@@ -892,8 +892,8 @@ export function GlobalHeader({
                 href="/rentals"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/rentals")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
               >
@@ -908,8 +908,8 @@ export function GlobalHeader({
                 href="/jobs"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/jobs")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
               >
@@ -924,8 +924,8 @@ export function GlobalHeader({
                 href="/facility-care"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/facility-care")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/facility-care") ? "page" : undefined}
               >
@@ -940,12 +940,12 @@ export function GlobalHeader({
                 href="/plus"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/plus")
-                    ? "text-yellow-700 bg-yellow-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-yellow-400 bg-yellow-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/plus") ? "page" : undefined}
               >
-                <Star className="w-4 h-4 text-yellow-500" aria-hidden="true" />
+                <Star className="w-4 h-4 text-yellow-400" aria-hidden="true" />
                 <span>LocalPro+</span>
               </Link>
             )}
@@ -956,8 +956,8 @@ export function GlobalHeader({
                 href="/ads"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/ads")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/ads") ? "page" : undefined}
               >
@@ -972,8 +972,8 @@ export function GlobalHeader({
                 href="/finance"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/finance")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
               >
@@ -988,8 +988,8 @@ export function GlobalHeader({
                 href="/referrals"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/referrals")
-                    ? "text-green-700 bg-green-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    ? "text-emerald-400 bg-emerald-500/10"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
                 }`}
                 aria-current={pathname?.startsWith("/referrals") ? "page" : undefined}
               >

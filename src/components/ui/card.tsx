@@ -16,8 +16,8 @@ export function Card({ className, padding = "md", interactive = true, ...props }
 	return (
 		<div
 			className={cn(
-				"bg-white rounded-xl shadow-sm",
-				interactive && "hover:shadow-md transition-shadow",
+				"bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl shadow-lg shadow-black/10",
+				interactive && "hover:shadow-xl hover:border-slate-700 transition-all",
 				paddingMap[padding],
 				className
 			)}
@@ -33,11 +33,11 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
 }
 
 export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-	return <h3 className={cn("text-lg font-semibold text-gray-700", className)} {...props} />;
+	return <h3 className={cn("text-lg font-semibold text-white", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-	return <div className={cn("space-y-2", className)} {...props} />;
+	return <div className={cn("space-y-2 text-slate-300", className)} {...props} />;
 }
 
 

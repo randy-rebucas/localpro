@@ -25,8 +25,8 @@ interface EmptyStateProps {
 
 export function EmptyState({
   icon: Icon,
-  iconColor = "text-gray-600",
-  iconBgColor = "bg-gray-100",
+  iconColor = "text-slate-400",
+  iconBgColor = "bg-slate-800",
   title,
   description,
   actions = [],
@@ -37,11 +37,11 @@ export function EmptyState({
     
     switch (variant) {
       case "primary":
-        return `${baseStyles} bg-green-600 text-white hover:bg-green-700`;
+        return `${baseStyles} bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/25`;
       case "secondary":
-        return `${baseStyles} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+        return `${baseStyles} bg-slate-800 text-slate-300 hover:bg-slate-700`;
       case "outline":
-        return `${baseStyles} border border-gray-300 text-gray-700 hover:bg-gray-50`;
+        return `${baseStyles} border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white`;
       default:
         return baseStyles;
     }
@@ -52,8 +52,8 @@ export function EmptyState({
       <div className={`w-16 h-16 ${iconBgColor} rounded-full flex items-center justify-center mx-auto mb-4`}>
         <Icon className={`w-8 h-8 ${iconColor}`} />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">{description}</p>
+      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <p className="text-slate-400 mb-6 max-w-md mx-auto">{description}</p>
       
       {actions.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -103,7 +103,7 @@ export function EmptyStateCard(props: EmptyStateCardProps) {
   const { ...emptyStateProps } = props;
   
   return (
-    <div className="bg-white rounded-lg shadow-sm" style={{ padding: 0 }}>
+    <div className="bg-slate-900/80 border border-slate-800 rounded-lg shadow-lg" style={{ padding: 0 }}>
       <EmptyState {...emptyStateProps} />
     </div>
   );

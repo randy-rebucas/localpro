@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Booking Entity Interface (matching data-entities.md)
 interface Booking {
@@ -454,7 +455,7 @@ export default function BookingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
@@ -465,8 +466,8 @@ export default function BookingsPage() {
         <Card interactive={false}>
           <EmptyState
             icon={AlertCircle}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
+            iconColor="text-red-400"
+            iconBgColor="bg-red-500/20"
             title="Failed to Load Bookings"
             description={error}
             actions={[
@@ -510,22 +511,22 @@ export default function BookingsPage() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left Sidebar - Filters */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <Card className="p-4 sticky top-4">
+          <Card className="p-4 sticky top-4 bg-slate-900/80 border-slate-800">
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg font-semibold text-white">Filters</h2>
+                <SlidersHorizontal className="w-5 h-5 text-slate-400" />
               </div>
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Filter by Status
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-white"
                 >
                   {statusOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -537,13 +538,13 @@ export default function BookingsPage() {
               
               {/* Type Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Filter by Type
                 </label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-white"
                 >
                   <option value="all">All Bookings</option>
                   <option value="client">As Client</option>
@@ -553,27 +554,27 @@ export default function BookingsPage() {
               
               {/* Date From */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Date From
                 </label>
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-white"
                 />
               </div>
               
               {/* Date To */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Date To
                 </label>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-800 text-white"
                 />
               </div>
 
@@ -586,7 +587,7 @@ export default function BookingsPage() {
                     setDateFrom("");
                     setDateTo("");
                   }}
-                  className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  className="w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                 >
                   Clear Filters
                 </button>
@@ -703,7 +704,7 @@ export default function BookingsPage() {
                         </div>
                         <div className="text-right">
                           <div className="text-2xl font-bold text-green-600">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(totalPrice)}
+                            {formatCurrency(totalPrice, 'PHP')}
                           </div>
                           <div className="text-sm text-gray-500">Total</div>
                         </div>
@@ -757,7 +758,7 @@ export default function BookingsPage() {
                           <ul className="text-sm text-gray-600 space-y-1">
                             {booking.pricing.additionalFees.map((fee, idx) => (
                               <li key={idx}>
-                                {fee.description || 'Additional fee'}: {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(fee.amount || 0)}
+                                {fee.description || 'Additional fee'}: {formatCurrency(fee.amount || 0, 'PHP')}
                               </li>
                             ))}
                           </ul>

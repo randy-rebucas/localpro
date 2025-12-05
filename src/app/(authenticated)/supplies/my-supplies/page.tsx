@@ -126,11 +126,11 @@ const statuses = [
 
 const getStatusColor = (status: Supply['status']) => {
   switch (status) {
-    case 'available': return 'bg-gradient-to-r from-emerald-500 to-green-500 text-white';
-    case 'out-of-stock': return 'bg-gradient-to-r from-red-500 to-rose-500 text-white';
-    case 'discontinued': return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
-    case 'pre-order': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white';
-    default: return 'bg-gray-100 text-gray-800';
+    case 'available': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+    case 'out-of-stock': return 'bg-red-500/20 text-red-400 border border-red-500/30';
+    case 'discontinued': return 'bg-slate-700 text-slate-400 border border-slate-600';
+    case 'pre-order': return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+    default: return 'bg-slate-800 text-slate-400 border border-slate-700';
   }
 };
 
@@ -296,10 +296,10 @@ export default function MySuppliesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-pulse"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -326,10 +326,10 @@ export default function MySuppliesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>

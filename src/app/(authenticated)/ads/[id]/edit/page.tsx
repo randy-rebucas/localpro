@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
 
 const categories = [
   "Hardware Stores",
@@ -412,11 +413,11 @@ export default function EditAdPage() {
           </Card>
 
           {/* Budget and Duration */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Budget & Duration</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Budget & Duration</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   Budget (PHP) *
                 </label>
                 <div className="relative">
@@ -469,8 +470,8 @@ export default function EditAdPage() {
           </Card>
 
           {/* Target Audience */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Target Audience</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Target Audience</h2>
             <div className="space-y-3">
               {targetAudiences.map((audience) => (
                 <label key={audience} className="flex items-center gap-3 cursor-pointer">
@@ -478,23 +479,23 @@ export default function EditAdPage() {
                     type="checkbox"
                     checked={formData.targetAudience.includes(audience)}
                     onChange={() => handleAudienceToggle(audience)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-blue-500 border-slate-700 rounded focus:ring-blue-500 bg-slate-800"
                   />
-                  <span className="text-sm text-gray-700">{audience}</span>
+                  <span className="text-sm text-slate-300">{audience}</span>
                 </label>
               ))}
               {errors.targetAudience && (
-                <p className="text-red-500 text-sm mt-1">{errors.targetAudience}</p>
+                <p className="text-red-400 text-sm mt-1">{errors.targetAudience}</p>
               )}
             </div>
           </Card>
 
           {/* Location */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Location</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Location</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-300 mb-1">
                   City
                 </label>
                 <Input
@@ -527,8 +528,8 @@ export default function EditAdPage() {
           </Card>
 
           {/* Tags */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Tags</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Tags</h2>
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Input
@@ -546,12 +547,12 @@ export default function EditAdPage() {
                   {formData.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm"
                     >
                       {tag}
                       <button
                         onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 hover:text-blue-600"
+                        className="ml-1 hover:text-blue-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -563,8 +564,8 @@ export default function EditAdPage() {
           </Card>
 
           {/* Images */}
-          <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Images</h2>
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h2 className="text-lg font-semibold text-white mb-4">Images</h2>
             <div className="space-y-4">
               <div className="flex gap-2">
                 <Input
@@ -603,9 +604,9 @@ export default function EditAdPage() {
 
         {/* Preview Sidebar */}
         <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Ad Preview</h3>
-            <div className="border rounded-lg p-4 bg-gray-50">
+          <Card className="p-6 bg-slate-900/80 border-slate-800">
+            <h3 className="text-lg font-semibold text-white mb-4">Ad Preview</h3>
+            <div className="border border-slate-700 rounded-lg p-4 bg-slate-800">
               {formData.images.length > 0 && (
                 <div className="aspect-video bg-gray-200 rounded-lg mb-4 overflow-hidden">
                   <Image
@@ -636,7 +637,7 @@ export default function EditAdPage() {
               <div className="text-xs text-gray-500">
                 <p>Category: {formData.category || "Not selected"}</p>
                 <p>Type: {formData.type || "Not selected"}</p>
-                <p>Budget: ₱{formData.budget || "0"}</p>
+                <p>Budget: {formatCurrency(Number(formData.budget) || 0, 'PHP')}</p>
               </div>
             </div>
           </Card>

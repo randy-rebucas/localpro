@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface CourseFormData {
     title: string;
@@ -190,11 +191,11 @@ export default function CreateCoursePage() {
             />
 
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
                     <div>
-                        <h3 className="text-sm font-medium text-red-800">Error</h3>
-                        <p className="text-sm text-red-700 mt-1">{error}</p>
+                        <h3 className="text-sm font-medium text-red-400">Error</h3>
+                        <p className="text-sm text-red-400/80 mt-1">{error}</p>
                     </div>
                 </div>
             )}
@@ -567,7 +568,7 @@ export default function CreateCoursePage() {
                                     <div className="text-sm">
                                         <span className="text-gray-600">Price:</span>
                                         <p className="font-medium">
-                                            {formData.price === 0 ? 'Free' : `₱${formData.price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                            {formData.price === 0 ? 'Free' : formatCurrency(formData.price, 'PHP')}
                                         </p>
                                     </div>
                                     <div className="text-sm">

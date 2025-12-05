@@ -15,12 +15,12 @@ export interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectE
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, helperText, variant = 'default', options, placeholder, children, onValueChange, onChange, ...props }, ref) => {
-    const baseClasses = "w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none bg-no-repeat bg-right bg-[length:16px]";
+    const baseClasses = "w-full px-4 py-3 pr-10 bg-slate-800 border rounded-lg text-white focus:outline-none transition-all duration-200 appearance-none bg-no-repeat bg-right bg-[length:16px]";
     
     const variantClasses = {
-      default: "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500",
-      error: "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500",
-      success: "border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+      default: "border-slate-700 hover:border-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500",
+      error: "border-red-500/50 focus:ring-2 focus:ring-red-500 focus:border-red-500",
+      success: "border-emerald-500/50 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
     };
 
     const selectClasses = cn(
@@ -43,7 +43,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="space-y-1">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-slate-300">
             {label}
           </label>
         )}
@@ -55,7 +55,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {...props}
           >
             {placeholder && (
-              <option value="" disabled>
+              <option value="" disabled className="bg-slate-800 text-slate-400">
                 {placeholder}
               </option>
             )}
@@ -65,6 +65,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                   key={option.value} 
                   value={option.value}
                   disabled={option.disabled}
+                  className="bg-slate-800 text-white"
                 >
                   {option.label}
                 </option>
@@ -74,14 +75,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             )}
           </select>
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-slate-500" />
           </div>
         </div>
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-red-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="text-sm text-gray-500">{helperText}</p>
+          <p className="text-sm text-slate-500">{helperText}</p>
         )}
       </div>
     );

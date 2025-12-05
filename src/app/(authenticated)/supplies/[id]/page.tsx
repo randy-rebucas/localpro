@@ -103,11 +103,11 @@ export interface Supply {
 
 const getStatusConfig = (status: Supply['status']) => {
   switch (status) {
-    case 'available': return { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'In Stock' };
-    case 'out-of-stock': return { bg: 'bg-red-100', text: 'text-red-700', label: 'Out of Stock' };
-    case 'discontinued': return { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Discontinued' };
-    case 'pre-order': return { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Pre-Order' };
-    default: return { bg: 'bg-gray-100', text: 'text-gray-700', label: status };
+    case 'available': return { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'In Stock' };
+    case 'out-of-stock': return { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Out of Stock' };
+    case 'discontinued': return { bg: 'bg-slate-800', text: 'text-slate-400', label: 'Discontinued' };
+    case 'pre-order': return { bg: 'bg-blue-500/20', text: 'text-blue-400', label: 'Pre-Order' };
+    default: return { bg: 'bg-slate-800', text: 'text-slate-400', label: status };
   }
 };
 
@@ -584,36 +584,36 @@ export default function SupplyDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Back Button Skeleton */}
           <div className="mb-6">
-            <div className="h-10 w-24 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="h-10 w-24 bg-slate-800 rounded-lg animate-pulse"></div>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Image Skeleton */}
             <div className="space-y-4">
-              <div className="aspect-square bg-gray-200 rounded-xl animate-pulse"></div>
+              <div className="aspect-square bg-slate-800 rounded-xl animate-pulse"></div>
               <div className="flex gap-2">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="w-20 h-20 bg-gray-200 rounded-lg animate-pulse"></div>
+                  <div key={i} className="w-20 h-20 bg-slate-800 rounded-lg animate-pulse"></div>
                 ))}
               </div>
             </div>
             
             {/* Details Skeleton */}
             <div className="space-y-6">
-              <div className="h-8 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-              <div className="h-6 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-              <div className="h-12 bg-gray-200 rounded w-1/3 animate-pulse"></div>
-              <div className="h-24 bg-gray-200 rounded animate-pulse"></div>
-              <div className="h-14 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-8 bg-slate-800 rounded w-3/4 animate-pulse"></div>
+              <div className="h-6 bg-slate-800 rounded w-1/2 animate-pulse"></div>
+              <div className="h-12 bg-slate-800 rounded w-1/3 animate-pulse"></div>
+              <div className="h-24 bg-slate-800 rounded animate-pulse"></div>
+              <div className="h-14 bg-slate-800 rounded animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -623,19 +623,19 @@ export default function SupplyDetailPage() {
 
   if (!supply) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
         </div>
         <div className="relative z-10 text-center py-12">
-          <div className="w-20 h-20 bg-gradient-to-br from-orange-100 to-orange-200 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <Package className="w-10 h-10 text-orange-600" />
+          <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Package className="w-10 h-10 text-orange-400" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Supply not found</h3>
-          <p className="text-gray-600 mb-6 max-w-md">The supply you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+          <h3 className="text-2xl font-bold text-white mb-2">Supply not found</h3>
+          <p className="text-slate-400 mb-6 max-w-md">The supply you&apos;re looking for doesn&apos;t exist or has been removed.</p>
           <Link
             href="/supplies"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Browse Supplies
@@ -650,7 +650,7 @@ export default function SupplyDetailPage() {
   const savings = supply.originalPrice ? (supply.originalPrice - supply.price) * quantity : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
       {/* Animated Background Blobs */}

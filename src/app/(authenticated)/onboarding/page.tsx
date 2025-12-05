@@ -357,40 +357,45 @@ export default function OnboardingPage() {
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/20 rounded-full filter blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-teal-500/10 rounded-full filter blur-3xl"></div>
+      </div>
       {/* Loading Overlay for Redirect */}
       {isRedirecting && (
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
+            <Loader2 className="w-12 h-12 text-emerald-400 animate-spin" />
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Setup Complete!</h3>
-              <p className="text-sm text-gray-600">Redirecting to your dashboard...</p>
+              <h3 className="text-lg font-semibold text-white mb-1">Setup Complete!</h3>
+              <p className="text-sm text-slate-400">Redirecting to your dashboard...</p>
             </div>
           </div>
         </div>
       )}
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl mb-4 shadow-lg shadow-emerald-500/25">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to LocalPro!</h1>
-          <p className="text-gray-600">Let&apos;s set up your profile to get started</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome to LocalPro!</h1>
+          <p className="text-slate-400">Let&apos;s set up your profile to get started</p>
         </div>
 
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-slate-300">
               Step {currentStep} of {steps.length}
             </span>
-            <span className="text-sm text-gray-500">{Math.round(progress)}% Complete</span>
+            <span className="text-sm text-slate-500">{Math.round(progress)}% Complete</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-slate-800 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-green-600 to-green-700 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -409,17 +414,17 @@ export default function OnboardingPage() {
                 {index < steps.length - 1 && (
                   <div
                     className={`absolute top-6 left-[60%] w-[80%] h-0.5 z-0 ${
-                      isCompleted ? "bg-green-600" : "bg-gray-200"
+                      isCompleted ? "bg-emerald-500" : "bg-slate-700"
                     }`}
                   />
                 )}
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all relative z-10 ${
                     isCompleted
-                      ? "bg-green-600 text-white"
+                      ? "bg-emerald-500 text-white"
                       : isCurrent
-                      ? "bg-green-100 text-green-700 border-2 border-green-600"
-                      : "bg-gray-200 text-gray-400"
+                      ? "bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500"
+                      : "bg-slate-800 text-slate-500"
                   }`}
                 >
                   {isCompleted ? (
@@ -431,7 +436,7 @@ export default function OnboardingPage() {
                 <div className="text-center">
                   <p
                     className={`text-xs font-medium ${
-                      isCurrent ? "text-green-700" : isCompleted ? "text-gray-700" : "text-gray-400"
+                      isCurrent ? "text-emerald-400" : isCompleted ? "text-slate-300" : "text-slate-500"
                     }`}
                   >
                     {step.title}
@@ -443,18 +448,18 @@ export default function OnboardingPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl p-8 mb-6 backdrop-blur-sm">
           {currentStepData && (
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   {currentStepData.icon && (
-                    <currentStepData.icon className="w-5 h-5 text-green-700" />
+                    <currentStepData.icon className="w-5 h-5 text-emerald-400" />
                   )}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">{currentStepData.title}</h2>
-                  <p className="text-sm text-gray-600">{currentStepData.description}</p>
+                  <h2 className="text-xl font-semibold text-white">{currentStepData.title}</h2>
+                  <p className="text-sm text-slate-400">{currentStepData.description}</p>
                 </div>
               </div>
 
@@ -463,8 +468,8 @@ export default function OnboardingPage() {
                 {currentStep === 1 && (
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name <span className="text-red-500">*</span>
+                      <label htmlFor="firstName" className="block text-sm font-medium text-slate-300 mb-2">
+                        First Name <span className="text-red-400">*</span>
                       </label>
                       <Input
                         id="firstName"
@@ -474,12 +479,12 @@ export default function OnboardingPage() {
                         className={errors.firstName ? "border-red-500" : ""}
                       />
                       {errors.firstName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>
                       )}
                     </div>
                     <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name <span className="text-red-500">*</span>
+                      <label htmlFor="lastName" className="block text-sm font-medium text-slate-300 mb-2">
+                        Last Name <span className="text-red-400">*</span>
                       </label>
                       <Input
                         id="lastName"
@@ -489,35 +494,35 @@ export default function OnboardingPage() {
                         className={errors.lastName ? "border-red-500" : ""}
                       />
                       {errors.lastName && (
-                        <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{errors.lastName.message}</p>
                       )}
                     </div>
                     <div>
-                      <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-2">
-                        Gender <span className="text-red-500">*</span>
+                      <label htmlFor="gender" className="block text-sm font-medium text-slate-300 mb-2">
+                        Gender <span className="text-red-400">*</span>
                       </label>
                       <select
                         id="gender"
                         {...register("gender")}
-                        className={`w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none ${
+                        className={`w-full px-4 py-3 pr-10 bg-slate-800 border rounded-lg text-white focus:outline-none transition-all duration-200 appearance-none ${
                           errors.gender 
-                            ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500" 
-                            : "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            ? "border-red-500/50 focus:ring-2 focus:ring-red-500 focus:border-red-500" 
+                            : "border-slate-700 hover:border-slate-600 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                         }`}
                       >
-                        <option value="">Select your gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                        <option value="prefer-not-to-say">Prefer not to say</option>
+                        <option value="" className="bg-slate-800">Select your gender</option>
+                        <option value="male" className="bg-slate-800">Male</option>
+                        <option value="female" className="bg-slate-800">Female</option>
+                        <option value="other" className="bg-slate-800">Other</option>
+                        <option value="prefer-not-to-say" className="bg-slate-800">Prefer not to say</option>
                       </select>
                       {errors.gender && (
-                        <p className="mt-1 text-sm text-red-600">{errors.gender.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{errors.gender.message}</p>
                       )}
                     </div>
                     <div>
-                      <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">
-                        Date of Birth <span className="text-red-500">*</span>
+                      <label htmlFor="birthdate" className="block text-sm font-medium text-slate-300 mb-2">
+                        Date of Birth <span className="text-red-400">*</span>
                       </label>
                       <Input
                         id="birthdate"
@@ -528,7 +533,7 @@ export default function OnboardingPage() {
                         min={new Date(new Date().setFullYear(new Date().getFullYear() - 120)).toISOString().split('T')[0]}
                       />
                       {errors.birthdate && (
-                        <p className="mt-1 text-sm text-red-600">{errors.birthdate.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{errors.birthdate.message}</p>
                       )}
                     </div>
                   </div>
@@ -537,56 +542,56 @@ export default function OnboardingPage() {
                 {/* Step 2: Roles */}
                 {currentStep === 2 && (
                   <div className="space-y-4">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Select at least one role. You&apos;ll always have Client access to book services and use platform features. <span className="text-red-500">*</span>
+                    <p className="text-sm text-slate-400 mb-4">
+                      Select at least one role. You&apos;ll always have Client access to book services and use platform features. <span className="text-red-400">*</span>
                     </p>
                     
                     <div className="space-y-3">
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-slate-700 rounded-lg hover:border-emerald-500/50 hover:bg-emerald-500/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeProvider")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-emerald-500 border-slate-600 rounded focus:ring-emerald-500 bg-slate-800"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">Service Provider</div>
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="font-medium text-white">Service Provider</div>
+                          <div className="text-sm text-slate-400 mt-1">
                             Offer services, manage your business, create jobs, and earn money by providing services to clients.
                           </div>
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-slate-700 rounded-lg hover:border-emerald-500/50 hover:bg-emerald-500/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeSupplier")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-emerald-500 border-slate-600 rounded focus:ring-emerald-500 bg-slate-800"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">Supplier</div>
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="font-medium text-white">Supplier</div>
+                          <div className="text-sm text-slate-400 mt-1">
                             Provide supplies and materials to service providers and businesses on the platform.
                           </div>
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-slate-700 rounded-lg hover:border-emerald-500/50 hover:bg-emerald-500/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeInstructor")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-emerald-500 border-slate-600 rounded focus:ring-emerald-500 bg-slate-800"
                         />
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">Instructor</div>
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="font-medium text-white">Instructor</div>
+                          <div className="text-sm text-slate-400 mt-1">
                             Create and teach courses, share knowledge, and help others learn new skills through the Academy.
                           </div>
                         </div>
                       </label>
                     </div>
 
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-800">
+                    <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                      <p className="text-sm text-blue-400">
                         <strong>Note:</strong> You can always add or change your roles later in your profile settings. 
                         Everyone starts as a Client to access basic platform features.
                       </p>
@@ -597,8 +602,8 @@ export default function OnboardingPage() {
                 {/* Step 3: Email */}
                 {currentStep === 3 && (
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email Address <span className="text-gray-400 text-xs">(Optional)</span>
+                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                      Email Address <span className="text-slate-500 text-xs">(Optional)</span>
                     </label>
                     <Input
                       id="email"
@@ -608,9 +613,9 @@ export default function OnboardingPage() {
                       className={errors.email ? "border-red-500" : ""}
                     />
                     {errors.email && (
-                      <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                      <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
                     )}
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-slate-500">
                       We&apos;ll use this to send you important updates and notifications.
                     </p>
                   </div>
@@ -619,8 +624,8 @@ export default function OnboardingPage() {
                 {/* Step 4: Bio */}
                 {currentStep === 4 && (
                   <div>
-                    <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-2">
-                      Bio <span className="text-red-500">*</span>
+                    <label htmlFor="bio" className="block text-sm font-medium text-slate-300 mb-2">
+                      Bio <span className="text-red-400">*</span>
                     </label>
                     <Textarea
                       id="bio"
@@ -631,9 +636,9 @@ export default function OnboardingPage() {
                       maxLength={500}
                     />
                     {errors.bio && (
-                      <p className="mt-1 text-sm text-red-600">{errors.bio.message}</p>
+                      <p className="mt-1 text-sm text-red-400">{errors.bio.message}</p>
                     )}
-                    <p className="mt-2 text-sm text-gray-500">
+                    <p className="mt-2 text-sm text-slate-500">
                       {watch("bio")?.length || 0}/500 characters
                     </p>
                   </div>
@@ -643,8 +648,8 @@ export default function OnboardingPage() {
                 {currentStep === 5 && (
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="address.street" className="block text-sm font-medium text-gray-700 mb-2">
-                        Street Address <span className="text-red-500">*</span>
+                      <label htmlFor="address.street" className="block text-sm font-medium text-slate-300 mb-2">
+                        Street Address <span className="text-red-400">*</span>
                       </label>
                       <Input
                         id="address.street"
@@ -654,13 +659,13 @@ export default function OnboardingPage() {
                         className={errors.address?.street ? "border-red-500" : ""}
                       />
                       {errors.address?.street && (
-                        <p className="mt-1 text-sm text-red-600">{errors.address.street.message}</p>
+                        <p className="mt-1 text-sm text-red-400">{errors.address.street.message}</p>
                       )}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="address.city" className="block text-sm font-medium text-gray-700 mb-2">
-                          City <span className="text-red-500">*</span>
+                        <label htmlFor="address.city" className="block text-sm font-medium text-slate-300 mb-2">
+                          City <span className="text-red-400">*</span>
                         </label>
                         <Input
                           id="address.city"
@@ -670,12 +675,12 @@ export default function OnboardingPage() {
                           className={errors.address?.city ? "border-red-500" : ""}
                         />
                         {errors.address?.city && (
-                          <p className="mt-1 text-sm text-red-600">{errors.address.city.message}</p>
+                          <p className="mt-1 text-sm text-red-400">{errors.address.city.message}</p>
                         )}
                       </div>
                       <div>
-                        <label htmlFor="address.state" className="block text-sm font-medium text-gray-700 mb-2">
-                          State/Province <span className="text-red-500">*</span>
+                        <label htmlFor="address.state" className="block text-sm font-medium text-slate-300 mb-2">
+                          State/Province <span className="text-red-400">*</span>
                         </label>
                         <Input
                           id="address.state"
@@ -685,14 +690,14 @@ export default function OnboardingPage() {
                           className={errors.address?.state ? "border-red-500" : ""}
                         />
                         {errors.address?.state && (
-                          <p className="mt-1 text-sm text-red-600">{errors.address.state.message}</p>
+                          <p className="mt-1 text-sm text-red-400">{errors.address.state.message}</p>
                         )}
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="address.zipCode" className="block text-sm font-medium text-gray-700 mb-2">
-                          ZIP/Postal Code <span className="text-red-500">*</span>
+                        <label htmlFor="address.zipCode" className="block text-sm font-medium text-slate-300 mb-2">
+                          ZIP/Postal Code <span className="text-red-400">*</span>
                         </label>
                         <Input
                           id="address.zipCode"
@@ -702,12 +707,12 @@ export default function OnboardingPage() {
                           className={errors.address?.zipCode ? "border-red-500" : ""}
                         />
                         {errors.address?.zipCode && (
-                          <p className="mt-1 text-sm text-red-600">{errors.address.zipCode.message}</p>
+                          <p className="mt-1 text-sm text-red-400">{errors.address.zipCode.message}</p>
                         )}
                       </div>
                       <div>
-                        <label htmlFor="address.country" className="block text-sm font-medium text-gray-700 mb-2">
-                          Country <span className="text-red-500">*</span>
+                        <label htmlFor="address.country" className="block text-sm font-medium text-slate-300 mb-2">
+                          Country <span className="text-red-400">*</span>
                         </label>
                         <Input
                           id="address.country"
@@ -717,7 +722,7 @@ export default function OnboardingPage() {
                           className={errors.address?.country ? "border-red-500" : ""}
                         />
                         {errors.address?.country && (
-                          <p className="mt-1 text-sm text-red-600">{errors.address.country.message}</p>
+                          <p className="mt-1 text-sm text-red-400">{errors.address.country.message}</p>
                         )}
                       </div>
                     </div>
@@ -725,12 +730,12 @@ export default function OnboardingPage() {
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between pt-6 border-t">
+                <div className="flex justify-between pt-6 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={handleBack}
                     disabled={currentStep === 1 || isSubmitting}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 text-slate-300 bg-slate-800 rounded-lg hover:bg-slate-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     Back
@@ -742,7 +747,7 @@ export default function OnboardingPage() {
                         type="button"
                         onClick={handleSkip}
                         disabled={isSubmitting}
-                        className="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="px-4 py-2 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         Skip
                       </button>
@@ -774,7 +779,7 @@ export default function OnboardingPage() {
                         }
                         await handleNext();
                       }}
-                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg hover:from-emerald-600 hover:to-teal-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/25"
                     >
                       {isSubmitting ? (
                         <>
@@ -801,7 +806,7 @@ export default function OnboardingPage() {
         </div>
 
         {/* Footer Note */}
-        <p className="text-center text-sm text-gray-500">
+        <p className="text-center text-sm text-slate-500">
           You can always update your profile later in settings
         </p>
       </div>

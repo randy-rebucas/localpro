@@ -3,6 +3,7 @@
 import React from "react";
 import { ServiceCategory } from "./categories-carousel";
 import { TrendingUp, DollarSign, Star, Users, Tag } from "lucide-react";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface CategoryStatisticsProps {
   category: ServiceCategory | null;
@@ -42,11 +43,11 @@ export function CategoryStatistics({ category }: CategoryStatisticsProps) {
             <div className="min-w-0">
               <p className="text-xs text-gray-600 font-medium leading-tight">Avg. Price</p>
               <p className="text-base font-bold text-gray-900">
-                {pricing.currency || "₱"}{pricing.average?.toLocaleString() || "N/A"}
+                {pricing.average !== undefined ? formatCurrency(pricing.average, 'PHP') : "N/A"}
               </p>
               {pricing.min !== undefined && pricing.max !== undefined && (
                 <p className="text-xs text-gray-500 leading-tight">
-                  {pricing.currency || "₱"}{pricing.min}-{pricing.currency || "₱"}{pricing.max}
+                  {formatCurrency(pricing.min, 'PHP')}-{formatCurrency(pricing.max, 'PHP')}
                 </p>
               )}
             </div>

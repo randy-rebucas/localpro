@@ -314,13 +314,13 @@ export default function MyServicesPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200";
+        return "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
       case "INACTIVE":
-        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200";
+        return "bg-slate-800 text-slate-400 border border-slate-700";
       case "PENDING":
-        return "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200";
+        return "bg-amber-500/20 text-amber-400 border border-amber-500/30";
       default:
-        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200";
+        return "bg-slate-800 text-slate-400 border border-slate-700";
     }
   };
 
@@ -330,8 +330,8 @@ export default function MyServicesPage() {
         key={i}
         className={`w-4 h-4 ${
           i < Math.floor(rating)
-            ? "text-yellow-400 fill-current"
-            : "text-gray-300"
+            ? "text-amber-400 fill-current"
+            : "text-slate-600"
         }`}
       />
     ));
@@ -339,62 +339,62 @@ export default function MyServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="p-4 space-y-4 relative z-10">
           {/* Header Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+                <div className="h-7 bg-slate-800 rounded w-40 animate-pulse"></div>
+                <div className="h-4 bg-slate-800 rounded w-56 animate-pulse"></div>
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg w-48 animate-pulse"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-48 animate-pulse"></div>
             </div>
           </div>
 
           {/* Stats Skeleton */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-md p-4">
-                <div className="h-7 bg-gray-200 rounded w-12 animate-pulse mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+              <div key={i} className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-md p-4">
+                <div className="h-7 bg-slate-800 rounded w-12 animate-pulse mb-2"></div>
+                <div className="h-4 bg-slate-800 rounded w-20 animate-pulse"></div>
               </div>
             ))}
           </div>
 
           {/* Filters Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
-            <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-4 backdrop-blur-sm">
+            <div className="h-4 bg-slate-800 rounded w-32 mb-2 animate-pulse"></div>
+            <div className="h-10 bg-slate-800 rounded-lg animate-pulse"></div>
           </div>
 
           {/* Services Skeleton */}
           <div className="space-y-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md p-5 border-2 border-gray-200">
+              <div key={i} className="bg-slate-900/80 rounded-xl shadow-md p-5 border border-slate-800">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
                       <div className="space-y-2">
-                        <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
+                        <div className="h-5 bg-slate-800 rounded w-48 animate-pulse"></div>
                         <div className="flex items-center gap-2">
-                          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                          <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                          <div className="h-6 bg-slate-800 rounded w-20 animate-pulse"></div>
+                          <div className="h-4 bg-slate-800 rounded w-24 animate-pulse"></div>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        <div className="h-6 bg-slate-800 rounded w-20 animate-pulse"></div>
+                        <div className="h-4 bg-slate-800 rounded w-16 animate-pulse"></div>
                       </div>
                     </div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-3 animate-pulse"></div>
+                    <div className="h-4 bg-slate-800 rounded w-full mb-3 animate-pulse"></div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
                       {Array.from({ length: 4 }).map((_, j) => (
                         <div key={j} className="bg-gray-50 rounded-lg p-3">
@@ -420,10 +420,10 @@ export default function MyServicesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
@@ -476,10 +476,10 @@ export default function MyServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>

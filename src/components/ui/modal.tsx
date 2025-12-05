@@ -56,15 +56,15 @@ export function Modal({
         width: 8px;
       }
       .modal-content-scroll::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: #1e293b;
         border-radius: 4px;
       }
       .modal-content-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: #475569;
         border-radius: 4px;
       }
       .modal-content-scroll::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: #64748b;
       }
     `;
     document.head.appendChild(style);
@@ -115,7 +115,7 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-end backdrop-blur-sm bg-black/20 transition-opacity duration-300"
+      className="fixed inset-0 z-[9999] flex items-center justify-end backdrop-blur-sm bg-black/50 transition-opacity duration-300"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -123,19 +123,19 @@ export function Modal({
       }}
     >
       <div
-        className={`bg-white shadow-xl h-screen flex flex-col transform transition-transform duration-300 ease-out ${sizeClasses[size]} ${className} ${
+        className={`bg-slate-900 border-l border-slate-800 shadow-xl h-screen flex flex-col transform transition-transform duration-300 ease-out ${sizeClasses[size]} ${className} ${
           isVisible ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ width: size === 'full' ? '100%' : undefined }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
-            {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800 bg-slate-900 flex-shrink-0">
+            {title && <h2 className="text-lg font-semibold text-white">{title}</h2>}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-900"
+                className="p-1 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
@@ -144,15 +144,15 @@ export function Modal({
           </div>
         )}
         <div 
-          className="flex-1 overflow-y-auto px-4 py-3 text-gray-900 leading-normal text-sm antialiased modal-content-scroll"
+          className="flex-1 overflow-y-auto px-4 py-3 text-slate-300 leading-normal text-sm antialiased modal-content-scroll"
           style={{
             scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e1 #f1f5f9'
+            scrollbarColor: '#475569 #1e293b'
           }}
         >
           {children}
         </div>
-        {footer && <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">{footer}</div>}
+        {footer && <div className="px-4 py-3 border-t border-slate-800 bg-slate-950 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );

@@ -443,7 +443,7 @@ export default function AdminDashboard() {
       icon: CreditCard,
       href: "/admin/finance",
       color: "bg-yellow-500",
-      stats: stats ? `₱${stats.totalRevenue.toLocaleString()}` : "Loading..."
+      stats: stats ? formatCurrency(stats.totalRevenue, 'PHP') : "Loading..."
     },
     {
       name: "Rentals",
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
       icon: Crown,
       href: "/admin/plus",
       color: "bg-yellow-500",
-      stats: stats ? `₱${stats.totalRevenue.toLocaleString()} revenue` : "Loading..."
+      stats: stats ? `${formatCurrency(stats.totalRevenue, 'PHP')} revenue` : "Loading..."
     },
     {
       name: "System",

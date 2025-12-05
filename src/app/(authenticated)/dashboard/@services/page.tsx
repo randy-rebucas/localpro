@@ -69,62 +69,62 @@ const featureConfig: Record<string, { name: string; icon: React.ReactNode; color
   marketplace: {
     name: "Marketplace",
     icon: <Shield className="w-6 h-6" />,
-    color: "bg-gray-100 text-gray-700"
+    color: "bg-slate-700 text-slate-300"
   },
   supplies: {
     name: "Supplies",
     icon: <Package className="w-6 h-6" />,
-    color: "bg-amber-100 text-amber-700"
+    color: "bg-amber-500/20 text-amber-400"
   },
   academy: {
     name: "Academy",
     icon: <GraduationCap className="w-6 h-6" />,
-    color: "bg-green-100 text-green-700"
+    color: "bg-emerald-500/20 text-emerald-400"
   },
   rentals: {
     name: "Rentals",
     icon: <Car className="w-6 h-6" />,
-    color: "bg-blue-100 text-blue-700"
+    color: "bg-blue-500/20 text-blue-400"
   },
   localProPlus: {
     name: "LocalPro Plus",
     icon: <Star className="w-6 h-6" />,
-    color: "bg-yellow-100 text-yellow-700"
+    color: "bg-yellow-500/20 text-yellow-400"
   },
   facilityCare: {
     name: "Facility Care",
     icon: <Home className="w-6 h-6" />,
-    color: "bg-emerald-100 text-emerald-700"
+    color: "bg-teal-500/20 text-teal-400"
   },
   ads: {
     name: "Ads",
     icon: <Megaphone className="w-6 h-6" />,
-    color: "bg-purple-100 text-purple-700"
+    color: "bg-purple-500/20 text-purple-400"
   },
   finance: {
     name: "Finance",
     icon: <DollarSign className="w-6 h-6" />,
-    color: "bg-red-100 text-red-700"
+    color: "bg-red-500/20 text-red-400"
   },
   jobBoard: {
     name: "Job Board",
     icon: <Shield className="w-6 h-6" />,
-    color: "bg-indigo-100 text-indigo-700"
+    color: "bg-indigo-500/20 text-indigo-400"
   },
   referrals: {
     name: "Referrals",
     icon: <Star className="w-6 h-6" />,
-    color: "bg-pink-100 text-pink-700"
+    color: "bg-pink-500/20 text-pink-400"
   },
   analytics: {
     name: "Analytics",
     icon: <Shield className="w-6 h-6" />,
-    color: "bg-cyan-100 text-cyan-700"
+    color: "bg-cyan-500/20 text-cyan-400"
   },
   payments: {
     name: "Payments",
     icon: <DollarSign className="w-6 h-6" />,
-    color: "bg-teal-100 text-teal-700"
+    color: "bg-teal-500/20 text-teal-400"
   }
 };
 
@@ -191,7 +191,7 @@ export default function ServicesPage() {
               // Get color from settings or fallback to config
               const color = (typeof featureDetails.color === 'string' ? featureDetails.color : null) || 
                 featureConfig[key]?.color || 
-                "bg-gray-100 text-gray-700";
+                "bg-slate-700 text-slate-300";
               
               // Get name from settings or fallback to config
               const name = (typeof featureDetails.name === 'string' ? featureDetails.name : null) || 
@@ -245,8 +245,8 @@ export default function ServicesPage() {
       <div className="mb-8">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
-            <p className="text-gray-600">Loading features...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mb-4"></div>
+            <p className="text-slate-400">Loading features...</p>
           </div>
         </div>
       </div>
@@ -260,11 +260,11 @@ export default function ServicesPage() {
         {features.map((feature) => (
           <div
             key={feature.key}
-            className={`bg-white rounded-xl shadow-sm p-4 border transition-all duration-200 cursor-pointer hover:shadow-md ${
+            className={`bg-slate-900/80 backdrop-blur-sm rounded-xl shadow-lg p-4 border transition-all duration-200 cursor-pointer hover:shadow-xl ${
               feature.featured 
-                ? "border-amber-300 border-2" 
-                : "border-gray-200"
-            } ${feature.enabled ? "hover:border-blue-300" : "opacity-75"}`}
+                ? "border-amber-500/50 border-2" 
+                : "border-slate-800"
+            } ${feature.enabled ? "hover:border-emerald-500/50" : "opacity-75"}`}
             onClick={() => {
               if (feature.enabled && feature.route) {
                 router.push(feature.route);
@@ -277,15 +277,15 @@ export default function ServicesPage() {
               </div>
               <div className="flex flex-col items-end gap-1">
                 {feature.featured && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400">
                     <Star className="w-3 h-3" />
                     <span>Featured</span>
                   </div>
                 )}
                 <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                   feature.enabled 
-                    ? "bg-green-100 text-green-800" 
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-emerald-500/20 text-emerald-400" 
+                    : "bg-slate-700 text-slate-400"
                 }`}>
                   {feature.enabled ? (
                     <>
@@ -302,31 +302,31 @@ export default function ServicesPage() {
               </div>
             </div>
             
-            <h3 className="text-base font-semibold text-gray-800 mb-1">
+            <h3 className="text-base font-semibold text-white mb-1">
               {feature.name}
             </h3>
             
             {feature.description && (
-              <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+              <p className="text-xs text-slate-400 mb-2 line-clamp-2">
                 {feature.description}
               </p>
             )}
             
             <div className="flex flex-wrap gap-1 mb-2">
               {feature.category && (
-                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md border border-blue-500/30">
                   {feature.category}
                 </span>
               )}
               {feature.services && feature.services.length > 0 && (
-                <span className="text-xs bg-gray-50 text-gray-700 px-2 py-0.5 rounded-md border border-gray-200">
+                <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-md border border-slate-600">
                   {feature.services.length} {feature.services.length === 1 ? 'service' : 'services'}
                 </span>
               )}
             </div>
             
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-3 text-xs text-gray-500">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-800">
+              <div className="flex items-center gap-3 text-xs text-slate-500">
                 {feature.users !== undefined && feature.users > 0 && (
                   <div className="flex items-center gap-1">
                     <Users className="w-3 h-3" />
@@ -341,7 +341,7 @@ export default function ServicesPage() {
                 )}
               </div>
               {feature.enabled && feature.route && (
-                <ArrowRight className="w-4 h-4 text-gray-400" />
+                <ArrowRight className="w-4 h-4 text-slate-500" />
               )}
             </div>
           </div>
@@ -351,9 +351,9 @@ export default function ServicesPage() {
       {/* Empty state */}
       {features.length === 0 && !loading && (
         <div className="text-center py-12">
-          <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-medium text-gray-700 mb-2">No features found</h3>
-          <p className="text-gray-500">
+          <Shield className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+          <h3 className="text-xl font-medium text-white mb-2">No features found</h3>
+          <p className="text-slate-400">
             Unable to load features from the API
           </p>
         </div>

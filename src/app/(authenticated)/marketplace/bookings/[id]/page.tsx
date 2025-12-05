@@ -717,7 +717,7 @@ export default function BookingDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
@@ -725,12 +725,12 @@ export default function BookingDetailPage() {
   if (error || !booking) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Booking Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The booking you're looking for doesn't exist."}</p>
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Booking Not Found</h2>
+        <p className="text-slate-400 mb-6">{error || "The booking you're looking for doesn't exist."}</p>
         <Link
           href="/marketplace/my-bookings"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
         >
           Back to My Bookings
         </Link>
@@ -744,7 +744,7 @@ export default function BookingDetailPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/marketplace/my-bookings"
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-700 transition-colors"
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to My Bookings
@@ -752,10 +752,10 @@ export default function BookingDetailPage() {
       </div>
 
       {/* Booking Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-slate-900/80 rounded-lg shadow-lg p-6 border border-slate-800">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-700 mb-2">{booking.service?.name || booking.service?.title || 'Service'}</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{booking.service?.name || booking.service?.title || 'Service'}</h1>
             <div className="flex items-center gap-4 mb-4">
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
                 {getStatusIcon(booking.status)}
@@ -766,10 +766,10 @@ export default function BookingDetailPage() {
                 return (
                   <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
                     paymentStatus === "PAID" || paymentStatus === "paid"
-                      ? "bg-green-100 text-green-800" 
+                      ? "bg-emerald-500/20 text-emerald-400" 
                       : paymentStatus === "PENDING" || paymentStatus === "pending"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-red-100 text-red-800"
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-red-500/20 text-red-400"
                   }`}>
                     <CreditCard className="w-4 h-4" />
                     {paymentStatus.toUpperCase()}
@@ -779,10 +779,10 @@ export default function BookingDetailPage() {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-3xl font-bold text-emerald-400">
               {formatPrice(booking.totalPrice || booking.pricing?.totalAmount || 0)}
             </div>
-            <div className="text-sm text-gray-500">Total Amount</div>
+            <div className="text-sm text-slate-500">Total Amount</div>
           </div>
         </div>
       </div>

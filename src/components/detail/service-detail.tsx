@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Service } from "@/types/services";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface ServiceDetailProps {
   service: Service;
@@ -96,7 +97,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
           {service.pricing && (
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold">
-                ₱{service.pricing.basePrice}
+                {formatCurrency(service.pricing.basePrice, 'PHP')}
               </span>
               <span className="text-gray-600">
                 /{service.pricing.type === "hourly" ? "hr" : service.pricing.type === "fixed" ? "service" : service.pricing.type}
@@ -207,7 +208,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Insurance</h2>
             <p className="text-gray-600">
-              Covered up to ₱{service.insurance.coverageAmount?.toLocaleString()}
+              Covered up to {formatCurrency(service.insurance.coverageAmount || 0, 'PHP')}
             </p>
           </Card>
         )}

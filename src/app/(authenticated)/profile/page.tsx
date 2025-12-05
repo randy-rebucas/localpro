@@ -57,12 +57,12 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
       
       <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -72,32 +72,32 @@ export default function ProfilePage() {
             <User className="w-7 h-7" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-1">Profile</h1>
-            <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your account information and settings</p>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-blue-300 to-white bg-clip-text text-transparent mb-1">Profile</h1>
+            <p className="text-sm sm:text-base text-slate-400 font-medium">Manage your account information and settings</p>
           </div>
         </div>
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-12">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl p-12">
           <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mb-4"></div>
-            <p className="text-gray-600 font-medium">Loading profile...</p>
-            <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your information</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500 mb-4"></div>
+            <p className="text-white font-medium">Loading profile...</p>
+            <p className="text-sm text-slate-400 mt-1">Please wait while we fetch your information</p>
           </div>
         </div>
       )}
 
       {/* Error State */}
       {error && !loading && (
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl border-2 border-red-300 shadow-xl p-6">
+        <div className="bg-slate-900/80 border border-red-500/30 rounded-2xl shadow-xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+            <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-red-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Unable to Load Profile</h3>
-              <p className="text-red-600 mb-4">{error}</p>
+              <h3 className="text-lg font-semibold text-white mb-1">Unable to Load Profile</h3>
+              <p className="text-red-400 mb-4">{error}</p>
               <button
                 onClick={() => window.location.reload()}
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
@@ -117,17 +117,17 @@ export default function ProfilePage() {
 
       {/* Empty State */}
       {!loading && !error && !profile && (
-        <div className="bg-gradient-to-br from-white to-yellow-50/30 rounded-2xl border-2 border-yellow-300 shadow-xl p-6">
+        <div className="bg-slate-900/80 border border-yellow-500/30 rounded-2xl shadow-xl p-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
+            <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-yellow-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">No Profile Data Available</h3>
-              <p className="text-yellow-600 mb-4">We couldn&apos;t find any profile information. Please try refreshing the page.</p>
+              <h3 className="text-lg font-semibold text-white mb-1">No Profile Data Available</h3>
+              <p className="text-yellow-400 mb-4">We couldn&apos;t find any profile information. Please try refreshing the page.</p>
               <button
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl hover:from-emerald-600 hover:to-teal-600 transition-all shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:scale-105"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh Page

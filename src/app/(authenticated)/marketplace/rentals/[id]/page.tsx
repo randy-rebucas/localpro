@@ -30,6 +30,7 @@ import { ListSkeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { formatCurrency } from "@/lib/currency-utils";
 
 export interface Rental {
   id: string;
@@ -217,7 +218,7 @@ export default function RentalDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <Breadcrumbs
@@ -237,7 +238,7 @@ export default function RentalDetailPage() {
 
   if (error || !rental) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <Breadcrumbs
@@ -249,10 +250,10 @@ export default function RentalDetailPage() {
               ]}
             />
           </div>
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center bg-slate-900/80 border-slate-800">
             <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Rental not found</h3>
-            <p className="text-gray-600 mb-6">{error || "The rental you're looking for doesn't exist."}</p>
+            <h3 className="text-lg font-medium text-white mb-2">Rental not found</h3>
+            <p className="text-slate-400 mb-6">{error || "The rental you're looking for doesn't exist."}</p>
             <Button onClick={() => router.push('/marketplace/rentals')}>
               Back to Rentals
             </Button>
@@ -263,7 +264,7 @@ export default function RentalDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -385,7 +386,7 @@ export default function RentalDetailPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-gray-900">
-                    ₱{rental.price}
+                    {formatCurrency(rental.price, 'PHP')}
                     <span className="text-lg text-gray-500">/{rental.priceUnit}</span>
                   </div>
                   <div className="flex items-center gap-1 mt-1">
@@ -474,7 +475,7 @@ export default function RentalDetailPage() {
             <Card className="p-6">
               <div className="text-center mb-6">
                 <div className="text-3xl font-bold text-gray-900 mb-2">
-                  ₱{rental.price}
+                  {formatCurrency(rental.price, 'PHP')}
                   <span className="text-lg text-gray-500">/{rental.priceUnit}</span>
                 </div>
                 <Badge className={`${getStatusColor(rental.status)} flex items-center gap-1 justify-center`}>

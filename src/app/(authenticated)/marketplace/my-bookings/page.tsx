@@ -24,6 +24,7 @@ import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { CommunicationAPI } from "@/lib/communication-utils";
+import { formatCurrency } from "@/lib/currency-utils";
 
 // Booking Entity Interface (matching data-entities.md)
 interface Booking {
@@ -519,17 +520,17 @@ export default function MyBookingsPage() {
     const normalizedStatus = status.toLowerCase();
     switch (normalizedStatus) {
       case "pending":
-        return "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200";
+        return "bg-amber-500/20 text-amber-400 border border-amber-500/30";
       case "confirmed":
-        return "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200";
+        return "bg-blue-500/20 text-blue-400 border border-blue-500/30";
       case "in_progress":
-        return "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200";
+        return "bg-purple-500/20 text-purple-400 border border-purple-500/30";
       case "completed":
-        return "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200";
+        return "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
       case "cancelled":
-        return "bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200";
+        return "bg-red-500/20 text-red-400 border border-red-500/30";
       default:
-        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200";
+        return "bg-slate-800 text-slate-400 border border-slate-700";
     }
   };
 
@@ -567,33 +568,33 @@ export default function MyBookingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-600/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="p-4 space-y-4 relative z-10">
           {/* Header Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+                <div className="h-7 bg-slate-800 rounded w-40 animate-pulse"></div>
+                <div className="h-4 bg-slate-800 rounded w-56 animate-pulse"></div>
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg w-40 animate-pulse"></div>
+              <div className="h-10 bg-slate-800 rounded-lg w-40 animate-pulse"></div>
             </div>
           </div>
 
           {/* Filters Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+          <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-4 backdrop-blur-sm">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+                  <div className="h-4 bg-slate-800 rounded w-24 animate-pulse"></div>
+                  <div className="h-10 bg-slate-800 rounded-lg animate-pulse"></div>
                 </div>
               ))}
             </div>
@@ -643,10 +644,10 @@ export default function MyBookingsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
           <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
@@ -699,10 +700,10 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
@@ -913,7 +914,7 @@ export default function MyBookingsPage() {
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(totalPrice)}
+                            {formatCurrency(totalPrice, 'PHP')}
                           </div>
                           <div className="text-sm text-gray-500">Total</div>
                         </div>
@@ -972,7 +973,7 @@ export default function MyBookingsPage() {
                           <ul className="text-sm text-gray-600 space-y-1">
                             {booking.pricing.additionalFees.map((fee, idx) => (
                               <li key={idx}>
-                                {fee.description || 'Additional fee'}: {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(fee.amount || 0)}
+                                {fee.description || 'Additional fee'}: {formatCurrency(fee.amount || 0, 'PHP')}
                               </li>
                             ))}
                           </ul>

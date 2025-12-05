@@ -196,16 +196,16 @@ export default function HeaderPage() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "online":
-        return "text-green-600";
+        return "text-emerald-400";
       case "maintenance":
-        return "text-yellow-600";
+        return "text-yellow-400";
       case "degraded":
-        return "text-orange-600";
+        return "text-orange-400";
       case "unhealthy":
       case "offline":
-        return "text-red-600";
+        return "text-red-400";
       default:
-        return "text-gray-600";
+        return "text-slate-400";
     }
   };
 
@@ -217,19 +217,19 @@ export default function HeaderPage() {
           {/* Left side - Greeting and info */}
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
                   {greeting}, {getUserDisplayName()}! 👋
                 </h1>
-                <p className="text-gray-600 text-lg">
+                <p className="text-slate-400 text-lg">
                   {formatDate(currentTime)} • {formatTime(currentTime)}
                 </p>
               </div>
             </div>
-            <p className="text-gray-600 text-base max-w-2xl">
+            <p className="text-slate-400 text-base max-w-2xl">
               Welcome to your LocalPro dashboard. Access all your professional services, 
               track your activity, and manage your business in one place.
             </p>
@@ -246,16 +246,16 @@ export default function HeaderPage() {
                     {loading ? "..." : platformStatus}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">Platform Status</p>
+                <p className="text-xs text-slate-500">Platform Status</p>
               </div>
               <div className="text-center">
-                <div className="flex items-center gap-1 text-blue-600">
+                <div className="flex items-center gap-1 text-blue-400">
                   <Zap className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {loading ? "..." : activeServices > 0 ? `${activeServices}` : "Active"}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">All Services</p>
+                <p className="text-xs text-slate-500">All Services</p>
               </div>
             </div>
           </div>

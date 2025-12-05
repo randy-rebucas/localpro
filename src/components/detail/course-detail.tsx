@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/courses";
 import { useSession } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface CourseDetailProps {
   course: Course;
@@ -127,15 +128,15 @@ export function CourseDetail({
               {course.pricing.discountedPrice ? (
                 <>
                   <span className="text-3xl font-bold">
-                    ₱{course.pricing.discountedPrice}
+                    {formatCurrency(course.pricing.discountedPrice, 'PHP')}
                   </span>
                   <span className="text-lg text-gray-500 line-through">
-                    ₱{course.pricing.regularPrice}
+                    {formatCurrency(course.pricing.regularPrice, 'PHP')}
                   </span>
                 </>
               ) : (
                 <span className="text-3xl font-bold">
-                  ₱{course.pricing.regularPrice}
+                  {formatCurrency(course.pricing.regularPrice, 'PHP')}
                 </span>
               )}
             </div>

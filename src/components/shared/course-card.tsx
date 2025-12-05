@@ -7,6 +7,7 @@ import { Star, Clock, Users, GraduationCap, Play, Heart, Share2 } from "lucide-r
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Course } from "@/types/courses";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface CourseCardProps {
   course: Course;
@@ -97,11 +98,11 @@ export function CourseCard({ course, viewMode = "list", onEnroll, onFavorite }: 
               <div className="flex items-center gap-2">
                 {course.pricing.discountedPrice ? (
                   <>
-                    <span className="text-lg font-bold">₱{course.pricing.discountedPrice}</span>
-                    <span className="text-sm text-gray-500 line-through">₱{course.pricing.regularPrice}</span>
+                    <span className="text-lg font-bold">{formatCurrency(course.pricing.discountedPrice, 'PHP')}</span>
+                    <span className="text-sm text-gray-500 line-through">{formatCurrency(course.pricing.regularPrice, 'PHP')}</span>
                   </>
                 ) : (
-                  <span className="text-lg font-bold">₱{course.pricing.regularPrice}</span>
+                  <span className="text-lg font-bold">{formatCurrency(course.pricing.regularPrice, 'PHP')}</span>
                 )}
               </div>
             </div>

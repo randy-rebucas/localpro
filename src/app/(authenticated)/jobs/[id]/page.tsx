@@ -434,7 +434,7 @@ export default function JobDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
@@ -442,12 +442,12 @@ export default function JobDetailPage() {
   if (error || !job) {
     return (
       <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The job you're looking for doesn't exist."}</p>
+        <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-white mb-2">Job Not Found</h2>
+        <p className="text-slate-400 mb-6">{error || "The job you're looking for doesn't exist."}</p>
         <Link
           href="/jobs"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          className="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors"
         >
           Back to Jobs
         </Link>
@@ -463,25 +463,25 @@ export default function JobDetailPage() {
       <div className="flex items-center gap-4">
         <Link
           href="/jobs"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
           title="Back to marketplace"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-slate-400" />
         </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
           <Briefcase className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">{job.title}</h1>
-          <p className="text-sm text-gray-600">{job.description ? job.description.substring(0, 80) + (job.description.length > 80 ? '...' : '') : 'Job opportunity'}</p>
+          <h1 className="text-2xl font-bold text-white mb-1">{job.title}</h1>
+          <p className="text-sm text-slate-400">{job.description ? job.description.substring(0, 80) + (job.description.length > 80 ? '...' : '') : 'Job opportunity'}</p>
         </div>
       </div>
 
       {/* Job Details */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-slate-900/80 rounded-lg shadow-lg p-6 border border-slate-800">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+            <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
               {job.company?.name && (
                 <div className="flex items-center gap-1">
                   <Building2 className="w-4 h-4" />

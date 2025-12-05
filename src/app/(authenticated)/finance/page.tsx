@@ -123,12 +123,9 @@ export default function FinancePage() {
   }, []);
 
   const formatCurrency = useCallback((amount: number) => {
-    try {
-      return formatCurrencyUtil(amount, overview?.wallet?.currency || 'PHP');
-    } catch {
-      return `₱${amount?.toLocaleString() || '0'}`;
-    }
-  }, [overview?.wallet?.currency]);
+    // Always use PHP currency through the utility
+    return formatCurrencyUtil(amount, 'PHP');
+  }, []);
 
   const fetchFinanceData = useCallback(async (isRefresh = false) => {
     if (abortControllerRef.current) {

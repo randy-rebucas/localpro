@@ -520,8 +520,8 @@ export default function MarketplaceAdsPage() {
       <div className="p-4 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Ads Nearby</h1>
-            <p className="text-gray-600">Discover ads in your area</p>
+            <h1 className="text-2xl font-bold text-white">Ads Nearby</h1>
+            <p className="text-slate-400">Discover ads in your area</p>
           </div>
         </div>
         <ListSkeleton />
@@ -535,8 +535,8 @@ export default function MarketplaceAdsPage() {
         <Card interactive={false}>
           <EmptyState
             icon={Megaphone}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
+            iconColor="text-red-400"
+            iconBgColor="bg-red-500/20"
             title="Unable to Load Ads"
             description={error}
             actions={[
@@ -582,16 +582,16 @@ export default function MarketplaceAdsPage() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left Sidebar - Filters */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <Card className="p-4 sticky top-4">
+          <Card className="p-4 sticky top-4 bg-slate-900/80 border-slate-800">
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                <SlidersHorizontal className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg font-semibold text-white">Filters</h2>
+                <SlidersHorizontal className="w-5 h-5 text-slate-400" />
               </div>
 
               {/* Category Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Category
                 </label>
                 <select

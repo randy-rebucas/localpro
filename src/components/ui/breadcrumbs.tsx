@@ -16,7 +16,7 @@ type BreadcrumbsProps = {
 
 export function Breadcrumbs({
   items,
-  className = "text-sm text-gray-500",
+  className = "text-sm text-slate-400",
   ariaLabel = "Breadcrumb",
   separator = "/",
 }: BreadcrumbsProps) {
@@ -26,10 +26,10 @@ export function Breadcrumbs({
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={`${item.label}-${index}`} className={isLast ? "text-gray-700 font-medium" : undefined}>
+            <li key={`${item.label}-${index}`} className={isLast ? "text-white font-medium" : undefined}>
               {item.href && !isLast ? (
                 <div className="flex items-center gap-2">
-                  <Link href={item.href} className="hover:text-gray-700">
+                  <Link href={item.href} className="hover:text-white">
                     {item.label}
                   </Link>
                   {!isLast && <span className="select-none">{separator}</span>}

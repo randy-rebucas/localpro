@@ -9,6 +9,7 @@ import {
   Clock,
   Star,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency-utils";
 
 interface FilterSidebarProps {
   isOpen: boolean;
@@ -95,14 +96,14 @@ export function FilterSidebar({
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Min</p>
                   <span className="text-base font-bold text-green-700">
-                    ₱{priceRange[0].toLocaleString()}
+                    {formatCurrency(priceRange[0], 'PHP')}
                   </span>
                 </div>
                 <div className="w-px h-8 bg-green-200"></div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Max</p>
                   <span className="text-base font-bold text-green-700">
-                    ₱{priceRange[1].toLocaleString()}
+                    {formatCurrency(priceRange[1], 'PHP')}
                   </span>
                 </div>
               </div>

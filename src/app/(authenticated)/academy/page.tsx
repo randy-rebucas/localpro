@@ -542,34 +542,34 @@ export default function AcademyPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+            <div className="min-h-screen bg-slate-950 relative overflow-hidden">
                 {/* Animated Background Blobs */}
                 <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-                    <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                    <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
                 </div>
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
                     {/* Header Skeleton */}
                     <div className="animate-pulse">
-                        <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
-                        <div className="h-12 bg-gray-200 rounded-lg w-full mb-4"></div>
+                        <div className="h-8 bg-slate-800 rounded w-1/3 mb-2"></div>
+                        <div className="h-4 bg-slate-800 rounded w-1/2 mb-6"></div>
+                        <div className="h-12 bg-slate-800 rounded-lg w-full mb-4"></div>
                         <div className="flex gap-3">
-                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
-                            <div className="h-10 bg-gray-200 rounded-lg w-32"></div>
+                            <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+                            <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
+                            <div className="h-10 bg-slate-800 rounded-lg w-32"></div>
                         </div>
                     </div>
 
                     {/* Content Skeleton */}
                     <div className="flex flex-col lg:flex-row gap-6">
                         <div className="lg:w-64 flex-shrink-0">
-                            <div className="bg-white rounded-xl border-2 border-gray-200 p-6 animate-pulse">
-                                <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+                            <div className="bg-slate-900/80 rounded-xl border border-slate-800 p-6 animate-pulse">
+                                <div className="h-6 bg-slate-800 rounded w-1/2 mb-4"></div>
                                 <div className="space-y-4">
                                     {Array.from({ length: 4 }).map((_, i) => (
-                                        <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                                        <div key={i} className="h-10 bg-slate-800 rounded"></div>
                                     ))}
                                 </div>
                             </div>
@@ -585,17 +585,17 @@ export default function AcademyPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+            <div className="min-h-screen bg-slate-950 relative overflow-hidden">
                 <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
                 </div>
                 <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     <Card interactive={false}>
                         <EmptyState
                             icon={GraduationCap}
-                            iconColor="text-red-600"
-                            iconBgColor="bg-red-100"
+                            iconColor="text-red-400"
+                            iconBgColor="bg-red-500/20"
                             title="Unable to Load Courses"
                             description={error}
                             actions={[
@@ -615,12 +615,12 @@ export default function AcademyPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+        <div className="min-h-screen bg-slate-950 relative overflow-hidden">
             {/* Animated Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-                <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+                <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-float"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+                <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl animate-float animation-delay-4000"></div>
             </div>
 
             <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -628,17 +628,17 @@ export default function AcademyPage() {
                 <div className="mb-6">
                     <div className="flex items-start justify-between mb-2">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            <h1 className="text-3xl font-bold text-white mb-2">
                                 Academy — Learn skills that grow your career
                             </h1>
-                            <p className="text-gray-600">
+                            <p className="text-slate-400">
                                 Expert-led courses, certifications, and hands-on training for service professionals.
                             </p>
                         </div>
                         {(isInstructor || isAdmin) && (
                             <button
                                 onClick={handleCreateCourse}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg hover:from-emerald-600 hover:to-emerald-700 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
                             >
                                 <Plus className="w-4 h-4" />
                                 Create Course
@@ -648,33 +648,33 @@ export default function AcademyPage() {
                 </div>
 
                 {/* Subheader - Feature Links */}
-                <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4">
+                <div className="mb-6 flex items-center gap-6 border-b border-slate-800 pb-4">
                     <Link 
                         href="/academy/instructors" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group"
                     >
-                        <CheckCircle2 className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">Verified Instructors</span>
                     </Link>
                     <Link 
                         href="/academy/certifications" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group"
                     >
-                        <Award className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <Award className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">Certificates</span>
                     </Link>
                     <Link 
                         href="/support" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group"
                     >
-                        <Headphones className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <Headphones className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">Support</span>
                     </Link>
                     <Link 
                         href="/academy/my-courses" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                        className="inline-flex items-center gap-2 text-slate-400 hover:text-emerald-400 transition-colors group"
                     >
-                        <BookOpen className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <BookOpen className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">My Courses</span>
                     </Link>
                 </div>
@@ -682,19 +682,19 @@ export default function AcademyPage() {
                 {/* Search Bar */}
                 <div className="relative mb-6">
                     <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                        <Search className="w-5 h-5 text-gray-400" />
+                        <Search className="w-5 h-5 text-slate-500" />
                     </div>
                     <input
                         type="text"
                         placeholder="Search courses, skills, or instructors"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500"
                     />
                     {searchQuery && (
                         <button
                             onClick={() => setSearchQuery("")}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -705,13 +705,13 @@ export default function AcademyPage() {
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left Sidebar - Filters */}
                     <aside className="lg:w-64 flex-shrink-0">
-                        <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6 space-y-6 sticky top-24">
+                        <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6 space-y-6 sticky top-24">
                             {/* Filters Section */}
                             <div>
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                                    <h2 className="text-lg font-bold text-white">Filters</h2>
                                     {activeFiltersCount > 0 && (
-                                        <span className="px-2 py-0.5 bg-green-600 text-white text-xs font-medium rounded-full">
+                                        <span className="px-2 py-0.5 bg-emerald-500 text-white text-xs font-medium rounded-full">
                                             {activeFiltersCount}
                                         </span>
                                     )}
@@ -719,11 +719,11 @@ export default function AcademyPage() {
                                 
                                 {/* Category Filter */}
                                 <div className="mb-4">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">Category</label>
                                     <select
                                         value={filters.category}
                                         onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                                        className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white font-medium"
                                     >
                                         {categories.map(category => (
                                             <option key={category.value} value={category.value}>
@@ -735,11 +735,11 @@ export default function AcademyPage() {
 
                                 {/* Level Filter */}
                                 <div className="mb-4">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Level</label>
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">Level</label>
                                     <select
                                         value={filters.level}
                                         onChange={(e) => setFilters(prev => ({ ...prev, level: e.target.value }))}
-                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                                        className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white font-medium"
                                     >
                                         {levels.map(level => (
                                             <option key={level.value} value={level.value}>
@@ -751,33 +751,33 @@ export default function AcademyPage() {
 
                                 {/* Price Range */}
                                 <div className="mb-4">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price Range</label>
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">Price Range</label>
                                     <div className="flex gap-2">
                                         <input
                                             type="number"
                                             value={filters.priceRange[0] || ""}
                                             onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [parseInt(e.target.value) || 0, prev.priceRange[1]] }))}
                                             placeholder="Min"
-                                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                                            className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500"
                                         />
-                                        <span className="self-center text-gray-500">-</span>
+                                        <span className="self-center text-slate-500">-</span>
                                         <input
                                             type="number"
                                             value={filters.priceRange[1] || ""}
                                             onChange={(e) => setFilters(prev => ({ ...prev, priceRange: [prev.priceRange[0], parseInt(e.target.value) || 1000] }))}
                                             placeholder="Max"
-                                            className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white"
+                                            className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white placeholder-slate-500"
                                         />
                                     </div>
                                 </div>
 
                                 {/* Rating Filter */}
                                 <div className="mb-4">
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Minimum Rating</label>
+                                    <label className="block text-sm font-semibold text-slate-300 mb-2">Minimum Rating</label>
                                     <select
                                         value={filters.rating}
                                         onChange={(e) => setFilters(prev => ({ ...prev, rating: Number(e.target.value) }))}
-                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
+                                        className="w-full px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md bg-slate-800 text-white font-medium"
                                     >
                                         <option value={0}>Any Rating</option>
                                         <option value={4}>4+ Stars</option>
@@ -793,9 +793,9 @@ export default function AcademyPage() {
                                             type="checkbox"
                                             checked={filters.certification}
                                             onChange={(e) => setFilters(prev => ({ ...prev, certification: e.target.checked }))}
-                                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500 bg-slate-800"
                                         />
-                                        <span className="text-sm font-medium text-gray-700">With Certification</span>
+                                        <span className="text-sm font-medium text-slate-300">With Certification</span>
                                     </label>
                                 </div>
 
@@ -806,9 +806,9 @@ export default function AcademyPage() {
                                             type="checkbox"
                                             checked={filters.enrollment}
                                             onChange={(e) => setFilters(prev => ({ ...prev, enrollment: e.target.checked }))}
-                                            className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                                            className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-500 bg-slate-800"
                                         />
-                                        <span className="text-sm font-medium text-gray-700">Open Enrollment</span>
+                                        <span className="text-sm font-medium text-slate-300">Open Enrollment</span>
                                     </label>
                                 </div>
 
@@ -816,7 +816,7 @@ export default function AcademyPage() {
                                 {activeFiltersCount > 0 && (
                                     <button
                                         onClick={clearFilters}
-                                        className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                                        className="w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                                     >
                                         Clear Filters
                                     </button>
@@ -825,18 +825,18 @@ export default function AcademyPage() {
 
                             {/* Become an Instructor Section */}
                             {isClient && !isInstructor && !isAdmin && (
-                                <div className="pt-6 border-t-2 border-gray-200">
-                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                                <div className="pt-6 border-t-2 border-slate-800">
+                                    <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                                         <div className="flex items-start gap-3 mb-3">
-                                            <Sparkles className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                            <Sparkles className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                                             <div>
-                                                <h3 className="font-semibold text-gray-900 text-sm">Become an Instructor</h3>
-                                                <p className="text-xs text-gray-600 mt-1">Share your expertise and earn by creating courses.</p>
+                                                <h3 className="font-semibold text-white text-sm">Become an Instructor</h3>
+                                                <p className="text-xs text-slate-400 mt-1">Share your expertise and earn by creating courses.</p>
                                             </div>
                                         </div>
                                         <Link
                                             href="/plus?upgrade=instructor"
-                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md font-medium text-sm"
+                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all shadow-sm hover:shadow-md font-medium text-sm"
                                         >
                                             Upgrade Now
                                             <ArrowRight className="w-4 h-4" />
@@ -846,8 +846,8 @@ export default function AcademyPage() {
                             )}
 
                             {/* Popular Categories */}
-                            <div className="pt-6 border-t-2 border-gray-200">
-                                <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
+                            <div className="pt-6 border-t-2 border-slate-800">
+                                <h2 className="text-lg font-bold text-white mb-4">Popular Categories</h2>
                                 <div className="flex flex-wrap gap-2">
                                     {categories.filter(c => c.value).slice(0, 5).map((category) => (
                                         <button
@@ -855,8 +855,8 @@ export default function AcademyPage() {
                                             onClick={() => setFilters(prev => ({ ...prev, category: prev.category === category.value ? "" : category.value }))}
                                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
                                                 filters.category === category.value
-                                                    ? "bg-green-600 text-white border-green-600"
-                                                    : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200"
+                                                    ? "bg-emerald-500 text-white border-emerald-500"
+                                                    : "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700"
                                             }`}
                                         >
                                             {category.label}
@@ -866,12 +866,12 @@ export default function AcademyPage() {
                             </div>
 
                             {/* Learning Tips */}
-                            <div className="pt-6 border-t-2 border-gray-200">
-                                <h2 className="text-lg font-bold text-gray-900 mb-4">Learning tips</h2>
+                            <div className="pt-6 border-t-2 border-slate-800">
+                                <h2 className="text-lg font-bold text-white mb-4">Learning tips</h2>
                                 <ul className="space-y-3">
                                     {learningTips.map((tip, index) => (
-                                        <li key={index} className="text-sm text-gray-600 flex items-start gap-2">
-                                            <span className="text-green-600 mt-1">•</span>
+                                        <li key={index} className="text-sm text-slate-400 flex items-start gap-2">
+                                            <span className="text-emerald-400 mt-1">•</span>
                                             <span>{tip}</span>
                                         </li>
                                     ))}
@@ -879,18 +879,18 @@ export default function AcademyPage() {
                             </div>
 
                             {/* Need Help Section */}
-                            <div className="pt-6 border-t-2 border-gray-200">
-                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
+                            <div className="pt-6 border-t-2 border-slate-800">
+                                <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
                                     <div className="flex items-start gap-3 mb-3">
-                                        <HelpCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                        <HelpCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
                                         <div>
-                                            <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
-                                            <p className="text-xs text-gray-600 mt-1">Our team is here to help you find the right course.</p>
+                                            <h3 className="font-semibold text-white text-sm">Need Help?</h3>
+                                            <p className="text-xs text-slate-400 mt-1">Our team is here to help you find the right course.</p>
                                         </div>
                                     </div>
                                     <Link
                                         href="/support"
-                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-green-600 rounded-lg hover:bg-green-50 transition-all border border-green-200 font-medium text-sm"
+                                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-emerald-400 rounded-lg hover:bg-slate-700 transition-all border border-slate-700 font-medium text-sm"
                                     >
                                         <Zap className="w-4 h-4" />
                                         Contact Support
@@ -904,12 +904,12 @@ export default function AcademyPage() {
                     <div className="flex-1 min-w-0 space-y-6">
                         {/* My Enrolled Courses Section */}
                         {session && myEnrollments.length > 0 && (
-                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-lg font-bold text-gray-900">Continue Learning</h2>
+                                    <h2 className="text-lg font-bold text-white">Continue Learning</h2>
                                     <Link 
                                         href="/academy/my-courses" 
-                                        className="text-sm text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                                        className="text-sm text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
                                     >
                                         View All
                                         <ArrowRight className="w-4 h-4" />
@@ -921,23 +921,23 @@ export default function AcademyPage() {
                                         if (!course) return null;
                                         const courseId = course.id || course._id || '';
                                         return (
-                                            <div key={enrollment._id || enrollment.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-green-300 hover:shadow-md transition-all">
+                                            <div key={enrollment._id || enrollment.id} className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-emerald-500 hover:shadow-md transition-all">
                                                 <div className="space-y-3">
                                                     <div className="flex items-start justify-between">
-                                                        <h3 className="font-semibold text-gray-900 line-clamp-2 text-sm">{course.title}</h3>
+                                                        <h3 className="font-semibold text-white line-clamp-2 text-sm">{course.title}</h3>
                                                         {enrollment.status === 'completed' && (
-                                                            <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 ml-2" />
+                                                            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 ml-2" />
                                                         )}
                                                     </div>
                                                     {enrollment.progress !== undefined && (
                                                         <div className="space-y-1">
                                                             <div className="flex items-center justify-between text-xs">
-                                                                <span className="text-gray-600">Progress</span>
-                                                                <span className="font-medium text-gray-900">{enrollment.progress}%</span>
+                                                                <span className="text-slate-400">Progress</span>
+                                                                <span className="font-medium text-white">{enrollment.progress}%</span>
                                                             </div>
-                                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                            <div className="w-full bg-slate-700 rounded-full h-2">
                                                                 <div 
-                                                                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all"
+                                                                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all"
                                                                     style={{ width: `${enrollment.progress}%` }}
                                                                 />
                                                             </div>
@@ -945,7 +945,7 @@ export default function AcademyPage() {
                                                     )}
                                                     <button
                                                         onClick={() => handleViewCourse(courseId)}
-                                                        className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium text-sm flex items-center justify-center gap-2"
+                                                        className="w-full px-3 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-medium text-sm flex items-center justify-center gap-2"
                                                     >
                                                         <Play className="w-4 h-4" />
                                                         {enrollment.status === 'completed' ? 'Review' : 'Continue'}
@@ -960,10 +960,10 @@ export default function AcademyPage() {
 
                         {/* Featured Courses Section */}
                         {featuredCourses.length > 0 && (
-                            <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-6">
+                            <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg p-6">
                                 <div className="flex items-center gap-2 mb-4">
-                                    <Sparkles className="w-5 h-5 text-yellow-500" />
-                                    <h2 className="text-lg font-bold text-gray-900">Featured Courses</h2>
+                                    <Sparkles className="w-5 h-5 text-amber-400" />
+                                    <h2 className="text-lg font-bold text-white">Featured Courses</h2>
                                 </div>
                                 <div className="space-y-4">
                                     {featuredCourses.slice(0, 3).map((course, index) => (
@@ -980,13 +980,13 @@ export default function AcademyPage() {
 
                         {/* Sort and Results Count */}
                         <div className="flex items-center justify-between">
-                            <p className="text-gray-600 text-sm">
+                            <p className="text-slate-400 text-sm">
                                 {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
                             </p>
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm bg-white font-medium"
+                                className="px-3 py-2 border-2 border-slate-700 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm bg-slate-800 text-white font-medium"
                             >
                                 {sortOptions.map(option => (
                                     <option key={option.value} value={option.value}>
@@ -1029,15 +1029,15 @@ export default function AcademyPage() {
                                 
                                 {/* Pagination */}
                                 {pagination.pages > 1 && (
-                                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-                                        <div className="text-sm text-gray-600">
+                                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800">
+                                        <div className="text-sm text-slate-400">
                                             Showing {((pagination.current - 1) * pagination.limit) + 1} to {Math.min(pagination.current * pagination.limit, pagination.total)} of {pagination.total} courses
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
                                                 onClick={() => handlePageChange(pagination.current - 1)}
                                                 disabled={pagination.current === 1}
-                                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
                                                 aria-label="Previous page"
                                             >
                                                 <ChevronLeft className="w-4 h-4" />
@@ -1060,8 +1060,8 @@ export default function AcademyPage() {
                                                             onClick={() => handlePageChange(pageNum)}
                                                             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                                                                 pagination.current === pageNum
-                                                                    ? "bg-green-600 text-white"
-                                                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                                                    ? "bg-emerald-500 text-white"
+                                                                    : "border border-slate-700 text-slate-300 hover:bg-slate-800"
                                                             }`}
                                                         >
                                                             {pageNum}
@@ -1072,7 +1072,7 @@ export default function AcademyPage() {
                                             <button
                                                 onClick={() => handlePageChange(pagination.current + 1)}
                                                 disabled={pagination.current === pagination.pages}
-                                                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                className="p-2 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-slate-300"
                                                 aria-label="Next page"
                                             >
                                                 <ChevronRight className="w-4 h-4" />
@@ -1158,11 +1158,11 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
     // Get level badge color
     const getLevelColor = (level: Course['level']) => {
         switch (level) {
-            case 'beginner': return 'bg-green-100 text-green-800';
-            case 'intermediate': return 'bg-blue-100 text-blue-800';
-            case 'advanced': return 'bg-purple-100 text-purple-800';
-            case 'expert': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'beginner': return 'bg-emerald-500/20 text-emerald-400';
+            case 'intermediate': return 'bg-blue-500/20 text-blue-400';
+            case 'advanced': return 'bg-purple-500/20 text-purple-400';
+            case 'expert': return 'bg-red-500/20 text-red-400';
+            default: return 'bg-slate-800 text-slate-400';
         }
     };
     
@@ -1187,8 +1187,8 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                     <Star
                         key={`star-${i}`}
                         className={`w-3.5 h-3.5 ${i < Math.floor(rating)
-                            ? "text-yellow-400 fill-current"
-                            : "text-gray-300"
+                            ? "text-amber-400 fill-current"
+                            : "text-slate-600"
                         }`}
                     />
                 ))}
@@ -1198,12 +1198,12 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
 
     return (
         <div
-            className={`bg-white rounded-xl border-2 border-gray-200 shadow-sm hover:shadow-lg hover:border-green-300 transition-all duration-300 overflow-hidden group flex flex-row items-stretch ${
-                featured ? "ring-2 ring-yellow-400" : ""
+            className={`bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg hover:shadow-xl hover:border-emerald-500 transition-all duration-300 overflow-hidden group flex flex-row items-stretch ${
+                featured ? "ring-2 ring-amber-400" : ""
             }`}
         >
             {/* Course Image - Left Side */}
-            <div className="relative w-48 md:w-56 flex-shrink-0 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+            <div className="relative w-48 md:w-56 flex-shrink-0 bg-slate-800 to-slate-700 overflow-hidden">
                 {imageUrl ? (
                     <Image
                         src={imageUrl}
@@ -1212,7 +1212,7 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 min-h-[10rem]">
+                    <div className="w-full h-full flex items-center justify-center text-slate-500 min-h-[10rem]">
                         <div className="text-center">
                             <BookOpen className="w-10 h-10 mx-auto mb-2" />
                             <span className="text-xs">No Image</span>
@@ -1220,7 +1220,7 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                     </div>
                 )}
                 {featured && (
-                    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                    <div className="absolute top-2 left-2 bg-amber-400 text-white px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         Featured
                     </div>
@@ -1233,10 +1233,10 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                     {/* Title and Instructor */}
                     <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0 pr-4">
-                            <h3 className="font-semibold text-gray-900 text-base group-hover:text-green-600 transition-colors line-clamp-1">
+                            <h3 className="font-semibold text-white text-base group-hover:text-emerald-400 transition-colors line-clamp-1">
                                 {course.title}
                             </h3>
-                            <p className="text-sm text-gray-500 mt-0.5">by {instructorName}</p>
+                            <p className="text-sm text-slate-400 mt-0.5">by {instructorName}</p>
                         </div>
                         {/* Price - Top Right */}
                         <div className="text-right flex-shrink-0">
@@ -1244,26 +1244,26 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                                 <div>
                                     {priceDisplay.discounted && priceDisplay.regular !== undefined && priceDisplay.discounted < priceDisplay.regular ? (
                                         <>
-                                            <span className="text-xs text-gray-400 line-through block">
+                                            <span className="text-xs text-slate-500 line-through block">
                                                 {formatPrice(priceDisplay.regular)}
                                             </span>
-                                            <span className="text-lg font-bold text-green-600">{formatPrice(priceDisplay.discounted)}</span>
+                                            <span className="text-lg font-bold text-emerald-400">{formatPrice(priceDisplay.discounted)}</span>
                                         </>
                                     ) : (
-                                        <span className="text-lg font-bold text-green-600">
+                                        <span className="text-lg font-bold text-emerald-400">
                                             {priceDisplay.regular !== undefined && formatPrice(priceDisplay.regular)}
                                         </span>
                                     )}
                                 </div>
                             ) : (
-                                <span className="text-lg font-bold text-green-600">Free</span>
+                                <span className="text-lg font-bold text-emerald-400">Free</span>
                             )}
                         </div>
                     </div>
 
                     {/* Description */}
                     {course.description && (
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-3">{course.description}</p>
+                        <p className="text-sm text-slate-400 line-clamp-2 mb-3">{course.description}</p>
                     )}
 
                     {/* Tags Row */}
@@ -1271,11 +1271,11 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                         <span className={`text-xs px-2 py-0.5 rounded font-medium ${getLevelColor(course.level)}`}>
                             {course.level}
                         </span>
-                        <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-medium">
+                        <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-medium">
                             {getCategoryLabel(course.category)}
                         </span>
                         {course.certification?.isAvailable && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded font-medium flex items-center gap-1">
+                            <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium flex items-center gap-1">
                                 <Award className="w-3 h-3" />
                                 Certificate
                             </span>
@@ -1284,9 +1284,9 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                 </div>
 
                 {/* Bottom Row - Meta and Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between pt-3 border-t border-slate-800">
                     {/* Meta Info */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-slate-400">
                         <div className="flex items-center gap-1">
                             {renderStars(courseRating)}
                             <span className="ml-1">{courseRating.toFixed(1)} ({reviewCount})</span>
@@ -1304,7 +1304,7 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
                     {/* Action Button */}
                     <button
                         onClick={() => onView(courseId)}
-                        className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-medium text-sm flex items-center gap-2 flex-shrink-0"
+                        className="px-5 py-2.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all font-medium text-sm flex items-center gap-2 flex-shrink-0"
                     >
                         <Play className="w-4 h-4" />
                         View Course

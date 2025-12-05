@@ -719,22 +719,22 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-slate-950 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/25">
               <Heart className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-1">Favorites</h1>
-              <p className="text-sm text-gray-600">Your saved items and services</p>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-1">Favorites</h1>
+              <p className="text-sm text-slate-400">Your saved items and services</p>
             </div>
           </div>
           <ListSkeleton />
@@ -752,26 +752,26 @@ export default function FavoritesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/25">
               <Heart className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-1">Favorites</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-1">Favorites</h1>
+              <p className="text-sm text-slate-400">
                 {totalFavorites > 0 ? (
-                  <span className="font-medium text-gray-700">{totalFavorites} saved item{totalFavorites !== 1 ? 's' : ''}</span>
+                  <span className="font-medium text-slate-300">{totalFavorites} saved item{totalFavorites !== 1 ? 's' : ''}</span>
                 ) : (
                   <span>Your saved items and services</span>
                 )}
@@ -782,10 +782,10 @@ export default function FavoritesPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className={`p-2.5 rounded-lg transition-all border shadow-sm hover:shadow-md ${
+                className={`p-2.5 rounded-lg transition-all border ${
                   viewMode === "grid"
-                    ? "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 text-emerald-700"
-                    : "bg-gradient-to-br from-white to-gray-50 border-gray-200 text-gray-600 hover:from-gray-50 hover:to-gray-100"
+                    ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                    : "bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700 hover:text-white"
                 }`}
                 title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
               >
@@ -796,7 +796,7 @@ export default function FavoritesPage() {
         </div>
 
       {/* Tabs */}
-      <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md border border-gray-200 overflow-hidden backdrop-blur-sm">
+      <div className="bg-slate-900/80 rounded-xl shadow-lg border border-slate-800 overflow-hidden backdrop-blur-sm">
         <div className="flex flex-wrap gap-1 p-2">
           {(['services', 'providers', 'courses', 'supplies', 'jobs'] as FavoriteType[]).map((type) => {
             const Icon = getTypeIcon(type);
@@ -809,15 +809,15 @@ export default function FavoritesPage() {
                 onClick={() => setActiveTab(type)}
                 className={`px-4 py-2.5 flex items-center gap-2 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/30 font-semibold transform hover:scale-105'
-                    : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-emerald-50/30 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/25 font-semibold'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 <span className="capitalize font-medium">{type}</span>
                 {count > 0 && (
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                    isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-400'
                   }`}>
                     {count}
                   </span>
@@ -830,11 +830,11 @@ export default function FavoritesPage() {
 
       {/* Content */}
       {error ? (
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-red-200 shadow-md">
+        <div className="bg-slate-900/80 to-red-500/10 rounded-xl border border-red-500/30 shadow-lg">
           <EmptyState
             icon={Heart}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
+            iconColor="text-red-400"
+            iconBgColor="bg-red-500/20"
             title="Unable to Load Favorites"
             description={error}
             actions={[
@@ -849,7 +849,7 @@ export default function FavoritesPage() {
           />
         </div>
       ) : filteredFavorites.length === 0 ? (
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md">
+        <div className="bg-slate-900/80 rounded-xl border border-slate-800 shadow-lg">
           <EmptyState
             icon={Heart}
             iconColor="text-gray-600"
