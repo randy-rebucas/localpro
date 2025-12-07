@@ -464,6 +464,23 @@ export const API_ENDPOINTS = {
   logsCleanup: "/api/logs/cleanup",
   logsFlush: "/api/logs/flush",
   
+  // Log Configuration Management
+  logsConfig: "/api/logs/config",
+  logsConfigLevel: "/api/logs/config/level",
+  logsConfigOverride: "/api/logs/config/override",
+  logsConfigOverrideByContext: "/api/logs/config/override/[context]",
+  
+  // Log Metrics & Statistics
+  logsMetrics: "/api/logs/metrics",
+  logsMetricsReset: "/api/logs/metrics/reset",
+  logsStatistics: "/api/logs/statistics",
+  logsSlowOperations: "/api/logs/slow-operations",
+  
+  // Log Correlation & Query
+  logsCorrelation: "/api/logs/correlation/[correlationId]",
+  logsErrorsSummary: "/api/logs/errors/summary",
+  logsQuery: "/api/logs/query",
+  
   // Audit Logs
   auditLogs: "/api/audit-logs",
   auditLogsStats: "/api/audit-logs/stats",
