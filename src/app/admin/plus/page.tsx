@@ -11,7 +11,7 @@ import {
   Package,
   Users,
   TrendingUp,
-  DollarSign,
+  Coins,
   CheckCircle2,
   XCircle,
   Clock,
@@ -1415,7 +1415,7 @@ function AnalyticsTab() {
               </p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <Coins className="w-5 h-5 text-green-600" />
             </div>
           </div>
         </div>

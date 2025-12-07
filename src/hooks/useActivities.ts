@@ -685,6 +685,13 @@ export function useGlobalActivityStats() {
       const response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
 
       if (!response.ok) {
+        // 403 is expected for non-admin users - handle silently
+        if (response.status === 403) {
+          if (mountedRef.current) {
+            setStats(null);
+          }
+          return;
+        }
         throw new Error(`Failed to fetch global activity stats: ${response.status}`);
       }
 

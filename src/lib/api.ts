@@ -242,7 +242,6 @@ export const API_ENDPOINTS = {
   adsCreate: "/api/ads",
   adsUpdate: "/api/ads",
   adsDelete: "/api/ads",
-  analyticsCustom: "/api/analytics/custom",
   
   // Trust & Verification
   trustVerificationVerifiedUsers: "/api/trust-verification/verified-users",
@@ -374,13 +373,38 @@ export const API_ENDPOINTS = {
   settingsAppUpdate: "/api/settings/app",
   
   // Analytics & Insights
+  // Authenticated endpoints
+  analyticsMetadata: "/api/analytics/metadata",
+  analyticsTrack: "/api/analytics/track",
+  
+  // Admin-only dashboard & real-time
+  analyticsDashboard: "/api/analytics/dashboard",
+  analyticsRealtime: "/api/analytics/realtime",
+  analyticsTimeSeries: "/api/analytics/time-series",
+  analyticsComparison: "/api/analytics/comparison",
+  analyticsExport: "/api/analytics/export",
+  
+  // Admin-only platform analytics
   analyticsOverview: "/api/analytics/overview",
-  analyticsUser: "/api/analytics/user",
+  analyticsUsers: "/api/analytics/users",
+  analyticsFinancial: "/api/analytics/financial",
   analyticsMarketplace: "/api/analytics/marketplace",
   analyticsJobs: "/api/analytics/jobs",
   analyticsReferrals: "/api/analytics/referrals",
   analyticsAgencies: "/api/analytics/agencies",
-  analyticsTrack: "/api/analytics/track",
+  analyticsCustom: "/api/analytics/custom",
+  
+  // Provider analytics (Provider/Admin access)
+  analyticsProvider: "/api/analytics/provider",
+  analyticsProviderById: "/api/analytics/provider/[providerId]",
+  
+  // Legacy analytics endpoints (keeping for backward compatibility)
+  analyticsUser: "/api/analytics/user",
+  analyticsRealTime: "/api/analytics/real-time",
+  analyticsPerformance: "/api/analytics/performance",
+  analyticsUserBehavior: "/api/analytics/user-behavior",
+  analyticsRevenue: "/api/analytics/revenue",
+  analyticsConversion: "/api/analytics/conversion",
   
   // Broadcaster
   broadcaster: "/api/broadcaster",
@@ -389,12 +413,6 @@ export const API_ENDPOINTS = {
   broadcasterStats: "/api/broadcaster/stats",
   broadcasterView: "/api/broadcaster",
   broadcasterClick: "/api/broadcaster",
-  analyticsRealTime: "/api/analytics/real-time",
-  analyticsPerformance: "/api/analytics/performance",
-  analyticsUserBehavior: "/api/analytics/user-behavior",
-  analyticsRevenue: "/api/analytics/revenue",
-  analyticsConversion: "/api/analytics/conversion",
-  analyticsDashboard: "/api/analytics/dashboard",
   
   // Global Search
   search: "/api/search",
@@ -498,6 +516,38 @@ export const API_ENDPOINTS = {
   
   // Monitoring Endpoints
   monitoringSystemHealth: "/api/monitoring/system-health",
+
+  // Email Marketing - Campaign Management (Admin only)
+  emailMarketingCampaigns: "/api/email-marketing/campaigns",
+  emailMarketingCampaignsById: "/api/email-marketing/campaigns/[id]",
+  emailMarketingCampaignsSend: "/api/email-marketing/campaigns/[id]/send",
+  emailMarketingCampaignsPause: "/api/email-marketing/campaigns/[id]/pause",
+  emailMarketingCampaignsResume: "/api/email-marketing/campaigns/[id]/resume",
+  emailMarketingCampaignsCancel: "/api/email-marketing/campaigns/[id]/cancel",
+  emailMarketingCampaignsTest: "/api/email-marketing/campaigns/[id]/test",
+  emailMarketingCampaignsDuplicate: "/api/email-marketing/campaigns/[id]/duplicate",
+  emailMarketingCampaignsEstimate: "/api/email-marketing/campaigns/estimate-audience",
+  emailMarketingCampaignsAnalytics: "/api/email-marketing/campaigns/[id]/analytics",
+
+  // Email Marketing - Subscriber Management
+  emailMarketingSubscribe: "/api/email-marketing/subscribe",
+  emailMarketingConfirm: "/api/email-marketing/confirm/[token]",
+  emailMarketingUnsubscribe: "/api/email-marketing/unsubscribe/[token]",
+  emailMarketingPreferences: "/api/email-marketing/preferences/[token]",
+  emailMarketingSubscribers: "/api/email-marketing/subscribers",
+  emailMarketingSubscribersById: "/api/email-marketing/subscribers/[id]",
+  emailMarketingSubscribersImport: "/api/email-marketing/subscribers/import",
+  emailMarketingSubscribersExport: "/api/email-marketing/subscribers/export",
+  emailMarketingSubscribersStats: "/api/email-marketing/subscribers/stats",
+
+  // Email Marketing - Analytics (Admin only)
+  emailMarketingAnalytics: "/api/email-marketing/analytics",
+  emailMarketingAnalyticsTop: "/api/email-marketing/analytics/top-campaigns",
+  emailMarketingAnalyticsDaily: "/api/email-marketing/analytics/daily",
+
+  // Email Marketing - Tracking (Automatic)
+  emailMarketingTrackOpen: "/api/email-marketing/track/open/[campaignId]/[subscriberId]",
+  emailMarketingTrackClick: "/api/email-marketing/track/click/[campaignId]/[subscriberId]",
 
   // Live Chat Endpoints (Public)
   liveChatSessions: "/api/live-chat/sessions",

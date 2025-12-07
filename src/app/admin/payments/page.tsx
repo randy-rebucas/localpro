@@ -9,7 +9,7 @@ import {
   CreditCard, 
   TrendingUp, 
   TrendingDown,
-  DollarSign, 
+  Coins, 
   Download,
   Filter,
   RefreshCw,
@@ -851,7 +851,7 @@ export default function PaymentProcessingPage() {
                 <p className="text-xs text-gray-500">+12.5% from last period</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <Coins className="w-5 h-5 text-green-600" />
               </div>
             </div>
           </div>

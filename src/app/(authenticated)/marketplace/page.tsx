@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useMemo } from "react";
+import Link from "next/link";
 import { useSession } from "@/hooks/useAuth";
 import { useRoleView } from "@/hooks/useRoleView";
 import { getUserName } from "@/lib/utils/user-name";
-import { getMarketplaceGreeting } from "@/components/marketplace/marketplace-greeting";
-import { MarketplaceHeader } from "@/components/marketplace/marketplace-header";
 import { ProviderMarketplace } from "@/components/marketplace/provider-marketplace";
 import { Broadcaster } from "@/components/broadcaster";
+import { Plus, BarChart3, Briefcase, Users, Headphones } from "lucide-react";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
@@ -16,10 +16,7 @@ export default function MarketplacePage() {
   const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
 
   // Manage role view state
-  const { isClientView, isProviderView } = useRoleView({ userRoles });
-
-  // Get greeting and description based on role view
-  const { greeting, description } = getMarketplaceGreeting(session, isClientView, isProviderView);
+  const { isProviderView } = useRoleView({ userRoles });
 
   // Get user name for marketplace components
   const userName = getUserName(session);
@@ -33,20 +30,66 @@ export default function MarketplacePage() {
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="relative z-0">
+      <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Broadcaster - Only shown for clients */}
-        <div className="container">
-          <Broadcaster />
+        <Broadcaster />
+
+        {/* Header Section */}
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Marketplace — Jobs, Services & Opportunities
+              </h1>
+              <p className="text-gray-600">
+                Find skilled professionals, post jobs, and connect with trusted service providers.
+              </p>
+            </div>
+            {isProviderView && (
+              <Link
+                href="/marketplace/create-job"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Post Job
+              </Link>
+            )}
+          </div>
         </div>
 
-        {/* Hero / Header Section */}
-        <MarketplaceHeader
-          greeting={greeting}
-          description={description}
-          isProviderView={isProviderView}
-        >
-
-        </MarketplaceHeader>
+        {/* Subheader - Feature Links */}
+        <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4">
+          {isProviderView && (
+            <Link 
+              href="/marketplace/my-jobs" 
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+            >
+              <BarChart3 className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">My Jobs</span>
+            </Link>
+          )}
+          <Link 
+            href="/jobs" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+          >
+            <Briefcase className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Browse Jobs</span>
+          </Link>
+          <Link 
+            href="/providers" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+          >
+            <Users className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Find Providers</span>
+          </Link>
+          <Link 
+            href="/support" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+          >
+            <Headphones className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">Support</span>
+          </Link>
+        </div>
 
         {/* Render marketplace component */}
         <ProviderMarketplace userName={userName} />

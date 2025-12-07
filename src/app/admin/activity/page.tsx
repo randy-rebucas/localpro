@@ -18,7 +18,7 @@ import {
   ShoppingCart,
   Briefcase,
   MessageSquare,
-  DollarSign
+  Coins
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -252,7 +252,7 @@ export default function AdminActivityPage() {
       marketplace: <ShoppingCart className="w-4 h-4" />,
       job_board: <Briefcase className="w-4 h-4" />,
       academy: <FileText className="w-4 h-4" />,
-      financial: <DollarSign className="w-4 h-4" />,
+      financial: <Coins className="w-4 h-4" />,
       communication: <MessageSquare className="w-4 h-4" />,
       authentication: <User className="w-4 h-4" />,
       profile: <User className="w-4 h-4" />

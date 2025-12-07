@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Loading } from "@/components/ui/loading";
 import { 
   CreditCard, 
-  DollarSign, 
+  Coins, 
   Filter,
   Eye,
   CheckCircle,
@@ -770,7 +770,7 @@ export default function FinanceAdmin() {
               </div>
             ) : filteredTopUpRequests.length === 0 ? (
               <div className="text-center py-8">
-                <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                <Coins className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                 <h3 className="text-sm font-medium text-gray-900 mb-1">No top-up requests found</h3>
                 <p className="text-xs text-gray-500">Try adjusting your filters.</p>
               </div>

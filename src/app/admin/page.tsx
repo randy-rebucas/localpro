@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { logger } from "@/lib/logger";
 import { 
   BarChart3, 
   Users, 
@@ -13,65 +12,36 @@ import {
   Megaphone, 
   MessageSquare, 
   Settings,
-  DollarSign,
+  Coins,
   Package,
   ArrowUpRight,
   AlertTriangle,
   TrendingUp,
   TrendingDown,
   Activity,
-  CheckCircle,
-  XCircle,
   RefreshCw,
-  Filter,
   Download,
-  Bell,
-  Shield,
-  Zap,
   Crown,
-  Radio
+  Radio,
+  FileText,
+  Eye,
+  Clock,
+  Database,
+  Wifi,
+  Mail
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 // Lazy load admin error state
 import { LazyAdminErrorState } from "@/lib/lazy-components";
-import { useRoleAccess } from "@/components/role-guard";
-import { useSession } from "@/hooks/useAuth";
+// Role access hooks available for future use
+// import { useRoleAccess } from "@/components/role-guard";
+// import { useSession } from "@/hooks/useAuth";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
-
-interface DashboardStats {
-  totalUsers: number;
-  activeServices: number;
-  totalRevenue: number;
-  growthRate: number;
-  pendingApprovals: number;
-  systemHealth: string;
-  newUsersToday: number;
-  activeBookings: number;
-  conversionRate: number;
-  avgResponseTime: number;
-  serverUptime: number;
-  errorRate: number;
-}
-
-interface RecentActivity {
-  id: string;
-  type: string;
-  description: string;
-  timestamp: string;
-  user: string;
-  status: 'success' | 'warning' | 'error' | 'info';
-  priority: 'low' | 'medium' | 'high';
-}
-
-interface SystemAlert {
-  id: string;
-  type: 'error' | 'warning' | 'info' | 'success';
-  title: string;
-  message: string;
-  timestamp: string;
-  resolved: boolean;
-}
+import { useAnalyticsDashboard, useAnalyticsRealtime, useAnalyticsFinancial, useAnalyticsExport, Timeframe } from "@/hooks/useAnalytics";
+import { useLogStats, useLogs } from "@/hooks/useLogs";
+import { useGlobalActivityStats, useActivityFeed } from "@/hooks/useActivities";
+import { useToast, ToastContainer } from "@/components/ui/toast";
 
 interface ModuleStats {
   supplies: number;
@@ -83,9 +53,7 @@ interface ModuleStats {
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [systemAlerts, setSystemAlerts] = useState<SystemAlert[]>([]);
+  // State
   const [moduleStats, setModuleStats] = useState<ModuleStats>({
     supplies: 0,
     academy: 0,
@@ -94,15 +62,64 @@ export default function AdminDashboard() {
     communication: 0,
     broadcaster: 0,
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("30d");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [showDevTools, setShowDevTools] = useState(false);
-  const roleAccess = useRoleAccess();
-  const { data: session } = useSession();
+  
+  // Toast hook
+  const { toasts, removeToast, success: toastSuccess, error: toastError } = useToast();
+  
+  // Analytics hooks
+  const { 
+    dashboard, 
+    loading: dashboardLoading, 
+    error: dashboardError, 
+    refetch: refetchDashboard 
+  } = useAnalyticsDashboard(selectedTimeframe);
 
-  // Fetch module stats
+  const { 
+    realtime, 
+    loading: realtimeLoading, 
+    refetch: refetchRealtime 
+  } = useAnalyticsRealtime(30000); // Auto-refresh every 30 seconds
+
+  const { 
+    financial, 
+    refetch: refetchFinancial 
+  } = useAnalyticsFinancial(selectedTimeframe);
+
+  const { downloadExport, loading: exportLoading } = useAnalyticsExport();
+
+  // Logs hooks
+  const { 
+    stats: logStats, 
+    loading: logStatsLoading, 
+    refetch: refetchLogStats 
+  } = useLogStats();
+
+  const { 
+    logs: recentLogs, 
+    loading: logsLoading, 
+    refetch: refetchLogs 
+  } = useLogs({ limit: 5, sortOrder: "desc" });
+
+  // Activity hooks
+  const { 
+    stats: activityStats, 
+    refetch: refetchActivityStats 
+  } = useGlobalActivityStats();
+
+  const { 
+    activities: recentActivities, 
+    loading: activitiesLoading, 
+    refetch: refetchActivities 
+  } = useActivityFeed({ limit: 5 });
+
+  // Computed loading state
+  const loading = dashboardLoading && !dashboard;
+  const error = dashboardError;
+
+  // Fetch module stats on mount
   const fetchModuleStats = useCallback(async () => {
     try {
       if (!getApiToken()) return;
@@ -142,262 +159,74 @@ export default function AdminDashboard() {
         communication: typeof communicationCount === 'number' ? communicationCount : 0,
         broadcaster: typeof broadcasterCount === 'number' ? broadcasterCount : 0,
       });
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      logger.warn('Error fetching module stats', { errorMessage: error.message, errorName: error.name });
+    } catch {
+      // Silently handle module stats errors
     }
   }, []);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // Initial fetch of module stats
+  useState(() => {
+    fetchModuleStats();
+  });
 
-        // Fetch real data from admin dashboard API
-        if (!getApiToken()) {
-          throw new Error('Authentication required');
-        }
-        
-        // Fetch dashboard data and module stats in parallel
-        const [dashboardPromise] = await Promise.all([
-          (async () => {
-            // Try analyticsDashboard endpoint first
-            let url = `${API_BASE_URL}${API_ENDPOINTS.analyticsDashboard}`;
-            let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-
-            // If dashboard endpoint doesn't exist (404), fall back to analyticsOverview
-            if (response.status === 404) {
-              logger.warn('Analytics dashboard endpoint not available, falling back to overview endpoint');
-              url = `${API_BASE_URL}${API_ENDPOINTS.analyticsOverview}`;
-              response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-              
-              if (!response.ok) {
-                // If overview also fails, use default data
-                logger.warn('Analytics overview endpoint also unavailable, using default data');
-                return {
-                  stats: {
-                    totalUsers: 0,
-                    activeServices: 0,
-                    totalRevenue: 0,
-                    growthRate: 0,
-                    pendingApprovals: 0,
-                    systemHealth: 'Unknown',
-                    newUsersToday: 0,
-                    activeBookings: 0,
-                    conversionRate: 0,
-                    avgResponseTime: 0,
-                    serverUptime: 0,
-                    errorRate: 0
-                  },
-                  recentActivity: [],
-                  systemAlerts: []
-                };
-              }
-
-              // Transform overview data to dashboard format
-              const overviewResult = await response.json();
-              if (overviewResult.success && overviewResult.data?.overview) {
-                const overview = overviewResult.data.overview;
-                return {
-                  stats: {
-                    totalUsers: overview.totalUsers || 0,
-                    activeServices: overview.totalServices || 0,
-                    totalRevenue: 0,
-                    growthRate: 0,
-                    pendingApprovals: 0,
-                    systemHealth: 'Healthy',
-                    newUsersToday: 0,
-                    activeBookings: 0,
-                    conversionRate: 0,
-                    avgResponseTime: 0,
-                    serverUptime: 100,
-                    errorRate: 0
-                  },
-                  recentActivity: [],
-                  systemAlerts: []
-                };
-              }
-            }
-
-            if (!response.ok) {
-              const errorData = await response.json().catch(() => ({}));
-              throw new Error(errorData.error || `HTTP ${response.status}: Failed to fetch dashboard data`);
-            }
-
-            const result = await response.json();
-            
-            if (!result.success) {
-              throw new Error(result.error || 'Failed to load dashboard data');
-            }
-
-            return {
-              stats: result.data.stats || {
-                totalUsers: 0,
-                activeServices: 0,
-                totalRevenue: 0,
-                growthRate: 0,
-                pendingApprovals: 0,
-                systemHealth: 'Unknown',
-                newUsersToday: 0,
-                activeBookings: 0,
-                conversionRate: 0,
-                avgResponseTime: 0,
-                serverUptime: 0,
-                errorRate: 0
-              },
-              recentActivity: result.data.recentActivity || [],
-              systemAlerts: result.data.systemAlerts || []
-            };
-          })(),
-          fetchModuleStats()
-        ]);
-
-        const dashboardData = await dashboardPromise;
-        setStats(dashboardData.stats);
-        setRecentActivity(dashboardData.recentActivity);
-        setSystemAlerts(dashboardData.systemAlerts);
-        setLastUpdated(new Date());
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        logger.warn('Error fetching dashboard data, using default values', { errorMessage: error.message, errorName: error.name });
-        // Set default data instead of showing error
-        setStats({
-          totalUsers: 0,
-          activeServices: 0,
-          totalRevenue: 0,
-          growthRate: 0,
-          pendingApprovals: 0,
-          systemHealth: 'Unknown',
-          newUsersToday: 0,
-          activeBookings: 0,
-          conversionRate: 0,
-          avgResponseTime: 0,
-          serverUptime: 0,
-          errorRate: 0
-        });
-        setRecentActivity([]);
-        setSystemAlerts([]);
-        setLastUpdated(new Date());
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [fetchModuleStats]);
-
+  // Refresh all data
   const refreshData = useCallback(async () => {
     setRefreshing(true);
     try {
-      // Fetch fresh data from admin dashboard API
-      if (!getApiToken()) {
-        throw new Error('Authentication required');
-      }
-
-      // Try analyticsDashboard endpoint first
-      let url = `${API_BASE_URL}${API_ENDPOINTS.analyticsDashboard}`;
-      let response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-
-      // If dashboard endpoint doesn't exist (404), fall back to analyticsOverview
-      if (response.status === 404) {
-        logger.warn('Analytics dashboard endpoint not available, falling back to overview endpoint');
-        url = `${API_BASE_URL}${API_ENDPOINTS.analyticsOverview}`;
-        response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
-        
-        if (!response.ok) {
-          // If overview also fails, use default data
-          logger.warn('Analytics overview endpoint also unavailable, using default data');
-          setStats({
-            totalUsers: 0,
-            activeServices: 0,
-            totalRevenue: 0,
-            growthRate: 0,
-            pendingApprovals: 0,
-            systemHealth: 'Unknown',
-            newUsersToday: 0,
-            activeBookings: 0,
-            conversionRate: 0,
-            avgResponseTime: 0,
-            serverUptime: 0,
-            errorRate: 0
-          });
-          setRecentActivity([]);
-          setSystemAlerts([]);
-          setLastUpdated(new Date());
-          return;
-        }
-
-        // Transform overview data to dashboard format
-        const overviewResult = await response.json();
-        if (overviewResult.success && overviewResult.data?.overview) {
-          const overview = overviewResult.data.overview;
-          setStats({
-            totalUsers: overview.totalUsers || 0,
-            activeServices: overview.totalServices || 0,
-            totalRevenue: 0,
-            growthRate: 0,
-            pendingApprovals: 0,
-            systemHealth: 'Healthy',
-            newUsersToday: 0,
-            activeBookings: 0,
-            conversionRate: 0,
-            avgResponseTime: 0,
-            serverUptime: 100,
-            errorRate: 0
-          });
-          setRecentActivity([]);
-          setSystemAlerts([]);
-          setLastUpdated(new Date());
-          return;
-        }
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to refresh dashboard data`);
-      }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to refresh dashboard data');
-      }
-
-      const { stats: apiStats, recentActivity: apiActivity, systemAlerts: apiAlerts } = result.data;
-
-      setStats(apiStats);
-      setRecentActivity(apiActivity || []);
-      setSystemAlerts(apiAlerts || []);
+      await Promise.all([
+        refetchDashboard(),
+        refetchRealtime(),
+        refetchFinancial(),
+        refetchLogStats(),
+        refetchLogs(),
+        refetchActivityStats(),
+        refetchActivities(),
+        fetchModuleStats(),
+      ]);
       setLastUpdated(new Date());
-      
-      // Refresh module stats
-      await fetchModuleStats();
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      logger.warn('Error refreshing admin dashboard data, using default values', { errorMessage: error.message, errorName: error.name });
-      // Set default data instead of showing error
-      setStats({
-        totalUsers: 0,
-        activeServices: 0,
-        totalRevenue: 0,
-        growthRate: 0,
-        pendingApprovals: 0,
-        systemHealth: 'Unknown',
-        newUsersToday: 0,
-        activeBookings: 0,
-        conversionRate: 0,
-        avgResponseTime: 0,
-        serverUptime: 0,
-        errorRate: 0
-      });
-      setRecentActivity([]);
-      setSystemAlerts([]);
-      setLastUpdated(new Date());
+      toastSuccess("Dashboard data refreshed");
+    } catch {
+      toastError("Failed to refresh some data");
     } finally {
       setRefreshing(false);
     }
-  }, [fetchModuleStats]);
+  }, [refetchDashboard, refetchRealtime, refetchFinancial, refetchLogStats, refetchLogs, refetchActivityStats, refetchActivities, fetchModuleStats, toastSuccess, toastError]);
+
+  // Handle export
+  const handleExport = useCallback(async (format: "json" | "csv") => {
+    const exportSuccess = await downloadExport({ 
+      type: "overview", 
+      timeframe: selectedTimeframe, 
+      format 
+    });
+    if (exportSuccess) {
+      toastSuccess(`Analytics exported as ${format.toUpperCase()}`);
+    } else {
+      toastError("Failed to export analytics");
+    }
+  }, [downloadExport, selectedTimeframe, toastSuccess, toastError]);
+
+  // Computed stats from dashboard
+  const stats = useMemo(() => {
+    if (!dashboard?.summary) return null;
+    const summary = dashboard.summary;
+    const growth = summary.growth || {};
+    return {
+      totalUsers: summary.users?.total || 0,
+      newUsersToday: summary.users?.new || 0,
+      activeServices: summary.services?.total || 0,
+      totalRevenue: summary.revenue?.total || 0,
+      activeBookings: summary.bookings?.total || 0,
+      completedBookings: summary.bookings?.completed || 0,
+      completionRate: summary.bookings?.completionRate || "0%",
+      totalJobs: summary.jobs?.total || 0,
+      jobApplications: summary.jobs?.applications || 0,
+      totalReferrals: summary.referrals?.total || 0,
+      growthUsers: growth.users || "0%",
+      growthRevenue: growth.revenue || "0%",
+      growthBookings: growth.bookings || "0%",
+    };
+  }, [dashboard]);
 
   // Memoize modules array to prevent unnecessary recalculations
   const modules = useMemo(() => [
@@ -439,7 +268,9 @@ export default function AdminDashboard() {
       icon: CreditCard,
       href: "/admin/finance",
       color: "bg-yellow-500",
-      stats: stats ? `₱${stats.totalRevenue.toLocaleString()}` : "Loading..."
+      stats: financial?.summary?.totalRevenue 
+        ? `₱${financial.summary.totalRevenue.toLocaleString()}` 
+        : stats ? `₱${stats.totalRevenue.toLocaleString()}` : "Loading..."
     },
     {
       name: "Rentals",
@@ -474,20 +305,38 @@ export default function AdminDashboard() {
       stats: moduleStats.broadcaster > 0 ? `${moduleStats.broadcaster.toLocaleString()} broadcasts` : "View broadcasts"
     },
     {
+      name: "Email Marketing",
+      description: "Campaigns and subscriber management",
+      icon: Mail,
+      href: "/admin/email-marketing",
+      color: "bg-rose-500",
+      stats: "Manage campaigns"
+    },
+    {
       name: "Analytics",
       description: "Platform analytics and insights",
       icon: BarChart3,
       href: "/admin/analytics",
       color: "bg-violet-500",
-      stats: "Real-time data"
+      stats: realtime ? `${realtime.activeUsers?.last15Minutes || 0} active now` : "Real-time data"
+    },
+    {
+      name: "Logs",
+      description: "System logs and error tracking",
+      icon: FileText,
+      href: "/admin/logs",
+      color: "bg-slate-500",
+      stats: logStats ? `${logStats.totalLogs?.toLocaleString() || 0} entries` : "View logs"
     },
     {
       name: "Plus",
       description: "Manage subscription plans and revenue",
       icon: Crown,
       href: "/admin/plus",
-      color: "bg-yellow-500",
-      stats: stats ? `₱${stats.totalRevenue.toLocaleString()} revenue` : "Loading..."
+      color: "bg-amber-500",
+      stats: financial?.summary?.totalRevenue 
+        ? `₱${financial.summary.totalRevenue.toLocaleString()} revenue` 
+        : "Loading..."
     },
     {
       name: "System",
@@ -495,31 +344,12 @@ export default function AdminDashboard() {
       icon: Settings,
       href: "/admin/settings",
       color: "bg-gray-500",
-      stats: stats ? stats.systemHealth : "Loading..."
+      stats: logStats?.errorRate !== undefined 
+        ? (logStats.errorRate < 1 ? "Healthy" : "Needs Attention") 
+        : "Loading..."
     }
-  ], [stats, moduleStats]);
+  ], [stats, moduleStats, financial, realtime, logStats]);
 
-  // Memoize helper functions to prevent recreating on every render
-  // These must be defined before any early returns
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case 'success': return 'text-green-600 bg-green-100';
-      case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'error': return 'text-red-600 bg-red-100';
-      case 'info': return 'text-blue-600 bg-blue-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  }, []);
-
-  const getAlertIcon = useCallback((type: string) => {
-    switch (type) {
-      case 'error': return <XCircle className="w-5 h-5 text-red-500" />;
-      case 'warning': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
-      case 'info': return <Bell className="w-5 h-5 text-blue-500" />;
-      case 'success': return <CheckCircle className="w-5 h-5 text-green-500" />;
-      default: return <Bell className="w-5 h-5 text-gray-500" />;
-    }
-  }, []);
 
   if (loading) {
     return (
@@ -541,6 +371,9 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-3">
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
+      
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
         <div>
@@ -548,11 +381,22 @@ export default function AdminDashboard() {
           <p className="text-gray-600 text-sm">LocalPro administration panel</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-          {lastUpdated && (
-            <p className="text-xs text-gray-500">
-              Updated: {lastUpdated.toLocaleTimeString()}
-            </p>
-          )}
+          {/* Timeframe Selector */}
+          <select
+            value={selectedTimeframe}
+            onChange={(e) => setSelectedTimeframe(e.target.value as Timeframe)}
+            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="24h">Last 24h</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+          
+          <p className="text-xs text-gray-500">
+            Updated: {lastUpdated.toLocaleTimeString()}
+          </p>
+          
           <button
             onClick={refreshData}
             disabled={refreshing}
@@ -561,109 +405,41 @@ export default function AdminDashboard() {
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
-          {process.env.NODE_ENV === 'development' && (
-            <button
-              onClick={() => setShowDevTools(!showDevTools)}
-              className="inline-flex items-center px-2 py-1 border border-yellow-300 shadow-sm text-xs font-medium rounded text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200"
-            >
-              <Settings className="w-3 h-3 mr-1" />
-              Dev
-            </button>
-          )}
+          
         </div>
       </div>
 
-      {/* Development Tools */}
-      {showDevTools && process.env.NODE_ENV === 'development' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-yellow-800">Dev Tools</h3>
-            <button
-              onClick={() => setShowDevTools(false)}
-              className="text-yellow-600 hover:text-yellow-800"
-            >
-              <XCircle className="w-4 h-4" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            <div className="bg-white p-3 rounded border border-yellow-200">
-              <h4 className="text-sm font-medium text-gray-900 mb-1">User Info</h4>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p><strong>Roles:</strong> {session?.user?.roles && session.user.roles.length > 0 
-                  ? session.user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
-                  : 'Not set'}</p>
-                <p><strong>Admin Access:</strong> {roleAccess?.isAdmin ? 'Yes' : 'No'}</p>
+      {/* Real-time Status Bar */}
+      {realtime && !realtimeLoading && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-green-800">Live</span>
               </div>
-            </div>
-            <div className="bg-white p-3 rounded border border-yellow-200">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">Quick Actions</h4>
-              <div className="space-y-2">
-                <div className="flex space-x-2">
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(`${API_BASE_URL}/api/admin/setup`, createAuthFetchOptions({
-                          method: 'POST'
-                        }));
-                        const result = await response.json();
-                        if (result.success) {
-                          alert('Admin role set! Please refresh the page.');
-                          window.location.reload();
-                        } else {
-                          alert('Failed to set admin role: ' + result.error);
-                        }
-                      } catch (error) {
-                        alert('Error: ' + error);
-                      }
-                    }}
-                    className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs"
-                  >
-                    Set Admin Role
-                  </button>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 text-xs"
-                  >
-                    Refresh
-                  </button>
+              <div className="flex items-center space-x-6 text-sm text-green-700">
+                <div className="flex items-center space-x-1">
+                  <Eye className="w-4 h-4" />
+                  <span><strong>{realtime.activeUsers?.last15Minutes || 0}</strong> active users</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <label className="text-xs font-medium text-gray-700">Role:</label>
-                  <select
-                    onChange={async (e) => {
-                      const newRole = e.target.value;
-                      if (newRole) {
-                        try {
-                          const response = await fetch(`${API_BASE_URL}/api/admin/update-role`, createAuthFetchOptions({
-                            method: 'POST',
-                            body: JSON.stringify({ role: newRole })
-                          }));
-                          const result = await response.json();
-                          if (result.success) {
-                            alert(`Role updated to ${newRole}! Refreshing page...`);
-                            window.location.reload();
-                          } else {
-                            alert('Failed to update role: ' + result.error);
-                          }
-                        } catch (error) {
-                          alert('Error: ' + error);
-                        }
-                      }
-                    }}
-                    className="px-2 py-1 border border-gray-300 rounded text-xs"
-                  >
-                    <option value="">Select Role</option>
-                    <option value="client">Client</option>
-                    <option value="provider">Provider</option>
-                    <option value="supplier">Supplier</option>
-                    <option value="instructor">Instructor</option>
-                    <option value="agency_owner">Agency Owner</option>
-                    <option value="agency_admin">Agency Admin</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                <div className="flex items-center space-x-1">
+                  <ShoppingCart className="w-4 h-4" />
+                  <span><strong>{realtime.bookings?.lastHour || 0}</strong> bookings/hr</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Coins className="w-4 h-4" />
+                  <span><strong>₱{(realtime.revenue?.lastHour || 0).toLocaleString()}</strong> revenue/hr</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Users className="w-4 h-4" />
+                  <span><strong>{realtime.newUsers?.lastHour || 0}</strong> new users/hr</span>
                 </div>
               </div>
             </div>
+            <span className="text-xs text-green-600">
+              {realtime.timestamp ? new Date(realtime.timestamp).toLocaleTimeString() : ""}
+            </span>
           </div>
         </div>
       )}
@@ -686,13 +462,13 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
-            {stats?.growthRate && stats.growthRate > 0 ? (
+            {stats?.growthUsers && parseFloat(stats.growthUsers) > 0 ? (
               <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
             ) : (
               <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
             )}
-            <span className={`font-medium ${stats?.growthRate && stats.growthRate > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {stats?.growthRate && stats.growthRate > 0 ? '+' : ''}{stats?.growthRate || 0}%
+            <span className={`font-medium ${stats?.growthUsers && parseFloat(stats.growthUsers) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {stats?.growthUsers || '0%'}
             </span>
           </div>
         </div>
@@ -705,7 +481,7 @@ export default function AdminDashboard() {
                 {stats?.activeServices.toLocaleString() || '0'}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.activeBookings || 0} bookings
+                {stats?.activeBookings || 0} bookings ({stats?.completionRate || '0%'})
               </p>
             </div>
             <div className="p-2 bg-green-100 rounded-lg">
@@ -713,8 +489,14 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
-            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-            <span className="text-green-600 font-medium">+8.2%</span>
+            {stats?.growthBookings && parseFloat(stats.growthBookings) > 0 ? (
+              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+            ) : (
+              <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
+            )}
+            <span className={`font-medium ${stats?.growthBookings && parseFloat(stats.growthBookings) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {stats?.growthBookings || '0%'}
+            </span>
           </div>
         </div>
         
@@ -723,39 +505,45 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Total Revenue</p>
               <p className="text-xl font-bold text-gray-900">
-                ${stats?.totalRevenue.toLocaleString() || '0'}
+                ₱{(financial?.summary?.totalRevenue || stats?.totalRevenue || 0).toLocaleString()}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.conversionRate || 0}% conversion
+                {financial?.summary?.transactionCount || 0} transactions
               </p>
             </div>
             <div className="p-2 bg-yellow-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-yellow-600" />
+              <Coins className="w-5 h-5 text-yellow-600" />
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
-            <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-            <span className="text-green-600 font-medium">+12.5%</span>
+            {(stats?.growthRevenue && parseFloat(stats.growthRevenue) > 0) || (financial?.summary?.growth && parseFloat(financial.summary.growth) > 0) ? (
+              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+            ) : (
+              <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
+            )}
+            <span className={`font-medium ${(stats?.growthRevenue && parseFloat(stats.growthRevenue) > 0) || (financial?.summary?.growth && parseFloat(financial.summary.growth) > 0) ? 'text-green-600' : 'text-red-600'}`}>
+              {financial?.summary?.growth || stats?.growthRevenue || '0%'}
+            </span>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500">Pending Approvals</p>
+              <p className="text-xs font-medium text-gray-500">Jobs & Applications</p>
               <p className="text-xl font-bold text-gray-900">
-                {stats?.pendingApprovals || '0'}
+                {stats?.totalJobs || '0'}
               </p>
               <p className="text-xs text-gray-500">
-                High priority
+                {stats?.jobApplications || 0} applications
               </p>
             </div>
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Activity className="w-5 h-5 text-purple-600" />
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
-            <span className="text-red-600 font-medium">Attention</span>
+            <span className="text-purple-600 font-medium">{stats?.totalReferrals || 0} referrals</span>
           </div>
         </div>
       </div>
@@ -765,16 +553,16 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-3 border-l-4 border-purple-500">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500">System Health</p>
+              <p className="text-xs font-medium text-gray-500">Total Logs</p>
               <p className="text-lg font-bold text-gray-900">
-                {stats?.serverUptime || 0}%
+                {logStats?.totalLogs?.toLocaleString() || 0}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.systemHealth || 'Unknown'}
+                {logStats?.last24Hours?.total?.toLocaleString() || 0} last 24h
               </p>
             </div>
             <div className="p-2 bg-purple-100 rounded-lg">
-              <Shield className="w-4 h-4 text-purple-600" />
+              <Database className="w-4 h-4 text-purple-600" />
             </div>
           </div>
         </div>
@@ -784,14 +572,14 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Response Time</p>
               <p className="text-lg font-bold text-gray-900">
-                {stats?.avgResponseTime || 0}s
+                {logStats?.averageResponseTime ? `${logStats.averageResponseTime.toFixed(0)}ms` : 'N/A'}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.avgResponseTime && stats.avgResponseTime < 2 ? 'Excellent' : 'Good'}
+                {logStats?.averageResponseTime && logStats.averageResponseTime < 200 ? 'Excellent' : logStats?.averageResponseTime && logStats.averageResponseTime < 500 ? 'Good' : 'Needs Attention'}
               </p>
             </div>
             <div className="p-2 bg-cyan-100 rounded-lg">
-              <Zap className="w-4 h-4 text-cyan-600" />
+              <Clock className="w-4 h-4 text-cyan-600" />
             </div>
           </div>
         </div>
@@ -801,14 +589,14 @@ export default function AdminDashboard() {
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Error Rate</p>
               <p className="text-lg font-bold text-gray-900">
-                {stats?.errorRate || 0}%
+                {logStats?.errorRate !== undefined ? `${logStats.errorRate.toFixed(2)}%` : 'N/A'}
               </p>
               <p className="text-xs text-gray-500">
-                {stats?.errorRate && stats.errorRate < 1 ? 'Low' : 'High'}
+                {logStats?.recentErrors || 0} recent errors
               </p>
             </div>
             <div className="p-2 bg-orange-100 rounded-lg">
-              <Activity className="w-4 h-4 text-orange-600" />
+              <AlertTriangle className="w-4 h-4 text-orange-600" />
             </div>
           </div>
         </div>
@@ -816,46 +604,91 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-3 border-l-4 border-indigo-500">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-xs font-medium text-gray-500">Active Alerts</p>
+              <p className="text-xs font-medium text-gray-500">Active Users</p>
               <p className="text-lg font-bold text-gray-900">
-                {systemAlerts?.filter(alert => !alert.resolved).length || 0}
+                {activityStats?.activeUsersToday || 0}
               </p>
               <p className="text-xs text-gray-500">
-                {(systemAlerts?.filter(alert => !alert.resolved).length || 0) === 0 ? 'All Clear' : 'Attention'}
+                {activityStats?.activeUsersWeek || 0} this week
               </p>
             </div>
             <div className="p-2 bg-indigo-100 rounded-lg">
-              <Bell className="w-4 h-4 text-indigo-600" />
+              <Wifi className="w-4 h-4 text-indigo-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity & Quick Actions */}
+      {/* Log Level Summary */}
+      {logStats && !logStatsLoading && (
+        <div className="bg-white rounded-lg shadow p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-medium text-gray-900">Log Summary</h3>
+            <Link href="/admin/logs" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {logStats.byLevel && Object.entries(logStats.byLevel).map(([level, count]) => {
+              const colors: Record<string, string> = {
+                debug: 'bg-gray-100 text-gray-700 border-gray-200',
+                info: 'bg-blue-100 text-blue-700 border-blue-200',
+                warn: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+                error: 'bg-red-100 text-red-700 border-red-200',
+                fatal: 'bg-purple-100 text-purple-700 border-purple-200',
+              };
+              return (
+                <div key={level} className={`rounded p-2 text-center border ${colors[level] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                  <p className="text-xs uppercase font-medium">{level}</p>
+                  <p className="text-lg font-bold">{(count as number)?.toLocaleString() || 0}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity & Recent Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* Recent Activities */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="text-base font-medium text-gray-900">Recent Activity</h3>
+          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-base font-medium text-gray-900">Recent Activities</h3>
+            <Link href="/admin/activities" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
           </div>
           <div className="p-4">
-            {recentActivity && recentActivity.length > 0 ? (
+            {activitiesLoading ? (
+              <div className="flex justify-center py-4">
+                <Loading size="sm" />
+              </div>
+            ) : recentActivities && recentActivities.length > 0 ? (
               <div className="space-y-2">
-                {recentActivity?.slice(0, 4).map((activity) => (
-                  <div key={activity.id} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
+                {recentActivities.slice(0, 5).map((activity) => (
+                  <div key={activity._id || activity.id} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
                     <div className="flex-shrink-0">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${getStatusColor(activity.status).split(' ')[1]}`}></div>
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        activity.category === 'financial' ? 'bg-green-500' :
+                        activity.category === 'marketplace' ? 'bg-blue-500' :
+                        activity.category === 'social' ? 'bg-purple-500' :
+                        activity.category === 'learning' ? 'bg-indigo-500' :
+                        'bg-gray-500'
+                      }`}></div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-900 font-medium truncate">{activity.description}</p>
-                        <span className={`text-xs px-1 py-0.5 rounded ${getStatusColor(activity.status)}`}>
-                          {activity.status}
+                        <p className="text-xs text-gray-900 font-medium truncate">
+                          {activity.title || activity.description || activity.type}
+                        </p>
+                        <span className="text-xs px-1 py-0.5 rounded bg-gray-100 text-gray-600">
+                          {activity.type}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mt-1">
-                        <p className="text-xs text-gray-500">{activity.user}</p>
+                        <p className="text-xs text-gray-500 truncate">
+                          {typeof activity.user === 'object' 
+                            ? activity.user.fullName || activity.user.email 
+                            : activity.user || 'Unknown'}
+                        </p>
                         <span className="text-xs text-gray-400">
-                          {new Date(activity.timestamp).toLocaleTimeString()}
+                          {activity.createdAt ? new Date(activity.createdAt).toLocaleTimeString() : ''}
                         </span>
                       </div>
                     </div>
@@ -868,121 +701,195 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Recent Logs */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="text-base font-medium text-gray-900">Quick Actions</h3>
+          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-base font-medium text-gray-900">Recent Logs</h3>
+            <Link href="/admin/logs" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
           </div>
           <div className="p-4">
-            <div className="space-y-2">
-              <Link 
-                href="/admin/users"
-                className="w-full text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors group block"
-              >
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 text-blue-600 mr-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Manage Users</p>
-                    <p className="text-xs text-gray-500">View and edit accounts</p>
-                  </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                </div>
-              </Link>
-              
-              <Link 
-                href="/admin/settings"
-                className="w-full text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors group block"
-              >
-                <div className="flex items-center">
-                  <Settings className="w-4 h-4 text-green-600 mr-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">System Settings</p>
-                    <p className="text-xs text-gray-500">Configure platform</p>
-                  </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
-                </div>
-              </Link>
-              
-              <Link 
-                href="/admin/analytics"
-                className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors group block"
-              >
-                <div className="flex items-center">
-                  <BarChart3 className="w-4 h-4 text-purple-600 mr-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">View Analytics</p>
-                    <p className="text-xs text-gray-500">Performance metrics</p>
-                  </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-purple-600 transition-colors" />
-                </div>
-              </Link>
-
-              <Link 
-                href="/admin/errors"
-                className="w-full text-left px-3 py-2 bg-red-50 hover:bg-red-100 rounded transition-colors group block"
-              >
-                <div className="flex items-center">
-                  <AlertTriangle className="w-4 h-4 text-red-600 mr-2" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Review Alerts</p>
-                    <p className="text-xs text-gray-500">System warnings</p>
-                  </div>
-                  <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-red-600 transition-colors" />
-                </div>
-              </Link>
-            </div>
+            {logsLoading ? (
+              <div className="flex justify-center py-4">
+                <Loading size="sm" />
+              </div>
+            ) : recentLogs && recentLogs.length > 0 ? (
+              <div className="space-y-2">
+                {recentLogs.slice(0, 5).map((log, idx) => {
+                  const levelColors: Record<string, string> = {
+                    debug: 'bg-gray-100 text-gray-700',
+                    info: 'bg-blue-100 text-blue-700',
+                    warn: 'bg-yellow-100 text-yellow-700',
+                    error: 'bg-red-100 text-red-700',
+                    fatal: 'bg-purple-100 text-purple-700',
+                  };
+                  return (
+                    <div key={log._id || log.id || idx} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
+                      <span className={`text-xs px-1.5 py-0.5 rounded uppercase font-medium ${levelColors[log.level] || 'bg-gray-100 text-gray-700'}`}>
+                        {log.level}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-900 font-medium truncate">{log.message}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-500">{log.source || log.category || 'system'}</p>
+                          <span className="text-xs text-gray-400">
+                            {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-2 text-sm">No recent logs</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* System Alerts */}
-      {systemAlerts && systemAlerts.length > 0 && (
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-medium text-gray-900">System Alerts</h3>
-              <span className="text-xs text-gray-500">
-                {systemAlerts?.filter(alert => !alert.resolved).length || 0} active
-              </span>
-            </div>
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h3 className="text-base font-medium text-gray-900">Quick Actions</h3>
+        </div>
+        <div className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Link 
+              href="/admin/users"
+              className="text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors group block"
+            >
+              <div className="flex items-center">
+                <Users className="w-4 h-4 text-blue-600 mr-2" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Manage Users</p>
+                  <p className="text-xs text-gray-500">View and edit accounts</p>
+                </div>
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors" />
+              </div>
+            </Link>
+            
+            <Link 
+              href="/admin/settings"
+              className="text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors group block"
+            >
+              <div className="flex items-center">
+                <Settings className="w-4 h-4 text-green-600 mr-2" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">System Settings</p>
+                  <p className="text-xs text-gray-500">Configure platform</p>
+                </div>
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
+              </div>
+            </Link>
+            
+            <Link 
+              href="/admin/analytics"
+              className="text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 rounded transition-colors group block"
+            >
+              <div className="flex items-center">
+                <BarChart3 className="w-4 h-4 text-purple-600 mr-2" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">View Analytics</p>
+                  <p className="text-xs text-gray-500">Performance metrics</p>
+                </div>
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-purple-600 transition-colors" />
+              </div>
+            </Link>
+
+            <Link 
+              href="/admin/logs"
+              className="text-left px-3 py-2 bg-red-50 hover:bg-red-100 rounded transition-colors group block"
+            >
+              <div className="flex items-center">
+                <FileText className="w-4 h-4 text-red-600 mr-2" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">View Logs</p>
+                  <p className="text-xs text-gray-500">System & error logs</p>
+                </div>
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-red-600 transition-colors" />
+              </div>
+            </Link>
           </div>
-          <div className="p-4">
-            <div className="space-y-2">
-              {systemAlerts?.slice(0, 3).map((alert) => (
-                <div key={alert.id} className={`p-3 rounded border-l-4 ${
-                  alert.type === 'error' ? 'border-red-500 bg-red-50' :
-                  alert.type === 'warning' ? 'border-yellow-500 bg-yellow-50' :
-                  alert.type === 'info' ? 'border-blue-500 bg-blue-50' :
-                  'border-green-500 bg-green-50'
-                }`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-2">
-                      {getAlertIcon(alert.type)}
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900">{alert.title}</h4>
-                        <p className="text-xs text-gray-600 mt-1">{alert.message}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {new Date(alert.timestamp).toLocaleString()}
-                        </p>
+        </div>
+      </div>
+
+      {/* Top Metrics from Dashboard */}
+      {dashboard?.topMetrics && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          {/* Top Providers */}
+          {dashboard.topMetrics.topProviders && dashboard.topMetrics.topProviders.length > 0 && (
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900">Top Providers</h3>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
+                  {dashboard.topMetrics.topProviders.slice(0, 5).map((provider, idx) => (
+                    <div key={provider.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-5 h-5 flex items-center justify-center bg-blue-100 text-blue-600 text-xs font-bold rounded-full">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm text-gray-900 truncate">{provider.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-gray-900">₱{provider.revenue?.toLocaleString() || 0}</p>
+                        <p className="text-xs text-gray-500">{provider.bookings} bookings</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      {alert.resolved ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Resolved
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                          <AlertTriangle className="w-3 h-3 mr-1" />
-                          Active
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Top Services */}
+          {dashboard.topMetrics.topServices && dashboard.topMetrics.topServices.length > 0 && (
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900">Top Services</h3>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
+                  {dashboard.topMetrics.topServices.slice(0, 5).map((service, idx) => (
+                    <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-5 h-5 flex items-center justify-center bg-green-100 text-green-600 text-xs font-bold rounded-full">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm text-gray-900 truncate">{service.name}</span>
+                      </div>
+                      <p className="text-xs font-medium text-gray-600">{service.bookings} bookings</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Top Categories */}
+          {dashboard.topMetrics.topCategories && dashboard.topMetrics.topCategories.length > 0 && (
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-medium text-gray-900">Top Categories</h3>
+              </div>
+              <div className="p-3">
+                <div className="space-y-2">
+                  {dashboard.topMetrics.topCategories.slice(0, 5).map((category, idx) => (
+                    <div key={`${category.category}-${idx}`} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex items-center space-x-2">
+                        <span className="w-5 h-5 flex items-center justify-center bg-purple-100 text-purple-600 text-xs font-bold rounded-full">
+                          {idx + 1}
+                        </span>
+                        <span className="text-sm text-gray-900 capitalize truncate">{category.category}</span>
+                      </div>
+                      <p className="text-xs font-medium text-gray-600">{category.count} services</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -991,13 +898,21 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold text-gray-900">Admin Modules</h2>
           <div className="flex items-center space-x-2">
-            <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              <Filter className="w-3 h-3 mr-1" />
-              Filter
-            </button>
-            <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button 
+              onClick={() => handleExport("json")}
+              disabled={exportLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
               <Download className="w-3 h-3 mr-1" />
-              Export
+              Export JSON
+            </button>
+            <button 
+              onClick={() => handleExport("csv")}
+              disabled={exportLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <Download className="w-3 h-3 mr-1" />
+              Export CSV
             </button>
           </div>
         </div>

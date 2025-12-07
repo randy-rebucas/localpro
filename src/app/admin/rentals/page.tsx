@@ -14,7 +14,7 @@ import {
   Eye,
   X,
   Package,
-  DollarSign,
+  Coins,
   Filter
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
@@ -1360,7 +1360,7 @@ export default function RentalsPage() {
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
-                <DollarSign className="w-5 h-5 text-yellow-600" />
+                <Coins className="w-5 h-5 text-yellow-600" />
               </div>
             </div>
           </div>

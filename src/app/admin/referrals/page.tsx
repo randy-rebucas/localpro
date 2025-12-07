@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { 
   Target, 
-  DollarSign, 
+  Coins, 
   Clock, 
   CheckCircle, 
   XCircle, 
@@ -511,7 +511,7 @@ export default function AdminReferralsPage() {
                 <p className="text-lg font-bold text-gray-900">{formatCurrency(stats.totalRewards)}</p>
                 <p className="text-xs text-gray-500">{formatCurrency(stats.paidRewards)} paid</p>
               </div>
-              <DollarSign className="w-5 h-5 text-purple-600" />
+              <Coins className="w-5 h-5 text-purple-600" />
             </div>
           </div>
         </div>

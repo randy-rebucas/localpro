@@ -187,7 +187,6 @@ export function CategoriesCarousel({
   categories,
   onCategorySelect,
   selectedCategoryId,
-  showDescription = false,
   className = "",
   loading = false,
   error = null,
@@ -304,58 +303,47 @@ export function CategoriesCarousel({
       {canScrollLeft && (
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-gradient-to-r from-white to-gray-50 rounded-full shadow-xl border-2 border-gray-200 flex items-center justify-center hover:from-green-50 hover:to-green-100 hover:border-green-300 transition-all hover:scale-110 hover:shadow-green-200/50"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-300 transition-all hover:scale-110"
           aria-label="Scroll left"
         >
-          <ChevronLeft className="w-6 h-6 text-gray-700 hover:text-green-700" />
+          <ChevronLeft className="w-4 h-4 text-gray-600" />
         </button>
       )}
 
       {/* Scrollable Container */}
       <div
         ref={scrollContainerRef}
-        className="overflow-x-auto pb-4 -mx-4 px-4 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="overflow-x-auto pb-2 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
-        <div className="flex gap-3 min-w-max py-2 px-2">
+        <div className="flex gap-2 min-w-max py-1 px-1">
           {categories.map((category) => {
             const categoryKey = getCategoryKey(category);
             const isSelected = isCategorySelected(category);
+            const IconComponent = getCategoryIcon(category);
 
             return (
               <button
                 key={categoryKey}
                 onClick={() => handleCategoryClick(category)}
-                className={`flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-300 min-w-[130px] text-left transform hover:scale-105 ${
+                className={`group inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full transition-all duration-200 whitespace-nowrap ${
                   isSelected
-                    ? "bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-500 shadow-lg shadow-green-200/50"
-                    : "bg-gradient-to-br from-gray-50 to-white border-2 border-transparent hover:border-green-300 hover:shadow-lg hover:bg-gradient-to-br hover:from-green-50/50 hover:to-blue-50/50"
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 border-2 border-green-500"
+                    : "bg-white text-gray-700 border border-gray-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md"
                 }`}
                 type="button"
               >
-                {(() => {
-                  const IconComponent = getCategoryIcon(category);
-                  return (
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                      isSelected 
-                        ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-300/50' 
-                        : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 group-hover:from-green-100 group-hover:to-green-200 group-hover:text-green-600'
-                    }`}>
-                      <IconComponent className={`w-6 h-6 ${isSelected ? 'animate-pulse' : ''}`} />
-                    </div>
-                  );
-                })()}
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className={`text-sm font-semibold transition-colors ${
-                    isSelected ? 'text-green-700' : 'text-gray-700'
-                  }`}>{category.name}</span>
-                  {showDescription && category.description && (
-                    <span className={`text-xs text-center line-clamp-2 transition-colors ${
-                      isSelected ? 'text-green-600' : 'text-gray-500'
-                    }`}>
-                      {category.description}
-                    </span>
-                  )}
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                  isSelected 
+                    ? 'bg-white/20' 
+                    : 'bg-gray-100 group-hover:bg-green-100'
+                }`}>
+                  <IconComponent className={`w-4 h-4 ${
+                    isSelected ? 'text-white' : 'text-gray-600 group-hover:text-green-600'
+                  }`} />
                 </div>
+                <span className={`text-sm font-semibold ${
+                  isSelected ? 'text-white' : 'text-gray-700 group-hover:text-green-700'
+                }`}>{category.name}</span>
               </button>
             );
           })}
@@ -366,10 +354,10 @@ export function CategoriesCarousel({
       {canScrollRight && (
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-gradient-to-r from-white to-gray-50 rounded-full shadow-xl border-2 border-gray-200 flex items-center justify-center hover:from-green-50 hover:to-green-100 hover:border-green-300 transition-all hover:scale-110 hover:shadow-green-200/50"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-300 transition-all hover:scale-110"
           aria-label="Scroll right"
         >
-          <ChevronRight className="w-6 h-6 text-gray-700 hover:text-green-700" />
+          <ChevronRight className="w-4 h-4 text-gray-600" />
         </button>
       )}
     </div>

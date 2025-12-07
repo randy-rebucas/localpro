@@ -18,7 +18,7 @@ import {
   Clock,
   Building,
   MapPin,
-  DollarSign,
+  Coins,
   Image as ImageIcon,
   Filter,
 } from "lucide-react";
@@ -926,7 +926,7 @@ export default function AdminJobsPage() {
                           </div>
                           {job.salary && (
                             <div className="text-[10px] text-gray-500">
-                              <DollarSign className="w-2.5 h-2.5 inline mr-0.5" />
+                              <Coins className="w-2.5 h-2.5 inline mr-0.5" />
                               {job.salary.currency} {job.salary.min?.toLocaleString()}
                               {job.salary.max && ` - ${job.salary.max.toLocaleString()}`}
                             </div>

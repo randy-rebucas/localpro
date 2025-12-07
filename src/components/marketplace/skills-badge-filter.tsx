@@ -92,10 +92,10 @@ export function SkillsBadgeFilter({
       {showClearButton && selectedSkills.length > 0 && (
         <button
           onClick={onClearAll}
-          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors border border-gray-300"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors border border-gray-300"
           aria-label="Clear all selected skills"
         >
-          <X className="w-3 h-3" />
+          <X className="w-4 h-4" />
           Clear ({selectedSkills.length})
         </button>
       )}
@@ -116,28 +116,35 @@ export function SkillsBadgeFilter({
               onSkillToggle(skillId);
             }}
             className={cn(
-              "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all",
+              "group inline-flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200",
               "focus:outline-none focus:ring-2 focus:ring-offset-1",
               selected
-                ? "bg-green-100 text-green-800 border-2 border-green-500 shadow-sm"
-                : "bg-white text-gray-700 border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 border-2 border-green-500"
+                : "bg-white text-gray-700 border border-gray-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md"
             )}
             style={
               selected
                 ? {
+                    background: `linear-gradient(to right, ${categoryColor}, ${categoryColor}dd)`,
                     borderColor: categoryColor,
-                    backgroundColor: `${categoryColor}15`,
-                    color: categoryColor,
+                    boxShadow: `0 10px 15px -3px ${categoryColor}30`,
                   }
                 : undefined
             }
             aria-label={`${selected ? "Deselect" : "Select"} skill: ${skill.name}`}
             aria-pressed={selected}
           >
-            {icon && <span className="text-sm">{icon}</span>}
+            {icon && (
+              <div className={cn(
+                "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200",
+                selected ? "bg-white/20" : "bg-gray-100 group-hover:bg-green-100"
+              )}>
+                <span className="text-base">{icon}</span>
+              </div>
+            )}
             <span>{skill.name}</span>
             {selected && (
-              <X className="w-3 h-3 opacity-70" />
+              <X className="w-4 h-4 opacity-80" />
             )}
           </button>
         );
@@ -145,7 +152,7 @@ export function SkillsBadgeFilter({
 
       {/* Show more indicator */}
       {hasMore && (
-        <span className="text-xs text-gray-500 px-2">
+        <span className="text-sm text-gray-500 px-2">
           +{sortedSkills.length - (maxVisible || 0)} more
         </span>
       )}

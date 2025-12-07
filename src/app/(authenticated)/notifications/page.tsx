@@ -390,6 +390,7 @@ export default function NotificationsPage() {
     devices,
     loading: devicesLoading,
     removeToken,
+    // registerToken and getDeviceInfo available for push notification setup
   } = useFCMDevices();
 
   const [items, setItems] = useState<NotificationItem[]>([]);

@@ -34,7 +34,8 @@ import {
   Building2,
   Bell,
   Calendar,
-  Activity
+  Activity,
+  Mail
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -130,6 +131,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "Broadcaster",
       href: "/admin/broadcaster",
       icon: Radio,
+    },
+    {
+      name: "Email Marketing",
+      href: "/admin/email-marketing",
+      icon: Mail,
     },
     {
       name: "Activity",

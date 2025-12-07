@@ -13,7 +13,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  DollarSign,
+  Coins,
   User,
   MapPin,
   Star
@@ -380,7 +380,7 @@ export default function AdminBookingsPage() {
                   {formatCurrency(statistics.totalRevenue || 0, getDefaultCurrency(appSettings), { appSettings })}
                 </p>
               </div>
-              <DollarSign className="w-6 h-6 text-green-500" />
+              <Coins className="w-6 h-6 text-green-500" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
