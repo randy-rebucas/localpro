@@ -35,7 +35,8 @@ import {
   Bell,
   Calendar,
   Activity,
-  Mail
+  Mail,
+  HardDrive
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -202,6 +203,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       name: "System Health",
       href: "/admin/health",
       icon: Monitor,
+    },
+    {
+      name: "Database",
+      href: "/admin/database",
+      icon: HardDrive,
     },
   ];
 
