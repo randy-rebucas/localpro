@@ -172,7 +172,9 @@ interface FilterOptions {
     enrollment: boolean;
 }
 
-const categories = [
+type CategoryOption = { value: string; label: string };
+
+const defaultCategoryOptions: CategoryOption[] = [
     { value: "", label: "All Categories" },
     { value: "cleaning", label: "Cleaning" },
     { value: "plumbing", label: "Plumbing" },
@@ -250,12 +252,44 @@ export default function AcademyPage() {
         certification: false,
         enrollment: true
     });
+    const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>(defaultCategoryOptions);
     const router = useRouter();
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const paginationRef = useRef(pagination);
     const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const { isInstructor, isAdmin, isClient } = useRoleAccess();
     const { data: session } = useSession();
+    
+    const fetchCategories = useCallback(async () => {
+        try {
+            const data = await apiRequest<any>(API_ENDPOINTS.academyCategories);
+            let names: string[] = [];
+
+            if (data && typeof data === 'object') {
+                if (Array.isArray((data as any).data)) {
+                    names = (data as any).data.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+                } else if ((data as any).data?.categories && Array.isArray((data as any).data.categories)) {
+                    names = (data as any).data.categories.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+                } else if (Array.isArray((data as any).categories)) {
+                    names = (data as any).categories.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+                } else if (Array.isArray(data as any)) {
+                    names = (data as any).map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+                }
+            } else if (Array.isArray(data)) {
+                names = (data as any).map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+            }
+
+            const unique = Array.from(new Set(names.map((n) => n?.toLowerCase?.() || n)));
+            const options: CategoryOption[] = [
+                defaultCategoryOptions[0],
+                ...unique.map((n) => ({ value: n, label: n.charAt(0).toUpperCase() + n.slice(1) }))
+            ];
+            setCategoryOptions(options.length > 1 ? options : defaultCategoryOptions);
+        } catch (err) {
+            logger.warn("Failed to fetch categories", { error: err instanceof Error ? err.message : String(err) });
+            setCategoryOptions(defaultCategoryOptions);
+        }
+    }, []);
 
     // Normalize course data from API response
     const normalizeCourse = useCallback((course: Partial<Course> & Record<string, unknown>): Course => {
@@ -477,13 +511,14 @@ export default function AcademyPage() {
         fetchCourses();
     }, [debouncedSearchQuery, filters, sortBy, fetchCourses]);
 
-    // Fetch featured courses and enrollments on mount
+    // Fetch featured courses, enrollments, and categories on mount
     useEffect(() => {
         fetchFeaturedCourses();
+        fetchCategories();
         if (session) {
             fetchMyEnrollments();
         }
-    }, [fetchFeaturedCourses, fetchMyEnrollments, session]);
+    }, [fetchFeaturedCourses, fetchCategories, fetchMyEnrollments, session]);
 
     // Filter courses client-side for additional filtering
     const filteredCourses = useMemo(() => {
@@ -677,6 +712,13 @@ export default function AcademyPage() {
                         <BookOpen className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">My Courses</span>
                     </Link>
+                    <Link 
+                        href="/academy/my-created-courses" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <BookOpen className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">My Created Courses</span>
+                    </Link>
                 </div>
                     
                 {/* Search Bar */}
@@ -725,7 +767,7 @@ export default function AcademyPage() {
                                         onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
                                         className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:shadow-md bg-white font-medium"
                                     >
-                                        {categories.map(category => (
+                                        {categoryOptions.map(category => (
                                             <option key={category.value} value={category.value}>
                                                 {category.label}
                                             </option>
@@ -849,7 +891,7 @@ export default function AcademyPage() {
                             <div className="pt-6 border-t-2 border-gray-200">
                                 <h2 className="text-lg font-bold text-gray-900 mb-4">Popular Categories</h2>
                                 <div className="flex flex-wrap gap-2">
-                                    {categories.filter(c => c.value).slice(0, 5).map((category) => (
+                                    {categoryOptions.filter(c => c.value).slice(0, 5).map((category) => (
                                         <button
                                             key={category.value}
                                             onClick={() => setFilters(prev => ({ ...prev, category: prev.category === category.value ? "" : category.value }))}
@@ -1133,10 +1175,14 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
     
     // Get duration display
     const getDurationDisplay = () => {
+        if (!course.duration) return '—';
         if (typeof course.duration === 'number') {
             return `${course.duration}h`;
         }
-        return `${course.duration.hours}h`;
+        const hours = course.duration.hours ?? 0;
+        const weeks = course.duration.weeks;
+        if (weeks) return `${weeks}w · ${hours}h`;
+        return `${hours}h`;
     };
     const durationDisplay = getDurationDisplay();
     
@@ -1177,7 +1223,11 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
             safety: 'Safety',
             certification: 'Certification'
         };
-        return labels[category] || category;
+        if (typeof category === 'string') {
+            return labels[category] || category;
+        }
+        const name = (category as any)?.name || '';
+        return labels[name] || name || 'Category';
     };
     
     const renderStars = (rating: number) => {

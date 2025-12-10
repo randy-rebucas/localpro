@@ -760,7 +760,7 @@ export default function FavoritesPage() {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-8 space-y-6 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
