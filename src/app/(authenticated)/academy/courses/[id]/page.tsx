@@ -39,6 +39,52 @@ type CourseResponse =
   | Course[]
   | null;
 
+type ScheduleLike = {
+  startDate?: string | Date;
+  endDate?: string | Date;
+};
+
+type InstructorLike = {
+  _id?: string;
+  id?: string;
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  profile?: {
+    avatar?: string;
+    bio?: string;
+    rating?: number;
+  };
+  bio?: string;
+  rating?: number;
+};
+
+const getCourseId = (value: Course | null | undefined, fallback?: string) => {
+  if (!value) return fallback;
+  if (value._id) return value._id;
+  const record = value as unknown as Record<string, unknown>;
+  if (typeof record.id === "string") return record.id;
+  return fallback;
+};
+
+const getUserId = (user: unknown): string | undefined => {
+  if (!user || typeof user !== "object") return undefined;
+  const record = user as Record<string, unknown>;
+  if (typeof record.id === "string") return record.id;
+  if (typeof record._id === "string") return record._id;
+  if (typeof record.userId === "string") return record.userId;
+  return undefined;
+};
+
+const getSchedule = (schedule: unknown): ScheduleLike | undefined => {
+  if (!schedule || typeof schedule !== "object") return undefined;
+  const record = schedule as Record<string, unknown>;
+  const startDate = record.startDate as string | Date | undefined;
+  const endDate = record.endDate as string | Date | undefined;
+  return { startDate, endDate };
+};
+
 export default function AcademyCourseDetailPage() {
   const params = useParams<{ id: string }>();
   const { settings: appSettings } = useAppSettings();
@@ -82,17 +128,21 @@ export default function AcademyCourseDetailPage() {
 
       if (data && typeof data === "object") {
         if ("success" in data && data.success === false) {
-          throw new Error((data as any).error || "Failed to load course");
+          const errorMessage =
+            "error" in data && typeof data.error === "string" ? data.error : "Failed to load course";
+          throw new Error(errorMessage);
         }
 
         // Common shapes
         if ("course" in data && data.course) {
           payload = data.course as Course;
         } else if ("data" in data && data.data) {
-          if ((data.data as any).course) {
-            payload = (data.data as any).course as Course;
+          const nestedData = data.data;
+          if (nestedData && typeof nestedData === "object" && "course" in nestedData) {
+            const nestedCourse = (nestedData as { course?: Course }).course;
+            if (nestedCourse) payload = nestedCourse;
           } else {
-            payload = data.data as Course;
+            payload = nestedData as Course;
           }
         }
       }
@@ -100,7 +150,14 @@ export default function AcademyCourseDetailPage() {
       // Fallback if payload not yet set
       if (!payload) {
         if (Array.isArray(data) && data.length > 0) {
-          const found = data.find((c: any) => c._id === params.id || c.id === params.id);
+          const found = data.find((c) => {
+            if (!c || typeof c !== "object") return false;
+            const record = c as unknown as Record<string, unknown>;
+            return (
+              (typeof record._id === "string" && record._id === params.id) ||
+              (typeof record.id === "string" && record.id === params.id)
+            );
+          });
           payload = (found as Course) || (data[0] as Course);
         } else if (data && typeof data === "object") {
           payload = data as Course;
@@ -132,7 +189,7 @@ export default function AcademyCourseDetailPage() {
   // Sync favorite state when course loads
   useEffect(() => {
     const syncFavorite = async () => {
-      const courseId = course?._id || (course as any)?.id || (params?.id as string | undefined);
+      const courseId = getCourseId(course, params?.id as string | undefined);
       if (!courseId) return;
       try {
         if (!getApiToken()) {
@@ -162,20 +219,27 @@ export default function AcademyCourseDetailPage() {
     const weeks = course.duration.weeks;
     if (!weeks) return `${hours}h`;
     return `${weeks} week${weeks !== 1 ? "s" : ""} · ${hours}h`;
-  }, [course?.duration, course]);
+  }, [course?.duration]);
 
-  const startDate = course?.schedule && (course.schedule as any).startDate ? new Date((course.schedule as any).startDate) : null;
-  const endDate = course?.schedule && (course.schedule as any).endDate ? new Date((course.schedule as any).endDate) : null;
+  const schedule = getSchedule(course?.schedule);
+  const startDate = schedule?.startDate ? new Date(schedule.startDate) : null;
+  const endDate = schedule?.endDate ? new Date(schedule.endDate) : null;
 
   const isOwner = useMemo(() => {
     if (!course || !session?.user) return false;
-    const userId = session.user.id || (session.user as any)?._id || (session.user as any)?.userId;
+    const userId = getUserId(session.user);
     if (!userId) return false;
     if (typeof course.instructor === "string") {
       return course.instructor === userId;
     }
-    const instr = course.instructor as any;
-    return instr?._id === userId || instr?.id === userId || instr?.userId === userId;
+    if (!course.instructor || typeof course.instructor !== "object") return false;
+    const instrRecord = course.instructor as Record<string, unknown>;
+    const instructorId =
+      (typeof instrRecord._id === "string" && instrRecord._id) ||
+      (typeof instrRecord.id === "string" && instrRecord.id) ||
+      (typeof instrRecord.userId === "string" && instrRecord.userId) ||
+      undefined;
+    return instructorId === userId;
   }, [course, session?.user]);
 
   const levelPill = useMemo(() => {
@@ -206,7 +270,7 @@ export default function AcademyCourseDetailPage() {
   };
 
   const handleToggleFavorite = useCallback(async () => {
-    const courseId = course?._id || (course as any)?.id || (params?.id as string | undefined);
+    const courseId = getCourseId(course, params?.id as string | undefined);
     if (!courseId) return;
 
     if (!getApiToken()) {
@@ -243,7 +307,7 @@ export default function AcademyCourseDetailPage() {
     } finally {
       setIsTogglingFavorite(false);
     }
-  }, [course?._id, course, params?.id, isFavorited, isTogglingFavorite]);
+  }, [course, params?.id, isFavorited, isTogglingFavorite]);
 
   const handleShare = useCallback(async () => {
     if (!course) return;
@@ -280,7 +344,7 @@ export default function AcademyCourseDetailPage() {
   }, [course, params?.id]);
 
   const handleEnroll = useCallback(async () => {
-    const courseId = course?._id || (course as any)?.id || (params?.id as string | undefined);
+    const courseId = getCourseId(course, params?.id as string | undefined);
     if (!courseId) return;
 
     if (!getApiToken()) {
@@ -358,9 +422,13 @@ export default function AcademyCourseDetailPage() {
   const categoryName =
     typeof course.category === "string"
       ? course.category
-      : (course.category as any)?.name || (course.category as any)?._id || "Category";
+      : (course.category &&
+          typeof course.category === "object" &&
+          ((course.category as { name?: string }).name || (course.category as { _id?: string })._id)) ||
+        "Category";
 
-  const instructor = typeof course.instructor === "object" ? (course.instructor as any) : null;
+  const instructor =
+    course.instructor && typeof course.instructor === "object" ? (course.instructor as InstructorLike) : null;
   const instructorName =
     typeof course.instructor === "string"
       ? "Instructor"
@@ -571,7 +639,7 @@ export default function AcademyCourseDetailPage() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                <h2 className="text-lg font-semibold text-gray-900">What you'll learn</h2>
+                <h2 className="text-lg font-semibold text-gray-900">What you&apos;ll learn</h2>
               </div>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {course.learningOutcomes.map((item, idx) => (
@@ -714,12 +782,12 @@ export default function AcademyCourseDetailPage() {
                   {course.enrollment?.maxCapacity ? `${course.enrollment.maxCapacity} seats` : "Unlimited"}
                 </span>
               </div>
-              {course.schedule && (course.schedule as any).startDate && (
+            {startDate && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Schedule</span>
                   <span className="font-medium flex items-center gap-1">
                     <CalendarRange className="w-4 h-4" />
-                    {new Date((course.schedule as any).startDate).toLocaleDateString()}
+                  {startDate.toLocaleDateString()}
                   </span>
                 </div>
               )}

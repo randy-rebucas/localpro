@@ -62,11 +62,11 @@ const normalizeStatus = (isActive?: boolean, stock?: number): Supply['status'] =
   return "available";
 };
 
-const normalizeSupply = (item: Record<string, any>): Supply => {
-  const pricing = item.pricing || {};
-  const inventory = item.inventory || {};
-  const specifications = item.specifications || {};
-  const supplierRaw = item.supplier || {};
+const normalizeSupply = (item: Record<string, unknown>): Supply => {
+  const pricing = (item.pricing || {}) as Record<string, unknown>;
+  const inventory = (item.inventory || {}) as Record<string, unknown>;
+  const specifications = (item.specifications || {}) as Record<string, unknown>;
+  const supplierRaw = (item.supplier || {}) as Record<string, unknown>;
   const orders = Array.isArray(item.orders) ? item.orders : [];
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
   const imagesRaw = Array.isArray(item.images) ? item.images : [];
@@ -81,8 +81,15 @@ const normalizeSupply = (item: Record<string, any>): Supply => {
   }, undefined);
 
   const images = imagesRaw
-    .map((img) => (typeof img === "string" ? img : img?.url || img?.publicId))
-    .filter(Boolean) as string[];
+    .map((img: unknown) => {
+      if (typeof img === "string") return img;
+      if (img && typeof img === "object") {
+        const record = img as { url?: string; publicId?: string };
+        return record.url || record.publicId;
+      }
+      return undefined;
+    })
+    .filter((val): val is string => Boolean(val));
 
   const category = normalizeCategory(item.category);
   const type = normalizeType(item.category);
@@ -297,7 +304,7 @@ export default function MySuppliesPage() {
         
         if (Array.isArray(suppliesData)) {
           const normalized = suppliesData
-            .filter((item): item is Record<string, any> => Boolean(item))
+            .filter((item): item is Record<string, unknown> => Boolean(item))
             .map(normalizeSupply);
           setSupplies(normalized);
         } else {

@@ -27,6 +27,18 @@ type CoursesResponse =
   | Course[]
   | null;
 
+const extractCourses = (payload: unknown): Course[] => {
+  if (Array.isArray(payload)) return payload as Course[];
+  if (payload && typeof payload === "object") {
+    const record = payload as { courses?: unknown; items?: unknown; data?: unknown; course?: unknown };
+    if (Array.isArray(record.courses)) return record.courses as Course[];
+    if (Array.isArray(record.items)) return record.items as Course[];
+    if (Array.isArray(record.data)) return record.data as Course[];
+    if (record.course && typeof record.course === "object") return [record.course as Course];
+  }
+  return [];
+};
+
 export default function MyCoursesPage() {
   const router = useRouter();
   const { settings: appSettings } = useAppSettings();
@@ -70,22 +82,10 @@ export default function MyCoursesPage() {
       const data: CoursesResponse = await res.json();
       let list: Course[] = [];
       if (Array.isArray(data)) {
-        list = data as Course[];
+        list = data;
       } else if (data && typeof data === "object") {
-        const payload = (data as any).data || data;
-        if (Array.isArray(payload)) {
-          list = payload as Course[];
-        } else if (Array.isArray(payload?.courses)) {
-          list = payload.courses as Course[];
-        } else if (Array.isArray(payload?.items)) {
-          list = payload.items as Course[];
-        } else if (Array.isArray((data as any).courses)) {
-          list = (data as any).courses as Course[];
-        } else if (Array.isArray((data as any).items)) {
-          list = (data as any).items as Course[];
-        } else if (payload?.course) {
-          list = [payload.course as Course];
-        }
+        const record = data as { data?: unknown };
+        list = extractCourses(record.data) || extractCourses(record);
       }
 
       setCourses(list);
@@ -232,7 +232,13 @@ export default function MyCoursesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs text-gray-600">
                       <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                        {typeof course.category === "string" ? course.category : (course.category as any)?.name || "Category"}
+                        {typeof course.category === "string"
+                          ? course.category
+                          : (course.category &&
+                              typeof course.category === "object" &&
+                              ("name" in course.category
+                                ? (course.category as { name?: string }).name || "Category"
+                                : "Category")) || "Category"}
                       </span>
                       {course.level && (
                         <span className="px-2 py-1 rounded-full bg-gray-100 text-gray-800 border border-gray-200">

@@ -262,21 +262,41 @@ export default function AcademyPage() {
     
     const fetchCategories = useCallback(async () => {
         try {
-            const data = await apiRequest<any>(API_ENDPOINTS.academyCategories);
+            const data = await apiRequest<unknown>(API_ENDPOINTS.academyCategories);
             let names: string[] = [];
 
-            if (data && typeof data === 'object') {
-                if (Array.isArray((data as any).data)) {
-                    names = (data as any).data.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
-                } else if ((data as any).data?.categories && Array.isArray((data as any).data.categories)) {
-                    names = (data as any).data.categories.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
-                } else if (Array.isArray((data as any).categories)) {
-                    names = (data as any).categories.map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
-                } else if (Array.isArray(data as any)) {
-                    names = (data as any).map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+            const extractName = (cat: unknown): string | undefined => {
+                if (typeof cat === 'string') return cat;
+                if (cat && typeof cat === 'object' && 'name' in cat && typeof (cat as { name?: unknown }).name === 'string') {
+                    return (cat as { name: string }).name;
                 }
-            } else if (Array.isArray(data)) {
-                names = (data as any).map((c: any) => typeof c === 'string' ? c : c?.name).filter(Boolean);
+                return undefined;
+            };
+
+            const collectNames = (value: unknown): string[] => {
+                if (!value) return [];
+                if (Array.isArray(value)) return value.map(extractName).filter((n): n is string => Boolean(n));
+                if (typeof value === 'object' && 'categories' in value) {
+                    const categories = (value as { categories?: unknown }).categories;
+                    if (Array.isArray(categories)) return categories.map(extractName).filter((n): n is string => Boolean(n));
+                }
+                return [];
+            };
+
+            if (data && typeof data === 'object') {
+                const record = data as { data?: unknown; categories?: unknown };
+                names = collectNames(record.data);
+                if (!names.length && record.data && typeof record.data === 'object') {
+                    names = collectNames(record.data);
+                }
+                if (!names.length) {
+                    names = collectNames(record.categories);
+                }
+                if (!names.length) {
+                    names = collectNames(data);
+                }
+            } else {
+                names = collectNames(data);
             }
 
             const unique = Array.from(new Set(names.map((n) => n?.toLowerCase?.() || n)));
@@ -1226,7 +1246,10 @@ const CourseCard = React.memo(function CourseCard({ course, onView, featured = f
         if (typeof category === 'string') {
             return labels[category] || category;
         }
-        const name = (category as any)?.name || '';
+        const name =
+            category && typeof category === 'object' && 'name' in category && typeof (category as { name?: unknown }).name === 'string'
+                ? (category as { name: string }).name
+                : '';
         return labels[name] || name || 'Category';
     };
     

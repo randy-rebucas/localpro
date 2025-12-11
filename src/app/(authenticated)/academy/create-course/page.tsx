@@ -92,18 +92,27 @@ export default function CreateCoursePage() {
         const data = await res.json();
         let names: string[] = [];
 
+        const extractName = (cat: unknown): string | undefined => {
+          if (typeof cat === "string") return cat;
+          if (cat && typeof cat === "object" && "name" in cat && typeof (cat as { name?: unknown }).name === "string") {
+            return (cat as { name: string }).name;
+          }
+          return undefined;
+        };
+
         if (data && typeof data === "object" && !Array.isArray(data)) {
-          if ("success" in data && data.success && "data" in data && data.data) {
-            if (Array.isArray(data.data)) {
-              names = data.data.map((cat: any) => (typeof cat === "string" ? cat : cat.name)).filter(Boolean);
-            } else if (Array.isArray(data.data.categories)) {
-              names = data.data.categories.map((cat: any) => (typeof cat === "string" ? cat : cat.name)).filter(Boolean);
+          if ("success" in data && (data as { success?: boolean }).success && "data" in data && (data as { data?: unknown }).data) {
+            const payload = (data as { data?: unknown }).data;
+            if (Array.isArray(payload)) {
+              names = payload.map(extractName).filter((n): n is string => Boolean(n));
+            } else if (payload && typeof payload === "object" && Array.isArray((payload as { categories?: unknown[] }).categories)) {
+              names = (payload as { categories: unknown[] }).categories.map(extractName).filter((n): n is string => Boolean(n));
             }
-          } else if ("categories" in data && Array.isArray(data.categories)) {
-            names = data.categories.map((cat: any) => (typeof cat === "string" ? cat : cat.name)).filter(Boolean);
+          } else if ("categories" in data && Array.isArray((data as { categories?: unknown[] }).categories)) {
+            names = (data as { categories: unknown[] }).categories.map(extractName).filter((n): n is string => Boolean(n));
           }
         } else if (Array.isArray(data)) {
-          names = data.map((cat: any) => (typeof cat === "string" ? cat : cat.name)).filter(Boolean);
+          names = data.map(extractName).filter((n): n is string => Boolean(n));
         }
 
         const normalized = names.map((n) => (typeof n === "string" ? n.toLowerCase() : n)).filter(Boolean);

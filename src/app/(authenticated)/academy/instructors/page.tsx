@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
@@ -30,6 +29,17 @@ type InstructorsResponse =
   | { success?: boolean; data?: InstructorProfile[]; instructors?: InstructorProfile[] }
   | InstructorProfile[]
   | null;
+
+const extractInstructors = (payload: unknown): InstructorProfile[] => {
+  if (Array.isArray(payload)) return payload as InstructorProfile[];
+  if (payload && typeof payload === "object") {
+    const record = payload as { data?: unknown; users?: unknown; instructors?: unknown };
+    if (Array.isArray(record.data)) return record.data as InstructorProfile[];
+    if (Array.isArray(record.users)) return record.users as InstructorProfile[];
+    if (Array.isArray(record.instructors)) return record.instructors as InstructorProfile[];
+  }
+  return [];
+};
 
 export default function AcademyInstructorsPage() {
   const router = useRouter();
@@ -67,18 +77,8 @@ export default function AcademyInstructorsPage() {
       if (Array.isArray(data)) {
         list = data;
       } else if (data && typeof data === "object") {
-        const payload = (data as any).data || data;
-        if (Array.isArray(payload)) {
-          list = payload as InstructorProfile[];
-        } else if (Array.isArray(payload?.users)) {
-          list = payload.users as InstructorProfile[];
-        } else if (Array.isArray(payload?.instructors)) {
-          list = payload.instructors as InstructorProfile[];
-        } else if (Array.isArray((data as any).users)) {
-          list = (data as any).users as InstructorProfile[];
-        } else if (Array.isArray((data as any).instructors)) {
-          list = (data as any).instructors as InstructorProfile[];
-        }
+        const record = data as { data?: unknown; users?: unknown; instructors?: unknown };
+        list = extractInstructors(record.data) || extractInstructors(record) || [];
       }
 
       setInstructors(list);

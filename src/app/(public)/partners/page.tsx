@@ -265,7 +265,7 @@ export default function Partners() {
                   <p className="text-slate-300 mb-6 leading-relaxed">
                     LocalPro has established an official partnership with the Local Government Unit of Ormoc City 
                     to support local service providers and strengthen the city&apos;s digital economy. This collaboration 
-                    aims to empower Ormocano entrepreneurs and skilled workers through technology-enabled opportunities.
+                    aims to empower Ormocanon entrepreneurs and skilled workers through technology-enabled opportunities.
                   </p>
 
                   <div className="grid sm:grid-cols-2 gap-4 mb-6">
@@ -314,7 +314,7 @@ export default function Partners() {
             </div>
           </div>
 
-          {/* Ongoing Partnerships - TESDA & EVSU */}
+          {/* Ongoing Partnerships - TESDA & EVSU-ORMOC */}
           <div className="mb-8">
             <div className="flex items-center justify-center space-x-2 mb-8">
               <Clock className="w-5 h-5 text-amber-400" />
@@ -322,7 +322,7 @@ export default function Partners() {
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {/* TESDC Partnership */}
+              {/* OTESDC Partnership */}
               <div className="relative p-6 rounded-2xl bg-slate-800/50 border border-amber-500/30 overflow-hidden group hover:border-amber-500/50 transition-all">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl"></div>
                 
@@ -335,14 +335,14 @@ export default function Partners() {
                       <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30 mb-1">
                         In Progress
                       </span>
-                      <h4 className="text-xl font-bold text-white">TESDC</h4>
+                      <h4 className="text-xl font-bold text-white">OTESDC</h4>
                       <p className="text-amber-400 text-sm font-medium">Technical Education Partner</p>
                     </div>
                   </div>
                   
                   <p className="text-slate-400 text-sm mb-4 leading-relaxed">
                     Technical Education and Skills Development Center - We are working to establish a partnership 
-                    with TESDC to provide accredited training programs and certifications for service providers on our platform.
+                    with OTESDC to provide accredited training programs and certifications for service providers on our platform.
                   </p>
 
                   <div className="space-y-2 mb-4">
@@ -350,7 +350,7 @@ export default function Partners() {
                     <ul className="space-y-2">
                       {[
                         "Skills assessment and certification integration",
-                        "TESDC-accredited training programs",
+                        "OTESDC-accredited training programs",
                         "National Certificate (NC) verification",
                         "Scholarship programs for service providers"
                       ].map((item, index) => (
@@ -369,7 +369,7 @@ export default function Partners() {
                 </div>
               </div>
 
-              {/* EVSU Partnership */}
+              {/* EVSU-ORMOC Partnership */}
               <div className="relative p-6 rounded-2xl bg-slate-800/50 border border-blue-500/30 overflow-hidden group hover:border-blue-500/50 transition-all">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
                 
@@ -382,13 +382,13 @@ export default function Partners() {
                       <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30 mb-1">
                         In Progress
                       </span>
-                      <h4 className="text-xl font-bold text-white">EVSU</h4>
+                      <h4 className="text-xl font-bold text-white">EVSU-ORMOC</h4>
                       <p className="text-blue-400 text-sm font-medium">Academic Institution Partner</p>
                     </div>
                   </div>
                   
                   <p className="text-slate-400 text-sm mb-4 leading-relaxed">
-                    Eastern Visayas State University - We are in discussions with EVSU to create internship opportunities, 
+                    Eastern Visayas State University - We are in discussions with EVSU-ORMOC to create internship opportunities, 
                     research collaborations, and graduate employment pathways through our platform.
                   </p>
 

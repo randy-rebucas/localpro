@@ -150,29 +150,83 @@ const normalizePaymentStatus = (status?: string): SupplyOrder['paymentStatus'] =
     : 'pending';
 };
 
-const normalizeOrder = (order: Record<string, any>): SupplyOrder => {
-  const rawSupply = order.supply || order.product || {};
-  const rawSupplier = rawSupply.supplier || {};
-  const rawShipping = order.shippingAddress || order.deliveryAddress || {};
-  const rawDelivery = order.delivery || order.shipping || {};
-  const images = Array.isArray(rawSupply.images)
-    ? rawSupply.images
-        .map((img: any) => (typeof img === 'string' ? img : img?.url || img?.publicId))
-        .filter(Boolean)
-    : [];
+const normalizeOrder = (order: Record<string, unknown>): SupplyOrder => {
+  const rawSupply = (order.supply || order.product || {}) as Record<string, unknown>;
+  const rawSupplier = (rawSupply.supplier || {}) as Record<string, unknown>;
+  const rawShipping = (order.shippingAddress || order.deliveryAddress || {}) as Record<string, unknown>;
+  const rawDelivery = (order.delivery || order.shipping || {}) as Record<string, unknown>;
+  const rawImages = Array.isArray(rawSupply.images) ? rawSupply.images : [];
+  const images = rawImages
+    .map((img: unknown) => {
+      if (typeof img === 'string') return img;
+      if (img && typeof img === 'object') {
+        const record = img as { url?: string; publicId?: string };
+        return record.url || record.publicId;
+      }
+      return undefined;
+    })
+    .filter((val): val is string => Boolean(val));
 
-  const quantity = order.quantity || order.items?.[0]?.quantity || 1;
+  const rawItems = Array.isArray(order.items) ? order.items : [];
+  const firstItem = (rawItems[0] || {}) as Record<string, unknown>;
+  const quantityValue = order.quantity ?? firstItem.quantity;
+  const quantity =
+    typeof quantityValue === 'number'
+      ? quantityValue
+      : typeof quantityValue === 'string'
+        ? Number(quantityValue) || 1
+        : 1;
   const totalPrice = order.totalPrice ?? order.totalCost ?? order.totalAmount ?? 0;
 
+  const orderIdValue = order.id ?? order._id;
+  const orderId =
+    typeof orderIdValue === 'string'
+      ? orderIdValue
+      : typeof orderIdValue === 'number'
+        ? String(orderIdValue)
+        : '';
+
+  const supplyIdValue = order.supplyId ?? rawSupply.id ?? rawSupply._id;
+  const supplyId =
+    typeof supplyIdValue === 'string'
+      ? supplyIdValue
+      : typeof supplyIdValue === 'number'
+        ? String(supplyIdValue)
+        : '';
+
+  const supplyNestedIdValue = rawSupply.id ?? rawSupply._id;
+  const supplyNestedId =
+    typeof supplyNestedIdValue === 'string'
+      ? supplyNestedIdValue
+      : typeof supplyNestedIdValue === 'number'
+        ? String(supplyNestedIdValue)
+        : '';
+
+  const supplyName =
+    typeof rawSupply.name === 'string'
+      ? rawSupply.name
+      : typeof rawSupply.title === 'string'
+        ? rawSupply.title
+        : 'Supply item';
+
+  const supplyDescription =
+    typeof rawSupply.description === 'string' ? rawSupply.description : '';
+
+  const supplyCategory =
+    typeof rawSupply.category === 'string' ? rawSupply.category : 'General';
+
+  const supplyType =
+    typeof rawSupply.type === 'string' ? rawSupply.type : 'product';
+
   return {
-    id: order.id || order._id || '',
-    supplyId: order.supplyId || rawSupply.id || rawSupply._id || '',
+    id: orderId,
+    supplyId,
     supply: {
-      id: rawSupply.id || rawSupply._id || '',
-      name: rawSupply.name || rawSupply.title || 'Supply item',
-      description: rawSupply.description || '',
-      category: rawSupply.category || 'General',
-      type: rawSupply.type || 'product',
+      id: supplyNestedId,
+      name: supplyName,
+      description: supplyDescription,
+      category: supplyCategory,
+      type: supplyType,
       price: rawSupply.pricing?.retailPrice ?? rawSupply.price ?? (quantity ? totalPrice / quantity : 0),
       unit: rawSupply.unit || 'unit',
       images,
@@ -244,7 +298,7 @@ export default function MyOrdersPage() {
         
         if (Array.isArray(ordersData) && ordersData.length > 0) {
           const normalized = ordersData
-            .filter((order): order is Record<string, any> => Boolean(order))
+            .filter((order): order is Record<string, unknown> => Boolean(order))
             .map(normalizeOrder);
           setOrders(normalized);
         } else {
@@ -529,7 +583,7 @@ export default function MyOrdersPage() {
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                   {searchQuery || selectedStatus !== "All Status" || selectedPaymentStatus !== "All Payment"
                     ? "Try adjusting your filters to see more results."
-                    : "You haven't placed any orders yet. Start shopping to see your orders here!"}
+                    : "You haven&apos;t placed any orders yet. Start shopping to see your orders here!"}
                 </p>
                 <Link
                   href="/supplies"
