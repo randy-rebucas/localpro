@@ -24,6 +24,7 @@ import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { useRoleAccess } from "@/components/role-guard";
+import { createAuthFetchOptions } from "@/lib/auth-utils";
 
 export interface Supply {
   id: string;
@@ -278,10 +279,7 @@ export default function SuppliesPage() {
     
     try {
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesCategories}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
       
       if (!response.ok) {
         setCategories(fallbackCategories);
@@ -313,10 +311,7 @@ export default function SuppliesPage() {
     
     try {
       const url = `${API_BASE_URL}${API_ENDPOINTS.suppliesTypes}`;
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
       if (!response.ok) {
         setTypes(fallbackTypes);
@@ -354,14 +349,19 @@ export default function SuppliesPage() {
         if (useNearby && userLocation) {
           url = `${API_BASE_URL}${API_ENDPOINTS.suppliesNearby}?lat=${userLocation.lat}&lng=${userLocation.lng}`;
         }
-        
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
-        });
+
+        const fetchWith = async (useAuth: boolean) =>
+          fetch(url, useAuth ? createAuthFetchOptions({ method: 'GET' }) : { method: 'GET' });
+
+        let response = await fetchWith(true);
+        if (response.status === 401) {
+          // Retry without auth in case the endpoint is public
+          response = await fetchWith(false);
+        }
 
         if (!response.ok) {
-          throw new Error('Failed to fetch supplies');
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`Failed to fetch supplies (status ${response.status})${errorText ? `: ${errorText}` : ''}`);
         }
 
         const data = await response.json();
@@ -562,6 +562,13 @@ export default function SuppliesPage() {
             <span className="text-sm font-medium">My Orders</span>
           </Link>
           <Link 
+            href="/supplies/my-supplies" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors group"
+          >
+            <Package className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-medium">My Supplies</span>
+          </Link>
+          <Link 
             href="/supplies/verified" 
             className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors group"
           >
@@ -577,26 +584,40 @@ export default function SuppliesPage() {
           </Link>
         </div>
           
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-            <Search className="w-5 h-5 text-gray-400" />
+        {/* Search Bar + Location */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative flex-1">
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <Search className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search supplies, tools, equipment, or suppliers"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder="Search supplies, tools, equipment, or suppliers"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm hover:shadow-md bg-white"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button
+            onClick={() => setUseNearby(!useNearby)}
+            className={`inline-flex items-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-sm font-semibold ${
+              useNearby
+                ? 'border-orange-500 bg-orange-50 text-orange-700'
+                : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50 text-gray-700'
+            }`}
+            title="Use my location"
+          >
+            <Navigation className={`w-4 h-4 ${useNearby ? 'text-orange-600' : 'text-gray-500'}`} />
+            Use my location
+          </button>
         </div>
 
         {/* Main Content Layout */}
@@ -615,21 +636,6 @@ export default function SuppliesPage() {
                   )}
                 </div>
                 
-                {/* Nearby Toggle */}
-                <div className="mb-4">
-                  <button
-                    onClick={() => setUseNearby(!useNearby)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${
-                      useNearby 
-                        ? 'border-orange-500 bg-orange-50 text-orange-700' 
-                        : 'border-gray-300 hover:border-orange-500 hover:bg-orange-50'
-                    }`}
-                  >
-                    <Navigation className={`w-4 h-4 ${useNearby ? 'text-orange-600' : 'text-gray-500'}`} />
-                    <span className="text-sm font-medium">Use my location</span>
-                  </button>
-                </div>
-
                 {/* Type Filter */}
                 <div className="mb-4">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Type</label>

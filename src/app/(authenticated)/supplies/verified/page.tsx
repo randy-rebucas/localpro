@@ -341,29 +341,23 @@ export default function VerifiedSuppliersPage() {
       </div>
 
       <div className="relative z-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Back Link */}
-        <Link
-          href="/supplies"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 transition-colors mb-6 group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Back to All Supplies</span>
-        </Link>
-
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-              <ShieldCheck className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Verified Suppliers
-              </h1>
-              <p className="text-gray-600">
-                Shop with confidence from LocalPro-verified suppliers
-              </p>
-            </div>
+        {/* Header (mirrors course detail style) */}
+        <div className="flex items-center gap-3 mb-6">
+          <Link
+            href="/supplies"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Back to Supplies"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+            <ShieldCheck className="w-6 h-6 text-white" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Verified Suppliers</h1>
+            <p className="text-sm text-gray-600">
+              Shop with confidence from LocalPro-verified suppliers
+            </p>
           </div>
         </div>
 

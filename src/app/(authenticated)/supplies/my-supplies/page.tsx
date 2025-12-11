@@ -34,6 +34,121 @@ import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
+const normalizeCategory = (category?: string) => {
+  if (!category) return "Other";
+  const lower = category.toLowerCase();
+  if (lower.includes("clean")) return "Cleaning Supplies";
+  if (lower.includes("tool")) return "Tools & Equipment";
+  if (lower.includes("material")) return "Building Materials";
+  if (lower.includes("safety")) return "Safety Equipment";
+  if (lower.includes("office")) return "Office Supplies";
+  if (lower.includes("kit")) return "Maintenance Kits";
+  return category;
+};
+
+const normalizeType = (category?: string): Supply['type'] => {
+  const lower = (category || "").toLowerCase();
+  if (lower.includes("clean")) return "cleaning";
+  if (lower.includes("tool")) return "tools";
+  if (lower.includes("equipment")) return "equipment";
+  if (lower.includes("material")) return "materials";
+  if (lower.includes("subscription")) return "subscription";
+  return "materials";
+};
+
+const normalizeStatus = (isActive?: boolean, stock?: number): Supply['status'] => {
+  if (isActive === false) return "discontinued";
+  if (stock !== undefined && stock <= 0) return "out-of-stock";
+  return "available";
+};
+
+const normalizeSupply = (item: Record<string, any>): Supply => {
+  const pricing = item.pricing || {};
+  const inventory = item.inventory || {};
+  const specifications = item.specifications || {};
+  const supplierRaw = item.supplier || {};
+  const orders = Array.isArray(item.orders) ? item.orders : [];
+  const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+  const imagesRaw = Array.isArray(item.images) ? item.images : [];
+
+  const stock = inventory.quantity ?? 0;
+  const revenue = orders.reduce((sum, order) => sum + (order.totalCost || order.totalAmount || 0), 0);
+  const lastOrderDate = orders.reduce<string | undefined>((latest, order) => {
+    const created = order.createdAt ? new Date(order.createdAt).toISOString() : undefined;
+    if (!created) return latest;
+    if (!latest) return created;
+    return new Date(created) > new Date(latest) ? created : latest;
+  }, undefined);
+
+  const images = imagesRaw
+    .map((img) => (typeof img === "string" ? img : img?.url || img?.publicId))
+    .filter(Boolean) as string[];
+
+  const category = normalizeCategory(item.category);
+  const type = normalizeType(item.category);
+
+  return {
+    id: item.id || item._id || "",
+    name: item.name || item.title || "Untitled Supply",
+    description: item.description || "",
+    category,
+    type,
+    status: normalizeStatus(item.isActive, stock),
+    price: pricing.retailPrice ?? item.price ?? 0,
+    originalPrice: pricing.wholesalePrice,
+    unit: item.unit || "unit",
+    stock,
+    minOrder: inventory.minStock ?? 1,
+    maxOrder: inventory.maxStock,
+    location: {
+      address: item.location?.address || "",
+      city: item.location?.city || "",
+      state: item.location?.state || "",
+      zipCode: item.location?.zipCode || "",
+      coordinates: item.location?.coordinates
+    },
+    images,
+    features: item.features || [],
+    specifications: {
+      brand: item.brand || specifications.brand,
+      model: specifications.model,
+      weight: specifications.weight,
+      dimensions: specifications.dimensions,
+      material: specifications.material,
+      color: specifications.color,
+      warranty: specifications.warranty,
+    },
+    supplier: {
+      id: typeof supplierRaw === "string" ? supplierRaw : supplierRaw.id || supplierRaw._id || "",
+      name: typeof supplierRaw === "string"
+        ? "Supplier"
+        : supplierRaw.name || [supplierRaw.firstName, supplierRaw.lastName].filter(Boolean).join(" ") || "Supplier",
+      avatar: supplierRaw.avatar,
+      rating: supplierRaw.rating ?? item.averageRating ?? 0,
+      reviewCount: supplierRaw.reviewCount ?? reviews.length ?? 0,
+      verified: Boolean(supplierRaw.verified),
+      location: supplierRaw.location || supplierRaw.city || "",
+    },
+    delivery: {
+      available: true,
+      estimatedDays: item.delivery?.estimatedDays ?? 0,
+      cost: item.delivery?.cost ?? 0,
+      freeShippingThreshold: item.delivery?.freeShippingThreshold
+    },
+    rating: item.averageRating ?? 0,
+    reviewCount: reviews.length ?? 0,
+    viewsCount: item.views ?? 0,
+    isFeatured: item.isFeatured ?? false,
+    isFavorited: false,
+    tags: item.tags || [],
+    createdAt: item.createdAt || new Date().toISOString(),
+    updatedAt: item.updatedAt || item.createdAt || new Date().toISOString(),
+    ordersCount: orders.length ?? 0,
+    revenue,
+    lastOrderDate,
+  };
+};
+
 export interface Supply {
   id: string;
   name: string;
@@ -178,10 +293,13 @@ export default function MySuppliesPage() {
         }
 
         const data = await response.json();
-        const suppliesData = data.supplies || data.data || data || [];
+        const suppliesData = data.supplies || data.data || data.results || data || [];
         
         if (Array.isArray(suppliesData)) {
-          setSupplies(suppliesData);
+          const normalized = suppliesData
+            .filter((item): item is Record<string, any> => Boolean(item))
+            .map(normalizeSupply);
+          setSupplies(normalized);
         } else {
           setSupplies([]);
         }
@@ -200,7 +318,7 @@ export default function MySuppliesPage() {
     const matchesSearch = supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          supply.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          supply.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All Categories" || supply.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All Categories" || supply.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesType = selectedType === "All Types" || supply.type === selectedType.toLowerCase();
     const matchesStatus = selectedStatus === "All Status" || supply.status === selectedStatus.toLowerCase().replace(' ', '-');
     
@@ -336,30 +454,35 @@ export default function MySuppliesPage() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            href="/supplies"
-            className="p-2.5 hover:bg-white rounded-lg transition-all border-2 border-transparent hover:border-gray-200 hover:shadow-sm"
-            title="Back to Supplies"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Package className="w-6 h-6" />
+        <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Link
+              href="/supplies"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-200 transition-all"
+              title="Back to Supplies"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-semibold">Back</span>
+            </Link>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+              <Package className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 truncate">My Supplies</h1>
+              <p className="text-sm text-gray-600">
+                {supplies.length} listing{supplies.length !== 1 ? "s" : ""} • {formatCurrency(totalRevenue, 'PHP', { appSettings })} total revenue
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">My Supplies</h1>
-            <p className="text-sm text-gray-600">
-              {supplies.length} listing{supplies.length !== 1 ? "s" : ""} • {formatCurrency(totalRevenue, 'PHP', { appSettings })} total revenue
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCreateSupply}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Supply</span>
+            </button>
           </div>
-          <button
-            onClick={handleCreateSupply}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Supply</span>
-          </button>
         </div>
 
         {/* Stats Cards */}

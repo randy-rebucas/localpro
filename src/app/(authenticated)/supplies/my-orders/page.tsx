@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -136,6 +136,83 @@ const getStatusIcon = (status: SupplyOrder['status']) => {
   }
 };
 
+const normalizeStatus = (status?: string): SupplyOrder['status'] => {
+  const normalized = (status || '').toLowerCase() as SupplyOrder['status'];
+  return ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'].includes(normalized)
+    ? normalized
+    : 'pending';
+};
+
+const normalizePaymentStatus = (status?: string): SupplyOrder['paymentStatus'] => {
+  const normalized = (status || '').toLowerCase() as SupplyOrder['paymentStatus'];
+  return ['pending', 'paid', 'failed', 'refunded'].includes(normalized)
+    ? normalized
+    : 'pending';
+};
+
+const normalizeOrder = (order: Record<string, any>): SupplyOrder => {
+  const rawSupply = order.supply || order.product || {};
+  const rawSupplier = rawSupply.supplier || {};
+  const rawShipping = order.shippingAddress || order.deliveryAddress || {};
+  const rawDelivery = order.delivery || order.shipping || {};
+  const images = Array.isArray(rawSupply.images)
+    ? rawSupply.images
+        .map((img: any) => (typeof img === 'string' ? img : img?.url || img?.publicId))
+        .filter(Boolean)
+    : [];
+
+  const quantity = order.quantity || order.items?.[0]?.quantity || 1;
+  const totalPrice = order.totalPrice ?? order.totalCost ?? order.totalAmount ?? 0;
+
+  return {
+    id: order.id || order._id || '',
+    supplyId: order.supplyId || rawSupply.id || rawSupply._id || '',
+    supply: {
+      id: rawSupply.id || rawSupply._id || '',
+      name: rawSupply.name || rawSupply.title || 'Supply item',
+      description: rawSupply.description || '',
+      category: rawSupply.category || 'General',
+      type: rawSupply.type || 'product',
+      price: rawSupply.pricing?.retailPrice ?? rawSupply.price ?? (quantity ? totalPrice / quantity : 0),
+      unit: rawSupply.unit || 'unit',
+      images,
+      supplier: {
+        id: rawSupplier.id || rawSupplier._id || '',
+        name: rawSupplier.name || [rawSupplier.firstName, rawSupplier.lastName].filter(Boolean).join(' ') || 'Supplier',
+        avatar: rawSupplier.avatar || '',
+        rating: rawSupplier.rating ?? 0,
+        reviewCount: rawSupplier.reviewCount ?? 0,
+        verified: Boolean(rawSupplier.verified),
+        location: rawSupplier.location || rawSupplier.city || ''
+      }
+    },
+    quantity,
+    totalPrice,
+    status: normalizeStatus(order.status),
+    paymentStatus: normalizePaymentStatus(order.paymentStatus || order.payment?.status),
+    shippingAddress: {
+      name: rawShipping.name || `${rawSupplier.firstName || ''} ${rawSupplier.lastName || ''}`.trim() || 'Delivery Contact',
+      address: rawShipping.address || rawShipping.street || '',
+      city: rawShipping.city || '',
+      state: rawShipping.state || '',
+      zipCode: rawShipping.zipCode || rawShipping.postalCode || '',
+      phone: rawShipping.phone || order.contactInfo?.phone || '',
+      email: rawShipping.email || order.contactInfo?.email || ''
+    },
+    delivery: {
+      estimatedDays: rawDelivery.estimatedDays ?? 0,
+      cost: rawDelivery.cost ?? 0,
+      trackingNumber: rawDelivery.trackingNumber || rawDelivery.tracking || order.trackingNumber,
+      carrier: rawDelivery.carrier || ''
+    },
+    notes: order.specialInstructions || order.notes,
+    createdAt: order.createdAt || new Date().toISOString(),
+    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
+    deliveredAt: rawDelivery.actualDelivery || order.deliveredAt,
+    cancelledAt: order.cancelledAt
+  };
+};
+
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,147 +223,12 @@ export default function MyOrdersPage() {
   const router = useRouter();
   const { settings: appSettings } = useAppSettings();
 
-  // Mock data for development
-  const mockOrders = useMemo((): SupplyOrder[] => [
-    {
-      id: '1',
-      supplyId: '1',
-      supply: {
-        id: '1',
-        name: 'Professional Cleaning Kit - Complete Set',
-        description: 'Complete cleaning kit with all essential tools and supplies for professional cleaning services.',
-        category: 'Cleaning Supplies',
-        type: 'cleaning',
-        price: 4500,
-        unit: 'set',
-        images: ['https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400'],
-        supplier: {
-          id: '1',
-          name: 'Professional Supply Co.',
-          rating: 4.8,
-          reviewCount: 156,
-          verified: true,
-          location: 'Makati City'
-        }
-      },
-      quantity: 2,
-      totalPrice: 9000,
-      status: 'shipped',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 2,
-        cost: 150,
-        trackingNumber: 'TRK123456789',
-        carrier: 'LBC'
-      },
-      notes: 'Please deliver during business hours',
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      supplyId: '2',
-      supply: {
-        id: '2',
-        name: 'Heavy Duty Drill Set - 20 Piece',
-        description: 'Professional grade drill set with various bits and accessories.',
-        category: 'Tools & Equipment',
-        type: 'tools',
-        price: 7500,
-        unit: 'set',
-        images: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400'],
-        supplier: {
-          id: '2',
-          name: 'Tool Supply Depot',
-          rating: 4.6,
-          reviewCount: 89,
-          verified: true,
-          location: 'Pasig City'
-        }
-      },
-      quantity: 1,
-      totalPrice: 7500,
-      status: 'delivered',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 3,
-        cost: 200,
-        trackingNumber: 'TRK987654321',
-        carrier: 'JRS Express'
-      },
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      deliveredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '3',
-      supplyId: '3',
-      supply: {
-        id: '3',
-        name: 'Monthly Cleaning Subscription Box',
-        description: 'Monthly subscription box with curated cleaning supplies delivered to your door.',
-        category: 'Maintenance Kits',
-        type: 'subscription',
-        price: 1500,
-        unit: 'box',
-        images: ['https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=400'],
-        supplier: {
-          id: '3',
-          name: 'Subscription Supply Co.',
-          rating: 4.9,
-          reviewCount: 234,
-          verified: true,
-          location: 'Taguig City'
-        }
-      },
-      quantity: 1,
-      totalPrice: 1500,
-      status: 'processing',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 1,
-        cost: 0,
-        trackingNumber: 'TRK456789123',
-        carrier: 'Grab Express'
-      },
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ], []);
-
   useEffect(() => {
     const fetchMyOrders = async () => {
       try {
         setLoading(true);
         if (!getApiToken()) {
-          setOrders(mockOrders);
+          setOrders([]);
           return;
         }
         
@@ -294,29 +236,30 @@ export default function MyOrdersPage() {
         const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
         if (!response.ok) {
-          logger.debug('My orders API not available, using sample data', { status: response.status });
-          setOrders(mockOrders);
-          return;
+          throw new Error(`Failed to fetch orders: ${response.status}`);
         }
 
         const data = await response.json();
-        const ordersData = data.orders || data.data || data || [];
+        const ordersData = data.orders || data.data || data.results || data || [];
         
         if (Array.isArray(ordersData) && ordersData.length > 0) {
-          setOrders(ordersData);
+          const normalized = ordersData
+            .filter((order): order is Record<string, any> => Boolean(order))
+            .map(normalizeOrder);
+          setOrders(normalized);
         } else {
           setOrders([]);
         }
       } catch (error) {
-        logger.debug('Could not fetch my orders, using sample data', { error: error instanceof Error ? error.message : String(error) });
-        setOrders(mockOrders);
+        logger.error('Could not fetch my orders', error instanceof Error ? error : new Error(String(error)));
+        setOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMyOrders();
-  }, [mockOrders]);
+  }, []);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

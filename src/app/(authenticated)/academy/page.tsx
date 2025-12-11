@@ -692,20 +692,6 @@ export default function AcademyPage() {
                         <span className="text-sm font-medium">Verified Instructors</span>
                     </Link>
                     <Link 
-                        href="/academy/certifications" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
-                    >
-                        <Award className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
-                        <span className="text-sm font-medium">Certificates</span>
-                    </Link>
-                    <Link 
-                        href="/support" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
-                    >
-                        <Headphones className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
-                        <span className="text-sm font-medium">Support</span>
-                    </Link>
-                    <Link 
                         href="/academy/my-courses" 
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
                     >
@@ -718,6 +704,20 @@ export default function AcademyPage() {
                     >
                         <BookOpen className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
                         <span className="text-sm font-medium">My Created Courses</span>
+                    </Link>
+                    <Link 
+                        href="/academy/certifications" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <Award className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Certificates</span>
+                    </Link>
+                    <Link 
+                        href="/support" 
+                        className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                    >
+                        <Headphones className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
+                        <span className="text-sm font-medium">Support</span>
                     </Link>
                 </div>
                     
