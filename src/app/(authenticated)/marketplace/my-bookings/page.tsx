@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
+  ArrowLeft,
   Calendar, 
   Clock, 
   MapPin, 
@@ -575,15 +576,19 @@ export default function MyBookingsPage() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
-        <div className="p-4 space-y-4 relative z-10">
+        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           {/* Header Skeleton */}
           <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2">
-                <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+              <div className="flex items-center gap-4">
+                <div className="h-10 w-10 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="hidden sm:block h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
+                  <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+                </div>
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg w-40 animate-pulse"></div>
+              <div className="h-10 bg-gray-200 rounded-lg w-44 animate-pulse"></div>
             </div>
           </div>
 
@@ -651,13 +656,25 @@ export default function MyBookingsPage() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
-        <div className="p-4 relative z-10">
+        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           {/* Header */}
           <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm mb-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Bookings</h1>
-                <p className="text-gray-600">Manage your service bookings</p>
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Back to Marketplace
+                </Link>
+                <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Bookings</h1>
+                  <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service bookings</p>
+                </div>
               </div>
               <Link
                 href="/marketplace"
@@ -699,21 +716,28 @@ export default function MyBookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-      {/* Animated Background Blobs */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/40 relative overflow-hidden">
+      {/* Background accents */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -top-24 -left-16 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-sky-100/30 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="p-4 space-y-4 relative z-10">
+      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg p-6 sm:p-7 backdrop-blur-sm space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Bookings</h1>
-              <p className="text-gray-600">Manage your service bookings</p>
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">My Bookings</h1>
+                <p className="text-sm sm:text-base text-gray-600 max-w-2xl">
+                  Manage all your service appointments, track statuses, and message providers in one place.
+                </p>
+              </div>
             </div>
             <Link
               href="/marketplace"
@@ -726,7 +750,7 @@ export default function MyBookingsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
+        <div className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg p-4 sm:p-5 backdrop-blur-sm">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -735,7 +759,7 @@ export default function MyBookingsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
               >
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -751,7 +775,7 @@ export default function MyBookingsPage() {
               <select
                 value={typeFilter}
                 onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
               >
                 <option value="all">All Bookings</option>
                 <option value="client">As Client</option>
@@ -766,7 +790,7 @@ export default function MyBookingsPage() {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
               />
             </div>
             <div className="flex-1">
@@ -777,7 +801,7 @@ export default function MyBookingsPage() {
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
+                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
               />
             </div>
             <div className="flex items-end">
@@ -788,7 +812,7 @@ export default function MyBookingsPage() {
                   setDateFrom("");
                   setDateTo("");
                 }}
-                className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all border-2 border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md hover:scale-105"
+                className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all border-2 border-gray-200/80 hover:border-gray-300 shadow-sm hover:shadow-md hover:scale-105"
               >
                 Clear Filters
               </button>
@@ -799,7 +823,7 @@ export default function MyBookingsPage() {
         {/* Bookings List */}
         <div className="space-y-4">
           {!Array.isArray(bookings) || bookings.length === 0 ? (
-            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/50 border-2 border-gray-200 shadow-lg">
+            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg">
               <EmptyState
                 icon={Calendar}
                 iconColor="text-blue-600"
@@ -879,7 +903,7 @@ export default function MyBookingsPage() {
               const durationHours = booking.duration || 0;
               
               return (
-                <div key={bookingId} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200 backdrop-blur-sm">
+                <div key={bookingId} className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200/70 backdrop-blur-sm">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-3">

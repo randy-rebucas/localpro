@@ -8,6 +8,7 @@ import { CLIENT_CONFIG } from "@/lib/env";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { CommunicationAPI } from "@/lib/communication-utils";
 
 // Communication Data Entities (from features/communication/data-entities.md)
 
@@ -1664,6 +1665,116 @@ export default function MessagesPage() {
       }
     };
   }, [fetchConversations, fetchUnreadCount, setupEventSource]);
+
+  // Auto-open or create a conversation when ?userId is provided (e.g., from provider detail "Send Message")
+  useEffect(() => {
+    const userIdFromUrl = searchParams?.get('userId');
+    if (!userIdFromUrl) return;
+    if (loadingConversation) return;
+
+    const openConversationWithUser = async () => {
+      try {
+        setLoadingConversation(true);
+        setMessagePage(1);
+        setHasMoreMessages(true);
+        setSearchResults([]);
+        setMessageSearchQuery('');
+
+        let conversationId: string | undefined;
+
+        // Try to find existing conversation with this user
+        try {
+          const existing = await CommunicationAPI.getConversationWithUser(userIdFromUrl);
+          const conversation =
+            (existing as { conversation?: unknown; data?: unknown })?.conversation ||
+            (existing as { data?: unknown })?.data ||
+            existing;
+          conversationId =
+            (existing as { conversationId?: string })?.conversationId ||
+            (conversation as { _id?: string; id?: string })?._id ||
+            (conversation as { _id?: string; id?: string })?.id;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          // If 404, proceed to create a new conversation; otherwise log and still try to create
+          if (!message.includes('404')) {
+            logger.warn('No existing conversation found, will create a new one', {
+              userId: userIdFromUrl,
+              error: message
+            });
+          }
+        }
+
+        const ensureActive = async (convId: string) => {
+          // Mark as read and fetch details/messages
+          markAsRead(convId).catch(err => {
+            logger.warn('Error marking conversation as read', {
+              conversationId: convId,
+              error: err instanceof Error ? err.message : String(err)
+            });
+          });
+
+          const [details, messages] = await Promise.all([
+            fetchConversationDetails(convId),
+            fetchConversationMessages(convId, 1, 50)
+          ]);
+
+          if (details) {
+            setActiveConversation({
+              ...details,
+              messages
+            });
+            setHasMoreMessages(messages.length === 50);
+            setTimeout(() => scrollToBottom(), 200);
+          }
+
+          // Update URL to use conversationId and drop userId
+          const params = new URLSearchParams(searchParams.toString());
+          params.set('conversationId', convId);
+          params.delete('userId');
+          router.replace(`${pathname}?${params.toString()}`);
+        };
+
+        if (conversationId) {
+          await ensureActive(conversationId);
+          return;
+        }
+
+        // No existing conversation; create one
+        const created = await CommunicationAPI.createConversation([userIdFromUrl]);
+        const createdConversation =
+          (created as { conversation?: unknown; data?: unknown })?.conversation ||
+          (created as { data?: unknown })?.data ||
+          created;
+        const createdConversationId =
+          (created as { conversationId?: string })?.conversationId ||
+          (createdConversation as { _id?: string; id?: string })?._id ||
+          (createdConversation as { _id?: string; id?: string })?.id;
+
+        if (createdConversationId) {
+          await ensureActive(createdConversationId);
+        }
+      } catch (err) {
+        logger.error(
+          'Error opening conversation with user from URL',
+          err instanceof Error ? err : undefined,
+          { userId: userIdFromUrl }
+        );
+      } finally {
+        setLoadingConversation(false);
+      }
+    };
+
+    openConversationWithUser();
+  }, [
+    searchParams,
+    fetchConversationDetails,
+    fetchConversationMessages,
+    markAsRead,
+    scrollToBottom,
+    router,
+    pathname,
+    loadingConversation
+  ]);
 
   // Set initial active conversation when conversations are loaded or URL changes
   useEffect(() => {

@@ -260,7 +260,7 @@ export function CategoriesCarousel({
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center py-12 ${className}`}>
+      <div className={`flex items-center justify-center ${className}`}>
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
           <p className="text-sm text-gray-600">Loading categories...</p>
@@ -271,7 +271,7 @@ export function CategoriesCarousel({
 
   if (error) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 ${className}`}>
+      <div className={`flex flex-col items-center justify-center ${className}`}>
         <div className="flex flex-col items-center gap-3 max-w-md text-center">
           <AlertCircle className="w-8 h-8 text-red-500" />
           <p className="text-sm text-gray-600">{error}</p>
@@ -291,7 +291,7 @@ export function CategoriesCarousel({
 
   if (categories.length === 0) {
     return (
-      <div className={`flex items-center justify-center py-12 ${className}`}>
+      <div className={`flex items-center justify-center ${className}`}>
         <p className="text-sm text-gray-600">No categories available</p>
       </div>
     );
@@ -313,7 +313,7 @@ export function CategoriesCarousel({
       {/* Scrollable Container */}
       <div
         ref={scrollContainerRef}
-        className="overflow-x-auto pb-2 scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         <div className="flex gap-2 min-w-max py-1 px-1">
           {categories.map((category) => {

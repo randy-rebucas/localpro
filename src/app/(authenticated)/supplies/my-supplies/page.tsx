@@ -67,11 +67,13 @@ const normalizeSupply = (item: Record<string, unknown>): Supply => {
   const inventory = (item.inventory || {}) as Record<string, unknown>;
   const specifications = (item.specifications || {}) as Record<string, unknown>;
   const supplierRaw = (item.supplier || {}) as Record<string, unknown>;
+  const locationObj = item.location && typeof item.location === "object" ? (item.location as Record<string, unknown>) : {};
+  const deliveryObj = item.delivery && typeof item.delivery === "object" ? (item.delivery as Record<string, unknown>) : {};
   const orders = Array.isArray(item.orders) ? item.orders : [];
   const reviews = Array.isArray(item.reviews) ? item.reviews : [];
   const imagesRaw = Array.isArray(item.images) ? item.images : [];
 
-  const stock = inventory.quantity ?? 0;
+  const stock = typeof inventory.quantity === "number" ? inventory.quantity : 0;
   const revenue = orders.reduce((sum, order) => sum + (order.totalCost || order.totalAmount || 0), 0);
   const lastOrderDate = orders.reduce<string | undefined>((latest, order) => {
     const created = order.createdAt ? new Date(order.createdAt).toISOString() : undefined;
@@ -91,65 +93,158 @@ const normalizeSupply = (item: Record<string, unknown>): Supply => {
     })
     .filter((val): val is string => Boolean(val));
 
-  const category = normalizeCategory(item.category);
-  const type = normalizeType(item.category);
+  const asString = (value: unknown): string => {
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return String(value);
+    return "";
+  };
+
+  const asNumber = (value: unknown, fallback = 0): number => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return fallback;
+  };
+
+  const rawCategory = typeof item.category === "string" ? item.category : undefined;
+  const category = normalizeCategory(rawCategory);
+  const type = normalizeType(rawCategory);
+
+  const allowedUnits: Supply["unit"][] = ["piece", "pack", "box", "kg", "liter", "set"];
+
+  const itemId = typeof item.id === "string"
+    ? item.id
+    : typeof item._id === "string"
+      ? item._id
+      : "";
+  const itemName = typeof item.name === "string"
+    ? item.name
+    : typeof item.title === "string"
+      ? item.title
+      : "Untitled Supply";
+  const itemDescription = typeof item.description === "string" ? item.description : "";
+  const rawUnit = typeof item.unit === "string" ? item.unit.toLowerCase() : "";
+  const unit: Supply["unit"] = allowedUnits.includes(rawUnit as Supply["unit"])
+    ? (rawUnit as Supply["unit"])
+    : "piece";
+  const locationAddress = typeof locationObj.address === "string" ? locationObj.address : "";
+  const locationCity = typeof locationObj.city === "string" ? locationObj.city : "";
+  const locationState = typeof locationObj.state === "string" ? locationObj.state : "";
+  const locationZip = typeof locationObj.zipCode === "string" ? locationObj.zipCode : "";
+  let locationCoords: { lat: number; lng: number } | undefined;
+  if (locationObj.coordinates && typeof locationObj.coordinates === "object") {
+    const coords = locationObj.coordinates as Record<string, unknown>;
+    if (typeof coords.lat === "number" && typeof coords.lng === "number") {
+      locationCoords = { lat: coords.lat, lng: coords.lng };
+    }
+  }
+  const deliveryEstimatedDays = typeof deliveryObj.estimatedDays === "number" ? deliveryObj.estimatedDays : 0;
+  const deliveryCost = typeof deliveryObj.cost === "number" ? deliveryObj.cost : 0;
+  const deliveryFreeThreshold = typeof deliveryObj.freeShippingThreshold === "number"
+    ? deliveryObj.freeShippingThreshold
+    : undefined;
+  const createdAt = typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString();
+  const updatedAt = typeof item.updatedAt === "string"
+    ? item.updatedAt
+    : typeof item.createdAt === "string"
+      ? item.createdAt
+      : new Date().toISOString();
+  const isActiveFlag = typeof item.isActive === "boolean" ? item.isActive : undefined;
+  const priceValue =
+    typeof pricing.retailPrice === "number"
+      ? pricing.retailPrice
+      : typeof item.price === "number"
+        ? item.price
+        : 0;
+  const originalPriceValue = typeof pricing.wholesalePrice === "number" ? pricing.wholesalePrice : undefined;
+  const minOrderValue = typeof inventory.minStock === "number" ? inventory.minStock : 1;
+  const maxOrderValue = typeof inventory.maxStock === "number" ? inventory.maxStock : undefined;
+  const features = Array.isArray(item.features)
+    ? item.features.filter((f): f is string => typeof f === "string")
+    : [];
+  const tags = Array.isArray(item.tags)
+    ? item.tags.filter((t): t is string => typeof t === "string")
+    : [];
+  const specBrand = typeof item.brand === "string"
+    ? item.brand
+    : typeof specifications.brand === "string"
+      ? specifications.brand
+      : undefined;
+  const specModel = typeof specifications.model === "string" ? specifications.model : undefined;
+  const specWeight = typeof specifications.weight === "string" ? specifications.weight : undefined;
+  const specDimensions = typeof specifications.dimensions === "string" ? specifications.dimensions : undefined;
+  const specMaterial = typeof specifications.material === "string" ? specifications.material : undefined;
+  const specColor = typeof specifications.color === "string" ? specifications.color : undefined;
+  const specWarranty = typeof specifications.warranty === "string" ? specifications.warranty : undefined;
 
   return {
-    id: item.id || item._id || "",
-    name: item.name || item.title || "Untitled Supply",
-    description: item.description || "",
+    id: itemId,
+    name: itemName,
+    description: itemDescription,
     category,
     type,
-    status: normalizeStatus(item.isActive, stock),
-    price: pricing.retailPrice ?? item.price ?? 0,
-    originalPrice: pricing.wholesalePrice,
-    unit: item.unit || "unit",
+    status: normalizeStatus(isActiveFlag, stock),
+    price: priceValue,
+    originalPrice: originalPriceValue,
+    unit,
     stock,
-    minOrder: inventory.minStock ?? 1,
-    maxOrder: inventory.maxStock,
+    minOrder: minOrderValue,
+    maxOrder: maxOrderValue,
     location: {
-      address: item.location?.address || "",
-      city: item.location?.city || "",
-      state: item.location?.state || "",
-      zipCode: item.location?.zipCode || "",
-      coordinates: item.location?.coordinates
+      address: locationAddress,
+      city: locationCity,
+      state: locationState,
+      zipCode: locationZip,
+      coordinates: locationCoords
     },
     images,
-    features: item.features || [],
+    features,
     specifications: {
-      brand: item.brand || specifications.brand,
-      model: specifications.model,
-      weight: specifications.weight,
-      dimensions: specifications.dimensions,
-      material: specifications.material,
-      color: specifications.color,
-      warranty: specifications.warranty,
+      brand: specBrand,
+      model: specModel,
+      weight: specWeight,
+      dimensions: specDimensions,
+      material: specMaterial,
+      color: specColor,
+      warranty: specWarranty,
     },
     supplier: {
-      id: typeof supplierRaw === "string" ? supplierRaw : supplierRaw.id || supplierRaw._id || "",
+      id: typeof supplierRaw === "string"
+        ? supplierRaw
+        : asString(supplierRaw.id) || asString(supplierRaw._id) || "",
       name: typeof supplierRaw === "string"
         ? "Supplier"
-        : supplierRaw.name || [supplierRaw.firstName, supplierRaw.lastName].filter(Boolean).join(" ") || "Supplier",
-      avatar: supplierRaw.avatar,
-      rating: supplierRaw.rating ?? item.averageRating ?? 0,
-      reviewCount: supplierRaw.reviewCount ?? reviews.length ?? 0,
-      verified: Boolean(supplierRaw.verified),
-      location: supplierRaw.location || supplierRaw.city || "",
+        : asString(supplierRaw.name)
+          || [asString(supplierRaw.firstName), asString(supplierRaw.lastName)].filter(Boolean).join(" ")
+          || "Supplier",
+      avatar: typeof supplierRaw === "string" ? undefined : asString(supplierRaw.avatar) || undefined,
+      rating: typeof supplierRaw === "string"
+        ? asNumber(item.averageRating)
+        : asNumber(supplierRaw.rating, asNumber(item.averageRating)),
+      reviewCount: typeof supplierRaw === "string"
+        ? asNumber(reviews.length)
+        : asNumber(supplierRaw.reviewCount, asNumber(reviews.length)),
+      verified: typeof supplierRaw === "string" ? false : Boolean(supplierRaw.verified),
+      location: typeof supplierRaw === "string"
+        ? ""
+        : asString(supplierRaw.location) || asString(supplierRaw.city),
     },
     delivery: {
       available: true,
-      estimatedDays: item.delivery?.estimatedDays ?? 0,
-      cost: item.delivery?.cost ?? 0,
-      freeShippingThreshold: item.delivery?.freeShippingThreshold
+      estimatedDays: deliveryEstimatedDays,
+      cost: deliveryCost,
+      freeShippingThreshold: deliveryFreeThreshold
     },
-    rating: item.averageRating ?? 0,
-    reviewCount: reviews.length ?? 0,
-    viewsCount: item.views ?? 0,
-    isFeatured: item.isFeatured ?? false,
+    rating: asNumber(item.averageRating),
+    reviewCount: asNumber(reviews.length),
+    viewsCount: asNumber(item.views),
+    isFeatured: Boolean(item.isFeatured),
     isFavorited: false,
-    tags: item.tags || [],
-    createdAt: item.createdAt || new Date().toISOString(),
-    updatedAt: item.updatedAt || item.createdAt || new Date().toISOString(),
+    tags,
+    createdAt,
+    updatedAt,
     ordersCount: orders.length ?? 0,
     revenue,
     lastOrderDate,

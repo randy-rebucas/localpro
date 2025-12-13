@@ -15,6 +15,8 @@ import {
   ChevronUp,
   Image as ImageIcon,
   X,
+  Tag,
+  Briefcase,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -35,6 +37,135 @@ import {
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
+
+type MarketplaceTab = "services" | "categories";
+
+interface MarketplaceCategory {
+  _id?: string;
+  id?: string;
+  key: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  slug?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  subcategories?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+const defaultServiceCategories: ServiceCategory[] = [
+  "cleaning",
+  "plumbing",
+  "electrical",
+  "moving",
+  "landscaping",
+  "painting",
+  "carpentry",
+  "flooring",
+  "roofing",
+  "hvac",
+  "appliance_repair",
+  "locksmith",
+  "handyman",
+  "home_security",
+  "pool_maintenance",
+  "pest_control",
+  "carpet_cleaning",
+  "window_cleaning",
+  "gutter_cleaning",
+  "power_washing",
+  "snow_removal",
+  "other",
+];
+
+const sanitizeCategoryKey = (value: string): string => {
+  if (!value) return "";
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+};
+
+const getCategoryLabel = (key?: string): string => {
+  if (!key) return "—";
+  const sanitized = sanitizeCategoryKey(key);
+  return sanitized
+    .split("_")
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : ""))
+    .join(" ")
+    .trim() || "—";
+};
+
+const normalizeServiceCategory = (category: unknown): ServiceCategory => {
+  const sanitized = typeof category === "string" ? sanitizeCategoryKey(category) : "";
+  return (sanitized || "other") as ServiceCategory;
+};
+
+const normalizeMarketplaceCategory = (raw: unknown): MarketplaceCategory | null => {
+  if (!raw || typeof raw !== "object") return null;
+  const candidate = raw as Record<string, unknown>;
+  const key =
+    sanitizeCategoryKey(
+      (candidate.key ||
+        candidate.slug ||
+        candidate.name ||
+        candidate.id ||
+        candidate._id ||
+        "") as string
+    ) || "";
+  const name =
+    (candidate.name ||
+      candidate.label ||
+      candidate.title ||
+      candidate.key ||
+      candidate.slug ||
+      key) as string;
+
+  if (!key || !name) return null;
+
+  const displayOrderValue = candidate.displayOrder;
+  const displayOrder =
+    typeof displayOrderValue === "number"
+      ? displayOrderValue
+      : typeof displayOrderValue === "string" && displayOrderValue.trim() !== ""
+        ? Number(displayOrderValue)
+        : undefined;
+
+  return {
+    _id: (candidate._id as string) || undefined,
+    id: (candidate.id as string) || undefined,
+    key,
+    name,
+    description: (candidate.description as string) || undefined,
+    icon: (candidate.icon as string) || undefined,
+    slug: (candidate.slug as string) || key,
+    displayOrder,
+    isActive:
+      candidate.isActive !== undefined
+        ? Boolean(candidate.isActive)
+        : candidate.status
+          ? String(candidate.status).toLowerCase() === "active"
+          : true,
+    isDeleted:
+      candidate.isDeleted !== undefined
+        ? Boolean(candidate.isDeleted)
+        : candidate.status
+          ? String(candidate.status).toLowerCase() === "deleted"
+          : false,
+    subcategories: Array.isArray(candidate.subcategories)
+      ? (candidate.subcategories as string[])
+      : undefined,
+    createdAt: (candidate.createdAt as string) || undefined,
+    updatedAt: (candidate.updatedAt as string) || undefined,
+  };
+};
+
+const MARKETPLACE_CATEGORIES_MANAGE_ENDPOINT = `${API_BASE_URL}/api/marketplace/services/categories/manage`;
 
 // Type for API service response (raw data from backend)
 interface ApiServiceData {
@@ -87,7 +218,7 @@ const transformServiceData = (apiService: ApiServiceData): Service => {
     _id: apiService._id,
     title: apiService.title || '',
     description: apiService.description || '',
-    category: apiService.category as ServiceCategory || 'other',
+    category: normalizeServiceCategory(apiService.category),
     subcategory: apiService.subcategory || '',
     provider: typeof apiService.provider === 'string' 
       ? apiService.provider 
@@ -159,6 +290,30 @@ export default function MarketplacePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all"); // "all", "active", "inactive"
+  const [activeTab, setActiveTab] = useState<MarketplaceTab>("services");
+
+  // Categories state
+  const [categoriesData, setCategoriesData] = useState<MarketplaceCategory[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>(defaultServiceCategories);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySubmitting, setCategorySubmitting] = useState(false);
+  const [categoryForm, setCategoryForm] = useState<{
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+    displayOrder: string;
+    isActive: boolean;
+  }>({
+    key: "",
+    name: "",
+    description: "",
+    icon: "",
+    displayOrder: "",
+    isActive: true,
+  });
+  const [editingCategory, setEditingCategory] = useState<MarketplaceCategory | null>(null);
 
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -352,6 +507,284 @@ export default function MarketplacePage() {
     }
   };
 
+  const fetchCategories = useCallback(async () => {
+    const parseCategories = (data: unknown): MarketplaceCategory[] => {
+      let rawCategories: unknown = [];
+      if (Array.isArray(data)) {
+        rawCategories = data;
+      } else if (data && typeof data === "object") {
+        const obj = data as Record<string, unknown>;
+        const dataField = obj.data as unknown;
+
+        if (Array.isArray(dataField)) {
+          rawCategories = dataField;
+        } else if (
+          dataField &&
+          typeof dataField === "object" &&
+          Array.isArray((dataField as { categories?: unknown[] }).categories)
+        ) {
+          rawCategories = (dataField as { categories?: unknown[] }).categories;
+        } else if (
+          dataField &&
+          typeof dataField === "object" &&
+          Array.isArray((dataField as { items?: unknown[] }).items)
+        ) {
+          rawCategories = (dataField as { items?: unknown[] }).items;
+        } else if (Array.isArray(obj.categories as unknown[])) {
+          rawCategories = obj.categories;
+        } else {
+          const firstArrayKey = Object.keys(obj).find((key) => Array.isArray(obj[key] as unknown[]));
+          rawCategories = firstArrayKey ? obj[firstArrayKey] : [];
+        }
+      }
+
+      const normalizedCategories = Array.isArray(rawCategories)
+        ? (rawCategories
+            .map((item) => normalizeMarketplaceCategory(item))
+            .filter(Boolean) as MarketplaceCategory[])
+        : [];
+
+      normalizedCategories.sort(
+        (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+      );
+
+      return normalizedCategories;
+    };
+
+    const applyCategories = (normalizedCategories: MarketplaceCategory[]) => {
+      setCategoriesData(normalizedCategories);
+
+      const mergedOptions = Array.from(
+        new Set([
+          ...defaultServiceCategories,
+          ...normalizedCategories
+            .map((cat) => sanitizeCategoryKey(cat.key || cat.name))
+            .filter(Boolean),
+        ])
+      );
+      setCategoryOptions(mergedOptions);
+    };
+
+    const fetchFromEndpoint = async (url: string) => {
+      const response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to load categories (${response.status})`);
+      }
+      const data = await response.json().catch(() => ({}));
+      return parseCategories(data);
+    };
+
+    try {
+      setCategoryLoading(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        setCategoryError("Authentication required. Please log in again.");
+        setCategoryOptions(defaultServiceCategories);
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "200");
+      params.set("includeInactive", "true");
+      params.set("includeDeleted", "true");
+
+      const manageUrl = `${MARKETPLACE_CATEGORIES_MANAGE_ENDPOINT}?${params.toString()}`;
+      let categories: MarketplaceCategory[] = [];
+      let primaryError: Error | null = null;
+
+      try {
+        categories = await fetchFromEndpoint(manageUrl);
+      } catch (err) {
+        primaryError = err instanceof Error ? err : new Error(String(err));
+        logger.warn("Manage categories endpoint failed, falling back", {
+          error: primaryError.message,
+        });
+      }
+
+      // Fallback to base endpoint if manage fails
+      if (!categories.length && primaryError) {
+        try {
+          const fallbackUrl = `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}`;
+          categories = await fetchFromEndpoint(fallbackUrl);
+        } catch (fallbackErr) {
+          const fallbackError = fallbackErr instanceof Error ? fallbackErr : new Error(String(fallbackErr));
+          // If both fail, bubble the primary error message
+          throw primaryError || fallbackError;
+        }
+      }
+
+      applyCategories(categories);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error fetching service categories", error);
+      setCategoryError(error.message);
+      setCategoriesData([]);
+      setCategoryOptions(defaultServiceCategories);
+    } finally {
+      setCategoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const resetCategoryForm = () => {
+    setEditingCategory(null);
+    setCategoryForm({
+      key: "",
+      name: "",
+      description: "",
+      icon: "",
+      displayOrder: "",
+      isActive: true,
+    });
+  };
+
+  const handleCategorySubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const sanitizedKey = sanitizeCategoryKey(categoryForm.key || categoryForm.name);
+    const name = categoryForm.name.trim() || categoryForm.key;
+
+    if (!sanitizedKey || !name) {
+      toast.error("Category key and name are required");
+      return;
+    }
+
+    try {
+      setCategorySubmitting(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        throw new Error("Authentication required");
+      }
+
+    const payload = {
+      key: sanitizedKey,
+      name: name.trim(),
+      description: categoryForm.description.trim() || undefined,
+      icon: categoryForm.icon.trim() || undefined,
+      displayOrder:
+        categoryForm.displayOrder && categoryForm.displayOrder.trim() !== ""
+          ? Number(categoryForm.displayOrder)
+          : 0,
+      isActive: categoryForm.isActive,
+    };
+
+    const updateIdentifier = editingCategory?._id || editingCategory?.id || editingCategory?.key;
+    const url = editingCategory
+      ? `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}${updateIdentifier ? `/${encodeURIComponent(updateIdentifier)}` : ""}`
+      : `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}`;
+
+    if (editingCategory && !updateIdentifier) {
+      throw new Error("Cannot update category: missing category id");
+    }
+
+      const response = await fetch(
+        url,
+        createAuthFetchOptions({
+          method: editingCategory ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            `Failed to ${editingCategory ? "update" : "create"} category`
+        );
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (
+        result &&
+        typeof result === "object" &&
+        "success" in result &&
+        result.success === false
+      ) {
+        throw new Error(
+          result.error || `Failed to ${editingCategory ? "update" : "create"} category`
+        );
+      }
+
+      toast.success(editingCategory ? "Category updated" : "Category created");
+      resetCategoryForm();
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error saving category", error);
+      setCategoryError(error.message);
+      toast.error(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
+
+  const handleEditCategory = (category: MarketplaceCategory) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      key: category.key || "",
+      name: category.name || "",
+      description: category.description || "",
+      icon: category.icon || "",
+      displayOrder:
+        category.displayOrder !== undefined && category.displayOrder !== null
+          ? String(category.displayOrder)
+          : "",
+      isActive: category.isActive ?? true,
+    });
+  };
+
+  const handleDeleteCategory = async (category?: MarketplaceCategory) => {
+    const identifier =
+      category?._id ||
+      category?.id ||
+      category?.key ||
+      sanitizeCategoryKey(category?.name || "");
+    if (!identifier) return;
+    if (!confirm("Delete this category? This cannot be undone.")) return;
+
+    try {
+      setCategorySubmitting(true);
+      if (!getApiToken()) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.marketplaceServicesCategories}/${encodeURIComponent(
+          identifier
+        )}`,
+        createAuthFetchOptions({ method: "DELETE" })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete category");
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (result && typeof result === "object" && "success" in result && result.success === false) {
+        throw new Error(result.error || "Failed to delete category");
+      }
+
+      toast.success("Category deleted");
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error deleting category", error);
+      setCategoryError(error.message);
+      toast.error(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
+
   const handleSort = (field: 'title' | 'category' | 'createdAt' | 'price') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -454,8 +887,8 @@ export default function MarketplacePage() {
       const formData = {
         title: createFormData.title,
         description: createFormData.description,
-        category: createFormData.category,
-        subcategory: createFormData.subcategory,
+        category: normalizeServiceCategory(createFormData.category),
+        subcategory: createFormData.subcategory.trim(),
         pricing: {
           type: createFormData.pricingType,
           basePrice: parseFloat(createFormData.basePrice) || 0,
@@ -515,8 +948,8 @@ export default function MarketplacePage() {
       const formData = {
         title: editFormData.title,
         description: editFormData.description,
-        category: editFormData.category,
-        subcategory: editFormData.subcategory,
+        category: normalizeServiceCategory(editFormData.category),
+        subcategory: editFormData.subcategory.trim(),
         pricing: {
           type: editFormData.pricingType,
           basePrice: parseFloat(editFormData.basePrice) || 0,
@@ -712,6 +1145,7 @@ export default function MarketplacePage() {
   };
 
   const getCategoryColor = (category: string) => {
+    const key = sanitizeCategoryKey(category);
     const colors: Record<string, string> = {
       cleaning: 'bg-blue-100 text-blue-800',
       plumbing: 'bg-green-100 text-green-800',
@@ -724,11 +1158,39 @@ export default function MarketplacePage() {
       roofing: 'bg-red-100 text-red-800',
       hvac: 'bg-cyan-100 text-cyan-800',
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[key] || 'bg-gray-100 text-gray-800';
   };
 
   const getStatusColor = (isActive: boolean | undefined) => {
     return isActive ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100';
+  };
+
+  const categoriesToDisplay: MarketplaceCategory[] = categoriesData.length
+    ? categoriesData
+    : defaultServiceCategories.map((key) => ({
+        key,
+        name: getCategoryLabel(key),
+        isActive: true,
+        isDeleted: false,
+      }));
+
+  const renderCategoryState = (category: MarketplaceCategory) => {
+    if (category.isDeleted) {
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          Deleted
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+          category.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {category.isActive ? "Active" : "Inactive"}
+      </span>
+    );
   };
 
   if (loading) {
@@ -777,314 +1239,547 @@ export default function MarketplacePage() {
           <p className="text-gray-600 text-sm">Manage marketplace services and listings</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-          {lastUpdated && (
+          {activeTab === 'services' && lastUpdated && (
             <p className="text-xs text-gray-500">
               Updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add Service
-          </button>
-          <button
-            onClick={refreshData}
-            disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
-          >
-            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
+          {activeTab === 'services' ? (
+            <>
+              <button
+                onClick={() => setCreateModalOpen(true)}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Service
+              </button>
+              <button
+                onClick={refreshData}
+                disabled={refreshing}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={fetchCategories}
+              disabled={categoryLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            >
+              <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Filters and Controls */}
+      {/* Tabs */}
       <div className="bg-white rounded shadow">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Filter className="w-3 h-3 mr-1" />
-                {showFilters ? 'Hide' : 'Show'} Filters
-              </button>
-              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <Download className="w-3 h-3 mr-1" />
-                Export
-              </button>
-            </div>
-          </div>
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('services')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === 'services'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Briefcase className="w-3 h-3 inline mr-1" />
+              Services
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === 'categories'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Tag className="w-3 h-3 inline mr-1" />
+              Categories
+            </button>
+          </nav>
         </div>
+      </div>
 
-        {showFilters && (
-          <div className="p-4 border-b border-gray-200">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search services..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
+      {activeTab === 'services' && (
+        <>
+          {/* Filters and Controls */}
+          <div className="bg-white rounded shadow">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <Filter className="w-3 h-3 mr-1" />
+                    {showFilters ? 'Hide' : 'Show'} Filters
+                  </button>
+                  <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <Download className="w-3 h-3 mr-1" />
+                    Export
+                  </button>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="plumbing">Plumbing</option>
-                  <option value="electrical">Electrical</option>
-                  <option value="moving">Moving</option>
-                  <option value="landscaping">Landscaping</option>
-                  <option value="painting">Painting</option>
-                  <option value="carpentry">Carpentry</option>
-                  <option value="flooring">Flooring</option>
-                  <option value="roofing">Roofing</option>
-                  <option value="hvac">HVAC</option>
-                  <option value="appliance_repair">Appliance Repair</option>
-                  <option value="locksmith">Locksmith</option>
-                  <option value="handyman">Handyman</option>
-                  <option value="home_security">Home Security</option>
-                  <option value="pool_maintenance">Pool Maintenance</option>
-                  <option value="pest_control">Pest Control</option>
-                  <option value="carpet_cleaning">Carpet Cleaning</option>
-                  <option value="window_cleaning">Window Cleaning</option>
-                  <option value="gutter_cleaning">Gutter Cleaning</option>
-                  <option value="power_washing">Power Washing</option>
-                  <option value="snow_removal">Snow Removal</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
             </div>
 
-            <div className="mt-3 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setCategoryFilter('all');
-                  setStatusFilter('all');
-                }}
-                className="text-xs text-gray-600 hover:text-gray-800"
-              >
-                Clear all filters
-              </button>
-              <div className="text-xs text-gray-500">
-                {totalCount > 0 ? `${totalCount} services found` : `${services.length} services found`}
+            {showFilters && (
+              <div className="p-4 border-b border-gray-200">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search services..."
+                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(sanitizeCategoryKey(e.target.value))}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="all">All Categories</option>
+                      {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
+                        (categoryKey) => {
+                          const value = sanitizeCategoryKey(categoryKey);
+                          return (
+                            <option key={value} value={value}>
+                              {getCategoryLabel(value)}
+                            </option>
+                          );
+                        }
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCategoryFilter('all');
+                      setStatusFilter('all');
+                    }}
+                    className="text-xs text-gray-600 hover:text-gray-800"
+                  >
+                    Clear all filters
+                  </button>
+                  <div className="text-xs text-gray-500">
+                    {totalCount > 0 ? `${totalCount} services found` : `${services.length} services found`}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Data Table */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Services</h3>
-            <div className="flex items-center space-x-1">
-              <span className="text-xs text-gray-500">Sort:</span>
-              <button
-                onClick={() => handleSort('title')}
-                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Title
-                {sortBy === 'title' && (
-                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                )}
-              </button>
-              <button
-                onClick={() => handleSort('category')}
-                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'category' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Category
-                {sortBy === 'category' && (
-                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                )}
-              </button>
-              <button
-                onClick={() => handleSort('createdAt')}
-                className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                Date
-                {sortBy === 'createdAt' && (
-                  sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
-                )}
-              </button>
+          {/* Data Table */}
+          <div className="bg-white rounded shadow overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Services</h3>
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs text-gray-500">Sort:</span>
+                  <button
+                    onClick={() => handleSort('title')}
+                    className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                      sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Title
+                    {sortBy === 'title' && (
+                      sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleSort('category')}
+                    className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                      sortBy === 'category' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Category
+                    {sortBy === 'category' && (
+                      sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleSort('createdAt')}
+                    className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
+                      sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Date
+                    {sortBy === 'createdAt' && (
+                      sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {services.map((service) => (
-                <tr key={service._id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-8 w-8">
-                        {service.images && service.images.length > 0 ? (
-                          <Image 
-                            src={service.images[0].url || service.images[0].thumbnail || ''} 
-                            alt={service.title}
-                            width={32}
-                            height={32}
-                            className="h-8 w-8 rounded object-cover"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="h-8 w-8 rounded bg-gray-300 flex items-center justify-center">
-                            <ImageIcon className="w-4 h-4 text-gray-600" />
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {services.map((service) => (
+                    <tr key={service._id} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-8 w-8">
+                            {service.images && service.images.length > 0 ? (
+                              <Image 
+                                src={service.images[0].url || service.images[0].thumbnail || ''} 
+                                alt={service.title}
+                                width={32}
+                                height={32}
+                                className="h-8 w-8 rounded object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded bg-gray-300 flex items-center justify-center">
+                                <ImageIcon className="w-4 h-4 text-gray-600" />
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className="ml-3">
-                        <div className="text-xs font-semibold text-gray-900">
-                          {service.title || 'Untitled Service'}
+                          <div className="ml-3">
+                            <div className="text-xs font-semibold text-gray-900">
+                              {service.title || 'Untitled Service'}
+                            </div>
+                            <div className="text-xs text-gray-600 max-w-[220px] truncate">
+                              {service.description || 'No description'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-gray-600 line-clamp-1">
-                          {service.description || 'No description'}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(service.category)}`}>
+                          {getCategoryLabel(service.category)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
+                        <span>
+                          {formatCurrency(
+                            service.pricing?.basePrice || 0,
+                            service.pricing?.currency || getDefaultCurrency(appSettings),
+                            { appSettings }
+                          )}
+                          {service.pricing?.type && ` / ${service.pricing.type}`}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(service.isActive)}`}>
+                          {service.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
+                        {service.createdAt ? new Date(service.createdAt).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                        <div className="flex items-center space-x-2">
+                          {service._id && (
+                            <>
+                              <button 
+                                onClick={() => handleViewService(service._id!)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="View service details"
+                              >
+                                <Eye className="w-3 h-3" />
+                              </button>
+                              <button 
+                              onClick={() => {
+                                setSelectedService(service);
+                                setEditFormData({
+                                  title: service.title || '',
+                                  description: service.description || '',
+                                  category: normalizeServiceCategory(service.category),
+                                  subcategory: service.subcategory || '',
+                                  pricingType: service.pricing?.type || 'fixed',
+                                  basePrice: service.pricing?.basePrice?.toString() || '',
+                                  currency: service.pricing?.currency || getDefaultCurrency(appSettings),
+                                  serviceArea: service.serviceArea?.join(', ') || '',
+                                  serviceType: service.serviceType || 'one_time',
+                                  isActive: service.isActive !== undefined ? service.isActive : true
+                                });
+                                setEditModalOpen(true);
+                              }}
+                                className="text-green-600 hover:text-green-900"
+                                title="Edit service"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setSelectedService(service);
+                                  setImageUploadModalOpen(true);
+                                }}
+                                className="text-indigo-600 hover:text-indigo-900"
+                                title="Upload images"
+                              >
+                                <ImageIcon className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setSelectedService(service);
+                                  setDeleteModalOpen(true);
+                                }}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete service"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </>
+                          )}
                         </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getCategoryColor(service.category)}`}>
-                      {service.category.replace('_', ' ').toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">
-                    <span>
-                      {formatCurrency(
-                        service.pricing?.basePrice || 0,
-                        service.pricing?.currency || getDefaultCurrency(appSettings),
-                        { appSettings }
-                      )}
-                      {service.pricing?.type && ` / ${service.pricing.type}`}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(service.isActive)}`}>
-                      {service.isActive ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-500">
-                    {service.createdAt ? new Date(service.createdAt).toLocaleDateString() : 'N/A'}
-                  </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
-                    <div className="flex items-center space-x-2">
-                      {service._id && (
-                        <>
-                          <button 
-                            onClick={() => handleViewService(service._id!)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="View service details"
-                          >
-                            <Eye className="w-3 h-3" />
-                          </button>
-                          <button 
-                          onClick={() => {
-                            setSelectedService(service);
-                            setEditFormData({
-                              title: service.title || '',
-                              description: service.description || '',
-                              category: service.category || 'other',
-                              subcategory: service.subcategory || '',
-                              pricingType: service.pricing?.type || 'fixed',
-                              basePrice: service.pricing?.basePrice?.toString() || '',
-                              currency: service.pricing?.currency || getDefaultCurrency(appSettings),
-                              serviceArea: service.serviceArea?.join(', ') || '',
-                              serviceType: service.serviceType || 'one_time',
-                              isActive: service.isActive !== undefined ? service.isActive : true
-                            });
-                            setEditModalOpen(true);
-                          }}
-                            className="text-green-600 hover:text-green-900"
-                            title="Edit service"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setSelectedService(service);
-                              setImageUploadModalOpen(true);
-                            }}
-                            className="text-indigo-600 hover:text-indigo-900"
-                            title="Upload images"
-                          >
-                            <ImageIcon className="w-3 h-3" />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setSelectedService(service);
-                              setDeleteModalOpen(true);
-                            }}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete service"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-        {services.length === 0 && (
-          <div className="text-center py-8">
-            <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No services found</h3>
-            <p className="text-xs text-gray-500">Try adjusting your filters or search criteria.</p>
+            {services.length === 0 && (
+              <div className="text-center py-8">
+                <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <h3 className="text-sm font-medium text-gray-900 mb-1">No services found</h3>
+                <p className="text-xs text-gray-500">Try adjusting your filters or search criteria.</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="bg-white rounded shadow p-3 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Service Categories</h3>
+              <p className="text-xs text-gray-600">
+                Create, update, and order marketplace service categories.
+              </p>
+              {categoryError && (
+                <p className="text-xs text-red-600 mt-1">{categoryError}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchCategories}
+                disabled={categoryLoading}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <form className="space-y-2.5 md:col-span-1" onSubmit={handleCategorySubmit}>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Key *</label>
+                <input
+                  type="text"
+                  value={categoryForm.key}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, key: sanitizeCategoryKey(e.target.value) })
+                  }
+                  placeholder="e.g., cleaning"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Lowercase, unique identifier (letters, numbers, underscores).
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  placeholder="Cleaning Services"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Optional short description"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Icon (optional)</label>
+                <input
+                  type="text"
+                  value={categoryForm.icon}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                  placeholder="e.g., sparkles"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Display Order</label>
+                <input
+                  type="number"
+                  value={categoryForm.displayOrder}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, displayOrder: e.target.value })
+                  }
+                  placeholder="0"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={categoryForm.isActive}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-xs text-gray-700">Active</label>
+              </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                {editingCategory && (
+                  <button
+                    type="button"
+                    onClick={resetCategoryForm}
+                    className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={categorySubmitting}
+                  className="px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {categorySubmitting
+                    ? editingCategory
+                      ? 'Updating...'
+                      : 'Creating...'
+                    : editingCategory
+                      ? 'Update Category'
+                      : 'Create Category'}
+                </button>
+              </div>
+            </form>
+
+            <div className="md:col-span-2">
+              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Key</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Order</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {categoriesToDisplay.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-2.5 py-1.5 text-center text-xs text-gray-500">
+                          No categories found
+                        </td>
+                      </tr>
+                    ) : (
+                      categoriesToDisplay.map((category) => {
+                        const identifier =
+                          category._id ||
+                          category.id ||
+                          category.key ||
+                          sanitizeCategoryKey(category.name);
+                        const hasActions = categoriesData.length > 0;
+                        return (
+                          <tr key={identifier || category.name}>
+                            <td className="px-2.5 py-1.5 text-xs font-semibold text-gray-900">
+                              {sanitizeCategoryKey(category.key)}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs text-gray-900">
+                              {category.name || getCategoryLabel(category.key)}
+                              {category.description && (
+                                <div className="text-[11px] text-gray-500 line-clamp-1">
+                                  {category.description}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-2.5 py-1.5">
+                              {renderCategoryState(category)}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs text-gray-600">
+                              {category.displayOrder ?? 0}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs font-medium">
+                              {hasActions && (
+                                <div className="flex items-center space-x-2">
+                                  <button
+                                    onClick={() => handleEditCategory(category)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                    title="Edit category"
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCategory(category)}
+                                    className="text-red-600 hover:text-red-900"
+                                    title="Delete category"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* View Service Modal - Will be implemented in next chunk */}
       <Modal
@@ -1110,7 +1805,7 @@ export default function MarketplacePage() {
               <div>
                 <label className="text-xs font-medium text-gray-500">Category</label>
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(selectedServiceDetails.category)}`}>
-                  {selectedServiceDetails.category.replace('_', ' ').toUpperCase()}
+                  {getCategoryLabel(selectedServiceDetails.category)}
                 </span>
               </div>
               <div className="col-span-2">
@@ -1166,6 +1861,7 @@ export default function MarketplacePage() {
         <CreateServiceForm 
           formData={createFormData}
           setFormData={setCreateFormData}
+          categoryOptions={categoryOptions}
         />
       </Modal>
 
@@ -1203,6 +1899,7 @@ export default function MarketplacePage() {
           <EditServiceForm 
             formData={editFormData}
             setFormData={setEditFormData}
+            categoryOptions={categoryOptions}
           />
         )}
       </Modal>
@@ -1294,7 +1991,8 @@ export default function MarketplacePage() {
 // Create Service Form Component
 function CreateServiceForm({ 
   formData, 
-  setFormData
+  setFormData,
+  categoryOptions,
 }: {
   formData: {
     title: string;
@@ -1320,6 +2018,7 @@ function CreateServiceForm({
     serviceType: ServiceType;
     isActive: boolean;
   }>>;
+  categoryOptions: string[];
 }) {
   return (
     <div className="space-y-3">
@@ -1338,31 +2037,24 @@ function CreateServiceForm({
           <label className="block text-xs font-medium text-gray-700 mb-0.5">Category *</label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                category: normalizeServiceCategory(e.target.value),
+              })
+            }
             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="cleaning">Cleaning</option>
-            <option value="plumbing">Plumbing</option>
-            <option value="electrical">Electrical</option>
-            <option value="moving">Moving</option>
-            <option value="landscaping">Landscaping</option>
-            <option value="painting">Painting</option>
-            <option value="carpentry">Carpentry</option>
-            <option value="flooring">Flooring</option>
-            <option value="roofing">Roofing</option>
-            <option value="hvac">HVAC</option>
-            <option value="appliance_repair">Appliance Repair</option>
-            <option value="locksmith">Locksmith</option>
-            <option value="handyman">Handyman</option>
-            <option value="home_security">Home Security</option>
-            <option value="pool_maintenance">Pool Maintenance</option>
-            <option value="pest_control">Pest Control</option>
-            <option value="carpet_cleaning">Carpet Cleaning</option>
-            <option value="window_cleaning">Window Cleaning</option>
-            <option value="gutter_cleaning">Gutter Cleaning</option>
-            <option value="power_washing">Power Washing</option>
-            <option value="snow_removal">Snow Removal</option>
-            <option value="other">Other</option>
+            {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
+              (categoryKey) => {
+                const value = sanitizeCategoryKey(categoryKey);
+                return (
+                  <option key={value} value={value}>
+                    {getCategoryLabel(value)}
+                  </option>
+                );
+              }
+            )}
           </select>
         </div>
         <div>
@@ -1450,7 +2142,8 @@ function CreateServiceForm({
 // Edit Service Form Component
 function EditServiceForm({ 
   formData, 
-  setFormData
+  setFormData,
+  categoryOptions,
 }: {
   formData: {
     title: string;
@@ -1476,6 +2169,7 @@ function EditServiceForm({
     serviceType: ServiceType;
     isActive: boolean;
   }>>;
+  categoryOptions: string[];
 }) {
   return (
     <div className="space-y-3">
@@ -1494,31 +2188,24 @@ function EditServiceForm({
           <label className="block text-xs font-medium text-gray-700 mb-0.5">Category *</label>
           <select
             value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value as ServiceCategory })}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                category: normalizeServiceCategory(e.target.value),
+              })
+            }
             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
-            <option value="cleaning">Cleaning</option>
-            <option value="plumbing">Plumbing</option>
-            <option value="electrical">Electrical</option>
-            <option value="moving">Moving</option>
-            <option value="landscaping">Landscaping</option>
-            <option value="painting">Painting</option>
-            <option value="carpentry">Carpentry</option>
-            <option value="flooring">Flooring</option>
-            <option value="roofing">Roofing</option>
-            <option value="hvac">HVAC</option>
-            <option value="appliance_repair">Appliance Repair</option>
-            <option value="locksmith">Locksmith</option>
-            <option value="handyman">Handyman</option>
-            <option value="home_security">Home Security</option>
-            <option value="pool_maintenance">Pool Maintenance</option>
-            <option value="pest_control">Pest Control</option>
-            <option value="carpet_cleaning">Carpet Cleaning</option>
-            <option value="window_cleaning">Window Cleaning</option>
-            <option value="gutter_cleaning">Gutter Cleaning</option>
-            <option value="power_washing">Power Washing</option>
-            <option value="snow_removal">Snow Removal</option>
-            <option value="other">Other</option>
+            {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
+              (categoryKey) => {
+                const value = sanitizeCategoryKey(categoryKey);
+                return (
+                  <option key={value} value={value}>
+                    {getCategoryLabel(value)}
+                  </option>
+                );
+              }
+            )}
           </select>
         </div>
         <div>

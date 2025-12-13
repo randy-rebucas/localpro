@@ -7,7 +7,7 @@ import { useRoleView } from "@/hooks/useRoleView";
 import { getUserName } from "@/lib/utils/user-name";
 import { ProviderMarketplace } from "@/components/marketplace/provider-marketplace";
 import { Broadcaster } from "@/components/broadcaster";
-import { Plus, BarChart3, Briefcase, Users, Headphones } from "lucide-react";
+import { Plus, BarChart3, Briefcase, Users, Headphones, Calendar } from "lucide-react";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
@@ -61,19 +61,26 @@ export default function MarketplacePage() {
         <div className="mb-6 flex items-center gap-6 border-b border-gray-200 pb-4">
           {isProviderView && (
             <Link 
-              href="/marketplace/my-jobs" 
+              href="/marketplace/my-services" 
               className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
             >
               <BarChart3 className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
-              <span className="text-sm font-medium">My Jobs</span>
+              <span className="text-sm font-medium">My Services</span>
             </Link>
           )}
           <Link 
-            href="/jobs" 
+              href="/marketplace/my-bookings" 
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+            >
+              <Calendar className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">My Bookings</span>
+            </Link>
+          <Link 
+            href="/marketplace" 
             className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
           >
             <Briefcase className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium">Browse Jobs</span>
+            <span className="text-sm font-medium">Browse Services</span>
           </Link>
           <Link 
             href="/providers" 

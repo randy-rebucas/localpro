@@ -43,7 +43,6 @@ export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
     <>
       {/* Hero Section with Categories */}
       <div className="bg-gradient-to-b from-white via-green-50/30 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-4">
           <MarketplaceHero
             userName={userName}
             selectedCategory={filters.category}
@@ -63,7 +62,6 @@ export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
             }}
             onCategoriesRetry={refetchCategories}
           />
-        </div>
       </div>
 
       {/* Main Content */}

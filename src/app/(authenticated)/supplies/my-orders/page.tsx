@@ -176,7 +176,13 @@ const normalizeOrder = (order: Record<string, unknown>): SupplyOrder => {
       : typeof quantityValue === 'string'
         ? Number(quantityValue) || 1
         : 1;
-  const totalPrice = order.totalPrice ?? order.totalCost ?? order.totalAmount ?? 0;
+  const totalPriceRaw = order.totalPrice ?? order.totalCost ?? order.totalAmount ?? 0;
+  const totalPrice =
+    typeof totalPriceRaw === 'number'
+      ? totalPriceRaw
+      : typeof totalPriceRaw === 'string'
+        ? Number(totalPriceRaw) || 0
+        : 0;
 
   const orderIdValue = order.id ?? order._id;
   const orderId =
@@ -218,6 +224,21 @@ const normalizeOrder = (order: Record<string, unknown>): SupplyOrder => {
   const supplyType =
     typeof rawSupply.type === 'string' ? rawSupply.type : 'product';
 
+  const pricing =
+    rawSupply.pricing && typeof rawSupply.pricing === 'object'
+      ? (rawSupply.pricing as Record<string, unknown>)
+      : undefined;
+  const retailPrice =
+    typeof pricing?.retailPrice === 'number' ? pricing.retailPrice : undefined;
+  const basePrice = typeof rawSupply.price === 'number' ? rawSupply.price : undefined;
+
+  const paymentObj = order.payment && typeof order.payment === 'object'
+    ? (order.payment as Record<string, unknown>)
+    : undefined;
+  const contactInfoObj = order.contactInfo && typeof order.contactInfo === 'object'
+    ? (order.contactInfo as Record<string, unknown>)
+    : undefined;
+
   return {
     id: orderId,
     supplyId,
@@ -227,43 +248,92 @@ const normalizeOrder = (order: Record<string, unknown>): SupplyOrder => {
       description: supplyDescription,
       category: supplyCategory,
       type: supplyType,
-      price: rawSupply.pricing?.retailPrice ?? rawSupply.price ?? (quantity ? totalPrice / quantity : 0),
-      unit: rawSupply.unit || 'unit',
+      price: retailPrice ?? basePrice ?? (quantity ? totalPrice / quantity : 0),
+      unit: typeof rawSupply.unit === 'string' ? rawSupply.unit : 'unit',
       images,
       supplier: {
-        id: rawSupplier.id || rawSupplier._id || '',
-        name: rawSupplier.name || [rawSupplier.firstName, rawSupplier.lastName].filter(Boolean).join(' ') || 'Supplier',
-        avatar: rawSupplier.avatar || '',
-        rating: rawSupplier.rating ?? 0,
-        reviewCount: rawSupplier.reviewCount ?? 0,
+        id: typeof rawSupplier.id === 'string'
+          ? rawSupplier.id
+          : typeof rawSupplier._id === 'string'
+            ? rawSupplier._id
+            : '',
+        name: typeof rawSupplier.name === 'string'
+          ? rawSupplier.name
+          : [rawSupplier.firstName, rawSupplier.lastName]
+              .filter((val): val is string => typeof val === 'string' && Boolean(val))
+              .join(' ') || 'Supplier',
+        avatar: typeof rawSupplier.avatar === 'string' ? rawSupplier.avatar : '',
+        rating: typeof rawSupplier.rating === 'number' ? rawSupplier.rating : 0,
+        reviewCount: typeof rawSupplier.reviewCount === 'number' ? rawSupplier.reviewCount : 0,
         verified: Boolean(rawSupplier.verified),
-        location: rawSupplier.location || rawSupplier.city || ''
+        location: typeof rawSupplier.location === 'string'
+          ? rawSupplier.location
+          : typeof rawSupplier.city === 'string'
+            ? rawSupplier.city
+            : ''
       }
     },
     quantity,
     totalPrice,
-    status: normalizeStatus(order.status),
-    paymentStatus: normalizePaymentStatus(order.paymentStatus || order.payment?.status),
+    status: normalizeStatus(typeof order.status === 'string' ? order.status : undefined),
+    paymentStatus: normalizePaymentStatus(
+      typeof order.paymentStatus === 'string'
+        ? order.paymentStatus
+        : typeof paymentObj?.status === 'string'
+          ? (paymentObj.status as string)
+          : undefined
+    ),
     shippingAddress: {
-      name: rawShipping.name || `${rawSupplier.firstName || ''} ${rawSupplier.lastName || ''}`.trim() || 'Delivery Contact',
-      address: rawShipping.address || rawShipping.street || '',
-      city: rawShipping.city || '',
-      state: rawShipping.state || '',
-      zipCode: rawShipping.zipCode || rawShipping.postalCode || '',
-      phone: rawShipping.phone || order.contactInfo?.phone || '',
-      email: rawShipping.email || order.contactInfo?.email || ''
+      name:
+        (typeof rawShipping.name === 'string' && rawShipping.name) ||
+        `${typeof rawSupplier.firstName === 'string' ? rawSupplier.firstName : ''} ${typeof rawSupplier.lastName === 'string' ? rawSupplier.lastName : ''}`.trim() ||
+        'Delivery Contact',
+      address:
+        (typeof rawShipping.address === 'string' && rawShipping.address) ||
+        (typeof rawShipping.street === 'string' && rawShipping.street) ||
+        '',
+      city: typeof rawShipping.city === 'string' ? rawShipping.city : '',
+      state: typeof rawShipping.state === 'string' ? rawShipping.state : '',
+      zipCode:
+        (typeof rawShipping.zipCode === 'string' && rawShipping.zipCode) ||
+        (typeof rawShipping.postalCode === 'string' && rawShipping.postalCode) ||
+        '',
+      phone:
+        (typeof rawShipping.phone === 'string' && rawShipping.phone) ||
+        (typeof contactInfoObj?.phone === 'string' ? (contactInfoObj.phone as string) : '') ||
+        '',
+      email:
+        (typeof rawShipping.email === 'string' && rawShipping.email) ||
+        (typeof contactInfoObj?.email === 'string' ? (contactInfoObj.email as string) : '') ||
+        ''
     },
     delivery: {
-      estimatedDays: rawDelivery.estimatedDays ?? 0,
-      cost: rawDelivery.cost ?? 0,
-      trackingNumber: rawDelivery.trackingNumber || rawDelivery.tracking || order.trackingNumber,
-      carrier: rawDelivery.carrier || ''
+      estimatedDays: typeof rawDelivery.estimatedDays === 'number' ? rawDelivery.estimatedDays : 0,
+      cost: typeof rawDelivery.cost === 'number' ? rawDelivery.cost : 0,
+      trackingNumber:
+        (typeof rawDelivery.trackingNumber === 'string' && rawDelivery.trackingNumber) ||
+        (typeof rawDelivery.tracking === 'string' && rawDelivery.tracking) ||
+        (typeof order.trackingNumber === 'string' ? order.trackingNumber : ''),
+      carrier: typeof rawDelivery.carrier === 'string' ? rawDelivery.carrier : ''
     },
-    notes: order.specialInstructions || order.notes,
-    createdAt: order.createdAt || new Date().toISOString(),
-    updatedAt: order.updatedAt || order.createdAt || new Date().toISOString(),
-    deliveredAt: rawDelivery.actualDelivery || order.deliveredAt,
-    cancelledAt: order.cancelledAt
+    notes:
+      (typeof order.specialInstructions === 'string' && order.specialInstructions) ||
+      (typeof order.notes === 'string' && order.notes) ||
+      undefined,
+    createdAt:
+      (typeof order.createdAt === 'string' && order.createdAt) ||
+      new Date().toISOString(),
+    updatedAt:
+      (typeof order.updatedAt === 'string' && order.updatedAt) ||
+      (typeof order.createdAt === 'string' && order.createdAt) ||
+      new Date().toISOString(),
+    deliveredAt:
+      (typeof rawDelivery.actualDelivery === 'string' && rawDelivery.actualDelivery) ||
+      (typeof order.deliveredAt === 'string' && order.deliveredAt) ||
+      undefined,
+    cancelledAt:
+      (typeof order.cancelledAt === 'string' && order.cancelledAt) ||
+      undefined
   };
 };
 
