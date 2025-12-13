@@ -534,6 +534,28 @@ export const API_ENDPOINTS = {
   // Monitoring Endpoints
   monitoringSystemHealth: "/api/monitoring/system-health",
 
+  // Database Monitoring Endpoints
+  databaseMonitoringStats: "/api/database/monitoring/stats",
+  databaseMonitoringCollections: "/api/database/monitoring/collections",
+  databaseMonitoringQueries: "/api/database/monitoring/queries",
+  databaseMonitoringConnections: "/api/database/monitoring/connections",
+  databaseMonitoringSlowQueries: "/api/database/monitoring/slow-queries",
+  databaseMonitoringHealth: "/api/database/monitoring/health",
+  databaseMonitoringReset: "/api/database/monitoring/reset",
+
+  // Database Optimization Endpoints (Admin Only)
+  databaseOptimizationReport: "/api/database/optimization/report",
+  databaseOptimizationRecommendations: "/api/database/optimization/recommendations",
+  databaseOptimizationCreateIndexes: "/api/database/optimization/create-indexes",
+  databaseOptimizationQueryStats: "/api/database/optimization/query-stats",
+  databaseOptimizationHealth: "/api/database/optimization/health",
+  databaseOptimizationCollections: "/api/database/optimization/collections",
+  databaseOptimizationSlowQueries: "/api/database/optimization/slow-queries",
+  databaseOptimizationClearCache: "/api/database/optimization/clear-cache",
+  databaseOptimizationResetStats: "/api/database/optimization/reset-stats",
+  databaseOptimizationBackup: "/api/database/optimization/backup",
+  databaseOptimizationRestore: "/api/database/optimization/restore",
+
   // Email Marketing - Campaign Management (Admin only)
   emailMarketingCampaigns: "/api/email-marketing/campaigns",
   emailMarketingCampaignsById: "/api/email-marketing/campaigns/[id]",

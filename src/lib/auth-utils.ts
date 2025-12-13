@@ -7,38 +7,41 @@ import { logger } from './logger';
  */
 export function getApiToken(): string | null {
   if (typeof document === 'undefined') return null;
-  
+
   const cookies = document.cookie.split(';');
-  
-  // First, try to get api-token cookie (used by mobile authentication)
-  const apiTokenCookie = cookies.find(cookie => 
-    cookie.trim().startsWith('api-token=')
-  );
-  
-  if (apiTokenCookie) {
-    const token = apiTokenCookie.split('=')[1];
-    if (token && token.trim() !== '') {
-      return token;
-    }
+
+  const readCookie = (name: string) =>
+    cookies
+      .find(cookie => cookie.trim().startsWith(`${name}=`))
+      ?.split('=')[1];
+
+  const apiTokenCookie = readCookie('api-token');
+  const sessionCookie = readCookie('session');
+
+  // Fallbacks: some flows store tokens in localStorage instead of cookies
+  let storageToken: string | null = null;
+  try {
+    storageToken =
+      localStorage.getItem('api-token') ||
+      localStorage.getItem('apiToken') ||
+      localStorage.getItem('token') ||
+      null;
+  } catch {
+    storageToken = null;
   }
-  
-  // Fallback to session cookie for backward compatibility
-  const sessionCookie = cookies.find(cookie => 
-    cookie.trim().startsWith('session=')
-  );
-  
-  const token = sessionCookie ? sessionCookie.split('=')[1] : null;
-  
-  // Debug logging in development
+
+  const token = apiTokenCookie || sessionCookie || storageToken || null;
+
   if (process.env.NODE_ENV === 'development') {
     logger.debug('Token check', {
       hasApiToken: !!apiTokenCookie,
       hasSessionToken: !!sessionCookie,
+      hasStorageToken: !!storageToken,
       cookieCount: cookies.length,
       tokenLength: token?.length || 0
     });
   }
-  
+
   return token;
 }
 

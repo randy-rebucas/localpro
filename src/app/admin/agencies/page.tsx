@@ -255,15 +255,14 @@ export default function AdminAgenciesPage() {
 
   const handleVerifyAgency = async (verified: boolean) => {
     if (!selectedAgency?._id) return;
-    
     try {
       setSubmitting(true);
       if (!getApiToken()) return;
 
-      // Update agency verification status
-      const url = `${API_BASE_URL}${API_ENDPOINTS.agenciesById}/${selectedAgency._id}`;
+      // Use PATCH and the correct endpoint for verification
+      const url = `${API_BASE_URL}/api/agencies/${selectedAgency._id}/verification`;
       const response = await fetch(url, createAuthFetchOptions({
-        method: 'PUT',
+        method: 'PATCH',
         body: JSON.stringify({
           verification: {
             isVerified: verified,
@@ -273,8 +272,16 @@ export default function AdminAgenciesPage() {
       }));
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update verification status');
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch {}
+        logger.error('Agency verification update failed. Response:', new Error(errorText));
+        let errorData: Record<string, unknown> = {};
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {}
+        throw new Error(typeof errorData.error === 'string' ? errorData.error : (typeof errorText === 'string' && errorText) ? errorText : 'Failed to update verification status');
       }
 
       toast.success(verified ? 'Agency verified successfully' : 'Agency verification revoked');
@@ -430,8 +437,8 @@ export default function AdminAgenciesPage() {
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500">Total Revenue</p>
-                <p className="text-2xl font-bold text-yellow-600">${(statistics.totalRevenue || 0).toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Total Revenue (PHP)</p>
+                <p className="text-2xl font-bold text-yellow-600">₱{(statistics.totalRevenue || 0).toLocaleString()}</p>
               </div>
               <BarChart3 className="w-8 h-8 text-yellow-500" />
             </div>
@@ -805,8 +812,8 @@ export default function AdminAgenciesPage() {
                     <p className="text-lg font-bold text-blue-600">{selectedAgency.analytics.totalBookings || 0}</p>
                   </div>
                   <div className="bg-green-50 p-3 rounded">
-                    <p className="text-xs text-gray-500">Total Revenue</p>
-                    <p className="text-lg font-bold text-green-600">${(selectedAgency.analytics.totalRevenue || 0).toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">Total Revenue (PHP)</p>
+                    <p className="text-lg font-bold text-green-600">₱{(selectedAgency.analytics.totalRevenue || 0).toLocaleString()}</p>
                   </div>
                   <div className="bg-yellow-50 p-3 rounded">
                     <p className="text-xs text-gray-500">Avg Rating</p>

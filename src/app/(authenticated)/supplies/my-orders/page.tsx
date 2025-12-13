@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -136,6 +136,207 @@ const getStatusIcon = (status: SupplyOrder['status']) => {
   }
 };
 
+const normalizeStatus = (status?: string): SupplyOrder['status'] => {
+  const normalized = (status || '').toLowerCase() as SupplyOrder['status'];
+  return ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'].includes(normalized)
+    ? normalized
+    : 'pending';
+};
+
+const normalizePaymentStatus = (status?: string): SupplyOrder['paymentStatus'] => {
+  const normalized = (status || '').toLowerCase() as SupplyOrder['paymentStatus'];
+  return ['pending', 'paid', 'failed', 'refunded'].includes(normalized)
+    ? normalized
+    : 'pending';
+};
+
+const normalizeOrder = (order: Record<string, unknown>): SupplyOrder => {
+  const rawSupply = (order.supply || order.product || {}) as Record<string, unknown>;
+  const rawSupplier = (rawSupply.supplier || {}) as Record<string, unknown>;
+  const rawShipping = (order.shippingAddress || order.deliveryAddress || {}) as Record<string, unknown>;
+  const rawDelivery = (order.delivery || order.shipping || {}) as Record<string, unknown>;
+  const rawImages = Array.isArray(rawSupply.images) ? rawSupply.images : [];
+  const images = rawImages
+    .map((img: unknown) => {
+      if (typeof img === 'string') return img;
+      if (img && typeof img === 'object') {
+        const record = img as { url?: string; publicId?: string };
+        return record.url || record.publicId;
+      }
+      return undefined;
+    })
+    .filter((val): val is string => Boolean(val));
+
+  const rawItems = Array.isArray(order.items) ? order.items : [];
+  const firstItem = (rawItems[0] || {}) as Record<string, unknown>;
+  const quantityValue = order.quantity ?? firstItem.quantity;
+  const quantity =
+    typeof quantityValue === 'number'
+      ? quantityValue
+      : typeof quantityValue === 'string'
+        ? Number(quantityValue) || 1
+        : 1;
+  const totalPriceRaw = order.totalPrice ?? order.totalCost ?? order.totalAmount ?? 0;
+  const totalPrice =
+    typeof totalPriceRaw === 'number'
+      ? totalPriceRaw
+      : typeof totalPriceRaw === 'string'
+        ? Number(totalPriceRaw) || 0
+        : 0;
+
+  const orderIdValue = order.id ?? order._id;
+  const orderId =
+    typeof orderIdValue === 'string'
+      ? orderIdValue
+      : typeof orderIdValue === 'number'
+        ? String(orderIdValue)
+        : '';
+
+  const supplyIdValue = order.supplyId ?? rawSupply.id ?? rawSupply._id;
+  const supplyId =
+    typeof supplyIdValue === 'string'
+      ? supplyIdValue
+      : typeof supplyIdValue === 'number'
+        ? String(supplyIdValue)
+        : '';
+
+  const supplyNestedIdValue = rawSupply.id ?? rawSupply._id;
+  const supplyNestedId =
+    typeof supplyNestedIdValue === 'string'
+      ? supplyNestedIdValue
+      : typeof supplyNestedIdValue === 'number'
+        ? String(supplyNestedIdValue)
+        : '';
+
+  const supplyName =
+    typeof rawSupply.name === 'string'
+      ? rawSupply.name
+      : typeof rawSupply.title === 'string'
+        ? rawSupply.title
+        : 'Supply item';
+
+  const supplyDescription =
+    typeof rawSupply.description === 'string' ? rawSupply.description : '';
+
+  const supplyCategory =
+    typeof rawSupply.category === 'string' ? rawSupply.category : 'General';
+
+  const supplyType =
+    typeof rawSupply.type === 'string' ? rawSupply.type : 'product';
+
+  const pricing =
+    rawSupply.pricing && typeof rawSupply.pricing === 'object'
+      ? (rawSupply.pricing as Record<string, unknown>)
+      : undefined;
+  const retailPrice =
+    typeof pricing?.retailPrice === 'number' ? pricing.retailPrice : undefined;
+  const basePrice = typeof rawSupply.price === 'number' ? rawSupply.price : undefined;
+
+  const paymentObj = order.payment && typeof order.payment === 'object'
+    ? (order.payment as Record<string, unknown>)
+    : undefined;
+  const contactInfoObj = order.contactInfo && typeof order.contactInfo === 'object'
+    ? (order.contactInfo as Record<string, unknown>)
+    : undefined;
+
+  return {
+    id: orderId,
+    supplyId,
+    supply: {
+      id: supplyNestedId,
+      name: supplyName,
+      description: supplyDescription,
+      category: supplyCategory,
+      type: supplyType,
+      price: retailPrice ?? basePrice ?? (quantity ? totalPrice / quantity : 0),
+      unit: typeof rawSupply.unit === 'string' ? rawSupply.unit : 'unit',
+      images,
+      supplier: {
+        id: typeof rawSupplier.id === 'string'
+          ? rawSupplier.id
+          : typeof rawSupplier._id === 'string'
+            ? rawSupplier._id
+            : '',
+        name: typeof rawSupplier.name === 'string'
+          ? rawSupplier.name
+          : [rawSupplier.firstName, rawSupplier.lastName]
+              .filter((val): val is string => typeof val === 'string' && Boolean(val))
+              .join(' ') || 'Supplier',
+        avatar: typeof rawSupplier.avatar === 'string' ? rawSupplier.avatar : '',
+        rating: typeof rawSupplier.rating === 'number' ? rawSupplier.rating : 0,
+        reviewCount: typeof rawSupplier.reviewCount === 'number' ? rawSupplier.reviewCount : 0,
+        verified: Boolean(rawSupplier.verified),
+        location: typeof rawSupplier.location === 'string'
+          ? rawSupplier.location
+          : typeof rawSupplier.city === 'string'
+            ? rawSupplier.city
+            : ''
+      }
+    },
+    quantity,
+    totalPrice,
+    status: normalizeStatus(typeof order.status === 'string' ? order.status : undefined),
+    paymentStatus: normalizePaymentStatus(
+      typeof order.paymentStatus === 'string'
+        ? order.paymentStatus
+        : typeof paymentObj?.status === 'string'
+          ? (paymentObj.status as string)
+          : undefined
+    ),
+    shippingAddress: {
+      name:
+        (typeof rawShipping.name === 'string' && rawShipping.name) ||
+        `${typeof rawSupplier.firstName === 'string' ? rawSupplier.firstName : ''} ${typeof rawSupplier.lastName === 'string' ? rawSupplier.lastName : ''}`.trim() ||
+        'Delivery Contact',
+      address:
+        (typeof rawShipping.address === 'string' && rawShipping.address) ||
+        (typeof rawShipping.street === 'string' && rawShipping.street) ||
+        '',
+      city: typeof rawShipping.city === 'string' ? rawShipping.city : '',
+      state: typeof rawShipping.state === 'string' ? rawShipping.state : '',
+      zipCode:
+        (typeof rawShipping.zipCode === 'string' && rawShipping.zipCode) ||
+        (typeof rawShipping.postalCode === 'string' && rawShipping.postalCode) ||
+        '',
+      phone:
+        (typeof rawShipping.phone === 'string' && rawShipping.phone) ||
+        (typeof contactInfoObj?.phone === 'string' ? (contactInfoObj.phone as string) : '') ||
+        '',
+      email:
+        (typeof rawShipping.email === 'string' && rawShipping.email) ||
+        (typeof contactInfoObj?.email === 'string' ? (contactInfoObj.email as string) : '') ||
+        ''
+    },
+    delivery: {
+      estimatedDays: typeof rawDelivery.estimatedDays === 'number' ? rawDelivery.estimatedDays : 0,
+      cost: typeof rawDelivery.cost === 'number' ? rawDelivery.cost : 0,
+      trackingNumber:
+        (typeof rawDelivery.trackingNumber === 'string' && rawDelivery.trackingNumber) ||
+        (typeof rawDelivery.tracking === 'string' && rawDelivery.tracking) ||
+        (typeof order.trackingNumber === 'string' ? order.trackingNumber : ''),
+      carrier: typeof rawDelivery.carrier === 'string' ? rawDelivery.carrier : ''
+    },
+    notes:
+      (typeof order.specialInstructions === 'string' && order.specialInstructions) ||
+      (typeof order.notes === 'string' && order.notes) ||
+      undefined,
+    createdAt:
+      (typeof order.createdAt === 'string' && order.createdAt) ||
+      new Date().toISOString(),
+    updatedAt:
+      (typeof order.updatedAt === 'string' && order.updatedAt) ||
+      (typeof order.createdAt === 'string' && order.createdAt) ||
+      new Date().toISOString(),
+    deliveredAt:
+      (typeof rawDelivery.actualDelivery === 'string' && rawDelivery.actualDelivery) ||
+      (typeof order.deliveredAt === 'string' && order.deliveredAt) ||
+      undefined,
+    cancelledAt:
+      (typeof order.cancelledAt === 'string' && order.cancelledAt) ||
+      undefined
+  };
+};
+
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<SupplyOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,147 +347,12 @@ export default function MyOrdersPage() {
   const router = useRouter();
   const { settings: appSettings } = useAppSettings();
 
-  // Mock data for development
-  const mockOrders = useMemo((): SupplyOrder[] => [
-    {
-      id: '1',
-      supplyId: '1',
-      supply: {
-        id: '1',
-        name: 'Professional Cleaning Kit - Complete Set',
-        description: 'Complete cleaning kit with all essential tools and supplies for professional cleaning services.',
-        category: 'Cleaning Supplies',
-        type: 'cleaning',
-        price: 4500,
-        unit: 'set',
-        images: ['https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400'],
-        supplier: {
-          id: '1',
-          name: 'Professional Supply Co.',
-          rating: 4.8,
-          reviewCount: 156,
-          verified: true,
-          location: 'Makati City'
-        }
-      },
-      quantity: 2,
-      totalPrice: 9000,
-      status: 'shipped',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 2,
-        cost: 150,
-        trackingNumber: 'TRK123456789',
-        carrier: 'LBC'
-      },
-      notes: 'Please deliver during business hours',
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '2',
-      supplyId: '2',
-      supply: {
-        id: '2',
-        name: 'Heavy Duty Drill Set - 20 Piece',
-        description: 'Professional grade drill set with various bits and accessories.',
-        category: 'Tools & Equipment',
-        type: 'tools',
-        price: 7500,
-        unit: 'set',
-        images: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400'],
-        supplier: {
-          id: '2',
-          name: 'Tool Supply Depot',
-          rating: 4.6,
-          reviewCount: 89,
-          verified: true,
-          location: 'Pasig City'
-        }
-      },
-      quantity: 1,
-      totalPrice: 7500,
-      status: 'delivered',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 3,
-        cost: 200,
-        trackingNumber: 'TRK987654321',
-        carrier: 'JRS Express'
-      },
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      deliveredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    {
-      id: '3',
-      supplyId: '3',
-      supply: {
-        id: '3',
-        name: 'Monthly Cleaning Subscription Box',
-        description: 'Monthly subscription box with curated cleaning supplies delivered to your door.',
-        category: 'Maintenance Kits',
-        type: 'subscription',
-        price: 1500,
-        unit: 'box',
-        images: ['https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=400'],
-        supplier: {
-          id: '3',
-          name: 'Subscription Supply Co.',
-          rating: 4.9,
-          reviewCount: 234,
-          verified: true,
-          location: 'Taguig City'
-        }
-      },
-      quantity: 1,
-      totalPrice: 1500,
-      status: 'processing',
-      paymentStatus: 'paid',
-      shippingAddress: {
-        name: 'Juan Dela Cruz',
-        address: '123 Rizal Street',
-        city: 'Quezon City',
-        state: 'Metro Manila',
-        zipCode: '1100',
-        phone: '+63-917-123-4567',
-        email: 'juan@example.com'
-      },
-      delivery: {
-        estimatedDays: 1,
-        cost: 0,
-        trackingNumber: 'TRK456789123',
-        carrier: 'Grab Express'
-      },
-      createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-    }
-  ], []);
-
   useEffect(() => {
     const fetchMyOrders = async () => {
       try {
         setLoading(true);
         if (!getApiToken()) {
-          setOrders(mockOrders);
+          setOrders([]);
           return;
         }
         
@@ -294,29 +360,30 @@ export default function MyOrdersPage() {
         const response = await fetch(url, createAuthFetchOptions({ method: 'GET' }));
 
         if (!response.ok) {
-          logger.debug('My orders API not available, using sample data', { status: response.status });
-          setOrders(mockOrders);
-          return;
+          throw new Error(`Failed to fetch orders: ${response.status}`);
         }
 
         const data = await response.json();
-        const ordersData = data.orders || data.data || data || [];
+        const ordersData = data.orders || data.data || data.results || data || [];
         
         if (Array.isArray(ordersData) && ordersData.length > 0) {
-          setOrders(ordersData);
+          const normalized = ordersData
+            .filter((order): order is Record<string, unknown> => Boolean(order))
+            .map(normalizeOrder);
+          setOrders(normalized);
         } else {
           setOrders([]);
         }
       } catch (error) {
-        logger.debug('Could not fetch my orders, using sample data', { error: error instanceof Error ? error.message : String(error) });
-        setOrders(mockOrders);
+        logger.error('Could not fetch my orders', error instanceof Error ? error : new Error(String(error)));
+        setOrders([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchMyOrders();
-  }, [mockOrders]);
+  }, []);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -586,7 +653,7 @@ export default function MyOrdersPage() {
                 <p className="text-gray-600 mb-6 max-w-md mx-auto">
                   {searchQuery || selectedStatus !== "All Status" || selectedPaymentStatus !== "All Payment"
                     ? "Try adjusting your filters to see more results."
-                    : "You haven't placed any orders yet. Start shopping to see your orders here!"}
+                    : "You haven&apos;t placed any orders yet. Start shopping to see your orders here!"}
                 </p>
                 <Link
                   href="/supplies"

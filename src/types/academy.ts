@@ -1,4 +1,4 @@
-export type CourseCategory = "cleaning" | "plumbing" | "electrical" | "moving" | "business" | "safety" | "certification";
+export type CourseCategory = "cleaning" | "plumbing" | "electrical" | "moving" | "business" | "safety" | "certification" | (string & {});
 export type CourseLevel = "beginner" | "intermediate" | "advanced" | "expert";
 export type LessonType = "video" | "text" | "quiz" | "practical";
 export type SessionType = "live" | "recorded" | "practical";

@@ -147,9 +147,7 @@ export default function CheckoutPage() {
     
     if (!shippingInfo.firstName.trim()) newErrors.firstName = "First name is required";
     if (!shippingInfo.lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!shippingInfo.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
+    if (shippingInfo.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shippingInfo.email)) {
       newErrors.email = "Invalid email format";
     }
     if (!shippingInfo.phone.trim()) newErrors.phone = "Phone is required";
@@ -218,7 +216,9 @@ export default function CheckoutPage() {
               <CheckCircle className="w-14 h-14 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Placed!</h1>
-            <p className="text-gray-600 mb-6">Thank you for your order. We&apos;ll send you a confirmation email shortly.</p>
+            <p className="text-gray-600 mb-6">
+              Thank you for your order. If you provided an email, we&apos;ll send a confirmation shortly.
+            </p>
             
             <div className="bg-emerald-50 rounded-xl p-4 mb-8">
               <p className="text-sm text-gray-600">Order ID</p>
@@ -335,7 +335,7 @@ export default function CheckoutPage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email (optional)</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input

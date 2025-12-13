@@ -1,20 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Clock, Shield, Calendar, TrendingUp, Users, Building2, Wrench, Award } from "lucide-react";
+import { Star, MapPin, Phone, Mail, CheckCircle, ArrowLeft, User, Clock, Shield, Calendar, TrendingUp, Users, Building2, Wrench, Award, Heart, MessageSquare } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
+import { useSession } from "@/hooks/useAuth";
+import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
+import toast from "react-hot-toast";
 
 // UserId Interface
 interface UserIdData {
   _id?: string;
+  id?: string;
   firstName?: string;
   lastName?: string;
   email?: string;
@@ -316,6 +320,8 @@ interface MarketplaceService {
 
 export default function ProviderDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const { data: session } = useSession();
   const { settings: appSettings } = useAppSettings();
   const [provider, setProvider] = useState<Provider | null>(null);
   const [services, setServices] = useState<MarketplaceService[]>([]);
@@ -324,8 +330,17 @@ export default function ProviderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusWarning, setStatusWarning] = useState<string | null>(null);
   const [servicesPopulatedFromResponse, setServicesPopulatedFromResponse] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isCheckingFavorite, setIsCheckingFavorite] = useState(false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   const providerId = params?.id as string;
+  const providerUserId = typeof provider?.userId === 'object'
+    ? (provider?.userId?._id || provider?.userId?.id)
+    : (typeof provider?.userId === 'string' ? provider.userId : provider?._id);
+  const currentUserId = session?.user?._id || session?.user?.id || session?.user?.userId;
+  const isOwnProfile = !!(providerUserId && currentUserId && providerUserId === currentUserId);
   
   // Normalize currency to PHP only
   const normalizeCurrencyCode = useCallback((currency: string | undefined | null): string => {
@@ -654,6 +669,105 @@ export default function ProviderDetailPage() {
     }
   }, [providerId, provider, servicesPopulatedFromResponse]);
 
+  // Check favorite status once provider/user is known
+  useEffect(() => {
+    if (!providerId || !providerUserId || isOwnProfile) {
+      setIsFavorited(false);
+      setIsCheckingFavorite(false);
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        setIsCheckingFavorite(true);
+        const favorited = await checkFavorite('provider', providerId);
+        setIsFavorited(favorited);
+      } catch (err) {
+        logger.error('Error checking favorite status', err instanceof Error ? err : new Error(String(err)), { providerId });
+      } finally {
+        setIsCheckingFavorite(false);
+      }
+    };
+
+    checkStatus();
+  }, [providerId, providerUserId, isOwnProfile]);
+
+  // Keep favorite state in sync with global updates
+  useEffect(() => {
+    if (!providerId || isOwnProfile) return;
+
+    const handleFavoritesUpdated = async () => {
+      try {
+        const favorited = await checkFavorite('provider', providerId);
+        setIsFavorited(favorited);
+      } catch (err) {
+        logger.error('Error checking favorite status after update', err instanceof Error ? err : new Error(String(err)), { providerId });
+      }
+    };
+
+    window.addEventListener('favoritesUpdated', handleFavoritesUpdated);
+    return () => {
+      window.removeEventListener('favoritesUpdated', handleFavoritesUpdated);
+    };
+  }, [providerId, isOwnProfile]);
+
+  const handleFavoriteToggle = useCallback(async () => {
+    if (!providerId || isTogglingFavorite || isCheckingFavorite || isOwnProfile) return;
+
+    try {
+      setIsTogglingFavorite(true);
+      const newStatus = await toggleFavorite('provider', providerId);
+      setIsFavorited(newStatus);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.error('Error toggling favorite', err instanceof Error ? err : new Error(String(err)), { providerId });
+      toast.error(errorMessage || 'Failed to update favorite');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  }, [providerId, isTogglingFavorite, isCheckingFavorite, isOwnProfile]);
+
+  const handleBookNow = useCallback(() => {
+    const firstService = services[0];
+    const serviceId = firstService?._id || firstService?.id;
+
+    if (serviceId) {
+      router.push(`/marketplace/services/${serviceId}/book`);
+      return;
+    }
+
+    toast.error('No bookable services available for this provider yet.');
+  }, [router, services]);
+
+  const handleSendMessage = useCallback(async () => {
+    if (!providerUserId) {
+      toast.error('Provider contact information is unavailable right now.');
+      return;
+    }
+
+    try {
+      setMessageLoading(true);
+      // Let the messages page handle finding/creating the conversation
+      router.push(`/messages?userId=${providerUserId}`);
+      toast.success('Opening chat...');
+    } catch (err) {
+      logger.error(
+        'Error starting conversation',
+        err instanceof Error ? err : undefined,
+        { providerUserId }
+      );
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start conversation';
+
+      if (errorMessage.includes('500')) {
+        toast.error('Messaging is temporarily unavailable. Please try again shortly.');
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setMessageLoading(false);
+    }
+  }, [providerUserId, router]);
+
   if (loading) {
     return <Loading />;
   }
@@ -715,31 +829,65 @@ export default function ProviderDetailPage() {
       
       <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4 mb-4">
-            <Link
-              href="/marketplace"
-              className="p-2.5 hover:bg-gradient-to-br hover:from-green-50 hover:to-blue-50 rounded-xl transition-all hover:scale-105 hover:shadow-md"
-              title="Back to providers"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-700 hover:text-green-700" />
-            </Link>
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
-              <User className="w-7 h-7" />
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/marketplace"
+                className="p-2.5 hover:bg-gradient-to-br hover:from-green-50 hover:to-blue-50 rounded-xl transition-all hover:scale-105 hover:shadow-md"
+                title="Back to providers"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-700 hover:text-green-700" />
+              </Link>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 text-white flex items-center justify-center shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform duration-300">
+                <User className="w-7 h-7" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">{fullName}</h1>
+                <p className="text-sm sm:text-base text-gray-700 font-medium">
+                  {provider.businessInfo?.businessName || location}
+                  {rating > 0 && (
+                    <span className="ml-2 inline-flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200">
+                      <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span>
+                      <span className="text-gray-600">({reviewCount} reviews)</span>
+                    </span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-purple-700 to-gray-900 bg-clip-text text-transparent mb-1">{fullName}</h1>
-              <p className="text-sm sm:text-base text-gray-700 font-medium">
-                {provider.businessInfo?.businessName || location}
-                {rating > 0 && (
-                  <span className="ml-2 inline-flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-200">
-                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold text-gray-900">{rating.toFixed(1)}</span>
-                    <span className="text-gray-600">({reviewCount} reviews)</span>
-                  </span>
-                )}
-              </p>
-            </div>
+
+            {!isOwnProfile && (
+              <div className="flex flex-wrap gap-3 justify-end">
+                <button
+                  onClick={handleBookNow}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-semibold shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-[1.01] transition-all"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Book Now
+                </button>
+                <button
+                  onClick={handleSendMessage}
+                  disabled={messageLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-800 hover:border-green-300 hover:text-green-700 transition-all shadow-sm disabled:opacity-60"
+                >
+                  <MessageSquare className={`w-4 h-4 ${messageLoading ? 'animate-pulse' : ''}`} />
+                  {messageLoading ? 'Opening chat...' : 'Send Message'}
+                </button>
+                <button
+                  onClick={handleFavoriteToggle}
+                  disabled={isCheckingFavorite || isTogglingFavorite}
+                  title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                  className={`inline-flex items-center justify-center p-3 rounded-full border transition-all shadow-sm ${
+                    isFavorited
+                      ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
+                      : 'bg-white border-gray-200 text-gray-800 hover:border-rose-300 hover:text-rose-600'
+                  } disabled:opacity-60`}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Status Warning Banner */}

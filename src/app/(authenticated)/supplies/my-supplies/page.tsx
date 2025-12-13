@@ -34,6 +34,223 @@ import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 
+const normalizeCategory = (category?: string) => {
+  if (!category) return "Other";
+  const lower = category.toLowerCase();
+  if (lower.includes("clean")) return "Cleaning Supplies";
+  if (lower.includes("tool")) return "Tools & Equipment";
+  if (lower.includes("material")) return "Building Materials";
+  if (lower.includes("safety")) return "Safety Equipment";
+  if (lower.includes("office")) return "Office Supplies";
+  if (lower.includes("kit")) return "Maintenance Kits";
+  return category;
+};
+
+const normalizeType = (category?: string): Supply['type'] => {
+  const lower = (category || "").toLowerCase();
+  if (lower.includes("clean")) return "cleaning";
+  if (lower.includes("tool")) return "tools";
+  if (lower.includes("equipment")) return "equipment";
+  if (lower.includes("material")) return "materials";
+  if (lower.includes("subscription")) return "subscription";
+  return "materials";
+};
+
+const normalizeStatus = (isActive?: boolean, stock?: number): Supply['status'] => {
+  if (isActive === false) return "discontinued";
+  if (stock !== undefined && stock <= 0) return "out-of-stock";
+  return "available";
+};
+
+const normalizeSupply = (item: Record<string, unknown>): Supply => {
+  const pricing = (item.pricing || {}) as Record<string, unknown>;
+  const inventory = (item.inventory || {}) as Record<string, unknown>;
+  const specifications = (item.specifications || {}) as Record<string, unknown>;
+  const supplierRaw = (item.supplier || {}) as Record<string, unknown>;
+  const locationObj = item.location && typeof item.location === "object" ? (item.location as Record<string, unknown>) : {};
+  const deliveryObj = item.delivery && typeof item.delivery === "object" ? (item.delivery as Record<string, unknown>) : {};
+  const orders = Array.isArray(item.orders) ? item.orders : [];
+  const reviews = Array.isArray(item.reviews) ? item.reviews : [];
+  const imagesRaw = Array.isArray(item.images) ? item.images : [];
+
+  const stock = typeof inventory.quantity === "number" ? inventory.quantity : 0;
+  const revenue = orders.reduce((sum, order) => sum + (order.totalCost || order.totalAmount || 0), 0);
+  const lastOrderDate = orders.reduce<string | undefined>((latest, order) => {
+    const created = order.createdAt ? new Date(order.createdAt).toISOString() : undefined;
+    if (!created) return latest;
+    if (!latest) return created;
+    return new Date(created) > new Date(latest) ? created : latest;
+  }, undefined);
+
+  const images = imagesRaw
+    .map((img: unknown) => {
+      if (typeof img === "string") return img;
+      if (img && typeof img === "object") {
+        const record = img as { url?: string; publicId?: string };
+        return record.url || record.publicId;
+      }
+      return undefined;
+    })
+    .filter((val): val is string => Boolean(val));
+
+  const asString = (value: unknown): string => {
+    if (typeof value === "string") return value;
+    if (typeof value === "number") return String(value);
+    return "";
+  };
+
+  const asNumber = (value: unknown, fallback = 0): number => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return fallback;
+  };
+
+  const rawCategory = typeof item.category === "string" ? item.category : undefined;
+  const category = normalizeCategory(rawCategory);
+  const type = normalizeType(rawCategory);
+
+  const allowedUnits: Supply["unit"][] = ["piece", "pack", "box", "kg", "liter", "set"];
+
+  const itemId = typeof item.id === "string"
+    ? item.id
+    : typeof item._id === "string"
+      ? item._id
+      : "";
+  const itemName = typeof item.name === "string"
+    ? item.name
+    : typeof item.title === "string"
+      ? item.title
+      : "Untitled Supply";
+  const itemDescription = typeof item.description === "string" ? item.description : "";
+  const rawUnit = typeof item.unit === "string" ? item.unit.toLowerCase() : "";
+  const unit: Supply["unit"] = allowedUnits.includes(rawUnit as Supply["unit"])
+    ? (rawUnit as Supply["unit"])
+    : "piece";
+  const locationAddress = typeof locationObj.address === "string" ? locationObj.address : "";
+  const locationCity = typeof locationObj.city === "string" ? locationObj.city : "";
+  const locationState = typeof locationObj.state === "string" ? locationObj.state : "";
+  const locationZip = typeof locationObj.zipCode === "string" ? locationObj.zipCode : "";
+  let locationCoords: { lat: number; lng: number } | undefined;
+  if (locationObj.coordinates && typeof locationObj.coordinates === "object") {
+    const coords = locationObj.coordinates as Record<string, unknown>;
+    if (typeof coords.lat === "number" && typeof coords.lng === "number") {
+      locationCoords = { lat: coords.lat, lng: coords.lng };
+    }
+  }
+  const deliveryEstimatedDays = typeof deliveryObj.estimatedDays === "number" ? deliveryObj.estimatedDays : 0;
+  const deliveryCost = typeof deliveryObj.cost === "number" ? deliveryObj.cost : 0;
+  const deliveryFreeThreshold = typeof deliveryObj.freeShippingThreshold === "number"
+    ? deliveryObj.freeShippingThreshold
+    : undefined;
+  const createdAt = typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString();
+  const updatedAt = typeof item.updatedAt === "string"
+    ? item.updatedAt
+    : typeof item.createdAt === "string"
+      ? item.createdAt
+      : new Date().toISOString();
+  const isActiveFlag = typeof item.isActive === "boolean" ? item.isActive : undefined;
+  const priceValue =
+    typeof pricing.retailPrice === "number"
+      ? pricing.retailPrice
+      : typeof item.price === "number"
+        ? item.price
+        : 0;
+  const originalPriceValue = typeof pricing.wholesalePrice === "number" ? pricing.wholesalePrice : undefined;
+  const minOrderValue = typeof inventory.minStock === "number" ? inventory.minStock : 1;
+  const maxOrderValue = typeof inventory.maxStock === "number" ? inventory.maxStock : undefined;
+  const features = Array.isArray(item.features)
+    ? item.features.filter((f): f is string => typeof f === "string")
+    : [];
+  const tags = Array.isArray(item.tags)
+    ? item.tags.filter((t): t is string => typeof t === "string")
+    : [];
+  const specBrand = typeof item.brand === "string"
+    ? item.brand
+    : typeof specifications.brand === "string"
+      ? specifications.brand
+      : undefined;
+  const specModel = typeof specifications.model === "string" ? specifications.model : undefined;
+  const specWeight = typeof specifications.weight === "string" ? specifications.weight : undefined;
+  const specDimensions = typeof specifications.dimensions === "string" ? specifications.dimensions : undefined;
+  const specMaterial = typeof specifications.material === "string" ? specifications.material : undefined;
+  const specColor = typeof specifications.color === "string" ? specifications.color : undefined;
+  const specWarranty = typeof specifications.warranty === "string" ? specifications.warranty : undefined;
+
+  return {
+    id: itemId,
+    name: itemName,
+    description: itemDescription,
+    category,
+    type,
+    status: normalizeStatus(isActiveFlag, stock),
+    price: priceValue,
+    originalPrice: originalPriceValue,
+    unit,
+    stock,
+    minOrder: minOrderValue,
+    maxOrder: maxOrderValue,
+    location: {
+      address: locationAddress,
+      city: locationCity,
+      state: locationState,
+      zipCode: locationZip,
+      coordinates: locationCoords
+    },
+    images,
+    features,
+    specifications: {
+      brand: specBrand,
+      model: specModel,
+      weight: specWeight,
+      dimensions: specDimensions,
+      material: specMaterial,
+      color: specColor,
+      warranty: specWarranty,
+    },
+    supplier: {
+      id: typeof supplierRaw === "string"
+        ? supplierRaw
+        : asString(supplierRaw.id) || asString(supplierRaw._id) || "",
+      name: typeof supplierRaw === "string"
+        ? "Supplier"
+        : asString(supplierRaw.name)
+          || [asString(supplierRaw.firstName), asString(supplierRaw.lastName)].filter(Boolean).join(" ")
+          || "Supplier",
+      avatar: typeof supplierRaw === "string" ? undefined : asString(supplierRaw.avatar) || undefined,
+      rating: typeof supplierRaw === "string"
+        ? asNumber(item.averageRating)
+        : asNumber(supplierRaw.rating, asNumber(item.averageRating)),
+      reviewCount: typeof supplierRaw === "string"
+        ? asNumber(reviews.length)
+        : asNumber(supplierRaw.reviewCount, asNumber(reviews.length)),
+      verified: typeof supplierRaw === "string" ? false : Boolean(supplierRaw.verified),
+      location: typeof supplierRaw === "string"
+        ? ""
+        : asString(supplierRaw.location) || asString(supplierRaw.city),
+    },
+    delivery: {
+      available: true,
+      estimatedDays: deliveryEstimatedDays,
+      cost: deliveryCost,
+      freeShippingThreshold: deliveryFreeThreshold
+    },
+    rating: asNumber(item.averageRating),
+    reviewCount: asNumber(reviews.length),
+    viewsCount: asNumber(item.views),
+    isFeatured: Boolean(item.isFeatured),
+    isFavorited: false,
+    tags,
+    createdAt,
+    updatedAt,
+    ordersCount: orders.length ?? 0,
+    revenue,
+    lastOrderDate,
+  };
+};
+
 export interface Supply {
   id: string;
   name: string;
@@ -178,10 +395,13 @@ export default function MySuppliesPage() {
         }
 
         const data = await response.json();
-        const suppliesData = data.supplies || data.data || data || [];
+        const suppliesData = data.supplies || data.data || data.results || data || [];
         
         if (Array.isArray(suppliesData)) {
-          setSupplies(suppliesData);
+          const normalized = suppliesData
+            .filter((item): item is Record<string, unknown> => Boolean(item))
+            .map(normalizeSupply);
+          setSupplies(normalized);
         } else {
           setSupplies([]);
         }
@@ -200,7 +420,7 @@ export default function MySuppliesPage() {
     const matchesSearch = supply.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          supply.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          supply.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "All Categories" || supply.category === selectedCategory;
+    const matchesCategory = selectedCategory === "All Categories" || supply.category.toLowerCase() === selectedCategory.toLowerCase();
     const matchesType = selectedType === "All Types" || supply.type === selectedType.toLowerCase();
     const matchesStatus = selectedStatus === "All Status" || supply.status === selectedStatus.toLowerCase().replace(' ', '-');
     
@@ -336,30 +556,35 @@ export default function MySuppliesPage() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            href="/supplies"
-            className="p-2.5 hover:bg-white rounded-lg transition-all border-2 border-transparent hover:border-gray-200 hover:shadow-sm"
-            title="Back to Supplies"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Package className="w-6 h-6" />
+        <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-4 sm:p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <Link
+              href="/supplies"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg border border-gray-200 transition-all"
+              title="Back to Supplies"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-semibold">Back</span>
+            </Link>
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20 flex-shrink-0">
+              <Package className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 truncate">My Supplies</h1>
+              <p className="text-sm text-gray-600">
+                {supplies.length} listing{supplies.length !== 1 ? "s" : ""} • {formatCurrency(totalRevenue, 'PHP', { appSettings })} total revenue
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">My Supplies</h1>
-            <p className="text-sm text-gray-600">
-              {supplies.length} listing{supplies.length !== 1 ? "s" : ""} • {formatCurrency(totalRevenue, 'PHP', { appSettings })} total revenue
-            </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleCreateSupply}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Supply</span>
+            </button>
           </div>
-          <button
-            onClick={handleCreateSupply}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg font-semibold shadow-lg shadow-emerald-500/20 hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Supply</span>
-          </button>
         </div>
 
         {/* Stats Cards */}

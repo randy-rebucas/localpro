@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Eye,
   X,
-  Filter
+  Filter,
+  Tag
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { Modal } from "@/components/ui/modal";
@@ -30,6 +31,8 @@ import { useAppSettings } from "@/hooks/useAppSettings";
 import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 
+type AcademyTab = 'courses' | 'categories';
+
 interface CourseStatistics {
   totalCourses: number;
   activeCourses: number;
@@ -41,10 +44,54 @@ interface CourseStatistics {
   recentCourses: number;
 }
 
+interface AcademyCategory {
+  _id?: string;
+  name: string;
+  description?: string;
+  isActive?: boolean;
+  courseCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+const defaultCourseCategories: CourseCategory[] = ['cleaning', 'plumbing', 'electrical', 'moving', 'business', 'safety', 'certification'];
+const courseLevels: CourseLevel[] = ['beginner', 'intermediate', 'advanced', 'expert'];
+
+const sanitizeCategoryName = (value: string) => value.trim().toLowerCase();
+
+const normalizeCourseCategory = (category: unknown): CourseCategory => {
+  if (typeof category === 'string') {
+    const sanitized = sanitizeCategoryName(category);
+    return (sanitized || 'uncategorized') as CourseCategory;
+  }
+
+  if (category && typeof category === 'object') {
+    const categoryObj = category as { name?: string; _id?: string };
+
+    if (typeof categoryObj.name === 'string') {
+      const sanitized = sanitizeCategoryName(categoryObj.name);
+      return (sanitized || categoryObj.name) as CourseCategory;
+    }
+
+    if (typeof categoryObj._id === 'string') {
+      return categoryObj._id as CourseCategory;
+    }
+  }
+
+  return 'uncategorized' as CourseCategory;
+};
+
+const getCategoryLabel = (category: unknown) => {
+  const normalized = normalizeCourseCategory(category);
+  if (!normalized) return 'Uncategorized';
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
+
 export default function AcademyPage() {
   // App settings for currency formatting and other settings
   const { settings: appSettings } = useAppSettings();
   
+  const [activeTab, setActiveTab] = useState<AcademyTab>('courses');
   const [courses, setCourses] = useState<Course[]>([]);
   const [stats, setStats] = useState<CourseStatistics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +113,17 @@ export default function AcademyPage() {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [categoriesData, setCategoriesData] = useState<AcademyCategory[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<CourseCategory[]>(defaultCourseCategories);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySubmitting, setCategorySubmitting] = useState(false);
+  const [categoryForm, setCategoryForm] = useState<{ name: string; description: string; isActive: boolean }>({
+    name: '',
+    description: '',
+    isActive: true
+  });
+  const [editingCategory, setEditingCategory] = useState<AcademyCategory | null>(null);
 
   // Form states
   const [courseFormData, setCourseFormData] = useState({
@@ -159,7 +217,12 @@ export default function AcademyPage() {
         coursesData = coursesResult;
       }
 
-      setCourses(coursesData);
+      const normalizedCourses = coursesData.map((course) => ({
+        ...course,
+        category: normalizeCourseCategory(course.category as unknown)
+      }));
+
+      setCourses(normalizedCourses);
       setStats(statsData);
       setLastUpdated(new Date());
     } catch (err) {
@@ -181,6 +244,172 @@ export default function AcademyPage() {
     await fetchData();
     setRefreshing(false);
   }, [fetchData]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setCategoryLoading(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        setCategoryError('Authentication required. Please log in again.');
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCategories}`,
+        createAuthFetchOptions({ method: 'GET' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to load categories');
+      }
+
+      const data = await response.json();
+      let normalized: AcademyCategory[] = [];
+
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        if ('success' in data && data.success && 'data' in data && data.data) {
+          normalized = data.data as AcademyCategory[];
+        } else if ('categories' in data && Array.isArray(data.categories)) {
+          normalized = data.categories as AcademyCategory[];
+        }
+      } else if (Array.isArray(data)) {
+        normalized = data as AcademyCategory[];
+      }
+
+      setCategoriesData(normalized);
+
+      const names = normalized
+        .map(cat => sanitizeCategoryName(cat.name))
+        .filter(Boolean) as CourseCategory[];
+
+      setCategoryOptions(names.length ? Array.from(new Set([...defaultCourseCategories, ...names])) : defaultCourseCategories);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error fetching categories', error);
+      setCategoryError(error.message);
+      setCategoryOptions(defaultCourseCategories);
+    } finally {
+      setCategoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  const resetCategoryForm = () => {
+    setEditingCategory(null);
+    setCategoryForm({ name: '', description: '', isActive: true });
+  };
+
+  const handleCategorySubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const sanitizedName = sanitizeCategoryName(categoryForm.name);
+    const description = categoryForm.description.trim();
+
+    if (!sanitizedName) {
+      toast.error('Category name is required');
+      return;
+    }
+
+    try {
+      setCategorySubmitting(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const payload = {
+        name: sanitizedName,
+        description,
+        isActive: categoryForm.isActive
+      };
+
+      const identifier = editingCategory?._id || editingCategory?.name?.trim();
+      const url = `${API_BASE_URL}${API_ENDPOINTS.academyCategories}${identifier ? `/${encodeURIComponent(identifier)}` : ''}`;
+
+      const response = await fetch(
+        url,
+        createAuthFetchOptions({
+          method: editingCategory ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to ${editingCategory ? 'update' : 'create'} category`);
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
+        throw new Error(result.error || `Failed to ${editingCategory ? 'update' : 'create'} category`);
+      }
+
+      toast.success(editingCategory ? 'Category updated' : 'Category created');
+      resetCategoryForm();
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error saving category', error);
+      setCategoryError(error.message);
+      toast.error(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
+
+  const handleEditCategory = (category: AcademyCategory) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      name: category.name || '',
+      description: category.description || '',
+      isActive: category.isActive ?? true
+    });
+  };
+
+  const handleDeleteCategory = async (category?: AcademyCategory | string) => {
+    const identifier = typeof category === 'string' ? category : category?._id || category?.name;
+    if (!identifier) return;
+    if (!confirm('Delete this category? This cannot be undone.')) return;
+
+    try {
+      setCategorySubmitting(true);
+      if (!getApiToken()) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.academyCategories}/${encodeURIComponent(identifier)}`,
+        createAuthFetchOptions({ method: 'DELETE' })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete category');
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (result && typeof result === 'object' && 'success' in result && result.success === false) {
+        throw new Error(result.error || 'Failed to delete category');
+      }
+
+      toast.success('Category deleted');
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Error deleting category', error);
+      setCategoryError(error.message);
+      toast.error(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
 
   const resetForm = () => {
     // Reset instructor autosuggest state
@@ -515,15 +744,18 @@ export default function AcademyPage() {
       }
 
       const formData = new FormData();
-      formData.append('thumbnail', thumbnailFile, thumbnailFile.name || 'thumbnail.jpg');
+      // Send using multiple common field names to satisfy backend: file (preferred), thumbnail, image
+      const fileName = thumbnailFile.name || 'thumbnail.jpg';
+      formData.append('file', thumbnailFile, fileName);
+      formData.append('thumbnail', thumbnailFile, fileName);
+      formData.append('image', thumbnailFile, fileName);
 
       // Endpoint: POST /api/academy/courses/:id/thumbnail
       const url = `${API_BASE_URL}${API_ENDPOINTS.academyCoursesThumbnail.replace('[id]', selectedCourse._id)}`;
       const headers: HeadersInit = {
-        'Authorization': `Bearer ${token}`
+        Authorization: `Bearer ${token}`
       };
-      // Don't set Content-Type for FormData - browser will set it with boundary
-      
+
       logger.debug('Uploading thumbnail', { 
         url, 
         courseId: selectedCourse._id, 
@@ -886,7 +1118,8 @@ export default function AcademyPage() {
   }, []);
 
   const openEditModal = async (course: Course) => {
-    setSelectedCourse(course);
+    const normalizedCategory = normalizeCourseCategory(course.category as unknown);
+    setSelectedCourse({ ...course, category: normalizedCategory });
     
     const instructorId = typeof course.instructor === 'string' 
       ? course.instructor 
@@ -897,7 +1130,7 @@ export default function AcademyPage() {
     setCourseFormData({
       title: course.title,
       description: course.description,
-      category: course.category,
+      category: normalizedCategory,
       level: course.level,
       instructor: instructorId,
       regularPrice: typeof course.pricing === 'object' ? course.pricing.regularPrice : 0,
@@ -947,321 +1180,514 @@ export default function AcademyPage() {
     );
   }
 
-  const categories: CourseCategory[] = ['cleaning', 'plumbing', 'electrical', 'moving', 'business', 'safety', 'certification'];
-  const levels: CourseLevel[] = ['beginner', 'intermediate', 'advanced', 'expert'];
-
   return (
     <div className="space-y-4">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Academy Management</h1>
-          <p className="text-gray-600 text-sm">Manage courses, content, and enrollments</p>
+          <p className="text-gray-600 text-sm">Manage courses, content, categories, and enrollments</p>
         </div>
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
-          {lastUpdated && (
+          {activeTab === 'courses' && lastUpdated && (
             <p className="text-xs text-gray-500">
               Updated: {lastUpdated.toLocaleTimeString()}
             </p>
           )}
-          <button
-            onClick={refreshData}
-            disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
-          >
-            <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-          <button
-            onClick={() => {
-              resetForm();
-              setCreateModalOpen(true);
-            }}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Add Course
-          </button>
+          {activeTab === 'courses' ? (
+            <>
+              <button
+                onClick={refreshData}
+                disabled={refreshing}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => {
+                  resetForm();
+                  setCreateModalOpen(true);
+                }}
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Course
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={fetchCategories}
+              disabled={categoryLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            >
+              <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Courses</p>
-                <p className="text-lg font-bold text-gray-900">{stats.totalCourses || 0}</p>
+      {/* Tabs */}
+      <div className="bg-white rounded shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('courses')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === 'courses'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <BookOpen className="w-3 h-3 inline mr-1" />
+              Courses
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === 'categories'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Tag className="w-3 h-3 inline mr-1" />
+              Categories
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {activeTab === 'courses' && (
+        <>
+          {/* Statistics Cards */}
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Total Courses</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.totalCourses || 0}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
+                    <BookOpen className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <BookOpen className="w-5 h-5 text-blue-600" />
+              <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Active Courses</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.activeCourses || 0}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Total Enrollments</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.totalEnrollments || 0}</p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
+                    <Users className="w-5 h-5 text-purple-600" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Average Rating</p>
+                    <p className="text-lg font-bold text-gray-900">
+                      {stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
+                    <BarChart3 className="w-5 h-5 text-yellow-600" />
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Active Courses</p>
-                <p className="text-lg font-bold text-gray-900">{stats.activeCourses || 0}</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+          )}
+
+          {/* Search and Filters */}
+          <div className="bg-white rounded shadow">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <Filter className="w-3 h-3 mr-1" />
+                    {showFilters ? 'Hide' : 'Show'} Filters
+                  </button>
+                  <div className="text-xs text-gray-500">
+                    {courses.length} course{courses.length !== 1 ? 's' : ''} found
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded shadow p-3 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Total Enrollments</p>
-                <p className="text-lg font-bold text-gray-900">{stats.totalEnrollments || 0}</p>
+
+            {showFilters && (
+              <div className="p-4 border-b border-gray-200">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
+                      <input
+                        type="text"
+                        placeholder="Search courses..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="all">All Categories</option>
+                      {categoryOptions.map(cat => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
+                    <select
+                      value={levelFilter}
+                      onChange={(e) => setLevelFilter(e.target.value)}
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="all">All Levels</option>
+                      {courseLevels.map(level => (
+                        <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setCategoryFilter('all');
+                      setLevelFilter('all');
+                    }}
+                    className="text-xs text-gray-600 hover:text-gray-800"
+                  >
+                    Clear all filters
+                  </button>
+                </div>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg flex-shrink-0 ml-4">
-                <Users className="w-5 h-5 text-purple-600" />
+            )}
+          </div>
+
+          {/* Courses Table */}
+          <div className="bg-white rounded shadow overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">Courses</h3>
               </div>
             </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {courses.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-3 py-2 text-center text-xs text-gray-500">
+                        No courses found
+                      </td>
+                    </tr>
+                  ) : (
+                    courses.map((course) => (
+                      <tr key={course._id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {course.thumbnail?.url ? (
+                              <Image
+                                src={course.thumbnail.url}
+                                alt={course.title}
+                                width={32}
+                                height={32}
+                                className="w-8 h-8 rounded object-cover mr-2"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center mr-2">
+                                <BookOpen className="w-4 h-4 text-gray-400" />
+                              </div>
+                            )}
+                            <div>
+                              <div className="text-xs font-semibold text-gray-900">{course.title}</div>
+                              <div className="text-xs text-gray-600 truncate max-w-xs">{course.description}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {getCategoryLabel(course.category)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {course.level}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                          {typeof course.pricing === 'object' ? (
+                            <>
+                              {course.pricing.discountedPrice ? (
+                                <>
+                                  <span className="line-through text-gray-400">
+                                    {formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                                  </span>
+                                  <span className="ml-2 text-green-600 font-medium">
+                                    {formatCurrency(course.pricing.discountedPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
+                                  </span>
+                                </>
+                              ) : (
+                                formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })
+                              )}
+                            </>
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                            course.isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {course.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedCourse(course);
+                                setViewModalOpen(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="View course details"
+                            >
+                              <Eye className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => openEditModal(course)}
+                              className="text-green-600 hover:text-green-900"
+                              title="Edit course"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedCourse(course);
+                                setThumbnailModalOpen(true);
+                              }}
+                              className="text-purple-600 hover:text-purple-900"
+                              title="Upload Thumbnail"
+                            >
+                              <ImageIcon className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedCourse(course);
+                                setVideoModalOpen(true);
+                              }}
+                              className="text-green-600 hover:text-green-900"
+                              title="Upload Video"
+                            >
+                              <Video className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => course._id && handleDeleteCourse(course._id)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div className="bg-white rounded shadow p-3 border-l-4 border-yellow-500">
-            <div className="flex items-center justify-between">
+        </>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="bg-white rounded shadow p-4 space-y-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Course Categories</h3>
+              <p className="text-xs text-gray-600">Create, update, and toggle categories used by academy courses.</p>
+              {categoryError && (
+                <p className="text-xs text-red-600 mt-1">{categoryError}</p>
+              )}
+            </div>
+            <button
+              onClick={fetchCategories}
+              disabled={categoryLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            >
+              <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <form className="space-y-3 md:col-span-1" onSubmit={handleCategorySubmit}>
               <div>
-                <p className="text-xs font-medium text-gray-500">Average Rating</p>
-                <p className="text-lg font-bold text-gray-900">
-                  {stats.averageRating ? stats.averageRating.toFixed(1) : '0.0'}
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: sanitizeCategoryName(e.target.value) })}
+                  placeholder="e.g., cleaning"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">Required, unique, stored in lowercase.</p>
               </div>
-              <div className="p-3 bg-yellow-100 rounded-lg flex-shrink-0 ml-4">
-                <BarChart3 className="w-5 h-5 text-yellow-600" />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Optional short description"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={categoryForm.isActive}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-sm text-gray-700">Active</label>
+              </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                {editingCategory && (
+                  <button
+                    type="button"
+                    onClick={resetCategoryForm}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={categorySubmitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {categorySubmitting ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
+                </button>
+              </div>
+            </form>
+
+            <div className="md:col-span-2">
+              <div className="overflow-x-auto border border-gray-200 rounded">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Courses</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {categoryLoading ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-2 text-center text-xs text-gray-500">Loading categories...</td>
+                      </tr>
+                    ) : categoriesData.length === 0 ? (
+                      defaultCourseCategories.map((cat) => (
+                        <tr key={cat}>
+                          <td className="px-3 py-2 text-xs font-semibold text-gray-900">{cat}</td>
+                          <td className="px-3 py-2 text-xs text-gray-600">Default category</td>
+                          <td className="px-3 py-2">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              Active
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-xs text-gray-600">-</td>
+                          <td className="px-3 py-2 text-xs text-gray-500">System default</td>
+                        </tr>
+                      ))
+                    ) : (
+                      categoriesData.map((category) => (
+                        <tr key={category._id || category.name}>
+                          <td className="px-3 py-2 text-xs font-semibold text-gray-900">{category.name}</td>
+                          <td className="px-3 py-2 text-xs text-gray-600 truncate max-w-xs">
+                            {category.description || '—'}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+                              category.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {category.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-xs text-gray-600">
+                            {typeof category.courseCount === 'number' ? category.courseCount : '—'}
+                          </td>
+                          <td className="px-3 py-2 text-xs font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleEditCategory(category)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="Edit category"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(category)}
+                                className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                                title="Delete category"
+                                disabled={!category._id && !category.name}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Search and Filters */}
-      <div className="bg-white rounded shadow">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Filters & Search</h3>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <Filter className="w-3 h-3 mr-1" />
-                {showFilters ? 'Hide' : 'Show'} Filters
-              </button>
-              <div className="text-xs text-gray-500">
-                {courses.length} course{courses.length !== 1 ? 's' : ''} found
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="p-4 border-b border-gray-200">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3" />
-                  <input
-                    type="text"
-                    placeholder="Search courses..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Level</label>
-                <select
-                  value={levelFilter}
-                  onChange={(e) => setLevelFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="all">All Levels</option>
-                  {levels.map(level => (
-                    <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setCategoryFilter('all');
-                  setLevelFilter('all');
-                }}
-                className="text-xs text-gray-600 hover:text-gray-800"
-              >
-                Clear all filters
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Courses Table */}
-      <div className="bg-white rounded shadow overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium text-gray-900">Courses</h3>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {courses.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-3 py-2 text-center text-xs text-gray-500">
-                    No courses found
-                  </td>
-                </tr>
-              ) : (
-                courses.map((course) => (
-                  <tr key={course._id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {course.thumbnail?.url ? (
-                          <Image
-                            src={course.thumbnail.url}
-                            alt={course.title}
-                            width={32}
-                            height={32}
-                            className="w-8 h-8 rounded object-cover mr-2"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center mr-2">
-                            <BookOpen className="w-4 h-4 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="text-xs font-semibold text-gray-900">{course.title}</div>
-                          <div className="text-xs text-gray-600 truncate max-w-xs">{course.description}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {course.category}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {course.level}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      {typeof course.pricing === 'object' ? (
-                        <>
-                          {course.pricing.discountedPrice ? (
-                            <>
-                              <span className="line-through text-gray-400">
-                                {formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
-                              </span>
-                              <span className="ml-2 text-green-600 font-medium">
-                                {formatCurrency(course.pricing.discountedPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
-                              </span>
-                            </>
-                          ) : (
-                            formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })
-                          )}
-                        </>
-                      ) : (
-                        'N/A'
-                      )}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                        course.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {course.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedCourse(course);
-                            setViewModalOpen(true);
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="View course details"
-                        >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => openEditModal(course)}
-                          className="text-green-600 hover:text-green-900"
-                          title="Edit course"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedCourse(course);
-                            setThumbnailModalOpen(true);
-                          }}
-                          className="text-purple-600 hover:text-purple-900"
-                          title="Upload Thumbnail"
-                        >
-                          <ImageIcon className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedCourse(course);
-                            setVideoModalOpen(true);
-                          }}
-                          className="text-green-600 hover:text-green-900"
-                          title="Upload Video"
-                        >
-                          <Video className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => course._id && handleDeleteCourse(course._id)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* Create Course Modal */}
       <Modal
@@ -1303,7 +1729,7 @@ export default function AcademyPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {categories.map(cat => (
+                {categoryOptions.map(cat => (
                   <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                 ))}
               </select>
@@ -1316,7 +1742,7 @@ export default function AcademyPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {levels.map(level => (
+                {courseLevels.map(level => (
                   <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
                 ))}
               </select>
@@ -1546,7 +1972,7 @@ export default function AcademyPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {categories.map(cat => (
+                {categoryOptions.map(cat => (
                   <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                 ))}
               </select>
@@ -1559,7 +1985,7 @@ export default function AcademyPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
               >
-                {levels.map(level => (
+                {courseLevels.map(level => (
                   <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>
                 ))}
               </select>
@@ -1898,7 +2324,7 @@ export default function AcademyPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Category</h3>
-                <p className="mt-1 text-sm text-gray-900">{selectedCourse.category}</p>
+                <p className="mt-1 text-sm text-gray-900">{getCategoryLabel(selectedCourse.category)}</p>
               </div>
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Level</h3>

@@ -40,6 +40,7 @@ const onboardingSchema = z.object({
     return actualAge >= 13 && actualAge <= 120;
   }, "You must be at least 13 years old and not more than 120 years old"),
   email: z.string().email("Please enter a valid email address").optional().or(z.literal("")),
+  wantsToBeClient: z.boolean().optional(),
   wantsToBeProvider: z.boolean().optional(),
   wantsToBeSupplier: z.boolean().optional(),
   wantsToBeInstructor: z.boolean().optional(),
@@ -68,7 +69,7 @@ const steps = [
     title: "Your Roles",
     description: "What will you be doing on LocalPro?",
     icon: Shield,
-    fields: ["wantsToBeProvider", "wantsToBeSupplier", "wantsToBeInstructor"],
+    fields: ["wantsToBeClient", "wantsToBeProvider", "wantsToBeSupplier", "wantsToBeInstructor"],
   },
   {
     id: 3,
@@ -116,6 +117,10 @@ export default function OnboardingPage() {
     defaultValues: {
       gender: "",
       birthdate: "",
+      wantsToBeClient: true,
+      wantsToBeProvider: false,
+      wantsToBeSupplier: false,
+      wantsToBeInstructor: false,
     },
   });
 
@@ -135,6 +140,7 @@ export default function OnboardingPage() {
       if (userWithExtendedFields.birthdate) setValue("birthdate", userWithExtendedFields.birthdate);
       // Pre-select roles if user has roles
       if (session.user.roles && session.user.roles.length > 0) {
+        if (session.user.roles.includes("client")) setValue("wantsToBeClient", true);
         setValue("wantsToBeProvider", session.user.roles.includes("provider"));
         setValue("wantsToBeSupplier", session.user.roles.includes("supplier"));
         setValue("wantsToBeInstructor", session.user.roles.includes("instructor"));
@@ -162,9 +168,19 @@ export default function OnboardingPage() {
         // Email is optional - allow proceeding
         return true;
       }
-      if (field === "wantsToBeProvider" || field === "wantsToBeSupplier" || field === "wantsToBeInstructor") {
-        // At least one role must be selected
-        return formValues.wantsToBeProvider || formValues.wantsToBeSupplier || formValues.wantsToBeInstructor;
+      if (
+        field === "wantsToBeClient" ||
+        field === "wantsToBeProvider" ||
+        field === "wantsToBeSupplier" ||
+        field === "wantsToBeInstructor"
+      ) {
+        // At least one role must be selected (including client)
+        return (
+          formValues.wantsToBeClient ||
+          formValues.wantsToBeProvider ||
+          formValues.wantsToBeSupplier ||
+          formValues.wantsToBeInstructor
+        );
       }
       if (field === "bio") {
         // Bio is required
@@ -235,10 +251,16 @@ export default function OnboardingPage() {
     setIsSubmitting(true);
     try {
       const formData = watch();
+      const wantsClientRole = formData.wantsToBeClient ?? true;
       
       // Validate that at least one role is selected
-      if (!formData.wantsToBeProvider && !formData.wantsToBeSupplier && !formData.wantsToBeInstructor) {
-        toast.error("Please select at least one role.");
+      if (
+        !wantsClientRole &&
+        !formData.wantsToBeProvider &&
+        !formData.wantsToBeSupplier &&
+        !formData.wantsToBeInstructor
+      ) {
+        toast.error("Please select at least one role (including Client).");
         setIsSubmitting(false);
         return;
       }
@@ -253,7 +275,13 @@ export default function OnboardingPage() {
       };
       
       // Build roles array - always include client, add others if selected
-      const roles: string[] = ["client"]; // Client is always included
+      const roles: string[] = [];
+      const shouldIncludeClient =
+        wantsClientRole ||
+        formData.wantsToBeProvider ||
+        formData.wantsToBeSupplier ||
+        formData.wantsToBeInstructor;
+      if (shouldIncludeClient) roles.push("client"); // Client is always included
       if (formData.wantsToBeProvider) roles.push("provider");
       if (formData.wantsToBeSupplier) roles.push("supplier");
       if (formData.wantsToBeInstructor) roles.push("instructor");
@@ -538,10 +566,24 @@ export default function OnboardingPage() {
                 {currentStep === 2 && (
                   <div className="space-y-4">
                     <p className="text-sm text-gray-600 mb-4">
-                      Select at least one role. You&apos;ll always have Client access to book services and use platform features. <span className="text-red-500">*</span>
+                      Select at least one role. Client is selected by default so you can book services and use platform features. <span className="text-red-500">*</span>
                     </p>
                     
                     <div className="space-y-3">
+                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                        <input
+                          type="checkbox"
+                          {...register("wantsToBeClient")}
+                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">Client only</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            Book services, chat with providers, and use platform features without offering services yourself.
+                          </div>
+                        </div>
+                      </label>
+
                       <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
                         <input
                           type="checkbox"

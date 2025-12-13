@@ -38,6 +38,7 @@ import { ProfessionalInfo, BusinessInfo, Preferences, Performance } from "@/type
 
 // Type for API user response (raw data from backend)
 interface ApiUserData {
+    isActive?: boolean;
   _id?: string;
   phoneNumber?: string;
   email?: string;
@@ -94,6 +95,7 @@ const transformUserData = (apiUser: ApiUserData): User => {
     roles: roles,
     status: apiUser.status as UserStatus || 'pending_verification',
     isVerified: apiUser.isVerified || false,
+    ...(typeof apiUser.isActive === 'boolean' ? { isActive: apiUser.isActive } : {}),
     trustScore: apiUser.trustScore,
     completionRate: apiUser.completionRate,
     cancellationRate: apiUser.cancellationRate,
@@ -461,7 +463,7 @@ export default function UsersPage() {
       }
 
       const dataResult = await dataResponse.json();
-      
+
       // Handle stats response - only process if successful
       let statsData = null;
       if (statsResponse.ok) {
@@ -1140,13 +1142,16 @@ export default function UsersPage() {
 
   const handleOpenVerificationModal = (user: User) => {
     setSelectedUser(user);
+    console.log('🛂 Opening verification modal for user', { user: user });
+    // Prefill: checked if already verified (true) or trustScore >= 80
+    const trustPrefill = typeof user.trustScore === 'number' && user.trustScore >= 80;
     setVerificationFormData({
-      phoneVerified: user.verification?.phoneVerified || false,
-      emailVerified: user.verification?.emailVerified || false,
-      identityVerified: user.verification?.identityVerified || false,
-      businessVerified: user.verification?.businessVerified || false,
-      addressVerified: user.verification?.addressVerified || false,
-      bankAccountVerified: user.verification?.bankAccountVerified || false
+      phoneVerified: user.verification?.phoneVerified || trustPrefill || false,
+      emailVerified: user.verification?.emailVerified || trustPrefill || false,
+      identityVerified: user.verification?.identityVerified || trustPrefill || false,
+      businessVerified: user.verification?.businessVerified || trustPrefill || false,
+      addressVerified: user.verification?.addressVerified || trustPrefill || false,
+      bankAccountVerified: user.verification?.bankAccountVerified || trustPrefill || false
     });
     setVerificationModalOpen(true);
   };

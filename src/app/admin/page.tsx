@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { 
   BarChart3, 
@@ -165,9 +165,10 @@ export default function AdminDashboard() {
   }, []);
 
   // Initial fetch of module stats
-  useState(() => {
+  // Use useEffect to avoid state update on unmounted component
+  useEffect(() => {
     fetchModuleStats();
-  });
+  }, [fetchModuleStats]);
 
   // Refresh all data
   const refreshData = useCallback(async () => {

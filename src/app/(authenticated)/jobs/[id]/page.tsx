@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -393,6 +393,34 @@ export default function JobDetailPage() {
     return job?.company?.location?.isRemote;
   };
 
+  const timelineLabel = useMemo(() => {
+    const start = job?.applicationProcess?.startDate ? new Date(job.applicationProcess.startDate) : null;
+    const deadline = job?.applicationProcess?.deadline ? new Date(job.applicationProcess.deadline) : null;
+    if (start && deadline) {
+      return `Starts ${start.toLocaleDateString()} · Due ${deadline.toLocaleDateString()}`;
+    }
+    if (deadline) return `Due ${deadline.toLocaleDateString()}`;
+    if (start) return `Starts ${start.toLocaleDateString()}`;
+    return "Timeline not set";
+  }, [job?.applicationProcess]);
+
+  const budgetLabel = useMemo(() => {
+    if (!job?.salary) return "Compensation not set";
+    const currency = normalizeCurrencyCode(job.salary.currency || defaultCurrency);
+    const min = formatCurrency(job.salary.min || 0, currency, { appSettings });
+    const max = job.salary.max && job.salary.max > (job.salary.min || 0)
+      ? formatCurrency(job.salary.max, currency, { appSettings })
+      : null;
+    const period = job.salary.period ? `/${job.salary.period}` : "";
+    if (max) return `${min} - ${max}${period}`;
+    return `${min}${period}`;
+  }, [job?.salary, defaultCurrency, appSettings, normalizeCurrencyCode]);
+
+  const applicantsLabel = useMemo(() => {
+    const count = Array.isArray(job?.applications) ? job.applications.length : 0;
+    return `${count} applicant${count === 1 ? "" : "s"}`;
+  }, [job?.applications]);
+
   // Check if current user is the job owner/employer
   const isJobOwner = useCallback(() => {
     if (!job || !session?.user) return false;
@@ -456,7 +484,7 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
       {/* Header */}
@@ -474,6 +502,26 @@ export default function JobDetailPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">{job.title}</h1>
           <p className="text-sm text-gray-600">{job.description ? job.description.substring(0, 80) + (job.description.length > 80 ? '...' : '') : 'Job opportunity'}</p>
+        </div>
+      </div>
+
+      {/* Highlights */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <p className="text-xs text-gray-500">Compensation</p>
+          <p className="text-sm font-semibold text-gray-900 mt-1">{budgetLabel}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <p className="text-xs text-gray-500">Timeline</p>
+          <p className="text-sm font-semibold text-gray-900 mt-1">{timelineLabel}</p>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
+          <p className="text-xs text-gray-500">Applicants & Status</p>
+          <p className="text-sm font-semibold text-gray-900 mt-1">{applicantsLabel}</p>
+          <p className="text-xs text-gray-600 mt-1">
+            {job?.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : "Open"}
+            {getIsRemote() ? " · Remote friendly" : ""}
+          </p>
         </div>
       </div>
 

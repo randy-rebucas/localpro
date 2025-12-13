@@ -209,6 +209,7 @@ export interface UserBadge {
 }
 
 export interface User {
+    isActive?: boolean;
   _id?: string;
   phoneNumber: string;
   email?: string;
