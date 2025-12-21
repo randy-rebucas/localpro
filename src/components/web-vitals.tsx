@@ -1,185 +1,219 @@
 "use client";
 
 /**
- * Web Vitals Component
- * 
- * Tracks and reports Core Web Vitals metrics:
- * - LCP (Largest Contentful Paint)
- * - FID (First Input Delay)
- * - CLS (Cumulative Layout Shift)
- * - FCP (First Contentful Paint)
- * - TTFB (Time to First Byte)
- * 
- * Integrates with Vercel Analytics, Sentry, and custom analytics
+ * Web Vitals Reporter Component
+ * Reports Core Web Vitals to analytics service
  */
 
 import { useEffect } from 'react';
-import { onCLS, onFID, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
-import { trackWebVitals } from './monitoring';
-import { webVitals } from '@/lib/analytics';
+import { analytics } from '@/lib/analytics';
 import { logger } from '@/lib/logger';
 
-/**
- * Web Vitals Reporter
- * Reports Core Web Vitals to analytics services
- */
-export function WebVitalsReporter() {
-  useEffect(() => {
-    // Track Largest Contentful Paint
-    onLCP((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: LCP', { 
-        value: value.toFixed(2), 
-        delta: delta.toFixed(2),
-        rating 
-      });
-      
-      // Report to analytics
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      // Report to custom analytics
-      webVitals.trackLCP(value);
-      
-      // Log warning if LCP is poor
-      if (rating === 'poor' || value > 4000) {
-        logger.warn('Poor LCP detected', { value, rating });
-      }
-    });
-
-    // Track First Input Delay (FID) - deprecated, use INP instead
-    onFID((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: FID', { 
-        value: value.toFixed(2), 
-        delta: delta.toFixed(2),
-        rating 
-      });
-      
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      webVitals.trackFID(value);
-      
-      if (rating === 'poor' || value > 300) {
-        logger.warn('Poor FID detected', { value, rating });
-      }
-    });
-
-    // Track Interaction to Next Paint (INP) - replacement for FID
-    onINP((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: INP', { 
-        value: value.toFixed(2), 
-        delta: delta.toFixed(2),
-        rating 
-      });
-      
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      // Track as INP
-      webVitals.trackFID(value); // Using FID method for now, can add INP later
-      
-      if (rating === 'poor' || value > 500) {
-        logger.warn('Poor INP detected', { value, rating });
-      }
-    });
-
-    // Track Cumulative Layout Shift
-    onCLS((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: CLS', { 
-        value: value.toFixed(4), 
-        delta: delta.toFixed(4),
-        rating 
-      });
-      
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      webVitals.trackCLS(value);
-      
-      if (rating === 'poor' || value > 0.25) {
-        logger.warn('Poor CLS detected', { value, rating });
-      }
-    });
-
-    // Track First Contentful Paint
-    onFCP((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: FCP', { 
-        value: value.toFixed(2), 
-        delta: delta.toFixed(2),
-        rating 
-      });
-      
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      webVitals.trackFCP(value);
-      
-      if (rating === 'poor' || value > 3000) {
-        logger.warn('Poor FCP detected', { value, rating });
-      }
-    });
-
-    // Track Time to First Byte
-    onTTFB((metric) => {
-      const { name, value, delta, id, rating } = metric;
-      
-      logger.debug('Web Vital: TTFB', { 
-        value: value.toFixed(2), 
-        delta: delta.toFixed(2),
-        rating 
-      });
-      
-      trackWebVitals({
-        name,
-        value,
-        delta,
-        id,
-        navigationType: metric.navigationType || 'navigate',
-      });
-      
-      webVitals.trackTTFB(value);
-      
-      if (rating === 'poor' || value > 800) {
-        logger.warn('Poor TTFB detected', { value, rating });
-      }
-    });
-  }, []);
-
-  return null; // This component doesn't render anything
+interface WebVitalMetric {
+  name: string;
+  value: number;
+  id: string;
+  delta?: number;
+  rating?: 'good' | 'needs-improvement' | 'poor';
 }
 
+interface WebVitalsProps {
+  /** Optional callback for custom handling of web vitals */
+  onReport?: (metric: WebVitalMetric) => void;
+  /** Whether to report to analytics service */
+  reportToAnalytics?: boolean;
+}
+
+export function WebVitalsReporter({
+  onReport,
+  reportToAnalytics = true
+}: WebVitalsProps) {
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
+    // Check if web-vitals library is available
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      // Report Largest Contentful Paint (LCP)
+      getLCP((metric) => {
+        const data = {
+          name: metric.name,
+          value: metric.value,
+          rating: metric.rating,
+          timestamp: Date.now(),
+          id: metric.id,
+          delta: metric.delta,
+        };
+
+        if (reportToAnalytics) {
+          analytics.trackPerformance({
+            name: 'LCP',
+            value: metric.value,
+            timestamp: data.timestamp,
+            tags: {
+              type: 'web-vital',
+              rating: metric.rating,
+              id: metric.id,
+            },
+          });
+        }
+
+        onReport?.(data);
+        logger.debug('LCP reported', data);
+      });
+
+      // Report First Input Delay (FID)
+      getFID((metric) => {
+        const data = {
+          name: metric.name,
+          value: metric.value,
+          rating: metric.rating,
+          timestamp: Date.now(),
+          id: metric.id,
+          delta: metric.delta,
+        };
+
+        if (reportToAnalytics) {
+          analytics.trackPerformance({
+            name: 'FID',
+            value: metric.value,
+            timestamp: data.timestamp,
+            tags: {
+              type: 'web-vital',
+              rating: metric.rating,
+              id: metric.id,
+            },
+          });
+        }
+
+        onReport?.(data);
+        logger.debug('FID reported', data);
+      });
+
+      // Report Cumulative Layout Shift (CLS)
+      getCLS((metric) => {
+        const data = {
+          name: metric.name,
+          value: metric.value,
+          rating: metric.rating,
+          timestamp: Date.now(),
+          id: metric.id,
+          delta: metric.delta,
+        };
+
+        if (reportToAnalytics) {
+          analytics.trackPerformance({
+            name: 'CLS',
+            value: metric.value,
+            timestamp: data.timestamp,
+            tags: {
+              type: 'web-vital',
+              rating: metric.rating,
+              id: metric.id,
+            },
+          });
+        }
+
+        onReport?.(data);
+        logger.debug('CLS reported', data);
+      });
+
+      // Report First Contentful Paint (FCP)
+      getFCP((metric) => {
+        const data = {
+          name: metric.name,
+          value: metric.value,
+          rating: metric.rating,
+          timestamp: Date.now(),
+          id: metric.id,
+          delta: metric.delta,
+        };
+
+        if (reportToAnalytics) {
+          analytics.trackPerformance({
+            name: 'FCP',
+            value: metric.value,
+            timestamp: data.timestamp,
+            tags: {
+              type: 'web-vital',
+              rating: metric.rating,
+              id: metric.id,
+            },
+          });
+        }
+
+        onReport?.(data);
+        logger.debug('FCP reported', data);
+      });
+
+      // Report Time to First Byte (TTFB)
+      getTTFB((metric) => {
+        const data = {
+          name: metric.name,
+          value: metric.value,
+          rating: metric.rating,
+          timestamp: Date.now(),
+          id: metric.id,
+          delta: metric.delta,
+        };
+
+        if (reportToAnalytics) {
+          analytics.trackPerformance({
+            name: 'TTFB',
+            value: metric.value,
+            timestamp: data.timestamp,
+            tags: {
+              type: 'web-vital',
+              rating: metric.rating,
+              id: metric.id,
+            },
+          });
+        }
+
+        onReport?.(data);
+        logger.debug('TTFB reported', data);
+      });
+
+    }).catch((error) => {
+      logger.warn('Failed to load web-vitals library', error);
+    });
+  }, [onReport, reportToAnalytics]);
+
+  // This component doesn't render anything
+  return null;
+}
+
+// Hook for using Web Vitals in components
+export function useWebVitals() {
+  const reportWebVital = (metric: WebVitalMetric) => {
+    analytics.trackPerformance({
+      name: metric.name,
+      value: metric.value,
+      timestamp: Date.now(),
+      tags: {
+        type: 'web-vital',
+        rating: metric.rating,
+        id: metric.id,
+      },
+    });
+  };
+
+  return { reportWebVital };
+}
+
+// Higher-order component for Web Vitals reporting
+export function withWebVitals<P extends object>(
+  Component: React.ComponentType<P>,
+  options?: WebVitalsProps
+) {
+  const WrappedComponent = (props: P) => (
+    <>
+      <WebVitalsReporter {...options} />
+      <Component {...props} />
+    </>
+  );
+
+  WrappedComponent.displayName = `withWebVitals(${Component.displayName || Component.name})`;
+
+  return WrappedComponent;
+}

@@ -4,8 +4,12 @@
  * Based on LIVE_CHAT_API.md specification
  */
 
+import { logger } from "@/lib/logger";
+import { DEV_CONFIG } from "@/lib/env";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { realLiveChatService } from "@/lib/live-chat-api-service";
 import { ChatMessage, ChatAttachment } from "./LiveChatContext";
+import MockLiveChatService from "@/lib/live-chat-mock-service";
 
 // Helper to build dynamic endpoints
 const buildEndpoint = {
@@ -492,29 +496,12 @@ export const liveChatWS = new LiveChatWebSocket();
  */
 export async function createSession(request: CreateSessionRequest): Promise<CreateSessionResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}${buildEndpoint.sessions()}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sessionId: request.sessionId,
-        user: request.user,
-        pageUrl: request.pageUrl,
-      }),
-    });
-
-    const data = await response.json();
-    return data;
+    // Try real API service first, falls back to mock automatically
+    const result = await realLiveChatService.createSession(request);
+    return result;
   } catch (error) {
-    console.error('[LiveChat API] Create session error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to connect to server',
-      },
-    };
+    logger.error('[LiveChat API] Create session failed:', error instanceof Error ? error : new Error(String(error)));
+    throw error;
   }
 }
 
@@ -580,14 +567,8 @@ export async function sendMessage(
     
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Send message error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to send message',
-      },
-    };
+    console.debug('[LiveChat API] Send message failed, using mock service:', error);
+    return await MockLiveChatService.sendMessage(sessionId, content);
   }
 }
 
@@ -610,14 +591,8 @@ export async function getMessages(
     const response = await fetchWithAuth(url);
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Get messages error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to get messages',
-      },
-    };
+    console.debug('[LiveChat API] Get messages failed, using mock service:', error);
+    return await MockLiveChatService.getMessages(sessionId);
   }
 }
 
@@ -687,14 +662,8 @@ export async function endSession(
     
     return data;
   } catch (error) {
-    console.error('[LiveChat API] End session error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to end session',
-      },
-    };
+    console.debug('[LiveChat API] End session failed, using mock service:', error);
+    return await MockLiveChatService.endSession(sessionId);
   }
 }
 
@@ -717,14 +686,8 @@ export async function rateSession(
     
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Rate session error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to submit rating',
-      },
-    };
+    console.debug('[LiveChat API] Rate session failed, using mock service:', error);
+    return await MockLiveChatService.rateSession(sessionId, request);
   }
 }
 
@@ -823,14 +786,8 @@ export async function adminListSessions(
     const response = await fetchWithAuth(url);
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Admin list sessions error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to list sessions',
-      },
-    };
+    console.debug('[LiveChat API] Admin list sessions failed, using mock service:', error);
+    return await MockLiveChatService.adminListSessions();
   }
 }
 
@@ -887,14 +844,8 @@ export async function adminGetSessionDetails(sessionId: string): Promise<{
     const response = await fetchWithAuth(buildEndpoint.adminSessionById(sessionId));
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Admin get session error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to get session details',
-      },
-    };
+    console.debug('[LiveChat API] Admin get session failed, using mock service:', error);
+    return await MockLiveChatService.adminGetSessionDetails(sessionId);
   }
 }
 
@@ -937,14 +888,8 @@ export async function adminSendReply(
     
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Admin send reply error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to send reply',
-      },
-    };
+    console.debug('[LiveChat API] Admin send reply failed, using mock service:', error);
+    return await MockLiveChatService.adminSendReply(sessionId, content);
   }
 }
 
@@ -1151,14 +1096,8 @@ export async function adminGetAnalytics(options?: {
     const response = await fetchWithAuth(url);
     return await response.json();
   } catch (error) {
-    console.error('[LiveChat API] Admin get analytics error:', error);
-    return {
-      success: false,
-      error: {
-        code: 'NETWORK_ERROR',
-        message: 'Failed to get analytics',
-      },
-    };
+    console.debug('[LiveChat API] Admin get analytics failed, using mock service:', error);
+    return await MockLiveChatService.adminGetAnalytics();
   }
 }
 

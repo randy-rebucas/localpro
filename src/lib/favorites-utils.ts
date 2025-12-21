@@ -14,7 +14,7 @@ import { createAuthFetchOptions } from "./auth-utils";
 import { logger } from "./logger";
 import toast from "react-hot-toast";
 
-export type ItemType = 'service' | 'provider' | 'course' | 'supply' | 'job';
+export type ItemType = 'service' | 'provider' | 'course' | 'supply' | 'job' | 'rental';
 
 export interface FavoritePayload {
   itemType: ItemType;
@@ -46,6 +46,9 @@ export function getItemEndpoint(itemType: ItemType, itemId: string): string {
     case 'job':
       // Job
       return `${API_ENDPOINTS.jobsById}/${itemId}`;
+    case 'rental':
+      // Rental
+      return `${API_ENDPOINTS.rentalsById}/${itemId}`;
   }
 }
 

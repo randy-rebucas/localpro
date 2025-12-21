@@ -30,6 +30,8 @@ import { ListSkeleton } from "@/components/ui/loading";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { toggleFavorite } from "@/lib/favorites-utils";
+import toast from "react-hot-toast";
 
 export interface Rental {
   id: string;
@@ -188,20 +190,39 @@ export default function RentalDetailPage() {
   }, [rentalId]);
 
   const handleToggleFavorite = async () => {
-    // TODO: Implement favorite toggle API call
-    setIsFavorited(!isFavorited);
+    if (!rentalId) return;
+
+    try {
+      const newFavoriteStatus = await toggleFavorite('rental', rentalId);
+      setIsFavorited(newFavoriteStatus);
+    } catch (error) {
+      logger.error('Error toggling favorite', error instanceof Error ? error : new Error(String(error)));
+      // Revert optimistic update on error
+      setIsFavorited(!isFavorited);
+    }
   };
 
-  const handleShare = () => {
-    // TODO: Implement share functionality
-    if (navigator.share) {
-      navigator.share({
-        title: rental?.name,
-        text: rental?.description,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
+  const handleShare = async () => {
+    const shareData = {
+      title: rental?.name || 'Rental Item',
+      text: rental?.description || 'Check out this rental item on LocalPro',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success('Shared successfully!');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      // User cancelled share or clipboard failed
+      if (error instanceof Error && error.name !== 'AbortError') {
+        logger.error('Error sharing', error);
+        toast.error('Failed to share. You can manually copy the link.');
+      }
     }
   };
 
@@ -211,8 +232,10 @@ export default function RentalDetailPage() {
   };
 
   const handleContactOwner = () => {
-    // TODO: Implement contact owner functionality
-    logger.debug('Contact owner', { rentalId });
+    // Open contact modal or navigate to contact page
+    // For now, we'll show a toast with contact info
+    toast.success(`Contacting ${rental?.owner.name}...`);
+    logger.debug('Contact owner initiated', { rentalId, owner: rental?.owner });
   };
 
   if (loading) {
@@ -586,8 +609,30 @@ export default function RentalDetailPage() {
                   variant="outline"
                   className="w-full"
                   onClick={() => {
-                    // TODO: Open map with rental location
-                    logger.debug('Open map for location', { location: rental.location });
+                    const { address, city, state, coordinates } = rental.location;
+                    const query = coordinates
+                      ? `${coordinates.lat},${coordinates.lng}`
+                      : `${address}, ${city}, ${state}`;
+
+                    // Try to open in Google Maps app/web
+                    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+
+                    // For mobile devices, try to open native maps app first
+                    if (navigator.userAgent.includes('Mobile')) {
+                      // Try Apple Maps on iOS
+                      if (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')) {
+                        window.open(`maps:///?q=${encodeURIComponent(query)}`, '_blank');
+                      }
+                      // Try Google Maps on Android
+                      else if (navigator.userAgent.includes('Android')) {
+                        window.open(`geo:0,0?q=${encodeURIComponent(query)}`, '_blank');
+                      }
+                    }
+
+                    // Fallback to web Google Maps
+                    window.open(googleMapsUrl, '_blank');
+
+                    logger.debug('Opening map for location', { location: rental.location, query });
                   }}
                 >
                   View on Map

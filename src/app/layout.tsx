@@ -6,6 +6,7 @@ import { ResourceHints } from "@/components/resource-hints";
 import { WebVitalsReporter } from "@/components/web-vitals";
 import { LiveChatProvider } from "@/components/live-chat";
 import { LiveChatWidget } from "@/components/live-chat";
+import ErrorBoundary from "@/components/error-boundary";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { CLIENT_CONFIG } from "@/lib/env";
 import { SITE_CONFIG, PAGE_METADATA, generateKeywords } from "@/lib/seo-config";
@@ -189,10 +190,12 @@ export default function RootLayout({
         <ResourceHints />
         <WebVitalsReporter />
         <AppSettingsProvider />
-        <LiveChatProvider>
-          {children}
-          <LiveChatWidget />
-        </LiveChatProvider>
+        <ErrorBoundary>
+          <LiveChatProvider>
+            {children}
+            <LiveChatWidget />
+          </LiveChatProvider>
+        </ErrorBoundary>
         {CLIENT_CONFIG.googleTagManagerId && (
           <GoogleTagManager gtmId={CLIENT_CONFIG.googleTagManagerId} />
         )}

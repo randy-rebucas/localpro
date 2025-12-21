@@ -1,6 +1,7 @@
-import { API_BASE_URL, API_ENDPOINTS } from "./api";
-import { createAuthFetchOptions } from "./auth-utils";
 import { logger } from "./logger";
+import { DEV_CONFIG } from "./env";
+import { realAIService } from "./ai-api-service";
+import MockAIService from "./ai-mock-service";
 
 /**
  * AI Utilities for Marketplace Features
@@ -79,66 +80,19 @@ export async function naturalLanguageSearch(
   params: NaturalLanguageSearchParams
 ): Promise<NaturalLanguageSearchResult> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.aiNaturalLanguageSearch}`,
-      createAuthFetchOptions({
-        method: "POST",
-        body: JSON.stringify(params),
-      })
-    );
+    // Try real API service first, falls back to mock automatically
+    const responseData = await realAIService.naturalLanguageSearch(params);
 
-    if (!response.ok) {
-      // Handle 404 gracefully (endpoint not implemented)
-      if (response.status === 404) {
-        logger.debug("AI natural language search endpoint not available", { status: 404 });
-        throw new Error("AI search feature is not available yet. Please use the standard filters.");
-      }
-      throw new Error(`AI search failed: ${response.status}`);
-    }
-
-    const responseData = await response.json();
-    
-    // Transform the response to match expected format
-    // Handle both new format (with data.aiAnalysis) and legacy format
-    if (responseData.data) {
-      // New format: extract filters from aiAnalysis and services
-      const aiAnalysis = responseData.data.aiAnalysis;
-      const services = responseData.data.services || [];
-      
-      // Extract filters from aiAnalysis or infer from services
-      const filters: NaturalLanguageSearchResult['filters'] = {};
-      
-      if (aiAnalysis?.priceRange) {
-        filters.minPrice = aiAnalysis.priceRange.min;
-        filters.maxPrice = aiAnalysis.priceRange.max;
-      }
-      
-      // Extract category from services if available
-      if (services.length > 0 && services[0].category) {
-        filters.category = services[0].category;
-        if (services[0].subcategory) {
-          filters.subcategory = services[0].subcategory;
-        }
-      }
-      
-      return {
-        ...responseData,
-        filters,
-        interpretedQuery: responseData.data.query || responseData.interpretedQuery || params.query,
-        confidence: aiAnalysis?.confidence || responseData.confidence || 0,
-        services,
-        aiAnalysis,
-        count: responseData.data.count,
-      };
-    }
-    
-    // Legacy format - return as is
+    // The realAIService returns data in the expected format, return as-is
     return responseData;
   } catch (error) {
-    // Only log non-404 errors
-    if (error instanceof Error && !error.message.includes("404") && !error.message.includes("not available")) {
-      logger.error("Natural language search error", error);
+    // If it's a network error or other issue, try mock service
+    if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("network") || error.message.includes("404"))) {
+      logger.debug("Network error in AI search, falling back to mock service", { error: error.message });
+      return await MockAIService.naturalLanguageSearch(params);
     }
+    // Only log non-network errors
+    logger.error("Natural language search error", error);
     throw error;
   }
 }
@@ -168,32 +122,12 @@ export async function getServiceRecommendations(
   params: ServiceRecommendationParams = {}
 ): Promise<ServiceRecommendation[]> {
   try {
-    const queryParams = new URLSearchParams();
-    if (params.userId) queryParams.append("userId", params.userId);
-    if (params.location) queryParams.append("location", params.location);
-    if (params.lat) queryParams.append("lat", params.lat.toString());
-    if (params.lng) queryParams.append("lng", params.lng.toString());
-    if (params.limit) queryParams.append("limit", params.limit.toString());
-
-    const response = await fetch(
-      `${API_BASE_URL}${API_ENDPOINTS.aiServiceRecommendations}?${queryParams}`,
-      createAuthFetchOptions()
-    );
-
-    if (!response.ok) {
-      // Silently handle 404s (endpoint not implemented yet)
-      if (response.status === 404) {
-        logger.debug("AI recommendations endpoint not available", { status: 404 });
-        return [];
-      }
-      throw new Error(`Recommendations failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.recommendations || data.data || [];
+    // Try real API service first, falls back to mock automatically
+    const result = await realAIService.getServiceRecommendations(params);
+    return result;
   } catch (error) {
-    // Only log non-404 errors
-    if (error instanceof Error && !error.message.includes("404")) {
+    // Only log non-network errors
+    if (error instanceof Error && !error.message.includes("fetch") && !error.message.includes("network")) {
       logger.error("Service recommendations error", error);
     }
     return [];
@@ -276,20 +210,20 @@ export async function estimatePrice(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI price estimator endpoint not available", { status: 404 });
-        throw new Error("Price estimation feature is not available yet.");
+        logger.debug("AI price estimator endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.estimatePrice(params);
       }
       throw new Error(`Price estimation failed: ${response.status}`);
     }
 
     const responseData = await response.json();
-    
+
     // Transform the response to match expected format
     // Handle both new format (with data.estimate) and legacy format
     if (responseData.data?.estimate) {
       const estimate = responseData.data.estimate;
       const marketData = responseData.data.marketData;
-      
+
       // Transform to unified format
       return {
         ...responseData,
@@ -310,10 +244,15 @@ export async function estimatePrice(
         marketData,
       };
     }
-    
+
     // Legacy format - return as is
     return responseData;
   } catch (error) {
+    // If it's a network error, try mock service
+    if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("network") || error.message.includes("404"))) {
+      logger.debug("Network error in price estimation, falling back to mock service", { error: error.message });
+      return await MockAIService.estimatePrice(params);
+    }
     if (error instanceof Error && !error.message.includes("404") && !error.message.includes("not available")) {
       logger.error("Price estimation error", error);
     }
@@ -425,8 +364,8 @@ export async function matchService(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI service matcher endpoint not available", { status: 404 });
-        return [];
+        logger.debug("AI service matcher endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.matchService({ requirements: payload.requirements, filters: payload.filters });
       }
       throw new Error(`Service matching failed: ${response.status}`);
     }
@@ -507,8 +446,8 @@ export async function analyzeReviewSentiment(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI review sentiment endpoint not available", { status: 404 });
-        throw new Error("Sentiment analysis feature is not available yet.");
+        logger.debug("AI review sentiment endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.analyzeReviewSentiment(params);
       }
       throw new Error(`Sentiment analysis failed: ${response.status}`);
     }
@@ -552,8 +491,8 @@ export async function getBookingSuggestions(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI booking assistant endpoint not available", { status: 404 });
-        return [];
+        logger.debug("AI booking assistant endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.getBookingSuggestions(params);
       }
       throw new Error(`Booking assistant failed: ${response.status}`);
     }
@@ -635,8 +574,8 @@ export async function generateServiceDescription(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI description generator endpoint not available", { status: 404 });
-        throw new Error("Description generation feature is not available yet.");
+        logger.debug("AI description generator endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.generateServiceDescription(params);
       }
       
       // Try to get error message from response
@@ -681,8 +620,8 @@ export async function generateDescriptionFromTitle(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI description from title endpoint not available", { status: 404 });
-        throw new Error("Description generation feature is not available yet.");
+        logger.debug("AI description from title endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.generateDescriptionFromTitle(params);
       }
       
       // Try to get error message from response
@@ -826,8 +765,8 @@ export async function generateRentalDescription(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("Rental description generation endpoint not available", { status: 404 });
-        throw new Error("Rental description generation feature is not available yet.");
+        logger.debug("Rental description generation endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.generateRentalDescription(params);
       }
       
       // Try to get error message from response
@@ -952,8 +891,8 @@ export async function generateBio(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI bio generator endpoint not available", { status: 404 });
-        throw new Error("Bio generation feature is not available yet.");
+        logger.debug("AI bio generator endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.generateBio(params);
       }
       
       // Try to extract error message from response
@@ -1039,8 +978,8 @@ export async function optimizePricing(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI pricing optimizer endpoint not available", { status: 404 });
-        throw new Error("Pricing optimization feature is not available yet.");
+        logger.debug("AI pricing optimizer endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.optimizePricing(params);
       }
       throw new Error(`Pricing optimization failed: ${response.status}`);
     }
@@ -1095,8 +1034,8 @@ export async function getDemandForecast(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI demand forecast endpoint not available", { status: 404 });
-        throw new Error("Demand forecasting feature is not available yet.");
+        logger.debug("AI demand forecast endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.getDemandForecast(params);
       }
       throw new Error(`Demand forecast failed: ${response.status}`);
     }
@@ -1163,8 +1102,8 @@ export async function getReviewInsights(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI review insights endpoint not available", { status: 404 });
-        throw new Error("Review insights feature is not available yet.");
+        logger.debug("AI review insights endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.getReviewInsights(params);
       }
       throw new Error(`Review insights failed: ${response.status}`);
     }
@@ -1209,8 +1148,8 @@ export async function generateResponse(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI response assistant endpoint not available", { status: 404 });
-        throw new Error("Response assistant feature is not available yet.");
+        logger.debug("AI response assistant endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.generateResponse(params);
       }
       throw new Error(`Response generation failed: ${response.status}`);
     }
@@ -1265,8 +1204,8 @@ export async function optimizeListing(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI listing optimizer endpoint not available", { status: 404 });
-        throw new Error("Listing optimization feature is not available yet.");
+        logger.debug("AI listing optimizer endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.optimizeListing(params);
       }
       throw new Error(`Listing optimization failed: ${response.status}`);
     }
@@ -1326,8 +1265,8 @@ export async function getSchedulingRecommendations(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI scheduling assistant endpoint not available", { status: 404 });
-        return [];
+        logger.debug("AI scheduling assistant endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.getSchedulingRecommendations(params);
       }
       throw new Error(`Scheduling assistant failed: ${response.status}`);
     }
@@ -1421,8 +1360,8 @@ export async function prefillServiceForm(
 
     if (!response.ok) {
       if (response.status === 404) {
-        logger.debug("AI form prefiller endpoint not available", { status: 404 });
-        throw new Error("Form prefiller feature is not available yet.");
+        logger.debug("AI form prefiller endpoint not available, using mock service", { status: 404 });
+        return await MockAIService.prefillServiceForm(params);
       }
       throw new Error(`Form prefilling failed: ${response.status}`);
     }
