@@ -83,7 +83,7 @@ export const API_ENDPOINTS = {
   jobs: "/api/jobs",
   jobsSearch: "/api/jobs/search",
   jobsById: "/api/jobs",
-  jobsCategories: "/api/jobs/categories",
+  jobsCategories: "/api/job-categories",
   jobsMyApplications: "/api/jobs/my-applications",
   jobsMyJobs: "/api/jobs/my-jobs",
   jobsApply: "/api/jobs",

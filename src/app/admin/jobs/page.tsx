@@ -21,6 +21,7 @@ import {
   Coins,
   Image as ImageIcon,
   Filter,
+  Tag,
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { AdminErrorState } from "@/components/admin/admin-error-state";
@@ -44,6 +45,24 @@ import {
   Application,
 } from "@/types/jobs";
 
+type JobsTab = "jobs" | "categories";
+
+interface JobCategory {
+  _id?: string;
+  id?: string;
+  key: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  slug?: string;
+  displayOrder?: number;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  subcategories?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 interface JobStats {
   totalJobs?: number;
   activeJobs?: number;
@@ -56,6 +75,84 @@ interface JobStats {
   applicationsCount?: number;
 }
 
+const sanitizeCategoryKey = (value: string): string => {
+  if (!value) return "";
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+};
+
+const getCategoryLabel = (key?: string): string => {
+  if (!key) return "—";
+  const sanitized = sanitizeCategoryKey(key);
+  return sanitized
+    .split("_")
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : ""))
+    .join(" ");
+};
+
+const normalizeJobCategory = (raw: unknown): JobCategory | null => {
+  if (!raw || typeof raw !== "object") return null;
+  const candidate = raw as Record<string, unknown>;
+  const key =
+    sanitizeCategoryKey(
+      (candidate.key ||
+        candidate.slug ||
+        candidate.name ||
+        candidate.id ||
+        candidate._id ||
+        "") as string
+    ) || "";
+  const name =
+    (candidate.name ||
+      candidate.label ||
+      candidate.title ||
+      candidate.key ||
+      candidate.slug ||
+      key) as string;
+
+  if (!key || !name) return null;
+
+  const displayOrderValue = candidate.displayOrder;
+  const displayOrder =
+    typeof displayOrderValue === "number"
+      ? displayOrderValue
+      : typeof displayOrderValue === "string" && displayOrderValue.trim() !== ""
+        ? Number(displayOrderValue)
+        : undefined;
+
+  return {
+    _id: (candidate._id as string) || undefined,
+    id: (candidate.id as string) || undefined,
+    key,
+    name,
+    description: (candidate.description as string) || undefined,
+    icon: (candidate.icon as string) || undefined,
+    slug: (candidate.slug as string) || key,
+    displayOrder,
+    isActive:
+      candidate.isActive !== undefined
+        ? Boolean(candidate.isActive)
+        : candidate.status
+          ? String(candidate.status).toLowerCase() === "active"
+          : true,
+    isDeleted:
+      candidate.isDeleted !== undefined
+        ? Boolean(candidate.isDeleted)
+        : candidate.status
+          ? String(candidate.status).toLowerCase() === "deleted"
+          : false,
+    subcategories: Array.isArray(candidate.subcategories)
+      ? (candidate.subcategories as string[])
+      : undefined,
+    createdAt: (candidate.createdAt as string) || undefined,
+    updatedAt: (candidate.updatedAt as string) || undefined,
+  };
+};
+
 interface JobsResponse {
   success: boolean;
   data?: Job[];
@@ -67,6 +164,7 @@ interface JobsResponse {
 }
 
 export default function AdminJobsPage() {
+  const [activeTab, setActiveTab] = useState<JobsTab>("jobs");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +175,28 @@ export default function AdminJobsPage() {
     count: 0,
   });
   const { toasts, success, error: showError, removeToast } = useToast();
+
+  // Categories state
+  const [categoriesData, setCategoriesData] = useState<JobCategory[]>([]);
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySubmitting, setCategorySubmitting] = useState(false);
+  const [categoryForm, setCategoryForm] = useState<{
+    key: string;
+    name: string;
+    description: string;
+    icon: string;
+    displayOrder: string;
+    isActive: boolean;
+  }>({
+    key: "",
+    name: "",
+    description: "",
+    icon: "",
+    displayOrder: "",
+    isActive: true,
+  });
+  const [editingCategory, setEditingCategory] = useState<JobCategory | null>(null);
 
   const [filters, setFilters] = useState({
     page: 1,
@@ -627,6 +747,29 @@ export default function AdminJobsPage() {
     const company = job.company || { name: "" };
     const salary = job.salary;
     const requirements = job.requirements;
+    
+    // Determine category value - try to match with available categories
+    let categoryValue = "";
+    if (typeof job.category === 'string') {
+      // If it's a string, try to find matching category by ID, key, or name
+      const matchedCategory = categoriesData.find(
+        cat => cat._id === job.category || 
+               cat.id === job.category || 
+               (cat.key && cat.key === job.category) ||
+               (cat.name && cat.name === job.category)
+      );
+      categoryValue = matchedCategory ? (matchedCategory._id || matchedCategory.id || (matchedCategory.key || "")) : job.category;
+    } else if (job.category && typeof job.category === 'object') {
+      // If it's an object (JobCategory type), use its ID
+      const catObj = job.category as { _id?: string; id?: string; name?: string };
+      categoryValue = catObj._id || catObj.id || "";
+      // If not found in object, try to match by name
+      if (!categoryValue && catObj.name) {
+        const matchedCategory = categoriesData.find(cat => cat.name === catObj.name);
+        categoryValue = matchedCategory ? (matchedCategory._id || matchedCategory.id || (matchedCategory.key || "")) : "";
+      }
+    }
+    
     setEditForm({
       title: job.title || "",
       description: job.description || "",
@@ -644,7 +787,7 @@ export default function AdminJobsPage() {
           remoteType: (company.location?.remoteType || "fully_remote") as "fully_remote" | "hybrid" | "on_site",
         } as { address: string; city: string; state: string; country: string; isRemote: boolean; remoteType: "fully_remote" | "hybrid" | "on_site" },
       },
-      category: typeof job.category === 'string' ? job.category : job.category?.name || "",
+      category: categoryValue,
       subcategory: job.subcategory || "",
       jobType: job.jobType || "full_time",
       experienceLevel: job.experienceLevel || "mid",
@@ -744,6 +887,279 @@ export default function AdminJobsPage() {
     }
   };
 
+  const fetchCategories = useCallback(async () => {
+    const parseCategories = (data: unknown): JobCategory[] => {
+      let rawCategories: unknown = [];
+      if (Array.isArray(data)) {
+        rawCategories = data;
+      } else if (data && typeof data === "object") {
+        const obj = data as Record<string, unknown>;
+        const dataField = obj.data as unknown;
+
+        if (Array.isArray(dataField)) {
+          rawCategories = dataField;
+        } else if (
+          dataField &&
+          typeof dataField === "object" &&
+          Array.isArray((dataField as { categories?: unknown[] }).categories)
+        ) {
+          rawCategories = (dataField as { categories?: unknown[] }).categories;
+        } else if (
+          dataField &&
+          typeof dataField === "object" &&
+          Array.isArray((dataField as { items?: unknown[] }).items)
+        ) {
+          rawCategories = (dataField as { items?: unknown[] }).items;
+        } else if (Array.isArray(obj.categories as unknown[])) {
+          rawCategories = obj.categories;
+        } else {
+          const firstArrayKey = Object.keys(obj).find((key) => Array.isArray(obj[key] as unknown[]));
+          rawCategories = firstArrayKey ? obj[firstArrayKey] : [];
+        }
+      }
+
+      const normalizedCategories = Array.isArray(rawCategories)
+        ? (rawCategories
+            .map((item) => normalizeJobCategory(item))
+            .filter(Boolean) as JobCategory[])
+        : [];
+
+      normalizedCategories.sort(
+        (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)
+      );
+
+      return normalizedCategories;
+    };
+
+    const fetchFromEndpoint = async (url: string) => {
+      const response = await fetch(url, createAuthFetchOptions({ method: "GET" }));
+      if (!response.ok) {
+        let errorMessage = `Failed to load categories (${response.status})`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, try to get text
+          try {
+            const text = await response.text();
+            if (text) errorMessage = text;
+          } catch {
+            // Use default error message
+          }
+        }
+        throw new Error(errorMessage);
+      }
+      const data = await response.json().catch(() => ({}));
+      return parseCategories(data);
+    };
+
+    try {
+      setCategoryLoading(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        setCategoryError("Authentication required. Please log in again.");
+        setCategoriesData([]);
+        return;
+      }
+
+      // Try without query parameters first (similar to useJobCategories hook)
+      const url = `${API_BASE_URL}${API_ENDPOINTS.jobsCategories}`;
+      const categories = await fetchFromEndpoint(url);
+      setCategoriesData(categories);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error fetching job categories", error);
+      setCategoryError(error.message);
+      setCategoriesData([]);
+    } finally {
+      setCategoryLoading(false);
+    }
+  }, []);
+
+  // Fetch categories on component mount and when categories tab is active
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    if (activeTab === "categories") {
+      fetchCategories();
+    }
+  }, [activeTab, fetchCategories]);
+
+  const resetCategoryForm = () => {
+    setEditingCategory(null);
+    setCategoryForm({
+      key: "",
+      name: "",
+      description: "",
+      icon: "",
+      displayOrder: "",
+      isActive: true,
+    });
+  };
+
+  const handleCategorySubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    const sanitizedKey = sanitizeCategoryKey(categoryForm.key || categoryForm.name);
+    const name = categoryForm.name.trim() || categoryForm.key;
+
+    if (!sanitizedKey || !name) {
+      showError("Category key and name are required");
+      return;
+    }
+
+    try {
+      setCategorySubmitting(true);
+      setCategoryError(null);
+
+      if (!getApiToken()) {
+        throw new Error("Authentication required");
+      }
+
+      const payload = {
+        key: sanitizedKey,
+        name: name.trim(),
+        description: categoryForm.description.trim() || undefined,
+        icon: categoryForm.icon.trim() || undefined,
+        displayOrder:
+          categoryForm.displayOrder && categoryForm.displayOrder.trim() !== ""
+            ? Number(categoryForm.displayOrder)
+            : 0,
+        isActive: categoryForm.isActive,
+      };
+
+      const updateIdentifier = editingCategory?._id || editingCategory?.id || editingCategory?.key;
+      const url = editingCategory
+        ? `${API_BASE_URL}${API_ENDPOINTS.jobsCategories}${updateIdentifier ? `/${encodeURIComponent(updateIdentifier)}` : ""}`
+        : `${API_BASE_URL}${API_ENDPOINTS.jobsCategories}`;
+
+      if (editingCategory && !updateIdentifier) {
+        throw new Error("Cannot update category: missing category id");
+      }
+
+      const response = await fetch(
+        url,
+        createAuthFetchOptions({
+          method: editingCategory ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error ||
+            `Failed to ${editingCategory ? "update" : "create"} category`
+        );
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (
+        result &&
+        typeof result === "object" &&
+        "success" in result &&
+        result.success === false
+      ) {
+        throw new Error(
+          result.error || `Failed to ${editingCategory ? "update" : "create"} category`
+        );
+      }
+
+      success(editingCategory ? "Category updated" : "Category created");
+      resetCategoryForm();
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error saving category", error);
+      setCategoryError(error.message);
+      showError(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
+
+  const handleEditCategory = (category: JobCategory) => {
+    setEditingCategory(category);
+    setCategoryForm({
+      key: category.key || "",
+      name: category.name || "",
+      description: category.description || "",
+      icon: category.icon || "",
+      displayOrder:
+        category.displayOrder !== undefined && category.displayOrder !== null
+          ? String(category.displayOrder)
+          : "",
+      isActive: category.isActive ?? true,
+    });
+  };
+
+  const handleDeleteCategory = async (category?: JobCategory) => {
+    const identifier =
+      category?._id ||
+      category?.id ||
+      category?.key ||
+      sanitizeCategoryKey(category?.name || "");
+    if (!identifier) return;
+    if (!confirm("Delete this category? This cannot be undone.")) return;
+
+    try {
+      setCategorySubmitting(true);
+      if (!getApiToken()) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.jobsCategories}/${encodeURIComponent(
+          identifier
+        )}`,
+        createAuthFetchOptions({ method: "DELETE" })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete category");
+      }
+
+      const result = await response.json().catch(() => ({}));
+      if (result && typeof result === "object" && "success" in result && result.success === false) {
+        throw new Error(result.error || "Failed to delete category");
+      }
+
+      success("Category deleted");
+      await fetchCategories();
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error("Error deleting category", error);
+      setCategoryError(error.message);
+      showError(error.message);
+    } finally {
+      setCategorySubmitting(false);
+    }
+  };
+
+  const renderCategoryState = (category: JobCategory) => {
+    if (category.isDeleted) {
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          Deleted
+        </span>
+      );
+    }
+    return (
+      <span
+        className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
+          category.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {category.isActive ? "Active" : "Inactive"}
+      </span>
+    );
+  };
+
   const filteredJobs = jobs.filter((job) => {
     if (!searchQuery) return true;
     const searchLower = searchQuery.toLowerCase();
@@ -774,15 +1190,60 @@ export default function AdminJobsPage() {
           <p className="text-gray-600 text-xs">Manage job postings, applications, and recruitment</p>
         </div>
         <div className="mt-2 sm:mt-0">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Create Job
-          </button>
+          {activeTab === "jobs" && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Create Job
+            </button>
+          )}
+          {activeTab === "categories" && (
+            <button
+              onClick={fetchCategories}
+              disabled={categoryLoading}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            >
+              <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Tabs */}
+      <div className="bg-white rounded shadow">
+        <div className="border-b border-gray-200">
+          <nav className="flex -mb-px" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('jobs')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === 'jobs'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Briefcase className="w-3 h-3 inline mr-1" />
+              Jobs
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === 'categories'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <Tag className="w-3 h-3 inline mr-1" />
+              Categories
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      {activeTab === 'jobs' && (
+        <>
 
       {/* Filters and Controls */}
       <div className="bg-white rounded shadow">
@@ -1050,6 +1511,193 @@ export default function AdminJobsPage() {
           </div>
         )}
       </div>
+        </>
+      )}
+
+      {activeTab === 'categories' && (
+        <div className="bg-white rounded shadow p-3 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Job Categories</h3>
+              <p className="text-xs text-gray-600">
+                Create, update, and order job categories.
+              </p>
+              {categoryError && (
+                <p className="text-xs text-red-600 mt-1">{categoryError}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-3">
+            <form className="space-y-2.5 md:col-span-1" onSubmit={handleCategorySubmit}>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Key *</label>
+                <input
+                  type="text"
+                  value={categoryForm.key}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, key: sanitizeCategoryKey(e.target.value) })
+                  }
+                  placeholder="e.g., software_engineering"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Lowercase, unique identifier (letters, numbers, underscores).
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  placeholder="Software Engineering"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Optional short description"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Icon (optional)</label>
+                <input
+                  type="text"
+                  value={categoryForm.icon}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
+                  placeholder="e.g., code"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Display Order</label>
+                <input
+                  type="number"
+                  value={categoryForm.displayOrder}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, displayOrder: e.target.value })
+                  }
+                  placeholder="0"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={categoryForm.isActive}
+                  onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label className="ml-2 block text-xs text-gray-700">Active</label>
+              </div>
+              <div className="flex justify-end space-x-2 pt-2">
+                {editingCategory && (
+                  <button
+                    type="button"
+                    onClick={resetCategoryForm}
+                    className="px-2.5 py-1.5 border border-gray-300 rounded-md text-xs text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={categorySubmitting}
+                  className="px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {categorySubmitting
+                    ? editingCategory
+                      ? 'Updating...'
+                      : 'Creating...'
+                    : editingCategory
+                      ? 'Update Category'
+                      : 'Create Category'}
+                </button>
+              </div>
+            </form>
+
+            <div className="md:col-span-2">
+              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Key</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Name</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Order</th>
+                      <th className="px-2.5 py-1.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {categoriesData.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-2.5 py-1.5 text-center text-xs text-gray-500">
+                          {categoryLoading ? "Loading categories..." : "No categories found"}
+                        </td>
+                      </tr>
+                    ) : (
+                      categoriesData.map((category) => {
+                        const identifier =
+                          category._id ||
+                          category.id ||
+                          category.key ||
+                          sanitizeCategoryKey(category.name);
+                        return (
+                          <tr key={identifier || category.name}>
+                            <td className="px-2.5 py-1.5 text-xs font-semibold text-gray-900">
+                              {sanitizeCategoryKey(category.key)}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs text-gray-900">
+                              {category.name || getCategoryLabel(category.key)}
+                              {category.description && (
+                                <div className="text-[11px] text-gray-500 line-clamp-1">
+                                  {category.description}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-2.5 py-1.5">
+                              {renderCategoryState(category)}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs text-gray-600">
+                              {category.displayOrder ?? 0}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-xs font-medium">
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => handleEditCategory(category)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                  title="Edit category"
+                                >
+                                  <Edit className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCategory(category)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Delete category"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Modal */}
       <Modal
@@ -1108,11 +1756,17 @@ export default function AdminJobsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium mb-0.5">Category *</label>
-              <Input
+              <Select
                 value={createForm.category}
-                onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
-                placeholder="Category"
-                className="text-xs px-2 py-1.5 h-8"
+                onValueChange={(value) => setCreateForm({ ...createForm, category: value })}
+                options={categoriesData
+                  .filter(cat => cat.isActive !== false && cat.isDeleted !== true)
+                  .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+                  .map(cat => ({
+                    value: cat._id || cat.id || cat.key || "",
+                    label: cat.name || getCategoryLabel(cat.key)
+                  }))}
+                placeholder="Select a category"
               />
             </div>
           </div>
@@ -1279,11 +1933,17 @@ export default function AdminJobsPage() {
             </div>
             <div>
               <label className="block text-xs font-medium mb-0.5">Category *</label>
-              <Input
+              <Select
                 value={editForm.category}
-                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
-                placeholder="Category"
-                className="text-xs px-2 py-1.5 h-8"
+                onValueChange={(value) => setEditForm({ ...editForm, category: value })}
+                options={categoriesData
+                  .filter(cat => cat.isActive !== false && cat.isDeleted !== true)
+                  .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+                  .map(cat => ({
+                    value: cat._id || cat.id || cat.key || "",
+                    label: cat.name || getCategoryLabel(cat.key)
+                  }))}
+                placeholder="Select a category"
               />
             </div>
           </div>
