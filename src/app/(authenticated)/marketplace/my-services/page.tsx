@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   Plus,
   Edit,
@@ -9,7 +10,10 @@ import {
   Eye,
   Star,
   AlertCircle,
-  Briefcase
+  Briefcase,
+  ArrowLeft,
+  Filter,
+  Store
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -17,6 +21,8 @@ import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { formatCurrency } from "@/lib/currency-utils";
+import { ServiceFilterSidebar } from "@/components/marketplace/service-filter-sidebar";
+import { ServiceControlsBar } from "@/components/marketplace/service-controls-bar";
 
 interface Service {
   id: string;
@@ -80,11 +86,16 @@ interface ApiResponse {
 }
 
 export default function MyServicesPage() {
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stats, setStats] = useState<ServiceStats | null>(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const fetchServices = useCallback(async () => {
     try {
@@ -338,82 +349,109 @@ export default function MyServicesPage() {
     ));
   };
 
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(statusFilter !== "all");
+  }, [statusFilter]);
+
+  // Memoized filter drawer handlers
+  const handleOpenFilters = useCallback(() => {
+    setFilterDrawerOpen(true);
+  }, []);
+
+  const handleCloseFilters = useCallback(() => {
+    setFilterDrawerOpen(false);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setStatusFilter("all");
+  }, []);
+
+  // Back button handler
+  const handleBack = useCallback(() => {
+    router.push('/marketplace');
+  }, [router]);
+
+  // Sort services
+  const sortedServices = useMemo(() => {
+    if (!Array.isArray(services)) return [];
+    
+    const sorted = [...services].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortBy) {
+        case "createdAt":
+          aValue = new Date(a.createdAt || 0);
+          bValue = new Date(b.createdAt || 0);
+          break;
+        case "name":
+          aValue = a.name || "";
+          bValue = b.name || "";
+          break;
+        case "price":
+          aValue = a.price || 0;
+          bValue = b.price || 0;
+          break;
+        case "rating":
+          aValue = a.rating || 0;
+          bValue = b.rating || 0;
+          break;
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
+          break;
+        case "bookingCount":
+          aValue = a.bookingCount || 0;
+          bValue = b.bookingCount || 0;
+          break;
+        case "totalEarnings":
+          aValue = a.totalEarnings || 0;
+          bValue = b.totalEarnings || 0;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [services, sortBy, sortOrder]);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
-        </div>
-
-        <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-          {/* Header Skeleton */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gray-200 animate-pulse"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <div className="h-9 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
               <div className="space-y-2">
-                <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
+                <div className="h-8 bg-gray-200 rounded w-40 animate-pulse"></div>
                 <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
               </div>
             </div>
-            <div className="h-10 bg-gray-200 rounded-xl w-48 animate-pulse"></div>
           </div>
-
-          {/* Stats Skeleton */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
-                <div className="h-7 bg-gray-200 rounded w-12 animate-pulse mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-
-          {/* Filters Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
-            <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
-            <div className="h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-          </div>
-
-          {/* Services Skeleton */}
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl p-5 border border-gray-200/50">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="space-y-2">
-                        <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                          <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                      </div>
-                    </div>
-                    <div className="h-4 bg-gray-200 rounded w-full mb-3 animate-pulse"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                      {Array.from({ length: 4 }).map((_, j) => (
-                        <div key={j} className="bg-gray-50 rounded-lg p-3">
-                          <div className="h-6 bg-gray-200 rounded w-8 mx-auto animate-pulse mb-1"></div>
-                          <div className="h-4 bg-gray-200 rounded w-16 mx-auto animate-pulse"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 mt-3 lg:mt-0 lg:ml-4">
-                    {Array.from({ length: 4 }).map((_, k) => (
-                      <div key={k} className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <div className="lg:w-64 hidden lg:block">
+              <div className="h-96 bg-gray-200 rounded-2xl animate-pulse"></div>
+            </div>
+            <div className="flex-1 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white p-6 rounded-lg">
+                  <div className="h-6 bg-gray-200 rounded w-48 animate-pulse mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <div key={j} className="h-16 bg-gray-200 rounded animate-pulse"></div>
                     ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -422,37 +460,30 @@ export default function MyServicesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
-        </div>
-
-        <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform duration-300">
-                <Briefcase className="w-7 h-7" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to marketplace"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Marketplace</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-gray-900 bg-clip-text text-transparent mb-1">My Services</h1>
-                <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service listings</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Services</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Manage your service listings</p>
               </div>
             </div>
-            <Link
-              href="/marketplace/create-service"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-            >
-              <Plus className="w-4 h-4" />
-              Create New Service
-            </Link>
           </div>
-
-          {/* Error State */}
-          <Card interactive={false} className="bg-gradient-to-br from-white to-red-50/30 rounded-2xl border-2 border-red-300 shadow-xl">
+          <div className="bg-white p-12 rounded-lg">
             <EmptyState
               icon={AlertCircle}
               iconColor="text-red-600"
@@ -474,63 +505,72 @@ export default function MyServicesPage() {
                 }
               ]}
             />
-          </Card>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
-      </div>
-
-      <div className="relative z-0 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-xl shadow-emerald-500/30 hover:scale-105 transition-transform duration-300">
-              <Briefcase className="w-7 h-7" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-emerald-700 to-gray-900 bg-clip-text text-transparent mb-1">My Services</h1>
-              <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service listings</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to marketplace"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Marketplace</span>
+            </button>
           </div>
-          <Link
-            href="/marketplace/create-service"
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-          >
-            <Plus className="w-4 h-4" />
-            Create New Service
-          </Link>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Services</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {services.length > 0 ? `${services.length} ${services.length === 1 ? 'service' : 'services'}` : 'Manage your service listings'}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/marketplace/create-service"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              Create New Service
+            </Link>
+          </div>
         </div>
 
         {/* Stats Summary */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
+          <div className="mb-6 grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="text-2xl font-bold text-gray-700">{stats.totalServices}</div>
               <div className="text-sm text-gray-500">Total Services</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-green-50/50 rounded-2xl border border-green-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.activeServices}</div>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div className="text-2xl font-bold text-emerald-600">{stats.activeServices}</div>
               <div className="text-sm text-gray-500">Active</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="text-2xl font-bold text-gray-600">{stats.inactiveServices}</div>
               <div className="text-sm text-gray-500">Inactive</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-2xl border border-blue-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{stats.totalBookings}</div>
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div className="text-2xl font-bold text-blue-600">{stats.totalBookings}</div>
               <div className="text-sm text-gray-500">Total Bookings</div>
             </div>
-            <div className="bg-gradient-to-br from-white to-yellow-50/50 rounded-2xl border border-yellow-200/50 shadow-xl hover:shadow-2xl transition-all p-4">
-              <div className="text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+              <div className="text-2xl font-bold text-yellow-600">
                 {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : '0.0'}
               </div>
               <div className="text-sm text-gray-500">Avg Rating</div>
@@ -538,65 +578,101 @@ export default function MyServicesPage() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl border border-gray-200/50 shadow-xl p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-400 bg-white"
-              >
-                <option value="all">All Services</option>
-                <option value="ACTIVE">Active</option>
-                <option value="INACTIVE">Inactive</option>
-                <option value="PENDING">Pending</option>
-              </select>
-            </div>
-          </div>
-        </div>
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Sidebar - Filters */}
+          <ServiceFilterSidebar
+            isOpen={filterDrawerOpen}
+            onClose={handleCloseFilters}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+          />
 
-        {/* Services List */}
-        <div className="space-y-4">
-          {services.length === 0 ? (
-            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/50 border border-gray-200/50 shadow-xl rounded-2xl">
-              <EmptyState
-                icon={Plus}
-                iconColor="text-green-600"
-                iconBgColor="bg-green-100"
-                title={
-                  statusFilter === "all" 
-                    ? "No Services Yet" 
-                    : `No ${statusFilter.toLowerCase()} services`
-                }
-                description={
-                  statusFilter === "all" 
-                    ? "Start building your service business by creating your first service listing. Share your skills and start earning!" 
-                    : `You don't have any services with status "${statusFilter.toLowerCase()}". Try changing the filter or create a new service.`
-                }
-                actions={[
-                  {
-                    type: "link",
-                    href: "/marketplace/create-service",
-                    label: "Create Your First Service",
-                    variant: "primary"
-                  },
-                  ...(statusFilter !== "all" ? [{
-                    type: "button" as const,
-                    onClick: () => setStatusFilter("all"),
-                    label: "Show All Services",
-                    variant: "secondary" as const
-                  }] : [])
-                ]}
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={handleOpenFilters}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                aria-label="Open filters"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {hasActiveFilters && (
+                  <span className="ml-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                    1
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Controls Bar */}
+            <div className="mb-6">
+              <ServiceControlsBar
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
               />
-            </Card>
-          ) : (
-          <div className="grid gap-4">
-            {services.map((service, index) => (
-              <div key={service.id || `service-${index}`} className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-5 border border-gray-200/50">
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 mb-1">
+                  Error loading services
+                </p>
+                <p className="text-xs text-red-600">
+                  {error}
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Please try refreshing the page or adjusting your filters.
+                </p>
+              </div>
+            )}
+
+            {/* Services List */}
+            <div className="space-y-4">
+              {sortedServices.length === 0 ? (
+                <div className="bg-white p-12 rounded-lg">
+                  <EmptyState
+                    icon={Plus}
+                    iconColor="text-emerald-600"
+                    iconBgColor="bg-emerald-100"
+                    title={
+                      statusFilter === "all" 
+                        ? "No Services Yet" 
+                        : `No ${statusFilter.toLowerCase()} services`
+                    }
+                    description={
+                      statusFilter === "all" 
+                        ? "Start building your service business by creating your first service listing. Share your skills and start earning!" 
+                        : `You don't have any services with status "${statusFilter.toLowerCase()}". Try changing the filter or create a new service.`
+                    }
+                    actions={[
+                      {
+                        type: "link",
+                        href: "/marketplace/create-service",
+                        label: "Create Your First Service",
+                        variant: "primary"
+                      },
+                      ...(statusFilter !== "all" ? [{
+                        type: "button" as const,
+                        onClick: () => setStatusFilter("all"),
+                        label: "Show All Services",
+                        variant: "secondary" as const
+                      }] : [])
+                    ]}
+                  />
+                </div>
+              ) : (
+                <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}`}>
+                  {sortedServices.map((service, index) => (
+                    <div key={service.id || `service-${index}`} className={`bg-white border-l-4 border-l-emerald-500 ${viewMode === 'grid' ? 'rounded-lg shadow-md' : ''} hover:shadow-lg transition-all duration-300 p-5`}>
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-3">
@@ -697,11 +773,13 @@ export default function MyServicesPage() {
                       Delete
                     </button>
                   </div>
+                    </div>
+                  </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-          )}
         </div>
       </div>
     </div>

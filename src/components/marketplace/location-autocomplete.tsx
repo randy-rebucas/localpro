@@ -3,8 +3,15 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { MapPin, Loader2, X } from "lucide-react";
-import { API_BASE_URL } from "@/lib/api";
-import { API_ENDPOINTS } from "@/lib/api";
+import { CLIENT_CONFIG } from "@/lib/env";
+
+// Google Maps types
+declare global {
+  interface Window {
+    google: any;
+    initGoogleMaps: () => void;
+  }
+}
 
 interface LocationCoordinates {
   lat: number;
@@ -51,94 +58,152 @@ export function LocationAutocomplete({
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const autocompleteRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
+  const geocoderRef = useRef<any>(null);
   
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
-  const fetchPredictions = useCallback(async (input: string) => {
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+  // Load Google Maps script
+  useEffect(() => {
+    if (typeof window === 'undefined' || window.google?.maps?.places) {
+      setIsGoogleMapsLoaded(true);
+      return;
     }
 
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
+    const apiKey = CLIENT_CONFIG.googleMapsApiKey;
+    if (!apiKey) {
+      console.warn('Google Maps API key not found. Autocomplete will not work.');
+      return;
+    }
 
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.mapsPlacesSearch}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            input: input,
-            options: {
-              types: 'address', // or 'establishment' for businesses
-            }
-          }),
-          signal: controller.signal,
+    // Check if script is already loading
+    if (document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)) {
+      // Wait for it to load
+      const checkInterval = setInterval(() => {
+        if (window.google?.maps?.places) {
+          setIsGoogleMapsLoaded(true);
+          clearInterval(checkInterval);
         }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.data?.predictions) {
-        setPredictions(data.data.predictions);
-        setShowSuggestions(true);
-        setSelectedIndex(-1);
-      } else {
-        setPredictions([]);
-        setShowSuggestions(false);
-      }
-    } catch (error: unknown) {
-      // Ignore abort errors
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      console.error('Error fetching predictions:', error);
-      setPredictions([]);
-      setShowSuggestions(false);
-      // Only show error toast for non-abort errors
-      if (error instanceof Error && error.name !== 'AbortError') {
-        toast.error('Failed to fetch location suggestions. Please try again.', {
-          duration: 3000,
-          position: "top-right",
-        });
-      }
-    } finally {
-      setIsLoading(false);
+      }, 100);
+      return () => clearInterval(checkInterval);
     }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
+    script.async = true;
+    script.defer = true;
+
+    window.initGoogleMaps = () => {
+      setIsGoogleMapsLoaded(true);
+    };
+
+    script.onerror = () => {
+      console.error('Failed to load Google Maps script');
+      toast.error('Failed to load location services. Please refresh the page.', {
+        duration: 5000,
+        position: "top-right",
+      });
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Cleanup
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).initGoogleMaps) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any).initGoogleMaps;
+      }
+    };
   }, []);
 
-  // Debounced search with request cancellation
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    if (!isGoogleMapsLoaded || !inputRef.current || disabled || !window.google?.maps?.places) {
+      return;
+    }
+
+    try {
+      // Initialize AutocompleteService for suggestions
+      if (!placesServiceRef.current) {
+        placesServiceRef.current = new window.google.maps.places.AutocompleteService();
+      }
+
+      // Initialize Geocoder for getting coordinates
+      if (!geocoderRef.current) {
+        geocoderRef.current = new window.google.maps.Geocoder();
+      }
+    } catch (error) {
+      console.error('Error initializing Google Maps services:', error);
+    }
+  }, [isGoogleMapsLoaded, disabled]);
+
+  const fetchPredictions = useCallback(async (input: string) => {
+    if (!isGoogleMapsLoaded || !placesServiceRef.current || !input.trim()) {
+      setPredictions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      placesServiceRef.current.getPlacePredictions(
+        {
+          input: input,
+          types: ['address'], // Restrict to addresses
+        },
+        (predictions: any[], status: string) => {
+          setIsLoading(false);
+          
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            const formattedPredictions: PlacePrediction[] = predictions.map((pred) => ({
+              placeId: pred.place_id,
+              description: pred.description,
+              structuredFormatting: pred.structured_formatting ? {
+                mainText: pred.structured_formatting.main_text,
+                secondaryText: pred.structured_formatting.secondary_text,
+              } : undefined,
+            }));
+            
+            setPredictions(formattedPredictions);
+            setShowSuggestions(true);
+            setSelectedIndex(-1);
+          } else {
+            setPredictions([]);
+            setShowSuggestions(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error fetching predictions:', error);
+      setIsLoading(false);
+      setPredictions([]);
+      setShowSuggestions(false);
+    }
+  }, [isGoogleMapsLoaded]);
+
+  // Debounced search with request cancellation - improved autosuggest
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (value.length > 2 && !disabled) {
-        fetchPredictions(value);
+      // Trigger autosuggest after 2 characters (reduced from 3 for better UX)
+      if (value.trim().length >= 2 && !disabled) {
+        fetchPredictions(value.trim());
       } else {
         setPredictions([]);
         setShowSuggestions(false);
         setSelectedIndex(-1);
       }
-    }, 300);
+    }, 250); // Reduced debounce time for more responsive autosuggest
 
     return () => {
       clearTimeout(timer);
-      // Cancel any pending request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, [value, disabled, fetchPredictions]);
 
@@ -166,53 +231,63 @@ export function LocationAutocomplete({
     setSelectedIndex(-1);
     onChange(prediction.description);
     
-    // Fetch full place details to get coordinates
+    // Fetch full place details to get coordinates using Google Places API
     setIsLoadingDetails(true);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.mapsPlaceById}/${prediction.placeId}`
+      if (!isGoogleMapsLoaded || !window.google?.maps?.places) {
+        onCoordinatesChange?.(null);
+        setIsLoadingDetails(false);
+        return;
+      }
+
+      const placesService = new window.google.maps.places.PlacesService(
+        document.createElement('div')
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        const placeDetails: PlaceDetails = data.data;
-        const address = placeDetails.formattedAddress || prediction.description;
-        
-        onChange(address);
-        
-        // Extract coordinates if available
-        if (placeDetails.geometry?.location) {
-          const { lat, lng } = placeDetails.geometry.location;
-          onCoordinatesChange?.({ lat, lng });
+      placesService.getDetails(
+        {
+          placeId: prediction.placeId,
+          fields: ['formatted_address', 'geometry', 'name'],
+        },
+        (place: any, status: string) => {
+          setIsLoadingDetails(false);
           
-          toast.success("Location selected", {
-            duration: 2000,
-            position: "top-right",
-          });
-        } else {
-          // If no coordinates, still update the address
-          onCoordinatesChange?.(null);
-          toast.success("Location selected", {
-            duration: 2000,
-            position: "top-right",
-          });
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+            const address = place.formatted_address || prediction.description;
+            onChange(address);
+            
+            // Extract coordinates if available
+            if (place.geometry?.location) {
+              const lat = place.geometry.location.lat();
+              const lng = place.geometry.location.lng();
+              onCoordinatesChange?.({ lat, lng });
+              
+              toast.success("Location selected", {
+                duration: 2000,
+                position: "top-right",
+              });
+            } else {
+              // If no coordinates, still update the address
+              onCoordinatesChange?.(null);
+              toast.success("Location selected", {
+                duration: 2000,
+                position: "top-right",
+              });
+            }
+          } else {
+            // Fallback: just use the prediction description
+            onChange(prediction.description);
+            onCoordinatesChange?.(null);
+            toast.success("Location selected", {
+              duration: 2000,
+              position: "top-right",
+            });
+          }
         }
-      } else {
-        // Fallback: just use the prediction description
-        onChange(prediction.description);
-        onCoordinatesChange?.(null);
-        toast.success("Location selected", {
-          duration: 2000,
-          position: "top-right",
-        });
-      }
+      );
     } catch (error) {
       console.error('Error fetching place details:', error);
+      setIsLoadingDetails(false);
       // Fallback: just use the prediction description
       onChange(prediction.description);
       onCoordinatesChange?.(null);
@@ -220,10 +295,8 @@ export function LocationAutocomplete({
         duration: 2000,
         position: "top-right",
       });
-    } finally {
-      setIsLoadingDetails(false);
     }
-  }, [onChange, onCoordinatesChange]);
+  }, [onChange, onCoordinatesChange, isGoogleMapsLoaded]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -278,11 +351,18 @@ export function LocationAutocomplete({
 
     setIsLoading(true);
     
-    // Geolocation options with timeout
+    // Show a helpful message while waiting
+    toast.loading("Detecting your location... This may take a few seconds.", {
+      id: 'location-detection',
+      duration: 15000,
+      position: "top-right",
+    });
+    
+    // Geolocation options optimized for faster response
     const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 10000, // 10 seconds timeout
-      maximumAge: 0, // Don't use cached position
+      enableHighAccuracy: false, // Use less accurate but faster GPS/WiFi positioning
+      timeout: 20000, // 20 seconds timeout (increased for slower devices)
+      maximumAge: 300000, // Accept cached position up to 5 minutes old (faster)
     };
 
     navigator.geolocation.getCurrentPosition(
@@ -290,44 +370,40 @@ export function LocationAutocomplete({
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        // Try to reverse geocode using Google Maps API via backend
+        // Try to reverse geocode using Google Maps Geocoder directly
         try {
-          const response = await fetch(
-            `${API_BASE_URL}${API_ENDPOINTS.mapsReverseGeocode}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ 
-                lat, 
-                lng,
-              }),
-            }
-          );
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.data?.formatted_address) {
-              onChange(data.data.formatted_address);
-              onCoordinatesChange?.({ lat, lng });
-              toast.success("Location detected successfully", {
-                duration: 2000,
-                position: "top-right",
-              });
-            } else {
-              // Fallback: just use coordinates
-              onChange(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-              onCoordinatesChange?.({ lat, lng });
-              toast.success("Location detected (coordinates only)", {
-                duration: 2000,
-                position: "top-right",
-              });
-            }
+          if (isGoogleMapsLoaded && geocoderRef.current) {
+            geocoderRef.current.geocode(
+              { location: { lat, lng } },
+              (results: any[], status: string) => {
+                setIsLoading(false);
+                
+                if (status === window.google.maps.GeocoderStatus.OK && results && results[0]) {
+                  onChange(results[0].formatted_address);
+                  onCoordinatesChange?.({ lat, lng });
+                  toast.dismiss('location-detection');
+                  toast.success("Location detected successfully", {
+                    duration: 2000,
+                    position: "top-right",
+                  });
+                } else {
+                  // Fallback: just use coordinates
+                  onChange(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                  onCoordinatesChange?.({ lat, lng });
+                  toast.dismiss('location-detection');
+                  toast.success("Location detected (coordinates only)", {
+                    duration: 2000,
+                    position: "top-right",
+                  });
+                }
+              }
+            );
           } else {
             // Fallback: just use coordinates
+            setIsLoading(false);
             onChange(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
             onCoordinatesChange?.({ lat, lng });
+            toast.dismiss('location-detection');
             toast.success("Location detected (coordinates only)", {
               duration: 2000,
               position: "top-right",
@@ -335,65 +411,42 @@ export function LocationAutocomplete({
           }
         } catch (error) {
           // Fallback: just use coordinates
+          setIsLoading(false);
           onChange(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
           onCoordinatesChange?.({ lat, lng });
+          toast.dismiss('location-detection');
           toast.success("Location detected (coordinates only)", {
             duration: 2000,
             position: "top-right",
           });
           console.warn("Reverse geocoding failed, using coordinates:", error);
-        } finally {
-          setIsLoading(false);
         }
       },
       (error: GeolocationPositionError | Error | unknown) => {
+        setIsLoading(false);
+        
         // Geolocation error codes (defined by the API)
         const PERMISSION_DENIED = 1;
         const POSITION_UNAVAILABLE = 2;
         const TIMEOUT = 3;
         
-        // Safely extract error information using multiple methods
+        // Safely extract error code
         let errorCode = 0;
-        let errorMsg = "Unknown error";
         
-        // Method 1: Direct property access (for GeolocationPositionError)
         try {
-          if (error && typeof error === 'object') {
-            // Try direct property access first
+          // Try to get error code from GeolocationPositionError
+          if (error && typeof error === 'object' && 'code' in error) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const errorAny = error as any;
-            if (typeof errorAny.code === 'number') {
-              errorCode = errorAny.code;
-            }
-            if (typeof errorAny.message === 'string') {
-              errorMsg = errorAny.message;
+            const code = (error as any).code;
+            if (typeof code === 'number') {
+              errorCode = code;
             }
           }
         } catch {
           // Ignore access errors
         }
         
-        // Method 2: Try to infer from browser behavior
-        // Many browsers don't provide detailed error objects for security reasons
-        // Default to permission denied if we can't determine otherwise
-        if (errorCode === 0) {
-          // Check if error message contains clues
-          const errorStr = String(error);
-          const msgLower = errorMsg.toLowerCase();
-          
-          if (msgLower.includes('permission') || msgLower.includes('denied') || errorStr.includes('denied')) {
-            errorCode = PERMISSION_DENIED;
-          } else if (msgLower.includes('unavailable') || errorStr.includes('unavailable')) {
-            errorCode = POSITION_UNAVAILABLE;
-          } else if (msgLower.includes('timeout') || errorStr.includes('timeout')) {
-            errorCode = TIMEOUT;
-          } else {
-            // Default assumption: likely permission denied (most common)
-            // Browser may not expose error details for security
-            errorCode = PERMISSION_DENIED;
-          }
-        }
-        
+        // Determine error message based on code
         let errorMessage = "Unable to get your location. ";
         
         switch (errorCode) {
@@ -407,38 +460,28 @@ export function LocationAutocomplete({
             errorMessage += "The request to get your location timed out. Please try again.";
             break;
           default:
-            errorMessage += "Location access may be blocked. Please check your browser settings and try again.";
+            // Default to permission denied (most common case)
+            errorMessage += "Location access may be blocked. Please enable location permissions in your browser settings and try again.";
             break;
         }
 
-        // Enhanced logging - try multiple serialization methods
-        console.error("Geolocation error detected", {
-          extractedCode: errorCode,
-          extractedMessage: errorMsg,
-          errorExists: error !== null && error !== undefined,
-          errorType: typeof error,
-          errorConstructor: error?.constructor?.name,
-          hasCode: error && typeof error === 'object' && 'code' in error,
-          hasMessage: error && typeof error === 'object' && 'message' in error,
-          errorStringified: String(error),
-          errorJSON: (() => {
-            try {
-              return JSON.stringify(error);
-            } catch {
-              return '[Could not stringify]';
-            }
-          })(),
-        });
+        // Log error only in development or if it's not a permission error
+        if (process.env.NODE_ENV === 'development' && errorCode !== PERMISSION_DENIED) {
+          console.warn("Geolocation error:", {
+            code: errorCode,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
 
+        toast.dismiss('location-detection');
         toast.error(errorMessage, {
           duration: 5000,
           position: "top-right",
         });
-        setIsLoading(false);
       },
       options
     );
-  }, [onChange, onCoordinatesChange]);
+  }, [onChange, onCoordinatesChange, isGoogleMapsLoaded]);
 
   const handleClear = useCallback(() => {
     onChange("");
@@ -463,8 +506,13 @@ export function LocationAutocomplete({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (predictions.length > 0) {
+            // Show suggestions when input is focused if we have predictions or if user has typed something
+            if (predictions.length > 0 || (value.trim().length >= 2 && !isLoading)) {
               setShowSuggestions(true);
+              // If we have value but no predictions yet, trigger search
+              if (value.trim().length >= 2 && predictions.length === 0 && !isLoading) {
+                fetchPredictions(value.trim());
+              }
             }
           }}
           disabled={disabled || isLoading || isLoadingDetails}
@@ -508,40 +556,51 @@ export function LocationAutocomplete({
       </div>
 
       {/* Suggestions Dropdown */}
-      {showSuggestions && predictions.length > 0 && (
+      {showSuggestions && (
         <div
           ref={suggestionsRef}
           id="location-suggestions"
           className="absolute z-50 w-full mt-1 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto"
           role="listbox"
         >
-          {predictions.map((prediction, index) => (
-            <div
-              key={prediction.placeId}
-              onClick={() => handleSelect(prediction)}
-              onMouseEnter={() => setSelectedIndex(index)}
-              className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
-                index === selectedIndex
-                  ? 'bg-green-50 border-green-200'
-                  : 'hover:bg-gray-50'
-              }`}
-              role="option"
-              aria-selected={index === selectedIndex}
-            >
-              {prediction.structuredFormatting ? (
-                <div>
-                  <div className="font-medium text-gray-900">
-                    {prediction.structuredFormatting.mainText}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {prediction.structuredFormatting.secondaryText}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-gray-900">{prediction.description}</div>
-              )}
+          {isLoading && predictions.length === 0 ? (
+            <div className="px-4 py-3 text-center text-sm text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
+              Searching locations...
             </div>
-          ))}
+          ) : predictions.length > 0 ? (
+            predictions.map((prediction: PlacePrediction, index: number) => (
+              <div
+                key={prediction.placeId}
+                onClick={() => handleSelect(prediction)}
+                onMouseEnter={() => setSelectedIndex(index)}
+                className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
+                  index === selectedIndex
+                    ? 'bg-green-50 border-green-200'
+                    : 'hover:bg-gray-50'
+                }`}
+                role="option"
+                aria-selected={index === selectedIndex}
+              >
+                {prediction.structuredFormatting ? (
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {prediction.structuredFormatting.mainText}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {prediction.structuredFormatting.secondaryText}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-900">{prediction.description}</div>
+                )}
+              </div>
+            ))
+          ) : value.trim().length >= 2 ? (
+            <div className="px-4 py-3 text-center text-sm text-gray-500">
+              No locations found. Try a different search term.
+            </div>
+          ) : null}
         </div>
       )}
     </div>

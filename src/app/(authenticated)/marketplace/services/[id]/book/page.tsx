@@ -15,7 +15,11 @@ import {
   Wallet,
   Loader2,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Store,
+  Banknote,
+  QrCode,
+  Eye
 } from "lucide-react";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
@@ -25,6 +29,7 @@ import { isPaymentMethodEnabled, getDefaultCurrency, calculateTransactionFee } f
 import { getPreferredPaymentMethod } from "@/lib/user-settings-utils";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 import { logger } from "@/lib/logger";
+import { LocationAutocomplete } from "@/components/marketplace/location-autocomplete";
 
 interface Service {
   _id?: string;
@@ -58,6 +63,10 @@ interface BookingFormData {
   bookingTime: string;
   location: string;
   duration: number;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   
   // Step 2
   address: {
@@ -66,11 +75,15 @@ interface BookingFormData {
     state: string;
     zipCode: string;
     country: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
   };
   specialInstructions: string;
   
   // Step 3 & 4
-  paymentMethod: 'paypal' | 'paymaya' | 'wallet' | 'gcash' | '';
+  paymentMethod: 'paypal' | 'paymaya' | 'wallet' | 'gcash' | 'cash' | 'qr_ph' | '';
   totalAmount: number;
 }
 
@@ -100,9 +113,21 @@ export default function BookServicePage() {
   // Get preferred payment method from user settings
   const preferredPaymentMethod = getPreferredPaymentMethod(userSettings);
   
+  // Get current date and time for default values (1 hour from now to pass validation)
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    // Add 1 hour (60 minutes) to ensure it's well beyond the 30-minute minimum requirement
+    const futureTime = new Date(now.getTime() + 60 * 60 * 1000);
+    const date = futureTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+    const time = futureTime.toTimeString().slice(0, 5); // HH:MM format
+    return { date, time };
+  };
+  
+  const { date: currentDate, time: currentTime } = getCurrentDateTime();
+  
   const [formData, setFormData] = useState<BookingFormData>({
-    bookingDate: '',
-    bookingTime: '',
+    bookingDate: currentDate,
+    bookingTime: currentTime,
     location: '',
     duration: 2,
     address: {
@@ -201,14 +226,14 @@ export default function BookServicePage() {
         if (walletData) {
           setWallet({
             balance: walletData.balance || 0,
-            currency: walletData.currency || 'PHP'
+            currency: walletData.currency || defaultCurrency
           });
         }
       }
     } catch (error) {
       logger.error("Error fetching wallet", error instanceof Error ? error : new Error(String(error)));
     }
-  }, []);
+  }, [defaultCurrency]);
 
   useEffect(() => {
     if (serviceIdFromUrl) {
@@ -278,18 +303,47 @@ export default function BookServicePage() {
         throw new Error('This service is currently not available for booking.');
       }
 
-      // Combine date and time
-      const bookingDateTime = new Date(`${formData.bookingDate}T${formData.bookingTime}`);
+      // Combine date and time in local timezone (not UTC)
+      // Parse date components separately to avoid timezone issues
+      const [year, month, day] = formData.bookingDate.split('-').map(Number);
+      const [hours, minutes] = formData.bookingTime.split(':').map(Number);
+      
+      // Create date in local timezone
+      const bookingDateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
+      
       if (isNaN(bookingDateTime.getTime())) {
         throw new Error('Invalid date or time selected. Please check your selection.');
       }
       
-      // Validate booking date is in the future
-      if (bookingDateTime <= new Date()) {
-        throw new Error('Booking date and time must be in the future.');
-      }
+      // Validate booking date is in the future (compare with current local time)
+      const now = new Date();
+      // Add a 30-minute buffer to account for processing delays and preparation time
+      const minimumBookingTime = new Date(now.getTime() + 30 * 60 * 1000);
       
-      const bookingDateValue = bookingDateTime.toISOString();
+      if (bookingDateTime <= minimumBookingTime) {
+        // Format minimum time for better error message
+        const minDate = new Date(minimumBookingTime);
+        const minDateStr = minDate.toLocaleDateString();
+        const minTimeStr = minDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        // Check if it's the same day
+        const isToday = bookingDateTime.toDateString() === now.toDateString();
+        const isPast = bookingDateTime <= now;
+        
+        // Calculate tomorrow's date for suggestion
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowDateStr = tomorrow.toLocaleDateString();
+        
+        if (isPast) {
+          // If time has passed today, suggest tomorrow
+          throw new Error(`The selected time (${formData.bookingTime}) has already passed today (${formData.bookingDate}). Please select tomorrow (${tomorrowDateStr}) or a later date, or choose a later time today.`);
+        } else if (isToday) {
+          throw new Error(`Booking must be at least 30 minutes in advance. The earliest available time today is ${minTimeStr}.`);
+        } else {
+          throw new Error(`Booking must be at least 30 minutes in advance. Please select a time after ${minTimeStr} on ${minDateStr}.`);
+        }
+      }
 
       // Use service ID from the service object (from API) or fallback to URL param
       const serviceId = service._id || service.id || params.id as string;
@@ -321,24 +375,30 @@ export default function BookServicePage() {
         throw new Error('Service pricing information is missing. Please refresh the page and try again.');
       }
 
-      // Create booking payload
-      const bookingPayload = {
+      // Map payment method for backend compatibility
+      // qr_ph maps to mobile_money for backend compatibility
+      const backendPaymentMethod = formData.paymentMethod === 'qr_ph' 
+        ? 'mobile_money' 
+        : formData.paymentMethod;
+
+      // Create booking payload matching the expected API structure
+      const bookingPayload: any = {
         serviceId: serviceId,
-        provider: providerId,
-        bookingDate: bookingDateValue,
+        providerId: providerId, // Use providerId instead of provider
+        bookingDate: formData.bookingDate, // Send date as string (YYYY-MM-DD)
+        bookingTime: formData.bookingTime, // Send time separately (HH:MM)
         duration: formData.duration,
-        address: formData.address,
-        specialInstructions: formData.specialInstructions || undefined,
-        pricing: {
-          basePrice: service.pricing.basePrice,
-          currency: service.pricing.currency || defaultCurrency,
-          type: service.pricing.type,
-          totalAmount: formData.totalAmount,
-          transactionFee: pricingBreakdown?.transactionFee || 0
+        paymentMethod: backendPaymentMethod, // Payment method at top level
+        address: {
+          ...formData.address,
+          // Include coordinates if available
+          ...(formData.address.coordinates && {
+            coordinates: formData.address.coordinates
+          })
         },
-        payment: {
-          method: formData.paymentMethod
-        }
+        ...(formData.specialInstructions && {
+          specialInstructions: formData.specialInstructions
+        })
       };
 
       logger.debug("Creating booking", { serviceId, providerId, bookingPayload });
@@ -351,18 +411,58 @@ export default function BookServicePage() {
       }));
 
       if (!bookingResponse.ok) {
-        const errorData = await bookingResponse.json().catch(() => ({}));
-        const errorMessage = errorData.message || errorData.error || "Failed to create booking";
+        // Try to get detailed error information
+        let errorData: any = {};
+        let errorMessage = "Failed to create booking";
+        
+        try {
+          const responseText = await bookingResponse.text();
+          try {
+            errorData = JSON.parse(responseText);
+          } catch {
+            // If not JSON, use text as error message
+            errorMessage = responseText || errorMessage;
+            errorData = { rawResponse: responseText };
+          }
+        } catch {
+          // If we can't read response, use default
+        }
+        
+        // Extract error message from various possible formats
+        errorMessage = errorData.message || 
+                      errorData.error || 
+                      errorData.details || 
+                      errorData.msg ||
+                      (typeof errorData === 'string' ? errorData : errorMessage);
+        
+        // Log detailed error for debugging
+        logger.debug("Booking creation failed", {
+          status: bookingResponse.status,
+          statusText: bookingResponse.statusText,
+          errorData,
+          bookingPayload
+        });
         
         // Provide more specific error messages
         if (bookingResponse.status === 404) {
           throw new Error('Service not found. The service may have been removed or is no longer available.');
         } else if (bookingResponse.status === 400) {
+          // Check if it's a payment method error
+          if (errorMessage.toLowerCase().includes('not implemented') || 
+              errorMessage.toLowerCase().includes('payment method')) {
+            // For cash and QR PH, these are valid offline payment methods
+            if (formData.paymentMethod === 'cash' || formData.paymentMethod === 'qr_ph') {
+              // Retry with a fallback payment method or show helpful message
+              throw new Error(`The ${formData.paymentMethod === 'cash' ? 'cash' : 'QR PH'} payment method is being set up. Please try again later or select a different payment method.`);
+            }
+          }
           throw new Error(errorMessage || 'Invalid booking data. Please check your information and try again.');
         } else if (bookingResponse.status === 409) {
           throw new Error('This time slot is already booked. Please select a different date or time.');
+        } else if (bookingResponse.status === 401 || bookingResponse.status === 403) {
+          throw new Error('You do not have permission to create this booking. Please log in and try again.');
         } else {
-          throw new Error(errorMessage);
+          throw new Error(errorMessage || `Booking creation failed with status ${bookingResponse.status}. Please try again.`);
         }
       }
 
@@ -415,13 +515,26 @@ export default function BookServicePage() {
       } else if (formData.paymentMethod === 'wallet') {
         // Wallet payment is processed automatically by backend
         // Just proceed to success
+      } else if (formData.paymentMethod === 'cash' || formData.paymentMethod === 'qr_ph') {
+        // Cash and QR PH payments don't require online processing
+        // Payment will be collected on-site or via QR code
+        // Just proceed to success
       }
 
       // If payment method doesn't require redirect, go to success
       setBookingId(createdBookingId);
       setCurrentStep(5);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to process booking";
+      // Extract error message more thoroughly
+      let errorMessage = "Failed to process booking";
+      if (error instanceof Error) {
+        errorMessage = error.message || errorMessage;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = String((error as any).message) || errorMessage;
+      }
+      
       logger.error("Error processing booking", error instanceof Error ? error : new Error(String(error)), {
         serviceId: service?._id || service?.id,
         providerId: typeof service?.provider === 'string' ? service.provider : (service?.provider?._id || service?.provider?.id),
@@ -430,7 +543,8 @@ export default function BookServicePage() {
           bookingTime: formData.bookingTime,
           duration: formData.duration,
           paymentMethod: formData.paymentMethod
-        }
+        },
+        errorMessage: errorMessage
       });
       setError(errorMessage);
     } finally {
@@ -498,35 +612,88 @@ export default function BookServicePage() {
     return calculateTotalWithFee(baseAmount);
   }, [service, formData.duration, calculateTotalWithFee]);
 
+  // Back button handler
+  const handleBack = useCallback(() => {
+    router.push(`/marketplace/services/${serviceIdFromUrl}`);
+  }, [router, serviceIdFromUrl]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <div className="h-9 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-8 bg-gray-200 rounded w-40 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error && !service) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <Link
-            href={`/marketplace/services/${serviceIdFromUrl}`}
-            className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Service
-          </Link>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to service"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Service</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Book Service</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Complete your booking</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-red-200 p-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Link
+                href={`/marketplace/services/${serviceIdFromUrl}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Service
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Helper to get currency with app settings fallback
+  const getCurrency = (currency?: string): string => {
+    return currency || defaultCurrency;
+  };
+
   const formatPrice = (price: number, currency?: string) => {
-    const currencyCode = currency || defaultCurrency;
+    const currencyCode = getCurrency(currency);
     return formatCurrencyUtil(price, currencyCode, {
       appSettings,
     });
@@ -541,72 +708,94 @@ export default function BookServicePage() {
     : undefined;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-          <Link
-            href={`/marketplace/services/${serviceIdFromUrl}`}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Back to service"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Book Service</h1>
-          <p className="text-sm text-gray-600">{service?.title || 'Loading...'}</p>
-        </div>
-      </div>
-
-      {/* Progress Steps */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between">
-          {[1, 2, 3, 4, 5].map((step) => (
-            <div key={step} className="flex items-center flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
-                    currentStep >= step
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {currentStep > step ? <CheckCircle2 className="w-5 h-5" /> : step}
-                </div>
-                <span className={`text-xs mt-2 ${currentStep >= step ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
-                  {step === 1 && 'Date & Time'}
-                  {step === 2 && 'Address'}
-                  {step === 3 && 'Summary'}
-                  {step === 4 && 'Payment'}
-                  {step === 5 && 'Success'}
-                </span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to service"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Service</span>
+            </button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Calendar className="w-5 h-5" />
               </div>
-              {step < 5 && (
-                <div
-                  className={`h-1 flex-1 mx-2 ${
-                    currentStep > step ? 'bg-green-600' : 'bg-gray-200'
-                  }`}
-                />
-              )}
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Book Service</h1>
+                <p className="text-sm text-gray-500 mt-0.5">{service?.title || 'Loading...'}</p>
+              </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm text-red-800">{error}</p>
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+            >
+              <Store className="w-4 h-4" />
+              Browse Marketplace
+            </Link>
           </div>
         </div>
-      )}
 
-      {/* Step Content */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        {/* Step 1: Date, Time, and Location */}
-        {currentStep === 1 && (
-          <div className="space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+
+          {/* Progress Steps */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center justify-between">
+              {[1, 2, 3, 4, 5].map((step) => (
+                <div key={step} className="flex items-center flex-1">
+                  <div className="flex flex-col items-center flex-1">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
+                        currentStep >= step
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {currentStep > step ? <CheckCircle2 className="w-5 h-5" /> : step}
+                    </div>
+                    <span className={`text-xs mt-2 ${currentStep >= step ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                      {step === 1 && 'Date & Time'}
+                      {step === 2 && 'Address'}
+                      {step === 3 && 'Summary'}
+                      {step === 4 && 'Payment'}
+                      {step === 5 && 'Success'}
+                    </span>
+                  </div>
+                  {step < 5 && (
+                    <div
+                      className={`h-1 flex-1 mx-2 ${
+                        currentStep > step ? 'bg-green-600' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Step Content */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            {/* Step 1: Date, Time, and Location */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Select Date, Time & Location
@@ -645,14 +834,25 @@ export default function BookServicePage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Location/Service Area <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                required
-                placeholder="Enter service location"
+              <LocationAutocomplete
                 value={formData.location}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                onChange={(location) => setFormData(prev => ({ ...prev, location }))}
+                onCoordinatesChange={(coords) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    coordinates: coords || undefined,
+                    address: {
+                      ...prev.address,
+                      coordinates: coords || undefined
+                    }
+                  }));
+                }}
+                placeholder="Search for your location or click 'Detect' to use your current location"
+                className=""
               />
+              <p className="text-xs text-gray-500 mt-2">
+                Start typing to see suggestions, or use the "Detect" button to automatically fill in your current location
+              </p>
             </div>
 
             <div>
@@ -690,11 +890,11 @@ export default function BookServicePage() {
               </button>
             </div>
           </div>
-        )}
+            )}
 
-        {/* Step 2: Address and Special Instructions */}
-        {currentStep === 2 && (
-          <div className="space-y-6">
+            {/* Step 2: Address and Special Instructions */}
+            {currentStep === 2 && (
+              <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <MapPin className="w-5 h-5" />
               Service Address & Instructions
@@ -815,12 +1015,12 @@ export default function BookServicePage() {
                 Next
               </button>
             </div>
-          </div>
-        )}
+              </div>
+            )}
 
-        {/* Step 3: Summary */}
-        {currentStep === 3 && (
-          <div className="space-y-6">
+            {/* Step 3: Summary */}
+            {currentStep === 3 && (
+              <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Booking Summary
@@ -901,24 +1101,24 @@ export default function BookServicePage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Base Price</span>
-                    <span className="text-gray-900">{formatPrice(service.pricing.basePrice, service.pricing.currency)}</span>
+                    <span className="text-gray-900">{formatPrice(service.pricing.basePrice, getCurrency(service.pricing.currency))}</span>
                   </div>
                   {service.pricing.type === 'hourly' && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">× {formData.duration} hour{formData.duration !== 1 ? 's' : ''}</span>
-                      <span className="text-gray-900">{formatPrice(service.pricing.basePrice * formData.duration, service.pricing.currency)}</span>
+                      <span className="text-gray-900">{formatPrice(service.pricing.basePrice * formData.duration, getCurrency(service.pricing.currency))}</span>
                     </div>
                   )}
                   {pricingBreakdown && pricingBreakdown.transactionFee > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Transaction Fee</span>
-                      <span className="text-gray-900">{formatPrice(pricingBreakdown.transactionFee, service.pricing.currency)}</span>
+                      <span className="text-gray-900">{formatPrice(pricingBreakdown.transactionFee, getCurrency(service.pricing.currency))}</span>
                     </div>
                   )}
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex justify-between font-semibold">
                       <span className="text-gray-900">Total</span>
-                      <span className="text-green-600 text-lg">{formatPrice(formData.totalAmount, service.pricing.currency)}</span>
+                      <span className="text-green-600 text-lg">{formatPrice(formData.totalAmount, getCurrency(service.pricing.currency))}</span>
                     </div>
                   </div>
                 </div>
@@ -938,13 +1138,13 @@ export default function BookServicePage() {
               >
                 Continue to Payment
               </button>
+              </div>
             </div>
-          </div>
-        )}
+            )}
 
-        {/* Step 4: Payment */}
-        {currentStep === 4 && (
-          <div className="space-y-6">
+            {/* Step 4: Payment */}
+            {currentStep === 4 && (
+              <div className="space-y-6">
             <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
               Payment Method
@@ -956,14 +1156,14 @@ export default function BookServicePage() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Subtotal</h3>
                     <span className="text-lg text-gray-900">
-                      {formatPrice(pricingBreakdown?.baseAmount || 0, service.pricing.currency)}
+                      {formatPrice(pricingBreakdown?.baseAmount || 0, getCurrency(service.pricing.currency))}
                     </span>
                   </div>
                   {pricingBreakdown && pricingBreakdown.transactionFee > 0 && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Transaction Fee</span>
                       <span className="text-gray-700">
-                        {formatPrice(pricingBreakdown.transactionFee, service.pricing.currency)}
+                        {formatPrice(pricingBreakdown.transactionFee, getCurrency(service.pricing.currency))}
                       </span>
                     </div>
                   )}
@@ -971,7 +1171,7 @@ export default function BookServicePage() {
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">Total Amount</h3>
                       <span className="text-2xl font-bold text-green-600">
-                        {formatPrice(formData.totalAmount, service.pricing.currency)}
+                        {formatPrice(formData.totalAmount, getCurrency(service.pricing.currency))}
                       </span>
                     </div>
                   </div>
@@ -1057,6 +1257,40 @@ export default function BookServicePage() {
                     </div>
                   </label>
                 )}
+
+                {/* Cash Payment */}
+                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="cash"
+                    checked={formData.paymentMethod === 'cash'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'cash' }))}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <Banknote className="w-5 h-5 text-gray-600" />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">Cash</div>
+                    <div className="text-sm text-gray-600">Pay with cash on-site</div>
+                  </div>
+                </label>
+
+                {/* QR PH Payment */}
+                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="qr_ph"
+                    checked={formData.paymentMethod === 'qr_ph'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'qr_ph' }))}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <QrCode className="w-5 h-5 text-gray-600" />
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">QR PH</div>
+                    <div className="text-sm text-gray-600">Pay via QR code (GCash, PayMaya, etc.)</div>
+                  </div>
+                </label>
               </div>
             </div>
 
@@ -1087,40 +1321,108 @@ export default function BookServicePage() {
                   'Confirm & Pay'
                 )}
               </button>
+              </div>
             </div>
-          </div>
-        )}
+            )}
 
-        {/* Step 5: Success */}
-        {currentStep === 5 && bookingId && (
-          <div className="text-center space-y-6 py-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle className="w-12 h-12 text-green-600" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
-              <p className="text-gray-600">Your service booking has been successfully created and payment has been processed.</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4 inline-block">
-              <p className="text-sm text-gray-600">Booking ID</p>
-              <p className="text-lg font-semibold text-gray-900">{bookingId}</p>
-            </div>
-            <div className="flex justify-center gap-3">
-              <Link
-                href={`/marketplace/bookings/${bookingId}`}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                View Booking Details
-              </Link>
-              <Link
-                href="/marketplace"
-                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Back to Marketplace
-              </Link>
-            </div>
+            {/* Step 5: Success */}
+            {currentStep === 5 && bookingId && (
+              <div className="text-center space-y-8 py-12">
+                {/* Success Icon */}
+                <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-green-100 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                  <CheckCircle className="w-16 h-16 text-emerald-600" />
+                </div>
+                
+                {/* Success Message */}
+                <div className="space-y-3">
+                  <h2 className="text-3xl font-bold text-gray-900">Booking Confirmed!</h2>
+                  <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Your service booking has been successfully created{formData.paymentMethod === 'cash' || formData.paymentMethod === 'qr_ph' 
+                      ? '. Payment will be collected on-site.' 
+                      : ' and payment has been processed.'}
+                  </p>
+                </div>
+
+                {/* Booking Details Card */}
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-6 max-w-md mx-auto shadow-md">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 mb-1">Booking ID</p>
+                      <p className="text-2xl font-bold text-gray-900 font-mono">{bookingId}</p>
+                    </div>
+                    
+                    {/* Service Summary */}
+                    {service && (
+                      <div className="pt-4 border-t border-emerald-200 space-y-2 text-left">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Service:</span>
+                          <span className="text-sm font-semibold text-gray-900">{service.title}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Date:</span>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {new Date(formData.bookingDate).toLocaleDateString('en-US', { 
+                              weekday: 'short', 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Time:</span>
+                          <span className="text-sm font-semibold text-gray-900">{formData.bookingTime}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Total:</span>
+                          <span className="text-sm font-bold text-emerald-600">
+                            {formatPrice(formData.totalAmount, getCurrency(service.pricing?.currency))}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+                  <Link
+                    href={`/marketplace/my-bookings`}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg font-semibold"
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                    View My Bookings
+                  </Link>
+                  <Link
+                    href={`/marketplace/bookings/${bookingId}`}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md font-semibold"
+                  >
+                    <Eye className="w-5 h-5" />
+                    View Booking Details
+                  </Link>
+                  <Link
+                    href="/marketplace"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow-md font-semibold"
+                  >
+                    <Store className="w-5 h-5" />
+                    Back to Marketplace
+                  </Link>
+                </div>
+
+                {/* Additional Info */}
+                <div className="pt-6 border-t border-gray-200 max-w-2xl mx-auto">
+                  <p className="text-sm text-gray-500">
+                    {formData.paymentMethod === 'cash' 
+                      ? 'Please prepare the exact amount for payment when the service provider arrives.'
+                      : formData.paymentMethod === 'qr_ph'
+                      ? 'You will receive a QR code for payment. Please complete the payment when the service provider arrives.'
+                      : 'You will receive a confirmation email shortly with all the booking details.'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

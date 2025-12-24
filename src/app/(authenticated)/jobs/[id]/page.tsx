@@ -459,134 +459,177 @@ export default function JobDetailPage() {
     }
   }, [showApplicationForm, isJobOwner, isOwner, showErrorToast]);
 
+  const handleBack = useCallback(() => {
+    router.push('/marketplace/my-jobs');
+  }, [router]);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !job) {
     return (
-      <div className="text-center py-12">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Job Not Found</h2>
-        <p className="text-gray-600 mb-6">{error || "The job you're looking for doesn't exist."}</p>
-        <Link
-          href="/jobs"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          Back to Jobs
-        </Link>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to my jobs"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to My Jobs</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Job Details</h1>
+                <p className="text-sm text-gray-500 mt-0.5">View job information</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-red-200 p-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-semibold text-red-600 mb-2">Job Not Found</h2>
+              <p className="text-gray-600 mb-6">{error || "The job you're looking for doesn't exist."}</p>
+              <Link
+                href="/marketplace/my-jobs"
+                className="inline-block bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              >
+                Back to My Jobs
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/jobs"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Back to marketplace"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
-          <Briefcase className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">{job.title}</h1>
-          <p className="text-sm text-gray-600">{job.description ? job.description.substring(0, 80) + (job.description.length > 80 ? '...' : '') : 'Job opportunity'}</p>
-        </div>
-      </div>
-
-      {/* Highlights */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-          <p className="text-xs text-gray-500">Compensation</p>
-          <p className="text-sm font-semibold text-gray-900 mt-1">{budgetLabel}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-          <p className="text-xs text-gray-500">Timeline</p>
-          <p className="text-sm font-semibold text-gray-900 mt-1">{timelineLabel}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
-          <p className="text-xs text-gray-500">Applicants & Status</p>
-          <p className="text-sm font-semibold text-gray-900 mt-1">{applicantsLabel}</p>
-          <p className="text-xs text-gray-600 mt-1">
-            {job?.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : "Open"}
-            {getIsRemote() ? " · Remote friendly" : ""}
-          </p>
-        </div>
-      </div>
-
-      {/* Job Details */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-              {job.company?.name && (
-                <div className="flex items-center gap-1">
-                  <Building2 className="w-4 h-4" />
-                  <span>{job.company.name}</span>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to my jobs"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to My Jobs</span>
+            </button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{job.title}</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {job.description ? job.description.substring(0, 100) + (job.description.length > 100 ? '...' : '') : 'Job opportunity'}
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-600">
+                  {job.company?.name && (
+                    <div className="flex items-center gap-1.5">
+                      <Building2 className="w-3 h-3 text-gray-400" aria-hidden="true" />
+                      <span>{job.company.name}</span>
+                    </div>
+                  )}
+                  {job.company?.location && (
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3 text-gray-400" aria-hidden="true" />
+                      <span>
+                        {job.company.location.city || ''}, {job.company.location.state || ''}
+                        {getIsRemote() && " (Remote)"}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-              {job.company?.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>
-                    {job.company.location.city || ''}, {job.company.location.state || ''}
-                    {getIsRemote() && " (Remote)"}
-                  </span>
-                </div>
-              )}
-              {job.applicationProcess?.startDate && (
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>Start {new Date(job.applicationProcess.startDate).toLocaleDateString()}</span>
-                </div>
-              )}
-              {job.applicationProcess?.deadline && (
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span>Due {new Date(job.applicationProcess.deadline).toLocaleDateString()}</span>
-                </div>
-              )}
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleShare}
+                className="relative p-2.5 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                title="Share job"
+                aria-label="Share job"
+              >
+                <Share2 className="w-5 h-5" />
+                {shareFeedback && (
+                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    {shareFeedback}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                )}
+              </button>
+              <button 
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite}
+                className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border shadow-sm ${
+                  isFavorited 
+                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
+                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              </button>
+              <Link
+                href="/marketplace/my-jobs"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+              >
+                <Briefcase className="w-4 h-4" />
+                My Jobs
+              </Link>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handleShare}
-              className="relative p-3 rounded-full bg-green-50 text-green-600 hover:bg-green-100 hover:text-green-700 transition-all hover:scale-110 group"
-              title="Share job"
-            >
-              <Share2 className="w-5 h-5" />
-              {shareFeedback && (
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                  {shareFeedback}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              )}
-            </button>
-            <button 
-              onClick={handleToggleFavorite}
-              disabled={isTogglingFavorite}
-              className={`p-3 rounded-full transition-all hover:scale-110 ${
-                isFavorited 
-                  ? 'bg-red-100 text-red-600 hover:bg-red-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-pink-100 hover:text-pink-600'
-              } ${isTogglingFavorite ? 'opacity-50 cursor-not-allowed' : ''}`}
-              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''} ${isTogglingFavorite ? 'animate-pulse' : ''}`} />
-            </button>
+        </div>
+
+        {/* Highlights */}
+        <div className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">Compensation</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">{budgetLabel}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">Timeline</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">{timelineLabel}</p>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+            <p className="text-xs text-gray-500">Applicants & Status</p>
+            <p className="text-sm font-semibold text-gray-900 mt-1">{applicantsLabel}</p>
+            <p className="text-xs text-gray-600 mt-1">
+              {job?.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : "Open"}
+              {getIsRemote() ? " · Remote friendly" : ""}
+            </p>
           </div>
         </div>
+
+        {/* Job Details */}
+        <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-6">
 
         {/* Job Images - Note: Jobs may not have images, using company logo if available */}
         {job.company?.logo?.url && (
@@ -638,8 +681,8 @@ export default function JobDetailPage() {
           )}
         </div>
 
-        {/* Salary and Application */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-200">
+          {/* Salary and Application */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t border-gray-200">
           {job.salary && (() => {
             const salaryCurrency = normalizeCurrencyCode(job.salary.currency);
             return (
@@ -678,23 +721,23 @@ export default function JobDetailPage() {
               Apply Now
             </button>
           )}
+          </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Job Description */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Job Description */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Job Description</h2>
             <div className="prose prose-gray max-w-none">
               <p className="text-gray-700 leading-7 text-base whitespace-pre-line">{job.description}</p>
             </div>
           </div>
 
-          {/* Skills Required */}
-          {job.requirements?.skills && job.requirements.skills.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            {/* Skills Required */}
+            {job.requirements?.skills && job.requirements.skills.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Skills Required</h2>
               <div className="flex flex-wrap gap-3">
                 {job.requirements.skills.map((skill, index) => (
@@ -711,7 +754,7 @@ export default function JobDetailPage() {
 
           {/* Requirements */}
           {job.requirements && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Requirements</h2>
               
               <div className="space-y-6">
@@ -816,7 +859,7 @@ export default function JobDetailPage() {
 
           {/* Responsibilities */}
           {job.responsibilities && job.responsibilities.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Responsibilities</h2>
               <ul className="space-y-3">
                 {job.responsibilities.map((responsibility: string, index: number) => (
@@ -831,7 +874,7 @@ export default function JobDetailPage() {
 
           {/* Qualifications */}
           {job.qualifications && job.qualifications.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Qualifications</h2>
               <ul className="space-y-3">
                 {job.qualifications.map((qualification: string, index: number) => (
@@ -846,7 +889,7 @@ export default function JobDetailPage() {
 
           {/* Benefits */}
           {job.benefits && job.benefits.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Benefits</h2>
               <div className="flex flex-wrap gap-3">
                 {job.benefits.map((benefit: string, index: number) => (
@@ -863,7 +906,7 @@ export default function JobDetailPage() {
 
           {/* Application Process */}
           {job.applicationProcess && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Application Process</h2>
               <div className="space-y-4">
                 {job.applicationProcess.applicationMethod && (
@@ -908,7 +951,7 @@ export default function JobDetailPage() {
 
           {/* Tags */}
           {job.tags && job.tags.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200 flex items-center gap-2">
                 <Tag className="w-6 h-6" />
                 Tags
@@ -928,7 +971,7 @@ export default function JobDetailPage() {
 
           {/* Related Jobs */}
           {relatedJobs.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Similar Jobs</h2>
               <div className="space-y-4">
                 {relatedJobs.slice(0, 3).map((relatedJob) => (
@@ -967,7 +1010,7 @@ export default function JobDetailPage() {
         <div className="space-y-8">
           {/* Company Info */}
           {job.company && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-24">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 sticky top-24">
               <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Company</h3>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
@@ -1031,7 +1074,7 @@ export default function JobDetailPage() {
           )}
 
           {/* Job Details */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Job Details</h3>
             <div className="space-y-4">
               {(() => {
@@ -1155,7 +1198,7 @@ export default function JobDetailPage() {
           </div>
 
           {/* Safety Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Safety & Trust</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -1312,6 +1355,7 @@ export default function JobDetailPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

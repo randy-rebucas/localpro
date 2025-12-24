@@ -18,7 +18,13 @@ export const SessionContext = createContext<SessionContextType | undefined>(unde
 let sessionPromise: Promise<Session | null> | null = null;
 let cachedSession: Session | null = null;
 let cacheTimestamp: number = 0;
-const CACHE_DURATION = 30000; // 30 seconds cache
+// Disable caching in development mode
+const CACHE_DURATION = process.env.NODE_ENV === 'development' ? 0 : 30000; // 30 seconds cache
+
+// Clear any existing cache data
+cachedSession = null;
+cacheTimestamp = 0;
+sessionPromise = null;
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(cachedSession);

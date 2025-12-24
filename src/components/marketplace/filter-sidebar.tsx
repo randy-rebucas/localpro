@@ -8,20 +8,39 @@ import {
   Award,
   Clock,
   Star,
+  MapPin,
+  Tag,
 } from "lucide-react";
+import { ServiceCategory } from "./categories-carousel";
 
 interface FilterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  sidebarCategory?: string;
-  onCategoryChange?: (category: string) => void;
+  // Category filter
+  categories?: ServiceCategory[];
+  categoriesLoading?: boolean;
+  selectedCategory?: ServiceCategory | null;
+  onCategorySelect?: (category: ServiceCategory | null) => void;
+  // Location filter
+  location?: string;
+  locationCoordinates?: { lat: number; lng: number } | null;
+  radius?: number;
+  onLocationChange?: (location: string) => void;
+  onLocationCoordinatesChange?: (coordinates: { lat: number; lng: number } | null) => void;
+  onRadiusChange?: (radius: number) => void;
+  detectingLocation?: boolean;
+  onDetectLocation?: () => void;
+  // Price filter
   priceRange: [number, number];
   maxPrice?: number;
   onPriceRangeChange: (range: [number, number]) => void;
+  // Rating filter
   minRating: number;
   onMinRatingChange: (rating: number) => void;
+  // Availability filter
   isAvailable: boolean;
   onAvailabilityChange: (available: boolean) => void;
+  // Clear filters
   hasActiveFilters: boolean;
   onClearFilters: () => void;
 }
@@ -29,6 +48,18 @@ interface FilterSidebarProps {
 export function FilterSidebar({
   isOpen,
   onClose,
+  categories = [],
+  categoriesLoading = false,
+  selectedCategory,
+  onCategorySelect,
+  location = "",
+  locationCoordinates,
+  radius = 5000,
+  onLocationChange,
+  onLocationCoordinatesChange,
+  onRadiusChange,
+  detectingLocation = false,
+  onDetectLocation,
   priceRange,
   maxPrice = 10000,
   onPriceRangeChange,
@@ -41,7 +72,7 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   return (
     <aside
-      className={`lg:w-64 flex-shrink-0 ${isOpen ? "block" : "hidden lg:block"}`}
+      className={`lg:w-[280px] flex-shrink-0 ${isOpen ? "block" : "hidden lg:block"}`}
     >
       {/* Mobile Overlay */}
       {isOpen && (
@@ -82,6 +113,124 @@ export function FilterSidebar({
 
         {/* Filter Content */}
         <div className="p-6 space-y-8">
+          {/* Category Filter */}
+          {categories && categories.length > 0 && (
+            <>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-green-600" />
+                  <label className="text-sm font-semibold text-gray-900">Category</label>
+                </div>
+                {categoriesLoading ? (
+                  <div className="text-sm text-gray-500">Loading categories...</div>
+                ) : (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <button
+                      onClick={() => onCategorySelect?.(null)}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                        !selectedCategory
+                          ? "bg-green-600 text-white shadow-md shadow-green-200"
+                          : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
+                      }`}
+                    >
+                      All Categories
+                    </button>
+                    {categories.map((category) => {
+                      const isSelected = selectedCategory?.key === category.key || 
+                                        selectedCategory?.id === category.id ||
+                                        selectedCategory?.name === category.name;
+                      return (
+                        <button
+                          key={category.key || category.id || category.name}
+                          onClick={() => onCategorySelect?.(category)}
+                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                            isSelected
+                              ? "bg-green-600 text-white shadow-md shadow-green-200"
+                              : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
+                          }`}
+                        >
+                          {category.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-gray-100"></div>
+            </>
+          )}
+
+          {/* Location Filter */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-green-600" />
+              <label className="text-sm font-semibold text-gray-900">Location</label>
+            </div>
+            <div className="space-y-3">
+              {onDetectLocation && (
+                <button
+                  onClick={onDetectLocation}
+                  disabled={detectingLocation}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {detectingLocation ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Detecting...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="w-4 h-4" />
+                      Use Current Location
+                    </>
+                  )}
+                </button>
+              )}
+              {onLocationChange && (
+                <input
+                  type="text"
+                  placeholder="Enter location..."
+                  value={location}
+                  onChange={(e) => onLocationChange(e.target.value)}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              )}
+              {locationCoordinates && onRadiusChange && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>Search Radius</span>
+                    <span className="font-medium">{(radius / 1000).toFixed(1)} km</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1000"
+                    max="50000"
+                    step="1000"
+                    value={radius}
+                    onChange={(e) => onRadiusChange(Number(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>1 km</span>
+                    <span>50 km</span>
+                  </div>
+                  {onLocationCoordinatesChange && (
+                    <button
+                      onClick={() => {
+                        onLocationCoordinatesChange(null);
+                        onLocationChange?.("");
+                      }}
+                      className="w-full mt-2 px-3 py-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      Clear Location
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100"></div>
 
           {/* Price Range */}
           <div className="space-y-4">

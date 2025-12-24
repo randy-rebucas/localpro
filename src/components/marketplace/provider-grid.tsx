@@ -142,11 +142,11 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
 
   return (
     <Link
-      href={`/marketplace/providers/${providerId}`}
-      className={`bg-white rounded-2xl shadow-md border border-gray-200/50 overflow-hidden hover:shadow-2xl hover:border-green-300 transition-all duration-300 group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'} transform hover:-translate-y-1`}
+      href={`/marketplace/provider/${providerId}`}
+      className={`bg-white overflow-hidden transition-all duration-300 group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'}`}
     >
       {/* Decorative gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50/0 to-blue-50/0 group-hover:from-green-50/50 group-hover:to-blue-50/30 transition-all duration-300 pointer-events-none rounded-2xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50/0 to-blue-50/0 group-hover:from-green-50/50 group-hover:to-blue-50/30 transition-all duration-300 pointer-events-none"></div>
       
       {/* Favorite Button - Top Right (hidden if own profile) */}
       {!isOwnProfile && (
@@ -247,7 +247,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
             <button 
               onClick={(e) => {
                 e.preventDefault();
-                window.location.href = `/marketplace/providers/${providerId}`;
+                window.location.href = `/marketplace/provider/${providerId}`;
               }}
               className={`${isGrid ? 'w-full' : ''} px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl text-sm font-semibold hover:from-green-700 hover:to-green-800 active:scale-95 transition-all shadow-md hover:shadow-lg group-hover:shadow-xl`}
             >
@@ -296,7 +296,7 @@ export function ProviderGrid({
   return (
     <div>
       <div className={viewMode === 'grid' 
-        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6'
+        ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5'
         : 'space-y-4'
       }>
         {providers.map((user, index) => (
@@ -315,23 +315,23 @@ export function ProviderGrid({
 
       {/* Pagination */}
       {pagination && pagination.pages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-3">
+        <div className="mt-8 flex items-center justify-center gap-2">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-5 py-2.5 border-2 border-gray-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:border-green-400 transition-all font-medium text-gray-700 hover:text-green-700 disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-700"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+            aria-label="Previous page"
           >
             Previous
           </button>
-          <div className="px-5 py-2.5 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl">
-            <span className="text-sm font-semibold text-gray-700">
-              Page <span className="text-green-700">{currentPage}</span> of <span className="text-green-700">{pagination.pages}</span>
-            </span>
+          <div className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg">
+            Page <span className="font-semibold text-emerald-600">{currentPage}</span> of <span className="font-semibold text-emerald-600">{pagination.pages}</span>
           </div>
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage === pagination.pages}
-            className="px-5 py-2.5 border-2 border-gray-300 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:border-green-400 transition-all font-medium text-gray-700 hover:text-green-700 disabled:hover:bg-transparent disabled:hover:border-gray-300 disabled:hover:text-gray-700"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+            aria-label="Next page"
           >
             Next
           </button>

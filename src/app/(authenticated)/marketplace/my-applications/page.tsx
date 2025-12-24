@@ -125,81 +125,108 @@ export default function MyApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link
-            href="/jobs"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Back to jobs"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
-            <FileText className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">My Applications</h1>
-            <p className="text-sm text-gray-600">View and manage your job applications</p>
-          </div>
-        </div>
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i} interactive={false}>
-              <div className="p-6 animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          {/* Header Section */}
+          <div className="mb-8">
+            {/* Back Button */}
+            <div className="mb-4">
+              <Link
+                href="/marketplace/jobs"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to jobs"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Jobs</span>
+              </Link>
+            </div>
+            
+            {/* Title & Description */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Applications</h1>
+                  <p className="text-sm text-gray-500 mt-0.5">View and manage your job applications</p>
+                </div>
               </div>
-            </Card>
-          ))}
+            </div>
+          </div>
+
+          {/* Loading State */}
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} interactive={false}>
+                <div className="p-6 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/marketplace/jobs"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Back to jobs"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 text-white flex items-center justify-center shadow-lg shadow-green-500/20">
-          <FileText className="w-6 h-6" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <Link
+              href="/marketplace/jobs"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to jobs"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Jobs</span>
+            </Link>
+          </div>
+          
+          {/* Title & Description */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Applications</h1>
+                <p className="text-sm text-gray-500 mt-0.5">View and manage your job applications</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">My Applications</h1>
-          <p className="text-sm text-gray-600">View and manage your job applications</p>
+
+        {/* Filters */}
+        <div className="mb-6">
+          <div className="flex gap-4 items-center">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white"
+            >
+              <option value="">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="reviewing">Reviewing</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="interviewed">Interviewed</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 items-center">
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="reviewing">Reviewing</option>
-          <option value="shortlisted">Shortlisted</option>
-          <option value="interviewed">Interviewed</option>
-          <option value="hired">Hired</option>
-          <option value="rejected">Rejected</option>
-        </select>
-      </div>
-
-      {/* Applications List */}
-      {error ? (
+        {/* Applications List */}
+        {error ? (
         <Card interactive={false}>
           <EmptyState
             icon={AlertCircle}
@@ -322,7 +349,7 @@ export default function MyApplicationsPage() {
                                 <MapPin className="w-4 h-4 flex-shrink-0" />
                                 <span>
                                   {isRemote ? (
-                                    <span className="text-green-600 font-medium">Remote</span>
+                                    <span className="text-emerald-600 font-medium">Remote</span>
                                   ) : (
                                     <span>
                                       {location.city || "Unknown"}
@@ -350,7 +377,7 @@ export default function MyApplicationsPage() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="text-sm text-green-600 hover:text-green-700 hover:underline"
+                                className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline"
                               >
                                 View Portfolio
                               </a>
@@ -389,30 +416,31 @@ export default function MyApplicationsPage() {
         </div>
       )}
 
-      {/* Pagination */}
-      {pagination && pagination.pages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-          <div className="text-sm text-gray-600">
-            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, pagination.total)} of {pagination.total} applications
+        {/* Pagination */}
+        {pagination && pagination.pages > 1 && (
+          <div className="flex items-center justify-between pt-4 border-t border-gray-200 mt-6">
+            <div className="text-sm text-gray-600">
+              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, pagination.total)} of {pagination.total} applications
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
+                disabled={currentPage === pagination.pages}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white"
+              >
+                Next
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage(prev => Math.min(pagination.pages, prev + 1))}
-              disabled={currentPage === pagination.pages}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

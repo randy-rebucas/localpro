@@ -11,7 +11,11 @@ const authCache = new Map<string, {
   apiToken?: string;
   timestamp: number 
 }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// Disable caching in development mode
+const CACHE_DURATION = process.env.NODE_ENV === 'development' ? 0 : 5 * 60 * 1000; // 5 minutes
+
+// Clear any existing cache data
+authCache.clear();
 
 // Clean up expired cache entries periodically
 setInterval(() => {

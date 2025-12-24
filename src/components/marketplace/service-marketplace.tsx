@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { MarketplaceHero } from "@/components/marketplace/marketplace-hero";
+import React, { useState, useCallback, useMemo } from "react";
+import { Filter, Grid3x3, List } from "lucide-react";
 import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
 import { ServiceGrid } from "@/components/marketplace/service-grid";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
@@ -9,13 +9,9 @@ import { useMarketplaceServices } from "@/hooks/useMarketplaceServices";
 import { useCategories } from "@/hooks/useCategories";
 import { useMaxPrice } from "@/hooks/useMaxPrice";
 import { useServiceFilters } from "@/hooks/useServiceFilters";
-import { ServiceControlsBar } from "@/components/marketplace/service-controls-bar";
-import { AISearchSection } from "@/components/marketplace/ai-search-section";
-import { AIFeaturesSection } from "@/components/marketplace/ai-features-section";
-import { AIFeaturesToggle } from "@/components/marketplace/ai-features-toggle";
 
 interface ServiceMarketplaceProps {
-  userName: string;
+  userName?: string;
 }
 
 export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
@@ -37,11 +33,25 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
     limit: 10,
   });
 
-  // Location detection - integrated with filters
-  // We'll use filters state directly and add location detection handlers
-  const [detectingLocation, setDetectingLocation] = React.useState(false);
+  // UI state
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+
+  // Memoized handlers
+  const handleOpenFilters = useCallback(() => {
+    setFilterDrawerOpen(true);
+  }, []);
+
+  const handleCloseFilters = useCallback(() => {
+    setFilterDrawerOpen(false);
+  }, []);
+
+  const handlePageChange = useCallback((page: number) => {
+    filters.setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [filters]);
   
-  const handleDetectLocation = React.useCallback(() => {
+  const handleDetectLocation = useCallback(() => {
     if (!navigator.geolocation) {
       return;
     }
@@ -94,62 +104,46 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
   }, [filters]);
 
   // Fetch services with filters applied
-  const { featuredServices, services, loading: loadingServices, pagination: servicesPagination } = useMarketplaceServices(filters.servicesParams);
+  const { 
+    featuredServices, 
+    services, 
+    loading: loadingServices, 
+    error: servicesError,
+    pagination: servicesPagination 
+  } = useMarketplaceServices(filters.servicesParams);
 
-  const handlePageChange = (page: number) => {
-    filters.setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // UI state
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  const [preferredFeatureSelectorOpen, setPreferredFeatureSelectorOpen] = useState(false);
-  const [showAIFeatures, setShowAIFeatures] = useState({
-    recommendations: true,
-    priceEstimator: false,
-    serviceMatcher: false,
-  });
+  // Memoized active filters count for badge
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.selectedCategory) count++;
+    if (filters.location?.trim()) count++;
+    if (filters.locationCoordinates) count++;
+    if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) count++;
+    if (filters.minRating > 0) count++;
+    if (filters.isAvailable) count++;
+    return count;
+  }, [filters.selectedCategory, filters.location, filters.locationCoordinates, filters.priceRange, filters.minRating, filters.isAvailable, maxPrice]);
 
   return (
-    <>
-      {/* Hero Section with Categories */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <MarketplaceHero
-            userName={userName}
-            selectedCategory={filters.categoryKey}
-            categories={categories}
-            categoriesLoading={categoriesLoading}
-            categoriesError={categoriesError}
-            onCategorySelect={filters.handleCategorySelect as (category: ServiceCategory | undefined) => void}
-            onCategoriesRetry={refetchCategories}
-          />
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        {/* AI Natural Language Search */}
-        <AISearchSection
-          location={filters.location}
-          lat={filters.locationCoordinates?.lat}
-          lng={filters.locationCoordinates?.lng}
-          radius={filters.radius}
-          priceRange={filters.priceRange}
-          onPriceRangeChange={filters.setPriceRange}
-          onCategoryKeyChange={filters.setCategoryKey}
-          onSubcategoryChange={filters.setSubcategory}
-          onMinRatingChange={filters.setMinRating}
-          onLocationChange={filters.setLocation}
-          onLocationCoordinatesChange={filters.setLocationCoordinates}
-          onRadiusChange={filters.setRadius}
-        />
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Sidebar - Filters */}
           <FilterSidebar
             isOpen={filterDrawerOpen}
-            onClose={() => setFilterDrawerOpen(false)}
+            onClose={handleCloseFilters}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
+            selectedCategory={filters.selectedCategory}
+            onCategorySelect={filters.handleCategorySelect as (category: ServiceCategory | null) => void}
+            location={filters.location}
+            locationCoordinates={filters.locationCoordinates}
+            radius={filters.radius}
+            onLocationChange={filters.setLocation}
+            onLocationCoordinatesChange={filters.setLocationCoordinates}
+            onRadiusChange={filters.setRadius}
+            detectingLocation={detectingLocation}
+            onDetectLocation={handleDetectLocation}
             priceRange={filters.priceRange}
             maxPrice={maxPrice}
             onPriceRangeChange={filters.setPriceRange}
@@ -163,34 +157,98 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
 
           {/* Main Content Area */}
           <div className="flex-1 min-w-0">
-            {/* Controls Bar */}
-            <ServiceControlsBar
-              locationCoordinates={filters.locationCoordinates}
-              radius={filters.radius}
-              detectingLocation={detectingLocation}
-              onDetectLocation={handleDetectLocation}
-              onClearLocation={() => {
-                filters.setLocationCoordinates(null);
-                filters.setLocation("");
-              }}
-              onRadiusChange={filters.setRadius}
-              sortBy={filters.sortBy}
-              onSortByChange={filters.setSortBy}
-              sortOrder={filters.sortOrder}
-              onSortOrderChange={filters.setSortOrder}
-              groupByCategory={filters.groupByCategory}
-              onGroupByCategoryChange={filters.setGroupByCategory}
-              viewMode={filters.viewMode}
-              onViewModeChange={filters.setViewMode}
-            />
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={handleOpenFilters}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                aria-label="Open filters"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="ml-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </button>
+            </div>
 
-            {/* AI Features Section */}
-            <AIFeaturesSection
-              showAIFeatures={showAIFeatures}
-              location={filters.location}
-              lat={filters.locationCoordinates?.lat}
-              lng={filters.locationCoordinates?.lng}
-            />
+            {/* Controls Bar */}
+            <div className="mb-6">
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+                  {/* Left Side - Sort Controls */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="text-xs font-medium text-gray-700 hidden sm:block">Sort by:</label>
+                    <select
+                      value={filters.sortBy}
+                      onChange={(e) => filters.setSortBy(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                      aria-label="Sort services by"
+                    >
+                      <option value="createdAt">Date Created</option>
+                      <option value="basePrice">Price</option>
+                      <option value="rating">Rating</option>
+                      <option value="title">Title</option>
+                    </select>
+
+                    <select
+                      value={filters.sortOrder}
+                      onChange={(e) => filters.setSortOrder(e.target.value as 'asc' | 'desc')}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                      aria-label="Sort order"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                  </div>
+
+                  {/* Right Side - View Mode Toggle */}
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => filters.setViewMode('grid')}
+                      className={`p-2 rounded-md transition-all duration-200 ${
+                        filters.viewMode === 'grid'
+                          ? 'bg-white text-emerald-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title="Grid View"
+                      aria-label="Switch to grid view"
+                    >
+                      <Grid3x3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => filters.setViewMode('list')}
+                      className={`p-2 rounded-md transition-all duration-200 ${
+                        filters.viewMode === 'list'
+                          ? 'bg-white text-emerald-600 shadow-sm'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                      title="List View"
+                      aria-label="Switch to list view"
+                    >
+                      <List className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Error State */}
+            {servicesError && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 mb-1">
+                  Error loading services
+                </p>
+                <p className="text-xs text-red-600">
+                  {servicesError}
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Please try refreshing the page or adjusting your filters.
+                </p>
+              </div>
+            )}
 
             {/* Service Listings */}
             <ServiceGrid 
@@ -207,15 +265,7 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
           </div>
         </div>
       </div>
-
-      {/* AI Features Toggle */}
-      <AIFeaturesToggle
-        showAIFeatures={showAIFeatures}
-        onToggleAIFeatures={setShowAIFeatures}
-        preferredFeatureSelectorOpen={preferredFeatureSelectorOpen}
-        onTogglePreferredFeatureSelector={setPreferredFeatureSelectorOpen}
-      />
-    </>
+    </div>
   );
 }
 

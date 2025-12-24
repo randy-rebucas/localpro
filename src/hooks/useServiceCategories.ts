@@ -20,7 +20,12 @@ interface CachedCategories {
 
 let categoriesCache: CachedCategories | null = null;
 let activeCategoriesRequest: Promise<CachedCategories | null> | null = null;
-const CACHE_DURATION = 60000; // 60 seconds cache (categories change less frequently)
+// Disable caching in development mode
+const CACHE_DURATION = process.env.NODE_ENV === 'development' ? 0 : 60000; // 60 seconds cache (categories change less frequently)
+
+// Clear any existing cache data
+categoriesCache = null;
+activeCategoriesRequest = null;
 
 interface ServiceCategoriesResponse {
   success?: boolean;

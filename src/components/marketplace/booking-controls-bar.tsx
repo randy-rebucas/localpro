@@ -3,7 +3,7 @@
 import React from "react";
 import { Grid3x3, List } from "lucide-react";
 
-interface JobControlsBarProps {
+interface BookingControlsBarProps {
   sortBy: string;
   onSortByChange: (sortBy: string) => void;
   sortOrder: 'asc' | 'desc';
@@ -12,14 +12,14 @@ interface JobControlsBarProps {
   onViewModeChange: (mode: 'grid' | 'list') => void;
 }
 
-export function JobControlsBar({
+export function BookingControlsBar({
   sortBy,
   onSortByChange,
   sortOrder,
   onSortOrderChange,
   viewMode,
   onViewModeChange,
-}: JobControlsBarProps) {
+}: BookingControlsBarProps) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
@@ -30,14 +30,13 @@ export function JobControlsBar({
             value={sortBy}
             onChange={(e) => onSortByChange(e.target.value)}
             className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
-            aria-label="Sort jobs by"
+            aria-label="Sort bookings by"
           >
+            <option value="bookingDate">Booking Date</option>
             <option value="createdAt">Date Created</option>
-            <option value="title">Job Title</option>
             <option value="status">Status</option>
-            <option value="applications">Applications</option>
-            <option value="views">Views</option>
-            <option value="salary">Salary</option>
+            <option value="totalAmount">Total Amount</option>
+            <option value="serviceName">Service Name</option>
           </select>
 
           <select
@@ -82,3 +81,4 @@ export function JobControlsBar({
     </div>
   );
 }
+

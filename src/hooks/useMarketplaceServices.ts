@@ -21,7 +21,12 @@ interface CachedServices {
 
 const servicesCache = new Map<string, CachedServices>();
 const activeRequests = new Map<string, Promise<CachedServices | null>>();
-const CACHE_DURATION = 30000; // 30 seconds cache
+// Disable caching in development mode
+const CACHE_DURATION = process.env.NODE_ENV === 'development' ? 0 : 30000; // 30 seconds cache
+
+// Clear any existing cache data
+servicesCache.clear();
+activeRequests.clear();
 
 // Generate cache key from params
 function getCacheKey(params: MarketplaceServicesParams): string {

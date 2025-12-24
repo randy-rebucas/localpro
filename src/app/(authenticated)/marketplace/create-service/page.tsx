@@ -18,7 +18,8 @@ import {
   Shield,
   Calendar,
   Image as ImageIcon,
-  Loader2
+  Loader2,
+  Store
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -2082,39 +2083,54 @@ export default function CreateServicePage() {
     }
   };
 
+  const handleBack = () => {
+    router.push('/marketplace/my-services');
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
       
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link
-            href="/marketplace"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Back to marketplace"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </Link>
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Plus className="w-6 h-6" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to my services"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to My Services</span>
+            </button>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Create New Service</h1>
-            <p className="text-sm text-gray-600">Step {currentStep} of {totalSteps}</p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Plus className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Create New Service</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Step {currentStep} of {totalSteps}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/marketplace/my-services"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+              >
+                <Store className="w-4 h-4" />
+                My Services
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+        <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-700">
               {FORM_STEPS[currentStep - 1]?.title}
@@ -2132,7 +2148,7 @@ export default function CreateServicePage() {
         </div>
 
         {/* Step Indicators */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between">
             {FORM_STEPS.map((step, index) => {
               const StepIcon = step.icon;
@@ -2177,26 +2193,26 @@ export default function CreateServicePage() {
         </div>
 
         <div>
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 md:p-8">
             <form onSubmit={handleSubmit} className="space-y-8" noValidate>
               {/* Step Content */}
               {renderStepContent()}
 
               {/* Error Message */}
               {error && (
-                <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-lg p-4 shadow-md">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <p className="text-red-600 font-medium">{error}</p>
                 </div>
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
+              <div className="flex justify-between items-center pt-8 border-t border-gray-200">
                 <div>
                   {currentStep > 1 && (
                     <button
                       type="button"
                       onClick={handlePrevious}
-                      className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium flex items-center gap-2"
+                      className="px-6 py-2.5 border border-gray-300 text-gray-800 rounded-lg bg-white hover:bg-gray-50 transition-all shadow-sm hover:shadow-md font-semibold text-base flex items-center gap-2"
                     >
                       <ChevronLeft className="w-5 h-5" />
                       Previous
@@ -2205,8 +2221,8 @@ export default function CreateServicePage() {
                 </div>
                 <div className="flex gap-4">
                   <Link
-                    href="/marketplace"
-                    className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
+                    href="/marketplace/my-services"
+                    className="px-8 py-3 border border-gray-300 text-gray-800 rounded-lg bg-white hover:bg-gray-50 transition-all shadow-sm hover:shadow-md font-semibold text-base"
                   >
                     Cancel
                   </Link>
@@ -2215,9 +2231,9 @@ export default function CreateServicePage() {
                       type="button"
                       onClick={handleNext}
                       disabled={!canProceedToNext()}
-                      className={`px-6 py-2.5 rounded-lg transition-all shadow-lg font-semibold flex items-center gap-2 ${
+                      className={`px-8 py-3 rounded-lg transition-all shadow-md font-bold text-base flex items-center gap-2 ${
                         canProceedToNext()
-                          ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 hover:shadow-xl hover:scale-105 shadow-emerald-500/30"
+                          ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 hover:shadow-lg"
                           : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
                       }`}
                     >
@@ -2228,7 +2244,7 @@ export default function CreateServicePage() {
                     <button
                       type="submit"
                       disabled={loading || isSubmittingRef.current || !canProceedToNext()}
-                      className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold disabled:hover:scale-100 flex items-center gap-2"
+                      className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg font-bold text-base flex items-center gap-2"
                     >
                       {loading ? (
                         <>

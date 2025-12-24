@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -8,16 +8,14 @@ import {
   Star, 
   MapPin, 
   Clock, 
-  // DollarSign,
-  // User,
-  // ChevronLeft,
   Share2,
   Heart,
   Shield,
   CheckCircle,
   AlertCircle,
+  Briefcase,
   ArrowLeft,
-  Briefcase
+  Store
 } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
@@ -26,6 +24,7 @@ import { logger } from "@/lib/logger";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency-utils";
 import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
 import { useToast, ToastContainer } from "@/components/ui/toast";
+import { useRouter } from "next/navigation";
 
 // Service Image Interface
 interface ServiceImage {
@@ -155,6 +154,7 @@ interface ProviderWithService {
 
 export default function ServiceDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const { toasts, success, error: showErrorToast, removeToast } = useToast();
   const [service, setService] = useState<Service | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -564,7 +564,7 @@ export default function ServiceDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service]);
 
-  const renderStars = (rating: number) => {
+  const renderStars = useCallback((rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
@@ -573,21 +573,46 @@ export default function ServiceDetailPage() {
             ? "text-yellow-400 fill-current"
             : "text-gray-300"
         }`}
+        aria-hidden="true"
       />
     ));
-  };
+  }, []);
+
+  // Back button handler
+  const handleBack = useCallback(() => {
+    router.push('/marketplace');
+  }, [router]);
+
+  // Memoized computed values
+  const validImages = useMemo(() => {
+    if (!service?.images || service.images.length === 0) return [];
+    
+    const getImageUrl = (img: ServiceImage | string) => {
+      return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
+    };
+    
+    return service.images
+      .map((img, index) => ({ img, originalIndex: index }))
+      .filter(({ img, originalIndex }) => {
+        const url = getImageUrl(img);
+        return url && url.trim() !== '' && !imageErrors.has(originalIndex);
+      });
+  }, [service?.images, imageErrors]);
+
+  const currentImage = useMemo(() => {
+    if (validImages.length === 0) return null;
+    return validImages.find(
+      ({ originalIndex }) => originalIndex === selectedImageIndex
+    ) || validImages[0];
+  }, [validImages, selectedImageIndex]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-        <div className="relative z-10 flex items-center justify-center min-h-[400px]">
-          <Loading size="lg" text="Loading service details..." />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loading size="lg" text="Loading service details..." />
+          </div>
         </div>
       </div>
     );
@@ -595,24 +620,43 @@ export default function ServiceDetailPage() {
 
   if (error || !service) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-        <div className="relative z-10 text-center py-12">
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-red-200 shadow-lg p-8 max-w-md mx-auto">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent mb-2">Service Not Found</h2>
-            <p className="text-gray-600 mb-6">{error || "The service you're looking for doesn't exist."}</p>
-            <Link
-              href="/marketplace"
-              className="inline-block bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
-            >
-              Back to Marketplace
-            </Link>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to marketplace"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Marketplace</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Service Details</h1>
+                <p className="text-sm text-gray-500 mt-0.5">View service information</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-red-200 p-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-8 h-8 text-red-600" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-semibold text-red-600 mb-2">Service Not Found</h2>
+              <p className="text-gray-600 mb-6">{error || "The service you're looking for doesn't exist."}</p>
+              <Link
+                href="/marketplace"
+                className="inline-block bg-emerald-600 text-white px-6 py-3 rounded-lg hover:bg-emerald-700 transition-colors font-medium"
+              >
+                Back to Marketplace
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -620,285 +664,262 @@ export default function ServiceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onClose={removeToast} position="top-right" />
       
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/marketplace"
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors hover:scale-105"
-          title="Back to marketplace"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
-          <Briefcase className="w-6 h-6" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">{service.title}</h1>
-          <p className="text-sm text-gray-600">{service.description ? service.description.substring(0, 80) + (service.description.length > 80 ? '...' : '') : 'Professional service'}</p>
-        </div>
-      </div>
-
-      {/* Service Details */}
-      <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                <span>{service.serviceArea?.join(', ') || 'Service area not specified'}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>{service.estimatedDuration?.min || 0}-{service.estimatedDuration?.max || 0} hours</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4" />
-                <span>{service.rating?.average?.toFixed(1) || '0.0'} ({service.rating?.count || 0} reviews)</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
-                  {service.category || 'Service'}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handleShare}
-              className="relative p-3 rounded-full bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 hover:from-emerald-100 hover:to-emerald-200 transition-all hover:scale-110 group shadow-md shadow-emerald-500/20 hover:shadow-lg"
-              title="Share service"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to marketplace"
             >
-              <Share2 className="w-5 h-5" />
-              {shareFeedback && (
-                <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
-                  {shareFeedback}
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                </div>
-              )}
-            </button>
-            <button 
-              onClick={handleToggleFavorite}
-              disabled={isTogglingFavorite || isCheckingFavorite}
-              className={`p-3 rounded-full transition-all hover:scale-110 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
-                isFavorited 
-                  ? 'bg-gradient-to-br from-red-100 to-pink-100 text-red-600 hover:from-red-200 hover:to-pink-200 shadow-red-500/20' 
-                  : 'bg-gradient-to-br from-gray-100 to-gray-50 text-gray-600 hover:from-pink-100 hover:to-pink-50 hover:text-pink-600'
-              } ${isTogglingFavorite ? 'animate-pulse' : ''}`}
-              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''} ${isTogglingFavorite ? 'animate-pulse' : ''}`} />
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Marketplace</span>
             </button>
           </div>
-        </div>
-
-      {/* Service Images */}
-      {(() => {
-        // If no images array or empty, show placeholder
-        if (!service.images || service.images.length === 0) {
-          return (
-            <div className="mb-6">
-              <div className="relative w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">No images available</p>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{service.title}</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {service.description ? service.description.substring(0, 100) + (service.description.length > 100 ? '...' : '') : 'Professional service'}
+                </p>
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-600">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3 text-gray-400" aria-hidden="true" />
+                    <span>{service.serviceArea?.slice(0, 2).join(', ') || 'Service area not specified'}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3 h-3 text-gray-400" aria-hidden="true" />
+                    <span>{service.estimatedDuration?.min || 0}-{service.estimatedDuration?.max || 0} hours</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Star className="w-3 h-3 text-yellow-400 fill-current" aria-hidden="true" />
+                    <span>{service.rating?.average?.toFixed(1) || '0.0'} ({service.rating?.count || 0})</span>
+                  </div>
                 </div>
               </div>
             </div>
-          );
-        }
-        
-        // Get image URL (handle both formats)
-        const getImageUrl = (img: ServiceImage | string) => {
-          return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
-        };
-        const getImageAlt = (img: ServiceImage | string, index: number) => {
-          return typeof img === 'string' 
-            ? `${service.title} ${index + 1}`
-            : (img.alt || `${service.title} ${index + 1}`);
-        };
-        
-        // Filter out images with empty or invalid URLs, keeping track of original indices
-        const validImagesWithIndices = service.images
-          .map((img, index) => ({ img, originalIndex: index }))
-          .filter(({ img, originalIndex }) => {
-            const url = getImageUrl(img);
-            return url && url.trim() !== '' && !imageErrors.has(originalIndex);
-          });
-        
-        // If no valid images, show placeholder
-        if (validImagesWithIndices.length === 0) {
-          return (
-            <div className="mb-6">
-              <div className="relative w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">No images available</p>
-                </div>
-              </div>
-            </div>
-          );
-        }
-        
-        // Find the current image based on selectedImageIndex
-        const currentImageEntry = validImagesWithIndices.find(
-          ({ originalIndex }) => originalIndex === selectedImageIndex
-        ) || validImagesWithIndices[0];
-        
-        const currentImage = currentImageEntry.img;
-        const currentImageUrl = getImageUrl(currentImage);
-        
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="md:col-span-2">
-              <div className="relative group overflow-hidden rounded-lg bg-gray-200 w-full h-64">
-                {currentImageUrl ? (
-                  <Image
-                    src={currentImageUrl}
-                    alt={getImageAlt(currentImage, currentImageEntry.originalIndex)}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 66vw"
-                    priority
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    onError={() => {
-                      setImageErrors(prev => new Set(prev).add(currentImageEntry.originalIndex));
-                    }}
-                    unoptimized={currentImageUrl.startsWith('http://localhost') || currentImageUrl.startsWith('http://127.0.0.1') || !currentImageUrl.startsWith('http')}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                    <Briefcase className="w-16 h-16 text-gray-400" />
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleShare}
+                className="relative p-2.5 rounded-lg bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+                title="Share service"
+                aria-label="Share service"
+              >
+                <Share2 className="w-5 h-5" />
+                {shareFeedback && (
+                  <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md whitespace-nowrap shadow-lg z-50">
+                    {shareFeedback}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                   </div>
                 )}
-                <div className="absolute inset-0 bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
+              </button>
+              <button 
+                onClick={handleToggleFavorite}
+                disabled={isTogglingFavorite || isCheckingFavorite}
+                className={`p-2.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed border shadow-sm ${
+                  isFavorited 
+                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
+                    : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+                title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+                aria-busy={isTogglingFavorite}
+              >
+                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              </button>
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
+              >
+                <Store className="w-4 h-4" />
+                Browse Marketplace
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Service Images */}
+        <div className="mb-6">
+
+          {validImages.length === 0 ? (
+            <div className="relative w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+              <div className="text-center">
+                <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-2" aria-hidden="true" />
+                <p className="text-gray-500 text-sm">No images available</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {validImagesWithIndices.slice(0, 4).map(({ img, originalIndex }) => {
-                const imageUrl = getImageUrl(img);
-                return (
-                  <button
-                    key={originalIndex}
-                    onClick={() => setSelectedImageIndex(originalIndex)}
-                    className={`relative h-20 rounded-lg overflow-hidden transition-all duration-200 bg-gray-200 ${
-                      selectedImageIndex === originalIndex 
-                        ? 'ring-2 ring-green-500 shadow-lg scale-105' 
-                        : 'hover:shadow-md hover:scale-102'
-                    }`}
-                  >
-                    {imageUrl ? (
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative group overflow-hidden rounded-lg bg-gray-100 w-full h-64 md:h-96">
+                  {currentImage && (() => {
+                    const getImageUrl = (img: ServiceImage | string) => {
+                      return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
+                    };
+                    const getImageAlt = (img: ServiceImage | string, index: number) => {
+                      return typeof img === 'string' 
+                        ? `${service.title} ${index + 1}`
+                        : (img.alt || `${service.title} ${index + 1}`);
+                    };
+                    const imageUrl = getImageUrl(currentImage.img);
+                    return imageUrl ? (
                       <Image
                         src={imageUrl}
-                        alt={getImageAlt(img, originalIndex)}
+                        alt={getImageAlt(currentImage.img, currentImage.originalIndex)}
                         fill
-                        sizes="(max-width: 768px) 50vw, 16vw"
-                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 66vw"
+                        priority
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={() => {
-                          setImageErrors(prev => new Set(prev).add(originalIndex));
+                          setImageErrors(prev => new Set(prev).add(currentImage.originalIndex));
                         }}
                         unoptimized={imageUrl.startsWith('http://localhost') || imageUrl.startsWith('http://127.0.0.1') || !imageUrl.startsWith('http')}
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-300">
-                        <Briefcase className="w-6 h-6 text-gray-500" />
+                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                        <Briefcase className="w-16 h-16 text-gray-400" aria-hidden="true" />
                       </div>
-                    )}
-                  </button>
-                );
-              })}
+                    );
+                  })()}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {validImages.slice(0, 4).map(({ img, originalIndex }) => {
+                  const getImageUrl = (img: ServiceImage | string) => {
+                    return typeof img === 'string' ? img : (img.url || img.thumbnail || '');
+                  };
+                  const getImageAlt = (img: ServiceImage | string, index: number) => {
+                    return typeof img === 'string' 
+                      ? `${service.title} ${index + 1}`
+                      : (img.alt || `${service.title} ${index + 1}`);
+                  };
+                  const imageUrl = getImageUrl(img);
+                  return (
+                    <button
+                      key={originalIndex}
+                      onClick={() => setSelectedImageIndex(originalIndex)}
+                      className={`relative h-20 rounded-lg overflow-hidden transition-all duration-200 bg-gray-100 ${
+                        selectedImageIndex === originalIndex 
+                          ? 'ring-2 ring-emerald-500 shadow-md' 
+                          : 'hover:shadow-sm'
+                      }`}
+                      aria-label={`View image ${originalIndex + 1}`}
+                    >
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={getImageAlt(img, originalIndex)}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 16vw"
+                          className="object-cover"
+                          onError={() => {
+                            setImageErrors(prev => new Set(prev).add(originalIndex));
+                          }}
+                          unoptimized={imageUrl.startsWith('http://localhost') || imageUrl.startsWith('http://127.0.0.1') || !imageUrl.startsWith('http')}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <Briefcase className="w-6 h-6 text-gray-500" aria-hidden="true" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })()}
+          )}
+        </div>
 
         {/* Price and Booking */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-          <div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
-              {formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency)}
+        <div className="mb-8 bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="text-3xl font-bold text-emerald-600">
+                {formatPrice(service.pricing?.basePrice || 0, service.pricing?.currency)}
+              </div>
+              <div className="text-sm text-gray-500">
+                {service.pricing?.type === 'hourly' 
+                  ? 'per hour' 
+                  : service.pricing?.type === 'fixed'
+                  ? 'fixed price'
+                  : service.pricing?.type === 'per_sqft'
+                  ? 'per square foot'
+                  : service.pricing?.type === 'per_item'
+                  ? 'per item'
+                  : 'per service'}
+              </div>
             </div>
-            <div className="text-sm text-gray-500">
-              {service.pricing?.type === 'hourly' 
-                ? 'per hour' 
-                : service.pricing?.type === 'fixed'
-                ? 'fixed price'
-                : service.pricing?.type === 'per_sqft'
-                ? 'per square foot'
-                : service.pricing?.type === 'per_item'
-                ? 'per item'
-                : 'per service'}
-            </div>
+            <Link
+              href={`/marketplace/services/${params.id}/book`}
+              className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all font-semibold text-center shadow-md hover:shadow-lg"
+            >
+              Book Now
+            </Link>
           </div>
-          <Link
-            href={`/marketplace/services/${params.id}/book`}
-            className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white px-6 py-3 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold inline-block text-center"
-          >
-            Book Now
-          </Link>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Description */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Description</h2>
-            <p className="text-gray-600 leading-relaxed">{service.description}</p>
-          </div>
 
-          {/* Features */}
-          {service.features && service.features.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">What&apos;s Included</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Description */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Description</h2>
+              <p className="text-gray-600 leading-relaxed">{service.description}</p>
+            </div>
+
+            {/* Features */}
+            {service.features && service.features.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">What&apos;s Included</h2>
               <ul className="space-y-2">
                 {service.features.map((feature, index) => (
-                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" aria-hidden="true" />
                     <span className="text-gray-600">{feature}</span>
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Requirements */}
-          {service.requirements && service.requirements.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Requirements</h2>
+            {/* Requirements */}
+            {service.requirements && service.requirements.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
               <ul className="space-y-2">
                 {service.requirements.map((requirement, index) => (
-                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-yellow-50/50 transition-colors">
-                    <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                  <li key={index} className="flex items-center gap-2 p-2 rounded-lg hover:bg-yellow-50 transition-colors">
+                    <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" aria-hidden="true" />
                     <span className="text-gray-600">{requirement}</span>
                   </li>
                 ))}
               </ul>
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Service Packages */}
-          {service.servicePackages && service.servicePackages.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Service Packages</h2>
+            {/* Service Packages */}
+            {service.servicePackages && service.servicePackages.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Packages</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {service.servicePackages.map((pkg, idx) => (
-                  <div key={pkg._id || pkg.id || `package-${idx}`} className="bg-gradient-to-br from-white to-emerald-50/30 border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-[1.02] transition-all">
-                    <h3 className="font-semibold text-gray-700 mb-2">{pkg.name || 'Package'}</h3>
+                  <div key={pkg._id || pkg.id || `package-${idx}`} className="bg-emerald-50/50 border border-emerald-200 rounded-lg p-4 hover:shadow-md transition-all">
+                    <h3 className="font-semibold text-gray-900 mb-2">{pkg.name || 'Package'}</h3>
                     <p className="text-sm text-gray-600 mb-3">{pkg.description || 'No description available'}</p>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                      <span className="text-lg font-bold text-emerald-600">
                         {formatPrice(pkg.price || 0, service.pricing?.currency)}
                       </span>
                       <span className="text-sm text-gray-500">{pkg.duration || 0} hours</span>
@@ -906,7 +927,7 @@ export default function ServiceDetailPage() {
                     <ul className="space-y-1">
                       {pkg.features?.map((feature, index) => (
                         <li key={index} className="flex items-center gap-2 text-sm text-gray-600">
-                          <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-emerald-500 flex-shrink-0" aria-hidden="true" />
                           <span>{feature}</span>
                         </li>
                       )) || []}
@@ -914,36 +935,36 @@ export default function ServiceDetailPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Add-ons */}
-          {service.addOns && service.addOns.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Available Add-ons</h2>
+            {/* Add-ons */}
+            {service.addOns && service.addOns.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Add-ons</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {service.addOns.map((addon, idx) => (
-                  <div key={addon._id || addon.id || `addon-${idx}`} className="bg-gradient-to-br from-white to-blue-50/30 border-2 border-gray-200 rounded-lg p-4 hover:shadow-lg hover:scale-[1.02] transition-all">
+                  <div key={addon._id || addon.id || `addon-${idx}`} className="bg-blue-50/50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-all">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-gray-700">{addon.name || 'Add-on'}</h3>
-                      <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-emerald-700 bg-clip-text text-transparent">
+                      <h3 className="font-semibold text-gray-900">{addon.name || 'Add-on'}</h3>
+                      <span className="text-lg font-bold text-emerald-600">
                         {formatPrice(addon.price || 0, service.pricing?.currency)}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{addon.description || 'No description available'}</p>
-                    <span className="inline-block px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
+                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                       {addon.category || 'General'}
                     </span>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Service Details */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Service Details</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Service Details */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Service Details</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                   <div>
                     <h3 className="font-medium text-gray-700 mb-2">Service Type</h3>
@@ -1011,16 +1032,16 @@ export default function ServiceDetailPage() {
                   </div>
                 </div>
               </div>
+              </div>
             </div>
-          </div>
 
-          {/* Warranty & Protection */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Warranty & Protection</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gradient-to-br from-emerald-50 to-white border-2 border-emerald-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
-                <Shield className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-                <h3 className="font-medium text-gray-700 mb-1">Warranty</h3>
+            {/* Warranty & Protection */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Warranty & Protection</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <Shield className="w-8 h-8 text-emerald-500 mx-auto mb-2" aria-hidden="true" />
+                <h3 className="font-medium text-gray-900 mb-1">Warranty</h3>
                 <p className="text-sm text-gray-600">
                   {service.warranty?.hasWarranty 
                     ? `${service.warranty.duration || 0}-day ${service.warranty.description || 'warranty'}`
@@ -1028,9 +1049,9 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
-                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <h3 className="font-medium text-gray-700 mb-1">Insurance</h3>
+              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" aria-hidden="true" />
+                <h3 className="font-medium text-gray-900 mb-1">Insurance</h3>
                 <p className="text-sm text-gray-600">
                   {service.insurance?.covered 
                     ? `Covered up to ${formatPrice(service.insurance.coverageAmount || 0, service.pricing?.currency)}`
@@ -1038,9 +1059,9 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-orange-50 to-white border-2 border-orange-200 rounded-lg hover:shadow-lg hover:scale-105 transition-all">
-                <AlertCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-                <h3 className="font-medium text-gray-700 mb-1">Emergency Service</h3>
+              <div className="text-center p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <AlertCircle className="w-8 h-8 text-orange-500 mx-auto mb-2" aria-hidden="true" />
+                <h3 className="font-medium text-gray-900 mb-1">Emergency Service</h3>
                 <p className="text-sm text-gray-600">
                   {service.emergencyService?.available 
                     ? `${service.emergencyService.responseTime || 'Not specified'} (+${formatPrice(service.emergencyService.surcharge || 0, service.pricing?.currency)})`
@@ -1048,17 +1069,17 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
+              </div>
             </div>
-          </div>
 
-          {/* Reviews */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Reviews</h2>
-            {reviews.length === 0 ? (
-              <p className="text-gray-500">No reviews yet</p>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
+            {/* Reviews */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Reviews</h2>
+              {reviews.length === 0 ? (
+                <p className="text-gray-500">No reviews yet</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-200 pb-4 last:border-b-0 hover:bg-gray-50/50 p-3 rounded-lg transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="relative w-10 h-10 bg-gradient-to-br from-gray-300 to-gray-400 rounded-full flex items-center justify-center overflow-hidden shadow-md">
@@ -1091,19 +1112,19 @@ export default function ServiceDetailPage() {
                           </button>
                         </div>
                       </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
+          {/* Sidebar */}
+          <div className="space-y-6">
           {/* Provider Info */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Provider</h3>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Provider</h3>
             {(() => {
               const provider = typeof service.provider === 'object' && !Array.isArray(service.provider)
                 ? service.provider
@@ -1247,9 +1268,9 @@ export default function ServiceDetailPage() {
 
           {/* Other Services from This Provider */}
           {otherProviderServices.length > 0 && (
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Other Services
                 </h3>
                 {typeof service?.provider === 'object' && service.provider && (
@@ -1339,19 +1360,19 @@ export default function ServiceDetailPage() {
           )}
 
           {/* Safety Info */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Safety & Trust</h3>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Safety & Trust</h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
-                <Shield className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                <Shield className="w-4 h-4 text-emerald-500" aria-hidden="true" />
                 <span className="text-sm text-gray-600">Background verified</span>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                <CheckCircle className="w-4 h-4 text-emerald-500" aria-hidden="true" />
                 <span className="text-sm text-gray-600">Identity verified</span>
               </div>
-              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50/50 transition-colors">
-                <Star className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                <Star className="w-4 h-4 text-emerald-500" aria-hidden="true" />
                 <span className="text-sm text-gray-600">Highly rated</span>
               </div>
             </div>

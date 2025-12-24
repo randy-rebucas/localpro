@@ -40,7 +40,12 @@ interface CachedSkills {
 
 const skillsCache = new Map<string, CachedSkills>();
 const activeSkillsRequests = new Map<string, Promise<CachedSkills | null>>();
-const CACHE_DURATION = 300000; // 5 minutes cache (skills change less frequently)
+// Disable caching in development mode
+const CACHE_DURATION = process.env.NODE_ENV === 'development' ? 0 : 300000; // 5 minutes cache (skills change less frequently)
+
+// Clear any existing cache data
+skillsCache.clear();
+activeSkillsRequests.clear();
 
 interface ProviderSkillsResponse {
   success?: boolean;

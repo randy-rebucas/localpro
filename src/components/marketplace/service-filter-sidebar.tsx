@@ -1,17 +1,16 @@
 "use client";
 
 import React from "react";
-import { Filter, X, CheckCircle2, Clock, XCircle, Edit } from "lucide-react";
+import { Filter, X, CheckCircle, XCircle, Clock } from "lucide-react";
 
-const jobStatuses = [
-  { value: "all", label: "All Jobs" },
-  { value: "active", label: "Active" },
-  { value: "paused", label: "Paused" },
-  { value: "closed", label: "Closed" },
-  { value: "draft", label: "Draft" },
+const serviceStatuses = [
+  { value: "all", label: "All Services" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+  { value: "PENDING", label: "Pending" },
 ];
 
-interface JobFilterSidebarProps {
+interface ServiceFilterSidebarProps {
   isOpen: boolean;
   onClose: () => void;
   statusFilter: string;
@@ -20,14 +19,14 @@ interface JobFilterSidebarProps {
   onClearFilters: () => void;
 }
 
-export function JobFilterSidebar({
+export function ServiceFilterSidebar({
   isOpen,
   onClose,
   statusFilter,
   onStatusFilterChange,
   hasActiveFilters,
   onClearFilters,
-}: JobFilterSidebarProps) {
+}: ServiceFilterSidebarProps) {
   return (
     <aside
       className={`lg:w-64 flex-shrink-0 ${isOpen ? "block" : "hidden lg:block"}`}
@@ -69,13 +68,12 @@ export function JobFilterSidebar({
               Status
             </label>
             <div className="space-y-2">
-              {jobStatuses.map((status) => {
-                let Icon = Clock;
-                if (status.value === "active") Icon = CheckCircle2;
-                else if (status.value === "paused") Icon = Clock;
-                else if (status.value === "closed") Icon = XCircle;
-                else if (status.value === "draft") Icon = Edit;
-                
+              {serviceStatuses.map((status) => {
+                const Icon = status.value === "ACTIVE" 
+                  ? CheckCircle 
+                  : status.value === "INACTIVE" 
+                  ? XCircle 
+                  : Clock;
                 return (
                   <label
                     key={status.value}
@@ -83,7 +81,7 @@ export function JobFilterSidebar({
                   >
                     <input
                       type="radio"
-                      name="jobStatus"
+                      name="serviceStatus"
                       value={status.value}
                       checked={statusFilter === status.value}
                       onChange={(e) => onStatusFilterChange(e.target.value)}
@@ -113,3 +111,4 @@ export function JobFilterSidebar({
     </aside>
   );
 }
+

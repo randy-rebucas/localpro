@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -17,14 +17,20 @@ import {
   Eye,
   MessageCircle,
   Star,
-  Store
+  Store,
+  X,
+  Filter
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { CommunicationAPI } from "@/lib/communication-utils";
+import { BookingFilterSidebar } from "@/components/marketplace/booking-filter-sidebar";
+import { BookingControlsBar } from "@/components/marketplace/booking-controls-bar";
+import { useAppSettings } from "@/hooks/useAppSettings";
+import { getDefaultCurrency } from "@/lib/settings-utils";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 
 // Booking Entity Interface (matching data-entities.md)
 interface Booking {
@@ -52,7 +58,7 @@ interface Booking {
       email?: string;
       avatar?: string;
     };
-  } | string; // Can be populated object or just ID
+  } | string;
   client: {
     _id?: string;
     id?: string;
@@ -62,7 +68,7 @@ interface Booking {
     phone?: string;
     email?: string;
     avatar?: string;
-  } | string; // Can be populated object or just ID
+  } | string;
   provider: {
     _id?: string;
     id?: string;
@@ -72,9 +78,9 @@ interface Booking {
     phone?: string;
     email?: string;
     avatar?: string;
-  } | string; // Can be populated object or just ID
+  } | string;
   bookingDate: string | Date;
-  duration: number; // in hours
+  duration: number;
   address?: {
     street?: string;
     city?: string;
@@ -171,9 +177,9 @@ interface Booking {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
-  userRole?: 'client' | 'provider'; // Role of the current user viewing this booking
+  userRole?: 'client' | 'provider';
   
-  // Legacy fields for backward compatibility
+  // Legacy fields
   date?: string;
   time?: string;
   totalPrice?: number;
@@ -185,6 +191,18 @@ interface Booking {
 
 export default function MyBookingsPage() {
   const router = useRouter();
+  const { settings: appSettings } = useAppSettings();
+  
+  // Get default currency from app settings
+  const defaultCurrency = getDefaultCurrency(appSettings);
+  
+  // Helper to format currency with app settings
+  const formatPrice = useCallback((price: number, currency?: string) => {
+    const currencyCode = currency || defaultCurrency;
+    return formatCurrencyUtil(price, currencyCode, {
+      appSettings,
+    });
+  }, [appSettings, defaultCurrency]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,6 +211,24 @@ export default function MyBookingsPage() {
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [messaging, setMessaging] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [reviewModalOpen, setReviewModalOpen] = useState<string | null>(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("bookingDate");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: '',
+    categories: {
+      quality: 5,
+      timeliness: 5,
+      communication: 5,
+      value: 5
+    },
+    wouldRecommend: false
+  });
   
   // Normalize booking data from API response
   const normalizeBooking = useCallback((booking: Partial<Booking> & Record<string, unknown>): Booking => {
@@ -200,7 +236,6 @@ export default function MyBookingsPage() {
       ...booking,
       _id: booking._id || booking.id,
       id: booking.id || booking._id,
-      // Handle service
       service: typeof booking.service === 'string'
         ? { id: booking.service }
         : {
@@ -213,7 +248,6 @@ export default function MyBookingsPage() {
             pricing: booking.service?.pricing,
             provider: booking.service?.provider
           },
-      // Handle client
       client: typeof booking.client === 'string'
         ? { id: booking.client }
         : (() => {
@@ -231,7 +265,6 @@ export default function MyBookingsPage() {
               avatar: String(client?.avatar || avatar?.url || avatar?.thumbnail || '')
             } as Booking['client'];
           })(),
-      // Handle provider
       provider: typeof booking.provider === 'string'
         ? { id: booking.provider }
         : (() => {
@@ -254,24 +287,20 @@ export default function MyBookingsPage() {
               avatar: String(targetProvider?.avatar || avatar?.url || avatar?.thumbnail || '')
             } as Booking['provider'];
           })(),
-      // Handle booking date
       bookingDate: booking.bookingDate || booking.date || new Date(),
-      // Handle status (normalize to lowercase)
       status: (booking.status || 'pending').toLowerCase() as Booking['status'],
-      // Handle pricing
       pricing: booking.pricing ? {
         ...booking.pricing,
         basePrice: booking.pricing.basePrice ?? booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.pricing.totalAmount ?? booking.totalPrice ?? 0,
-        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
+        currency: booking.pricing.currency ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? defaultCurrency,
         additionalFees: booking.pricing.additionalFees ?? []
       } : {
         basePrice: booking.totalPrice ?? (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.basePrice : undefined) ?? 0,
         totalAmount: booking.totalPrice ?? 0,
-        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? 'PHP',
+        currency: (typeof booking.service === 'object' && booking.service !== null ? booking.service.pricing?.currency : undefined) ?? defaultCurrency,
         additionalFees: []
       },
-      // Handle payment
       payment: booking.payment ? {
         ...booking.payment,
         status: booking.payment.status ?? (booking.paymentStatus ? (booking.paymentStatus.toLowerCase() as 'pending' | 'paid' | 'refunded' | 'failed') : 'pending'),
@@ -284,11 +313,8 @@ export default function MyBookingsPage() {
         transactionId: undefined,
         paidAt: undefined
       },
-      // Handle address
       address: booking.address || {},
-      // Handle special instructions
       specialInstructions: booking.specialInstructions || booking.notes,
-      // Set defaults
       duration: booking.duration || 0,
       communication: booking.communication || { messages: [] },
       timeline: booking.timeline || [],
@@ -296,7 +322,7 @@ export default function MyBookingsPage() {
       beforePhotos: booking.beforePhotos || [],
       afterPhotos: booking.afterPhotos || []
     };
-  }, []);
+  }, [defaultCurrency]);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -321,19 +347,52 @@ export default function MyBookingsPage() {
         params.append("dateTo", dateTo);
       }
 
-      const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceMyBookings}?${params.toString()}`;
+      // Try the my-bookings endpoint first
+      let url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceMyBookings}?${params.toString()}`;
       logger.debug("Fetching bookings", { url, filters: { statusFilter, typeFilter, dateFrom, dateTo } });
 
-      const response = await fetch(url, createAuthFetchOptions());
+      let response = await fetch(url, createAuthFetchOptions());
+      
+      // If my-bookings returns 501 (Not Implemented), fall back to the general bookings endpoint
+      if (response.status === 501) {
+        logger.warn("my-bookings endpoint not implemented, falling back to bookings endpoint", { status: response.status });
+        url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceBookings}?${params.toString()}`;
+        response = await fetch(url, createAuthFetchOptions());
+      }
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        
+        // Handle 501 (Not Implemented) gracefully - don't log as error since it's expected
+        if (response.status === 501) {
+          logger.warn("Bookings API endpoint not implemented", {
+            status: response.status,
+            statusText: response.statusText,
+            url
+          });
+          setError("This feature is currently unavailable. The bookings API is not yet implemented on the server.");
+          setBookings([]);
+          return;
+        }
+        
+        // Log other errors normally
         logger.error("Bookings API error", undefined, {
           status: response.status,
           statusText: response.statusText,
-          hasErrorData: !!errorData
+          hasErrorData: !!errorData,
+          url
         });
-        throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
+        
+        // Provide user-friendly error message for other errors
+        if (response.status === 401) {
+          setError("Please log in to view your bookings.");
+        } else if (response.status >= 500) {
+          setError("Server error. Please try again later.");
+        } else {
+          setError("Failed to load bookings. Please try again.");
+        }
+        setBookings([]);
+        return;
       }
 
       const data = await response.json();
@@ -345,26 +404,21 @@ export default function MyBookingsPage() {
         hasBookings: data && 'bookings' in data
       });
       
-      // Ensure bookings is always an array and normalize
       let bookingsData: Booking[] = [];
       
-      // Handle new structure: { success: true, data: { bookings: [], pagination: {}, stats: {} } }
       if (data && data.success && data.data && Array.isArray(data.data.bookings)) {
         bookingsData = (data.data.bookings as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         logger.debug("Using data.data.bookings array", { count: bookingsData.length });
       } 
-      // Handle legacy structure: direct array
       else if (Array.isArray(data)) {
         bookingsData = data.map((booking: Partial<Booking> & Record<string, unknown>) => normalizeBooking(booking));
         logger.debug("Using direct array data", { count: bookingsData.length });
       } 
-      // Handle legacy structure: { bookings: [] }
       else if (data && Array.isArray(data.bookings)) {
         bookingsData = (data.bookings as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         logger.debug("Using data.bookings array", { count: bookingsData.length });
       } 
-      // Handle legacy structure: { data: [] }
-      else if (data && Array.isArray(data.data)) {
+      else if (data && data.success && Array.isArray(data.data)) {
         bookingsData = (data.data as Array<Partial<Booking> & Record<string, unknown>>).map((booking) => normalizeBooking(booking));
         logger.debug("Using data.data array", { count: bookingsData.length });
       } 
@@ -383,7 +437,6 @@ export default function MyBookingsPage() {
     } catch (error) {
       logger.error("Error fetching bookings", error instanceof Error ? error : new Error(String(error)));
       setError("Failed to load bookings. Please try again.");
-      // Ensure bookings is always an array even on error
       setBookings([]);
     } finally {
       setLoading(false);
@@ -394,9 +447,11 @@ export default function MyBookingsPage() {
     fetchBookings();
   }, [fetchBookings]);
 
-  const updateBookingStatus = async (bookingId: string, status: string) => {
+  const updateBookingStatus = useCallback(async (bookingId: string, status: string) => {
+    if (updatingStatus) return;
+    
     try {
-      // Normalize status to lowercase
+      setUpdatingStatus(bookingId);
       const normalizedStatus = status.toLowerCase();
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.marketplaceBookingStatus}/${bookingId}/status`, createAuthFetchOptions({
         method: 'PUT',
@@ -407,20 +462,75 @@ export default function MyBookingsPage() {
         throw new Error("Failed to update booking status");
       }
 
-      // Refresh bookings
-      fetchBookings();
+      await fetchBookings();
     } catch (error) {
       logger.error("Error updating booking status", error instanceof Error ? error : new Error(String(error)), { bookingId, status });
       alert("Failed to update booking status. Please try again.");
+    } finally {
+      setUpdatingStatus(null);
     }
-  };
+  }, [fetchBookings, updatingStatus]);
+
+  const handleOpenReview = useCallback((bookingId: string) => {
+    setReviewModalOpen(bookingId);
+    setReviewForm({
+      rating: 5,
+      comment: '',
+      categories: {
+        quality: 5,
+        timeliness: 5,
+        communication: 5,
+        value: 5
+      },
+      wouldRecommend: false
+    });
+  }, []);
+
+  const handleCloseReview = useCallback(() => {
+    setReviewModalOpen(null);
+  }, []);
+
+  const handleSubmitReview = useCallback(async (bookingId: string) => {
+    if (submittingReview) return;
+
+    try {
+      setSubmittingReview(true);
+      
+      const reviewData = {
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim() || undefined,
+        categories: reviewForm.categories,
+        wouldRecommend: reviewForm.wouldRecommend
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}${API_ENDPOINTS.marketplaceBookingReview}/${bookingId}/review`,
+        createAuthFetchOptions({
+          method: 'POST',
+          body: JSON.stringify(reviewData),
+        })
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'Failed to submit review');
+      }
+
+      await fetchBookings();
+      handleCloseReview();
+      alert('Review submitted successfully!');
+    } catch (error) {
+      logger.error('Error submitting review', error instanceof Error ? error : new Error(String(error)), { bookingId });
+      alert(error instanceof Error ? error.message : 'Failed to submit review. Please try again.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  }, [reviewForm, submittingReview, fetchBookings, handleCloseReview]);
 
   const handleMessage = useCallback(async (booking: Booking) => {
     if (messaging) return;
 
-    // Determine who to message based on userRole
-    // If userRole is 'provider', message the client; if 'client', message the provider
-    const userRole = booking.userRole || 'client'; // Default to client if not specified
+    const userRole = booking.userRole || 'client';
     const otherParty = userRole === 'provider' 
       ? (booking.client && typeof booking.client === 'object' ? booking.client : null)
       : (booking.provider && typeof booking.provider === 'object' ? booking.provider : null);
@@ -442,22 +552,18 @@ export default function MyBookingsPage() {
     try {
       let conversationId: string | undefined;
       
-      // Try to get existing conversation
       try {
         const response = await CommunicationAPI.getConversationWithUser(String(otherPartyId));
         const conversation = response?.data?.conversation || response?.conversation || response?.data || response;
         conversationId = conversation?._id || conversation?.id;
       } catch (error) {
-        // If conversation doesn't exist (404), create a new one
         if (error instanceof Error && (error.message.includes('404') || error.message.includes('Failed to fetch'))) {
           logger.debug('Conversation not found, creating new one', { otherPartyId });
           
-          // Get service name
           const serviceName = typeof booking.service === 'object' && !Array.isArray(booking.service)
             ? (booking.service.title || booking.service.name || 'Service')
             : 'Service';
           
-          // Create conversation with booking context
           const conversationData: {
             participants: string[];
             type: string;
@@ -494,7 +600,6 @@ export default function MyBookingsPage() {
       }
 
       if (conversationId) {
-        // Navigate to messages page with conversation ID
         router.push(`/messages?conversationId=${conversationId}`);
       } else {
         throw new Error('Failed to get conversation ID from response');
@@ -507,34 +612,42 @@ export default function MyBookingsPage() {
     }
   }, [messaging, router]);
 
-  const formatDate = (dateString: string) => {
+  // Helper functions
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
+      weekday: 'short',
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric'
     });
-  };
+  }, []);
 
-  const getStatusColor = (status: string) => {
+  const formatTime = useCallback((dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }, []);
+
+  const getStatusColor = useCallback((status: string) => {
     const normalizedStatus = status.toLowerCase();
     switch (normalizedStatus) {
       case "pending":
-        return "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200";
+        return "bg-yellow-50 text-yellow-700";
       case "confirmed":
-        return "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200";
+        return "bg-blue-50 text-blue-700";
       case "in_progress":
-        return "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200";
+        return "bg-purple-50 text-purple-700";
       case "completed":
-        return "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200";
+        return "bg-emerald-50 text-emerald-700";
       case "cancelled":
-        return "bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200";
+        return "bg-red-50 text-red-700";
       default:
-        return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200";
+        return "bg-gray-50 text-gray-700";
     }
-  };
+  }, []);
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = useCallback((status: string) => {
     const normalizedStatus = status.toLowerCase();
     switch (normalizedStatus) {
       case "pending":
@@ -550,144 +663,169 @@ export default function MyBookingsPage() {
       default:
         return <Clock className="w-4 h-4" />;
     }
-  };
+  }, []);
 
-  const formatStatusLabel = (status: string) => {
+  const formatStatusLabel = useCallback((status: string) => {
     const normalizedStatus = status.toLowerCase();
     return normalizedStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
+  }, []);
 
-  const statusOptions = [
+  const statusOptions = useMemo(() => [
     { value: "all", label: "All Bookings" },
     { value: "pending", label: "Pending" },
     { value: "confirmed", label: "Confirmed" },
     { value: "in_progress", label: "In Progress" },
     { value: "completed", label: "Completed" },
     { value: "cancelled", label: "Cancelled" }
-  ];
+  ], [defaultCurrency]);
 
+  const handleClearFilters = useCallback(() => {
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setDateFrom("");
+    setDateTo("");
+  }, []);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter !== "all") count++;
+    if (typeFilter !== "all") count++;
+    if (dateFrom) count++;
+    if (dateTo) count++;
+    return count;
+  }, [statusFilter, typeFilter, dateFrom, dateTo]);
+
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(statusFilter !== "all" || typeFilter !== "all" || dateFrom || dateTo);
+  }, [statusFilter, typeFilter, dateFrom, dateTo]);
+
+  // Memoized filter drawer handlers
+  const handleOpenFilters = useCallback(() => {
+    setFilterDrawerOpen(true);
+  }, []);
+
+  const handleCloseFilters = useCallback(() => {
+    setFilterDrawerOpen(false);
+  }, []);
+
+  // Back button handler
+  const handleBack = useCallback(() => {
+    router.push('/marketplace');
+  }, [router]);
+
+  // Sort bookings
+  const sortedBookings = useMemo(() => {
+    if (!Array.isArray(bookings)) return [];
+    
+    const sorted = [...bookings].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortBy) {
+        case "bookingDate":
+          aValue = new Date(a.bookingDate || a.date || 0);
+          bValue = new Date(b.bookingDate || b.date || 0);
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt || 0);
+          bValue = new Date(b.createdAt || 0);
+          break;
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
+          break;
+        case "totalAmount":
+          aValue = a.pricing?.totalAmount || a.totalPrice || 0;
+          bValue = b.pricing?.totalAmount || b.totalPrice || 0;
+          break;
+        case "serviceName":
+          const aServiceName = typeof a.service === 'object' && !Array.isArray(a.service)
+            ? (a.service.title || a.service.name || '')
+            : '';
+          const bServiceName = typeof b.service === 'object' && !Array.isArray(b.service)
+            ? (b.service.title || b.service.name || '')
+            : '';
+          aValue = aServiceName;
+          bValue = bServiceName;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [bookings, sortBy, sortOrder]);
+
+  // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-          {/* Header Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="h-10 w-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="hidden sm:block h-12 w-12 bg-gray-200 rounded-xl animate-pulse"></div>
-                <div className="space-y-2">
-                  <div className="h-7 bg-gray-200 rounded w-40 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
-                </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <div className="h-9 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-8 bg-gray-200 rounded w-40 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
               </div>
-              <div className="h-10 bg-gray-200 rounded-lg w-44 animate-pulse"></div>
             </div>
           </div>
-
-          {/* Filters Skeleton */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  <div className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
-                </div>
-              ))}
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <div className="lg:w-64 hidden lg:block">
+              <div className="h-96 bg-gray-200 rounded-2xl animate-pulse"></div>
             </div>
-          </div>
-
-          {/* Bookings Skeleton */}
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md p-5 border-2 border-gray-200">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="space-y-2">
-                        <div className="h-5 bg-gray-200 rounded w-48 animate-pulse"></div>
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                          <div className="h-6 bg-gray-200 rounded w-24 animate-pulse"></div>
-                        </div>
-                      </div>
-                      <div className="text-right space-y-1">
-                        <div className="h-6 bg-gray-200 rounded w-24 animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                      {Array.from({ length: 6 }).map((_, j) => (
-                        <div key={j} className="flex items-center gap-2">
-                          <div className="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
-                          <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 mt-3 lg:mt-0 lg:ml-4">
-                    {Array.from({ length: 3 }).map((_, k) => (
-                      <div key={k} className="h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+            <div className="flex-1 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white p-6 rounded-lg">
+                  <div className="h-6 bg-gray-200 rounded w-48 animate-pulse mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <div key={j} className="h-16 bg-gray-200 rounded animate-pulse"></div>
                     ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-          {/* Header */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm mb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/marketplace"
-                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-gray-700 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 rounded-lg hover:from-gray-100 hover:to-gray-50 hover:border-gray-300 shadow-sm hover:shadow-md transition-all"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Marketplace
-                </Link>
-                <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Bookings</h1>
-                  <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your service bookings</p>
-                </div>
-              </div>
-              <Link
-                href="/marketplace"
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to marketplace"
               >
-                <Store className="w-4 h-4" />
-                Browse Providers
-              </Link>
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Marketplace</span>
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Bookings</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Manage your service appointments</p>
+              </div>
             </div>
           </div>
-
-          {/* Error State */}
-          <Card interactive={false} className="bg-gradient-to-br from-white to-red-50/30 border-2 border-red-200 shadow-lg">
+          <div className="bg-white p-12 rounded-lg">
             <EmptyState
               icon={AlertCircle}
               iconColor="text-red-600"
@@ -709,39 +847,44 @@ export default function MyBookingsPage() {
                 }
               ]}
             />
-          </Card>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/40 relative overflow-hidden">
-      {/* Background accents */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-24 -left-16 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-sky-100/30 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg p-6 sm:p-7 backdrop-blur-sm space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/30">
-                <Calendar className="w-6 h-6" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to marketplace"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Marketplace</span>
+            </button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">My Bookings</h1>
-                <p className="text-sm sm:text-base text-gray-600 max-w-2xl">
-                  Manage all your service appointments, track statuses, and message providers in one place.
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Bookings</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {bookings.length > 0 ? `${bookings.length} ${bookings.length === 1 ? 'booking' : 'bookings'}` : 'Manage your service appointments'}
                 </p>
               </div>
             </div>
             <Link
               href="/marketplace"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
             >
               <Store className="w-4 h-4" />
               Browse Providers
@@ -749,85 +892,77 @@ export default function MyBookingsPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg p-4 sm:p-5 backdrop-blur-sm">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
-              >
-                {statusOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Filter by Type
-              </label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
-              >
-                <option value="all">All Bookings</option>
-                <option value="client">As Client</option>
-                <option value="provider">As Provider</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date From
-              </label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date To
-              </label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm hover:shadow-md hover:border-gray-300 bg-white"
-              />
-            </div>
-            <div className="flex items-end">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Sidebar - Filters */}
+          <BookingFilterSidebar
+            isOpen={filterDrawerOpen}
+            onClose={handleCloseFilters}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            typeFilter={typeFilter}
+            onTypeFilterChange={setTypeFilter}
+            dateFrom={dateFrom}
+            onDateFromChange={setDateFrom}
+            dateTo={dateTo}
+            onDateToChange={setDateTo}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+          />
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden mb-4">
               <button
-                onClick={() => {
-                  setStatusFilter("all");
-                  setTypeFilter("all");
-                  setDateFrom("");
-                  setDateTo("");
-                }}
-                className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 rounded-lg transition-all border-2 border-gray-200/80 hover:border-gray-300 shadow-sm hover:shadow-md hover:scale-105"
+                onClick={handleOpenFilters}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                aria-label="Open filters"
               >
-                Clear Filters
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                  <span className="ml-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                    {activeFiltersCount}
+                  </span>
+                )}
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* Bookings List */}
-        <div className="space-y-4">
-          {!Array.isArray(bookings) || bookings.length === 0 ? (
-            <Card interactive={false} className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl border-2 border-gray-200/70 shadow-lg">
+            {/* Controls Bar */}
+            <div className="mb-6">
+              <BookingControlsBar
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 mb-1">
+                  Error loading bookings
+                </p>
+                <p className="text-xs text-red-600">
+                  {error}
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Please try refreshing the page or adjusting your filters.
+                </p>
+              </div>
+            )}
+
+            {/* Bookings List */}
+            <div role="list" aria-label="Bookings list">
+              {!Array.isArray(sortedBookings) || sortedBookings.length === 0 ? (
+            <div className="bg-white p-12">
               <EmptyState
                 icon={Calendar}
-                iconColor="text-blue-600"
-                iconBgColor="bg-blue-100"
+                iconColor="text-emerald-600"
+                iconBgColor="bg-emerald-100"
                 title={
                   statusFilter === "all" 
                     ? "No Bookings Yet" 
@@ -854,199 +989,393 @@ export default function MyBookingsPage() {
                   }] : [])
                 ]}
               />
-            </Card>
+            </div>
           ) : (
-          <div className="grid gap-4">
-            {Array.isArray(bookings) && bookings.map((booking) => {
-              const bookingId = booking.id || booking._id || '';
-              
-              // Get service name
-              const serviceName = typeof booking.service === 'object' && !Array.isArray(booking.service)
-                ? (booking.service.title || booking.service.name || 'Unknown Service')
-                : 'Unknown Service';
-              
-              // Get provider info
-              const provider = typeof booking.provider === 'object' && !Array.isArray(booking.provider)
-                ? booking.provider
-                : typeof booking.service === 'object' && !Array.isArray(booking.service) && booking.service.provider
-                  ? booking.service.provider
-                  : {};
-              const providerName = provider.name || 
-                (provider.firstName && provider.lastName 
-                  ? `${provider.firstName} ${provider.lastName}` 
-                  : provider.firstName || provider.lastName || 'Unknown Provider');
-              const providerId = provider._id || provider.id;
-              
-              // Get booking date
-              const bookingDate = booking.bookingDate 
-                ? new Date(booking.bookingDate) 
-                : booking.date 
-                  ? new Date(booking.date) 
-                  : new Date();
-              
-              // Get total price
-              const totalPrice = booking.pricing?.totalAmount || booking.totalPrice || 0;
-              const currency = booking.pricing?.currency || 'PHP';
-              
-              // Get payment status
-              const paymentStatus = booking.payment?.status || booking.paymentStatus || 'pending';
-              
-              // Get address
-              const address = booking.address || {};
-              const addressString = address.street 
-                ? `${address.street}, ${address.city || ''}, ${address.state || ''} ${address.zipCode || ''}`.trim()
-                : address.city && address.state
-                  ? `${address.city}, ${address.state}`
-                  : address.city || address.state || 'Location not specified';
-              
-              // Get duration
-              const durationHours = booking.duration || 0;
-              
-              return (
-                <div key={bookingId} className="bg-gradient-to-br from-white to-gray-50/70 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-5 border-2 border-gray-200/70 backdrop-blur-sm">
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-base font-semibold text-gray-900 mb-2">
+            <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'} role="list">
+              {Array.isArray(sortedBookings) && sortedBookings.map((booking) => {
+                const bookingId = booking.id || booking._id || '';
+                
+                const serviceName = typeof booking.service === 'object' && !Array.isArray(booking.service)
+                  ? (booking.service.title || booking.service.name || 'Unknown Service')
+                  : 'Unknown Service';
+                
+                const provider = typeof booking.provider === 'object' && !Array.isArray(booking.provider)
+                  ? booking.provider
+                  : typeof booking.service === 'object' && !Array.isArray(booking.service) && booking.service.provider
+                    ? booking.service.provider
+                    : {};
+                const providerName = provider.name || 
+                  (provider.firstName && provider.lastName 
+                    ? `${provider.firstName} ${provider.lastName}` 
+                    : provider.firstName || provider.lastName || 'Unknown Provider');
+                const providerId = provider._id || provider.id;
+                
+                const bookingDate = booking.bookingDate 
+                  ? new Date(booking.bookingDate) 
+                  : booking.date 
+                    ? new Date(booking.date) 
+                    : new Date();
+                
+                const totalPrice = booking.pricing?.totalAmount || booking.totalPrice || 0;
+                const currency = booking.pricing?.currency || defaultCurrency;
+                
+                const paymentStatus = booking.payment?.status || booking.paymentStatus || 'pending';
+                
+                const address = booking.address || {};
+                const addressString = address.street 
+                  ? `${address.street}, ${address.city || ''}, ${address.state || ''} ${address.zipCode || ''}`.trim()
+                  : address.city && address.state
+                    ? `${address.city}, ${address.state}`
+                    : address.city || address.state || 'Location not specified';
+                
+                const durationHours = booking.duration || 0;
+                
+                return (
+                  <div 
+                    key={bookingId} 
+                    className={`bg-white border-l-4 border-l-emerald-500 ${viewMode === 'grid' ? 'rounded-lg shadow-md h-full flex flex-col' : ''}`}
+                    role="listitem"
+                    aria-label={`Booking for ${serviceName}`}
+                  >
+                    <div className={`${viewMode === 'grid' ? 'p-4 flex flex-col flex-1' : 'p-6'}`}>
+                      {/* Top Section - Service Name, Status, Price */}
+                      <div className={`flex flex-col ${viewMode === 'grid' ? 'gap-3' : 'lg:flex-row lg:items-start lg:justify-between gap-4'} mb-4`}>
+                        <div className="flex-1 min-w-0">
+                          <h3 className={`${viewMode === 'grid' ? 'text-lg' : 'text-xl'} font-bold text-gray-900 mb-2 line-clamp-2`}>
                             {serviceName}
                           </h3>
-                          <div className="flex items-center gap-4 mb-1 flex-wrap">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-gray-500">Booking Status:</span>
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${getStatusColor(booking.status)}`}>
-                                {getStatusIcon(booking.status)}
-                                {formatStatusLabel(booking.status)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-medium text-gray-500">Payment Status:</span>
-                              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                                paymentStatus === "paid" || paymentStatus === "PAID"
-                                  ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200" 
-                                  : paymentStatus === "pending" || paymentStatus === "PENDING"
-                                  ? "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border border-yellow-200"
-                                  : paymentStatus === "refunded" || paymentStatus === "REFUNDED"
-                                  ? "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border border-blue-200"
-                                  : "bg-gradient-to-r from-red-100 to-pink-100 text-red-800 border border-red-200"
-                              }`}>
-                                {formatStatusLabel(paymentStatus)}
-                              </span>
-                            </div>
+                          <div className="flex flex-wrap items-center gap-2 mb-3">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold ${getStatusColor(booking.status)}`}>
+                              {getStatusIcon(booking.status)}
+                              {formatStatusLabel(booking.status)}
+                            </span>
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold ${
+                              paymentStatus === "paid" || paymentStatus === "PAID"
+                                ? "bg-emerald-50 text-emerald-700" 
+                                : paymentStatus === "pending" || paymentStatus === "PENDING"
+                                ? "bg-yellow-50 text-yellow-700"
+                                : paymentStatus === "refunded" || paymentStatus === "REFUNDED"
+                                ? "bg-blue-50 text-blue-700"
+                                : "bg-red-50 text-red-700"
+                            }`}>
+                              {formatStatusLabel(paymentStatus)}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(totalPrice)}
+                        <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'text-left' : 'text-right'}`}>
+                          <div className={`${viewMode === 'grid' ? 'text-2xl' : 'text-3xl'} font-bold text-emerald-600 mb-1`}>
+                            {formatPrice(totalPrice, currency)}
                           </div>
-                          <div className="text-sm text-gray-500">Total</div>
+                          <div className="text-xs text-gray-500">Total Amount</div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="w-4 h-4 flex-shrink-0" />
-                          <span>{formatDate(bookingDate.toISOString())}</span>
+                      {/* Key Information Grid */}
+                      <div className={`grid ${viewMode === 'grid' ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'} gap-3 ${viewMode === 'grid' ? 'mb-4 pb-4' : 'mb-6 pb-6'} border-b border-gray-200`}>
+                        <div className="flex items-start gap-2">
+                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-50 flex items-center justify-center rounded`}>
+                            <Calendar className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-emerald-600`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Date & Time</div>
+                            <div className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900`}>{formatDate(bookingDate.toISOString())}</div>
+                            <div className="text-xs text-gray-600">{formatTime(bookingDate.toISOString())}</div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="w-4 h-4 flex-shrink-0" />
-                          <span>{durationHours > 0 ? `${durationHours} hour${durationHours !== 1 ? 's' : ''}` : 'Duration not specified'}</span>
+                        
+                        <div className="flex items-start gap-2">
+                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-blue-50 flex items-center justify-center rounded`}>
+                            <Clock className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-blue-600`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Duration</div>
+                            <div className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900`}>
+                              {durationHours > 0 ? `${durationHours} hour${durationHours !== 1 ? 's' : ''}` : 'Not specified'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="w-4 h-4 flex-shrink-0 text-gray-600" />
-                          {providerId ? (
-                            <Link 
-                              href={`/marketplace/providers/${providerId}`}
-                              className="truncate font-semibold text-green-600 hover:text-green-700 hover:underline transition-all cursor-pointer px-2 py-1 rounded-md hover:bg-green-50"
-                            >
-                              {providerName}
-                            </Link>
-                          ) : (
-                            <span className="truncate text-gray-600">{providerName}</span>
+                        
+                        <div className="flex items-start gap-2">
+                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-purple-50 flex items-center justify-center rounded`}>
+                            <User className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-purple-600`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Provider</div>
+                            {providerId ? (
+                              <Link 
+                                href={`/marketplace/providers/${providerId}`}
+                                className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-emerald-600 hover:text-emerald-700 hover:underline truncate block`}
+                              >
+                                {providerName}
+                              </Link>
+                            ) : (
+                              <div className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900 truncate`}>{providerName}</div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-orange-50 flex items-center justify-center rounded`}>
+                            <MapPin className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-orange-600`} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Location</div>
+                            <div className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900 truncate`}>{addressString}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contact Information - Only show if available */}
+                      {(provider.phone || provider.email) && (
+                        <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'} gap-3 ${viewMode === 'grid' ? 'mb-4 pb-4' : 'mb-6 pb-6'} border-b border-gray-200`}>
+                          {provider.phone && (
+                            <div className="flex items-center gap-2">
+                              <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-teal-50 flex items-center justify-center rounded`}>
+                                <Phone className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-teal-600`} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Phone</div>
+                                <a href={`tel:${provider.phone}`} className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900 hover:text-emerald-600 transition-colors`}>
+                                  {provider.phone}
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                          {provider.email && (
+                            <div className="flex items-center gap-2">
+                              <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-indigo-50 flex items-center justify-center rounded`}>
+                                <Mail className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-indigo-600`} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email</div>
+                                <a href={`mailto:${provider.email}`} className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} font-semibold text-gray-900 hover:text-emerald-600 transition-colors truncate block`}>
+                                  {provider.email}
+                                </a>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        {provider.phone && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Phone className="w-4 h-4 flex-shrink-0" />
-                            <span>{provider.phone}</span>
-                          </div>
-                        )}
-                        {provider.email && (
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Mail className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{provider.email}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 flex-shrink-0" />
-                          <span className="truncate">{addressString}</span>
-                        </div>
-                      </div>
+                      )}
 
+                      {/* Additional Info */}
                       {(booking.specialInstructions || booking.notes) && (
-                        <div className="mb-3">
-                          <h4 className="text-sm font-medium text-gray-700 mb-1">Special Instructions:</h4>
-                          <p className="text-sm text-gray-600 line-clamp-2">{booking.specialInstructions || booking.notes}</p>
+                        <div className={`${viewMode === 'grid' ? 'mb-4' : 'mb-6'} p-3 bg-gray-50 border-l-4 border-l-gray-300 rounded-r`}>
+                          <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Special Instructions</h4>
+                          <p className={`${viewMode === 'grid' ? 'text-xs' : 'text-sm'} text-gray-700 leading-relaxed line-clamp-3`}>{booking.specialInstructions || booking.notes}</p>
                         </div>
                       )}
                       
                       {booking.pricing?.additionalFees && booking.pricing.additionalFees.length > 0 && (
-                        <div className="mb-3">
-                          <h4 className="text-sm font-medium text-gray-700 mb-1">Additional Fees:</h4>
-                          <ul className="text-sm text-gray-600 space-y-1">
+                        <div className={`${viewMode === 'grid' ? 'mb-4' : 'mb-6'} p-3 bg-amber-50 border-l-4 border-l-amber-400 rounded-r`}>
+                          <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wide mb-2">Additional Fees</h4>
+                          <ul className={`${viewMode === 'grid' ? 'space-y-1.5' : 'space-y-2'}`}>
                             {booking.pricing.additionalFees.map((fee, idx) => (
-                              <li key={idx}>
-                                {fee.description || 'Additional fee'}: {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(fee.amount || 0)}
+                              <li key={idx} className={`flex items-center justify-between ${viewMode === 'grid' ? 'text-xs' : 'text-sm'}`}>
+                                <span className="text-gray-700 truncate pr-2">{fee.description || 'Additional fee'}</span>
+                                <span className="font-semibold text-gray-900 flex-shrink-0">
+                                  {formatPrice(fee.amount || 0, currency)}
+                                </span>
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
-                    </div>
 
-                    <div className="flex flex-col gap-2 mt-3 lg:mt-0 lg:ml-4">
-                      <Link
-                        href={`/marketplace/bookings/${bookingId}`}
-                        className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg bg-gradient-to-r from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Details
-                      </Link>
-                      
-                      {booking.status === "pending" && (
-                        <button
-                          onClick={() => updateBookingStatus(bookingId, "cancelled")}
-                          className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-300 text-red-700 rounded-lg bg-gradient-to-r from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100 transition-all shadow-sm hover:shadow-md hover:scale-105"
+                      {/* Action Buttons */}
+                      <div className={`flex flex-wrap gap-2 ${viewMode === 'grid' ? 'pt-4 mt-auto' : 'pt-6'} border-t border-gray-200`}>
+                        <Link
+                          href={`/marketplace/bookings/${bookingId}`}
+                          className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all rounded`}
                         >
-                          <XCircle className="w-4 h-4" />
-                          Cancel Booking
-                        </button>
-                      )}
+                          <Eye className={viewMode === 'grid' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+                          {viewMode === 'grid' ? 'Details' : 'View Details'}
+                        </Link>
+                        
+                        {booking.status === "pending" && (
+                          <button
+                            onClick={() => updateBookingStatus(bookingId, "cancelled")}
+                            disabled={updatingStatus === bookingId}
+                            className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-red-700 bg-white border-2 border-red-300 hover:bg-red-50 hover:border-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded`}
+                            aria-label={`Cancel booking for ${serviceName}`}
+                            aria-busy={updatingStatus === bookingId}
+                          >
+                            <XCircle className={viewMode === 'grid' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+                            {updatingStatus === bookingId ? (viewMode === 'grid' ? 'Cancelling...' : 'Cancelling...') : (viewMode === 'grid' ? 'Cancel' : 'Cancel Booking')}
+                          </button>
+                        )}
 
-                      {booking.status === "completed" && !booking.review?.rating && (
-                        <button className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-green-300 text-green-700 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md hover:scale-105">
-                          <Star className="w-4 h-4" />
-                          Leave Review
-                        </button>
-                      )}
+                        {booking.status === "completed" && !booking.review?.rating && (
+                          <button 
+                            onClick={() => handleOpenReview(bookingId)}
+                            className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-emerald-700 bg-white border-2 border-emerald-300 hover:bg-emerald-50 hover:border-emerald-400 transition-all rounded`}
+                            aria-label={`Leave review for ${serviceName}`}
+                          >
+                            <Star className={viewMode === 'grid' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+                            {viewMode === 'grid' ? 'Review' : 'Leave Review'}
+                          </button>
+                        )}
 
-                      <button
-                        onClick={() => handleMessage(booking)}
-                        disabled={messaging === (booking.id || booking._id || '')}
-                        className="flex items-center justify-center gap-2 px-4 py-2 border-2 border-blue-300 text-blue-700 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                        {messaging === (booking.id || booking._id || '') ? 'Opening...' : 'Message'}
-                      </button>
+                        <button
+                          onClick={() => handleMessage(booking)}
+                          disabled={messaging === (booking.id || booking._id || '')}
+                          className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-blue-700 bg-white border-2 border-blue-300 hover:bg-blue-50 hover:border-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded`}
+                          aria-label={`Message provider about ${serviceName}`}
+                          aria-busy={messaging === (booking.id || booking._id || '')}
+                        >
+                          <MessageCircle className={viewMode === 'grid' ? 'w-3.5 h-3.5' : 'w-4 h-4'} />
+                          {messaging === (booking.id || booking._id || '') ? 'Opening...' : (viewMode === 'grid' ? 'Message' : 'Message')}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {reviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-gray-900">Leave a Review</h2>
+              <button
+                onClick={handleCloseReview}
+                className="p-1.5 hover:bg-gray-100 transition-colors"
+                aria-label="Close review modal"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Overall Rating */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-3">
+                  Overall Rating <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-3">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                      className="focus:outline-none transition-transform hover:scale-110 active:scale-95"
+                      aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+                    >
+                      <Star
+                        className={`w-9 h-9 transition-colors ${
+                          star <= reviewForm.rating
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300 hover:text-gray-400'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-base font-bold text-gray-700">
+                    {reviewForm.rating} / 5
+                  </span>
+                </div>
+              </div>
+
+              {/* Category Ratings */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-4">
+                  Category Ratings
+                </label>
+                <div className="space-y-4">
+                  {Object.entries(reviewForm.categories).map(([category, rating]) => (
+                    <div key={category} className="p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold text-gray-900 capitalize">
+                          {category}
+                        </span>
+                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1">{rating} / 5</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewForm(prev => ({
+                              ...prev,
+                              categories: {
+                                ...prev.categories,
+                                [category]: star
+                              }
+                            }))}
+                            className="focus:outline-none transition-transform hover:scale-110 active:scale-95"
+                            aria-label={`Rate ${category} ${star} star${star !== 1 ? 's' : ''}`}
+                          >
+                            <Star
+                              className={`w-6 h-6 transition-colors ${
+                                star <= rating
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300 hover:text-gray-400'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div>
+                <label htmlFor="review-comment" className="block text-sm font-bold text-gray-900 mb-2">
+                  Your Review
+                </label>
+                <textarea
+                  id="review-comment"
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                  rows={4}
+                  className="w-full px-4 py-3 text-sm border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none"
+                  placeholder="Share your experience with this service..."
+                />
+              </div>
+
+              {/* Would Recommend */}
+              <div className="flex items-center gap-3 p-4 bg-emerald-50">
+                <input
+                  type="checkbox"
+                  id="would-recommend"
+                  checked={reviewForm.wouldRecommend}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, wouldRecommend: e.target.checked }))}
+                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="would-recommend" className="text-sm font-semibold text-gray-900 cursor-pointer">
+                  I would recommend this service
+                </label>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleCloseReview}
+                  disabled={submittingReview}
+                  className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleSubmitReview(reviewModalOpen)}
+                  disabled={submittingReview || reviewForm.rating < 1}
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submittingReview ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

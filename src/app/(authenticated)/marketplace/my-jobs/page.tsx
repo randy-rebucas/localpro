@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { 
   Plus,
   Edit,
@@ -19,6 +20,8 @@ import {
   XCircle,
   Building2,
   Star,
+  ArrowLeft,
+  Filter,
 } from "lucide-react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -27,6 +30,9 @@ import { formatCurrency } from "@/lib/currency-utils";
 import { getDefaultCurrency } from "@/lib/settings-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { Job, JobStatus } from "@/types/jobs";
+import { JobFilterSidebar } from "@/components/marketplace/job-filter-sidebar";
+import { JobControlsBar } from "@/components/marketplace/job-controls-bar";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface JobStats {
   totalJobs: number;
@@ -47,6 +53,7 @@ interface ApiResponse {
 }
 
 export default function MyJobsPage() {
+  const router = useRouter();
   const { settings: appSettings } = useAppSettings();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +68,10 @@ export default function MyJobsPage() {
     count: number;
   } | null>(null);
   const [stats, setStats] = useState<JobStats | null>(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("createdAt");
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
   const defaultCurrency = getDefaultCurrency(appSettings);
 
@@ -237,33 +248,107 @@ export default function MyJobsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(statusFilter !== "all");
+  }, [statusFilter]);
+
+  // Memoized filter drawer handlers
+  const handleOpenFilters = useCallback(() => {
+    setFilterDrawerOpen(true);
+  }, []);
+
+  const handleCloseFilters = useCallback(() => {
+    setFilterDrawerOpen(false);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setStatusFilter("all");
+  }, []);
+
+  // Back button handler
+  const handleBack = useCallback(() => {
+    router.push('/marketplace');
+  }, [router]);
+
+  // Sort jobs
+  const sortedJobs = useMemo(() => {
+    if (!Array.isArray(jobs)) return [];
+    
+    const sorted = [...jobs].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+
+      switch (sortBy) {
+        case "createdAt":
+          aValue = new Date(a.createdAt || 0);
+          bValue = new Date(b.createdAt || 0);
+          break;
+        case "title":
+          aValue = a.title || "";
+          bValue = b.title || "";
+          break;
+        case "status":
+          aValue = a.status || "";
+          bValue = b.status || "";
+          break;
+        case "applications":
+          aValue = a.applications?.length || 0;
+          bValue = b.applications?.length || 0;
+          break;
+        case "views":
+          aValue = a.views?.count || 0;
+          bValue = b.views?.count || 0;
+          break;
+        case "salary":
+          const aSalary = a.salary?.min || a.salary?.max || 0;
+          const bSalary = b.salary?.min || b.salary?.max || 0;
+          aValue = aSalary;
+          bValue = bSalary;
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [jobs, sortBy, sortOrder]);
+
   if (loading && jobs.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6">
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Jobs</h1>
-                <p className="text-gray-600">Manage your job postings</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
+              <div className="h-9 w-32 bg-gray-200 rounded-lg animate-pulse"></div>
+            </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="h-8 bg-gray-200 rounded w-40 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
               </div>
-              <Link
-                href="/marketplace/create-job"
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-              >
-                <Plus className="w-4 h-4" />
-                Post New Job
-              </Link>
             </div>
           </div>
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <div className="lg:w-64 hidden lg:block">
+              <div className="h-96 bg-gray-200 rounded-2xl animate-pulse"></div>
+            </div>
+            <div className="flex-1 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white p-6 rounded-lg">
+                  <div className="h-6 bg-gray-200 rounded w-48 animate-pulse mb-4"></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <div key={j} className="h-16 bg-gray-200 rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -272,43 +357,51 @@ export default function MyJobsPage() {
 
   if (error && jobs.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6">
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Jobs</h1>
-                <p className="text-gray-600">Manage your job postings</p>
-              </div>
-              <Link
-                href="/marketplace/create-job"
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
-              >
-                <Plus className="w-4 h-4" />
-                Post New Job
-              </Link>
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border-2 border-red-200 shadow-lg p-8 backdrop-blur-sm">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/20">
-                <AlertCircle className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent mb-2">Error Loading Jobs</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+          <div className="mb-8">
+            <div className="mb-4">
               <button
-                onClick={() => fetchJobs()}
-                className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+                onClick={handleBack}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Go back to marketplace"
               >
-                Try Again
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to Marketplace</span>
               </button>
             </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Jobs</h1>
+                <p className="text-sm text-gray-500 mt-0.5">Manage your job postings</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-12 rounded-lg">
+            <EmptyState
+              icon={AlertCircle}
+              iconColor="text-red-600"
+              iconBgColor="bg-red-100"
+              title="Failed to Load Jobs"
+              description={error}
+              actions={[
+                {
+                  type: "button",
+                  onClick: fetchJobs,
+                  label: "Try Again",
+                  variant: "primary"
+                },
+                {
+                  type: "link",
+                  href: "/marketplace/create-job",
+                  label: "Post New Job",
+                  variant: "secondary"
+                }
+              ]}
+            />
           </div>
         </div>
       </div>
@@ -316,25 +409,37 @@ export default function MyJobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
-      {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-6 backdrop-blur-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">My Jobs</h1>
-              <p className="text-gray-600">Manage your job postings and track applications</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        {/* Header Section */}
+        <div className="mb-8">
+          {/* Back Button */}
+          <div className="mb-4">
+            <button
+              onClick={handleBack}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Go back to marketplace"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Marketplace</span>
+            </button>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Jobs</h1>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {jobs.length > 0 ? `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}` : 'Manage your job postings and track applications'}
+                </p>
+              </div>
             </div>
             <Link
               href="/marketplace/create-job"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-md hover:shadow-lg"
             >
               <Plus className="w-4 h-4" />
               Post New Job
@@ -342,108 +447,144 @@ export default function MyJobsPage() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Summary */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm hover:scale-[1.02]">
+          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Jobs</p>
                   <p className="text-2xl font-bold text-gray-900">{stats.totalJobs}</p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg shadow-md shadow-emerald-500/20">
-                  <Briefcase className="w-6 h-6 text-emerald-600" />
-                </div>
+                <Briefcase className="w-6 h-6 text-emerald-600" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-white to-green-50/50 rounded-xl border-2 border-green-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm hover:scale-[1.02]">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Active Jobs</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stats.activeJobs}</p>
+                  <p className="text-2xl font-bold text-emerald-600">{stats.activeJobs}</p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-green-100 to-emerald-200 rounded-lg shadow-md shadow-green-500/20">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </div>
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-xl border-2 border-blue-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm hover:scale-[1.02]">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Applications</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{stats.totalApplications}</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.totalApplications}</p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-200 rounded-lg shadow-md shadow-blue-500/20">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
-            <div className="bg-gradient-to-br from-white to-purple-50/50 rounded-xl border-2 border-purple-200 shadow-md hover:shadow-lg transition-all p-4 backdrop-blur-sm hover:scale-[1.02]">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Total Views</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{stats.totalViews}</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.totalViews}</p>
                 </div>
-                <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-200 rounded-lg shadow-md shadow-purple-500/20">
-                  <Eye className="w-6 h-6 text-purple-600" />
-                </div>
+                <Eye className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </div>
         )}
 
-        {/* Filters */}
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-semibold text-gray-700">Filter by status:</span>
-            <div className="flex flex-wrap gap-2">
-              {["all", "active", "paused", "closed", "draft"].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => {
-                    setStatusFilter(status);
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 ${
-                    statusFilter === status
-                      ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl"
-                      : "bg-white text-gray-700 border-2 border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/50 shadow-sm hover:shadow-md"
-                  }`}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Sidebar - Filters */}
+          <JobFilterSidebar
+            isOpen={filterDrawerOpen}
+            onClose={handleCloseFilters}
+            statusFilter={statusFilter}
+            onStatusFilterChange={(status) => {
+              setStatusFilter(status);
+              setCurrentPage(1);
+            }}
+            hasActiveFilters={hasActiveFilters}
+            onClearFilters={handleClearFilters}
+          />
 
-        {/* Jobs List */}
-        {jobs.length === 0 ? (
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-12 backdrop-blur-sm">
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/20">
-                <Briefcase className="w-8 h-8 text-emerald-600" />
-              </div>
-              <h3 className="text-xl font-bold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-2">
-                No jobs found
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {statusFilter !== "all"
-                  ? `You don't have any ${statusFilter} jobs yet.`
-                  : "You haven't posted any jobs yet. Create your first job posting to get started!"}
-              </p>
-              <Link
-                href="/marketplace/create-job"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 font-semibold"
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile Filter Button */}
+            <div className="lg:hidden mb-4">
+              <button
+                onClick={handleOpenFilters}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                aria-label="Open filters"
               >
-                <Plus className="w-5 h-5" />
-                Post Your First Job
-              </Link>
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {hasActiveFilters && (
+                  <span className="ml-1 px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold">
+                    1
+                  </span>
+                )}
+              </button>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {jobs.map((job) => {
+
+            {/* Controls Bar */}
+            <div className="mb-6">
+              <JobControlsBar
+                sortBy={sortBy}
+                onSortByChange={setSortBy}
+                sortOrder={sortOrder}
+                onSortOrderChange={setSortOrder}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            </div>
+
+            {/* Error State */}
+            {error && (
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm font-medium text-red-800 mb-1">
+                  Error loading jobs
+                </p>
+                <p className="text-xs text-red-600">
+                  {error}
+                </p>
+                <p className="text-xs text-red-600 mt-1">
+                  Please try refreshing the page or adjusting your filters.
+                </p>
+              </div>
+            )}
+
+            {/* Jobs List */}
+            {sortedJobs.length === 0 ? (
+              <div className="bg-white p-12 rounded-lg">
+                <EmptyState
+                  icon={Briefcase}
+                  iconColor="text-emerald-600"
+                  iconBgColor="bg-emerald-100"
+                  title={
+                    statusFilter !== "all"
+                      ? `No ${statusFilter} jobs found`
+                      : "No jobs found"
+                  }
+                  description={
+                    statusFilter !== "all"
+                      ? `You don't have any ${statusFilter} jobs yet.`
+                      : "You haven't posted any jobs yet. Create your first job posting to get started!"
+                  }
+                  actions={[
+                    {
+                      type: "link",
+                      href: "/marketplace/create-job",
+                      label: "Post Your First Job",
+                      variant: "primary"
+                    },
+                    ...(statusFilter !== "all" ? [{
+                      type: "button" as const,
+                      onClick: () => setStatusFilter("all"),
+                      label: "Show All Jobs",
+                      variant: "secondary" as const
+                    }] : [])
+                  ]}
+                />
+              </div>
+            ) : (
+              <div className={`${viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}`}>
+                {sortedJobs.map((job) => {
               const jobId = job._id || (job as { id?: string }).id;
               const categoryName = typeof job.category === 'object' ? job.category?.name : job.category;
               const companyName = job.company?.name || "Unknown Company";
@@ -456,10 +597,10 @@ export default function MyJobsPage() {
               const status = job.status || (job.isActive ? "active" : "paused");
 
               return (
-                <div
-                  key={jobId}
-                  className="p-6 bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm hover:scale-[1.01]"
-                >
+                  <div
+                    key={jobId}
+                    className={`bg-white border-l-4 border-l-emerald-500 ${viewMode === 'grid' ? 'rounded-lg shadow-md' : ''} hover:shadow-lg transition-all duration-300 p-6`}
+                  >
                   <div className="flex flex-col md:flex-row gap-6">
                     {/* Company Logo */}
                     <div className="flex-shrink-0">
@@ -606,67 +747,69 @@ export default function MyJobsPage() {
                         </button>
                       </div>
                     </div>
+                    </div>
+                  </div>
+                );
+              })}
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination && pagination.pages > 1 && (
+              <div className="mt-6 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-medium text-gray-600">
+                    Showing {((pagination.current - 1) * pagination.limit) + 1} to{" "}
+                    {Math.min(pagination.current * pagination.limit, pagination.total)} of{" "}
+                    {pagination.total} jobs
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(pagination.current - 1)}
+                      disabled={pagination.current === 1}
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md font-medium"
+                    >
+                      Previous
+                    </button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                        .filter(
+                          (page) =>
+                            page === 1 ||
+                            page === pagination.pages ||
+                            (page >= pagination.current - 1 && page <= pagination.current + 1)
+                        )
+                        .map((page, index, array) => (
+                          <div key={page} className="flex items-center gap-1">
+                            {index > 0 && array[index - 1] !== page - 1 && (
+                              <span className="px-2 text-gray-500">...</span>
+                            )}
+                            <button
+                              onClick={() => handlePageChange(page)}
+                              className={`px-4 py-2 rounded-lg transition-all font-semibold ${
+                                pagination.current === page
+                                  ? "bg-emerald-600 text-white shadow-md"
+                                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 shadow-sm"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                    <button
+                      onClick={() => handlePageChange(pagination.current + 1)}
+                      disabled={pagination.current === pagination.pages}
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md font-medium"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {pagination && pagination.pages > 1 && (
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg p-4 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-medium text-gray-600">
-                Showing {((pagination.current - 1) * pagination.limit) + 1} to{" "}
-                {Math.min(pagination.current * pagination.limit, pagination.total)} of{" "}
-                {pagination.total} jobs
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(pagination.current - 1)}
-                  disabled={pagination.current === 1}
-                  className="px-4 py-2 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
-                >
-                  Previous
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: pagination.pages }, (_, i) => i + 1)
-                    .filter(
-                      (page) =>
-                        page === 1 ||
-                        page === pagination.pages ||
-                        (page >= pagination.current - 1 && page <= pagination.current + 1)
-                    )
-                    .map((page, index, array) => (
-                      <div key={page} className="flex items-center gap-1">
-                        {index > 0 && array[index - 1] !== page - 1 && (
-                          <span className="px-2 text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => handlePageChange(page)}
-                          className={`px-4 py-2 rounded-lg transition-all font-semibold hover:scale-105 ${
-                            pagination.current === page
-                              ? "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl"
-                              : "bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 hover:from-gray-50 hover:to-gray-100 shadow-sm hover:shadow-md"
-                          }`}
-                        >
-                          {page}
-                        </button>
-                      </div>
-                    ))}
-                </div>
-                <button
-                  onClick={() => handlePageChange(pagination.current + 1)}
-                  disabled={pagination.current === pagination.pages}
-                  className="px-4 py-2 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-300 text-gray-700 rounded-lg hover:from-gray-50 hover:to-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md hover:scale-105 font-medium"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
