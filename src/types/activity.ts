@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/activity/types' instead.
+ */
+export * from '@/features/activity/types';
+
 export type ActivityType =
   | "user_login"
   | "user_logout"

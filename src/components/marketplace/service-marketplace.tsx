@@ -15,12 +15,11 @@ interface ServiceMarketplaceProps {
 }
 
 export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
+  void userName;
   // Fetch service categories
   const { 
     categories, 
     loading: categoriesLoading, 
-    error: categoriesError, 
-    refetch: refetchCategories 
   } = useCategories();
 
   // Fetch max price

@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/trust-verification/hooks/useTrustVerification' instead.
+ */
+export * from '@/features/trust-verification/hooks/useTrustVerification';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

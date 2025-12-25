@@ -1,40 +1,22 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Heart, Share2, MessageSquare } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Loading } from "@/components/ui/loading";
 import { useProvider } from "@/hooks/useProviders";
 import { ProviderDetail } from "@/components/detail/provider-detail";
-import { checkFavorite, toggleFavorite } from "@/lib/favorites-utils";
-import { useSession } from "@/hooks/useAuth";
+import { toggleFavorite } from "@/lib/favorites-utils";
 import toast from "react-hot-toast";
 import { logger } from "@/lib/logger";
 
 export default function ProviderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { data: session } = useSession();
   const providerId = params?.id as string;
 
-  const { provider, loading, error, refetch } = useProvider(providerId);
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  // Check if provider is favorited
-  React.useEffect(() => {
-    if (provider && providerId) {
-      const checkFav = async () => {
-        try {
-          const favorited = await checkFavorite("provider", providerId);
-          setIsFavorite(favorited);
-        } catch (err) {
-          logger.error("Error checking favorite", err instanceof Error ? err : new Error(String(err)));
-        }
-      };
-      checkFav();
-    }
-  }, [provider, providerId]);
+  const { provider, loading, error } = useProvider(providerId);
 
   const handleFavorite = useCallback(async () => {
     if (!providerId) {
@@ -44,7 +26,6 @@ export default function ProviderDetailPage() {
 
     try {
       const newFavoriteState = await toggleFavorite("provider", providerId);
-      setIsFavorite(newFavoriteState);
       toast.success(newFavoriteState ? "Added to favorites" : "Removed from favorites");
     } catch (err) {
       logger.error("Error toggling favorite", err instanceof Error ? err : new Error(String(err)));

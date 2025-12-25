@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/types-bookings' instead.
+ */
+export * from '@/features/marketplace/types-bookings';
+
 export type ServiceCategory =
   | "cleaning"
   | "plumbing"

@@ -1,4 +1,9 @@
-export type AdminRole = "admin" | "manager" | "supervisor";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/agencies/types' instead.
+ */
+export * from '@/features/agencies/types';
+import type { AdminRole } from '@/features/agencies/types';
 export type ProviderStatus = "active" | "inactive" | "suspended" | "pending";
 export type AgencyStatus = "active" | "inactive" | "suspended" | "pending";
 export type BusinessType = "sole_proprietorship" | "partnership" | "corporation" | "llc" | "nonprofit";

@@ -1,4 +1,9 @@
-export type FacilityCareCategory = "janitorial" | "landscaping" | "pest_control" | "maintenance" | "security";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/facility-care/types' instead.
+ */
+export * from '@/features/facility-care/types';
+import type { FacilityCareCategory } from '@/features/facility-care/types';
 export type PricingType = "hourly" | "monthly" | "per_sqft" | "per_visit" | "contract";
 export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 export type FacilityType =

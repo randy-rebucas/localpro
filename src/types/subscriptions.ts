@@ -1,4 +1,9 @@
-export type BillingCycle = "monthly" | "yearly";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/subscriptions/types' instead.
+ */
+export * from '@/features/subscriptions/types';
+import type { BillingCycle } from '@/features/subscriptions/types';
 export type SubscriptionStatus = "active" | "cancelled" | "expired" | "suspended" | "pending";
 export type PaymentMethod = "paypal" | "paymaya" | "stripe" | "bank_transfer";
 export type PaymentStatus = "pending" | "completed" | "failed" | "refunded" | "cancelled";

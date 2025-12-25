@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/components/portfolio-gallery' instead.
+ */
+export * from '@/features/auth/components/portfolio-gallery';
 
 import { useState } from "react";
 import { Upload, X, Eye, Download, ExternalLink, Plus, Grid, List } from "lucide-react";

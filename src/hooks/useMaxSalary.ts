@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/jobs/hooks/useMaxSalary' instead.
+ */
+export * from '@/features/jobs/hooks/useMaxSalary';
 import { useState, useEffect } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

@@ -1,4 +1,8 @@
-// Type mappings for frontend to backend
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/admin/types-broadcaster' instead.
+ */
+export * from '@/features/admin/types-broadcaster';
 export type BroadcasterTypeFrontend = 'info' | 'success' | 'warning' | 'error' | 'promotion';
 export type BroadcasterTypeBackend = 'announcement' | 'promotion' | 'news' | 'update' | 'event' | 'general';
 export type BroadcasterCategory = 'system' | 'marketing' | 'feature' | 'maintenance' | 'security' | 'other';

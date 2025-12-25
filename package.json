@@ -8,7 +8,15 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
-    "analyze": "node scripts/analyze-bundle.js"
+    "analyze": "node scripts/analyze-bundle.js",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:client": "playwright test e2e/journeys/client",
+    "test:e2e:provider": "playwright test e2e/journeys/provider",
+    "test:e2e:admin": "playwright test e2e/journeys/admin"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -43,12 +51,15 @@
   "devDependencies": {
     "@axe-core/react": "^4.11.0",
     "@eslint/eslintrc": "^3",
+    "@faker-js/faker": "^10.1.0",
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "15.5.7",
     "tailwindcss": "^4",

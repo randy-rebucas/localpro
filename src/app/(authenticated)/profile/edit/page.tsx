@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { EditProfileForm } from "@/components/edit-profile-form";
+import { EditProfileForm, type EditProfileUserProfile } from "@/components/edit-profile-form";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
-import { UserProfile } from "@/components/edit-profile-form";
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { Edit3, RefreshCw, AlertCircle, ArrowLeft } from "lucide-react";
@@ -15,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default function EditProfilePage() {
   const [mounted, setMounted] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<EditProfileUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,7 +85,7 @@ export default function EditProfilePage() {
         logger.debug('Extracted user data', { userId: userData?.id || userData?._id });
         
         // Ensure the profile data matches UserProfile interface structure
-        const normalizedProfile: UserProfile = {
+        const normalizedProfile: EditProfileUserProfile = {
           id: userData.id || userData._id || '',
           email: userData.email || '',
           name: userData.name || 

@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/trust-verification/types' instead.
+ */
+export * from '@/features/trust-verification/types';
+
 export type VerificationType =
   | "identity"
   | "identity_verification"

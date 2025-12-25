@@ -1,6 +1,9 @@
-"use client";
-
-import { useState, useEffect, useCallback, useRef } from "react";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/communication/hooks/useNotifications' instead.
+ */
+export * from '@/features/communication/hooks/useNotifications';
+import { useState, useRef, useCallback, useEffect } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";

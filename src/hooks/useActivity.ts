@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/activity/hooks/useActivity' instead.
+ */
+export * from '@/features/activity/hooks/useActivity';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

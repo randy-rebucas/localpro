@@ -1,6 +1,9 @@
-"use client";
-
-import { useState, useEffect, useContext } from 'react';
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/hooks/useAuth' instead.
+ */
+export * from '@/features/auth/hooks/useAuth';
+import { useState, useContext, useEffect } from 'react';
 import { API_BASE_URL, API_ENDPOINTS } from '@/lib/api';
 import { createAuthFetchOptions, getApiToken } from '@/lib/auth-utils';
 import { logger } from '@/lib/logger';

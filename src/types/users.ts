@@ -1,4 +1,8 @@
-export type UserRole = "client" | "provider" | "admin" | "supplier" | "instructor" | "agency_owner" | "agency_admin";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/types' instead.
+ */
+export * from '@/features/auth/types';
 export type BusinessType = "individual" | "small_business" | "enterprise" | "franchise";
 export type BackgroundCheckStatus = "pending" | "approved" | "rejected" | "not_required";
 export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";

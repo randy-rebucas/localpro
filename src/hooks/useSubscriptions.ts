@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/subscriptions/hooks/useSubscriptions' instead.
+ */
+export * from '@/features/subscriptions/hooks/useSubscriptions';
 import { useState, useEffect, useCallback, useRef } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

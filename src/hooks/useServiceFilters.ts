@@ -1,6 +1,9 @@
-"use client";
-
-import { useState, useEffect, useMemo, useCallback } from "react";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/hooks/useServiceFilters' instead.
+ */
+export * from '@/features/marketplace/hooks/useServiceFilters';
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
 
 interface ServiceFiltersState {

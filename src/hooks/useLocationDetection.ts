@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/hooks/useLocationDetection' instead.
+ */
+export * from '@/shared/hooks/useLocationDetection';
 import { useState, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { logger } from "@/lib/logger";

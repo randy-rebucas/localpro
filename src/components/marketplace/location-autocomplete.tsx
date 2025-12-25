@@ -8,8 +8,8 @@ import { CLIENT_CONFIG } from "@/lib/env";
 // Google Maps types
 declare global {
   interface Window {
-    google: any;
-    initGoogleMaps: () => void;
+    google?: unknown;
+    initGoogleMaps?: () => void;
   }
 }
 
@@ -36,16 +36,72 @@ interface PlacePrediction {
   };
 }
 
-interface PlaceDetails {
-  placeId: string;
-  formattedAddress?: string;
+type GooglePlacesPredictionRaw = {
+  place_id: string;
+  description: string;
+  structured_formatting?: {
+    main_text: string;
+    secondary_text: string;
+  };
+};
+
+type GooglePlacesDetailsRaw = {
+  formatted_address?: string;
   geometry?: {
-    location: {
-      lat: number;
-      lng: number;
+    location?: {
+      lat: () => number;
+      lng: () => number;
     };
   };
   name?: string;
+};
+
+type GoogleGeocodeResultRaw = {
+  formatted_address: string;
+};
+
+type AutocompleteServiceInstance = {
+  getPlacePredictions: (
+    request: { input: string; types?: string[] },
+    callback: (predictions: GooglePlacesPredictionRaw[] | null, status: string) => void
+  ) => void;
+};
+
+type PlacesServiceInstance = {
+  getDetails: (
+    request: { placeId: string; fields?: string[] },
+    callback: (place: GooglePlacesDetailsRaw | null, status: string) => void
+  ) => void;
+};
+
+type GeocoderInstance = {
+  geocode: (
+    request: { location: { lat: number; lng: number } },
+    callback: (results: GoogleGeocodeResultRaw[] | null, status: string) => void
+  ) => void;
+};
+
+type GoogleMapsLike = {
+  maps: {
+    places: {
+      AutocompleteService: new () => AutocompleteServiceInstance;
+      PlacesService: new (el: HTMLElement) => PlacesServiceInstance;
+      PlacesServiceStatus: { OK: string };
+    };
+    Geocoder: new () => GeocoderInstance;
+    GeocoderStatus: { OK: string };
+  };
+};
+
+function getGoogleMaps(): GoogleMapsLike | null {
+  if (typeof window === "undefined") return null;
+  const g = window.google;
+  if (!g || typeof g !== "object") return null;
+  const maps = (g as { maps?: unknown }).maps;
+  if (!maps || typeof maps !== "object") return null;
+  const places = (maps as { places?: unknown }).places;
+  if (!places || typeof places !== "object") return null;
+  return g as GoogleMapsLike;
 }
 
 export function LocationAutocomplete({
@@ -58,9 +114,8 @@ export function LocationAutocomplete({
 }: LocationAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const autocompleteRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
-  const geocoderRef = useRef<any>(null);
+  const placesServiceRef = useRef<AutocompleteServiceInstance | null>(null);
+  const geocoderRef = useRef<GeocoderInstance | null>(null);
   
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -71,7 +126,7 @@ export function LocationAutocomplete({
 
   // Load Google Maps script
   useEffect(() => {
-    if (typeof window === 'undefined' || window.google?.maps?.places) {
+    if (typeof window === 'undefined' || getGoogleMaps()?.maps?.places) {
       setIsGoogleMapsLoaded(true);
       return;
     }
@@ -86,7 +141,7 @@ export function LocationAutocomplete({
     if (document.querySelector(`script[src*="maps.googleapis.com/maps/api/js"]`)) {
       // Wait for it to load
       const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places) {
+        if (getGoogleMaps()?.maps?.places) {
           setIsGoogleMapsLoaded(true);
           clearInterval(checkInterval);
         }
@@ -115,29 +170,26 @@ export function LocationAutocomplete({
 
     return () => {
       // Cleanup
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((window as any).initGoogleMaps) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        delete (window as any).initGoogleMaps;
-      }
+      if (window.initGoogleMaps) delete window.initGoogleMaps;
     };
   }, []);
 
   // Initialize Google Places Autocomplete
   useEffect(() => {
-    if (!isGoogleMapsLoaded || !inputRef.current || disabled || !window.google?.maps?.places) {
+    const google = getGoogleMaps();
+    if (!isGoogleMapsLoaded || !inputRef.current || disabled || !google?.maps?.places) {
       return;
     }
 
     try {
       // Initialize AutocompleteService for suggestions
       if (!placesServiceRef.current) {
-        placesServiceRef.current = new window.google.maps.places.AutocompleteService();
+        placesServiceRef.current = new google.maps.places.AutocompleteService();
       }
 
       // Initialize Geocoder for getting coordinates
       if (!geocoderRef.current) {
-        geocoderRef.current = new window.google.maps.Geocoder();
+        geocoderRef.current = new google.maps.Geocoder();
       }
     } catch (error) {
       console.error('Error initializing Google Maps services:', error);
@@ -159,11 +211,12 @@ export function LocationAutocomplete({
           input: input,
           types: ['address'], // Restrict to addresses
         },
-        (predictions: any[], status: string) => {
+        (rawPredictions: GooglePlacesPredictionRaw[] | null, status: string) => {
           setIsLoading(false);
           
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-            const formattedPredictions: PlacePrediction[] = predictions.map((pred) => ({
+          const google = getGoogleMaps();
+          if (google && status === google.maps.places.PlacesServiceStatus.OK && rawPredictions) {
+            const formattedPredictions: PlacePrediction[] = rawPredictions.map((pred) => ({
               placeId: pred.place_id,
               description: pred.description,
               structuredFormatting: pred.structured_formatting ? {
@@ -234,13 +287,14 @@ export function LocationAutocomplete({
     // Fetch full place details to get coordinates using Google Places API
     setIsLoadingDetails(true);
     try {
-      if (!isGoogleMapsLoaded || !window.google?.maps?.places) {
+      const google = getGoogleMaps();
+      if (!isGoogleMapsLoaded || !google?.maps?.places) {
         onCoordinatesChange?.(null);
         setIsLoadingDetails(false);
         return;
       }
 
-      const placesService = new window.google.maps.places.PlacesService(
+      const placesService = new google.maps.places.PlacesService(
         document.createElement('div')
       );
 
@@ -249,10 +303,11 @@ export function LocationAutocomplete({
           placeId: prediction.placeId,
           fields: ['formatted_address', 'geometry', 'name'],
         },
-        (place: any, status: string) => {
+        (place: GooglePlacesDetailsRaw | null, status: string) => {
           setIsLoadingDetails(false);
           
-          if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+          const googleNow = getGoogleMaps();
+          if (googleNow && status === googleNow.maps.places.PlacesServiceStatus.OK && place) {
             const address = place.formatted_address || prediction.description;
             onChange(address);
             
@@ -372,13 +427,14 @@ export function LocationAutocomplete({
 
         // Try to reverse geocode using Google Maps Geocoder directly
         try {
-          if (isGoogleMapsLoaded && geocoderRef.current) {
+          const google = getGoogleMaps();
+          if (isGoogleMapsLoaded && geocoderRef.current && google) {
             geocoderRef.current.geocode(
               { location: { lat, lng } },
-              (results: any[], status: string) => {
+              (results: GoogleGeocodeResultRaw[] | null, status: string) => {
                 setIsLoading(false);
                 
-                if (status === window.google.maps.GeocoderStatus.OK && results && results[0]) {
+                if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
                   onChange(results[0].formatted_address);
                   onCoordinatesChange?.({ lat, lng });
                   toast.dismiss('location-detection');
@@ -436,8 +492,7 @@ export function LocationAutocomplete({
         try {
           // Try to get error code from GeolocationPositionError
           if (error && typeof error === 'object' && 'code' in error) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const code = (error as any).code;
+            const code = (error as { code?: unknown }).code;
             if (typeof code === 'number') {
               errorCode = code;
             }

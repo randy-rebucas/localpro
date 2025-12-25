@@ -8,7 +8,6 @@ import {
   Star, 
   MapPin, 
   Clock, 
-  Calendar,
   Phone,
   Mail,
   Share2,

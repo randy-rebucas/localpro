@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/hooks/useCategoryServices' instead.
+ */
+export * from '@/features/marketplace/hooks/useCategoryServices';
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

@@ -4,34 +4,29 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import { Sparkles, X, CheckCircle2 } from "lucide-react";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 // Feature route to ID mapping
-const routeToFeatureId: Record<string, PreferredFeature> = {
-  "/marketplace": "marketplace",
-  "/academy": "academy",
-  "/ads": "ads",
-  "/supplies": "supplies",
-  "/rentals": "rentals",
-  "/finance": "finance",
-  "/facility-care": "facility",
-  "/facility": "facility",
-  "/plus": "plus",
-  "/jobs": "jobs",
-  "/referrals": "referrals",
-};
+const routeToFeatureId: Record<string, PreferredFeature> = Object.values(PACKAGE_REGISTRY).reduce(
+  (acc, pkg) => {
+    acc[pkg.route] = pkg.id;
+    return acc;
+  },
+  {} as Record<string, PreferredFeature>
+);
 
 // Feature names for display
 const featureNames: Record<Exclude<PreferredFeature, null>, string> = {
-  marketplace: "Marketplace",
-  academy: "Academy",
-  ads: "Ads",
-  supplies: "Supplies",
-  rentals: "Rentals",
-  finance: "Finance",
-  facility: "FacilityCare",
-  plus: "LocalPro Plus",
-  jobs: "Jobs",
-  referrals: "Referrals",
+  marketplace: PACKAGE_REGISTRY.marketplace.label,
+  academy: PACKAGE_REGISTRY.academy.label,
+  ads: PACKAGE_REGISTRY.ads.label,
+  supplies: PACKAGE_REGISTRY.supplies.label,
+  rentals: PACKAGE_REGISTRY.rentals.label,
+  finance: PACKAGE_REGISTRY.finance.label,
+  facility: PACKAGE_REGISTRY.facility.label,
+  plus: PACKAGE_REGISTRY.plus.label,
+  jobs: PACKAGE_REGISTRY.jobs.label,
+  referrals: PACKAGE_REGISTRY.referrals.label,
 };
 
 export function PreferredFeaturePrompt() {

@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/components/avatar-upload' instead.
+ */
+export * from '@/features/auth/components/avatar-upload';
 
 import { useState, useRef, useEffect } from "react";
 import { Camera, Upload, X, RotateCw, ZoomIn, ZoomOut, User } from "lucide-react";

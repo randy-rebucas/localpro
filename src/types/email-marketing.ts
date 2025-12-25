@@ -1,6 +1,10 @@
-// Email Marketing Types
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/admin/types-email-marketing' instead.
+ */
+export * from '@/features/admin/types-email-marketing';
 
-export type CampaignStatus = 
+export type CampaignStatus =
   | "draft" 
   | "scheduled" 
   | "sending" 

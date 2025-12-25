@@ -1,6 +1,10 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/hooks/useScrollAnimation' instead.
+ */
+export * from '@/shared/hooks/useScrollAnimation';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from "react";
 
 interface UseScrollAnimationOptions {
   threshold?: number;

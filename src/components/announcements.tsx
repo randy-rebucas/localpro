@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/announcements/components/announcements' instead.
+ */
+export * from '@/features/announcements/components/announcements';
 
 import { useState, useEffect } from "react";
 import { 

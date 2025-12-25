@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useActiveRoleView } from "@/shared/hooks/useActiveRoleView";
+import { getRoleDisplayName } from "@/shared/lib/role-utils";
 import { 
   Shield, 
   Package, 
@@ -13,6 +15,7 @@ import {
   DollarSign,
   CheckCircle2,
   XCircle,
+  Search,
   Users,
   Briefcase,
   Wallet,
@@ -145,8 +148,12 @@ interface AppSettingsResponse {
 
 export default function ServicesPage() {
   const router = useRouter();
+  const { roleView, isClientView, isProviderView } = useActiveRoleView();
+
   const [features, setFeatures] = useState<Feature[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [showDisabled, setShowDisabled] = useState(true);
 
   // Fetch app settings to get all features
   useEffect(() => {
@@ -253,23 +260,217 @@ export default function ServicesPage() {
     );
   }
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const enabledCount = features.filter((f) => f.enabled).length;
+  const filtered = features.filter((feature) => {
+    if (!showDisabled && !feature.enabled) return false;
+    if (!normalizedQuery) return true;
+    return (
+      feature.name.toLowerCase().includes(normalizedQuery) ||
+      (feature.category?.toLowerCase().includes(normalizedQuery) ?? false) ||
+      (feature.description?.toLowerCase().includes(normalizedQuery) ?? false)
+    );
+  });
+
+  const recommendedKeysByRole: Record<string, string[]> = {
+    client: ["marketplace", "academy", "supplies", "rentals", "referrals", "localProPlus"],
+    provider: ["marketplace", "jobBoard", "finance", "rentals", "facilityCare", "referrals", "localProPlus"],
+    supplier: ["supplies", "finance", "referrals", "localProPlus"],
+    instructor: ["academy", "finance", "referrals", "localProPlus"],
+    agency_owner: ["marketplace", "jobBoard", "finance", "rentals", "facilityCare", "referrals", "localProPlus"],
+    agency_admin: ["marketplace", "jobBoard", "finance", "rentals", "facilityCare", "referrals", "localProPlus"],
+    admin: ["marketplace", "academy", "supplies", "rentals", "ads", "finance", "jobBoard", "referrals", "localProPlus"],
+  };
+
+  const recommendedKeys = recommendedKeysByRole[roleView] || recommendedKeysByRole.client;
+  const recommended = filtered.filter((f) => recommendedKeys.includes(f.key));
+  const other = filtered.filter((f) => !recommendedKeys.includes(f.key));
+
+  const roleLabel = (() => {
+    try {
+      return getRoleDisplayName(roleView as never);
+    } catch {
+      return roleView || "Client";
+    }
+  })();
+
   return (
     <div className="mb-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Modules</h2>
+          <p className="text-sm text-gray-600">
+            {isClientView
+              ? `Explore features as ${roleLabel}. Use search to find what you need fast.`
+              : `Manage your work as ${roleLabel}. Use search to find tools quickly.`}
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <div className="relative">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search modules…"
+              className="w-full sm:w-72 pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              aria-label="Search modules"
+            />
+          </div>
+
+          <label className="inline-flex items-center gap-2 text-sm text-gray-700 select-none">
+            <input
+              type="checkbox"
+              checked={showDisabled}
+              onChange={(e) => setShowDisabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+            />
+            Show disabled
+          </label>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+        <span>
+          Showing <span className="font-medium text-gray-900">{filtered.length}</span> of{" "}
+          <span className="font-medium text-gray-900">{features.length}</span> modules
+        </span>
+        <span>
+          Enabled: <span className="font-medium text-gray-900">{enabledCount}</span>
+        </span>
+      </div>
+
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {features.map((feature) => (
-          <div
+      {recommended.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-900">Recommended</h3>
+            {isProviderView && (
+              <span className="text-xs text-gray-500">Based on your active role</span>
+            )}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {recommended.map((feature) => {
+              const route = feature.route;
+              const canNavigate = Boolean(feature.enabled && route);
+              return (
+              <button
+                key={feature.key}
+                type="button"
+                disabled={!canNavigate}
+                className={`text-left bg-white rounded-xl shadow-sm p-4 border transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  feature.featured 
+                    ? "border-amber-300 border-2" 
+                    : "border-gray-200"
+                } ${canNavigate ? "hover:border-emerald-300" : "opacity-75 cursor-not-allowed"}`}
+                onClick={() => {
+                  if (feature.enabled && route) {
+                    router.push(route);
+                  }
+                }}
+                aria-label={canNavigate ? `Open ${feature.name}` : `${feature.name} is disabled`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center`}>
+                    {feature.icon}
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {feature.featured && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        <Star className="w-3 h-3" />
+                        <span>Featured</span>
+                      </div>
+                    )}
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      feature.enabled 
+                        ? "bg-green-100 text-green-800" 
+                        : "bg-gray-100 text-gray-600"
+                    }`}>
+                      {feature.enabled ? (
+                        <>
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>Enabled</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3" />
+                          <span>Disabled</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <h3 className="text-base font-semibold text-gray-800 mb-1">
+                  {feature.name}
+                </h3>
+                
+                {feature.description && (
+                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                    {feature.description}
+                  </p>
+                )}
+                
+                <div className="flex flex-wrap gap-1 mb-2">
+                  {feature.category && (
+                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                      {feature.category}
+                    </span>
+                  )}
+                  {feature.services && feature.services.length > 0 && (
+                    <span className="text-xs bg-gray-50 text-gray-700 px-2 py-0.5 rounded-md border border-gray-200">
+                      {feature.services.length} {feature.services.length === 1 ? 'service' : 'services'}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {feature.users !== undefined && feature.users > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{feature.users.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {feature.lastUpdated && (
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{feature.lastUpdated}</span>
+                      </div>
+                    )}
+                  </div>
+                  {feature.enabled && feature.route && (
+                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+              </button>
+            )})}
+          </div>
+        </div>
+      )}
+
+      {other.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {other.map((feature) => {
+          const route = feature.route;
+          const canNavigate = Boolean(feature.enabled && route);
+          return (
+          <button
             key={feature.key}
-            className={`bg-white rounded-xl shadow-sm p-4 border transition-all duration-200 cursor-pointer hover:shadow-md ${
+            type="button"
+            disabled={!canNavigate}
+            className={`text-left bg-white rounded-xl shadow-sm p-4 border transition-all duration-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
               feature.featured 
                 ? "border-amber-300 border-2" 
                 : "border-gray-200"
-            } ${feature.enabled ? "hover:border-blue-300" : "opacity-75"}`}
+            } ${canNavigate ? "hover:border-emerald-300" : "opacity-75 cursor-not-allowed"}`}
             onClick={() => {
-              if (feature.enabled && feature.route) {
-                router.push(feature.route);
+              if (feature.enabled && route) {
+                router.push(route);
               }
             }}
+            aria-label={canNavigate ? `Open ${feature.name}` : `${feature.name} is disabled`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center`}>
@@ -344,9 +545,10 @@ export default function ServicesPage() {
                 <ArrowRight className="w-4 h-4 text-gray-400" />
               )}
             </div>
-          </div>
-        ))}
-      </div>
+          </button>
+        )})}
+        </div>
+      )}
 
       {/* Empty state */}
       {features.length === 0 && !loading && (
@@ -356,6 +558,14 @@ export default function ServicesPage() {
           <p className="text-gray-500">
             Unable to load features from the API
           </p>
+        </div>
+      )}
+
+      {features.length > 0 && filtered.length === 0 && (
+        <div className="text-center py-12">
+          <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+          <h3 className="text-lg font-medium text-gray-800 mb-1">No matches</h3>
+          <p className="text-sm text-gray-600">Try a different search, or enable “Show disabled”.</p>
         </div>
       )}
     </div>

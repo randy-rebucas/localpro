@@ -52,6 +52,27 @@ interface ModuleStats {
   broadcaster: number;
 }
 
+type RecentActivityItem = {
+  _id?: string;
+  id?: string;
+  category?: string;
+  title?: string;
+  description?: string;
+  type?: string;
+  user?: string | { fullName?: string; email?: string };
+  createdAt?: string | number | Date;
+};
+
+type RecentLogItem = {
+  _id?: string;
+  id?: string;
+  level?: string;
+  message?: string;
+  source?: string;
+  category?: string;
+  timestamp?: string | number | Date;
+};
+
 export default function AdminDashboard() {
   // State
   const [moduleStats, setModuleStats] = useState<ModuleStats>({
@@ -662,7 +683,7 @@ export default function AdminDashboard() {
               </div>
             ) : recentActivities && recentActivities.length > 0 ? (
               <div className="space-y-2">
-                {recentActivities.slice(0, 5).map((activity) => (
+                {recentActivities.slice(0, 5).map((activity: RecentActivityItem) => (
                   <div key={activity._id || activity.id} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
                     <div className="flex-shrink-0">
                       <div className={`w-2 h-2 rounded-full mt-2 ${
@@ -715,7 +736,7 @@ export default function AdminDashboard() {
               </div>
             ) : recentLogs && recentLogs.length > 0 ? (
               <div className="space-y-2">
-                {recentLogs.slice(0, 5).map((log, idx) => {
+                {recentLogs.slice(0, 5).map((log: RecentLogItem, idx: number) => {
                   const levelColors: Record<string, string> = {
                     debug: 'bg-gray-100 text-gray-700',
                     info: 'bg-blue-100 text-blue-700',
@@ -723,10 +744,11 @@ export default function AdminDashboard() {
                     error: 'bg-red-100 text-red-700',
                     fatal: 'bg-purple-100 text-purple-700',
                   };
+                  const level = log.level || 'info';
                   return (
                     <div key={log._id || log.id || idx} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
-                      <span className={`text-xs px-1.5 py-0.5 rounded uppercase font-medium ${levelColors[log.level] || 'bg-gray-100 text-gray-700'}`}>
-                        {log.level}
+                      <span className={`text-xs px-1.5 py-0.5 rounded uppercase font-medium ${levelColors[level] || 'bg-gray-100 text-gray-700'}`}>
+                        {level}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-900 font-medium truncate">{log.message}</p>

@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from '@sentry/nextjs';
 
 const nextConfig: NextConfig = {
+  /**
+   * IMPORTANT (Windows/dev reliability):
+   * `next dev` and `next build` both write to `distDir`. If you run `pnpm build`
+   * while a dev server is running, the `.next` folder can get overwritten and
+   * the browser will request chunks that no longer exist (ChunkLoadError).
+   *
+   * Using a separate distDir in development prevents that class of issues.
+   */
+  distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
+
   // Performance optimizations
   experimental: {
     optimizePackageImports: [
@@ -163,6 +173,19 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
     ];
+  },
+
+  /**
+   * Webpack config tweak:
+   * In `next dev`, disable the filesystem "pack" cache serialization that can emit warnings like:
+   *   [webpack.cache.PackFileCacheStrategy] Serializing big strings ...
+   * We use an in-memory cache in development to avoid those warnings.
+   */
+  webpack: (config) => {
+    // Avoid webpack's filesystem "pack" cache serialization warnings about large strings.
+    // Memory cache is sufficient for both dev and CI/build environments.
+    config.cache = { type: "memory" };
+    return config;
   },
 };
 

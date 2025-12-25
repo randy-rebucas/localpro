@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/components/providers' instead.
+ */
+export * from '@/features/marketplace/components/providers';
 
 import ErrorBoundary from './error-boundary';
 

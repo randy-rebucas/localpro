@@ -13,9 +13,7 @@ import {
   Briefcase,
   ArrowLeft,
   Filter,
-  Store
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

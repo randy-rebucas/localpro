@@ -283,7 +283,7 @@ function PlansTab() {
                   </td>
                 </tr>
               ) : (
-                plans.map((plan) => (
+                plans.map((plan: SubscriptionPlan) => (
                   <tr key={plan._id} className="hover:bg-gray-50">
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-xs font-semibold text-gray-900">{plan.name}</div>
@@ -1446,7 +1446,7 @@ function AnalyticsTab() {
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xs font-semibold text-gray-900 mb-3">Subscriptions by Plan</h3>
             <div className="space-y-2">
-              {analytics.subscriptionsByPlan.map((item, index) => (
+              {analytics.subscriptionsByPlan.map((item: { planId?: string; planName?: string; count?: number }, index: number) => (
                 <div key={item.planId || `plan-${index}`} className="flex items-center justify-between">
                   <span className="text-xs text-gray-700">{item.planName}</span>
                   <span className="text-xs font-medium text-gray-900">{item.count}</span>
@@ -1461,7 +1461,7 @@ function AnalyticsTab() {
           <div className="bg-white rounded shadow p-4">
             <h3 className="text-xs font-semibold text-gray-900 mb-3">Subscriptions by Status</h3>
             <div className="space-y-2">
-              {analytics.subscriptionsByStatus.map((item, index) => (
+              {analytics.subscriptionsByStatus.map((item: { status?: string; count?: number }, index: number) => (
                 <div key={item.status || `status-${index}`} className="flex items-center justify-between">
                   <span className="text-xs text-gray-700 capitalize">{item.status}</span>
                   <span className="text-xs font-medium text-gray-900">{item.count}</span>
@@ -1489,7 +1489,7 @@ function AnalyticsTab() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {analytics.recentSubscriptions.slice(0, 5).map((sub, index) => {
+                {analytics.recentSubscriptions.slice(0, 5).map((sub: UserSubscription, index: number) => {
                   const user = typeof sub.user === "object" ? sub.user : null;
                   const plan = typeof sub.plan === "object" ? sub.plan : null;
                   return (

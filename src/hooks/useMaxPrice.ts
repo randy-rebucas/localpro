@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/hooks/useMaxPrice' instead.
+ */
+export * from '@/shared/hooks/useMaxPrice';
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";

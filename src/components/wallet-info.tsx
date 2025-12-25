@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/finance/components/wallet-info' instead.
+ */
+export * from '@/features/finance/components/wallet-info';
 
 import { Wallet as WalletIcon } from "lucide-react";
 import { UserProfileData } from "./user-profile";

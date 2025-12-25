@@ -1,4 +1,9 @@
-// Services feature interfaces (similar to bookings but with marketplace-specific features)
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/types' instead.
+ */
+export * from '@/features/marketplace/types';
+
 export type ServiceCategory =
   | "cleaning"
   | "plumbing"

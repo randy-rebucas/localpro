@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 interface FeatureOption {
   id: PreferredFeature;
@@ -39,7 +40,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Store className="w-6 h-6" />,
     iconBgColor: "bg-blue-100",
     iconTextColor: "text-blue-600",
-    route: "/marketplace",
+    route: PACKAGE_REGISTRY.marketplace.route,
     featureKey: "marketplace",
   },
   {
@@ -49,7 +50,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Package className="w-6 h-6" />,
     iconBgColor: "bg-orange-100",
     iconTextColor: "text-orange-600",
-    route: "/supplies",
+    route: PACKAGE_REGISTRY.supplies.route,
     featureKey: "supplies",
   },
   {
@@ -59,7 +60,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <GraduationCap className="w-6 h-6" />,
     iconBgColor: "bg-green-100",
     iconTextColor: "text-green-600",
-    route: "/academy",
+    route: PACKAGE_REGISTRY.academy.route,
     featureKey: "academy",
   },
   {
@@ -69,7 +70,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Car className="w-6 h-6" />,
     iconBgColor: "bg-red-100",
     iconTextColor: "text-red-600",
-    route: "/rentals",
+    route: PACKAGE_REGISTRY.rentals.route,
     featureKey: "rentals",
   },
   {
@@ -79,7 +80,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Briefcase className="w-6 h-6" />,
     iconBgColor: "bg-indigo-100",
     iconTextColor: "text-indigo-600",
-    route: "/jobs",
+    route: PACKAGE_REGISTRY.jobs.route,
     featureKey: "jobBoard",
   },
   {
@@ -89,7 +90,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Home className="w-6 h-6" />,
     iconBgColor: "bg-emerald-100",
     iconTextColor: "text-emerald-600",
-    route: "/facility-care",
+    route: PACKAGE_REGISTRY.facility.route,
     featureKey: "facilityCare",
   },
   {
@@ -99,7 +100,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Star className="w-6 h-6" />,
     iconBgColor: "bg-yellow-100",
     iconTextColor: "text-yellow-600",
-    route: "/plus",
+    route: PACKAGE_REGISTRY.plus.route,
     featureKey: "localProPlus",
   },
   {
@@ -109,7 +110,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Megaphone className="w-6 h-6" />,
     iconBgColor: "bg-teal-100",
     iconTextColor: "text-teal-600",
-    route: "/ads",
+    route: PACKAGE_REGISTRY.ads.route,
     featureKey: "ads",
   },
   {
@@ -119,7 +120,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <CreditCard className="w-6 h-6" />,
     iconBgColor: "bg-purple-100",
     iconTextColor: "text-purple-600",
-    route: "/finance",
+    route: PACKAGE_REGISTRY.finance.route,
     featureKey: "finance",
   },
   {
@@ -129,7 +130,7 @@ const allFeatureOptions: FeatureOption[] = [
     icon: <Gift className="w-6 h-6" />,
     iconBgColor: "bg-pink-100",
     iconTextColor: "text-pink-600",
-    route: "/referrals",
+    route: PACKAGE_REGISTRY.referrals.route,
     featureKey: "referrals",
   },
 ];

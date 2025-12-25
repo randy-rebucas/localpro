@@ -23,6 +23,7 @@ import {
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 interface ServiceModule {
   id: string;
@@ -42,7 +43,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Shield className="w-8 h-8" />,
     color: "bg-gray-100 text-gray-700",
     services: ["Cleaning", "Plumbing", "Electrical", "Moving"],
-    route: "/marketplace"
+    route: PACKAGE_REGISTRY.marketplace.route
   },
   {
     id: "supplies",
@@ -51,7 +52,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Package className="w-8 h-8" />,
     color: "bg-amber-100 text-amber-700",
     services: ["Cleaning supplies", "Tools", "Subscription kits"],
-    route: "/supplies"
+    route: PACKAGE_REGISTRY.supplies.route
   },
   {
     id: "academy",
@@ -60,7 +61,7 @@ const serviceModules: ServiceModule[] = [
     icon: <GraduationCap className="w-8 h-8" />,
     color: "bg-green-100 text-green-700",
     services: ["Partner with TES", "Run courses", "Certification"],
-    route: "/academy"
+    route: PACKAGE_REGISTRY.academy.route
   },
   {
     id: "rentals",
@@ -69,7 +70,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Car className="w-8 h-8" />,
     color: "bg-blue-100 text-blue-700",
     services: ["Tool and vehicle rentals"],
-    route: "/rentals"
+    route: PACKAGE_REGISTRY.rentals.route
   },
   {
     id: "plus",
@@ -78,7 +79,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Star className="w-8 h-8" />,
     color: "bg-yellow-100 text-yellow-700",
     services: ["Premium subscriptions", "Providers", "Clients"],
-    route: "/plus"
+    route: PACKAGE_REGISTRY.plus.route
   },
   {
     id: "facility",
@@ -87,7 +88,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Home className="w-8 h-8" />,
     color: "bg-emerald-100 text-emerald-700",
     services: ["Janitorial contracts", "Landscaping maintenance", "Pest control subscriptions"],
-    route: "/facility"
+    route: PACKAGE_REGISTRY.facility.route
   },
   {
     id: "ads",
@@ -96,7 +97,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Megaphone className="w-8 h-8" />,
     color: "bg-purple-100 text-purple-700",
     services: ["Advertising for hardware stores", "Suppliers", "Training schools"],
-    route: "/ads"
+    route: PACKAGE_REGISTRY.ads.route
   },
   {
     id: "finance",
@@ -105,7 +106,7 @@ const serviceModules: ServiceModule[] = [
     icon: <DollarSign className="w-8 h-8" />,
     color: "bg-red-100 text-red-700",
     services: ["Salary advance", "Micro-loans", "Partner with fintech.company"],
-    route: "/finance"
+    route: PACKAGE_REGISTRY.finance.route
   }
 ];
 

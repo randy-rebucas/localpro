@@ -1,4 +1,9 @@
-export type CompanySize = "startup" | "small" | "medium" | "large" | "enterprise";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/jobs/types' instead.
+ */
+export * from '@/features/jobs/types';
+import type { CompanySize } from '@/features/jobs/types';
 export type RemoteType = "fully_remote" | "hybrid" | "on_site";
 export type JobType = "full_time" | "part_time" | "contract" | "freelance" | "internship" | "temporary";
 export type ExperienceLevel = "entry" | "junior" | "mid" | "senior" | "lead" | "executive";

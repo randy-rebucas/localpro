@@ -13,6 +13,7 @@ import {
   Star,
   ArrowRight,
 } from "lucide-react";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 interface ServiceModule {
   id: string;
@@ -32,7 +33,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Store className="w-8 h-8" />,
     iconBgColor: "bg-blue-100",
     iconTextColor: "text-blue-600",
-    route: "/marketplace",
+    route: PACKAGE_REGISTRY.marketplace.route,
   },
   {
     id: "supplies",
@@ -41,7 +42,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Package className="w-8 h-8" />,
     iconBgColor: "bg-orange-100",
     iconTextColor: "text-orange-600",
-    route: "/supplies",
+    route: PACKAGE_REGISTRY.supplies.route,
   },
   {
     id: "academy",
@@ -50,7 +51,7 @@ const serviceModules: ServiceModule[] = [
     icon: <GraduationCap className="w-8 h-8" />,
     iconBgColor: "bg-green-100",
     iconTextColor: "text-green-600",
-    route: "/academy",
+    route: PACKAGE_REGISTRY.academy.route,
   },
   {
     id: "finance",
@@ -59,7 +60,7 @@ const serviceModules: ServiceModule[] = [
     icon: <CreditCard className="w-8 h-8" />,
     iconBgColor: "bg-purple-100",
     iconTextColor: "text-purple-600",
-    route: "/finance",
+    route: PACKAGE_REGISTRY.finance.route,
   },
   {
     id: "rentals",
@@ -68,7 +69,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Car className="w-8 h-8" />,
     iconBgColor: "bg-red-100",
     iconTextColor: "text-red-600",
-    route: "/rentals",
+    route: PACKAGE_REGISTRY.rentals.route,
   },
   {
     id: "ads",
@@ -77,7 +78,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Megaphone className="w-8 h-8" />,
     iconBgColor: "bg-teal-100",
     iconTextColor: "text-teal-600",
-    route: "/ads",
+    route: PACKAGE_REGISTRY.ads.route,
   },
   {
     id: "facility",
@@ -86,7 +87,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Home className="w-8 h-8" />,
     iconBgColor: "bg-emerald-100",
     iconTextColor: "text-emerald-600",
-    route: "/facility",
+    route: PACKAGE_REGISTRY.facility.route,
   },
   {
     id: "plus",
@@ -95,7 +96,7 @@ const serviceModules: ServiceModule[] = [
     icon: <Star className="w-8 h-8" />,
     iconBgColor: "bg-yellow-100",
     iconTextColor: "text-yellow-600",
-    route: "/plus",
+    route: PACKAGE_REGISTRY.plus.route,
   },
 ];
 

@@ -65,11 +65,11 @@ const normalizeNotification = (notification: Record<string, unknown>): Notificat
   if (!href && data) {
     // Try to construct href from data context
     if (typeof data.bookingId === 'string') {
-      href = `/bookings/${data.bookingId}`;
+      href = `/marketplace/bookings/${data.bookingId}`;
     } else if (typeof data.jobId === 'string') {
-      href = `/jobs/${data.jobId}`;
+      href = `/marketplace/jobs/${data.jobId}`;
     } else if (typeof data.orderId === 'string') {
-      href = `/orders/${data.orderId}`;
+      href = `/marketplace/orders/${data.orderId}`;
     } else if (notification.type === 'message_received' && typeof data.conversationId === 'string') {
       href = `/messages?conversation=${data.conversationId}`;
     }

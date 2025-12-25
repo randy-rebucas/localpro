@@ -1,4 +1,9 @@
-export type LoanType = "salary_advance" | "micro_loan" | "business_loan" | "equipment_loan";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/finance/types' instead.
+ */
+export * from '@/features/finance/types';
+import type { LoanType } from '@/features/finance/types';
 export type LoanStatus =
   | "pending"
   | "under_review"

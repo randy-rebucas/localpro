@@ -1,4 +1,9 @@
-export type RentalCategory = "tools" | "vehicles" | "equipment" | "machinery";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/rentals/types' instead.
+ */
+export * from '@/features/rentals/types';
+import type { RentalCategory } from '@/features/rentals/types';
 export type Condition = "excellent" | "good" | "fair" | "poor";
 export type DocumentType = "manual" | "warranty" | "insurance" | "license" | "other";
 export type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";

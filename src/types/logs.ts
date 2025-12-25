@@ -1,4 +1,9 @@
-export type LogLevel = "error" | "warn" | "info" | "http" | "debug";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/admin/types-logs' instead.
+ */
+export * from '@/features/admin/types-logs';
+import type { LogLevel } from '@/features/admin/types-logs';
 export type LogCategory =
   | "application"
   | "http"

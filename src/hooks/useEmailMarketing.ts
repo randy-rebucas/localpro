@@ -1,6 +1,9 @@
-"use client";
-
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/admin/hooks/useEmailMarketing' instead.
+ */
+export * from '@/features/admin/hooks/useEmailMarketing';
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";

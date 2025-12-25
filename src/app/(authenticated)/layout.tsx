@@ -20,6 +20,7 @@ import { usePreferredFeature } from "@/hooks/usePreferredFeature";
 import { PreferredFeaturePrompt } from "@/components/preferred-feature-prompt";
 import { FloatingFeatureSelector } from "@/components/floating-feature-selector";
 import { PerformanceDebug } from "@/components/performance-debug";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 export default function AuthenticatedLayout({
   children,
@@ -189,19 +190,8 @@ export default function AuthenticatedLayout({
       preferredFeature &&
       !preferredFeatureRedirectedRef.current
     ) {
-      // Feature route mapping
-      const featureRoutes: Record<string, string> = {
-        marketplace: "/marketplace",
-        academy: "/academy",
-        ads: "/ads",
-        supplies: "/supplies",
-        rentals: "/rentals",
-        finance: "/finance",
-        facility: "/facility-care",
-        plus: "/plus",
-      };
       const isHomePage = pathname === "/" || pathname === "/dashboard";
-      const featureRoute = featureRoutes[preferredFeature];
+      const featureRoute = preferredFeature ? PACKAGE_REGISTRY[preferredFeature]?.route : undefined;
 
       if (isHomePage && featureRoute && pathname !== featureRoute) {
         logger.debug("Redirecting to preferred feature", {

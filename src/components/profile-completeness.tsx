@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/components/profile-completeness' instead.
+ */
+export * from '@/features/auth/components/profile-completeness';
 
 import { useState, useEffect, useMemo } from "react";
 import { CheckCircle, Lightbulb, TrendingUp, Loader2, AlertCircle, User, Shield, FileText, Sparkles, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";

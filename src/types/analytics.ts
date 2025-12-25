@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/analytics/types' instead.
+ */
+export * from '@/features/analytics/types';
+
 export type AnalyticsEventType =
   | "page_view"
   | "service_view"

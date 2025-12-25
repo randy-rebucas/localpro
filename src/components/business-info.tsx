@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/components/business-info' instead.
+ */
+export * from '@/features/marketplace/components/business-info';
 
 import { useAppSettings } from "@/hooks/useAppSettings";
 import { getBusinessInfo, getSupportChannels, isSupportChannelEnabled, isBusinessOpen } from "@/lib/settings-utils";

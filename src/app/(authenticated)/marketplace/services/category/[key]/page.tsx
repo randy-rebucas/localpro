@@ -24,6 +24,7 @@ import { getPlaceholderImageUrl } from "@/lib/image-utils";
 import { useServiceCategories } from "@/hooks/useServiceCategories";
 import { useProviderSkills } from "@/hooks/useProviderSkills";
 import { SkillsBadgeFilter } from "@/components/marketplace/skills-badge-filter";
+import type { ServiceCategory } from "@/components/marketplace/categories-carousel";
 
 // Service Image Interface
 interface ServiceImage {
@@ -109,7 +110,7 @@ export default function CategoryServicesPage() {
   const { categories, loading: categoriesLoading, error: categoriesError } = useServiceCategories();
   
   // Find the current category from the fetched categories
-  const category = categories.find(cat => cat.key === categoryKey) || null;
+  const category = categories.find((cat: ServiceCategory) => cat.key === categoryKey) || null;
   
   // Fetch skills for the current category - only when categoryKey is available
   const { skills, loading: skillsLoading, error: skillsError, count: skillsCount } = useProviderSkills(
@@ -527,7 +528,7 @@ export default function CategoryServicesPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-gray-500">Subcategories:</span>
                 <div className="flex flex-wrap gap-1.5">
-                  {category.subcategories.map((subcategory, index) => (
+                  {category.subcategories.map((subcategory: string, index: number) => (
                     <span key={subcategory} className="text-gray-600">
                       {formatSubcategoryName(subcategory)}
                       {index < (category.subcategories?.length || 0) - 1 && <span className="text-gray-400">,</span>}

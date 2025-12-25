@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/finance/components/account-info' instead.
+ */
+export * from '@/features/finance/components/account-info';
 
 import { CheckCircle, AlertCircle, Shield } from "lucide-react";
 import { UserProfileData } from "./user-profile";

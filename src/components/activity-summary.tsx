@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/activity/components/activity-summary' instead.
+ */
+export * from '@/features/activity/components/activity-summary';
 
 import { Activity } from "lucide-react";
 import { UserProfileData } from "./user-profile";

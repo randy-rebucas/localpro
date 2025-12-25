@@ -1,4 +1,9 @@
-export type ConversationType = "booking" | "job_application" | "support" | "general" | "agency";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/communication/types' instead.
+ */
+export * from '@/features/communication/types';
+import type { ConversationType } from '@/features/communication/types';
 export type ConversationStatus = "active" | "resolved" | "closed" | "archived";
 export type Priority = "low" | "medium" | "high" | "urgent";
 export type ParticipantRole = "client" | "provider" | "admin" | "support";

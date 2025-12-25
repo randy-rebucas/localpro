@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useRoleAccess } from "@/components/role-guard";
 import { useAgencies } from "@/hooks/useAgencies";
+import type { Agency } from "@/types/agencies";
 
 const statuses = [
   "All Statuses",
@@ -201,7 +202,7 @@ export default function AgenciesPage() {
       ) : (
         <>
           <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-            {agencies.map((agency) => (
+            {agencies.map((agency: Agency) => (
               <Card key={agency._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className={viewMode === "grid" ? "" : "flex gap-4"}>
                   {agency.contact?.address && (

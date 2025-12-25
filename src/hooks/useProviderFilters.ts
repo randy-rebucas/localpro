@@ -1,6 +1,10 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/hooks/useProviderFilters' instead.
+ */
+export * from '@/features/marketplace/hooks/useProviderFilters';
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 interface ProviderFiltersState {
   status: string;

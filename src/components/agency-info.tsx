@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/agencies/components/agency-info' instead.
+ */
+export * from '@/features/agencies/components/agency-info';
 
 import { Users } from "lucide-react";
 import { UserProfileData } from "./user-profile";

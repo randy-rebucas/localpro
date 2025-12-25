@@ -1,4 +1,9 @@
-export type ReferralStatus = "pending" | "completed" | "expired" | "cancelled";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/referrals/types' instead.
+ */
+export * from '@/features/referrals/types';
+import type { ReferralStatus } from '@/features/referrals/types';
 export type ReferralType =
   | "signup"
   | "service_booking"

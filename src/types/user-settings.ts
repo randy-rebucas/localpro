@@ -1,4 +1,9 @@
-export type Visibility = "public" | "contacts_only" | "private";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/user-settings/types' instead.
+ */
+export * from '@/features/user-settings/types';
+import type { Visibility } from '@/features/user-settings/types';
 
 export interface UserSettings {
   privacy: {

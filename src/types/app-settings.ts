@@ -1,4 +1,9 @@
-export type Environment = "development" | "staging" | "production";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/app-settings/types' instead.
+ */
+export * from '@/features/app-settings/types';
+import type { Environment } from '@/features/app-settings/types';
 export type EmailProvider = "nodemailer" | "sendgrid" | "mailgun" | "ses";
 export type SmsProvider = "twilio" | "vonage" | "aws_sns";
 export type PushProvider = "firebase" | "onesignal" | "pusher";

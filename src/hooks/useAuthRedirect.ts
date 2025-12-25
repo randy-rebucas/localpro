@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/hooks/useAuthRedirect' instead.
+ */
+export * from '@/features/auth/hooks/useAuthRedirect';
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";

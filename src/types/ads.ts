@@ -1,4 +1,9 @@
-export type BusinessType = "hardware_store" | "supplier" | "training_school" | "service_provider" | "manufacturer";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/ads/types' instead.
+ */
+export * from '@/features/ads/types';
+import type { BusinessType } from '@/features/ads/types';
 export type SubscriptionPlan = "basic" | "premium" | "enterprise";
 export type DocumentType = "business_license" | "tax_certificate" | "insurance" | "other";
 export type AdType = "banner" | "sponsored_listing" | "video" | "text" | "interactive";

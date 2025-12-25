@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/components' instead.
+ */
+export * from '@/shared/components/lazy-loading';
 
 import React, { ComponentType } from 'react';
 import Image from 'next/image';

@@ -1,6 +1,9 @@
-"use client";
-
-import { useState, useEffect, useMemo, useCallback } from "react";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/jobs/hooks/useJobFilters' instead.
+ */
+export * from '@/features/jobs/hooks/useJobFilters';
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { JobCategory } from "@/types/jobs";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
 

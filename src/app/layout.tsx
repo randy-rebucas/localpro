@@ -10,6 +10,8 @@ import { GoogleTagManager } from "@next/third-parties/google";
 import { CLIENT_CONFIG } from "@/lib/env";
 import { SITE_CONFIG, PAGE_METADATA, generateKeywords } from "@/lib/seo-config";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/json-ld";
+import { SWRProvider } from "@/providers/swr-provider";
+import { PackageSwitcherProvider } from "@/contexts/package-switcher-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -188,11 +190,15 @@ export default function RootLayout({
       >
         <ResourceHints />
         <WebVitalsReporter />
-        <AppSettingsProvider />
-        <LiveChatProvider>
-          {children}
-          <LiveChatWidget />
-        </LiveChatProvider>
+        <SWRProvider>
+          <PackageSwitcherProvider>
+            <AppSettingsProvider />
+            <LiveChatProvider>
+              {children}
+              <LiveChatWidget />
+            </LiveChatProvider>
+          </PackageSwitcherProvider>
+        </SWRProvider>
         {CLIENT_CONFIG.googleTagManagerId && (
           <GoogleTagManager gtmId={CLIENT_CONFIG.googleTagManagerId} />
         )}

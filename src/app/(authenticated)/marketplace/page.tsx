@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React from "react";
 import { useSession } from "@/hooks/useAuth";
 import { getUserName } from "@/lib/utils/user-name";
 import { ServiceMarketplace } from "@/components/marketplace/service-marketplace";
@@ -10,15 +10,13 @@ import { Briefcase } from "lucide-react";
 import { Users } from "lucide-react";
 import { BarChart3 } from "lucide-react";
 import { Calendar } from "lucide-react";
-import { FileText } from "lucide-react";
 import { Headphones } from "lucide-react";
-import { useRoleView } from "@/hooks/useRoleView";
+import { useActiveRoleView } from "@/shared/hooks/useActiveRoleView";
 import { Broadcaster } from "@/components/broadcaster";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
-  const userRoles = useMemo(() => session?.user?.roles || [], [session?.user?.roles]);
-  const { isProviderView } = useRoleView({ userRoles });
+  const { isProviderView } = useActiveRoleView();
 
   // Get user name for marketplace components
   const userName = getUserName(session);

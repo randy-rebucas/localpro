@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/referrals/components/referral-info' instead.
+ */
+export * from '@/features/referrals/components/referral-info';
 
 import { useState, useMemo, useCallback } from "react";
 import { 
@@ -12,7 +16,7 @@ import {
   Mail, 
   Share2 
 } from "lucide-react";
-import { UserProfileData } from "./user-profile";
+import type { UserProfileData } from "@/features/auth/components/user-profile";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { CLIENT_CONFIG } from "@/lib/env";

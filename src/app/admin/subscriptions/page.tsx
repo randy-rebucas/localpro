@@ -22,7 +22,7 @@ import { Modal } from "@/components/ui/modal";
 import { useToast, ToastContainer } from "@/components/ui/toast";
 import { useAdminSubscriptions } from "@/hooks/useAdminSubscriptions";
 import { useSubscriptionPlans } from "@/hooks/useSubscriptions";
-import { UserSubscription } from "@/types/subscriptions";
+import { SubscriptionPlan, UserSubscription } from "@/types/subscriptions";
 import { Pagination } from "@/components/shared/pagination";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
@@ -478,7 +478,7 @@ export default function AdminSubscriptionsPage() {
                   className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
                 >
                   <option value="">All Plans</option>
-                  {plans?.map((plan) => (
+                  {plans?.map((plan: SubscriptionPlan) => (
                     <option key={plan._id} value={plan._id}>
                       {plan.name}
                     </option>
@@ -793,7 +793,7 @@ export default function AdminSubscriptionsPage() {
                 required
               >
                 <option value="">Select a plan</option>
-                {plans.map((plan) => (
+                {plans.map((plan: SubscriptionPlan) => (
                   <option key={plan._id} value={plan._id || ""}>
                     {plan.name}
                   </option>
@@ -905,7 +905,7 @@ export default function AdminSubscriptionsPage() {
                 className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value="">Keep current plan</option>
-                {plans.map((plan) => (
+                {plans.map((plan: SubscriptionPlan) => (
                   <option key={plan._id} value={plan._id || ""}>
                     {plan.name}
                   </option>

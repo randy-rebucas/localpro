@@ -5,16 +5,24 @@ import { useSession } from "@/hooks/useAuth";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
+import Link from "next/link";
+import { useActiveRoleView } from "@/shared/hooks/useActiveRoleView";
+import { getRoleDisplayName } from "@/shared/lib/role-utils";
 import { 
-  Shield, 
   User, 
+  CalendarDays,
   CheckCircle,
-  Activity,
   DollarSign,
-  Users,
-  BarChart3,
-  ArrowUpRight
+  Users as UsersIcon,
+  Briefcase,
+  ArrowUpRight,
+  Wallet,
+  Bell,
+  Heart,
+  Compass,
+  Shield
 } from "lucide-react";
+import { useDashboardAnalytics } from "@/features/analytics/hooks/useDashboardAnalytics";
 
 export default function StatsPage() {
   const [user, setUser] = useState<{ 
@@ -31,15 +39,13 @@ export default function StatsPage() {
       fields: Record<string, { completed: boolean; required: boolean }>;
     };
   } | null>(null);
-  const [stats, setStats] = useState({
-    totalServices: 8,
-    activeServices: 6,
-    totalUsers: 12500,
-    monthlyRevenue: 0,
-    profileCompleteness: 0,
-    lastActivity: "2 hours ago"
-  });
   const { data: session, status } = useSession();
+  const { userRoles, roleView, isClientView, isProviderView } = useActiveRoleView();
+
+  const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
+    timeframe: "30d",
+    enabled: !isClientView,
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -53,24 +59,6 @@ export default function StatsPage() {
           const userData = await userResponse.json();
           const user = userData?.data || userData;
           setUser(user);
-          setStats(prev => ({
-            ...prev,
-            profileCompleteness: user.profileCompleteness?.percentage || 0
-          }));
-        }
-
-        // Fetch analytics data
-        const analyticsUrl = `${API_BASE_URL}${API_ENDPOINTS.analyticsOverview}`;
-        const analyticsResponse = await fetch(analyticsUrl, createAuthFetchOptions({ method: 'GET' }));
-        if (analyticsResponse.ok) {
-          const analyticsData = await analyticsResponse.json();
-          const analytics = analyticsData?.data || analyticsData;
-          setStats(prev => ({
-            ...prev,
-            totalUsers: analytics.totalUsers || 12500,
-            monthlyRevenue: analytics.monthlyRevenue || 0,
-            lastActivity: analytics.lastActivity || "2 hours ago"
-          }));
         }
       } catch (error) {
         logger.error("Failed to fetch user data", error instanceof Error ? error : new Error(String(error)));
@@ -82,88 +70,206 @@ export default function StatsPage() {
     }
   }, [session, status]);
 
+  const profileCompleteness = user?.profileCompleteness?.percentage ?? 0;
+
+  const totalUsers = dashboard?.summary?.totalUsers;
+  const totalBookings = dashboard?.summary?.totalBookings;
+  const totalJobs = dashboard?.summary?.totalJobs;
+  const totalRevenue = dashboard?.summary?.totalRevenue;
+
+  const formatNumber = (value?: number) => {
+    if (value === undefined || value === null) return "—";
+    return value.toLocaleString();
+  };
+
+  const formatCurrency = (value?: number) => {
+    if (value === undefined || value === null) return "—";
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+    } catch {
+      return `$${value.toLocaleString()}`;
+    }
+  };
+
+  const activeRoleLabel = (() => {
+    try {
+      return getRoleDisplayName(roleView as never);
+    } catch {
+      return roleView || "Client";
+    }
+  })();
+
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Active Services Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <Shield className="w-6 h-6 text-green-600" />
-            </div>
-            <div className="flex items-center gap-1 text-green-600">
-              <ArrowUpRight className="w-4 h-4" />
-              <span className="text-xs font-medium">+12%</span>
-            </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Active Services</h3>
-          <p className="text-3xl font-bold text-gray-800 mb-1">{stats.activeServices}</p>
-          <p className="text-xs text-gray-500">of {stats.totalServices} total modules</p>
+      {/* Active role label */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-sm text-gray-600">
+          Viewing as{" "}
+          <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 font-medium text-gray-900">
+            <Shield className="w-3.5 h-3.5 text-gray-700" />
+            {activeRoleLabel}
+          </span>
         </div>
+        {isClientView && !userRoles.includes("provider") && (
+          <Link href="/onboarding" className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+            Become a provider
+          </Link>
+        )}
+      </div>
 
-        {/* Total Users Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <Users className="w-6 h-6 text-blue-600" />
+      {isClientView ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Link
+            href="/marketplace"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Compass className="w-6 h-6 text-emerald-700" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-emerald-700" />
             </div>
-            <div className="flex items-center gap-1 text-blue-600">
-              <ArrowUpRight className="w-4 h-4" />
-              <span className="text-xs font-medium">+8%</span>
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Explore services</h3>
+            <p className="text-xs text-gray-500">Browse and book from the marketplace</p>
+          </Link>
+
+          <Link
+            href="/marketplace/bookings"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <CalendarDays className="w-6 h-6 text-blue-700" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-blue-700" />
             </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Total Users</h3>
-          <p className="text-3xl font-bold text-gray-800 mb-1">{stats.totalUsers.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">across all platforms</p>
+            <h3 className="text-sm font-medium text-gray-700 mb-1">My bookings</h3>
+            <p className="text-xs text-gray-500">Track upcoming and past bookings</p>
+          </Link>
+
+          <Link
+            href="/favorites"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Heart className="w-6 h-6 text-pink-700" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-pink-700" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Saved items</h3>
+            <p className="text-xs text-gray-500">Your favorites across the app</p>
+          </Link>
+
+          <Link
+            href="/notifications"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Bell className="w-6 h-6 text-amber-700" />
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-amber-700" />
+            </div>
+            <h3 className="text-sm font-medium text-gray-700 mb-1">Notifications</h3>
+            <p className="text-xs text-gray-500">Updates, reminders, and alerts</p>
+          </Link>
         </div>
-
-        {/* Profile Completeness Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <User className="w-6 h-6 text-purple-600" />
-            </div>
-            <div className="text-right">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-xs font-bold text-purple-600">
-                  {stats.profileCompleteness}%
-                </span>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Bookings */}
+          <Link
+            href={isProviderView ? "/marketplace/my-bookings" : "/marketplace/bookings"}
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <CalendarDays className="w-6 h-6 text-emerald-700" />
+              </div>
+              <div className="flex items-center gap-1 text-emerald-700">
+                <ArrowUpRight className="w-4 h-4" />
+                <span className="text-xs font-medium">30d</span>
               </div>
             </div>
-          </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Profile Complete</h3>
-          <div className="mb-3">
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-1000"
-                style={{ width: `${stats.profileCompleteness}%` }}
-              ></div>
-            </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            {user?.profileCompleteness?.completedFields ? 
-              `${user.profileCompleteness.completedFields}/${user.profileCompleteness.totalFields} fields` : 
-              "Profile status"
-            }
-          </p>
-        </div>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">Bookings</h3>
+            <p className="text-3xl font-bold text-gray-800 mb-1">
+              {analyticsLoading ? "…" : formatNumber(totalBookings)}
+            </p>
+            <p className="text-xs text-gray-500">Total bookings</p>
+          </Link>
 
-        {/* Platform Status Card */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-              <Activity className="w-6 h-6 text-emerald-600" />
+          {/* Users */}
+          <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <UsersIcon className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="flex items-center gap-1 text-blue-600">
+                <ArrowUpRight className="w-4 h-4" />
+                <span className="text-xs font-medium">30d</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-emerald-600 font-medium">Live</span>
-            </div>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">Users</h3>
+            <p className="text-3xl font-bold text-gray-800 mb-1">
+              {analyticsLoading ? "…" : formatNumber(totalUsers)}
+            </p>
+            <p className="text-xs text-gray-500">Platform total</p>
           </div>
-          <h3 className="text-sm font-medium text-gray-600 mb-1">Platform Status</h3>
-          <p className="text-3xl font-bold text-emerald-600 mb-1">Online</p>
-          <p className="text-xs text-gray-500">All systems operational</p>
+
+          {/* Revenue */}
+          <Link
+            href="/finance"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Wallet className="w-6 h-6 text-yellow-700" />
+              </div>
+              <div className="flex items-center gap-1 text-yellow-700">
+                <ArrowUpRight className="w-4 h-4" />
+                <span className="text-xs font-medium">30d</span>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">Revenue</h3>
+            <p className="text-3xl font-bold text-gray-800 mb-1">{analyticsLoading ? "…" : formatCurrency(totalRevenue)}</p>
+            <p className="text-xs text-gray-500">Total revenue</p>
+          </Link>
+
+          {/* Profile Completeness */}
+          <Link
+            href="/profile"
+            className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <User className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="text-right">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-purple-600">
+                    {profileCompleteness}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">Profile complete</h3>
+            <div className="mb-3">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 h-2 rounded-full transition-all duration-700"
+                  style={{ width: `${profileCompleteness}%` }}
+                ></div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              {user?.profileCompleteness?.completedFields ?
+                `${user.profileCompleteness.completedFields}/${user.profileCompleteness.totalFields} fields` :
+                "Complete your profile to unlock more features"
+              }
+            </p>
+          </Link>
         </div>
-      </div>
+      )}
 
       {/* Additional Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -183,18 +289,18 @@ export default function StatsPage() {
           </div>
         </div>
 
-        {/* Monthly Revenue Card */}
+        {/* Jobs */}
         <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-yellow-600" />
+              <Briefcase className="w-6 h-6 text-yellow-700" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">Monthly Revenue</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-1">{isClientView ? "Explore jobs" : "Jobs"}</h3>
               <p className="text-xl font-bold text-gray-800">
-                ${stats.monthlyRevenue.toLocaleString()}
+                {isClientView ? "Browse" : (analyticsLoading ? "…" : formatNumber(totalJobs))}
               </p>
-              <p className="text-xs text-gray-500">This month</p>
+              <p className="text-xs text-gray-500">{isClientView ? "See opportunities and postings" : "Total jobs"}</p>
             </div>
           </div>
         </div>
@@ -203,14 +309,28 @@ export default function StatsPage() {
         <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-white" />
+              <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div>
               <h3 className="text-sm font-medium text-green-700 mb-1">Quick Actions</h3>
-              <p className="text-xs text-green-600 mb-2">View analytics & reports</p>
-              <button className="text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors">
-                View Details
-              </button>
+              <p className="text-xs text-green-600 mb-2">
+                {isClientView ? "Complete onboarding to unlock business tools" : "Create and manage your services"}
+              </p>
+              {isClientView ? (
+                <Link
+                  href="/onboarding"
+                  className="inline-flex text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Continue onboarding
+                </Link>
+              ) : (
+                <Link
+                  href="/marketplace/create-service"
+                  className="inline-flex text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Create service
+                </Link>
+              )}
             </div>
           </div>
         </div>

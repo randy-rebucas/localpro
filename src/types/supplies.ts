@@ -1,4 +1,9 @@
-export type ProductCategory = "cleaning_supplies" | "tools" | "materials" | "equipment";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/supplies/types' instead.
+ */
+export * from '@/features/supplies/types';
+import type { ProductCategory } from '@/features/supplies/types';
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "cash" | "card" | "bank_transfer" | "paypal" | "paymaya";

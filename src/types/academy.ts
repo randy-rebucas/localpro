@@ -1,4 +1,9 @@
-export type CourseCategory = "cleaning" | "plumbing" | "electrical" | "moving" | "business" | "safety" | "certification" | (string & {});
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/academy/types' instead.
+ */
+export * from '@/features/academy/types';
+import type { CourseCategory } from '@/features/academy/types';
 export type CourseLevel = "beginner" | "intermediate" | "advanced" | "expert";
 export type LessonType = "video" | "text" | "quiz" | "practical";
 export type SessionType = "live" | "recorded" | "practical";

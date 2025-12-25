@@ -382,7 +382,7 @@ export default function BookServicePage() {
         : formData.paymentMethod;
 
       // Create booking payload matching the expected API structure
-      const bookingPayload: any = {
+      const bookingPayload: Record<string, unknown> = {
         serviceId: serviceId,
         providerId: providerId, // Use providerId instead of provider
         bookingDate: formData.bookingDate, // Send date as string (YYYY-MM-DD)
@@ -412,13 +412,13 @@ export default function BookServicePage() {
 
       if (!bookingResponse.ok) {
         // Try to get detailed error information
-        let errorData: any = {};
+        let errorData: unknown = {};
         let errorMessage = "Failed to create booking";
         
         try {
           const responseText = await bookingResponse.text();
           try {
-            errorData = JSON.parse(responseText);
+            errorData = JSON.parse(responseText) as unknown;
           } catch {
             // If not JSON, use text as error message
             errorMessage = responseText || errorMessage;
@@ -429,11 +429,18 @@ export default function BookServicePage() {
         }
         
         // Extract error message from various possible formats
-        errorMessage = errorData.message || 
-                      errorData.error || 
-                      errorData.details || 
-                      errorData.msg ||
-                      (typeof errorData === 'string' ? errorData : errorMessage);
+        if (typeof errorData === "string") {
+          errorMessage = errorData || errorMessage;
+        } else if (errorData && typeof errorData === "object") {
+          const obj = errorData as Record<string, unknown>;
+          const candidate =
+            (typeof obj.message === "string" && obj.message) ||
+            (typeof obj.error === "string" && obj.error) ||
+            (typeof obj.details === "string" && obj.details) ||
+            (typeof obj.msg === "string" && obj.msg) ||
+            "";
+          errorMessage = candidate || errorMessage;
+        }
         
         // Log detailed error for debugging
         logger.debug("Booking creation failed", {
@@ -532,7 +539,10 @@ export default function BookServicePage() {
       } else if (typeof error === 'string') {
         errorMessage = error;
       } else if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = String((error as any).message) || errorMessage;
+        const maybeMessage = (error as { message?: unknown }).message;
+        if (typeof maybeMessage === "string") {
+          errorMessage = maybeMessage || errorMessage;
+        }
       }
       
       logger.error("Error processing booking", error instanceof Error ? error : new Error(String(error)), {
@@ -851,7 +861,7 @@ export default function BookServicePage() {
                 className=""
               />
               <p className="text-xs text-gray-500 mt-2">
-                Start typing to see suggestions, or use the "Detect" button to automatically fill in your current location
+                Start typing to see suggestions, or use the &quot;Detect&quot; button to automatically fill in your current location
               </p>
             </div>
 

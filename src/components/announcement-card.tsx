@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/announcements/components/announcement-card' instead.
+ */
+export * from '@/features/announcements/components/announcement-card';
 
 import { useMemo } from "react";
 import { useAnnouncements } from "@/hooks/useAnnouncements";

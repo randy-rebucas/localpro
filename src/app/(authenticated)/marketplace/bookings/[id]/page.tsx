@@ -968,6 +968,8 @@ export default function BookingDetailPage() {
               (provider.firstName && provider.lastName ? `${provider.firstName} ${provider.lastName}` : 
               provider.firstName || provider.lastName || 'Provider');
             const providerAvatar = provider.avatar || provider.profile?.avatar;
+            const providerAvatarSrc = typeof providerAvatar === "string" ? providerAvatar.trim() : "";
+            const hasProviderAvatar = providerAvatarSrc.length > 0;
             const providerPhone = provider.phone || provider.phoneNumber || 'N/A';
             const providerEmail = provider.email || 'N/A';
             const providerRating = provider.rating || 0;
@@ -979,9 +981,9 @@ export default function BookingDetailPage() {
                 <h3 className="text-lg font-semibold text-gray-700 mb-4">Service Provider</h3>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                    {providerAvatar ? (
+                    {hasProviderAvatar ? (
                       <Image
-                        src={providerAvatar}
+                        src={providerAvatarSrc}
                         alt={providerName}
                         width={48}
                         height={48}

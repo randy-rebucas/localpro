@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/components/profile-steps' instead.
+ */
+export * from '@/features/auth/components/profile-steps';
 
 import { User, Briefcase, MapPin, Camera, CheckCircle } from "lucide-react";
 

@@ -17,6 +17,7 @@ interface ProviderMarketplaceProps {
 
 export function ProviderMarketplace({ userName }: ProviderMarketplaceProps) {
   const router = useRouter();
+  void userName;
   
   // Manage filters
   const filters = useProviderFilters({

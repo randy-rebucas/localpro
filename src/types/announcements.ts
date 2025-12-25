@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/announcements/types' instead.
+ */
+export * from '@/features/announcements/types';
+
 export type AnnouncementType =
   | "system"
   | "maintenance"

@@ -1,4 +1,9 @@
-export type ProviderStatus = "pending" | "active" | "suspended" | "inactive" | "rejected";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/marketplace/types-providers' instead.
+ */
+export * from '@/features/marketplace/types-providers';
+import type { ProviderStatus } from '@/features/marketplace/types-providers';
 export type ProviderType = "individual" | "business" | "agency";
 export type ServiceCategory =
   | "cleaning"
@@ -291,6 +296,11 @@ export interface ProviderProfile {
   firstName?: string;
   lastName?: string;
   name?: string;
+  avatar?: {
+    url?: string;
+    thumbnail?: string;
+    publicId?: string;
+  };
 }
 
 export interface ProviderRating {

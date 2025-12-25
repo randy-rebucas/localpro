@@ -1,7 +1,9 @@
-"use client";
-
-import { useEffect } from "react";
-import React from "react";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/hooks/useAccessibility' instead.
+ */
+export * from '@/shared/hooks/useAccessibility';
+import React, { useEffect } from "react";
 
 // Focus management utilities
 export function useFocusManagement() {

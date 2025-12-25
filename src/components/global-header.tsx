@@ -7,6 +7,7 @@ import { useSession, signOut } from "@/hooks/useAuth";
 import { Logo } from "@/components/ui/logo";
 import { useRoleAccess } from "@/components/role-guard";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import { useRoleView } from "@/shared/hooks/useRoleView";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
@@ -62,6 +63,17 @@ interface GlobalHeaderProps {
   className?: string;
 }
 
+type HeaderNotification = {
+  /** Stable unique key for React rendering (not necessarily the backend id) */
+  id: string;
+  /** Backend id used for marking as read / navigation (may be null if API doesn't provide one) */
+  backendId: string | null;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
 export function GlobalHeader({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   showRoleNavigation: _showRoleNavigation = false,
@@ -106,59 +118,8 @@ export function GlobalHeader({
   const hasMultipleRoles = userRoles.length > 1;
   const shouldShowSwitcher = hasMultipleRoles && session;
 
-  // Role view state - persist in localStorage, default to 'client' if available
-  const [roleView, setRoleView] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('roleView');
-      // If we have user roles and saved value is valid, use it
-      if (saved && userRoles.length > 0 && userRoles.includes(saved)) {
-        return saved;
-      }
-    }
-    // Default to 'client' if user has that role, otherwise first available role
-    if (userRoles.length > 0) {
-      return userRoles.includes('client') ? 'client' : userRoles[0];
-    }
-    return 'client';
-  });
-
-  // Update roleView when userRoles change (e.g., after login)
-  useEffect(() => {
-    if (userRoles.length > 0) {
-      if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('roleView');
-        // If saved value is valid, use it; otherwise default to 'client' if available
-        if (saved && userRoles.includes(saved)) {
-          setRoleView(saved);
-        } else {
-          // Check current roleView, if invalid, default to 'client' if available
-          setRoleView((currentView) => {
-            if (userRoles.includes(currentView)) {
-              return currentView;
-            }
-            // Default to 'client' if available, otherwise first role
-            return userRoles.includes('client') ? 'client' : userRoles[0];
-          });
-        }
-      } else {
-        // Check current roleView, if invalid, default to 'client' if available
-        setRoleView((currentView) => {
-          if (userRoles.includes(currentView)) {
-            return currentView;
-          }
-          // Default to 'client' if available, otherwise first role
-          return userRoles.includes('client') ? 'client' : userRoles[0];
-        });
-      }
-    }
-  }, [userRoles]); // Only depend on userRoles
-
-  // Save roleView to localStorage when it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined' && userRoles.includes(roleView)) {
-      localStorage.setItem('roleView', roleView);
-    }
-  }, [roleView, userRoles]);
+  // Canonical role view (syncs via localStorage + roleViewChanged event)
+  const { roleView, setRoleView } = useRoleView({ userRoles: userRoles.length ? userRoles : ["client"] });
 
   // State management
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -169,7 +130,7 @@ export function GlobalHeader({
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ label: string; type: string; id: string }>>([]);
-  const [notifications, setNotifications] = useState<Array<{ id: string; title: string; message: string; isRead: boolean; createdAt: string }>>([]);
+  const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_favoritesCount, _setFavoritesCount] = useState(0);
@@ -306,7 +267,35 @@ export function GlobalHeader({
         if (response.ok) {
           const data = await response.json();
           const notificationsData = data?.data?.notifications || data?.notifications || data?.data || [];
-          setNotifications(Array.isArray(notificationsData) ? notificationsData.slice(0, 5) : []);
+          const normalized: HeaderNotification[] = Array.isArray(notificationsData)
+            ? notificationsData.slice(0, 5).map((raw: unknown, idx: number) => {
+              const n = raw as Record<string, unknown> | null | undefined;
+              const backendIdRaw =
+                n?.id ??
+                n?._id ??
+                n?.notificationId ??
+                n?.notification_id ??
+                n?.uuid;
+              const backendId = backendIdRaw != null && String(backendIdRaw).trim() !== "" ? String(backendIdRaw) : null;
+
+              const titleRaw = n?.title ?? n?.subject ?? n?.name ?? "Notification";
+              const messageRaw = n?.message ?? n?.body ?? n?.content ?? "";
+              const createdAtRaw = n?.createdAt ?? n?.created_at ?? n?.timestamp ?? "";
+              const isReadRaw = n?.isRead ?? n?.read ?? n?.is_read ?? false;
+
+              const title = String(titleRaw ?? "Notification");
+              const message = String(messageRaw ?? "");
+              const createdAt = String(createdAtRaw ?? "");
+              const isRead = Boolean(isReadRaw);
+
+              // React key must always be defined and unique.
+              const id = backendId ?? `notification-missing-id-${idx}`;
+
+              return { id, backendId, title, message, isRead, createdAt };
+            })
+            : [];
+
+          setNotifications(normalized);
         } else {
           setNotifications([]);
         }
@@ -406,8 +395,8 @@ export function GlobalHeader({
     setSearchQuery("");
   };
 
-  const handleNotificationClick = async (notificationId: string) => {
-    if (!session || !getApiToken()) return;
+  const handleNotificationClick = async (notificationId: string | null) => {
+    if (!notificationId || !session || !getApiToken()) return;
 
     try {
       // Replace [id] placeholder with actual notification ID
@@ -416,7 +405,7 @@ export function GlobalHeader({
       const response = await fetch(url, createAuthFetchOptions({ method: 'PUT' }));
 
       if (response.ok) {
-        setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n));
+        setNotifications(prev => prev.map(n => n.backendId === notificationId ? { ...n, isRead: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
       router.push('/notifications');
@@ -591,7 +580,7 @@ export function GlobalHeader({
                           notifications.map((notification) => (
                             <button
                               key={notification.id}
-                              onClick={() => handleNotificationClick(notification.id)}
+                              onClick={() => handleNotificationClick(notification.backendId)}
                               className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${!notification.isRead ? 'bg-blue-50' : ''
                                 }`}
                             >
@@ -703,10 +692,6 @@ export function GlobalHeader({
                         key={role}
                         onClick={() => {
                           setRoleView(role);
-                          // Dispatch custom event for other components to listen
-                          if (typeof window !== 'undefined') {
-                            window.dispatchEvent(new CustomEvent('roleViewChanged', { detail: { roleView: role } }));
-                          }
                           // Refresh page if on dashboard to update view
                           if (pathname?.startsWith('/dashboard')) {
                             router.refresh();

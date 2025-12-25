@@ -1,4 +1,8 @@
-"use client";
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/features/auth/components/verification-modal' instead.
+ */
+export * from '@/features/auth/components/verification-modal';
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";

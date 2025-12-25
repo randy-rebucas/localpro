@@ -1,5 +1,8 @@
-"use client";
-
+/**
+ * @deprecated This file is maintained for backward compatibility.
+ * Please import from '@/shared/hooks/useAIFeatures' instead.
+ */
+export * from '@/shared/hooks/useAIFeatures';
 import { useState, useCallback } from "react";
 import {
   naturalLanguageSearch,

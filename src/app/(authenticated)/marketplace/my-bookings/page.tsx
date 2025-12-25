@@ -670,15 +670,6 @@ export default function MyBookingsPage() {
     return normalizedStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }, []);
 
-  const statusOptions = useMemo(() => [
-    { value: "all", label: "All Bookings" },
-    { value: "pending", label: "Pending" },
-    { value: "confirmed", label: "Confirmed" },
-    { value: "in_progress", label: "In Progress" },
-    { value: "completed", label: "Completed" },
-    { value: "cancelled", label: "Cancelled" }
-  ], [defaultCurrency]);
-
   const handleClearFilters = useCallback(() => {
     setStatusFilter("all");
     setTypeFilter("all");
