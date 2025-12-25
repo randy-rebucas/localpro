@@ -1,6 +1,4 @@
-import type { AppPackage } from "@/contexts/package-switcher-context";
-
-export type PackageId = Exclude<AppPackage, null>;
+import type { AppPackage, PackageId } from "@/shared/types/app-package";
 
 export interface PackageRegistryEntry {
   id: PackageId;

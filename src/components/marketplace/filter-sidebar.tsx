@@ -70,6 +70,20 @@ export function FilterSidebar({
   hasActiveFilters,
   onClearFilters,
 }: FilterSidebarProps) {
+  const getCategoryValue = (category: ServiceCategory): string => {
+    return String(
+      category.key ?? category.id ?? (category as { slug?: string }).slug ?? category.name
+    );
+  };
+
+  const safeMaxPrice = Math.max(1, maxPrice);
+  const step = Math.max(1, Math.floor(safeMaxPrice / 100));
+  const minGap = Math.max(step, Math.round(safeMaxPrice * 0.01));
+
+  const leftPct = Math.min(100, Math.max(0, (priceRange[0] / safeMaxPrice) * 100));
+  const rightPct = Math.min(100, Math.max(0, (priceRange[1] / safeMaxPrice) * 100));
+  const widthPct = Math.max(0, rightPct - leftPct);
+
   return (
     <aside
       className={`lg:w-[280px] flex-shrink-0 ${isOpen ? "block" : "hidden lg:block"}`}
@@ -124,39 +138,32 @@ export function FilterSidebar({
                 {categoriesLoading ? (
                   <div className="text-sm text-gray-500">Loading categories...</div>
                 ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    <button
-                      onClick={() => onCategorySelect?.(null)}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                        !selectedCategory
-                          ? "bg-green-600 text-white shadow-md shadow-green-200"
-                          : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
-                      }`}
-                    >
-                      All Categories
-                    </button>
-                    {categories.map((category) => {
-                      const isSelected = selectedCategory?.key === category.key || 
-                                        selectedCategory?.id === category.id ||
-                                        selectedCategory?.name === category.name;
-                      return (
-                        <button
-                          key={category.key || category.id || category.name}
-                          onClick={() => onCategorySelect?.(category)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                            isSelected
-                              ? "bg-green-600 text-white shadow-md shadow-green-200"
-                              : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
-                          }`}
-                        >
-                          {category.name}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <select
+                    value={selectedCategory ? getCategoryValue(selectedCategory) : ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value) {
+                        onCategorySelect?.(null);
+                        return;
+                      }
+                      const next = categories.find((c) => getCategoryValue(c) === value) ?? null;
+                      onCategorySelect?.(next);
+                    }}
+                    className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-700"
+                    aria-label="Select category"
+                  >
+                    <option value="">All Categories</option>
+                    {categories.map((category) => (
+                      <option
+                        key={getCategoryValue(category)}
+                        value={getCategoryValue(category)}
+                      >
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 )}
               </div>
-              <div className="border-t border-gray-100"></div>
             </>
           )}
 
@@ -167,33 +174,47 @@ export function FilterSidebar({
               <label className="text-sm font-semibold text-gray-900">Location</label>
             </div>
             <div className="space-y-3">
-              {onDetectLocation && (
-                <button
-                  onClick={onDetectLocation}
-                  disabled={detectingLocation}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {detectingLocation ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Detecting...
-                    </>
-                  ) : (
-                    <>
-                      <MapPin className="w-4 h-4" />
-                      Use Current Location
-                    </>
-                  )}
-                </button>
-              )}
               {onLocationChange && (
-                <input
-                  type="text"
-                  placeholder="Enter location..."
-                  value={location}
-                  onChange={(e) => onLocationChange(e.target.value)}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter location..."
+                    value={location}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      onLocationChange(next);
+                      // If the user starts typing, treat it as a manual location (not GPS)
+                      if (onLocationCoordinatesChange && locationCoordinates) {
+                        onLocationCoordinatesChange(null);
+                      }
+                    }}
+                    className="w-full px-4 py-2.5 pr-11 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    aria-label="Location"
+                  />
+
+                  {onDetectLocation && (
+                    <button
+                      type="button"
+                      onClick={onDetectLocation}
+                      disabled={detectingLocation}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label="Use current location"
+                      title="Use current location"
+                    >
+                      {detectingLocation ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <MapPin className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {locationCoordinates && (
+                <div className="text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                  Using your current location.
+                </div>
               )}
               {locationCoordinates && onRadiusChange && (
                 <div className="space-y-2">
@@ -230,8 +251,6 @@ export function FilterSidebar({
             </div>
           </div>
 
-          <div className="border-t border-gray-100"></div>
-
           {/* Price Range */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -264,8 +283,8 @@ export function FilterSidebar({
                 <div
                   className="absolute h-2 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2"
                   style={{
-                    left: `${(priceRange[0] / maxPrice) * 100}%`,
-                    width: `${((priceRange[1] - priceRange[0]) / maxPrice) * 100}%`,
+                    left: `${leftPct}%`,
+                    width: `${widthPct}%`,
                   }}
                 ></div>
 
@@ -273,46 +292,47 @@ export function FilterSidebar({
                 <input
                   type="range"
                   min="0"
-                  max={maxPrice}
-                  step={Math.max(1, Math.floor(maxPrice / 100))}
+                  max={safeMaxPrice}
+                  step={step}
                   value={priceRange[0]}
                   onChange={(e) => {
-                    const newMin = parseInt(e.target.value);
-                    onPriceRangeChange([
-                      Math.min(newMin, priceRange[1] - 100),
-                      priceRange[1],
-                    ]);
+                    const newMin = Number(e.target.value);
+                    const maxAllowed = Math.max(0, priceRange[1] - minGap);
+                    onPriceRangeChange([Math.min(newMin, maxAllowed), priceRange[1]]);
                   }}
                   className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb z-10 top-1/2 transform -translate-y-1/2"
                   style={{
-                    zIndex: priceRange[0] > priceRange[1] - (maxPrice * 0.05) ? 20 : 10,
+                    zIndex: priceRange[0] > priceRange[1] - (safeMaxPrice * 0.05) ? 20 : 10,
                   }}
+                  aria-label="Minimum price"
                 />
 
                 {/* Max Slider */}
                 <input
                   type="range"
                   min="0"
-                  max={maxPrice}
-                  step={Math.max(1, Math.floor(maxPrice / 100))}
+                  max={safeMaxPrice}
+                  step={step}
                   value={priceRange[1]}
                   onChange={(e) => {
-                    const newMax = parseInt(e.target.value);
-                    onPriceRangeChange([
-                      priceRange[0],
-                      Math.max(newMax, priceRange[0] + 100),
-                    ]);
+                    const newMax = Number(e.target.value);
+                    const minAllowed = Math.min(safeMaxPrice, priceRange[0] + minGap);
+                    onPriceRangeChange([priceRange[0], Math.max(newMax, minAllowed)]);
                   }}
                   className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb z-10 top-1/2 transform -translate-y-1/2"
                   style={{
-                    zIndex: priceRange[1] < priceRange[0] + (maxPrice * 0.05) ? 20 : 10,
+                    zIndex: priceRange[1] < priceRange[0] + (safeMaxPrice * 0.05) ? 20 : 10,
                   }}
+                  aria-label="Maximum price"
                 />
               </div>
             </div>
 
             {/* Custom Slider Styles */}
             <style dangerouslySetInnerHTML={{ __html: `
+              .slider-thumb {
+                pointer-events: none;
+              }
               .slider-thumb::-webkit-slider-thumb {
                 appearance: none;
                 width: 18px;
@@ -322,6 +342,7 @@ export function FilterSidebar({
                 cursor: pointer;
                 border: 2px solid white;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                pointer-events: auto;
               }
               .slider-thumb::-moz-range-thumb {
                 width: 18px;
@@ -331,6 +352,7 @@ export function FilterSidebar({
                 cursor: pointer;
                 border: 2px solid white;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                pointer-events: auto;
               }
               .slider-thumb:focus {
                 outline: none;
@@ -343,8 +365,6 @@ export function FilterSidebar({
               }
             ` }} />
           </div>
-
-          <div className="border-t border-gray-100"></div>
 
           {/* Ratings */}
           <div className="space-y-3">
@@ -384,8 +404,6 @@ export function FilterSidebar({
             </div>
           </div>
 
-          <div className="border-t border-gray-100"></div>
-
           {/* Availability Toggle */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -417,7 +435,6 @@ export function FilterSidebar({
           {/* Clear Filters Button */}
           {hasActiveFilters && (
             <>
-              <div className="border-t border-gray-100"></div>
               <button
                 onClick={onClearFilters}
                 className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all border-2 border-transparent hover:border-gray-300 flex items-center justify-center gap-2"

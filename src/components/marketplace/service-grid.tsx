@@ -198,14 +198,6 @@ export function ServiceGrid({
 
   return (
     <div className="space-y-8">
-      {/* Results Count */}
-      {hasActiveFilters && (
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <span className="font-medium">{totalCount}</span>
-          <span>{totalCount === 1 ? 'service' : 'services'} found</span>
-        </div>
-      )}
-
       {/* Featured Services Section */}
       {featuredServicesToRender.length > 0 && (
         <div>

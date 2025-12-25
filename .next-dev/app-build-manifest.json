@@ -185,6 +185,56 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/auth/page.js"
+    ],
+    "/(authenticated)/supplies/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/supplies/layout.js"
+    ],
+    "/(authenticated)/supplies/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/supplies/page.js"
+    ],
+    "/(authenticated)/academy/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/academy/page.js"
+    ],
+    "/(authenticated)/rentals/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/rentals/layout.js"
+    ],
+    "/(authenticated)/rentals/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/rentals/page.js"
+    ],
+    "/(authenticated)/facility-care/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/facility-care/page.js"
+    ],
+    "/(authenticated)/ads/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/ads/layout.js"
+    ],
+    "/(authenticated)/ads/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/ads/page.js"
+    ],
+    "/(authenticated)/finance/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/finance/page.js"
+    ],
+    "/(authenticated)/referrals/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/referrals/page.js"
     ]
   }
 }

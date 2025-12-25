@@ -1,19 +1,11 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import type { AppPackage } from "@/shared/types/app-package";
+import { PACKAGE_IDS } from "@/shared/config/package-registry";
 
-export type AppPackage =
-  | "marketplace"
-  | "academy"
-  | "ads"
-  | "supplies"
-  | "rentals"
-  | "finance"
-  | "facility"
-  | "plus"
-  | "jobs"
-  | "referrals"
-  | null;
+// Re-export for backward compatibility (existing imports expect this type here)
+export type { AppPackage };
 
 interface PackageSwitcherContextValue {
   activePackage: AppPackage;
@@ -29,18 +21,7 @@ const PACKAGE_SWITCHER_EVENT = "localpro:package-switcher:changed";
 
 const PackageSwitcherContext = createContext<PackageSwitcherContextValue | undefined>(undefined);
 
-const VALID_PACKAGES: Set<Exclude<AppPackage, null>> = new Set([
-  "marketplace",
-  "academy",
-  "ads",
-  "supplies",
-  "rentals",
-  "finance",
-  "facility",
-  "plus",
-  "jobs",
-  "referrals",
-]);
+const VALID_PACKAGES: Set<Exclude<AppPackage, null>> = new Set(PACKAGE_IDS);
 
 function normalizePackage(raw: string | null): AppPackage {
   if (!raw) return null;

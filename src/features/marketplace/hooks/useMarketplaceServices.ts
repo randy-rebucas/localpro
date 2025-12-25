@@ -33,6 +33,7 @@ function getCacheKey(params: MarketplaceServicesParams): string {
   const parts = [
     params.categoryKey || '',
     params.subcategory || '',
+    params.search || '',
     params.location || '',
     params.lat?.toString() || '',
     params.lng?.toString() || '',
@@ -53,6 +54,7 @@ function getCacheKey(params: MarketplaceServicesParams): string {
 export interface MarketplaceServicesParams {
   categoryKey?: string | null;
   subcategory?: string | null;
+  search?: string;
   location?: string;
   lat?: number;
   lng?: number;
@@ -156,6 +158,10 @@ export function useMarketplaceServices(params: MarketplaceServicesParams) {
       
       if (params.subcategory) {
         queryParams.append('subcategory', params.subcategory);
+      }
+      
+      if (params.search?.trim()) {
+        queryParams.append('search', params.search.trim());
       }
       
       if (params.location?.trim()) {

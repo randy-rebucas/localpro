@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Filter, Grid3x3, List } from "lucide-react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { Filter, Grid3x3, List, Search, X } from "lucide-react";
 import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
 import { ServiceGrid } from "@/components/marketplace/service-grid";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
@@ -35,6 +35,20 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
   // UI state
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  
+  // Keep UI input in sync with filter state (e.g. when Clear Filters is pressed)
+  useEffect(() => {
+    setSearchInput(filters.search ?? "");
+  }, [filters.search]);
+
+  // Debounce search to avoid firing a request on every keystroke
+  useEffect(() => {
+    const t = setTimeout(() => {
+      filters.setSearch(searchInput);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput, filters]);
 
   // Memoized handlers
   const handleOpenFilters = useCallback(() => {
@@ -115,6 +129,7 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (filters.selectedCategory) count++;
+    if (filters.search?.trim()) count++;
     if (filters.location?.trim()) count++;
     if (filters.locationCoordinates) count++;
     if (filters.priceRange[0] > 0 || filters.priceRange[1] < maxPrice) count++;
@@ -125,7 +140,7 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 lg:py-2">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Sidebar - Filters */}
           <FilterSidebar
@@ -177,30 +192,58 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
             <div className="mb-6">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-                  {/* Left Side - Sort Controls */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <label className="text-xs font-medium text-gray-700 hidden sm:block">Sort by:</label>
-                    <select
-                      value={filters.sortBy}
-                      onChange={(e) => filters.setSortBy(e.target.value)}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
-                      aria-label="Sort services by"
-                    >
-                      <option value="createdAt">Date Created</option>
-                      <option value="basePrice">Price</option>
-                      <option value="rating">Rating</option>
-                      <option value="title">Title</option>
-                    </select>
+                  {/* Left Side - Search + Sort Controls */}
+                  <div className="flex flex-col gap-3 w-full sm:w-auto">
+                    {/* Search */}
+                    <div className="relative w-full sm:w-96">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search services..."
+                        className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                        aria-label="Search services"
+                      />
+                      {searchInput.trim().length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchInput("");
+                            filters.setSearch("");
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                          aria-label="Clear search"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
 
-                    <select
-                      value={filters.sortOrder}
-                      onChange={(e) => filters.setSortOrder(e.target.value as 'asc' | 'desc')}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
-                      aria-label="Sort order"
-                    >
-                      <option value="desc">Descending</option>
-                      <option value="asc">Ascending</option>
-                    </select>
+                    {/* Sort */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <label className="text-xs font-medium text-gray-700 hidden sm:block">Sort by:</label>
+                      <select
+                        value={filters.sortBy}
+                        onChange={(e) => filters.setSortBy(e.target.value)}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                        aria-label="Sort services by"
+                      >
+                        <option value="createdAt">Date Created</option>
+                        <option value="basePrice">Price</option>
+                        <option value="rating">Rating</option>
+                        <option value="title">Title</option>
+                      </select>
+
+                      <select
+                        value={filters.sortOrder}
+                        onChange={(e) => filters.setSortOrder(e.target.value as 'asc' | 'desc')}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                        aria-label="Sort order"
+                      >
+                        <option value="desc">Descending</option>
+                        <option value="asc">Ascending</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Right Side - View Mode Toggle */}

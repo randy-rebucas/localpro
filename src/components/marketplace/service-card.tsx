@@ -89,7 +89,11 @@ export function ServiceCard({
   };
   
   return (
-    <div className={`bg-white overflow-hidden transition-all group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'}`}>
+    <div
+      className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-green-200 overflow-hidden transition-all group relative ${
+        isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'
+      }`}
+    >
       {/* Favorite Icon - Top Right */}
       <div className="absolute top-3 right-3 z-10">
         <div className="bg-white rounded-full p-1.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">

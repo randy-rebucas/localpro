@@ -7,6 +7,7 @@ interface ServiceFiltersState {
   selectedCategory: ServiceCategory | null;
   categoryKey: string | null;
   subcategory: string | null;
+  search: string;
   priceRange: [number, number];
   minRating: number;
   isAvailable: boolean;
@@ -31,6 +32,7 @@ interface UseServiceFiltersReturn extends ServiceFiltersState {
   setSelectedCategory: (category: ServiceCategory | null) => void;
   setCategoryKey: (key: string | null) => void;
   setSubcategory: (subcategory: string | null) => void;
+  setSearch: (search: string) => void;
   setPriceRange: (range: [number, number]) => void;
   setMinRating: (rating: number) => void;
   setIsAvailable: (available: boolean) => void;
@@ -55,6 +57,7 @@ export function useServiceFilters({
   const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
   const [categoryKey, setCategoryKey] = useState<string | null>(null);
   const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const [priceRange, setPriceRange] = useState<[number, number]>(initialPriceRange);
   const [minRating, setMinRating] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
@@ -77,7 +80,7 @@ export function useServiceFilters({
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, minRating, isAvailable, sortBy, sortOrder, groupByCategory]);
+  }, [categoryKey, subcategory, search, location, locationCoordinates, radius, priceRange, minRating, isAvailable, sortBy, sortOrder, groupByCategory]);
 
   // Get category key from selected category
   const getCategoryKey = useCallback((category: ServiceCategory | null): string | null => {
@@ -97,15 +100,17 @@ export function useServiceFilters({
            priceRange[1] !== maxPrice ||
            minRating !== 0 ||
            isAvailable ||
+           search.trim() !== "" ||
            location.trim() !== "" ||
            locationCoordinates !== null ||
            subcategory !== null;
-  }, [priceRange, maxPrice, minRating, isAvailable, location, locationCoordinates, subcategory]);
+  }, [priceRange, maxPrice, minRating, isAvailable, search, location, locationCoordinates, subcategory]);
 
   const clearFilters = useCallback(() => {
     setSelectedCategory(null);
     setCategoryKey(null);
     setSubcategory(null);
+    setSearch("");
     setPriceRange([0, maxPrice]);
     setMinRating(0);
     setIsAvailable(false);
@@ -125,6 +130,7 @@ export function useServiceFilters({
   const servicesParams = useMemo(() => ({
     categoryKey: categoryKey || undefined,
     subcategory: subcategory || undefined,
+    search: search.trim() || undefined,
     location: location.trim() || undefined,
     lat: locationCoordinates?.lat,
     lng: locationCoordinates?.lng,
@@ -138,12 +144,13 @@ export function useServiceFilters({
     sortBy: sortBy,
     sortOrder: sortOrder,
     groupByCategory: groupByCategory,
-  }), [categoryKey, subcategory, location, locationCoordinates, radius, priceRange, maxPrice, minRating, isAvailable, currentPage, limit, sortBy, sortOrder, groupByCategory]);
+  }), [categoryKey, subcategory, search, location, locationCoordinates, radius, priceRange, maxPrice, minRating, isAvailable, currentPage, limit, sortBy, sortOrder, groupByCategory]);
 
   return {
     selectedCategory,
     categoryKey,
     subcategory,
+    search,
     priceRange,
     minRating,
     isAvailable,
@@ -159,6 +166,7 @@ export function useServiceFilters({
     setSelectedCategory,
     setCategoryKey,
     setSubcategory,
+    setSearch,
     setPriceRange,
     setMinRating,
     setIsAvailable,
