@@ -1,6 +1,5 @@
 /**
- * @deprecated This file is maintained for backward compatibility.
- * Please import from '@/shared/components/ui' instead.
+ * @deprecated This folder is maintained for backward compatibility.
+ * Prefer importing from `@/shared/components/ui` (shadcn source of truth).
  */
-export * from '@/shared/components/ui';
-
+export * from "@/shared/components/ui";

@@ -1,9 +1,6 @@
 {
-  "/(auth)/auth/page": "app/(auth)/auth/page.js",
-  "/(authenticated)/facility-care/page": "app/(authenticated)/facility-care/page.js",
-  "/(authenticated)/referrals/page": "app/(authenticated)/referrals/page.js",
   "/admin/page": "app/admin/page.js",
   "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js",
-  "/(authenticated)/ads/page": "app/(authenticated)/ads/page.js",
+  "/(authenticated)/supplies/page": "app/(authenticated)/supplies/page.js",
   "/(authenticated)/dashboard/page": "app/(authenticated)/dashboard/page.js"
 }
