@@ -136,7 +136,7 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
     if (filters.minRating > 0) count++;
     if (filters.isAvailable) count++;
     return count;
-  }, [filters.selectedCategory, filters.location, filters.locationCoordinates, filters.priceRange, filters.minRating, filters.isAvailable, maxPrice]);
+  }, [filters.selectedCategory, filters.search, filters.location, filters.locationCoordinates, filters.priceRange, filters.minRating, filters.isAvailable, maxPrice]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/20">

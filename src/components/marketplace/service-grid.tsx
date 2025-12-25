@@ -152,7 +152,6 @@ export function ServiceGrid({
   }
 
   const allServices = [...featuredServicesToRender, ...servicesToRender];
-  const totalCount = featuredServicesToRender.length + servicesToRender.length;
 
   if (allServices.length === 0) {
     const EmptyIcon = hasActiveFilters ? FilterX : Package;
