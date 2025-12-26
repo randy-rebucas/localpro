@@ -208,12 +208,12 @@ localpro-web-app/
 
 #### For Clients
 - 🛍️ **Marketplace** (Browse services)
-- 📅 **My Bookings**
+  - 📅 **My Bookings** (Quick Links under Header Section )
 - 💼 **Job Board**
 - 🎓 **Academy**
 - 🛒 **Supplies**
 - 🚗 **Rentals**
-- 💰 **Wallet**
+  - 💰 **Wallet** (On User Menu)
 
 #### For Providers
 - 📊 **Provider Dashboard**

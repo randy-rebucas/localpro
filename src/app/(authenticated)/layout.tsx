@@ -249,7 +249,7 @@ export default function AuthenticatedLayout({
             showRoleNavigation={true}
             showFavorites={true}
             notificationsDropdown={true}
-            logoHref="/"
+            logoHref="/dashboard"
             showMobileMenu={false}
           />
         </div>

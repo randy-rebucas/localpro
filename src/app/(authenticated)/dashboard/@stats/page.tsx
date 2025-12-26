@@ -20,7 +20,12 @@ import {
   Bell,
   Heart,
   Compass,
-  Shield
+  Shield,
+  Building,
+  Wrench,
+  BarChart3,
+  TrendingUp,
+  Package
 } from "lucide-react";
 import { useDashboardAnalytics } from "@/features/analytics/hooks/useDashboardAnalytics";
 
@@ -41,6 +46,7 @@ export default function StatsPage() {
   } | null>(null);
   const { data: session, status } = useSession();
   const { userRoles, roleView, isClientView, isProviderView } = useActiveRoleView();
+  const isSupplierView = roleView === "supplier";
 
   const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
     timeframe: "30d",
@@ -216,7 +222,7 @@ export default function StatsPage() {
             <p className="text-xs text-gray-500">Platform total</p>
           </div>
 
-          {/* Revenue */}
+          {/* Revenue / Earnings */}
           <Link
             href="/finance"
             className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
@@ -230,9 +236,9 @@ export default function StatsPage() {
                 <span className="text-xs font-medium">30d</span>
               </div>
             </div>
-            <h3 className="text-sm font-medium text-gray-600 mb-1">Revenue</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1">{isProviderView ? "Earnings" : "Revenue"}</h3>
             <p className="text-3xl font-bold text-gray-800 mb-1">{analyticsLoading ? "…" : formatCurrency(totalRevenue)}</p>
-            <p className="text-xs text-gray-500">Total revenue</p>
+            <p className="text-xs text-gray-500">{isProviderView ? "Total earnings" : "Total revenue"}</p>
           </Link>
 
           {/* Profile Completeness */}
@@ -271,6 +277,152 @@ export default function StatsPage() {
         </div>
       )}
 
+      {/* Provider Quick Links Section */}
+      {isProviderView && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Quick Links</h3>
+              <p className="text-sm text-gray-600">Access your provider tools</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* My Services */}
+            <Link
+              href="/marketplace/my-services"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <Wrench className="w-5 h-5 text-blue-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">My Services</h4>
+              <p className="text-xs text-gray-600">Manage your service listings</p>
+            </Link>
+
+            {/* Bookings */}
+            <Link
+              href="/marketplace/my-bookings"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <CalendarDays className="w-5 h-5 text-emerald-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Bookings</h4>
+              <p className="text-xs text-gray-600">View and manage bookings</p>
+            </Link>
+
+            {/* Earnings */}
+            <Link
+              href="/finance"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <DollarSign className="w-5 h-5 text-yellow-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Earnings</h4>
+              <p className="text-xs text-gray-600">Track your revenue</p>
+            </Link>
+
+            {/* Analytics */}
+            <Link
+              href="/analytics"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <BarChart3 className="w-5 h-5 text-purple-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Analytics</h4>
+              <p className="text-xs text-gray-600">View performance metrics</p>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Supplier Quick Links Section */}
+      {isSupplierView && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Quick Links</h3>
+              <p className="text-sm text-gray-600">Access your supplier tools</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* My Products */}
+            <Link
+              href="/supplies/my-products"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <Package className="w-5 h-5 text-amber-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">My Products</h4>
+              <p className="text-xs text-gray-600">Manage your product catalog</p>
+            </Link>
+
+            {/* Orders */}
+            <Link
+              href="/supplies/my-orders"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <Briefcase className="w-5 h-5 text-blue-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Orders</h4>
+              <p className="text-xs text-gray-600">View and manage orders</p>
+            </Link>
+
+            {/* Revenue */}
+            <Link
+              href="/finance"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <DollarSign className="w-5 h-5 text-yellow-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Revenue</h4>
+              <p className="text-xs text-gray-600">Track your sales revenue</p>
+            </Link>
+
+            {/* Analytics */}
+            <Link
+              href="/analytics"
+              className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-all duration-200 group border border-gray-200 hover:border-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                  <BarChart3 className="w-5 h-5 text-purple-700" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors ml-auto" />
+              </div>
+              <h4 className="text-sm font-semibold text-gray-900 mb-1">Analytics</h4>
+              <p className="text-xs text-gray-600">View sales analytics</p>
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Additional Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* User Role Card */}
@@ -281,29 +433,53 @@ export default function StatsPage() {
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-1">Account Type</h3>
-              <p className="text-xl font-bold text-gray-800 capitalize">
-                {user?.role || "User"}
+              <p className="text-xl font-bold text-gray-800">
+                {activeRoleLabel}
               </p>
-              <p className="text-xs text-gray-500">Current role</p>
+              <p className="text-xs text-gray-500">Active view: {roleView}</p>
             </div>
           </div>
         </div>
 
-        {/* Jobs */}
-        <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center">
-              <Briefcase className="w-6 h-6 text-yellow-700" />
+        {/* Become Agency Card - Show for providers who are not agency owners/admins */}
+        {isProviderView && !userRoles.includes("agency_owner") && !userRoles.includes("agency_admin") && (
+          <Link
+            href="/agencies/create"
+            className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Building className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-purple-900 mb-1">Become Agency</h3>
+                <p className="text-xs text-purple-700 mb-2">Scale your business with a team</p>
+                <div className="flex items-center gap-1 text-xs font-semibold text-purple-700 group-hover:text-purple-900">
+                  Get started
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-600 mb-1">{isClientView ? "Explore jobs" : "Jobs"}</h3>
-              <p className="text-xl font-bold text-gray-800">
-                {isClientView ? "Browse" : (analyticsLoading ? "…" : formatNumber(totalJobs))}
-              </p>
-              <p className="text-xs text-gray-500">{isClientView ? "See opportunities and postings" : "Total jobs"}</p>
+          </Link>
+        )}
+
+        {/* Jobs Card - Only show if not showing Become Agency */}
+        {!(isProviderView && !userRoles.includes("agency_owner") && !userRoles.includes("agency_admin")) && (
+          <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-2xl flex items-center justify-center">
+                <Briefcase className="w-6 h-6 text-yellow-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-600 mb-1">{isClientView ? "Explore jobs" : "Jobs"}</h3>
+                <p className="text-xl font-bold text-gray-800">
+                  {isClientView ? "Browse" : (analyticsLoading ? "…" : formatNumber(totalJobs))}
+                </p>
+                <p className="text-xs text-gray-500">{isClientView ? "See opportunities and postings" : "Total jobs"}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Quick Actions Card */}
         <div className="bg-gradient-to-br from-accent/10 to-accent/10 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">

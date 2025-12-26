@@ -39,7 +39,17 @@ import {
   Home,
   DollarSign,
   Gift,
+  Building,
+  Users,
+  FileText,
+  AlertCircle,
+  Wrench,
+  UserCircle,
+  Sparkles,
 } from "lucide-react";
+import { Modal } from "@/shared/components/ui/modal";
+import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
+import { PACKAGE_REGISTRY } from "@/shared/config/package-registry";
 
 interface GlobalHeaderProps {
   /** Show role-based navigation icons (Marketplace, Supplies, Academy, etc.) */
@@ -90,6 +100,11 @@ export function GlobalHeader({
   const pathname = usePathname();
   const {
     isAdmin,
+    isProvider,
+    isSupplier,
+    isInstructor,
+    isAgencyOwner,
+    isAgencyAdmin,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isBusinessRole: _isBusinessRole,
   } = useRoleAccess();
@@ -135,6 +150,8 @@ export function GlobalHeader({
   const [_favoritesCount, _setFavoritesCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [loadingSearch, setLoadingSearch] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showFeatureModal, setShowFeatureModal] = useState(false);
 
   // Refs for click outside detection
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -142,8 +159,150 @@ export function GlobalHeader({
   const quickActionsRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLFormElement>(null);
 
-  // Determine logo href - always links to homepage per requirements
-  const logoLink = logoHref || "/";
+  // Get role icon and label
+  const getRoleIcon = (role: string) => {
+    const roleIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+      'client': UserCircle,
+      'provider': Briefcase,
+      'supplier': Package,
+      'instructor': GraduationCap,
+      'agency_owner': Building,
+      'agency_admin': Building,
+      'admin': Shield,
+    };
+    return roleIcons[role] || UserCircle;
+  };
+
+  const getRoleLabel = (role: string) => {
+    const roleLabels: Record<string, string> = {
+      'client': 'Client',
+      'provider': 'Provider',
+      'supplier': 'Supplier',
+      'instructor': 'Instructor',
+      'agency_owner': 'Agency Owner',
+      'agency_admin': 'Agency Admin',
+      'admin': 'Admin',
+    };
+    return roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1);
+  };
+
+  const ActiveRoleIcon = getRoleIcon(roleView);
+
+  // Feature options for the switcher
+  const allFeatureOptions = useMemo(() => [
+    {
+      id: "marketplace" as PreferredFeature,
+      name: "Marketplace",
+      description: "Buy & sell locally",
+      icon: Store,
+      iconBgColor: "bg-primary/10",
+      iconTextColor: "text-primary",
+      route: PACKAGE_REGISTRY.marketplace.route,
+      featureKey: "marketplace",
+    },
+    {
+      id: "supplies" as PreferredFeature,
+      name: "Supplies",
+      description: "Equipment & tools",
+      icon: Package,
+      iconBgColor: "bg-orange-100",
+      iconTextColor: "text-orange-600",
+      route: PACKAGE_REGISTRY.supplies.route,
+      featureKey: "supplies",
+    },
+    {
+      id: "academy" as PreferredFeature,
+      name: "Academy",
+      description: "Learn & grow",
+      icon: GraduationCap,
+      iconBgColor: "bg-accent/10",
+      iconTextColor: "text-accent",
+      route: PACKAGE_REGISTRY.academy.route,
+      featureKey: "academy",
+    },
+    {
+      id: "rentals" as PreferredFeature,
+      name: "Rentals",
+      description: "Rent equipment",
+      icon: Car,
+      iconBgColor: "bg-red-100",
+      iconTextColor: "text-red-600",
+      route: PACKAGE_REGISTRY.rentals.route,
+      featureKey: "rentals",
+    },
+    {
+      id: "jobs" as PreferredFeature,
+      name: "Jobs",
+      description: "Find work opportunities",
+      icon: Briefcase,
+      iconBgColor: "bg-blue-100",
+      iconTextColor: "text-blue-600",
+      route: PACKAGE_REGISTRY.jobs.route,
+      featureKey: "jobBoard",
+    },
+    {
+      id: "facility" as PreferredFeature,
+      name: "Facility Care",
+      description: "Maintenance services",
+      icon: Home,
+      iconBgColor: "bg-emerald-100",
+      iconTextColor: "text-emerald-600",
+      route: PACKAGE_REGISTRY.facility.route,
+      featureKey: "facilityCare",
+    },
+    {
+      id: "plus" as PreferredFeature,
+      name: "LocalPro+",
+      description: "Premium features",
+      icon: Star,
+      iconBgColor: "bg-yellow-100",
+      iconTextColor: "text-yellow-600",
+      route: PACKAGE_REGISTRY.plus.route,
+      featureKey: "localProPlus",
+    },
+    {
+      id: "ads" as PreferredFeature,
+      name: "Ads",
+      description: "Promote business",
+      icon: Megaphone,
+      iconBgColor: "bg-teal-100",
+      iconTextColor: "text-teal-600",
+      route: PACKAGE_REGISTRY.ads.route,
+      featureKey: "ads",
+    },
+    {
+      id: "finance" as PreferredFeature,
+      name: "Finance",
+      description: "Manage money",
+      icon: DollarSign,
+      iconBgColor: "bg-purple-100",
+      iconTextColor: "text-purple-600",
+      route: PACKAGE_REGISTRY.finance.route,
+      featureKey: "finance",
+    },
+    {
+      id: "referrals" as PreferredFeature,
+      name: "Referrals",
+      description: "Earn rewards",
+      icon: Gift,
+      iconBgColor: "bg-pink-100",
+      iconTextColor: "text-pink-600",
+      route: PACKAGE_REGISTRY.referrals.route,
+      featureKey: "referrals",
+    },
+  ], []);
+
+  // Filter features based on app settings
+  const availableFeatures = useMemo(() => {
+    return allFeatureOptions.filter(feature => isFeatureEnabled(feature.featureKey));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allFeatureOptions, appSettings?.features]);
+
+  // Get preferred feature hook (for both indicator and modal)
+  const { preferredFeature, setPreferredFeature, clearPreferredFeature } = usePreferredFeature();
+
+  // Determine logo href - link to dashboard for authenticated users, homepage for unauthenticated
+  const logoLink = logoHref || (session ? "/dashboard" : "/");
 
   // Load favorites count from localStorage
   useEffect(() => {
@@ -489,6 +648,23 @@ export function GlobalHeader({
 
           {/* Right: Actions */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Home/Dashboard Link - Only for authenticated users */}
+            {session && (
+              <Link
+                href="/dashboard"
+                className={`hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pathname === "/dashboard" || pathname?.startsWith("/dashboard")
+                    ? "text-accent bg-accent/10"
+                    : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                title="Dashboard"
+                aria-label="Dashboard"
+              >
+                <Home className="w-5 h-5" aria-hidden="true" />
+                <span className="hidden lg:inline">Dashboard</span>
+              </Link>
+            )}
+
             {/* Mobile Search Icon */}
             <button
               onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
@@ -625,44 +801,34 @@ export function GlobalHeader({
               </Link>
             )}
 
-            {/* Role Toggle - Show options based on user's actual roles, hide if only client */}
+            {/* Role Toggle - Icon button that opens modal */}
             {shouldShowSwitcher && (
-              <div className="hidden sm:flex items-center border-r border-gray-300 pr-3 mr-1">
-                <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
-                  {userRoles.map((role) => {
-                    const roleLabels: Record<string, string> = {
-                      'client': 'Client',
-                      'provider': 'Provider',
-                      'supplier': 'Supplier',
-                      'instructor': 'Instructor',
-                      'agency_owner': 'Agency Owner',
-                      'agency_admin': 'Agency Admin',
-                      'admin': 'Admin',
-                    };
+              <button
+                onClick={() => setShowRoleModal(true)}
+                className="p-2 rounded-lg transition-colors text-gray-700 hover:text-gray-900 hover:bg-gray-100 relative"
+                title={`Current view: ${getRoleLabel(roleView)}. Click to switch role.`}
+                aria-label={`Switch role view. Current: ${getRoleLabel(roleView)}`}
+              >
+                <ActiveRoleIcon className="w-5 h-5" aria-hidden="true" />
+                {userRoles.length > 1 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full border-2 border-white"></span>
+                )}
+              </button>
+            )}
 
-                    return (
-                      <button
-                        key={role}
-                        onClick={() => {
-                          setRoleView(role);
-                          // Refresh page if on dashboard to update view
-                          if (pathname?.startsWith('/dashboard')) {
-                            router.refresh();
-                          }
-                        }}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${roleView === role
-                          ? 'bg-white text-accent shadow-sm'
-                          : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        title={`Switch to ${roleLabels[role] || role} view`}
-                        aria-label={`Switch to ${roleLabels[role] || role} view`}
-                      >
-                        {roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1)}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Feature Selector - Icon button that opens modal */}
+            {session && (
+              <button
+                onClick={() => setShowFeatureModal(true)}
+                className="p-2 rounded-lg transition-colors text-gray-700 hover:text-gray-900 hover:bg-gray-100 relative"
+                title="Preferred Feature. Click to change your preferred feature."
+                aria-label="Change preferred feature"
+              >
+                <Sparkles className="w-5 h-5" aria-hidden="true" />
+                {preferredFeature && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full border-2 border-white"></span>
+                )}
+              </button>
             )}
 
             {/* User Menu */}
@@ -870,6 +1036,288 @@ export function GlobalHeader({
               </Link>
             )}
 
+            {/* Provider-specific navigation */}
+            {session && roleView === 'provider' && userRoles.includes('provider') && (
+              <>
+                <Link
+                  href="/dashboard"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname === "/dashboard" || pathname?.startsWith("/dashboard")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname === "/dashboard" || pathname?.startsWith("/dashboard") ? "page" : undefined}
+                >
+                  <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                  <span>Provider Dashboard</span>
+                </Link>
+                <Link
+                  href="/marketplace/bookings"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/marketplace/bookings")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/marketplace/bookings") ? "page" : undefined}
+                >
+                  <Calendar className="w-4 h-4" aria-hidden="true" />
+                  <span>Bookings</span>
+                </Link>
+                {isFeatureEnabled('finance') && (
+                  <Link
+                    href="/finance"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/finance")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+                  >
+                    <DollarSign className="w-4 h-4" aria-hidden="true" />
+                    <span>Earnings</span>
+                  </Link>
+                )}
+                {isFeatureEnabled('analytics') && (
+                  <Link
+                    href="/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Analytics</span>
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* Supplier-specific navigation */}
+            {session && roleView === 'supplier' && userRoles.includes('supplier') && (
+              <>
+                <Link
+                  href="/supplies/my-products"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/supplies/my-products")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/supplies/my-products") ? "page" : undefined}
+                >
+                  <Package className="w-4 h-4" aria-hidden="true" />
+                  <span>My Products</span>
+                </Link>
+                <Link
+                  href="/supplies/my-orders"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/supplies/my-orders")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/supplies/my-orders") ? "page" : undefined}
+                >
+                  <FileText className="w-4 h-4" aria-hidden="true" />
+                  <span>Orders</span>
+                </Link>
+                {isFeatureEnabled('analytics') && (
+                  <Link
+                    href="/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Analytics</span>
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* Instructor-specific navigation */}
+            {session && roleView === 'instructor' && userRoles.includes('instructor') && (
+              <>
+                <Link
+                  href="/academy/my-courses"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/academy/my-courses")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/academy/my-courses") ? "page" : undefined}
+                >
+                  <GraduationCap className="w-4 h-4" aria-hidden="true" />
+                  <span>My Courses</span>
+                </Link>
+                <Link
+                  href="/academy/students"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/academy/students")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/academy/students") ? "page" : undefined}
+                >
+                  <Users className="w-4 h-4" aria-hidden="true" />
+                  <span>Students</span>
+                </Link>
+                {isFeatureEnabled('analytics') && (
+                  <Link
+                    href="/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Analytics</span>
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* Agency Owner/Admin-specific navigation */}
+            {session && (roleView === 'agency_owner' || roleView === 'agency_admin') && (userRoles.includes('agency_owner') || userRoles.includes('agency_admin')) && (
+              <>
+                <Link
+                  href="/agencies/dashboard"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/agencies/dashboard")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/agencies/dashboard") ? "page" : undefined}
+                >
+                  <Building className="w-4 h-4" aria-hidden="true" />
+                  <span>Agency Dashboard</span>
+                </Link>
+                <Link
+                  href="/agencies/team"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/agencies/team")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/agencies/team") ? "page" : undefined}
+                >
+                  <Users className="w-4 h-4" aria-hidden="true" />
+                  <span>Team Management</span>
+                </Link>
+                {isFeatureEnabled('analytics') && (
+                  <Link
+                    href="/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Agency Analytics</span>
+                  </Link>
+                )}
+                <Link
+                  href="/agencies/settings"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/agencies/settings")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/agencies/settings") ? "page" : undefined}
+                >
+                  <Settings className="w-4 h-4" aria-hidden="true" />
+                  <span>Agency Settings</span>
+                </Link>
+              </>
+            )}
+
+            {/* Admin-specific navigation */}
+            {session && isAdmin && roleView === 'admin' && (
+              <>
+                <Link
+                  href="/admin"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/admin")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/admin") ? "page" : undefined}
+                >
+                  <Shield className="w-4 h-4" aria-hidden="true" />
+                  <span>Admin Dashboard</span>
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/admin/users")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/admin/users") ? "page" : undefined}
+                >
+                  <Users className="w-4 h-4" aria-hidden="true" />
+                  <span>User Management</span>
+                </Link>
+                {isFeatureEnabled('analytics') && (
+                  <Link
+                    href="/admin/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Platform Analytics</span>
+                  </Link>
+                )}
+                <Link
+                  href="/admin/settings"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/admin/settings")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/admin/settings") ? "page" : undefined}
+                >
+                  <Settings className="w-4 h-4" aria-hidden="true" />
+                  <span>System Settings</span>
+                </Link>
+                <Link
+                  href="/admin/audit-logs"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/admin/audit-logs")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/admin/audit-logs") ? "page" : undefined}
+                >
+                  <FileText className="w-4 h-4" aria-hidden="true" />
+                  <span>Audit Logs</span>
+                </Link>
+                <Link
+                  href="/admin/error-monitoring"
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                    pathname?.startsWith("/admin/error-monitoring")
+                      ? "text-accent bg-accent/10"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  }`}
+                  aria-current={pathname?.startsWith("/admin/error-monitoring") ? "page" : undefined}
+                >
+                  <AlertCircle className="w-4 h-4" aria-hidden="true" />
+                  <span>Error Monitoring</span>
+                </Link>
+              </>
+            )}
+
             {/* Facility Care - check 'facilityCare' feature */}
             {isFeatureEnabled('facilityCare') && (
               <Link
@@ -952,6 +1400,164 @@ export function GlobalHeader({
           </div>
         </div>
       </div>
+
+      {/* Role Selection Modal */}
+      <Modal
+        isOpen={showRoleModal}
+        onClose={() => setShowRoleModal(false)}
+        title="Switch Role View"
+        size="sm"
+      >
+        <div className="space-y-2">
+          <p className="text-sm text-gray-600 mb-4">
+            Select a role to switch your view. This changes what features and navigation items you see.
+          </p>
+          {userRoles.map((role) => {
+            const RoleIcon = getRoleIcon(role);
+            const isActive = roleView === role;
+            
+            return (
+              <button
+                key={role}
+                onClick={() => {
+                  setRoleView(role);
+                  setShowRoleModal(false);
+                  // Refresh page if on dashboard to update view
+                  if (pathname?.startsWith('/dashboard')) {
+                    router.refresh();
+                  }
+                }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  isActive
+                    ? 'bg-accent/10 text-accent border-2 border-accent'
+                    : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-100 hover:border-gray-200'
+                }`}
+                aria-label={`Switch to ${getRoleLabel(role)} view`}
+                aria-pressed={isActive}
+              >
+                <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                  isActive
+                    ? 'bg-accent text-white'
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  <RoleIcon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium">{getRoleLabel(role)}</div>
+                  {isActive && (
+                    <div className="text-xs text-accent mt-0.5">Current view</div>
+                  )}
+                </div>
+                {isActive && (
+                  <div className="flex-shrink-0">
+                    <div className="w-2 h-2 bg-accent rounded-full"></div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </Modal>
+
+      {/* Feature Selection Modal */}
+      <Modal
+        isOpen={showFeatureModal}
+        onClose={() => setShowFeatureModal(false)}
+        title="Select Preferred Feature"
+        size="md"
+      >
+        <div>
+          {/* Current Preferred Feature Section */}
+          {preferredFeature && (() => {
+            const currentFeature = availableFeatures.find(f => f.id === preferredFeature);
+            if (!currentFeature) return null;
+            const CurrentFeatureIcon = currentFeature.icon;
+            
+            return (
+              <div className="mb-6 p-4 bg-accent/5 border-2 border-accent/20 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${currentFeature.iconBgColor}`}>
+                      <CurrentFeatureIcon className={`w-6 h-6 ${currentFeature.iconTextColor}`} />
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm text-gray-900">Current Preferred Feature</div>
+                      <div className="text-sm font-semibold text-accent">{currentFeature.name}</div>
+                      <div className="text-xs text-gray-600 mt-0.5">{currentFeature.description}</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      clearPreferredFeature();
+                      setShowFeatureModal(false);
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                    aria-label="Remove preferred feature"
+                  >
+                    <X className="w-4 h-4" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          <p className="text-sm text-gray-600 mb-4">
+            {preferredFeature 
+              ? "Choose a different feature or keep your current preference."
+              : "Choose your preferred feature for quick access. This will be your default landing page."
+            }
+          </p>
+          
+          <div className="grid grid-cols-3 gap-3">
+            {availableFeatures.map((feature) => {
+              const FeatureIcon = feature.icon;
+              const isActive = preferredFeature === feature.id;
+              
+              return (
+                <button
+                  key={feature.id}
+                  onClick={() => {
+                    setPreferredFeature(feature.id);
+                    setShowFeatureModal(false);
+                    // Navigate to the feature route
+                    router.push(feature.route);
+                  }}
+                  className={`flex flex-col items-center justify-center gap-2 px-3 py-4 rounded-lg transition-all relative ${
+                    isActive
+                      ? 'bg-accent/10 text-accent border-2 border-accent'
+                      : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-100 hover:border-gray-200'
+                  }`}
+                  aria-label={`Select ${feature.name} as preferred feature`}
+                  aria-pressed={isActive}
+                >
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-sm ${
+                    isActive
+                      ? 'bg-accent text-white'
+                      : `${feature.iconBgColor} ${feature.iconTextColor}`
+                  }`}>
+                    <FeatureIcon className="w-7 h-7" />
+                  </div>
+                  <div className="text-center w-full">
+                    <div className="font-medium text-sm">{feature.name}</div>
+                    <div className={`text-xs mt-1 ${isActive ? 'text-accent' : 'text-gray-500'}`}>
+                      {feature.description}
+                    </div>
+                    {isActive && (
+                      <div className="text-xs text-accent font-medium mt-1">Selected</div>
+                    )}
+                  </div>
+                  {isActive && (
+                    <div className="absolute top-2 right-2">
+                      <div className="w-2.5 h-2.5 bg-accent rounded-full shadow-sm"></div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 }
