@@ -1,117 +1,103 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useRoleViewContext } from "@/contexts/role-view-context";
 
 interface UseRoleViewOptions {
   userRoles: string[];
 }
 
+// Helper to get default roleView based on userRoles
+function getDefaultRoleView(userRoles: string[]): string {
+  if (userRoles.length > 0) {
+    return userRoles.includes("client") ? "client" : userRoles[0];
+  }
+  return "client";
+}
+
+// Helper to validate roleView against userRoles
+function isValidRoleView(roleView: string | null, userRoles: string[]): boolean {
+  if (!roleView) return false;
+  return userRoles.length > 0 && userRoles.includes(roleView);
+}
+
+/**
+ * Hook that wraps the RoleViewContext with userRoles validation.
+ * Ensures the roleView is always valid against the user's available roles.
+ * Persists across browser reloads via localStorage and backend sync.
+ */
 export function useRoleView({ userRoles }: UseRoleViewOptions) {
-  const isBrowser = typeof window !== "undefined";
+  // Get base roleView state from context (handles storage, sync, etc.)
+  const contextValue = useRoleViewContext();
+  const { roleView: contextRoleView, setRoleView: contextSetRoleView, isLoading } = contextValue;
+  
+  // Track if we've initialized the default to avoid infinite loops
+  const hasInitializedDefault = useRef(false);
 
-  const getDefaultRoleView = useCallback(() => {
-    if (userRoles.length > 0) {
-      return userRoles.includes("client") ? "client" : userRoles[0];
+  // Validate and normalize roleView against userRoles
+  const validatedRoleView = useMemo(() => {
+    // If context is still loading, return context value (might be from localStorage)
+    if (isLoading) {
+      return contextRoleView || (userRoles.length > 0 ? getDefaultRoleView(userRoles) : "client");
     }
-    return "client";
-  }, [userRoles]);
 
-  const readSavedRoleView = useCallback(() => {
-    if (!isBrowser) return null;
-    try {
-      return localStorage.getItem("roleView");
-    } catch {
-      return null;
+    // If no userRoles available yet, return context value (will validate later)
+    if (userRoles.length === 0) {
+      return contextRoleView || "client";
     }
-  }, [isBrowser]);
 
-  const persistRoleView = useCallback(
-    (next: string) => {
-    if (!isBrowser) return;
-    try {
-      localStorage.setItem("roleView", next);
-    } catch {
-      // ignore storage errors
+    // Validate context roleView against userRoles
+    if (contextRoleView && isValidRoleView(contextRoleView, userRoles)) {
+      return contextRoleView;
     }
-    },
-    [isBrowser]
-  );
 
-  const broadcastRoleView = useCallback(
-    (next: string) => {
-    if (!isBrowser) return;
-    window.dispatchEvent(new CustomEvent("roleViewChanged", { detail: { roleView: next } }));
-    },
-    [isBrowser]
-  );
+    // Context roleView is invalid or null, return default
+    return getDefaultRoleView(userRoles);
+  }, [contextRoleView, userRoles, isLoading]);
 
-  // Role view state (single source of truth: localStorage('roleView') + in-memory state)
-  const [roleView, setRoleView] = useState<string>(() => {
-    const saved = readSavedRoleView();
-    if (saved && userRoles.length > 0 && userRoles.includes(saved)) {
-      return saved;
-    }
-    return getDefaultRoleView();
-  });
-
-  // Keep roleView valid if userRoles change (e.g. after login/upgrade)
+  // Set default roleView if current one is invalid (only after context has loaded and userRoles are available)
   useEffect(() => {
-    if (userRoles.length === 0) return;
-    if (userRoles.includes(roleView)) return;
-    const next = getDefaultRoleView();
-    setRoleView(next);
-  }, [getDefaultRoleView, userRoles, roleView]);
+    // Don't set default during initial load or if userRoles not available
+    if (isLoading || userRoles.length === 0) {
+      return;
+    }
 
-  // Persist roleView whenever it changes (so any component can call setRoleView).
-  useEffect(() => {
-    if (!userRoles.includes(roleView)) return;
-    persistRoleView(roleView);
-  }, [persistRoleView, roleView, userRoles]);
-
-  // Listen for roleView changes from role switcher
-  useEffect(() => {
-    if (!isBrowser) return;
-
-    const handleRoleViewChange = (event: Event) => {
-      const customEvent = event as CustomEvent<{ roleView: string }>;
-      if (customEvent.detail?.roleView && userRoles.includes(customEvent.detail.roleView)) {
-        setRoleView(customEvent.detail.roleView);
+    // If context roleView is invalid or null, set the validated default
+    if (!contextRoleView || !isValidRoleView(contextRoleView, userRoles)) {
+      const defaultView = getDefaultRoleView(userRoles);
+      // Only update if different from current context value and we haven't initialized yet
+      if (contextRoleView !== defaultView && !hasInitializedDefault.current) {
+        hasInitializedDefault.current = true;
+        contextSetRoleView(defaultView);
       }
-    };
+    } else {
+      // RoleView is valid, mark as initialized
+      hasInitializedDefault.current = true;
+    }
+  }, [isLoading, userRoles, contextRoleView, contextSetRoleView]);
 
-    const handleStorageChange = () => {
-      const saved = readSavedRoleView();
-      if (saved && userRoles.includes(saved)) {
-        setRoleView(saved);
-      }
-    };
-
-    window.addEventListener("roleViewChanged", handleRoleViewChange);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("roleViewChanged", handleRoleViewChange);
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [isBrowser, readSavedRoleView, userRoles]);
-
-  // Wrapped setter: validates + persists + broadcasts
-  const setRoleViewSafe = (next: string) => {
-    if (!userRoles.includes(next)) return;
-    setRoleView(next);
-    persistRoleView(next);
-    broadcastRoleView(next);
+  // Wrapped setter: validates against userRoles before setting
+  // This ensures the roleView persists across reloads via context (which syncs to localStorage + backend)
+  const setRoleView = (next: string) => {
+    if (!isValidRoleView(next, userRoles)) {
+      return; // Silently ignore invalid roleView
+    }
+    // Context setter will:
+    // 1. Update localStorage immediately (persists across reloads)
+    // 2. Sync to backend (persists across devices/sessions)
+    // 3. Broadcast to other components
+    contextSetRoleView(next);
   };
 
   // Determine if we're in client or provider view
-  const isClientView = roleView === "client";
-  const isProviderView = roleView !== "client" && ["provider", "agency_owner", "agency_admin", "admin"].includes(roleView);
+  const isClientView = validatedRoleView === "client";
+  const isProviderView = validatedRoleView !== "client" && 
+    ["provider", "agency_owner", "agency_admin", "admin"].includes(validatedRoleView);
 
   return {
-    roleView,
-    setRoleView: setRoleViewSafe,
+    roleView: validatedRoleView,
+    setRoleView,
     isClientView,
     isProviderView,
   };
 }
-

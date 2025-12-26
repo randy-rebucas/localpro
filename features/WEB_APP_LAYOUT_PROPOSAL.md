@@ -217,30 +217,30 @@ localpro-web-app/
 
 #### For Providers
 - 📊 **Provider Dashboard**
-- 🛠️ **My Services**
-- 📅 **Bookings**
-- 💰 **Earnings**
-- 📈 **Analytics**
-- 🏢 **Become Agency** (if not agency)
+- 🛠️ **My Services** (Quick Links under Header Section )
+- 📅 **Bookings** (Quick Links under Header Section )
+- 💰 **Earnings** (Quick Links under Header Section )
+- 📈 **Analytics** (Quick Links under Header Section )
+  - 🏢 **Become Agency** (if not agency) (call to action inside content)
 
 #### For Suppliers
-- 📦 **My Products**
-- 📊 **Orders**
-- 💰 **Revenue**
-- 📈 **Analytics**
+  - 📦 **My Products** (Quick Links under Header Section )
+  - 📊 **Orders** (Quick Links under Header Section )
+  - 💰 **Revenue** (Quick Links under Header Section )
+  - 📈 **Analytics** (Quick Links under Header Section )
 
 #### For Instructors
-- 🎓 **My Courses**
-- 👥 **Students**
-- 📊 **Analytics**
-- 💰 **Earnings**
+- 🎓 **My Courses** (Quick Links under Header Section )
+- 👥 **Students** (Quick Links under Header Section )
+- 📊 **Analytics** (Quick Links under Header Section )
+- 💰 **Earnings** (Quick Links under Header Section )
 
 #### For Agency Owners/Admins
 - 🏢 **Agency Dashboard**
-- 👥 **Team Management**
-- 📊 **Agency Analytics**
-- 💰 **Financials**
-- ⚙️ **Agency Settings**
+- 👥 **Team Management** (Quick Links under Header Section )
+- 📊 **Agency Analytics** (Quick Links under Header Section )
+- 💰 **Financials** (Quick Links under Header Section )
+- ⚙️ **Agency Settings** (Quick Links under Header Section )
 
 #### For Admins
 - 🎛️ **Admin Dashboard**

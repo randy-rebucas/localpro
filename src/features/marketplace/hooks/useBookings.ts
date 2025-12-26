@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
-import { createAuthFetchOptions } from "@/lib/auth-utils";
+import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { Booking } from "@/types/bookings";
 
@@ -38,29 +38,71 @@ export function useBookings(params: BookingsParams = {}) {
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<BookingsResponse["pagination"] | null>(null);
   const mountedRef = useRef(true);
+  const paramsRef = useRef(params);
+  const hasFetchedRef = useRef(false);
+  const previousParamsKeyRef = useRef<string | null>(null);
+
+  // Create a stable key from params to detect actual changes
+  const paramsKey = useMemo(() => {
+    return JSON.stringify({
+      status: params.status,
+      serviceId: params.serviceId,
+      clientId: params.clientId,
+      providerId: params.providerId,
+      page: params.page,
+      limit: params.limit,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+      startDate: params.startDate,
+      endDate: params.endDate,
+    });
+  }, [
+    params.status,
+    params.serviceId,
+    params.clientId,
+    params.providerId,
+    params.page,
+    params.limit,
+    params.sortBy,
+    params.sortOrder,
+    params.startDate,
+    params.endDate,
+  ]);
 
   const fetchBookings = useCallback(async () => {
+    // Use params from ref to avoid dependency issues
+    const currentParams = paramsRef.current;
     if (!mountedRef.current) return;
+
+    // Check for authentication token before making request
+    if (!getApiToken()) {
+      if (mountedRef.current) {
+        setError(null);
+        setBookings([]);
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
 
       const queryParams = new URLSearchParams();
-      if (params.status) queryParams.append("status", params.status);
-      if (params.serviceId) queryParams.append("serviceId", params.serviceId);
-      if (params.clientId) queryParams.append("clientId", params.clientId);
-      if (params.providerId) queryParams.append("providerId", params.providerId);
-      if (params.startDate) queryParams.append("startDate", params.startDate);
-      if (params.endDate) queryParams.append("endDate", params.endDate);
+      if (currentParams.status) queryParams.append("status", currentParams.status);
+      if (currentParams.serviceId) queryParams.append("serviceId", currentParams.serviceId);
+      if (currentParams.clientId) queryParams.append("clientId", currentParams.clientId);
+      if (currentParams.providerId) queryParams.append("providerId", currentParams.providerId);
+      if (currentParams.startDate) queryParams.append("startDate", currentParams.startDate);
+      if (currentParams.endDate) queryParams.append("endDate", currentParams.endDate);
       
-      const page = params.page || 1;
-      const limit = params.limit || 10;
+      const page = currentParams.page || 1;
+      const limit = currentParams.limit || 10;
       queryParams.append("page", page.toString());
       queryParams.append("limit", limit.toString());
       
-      if (params.sortBy) queryParams.append("sortBy", params.sortBy);
-      if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+      if (currentParams.sortBy) queryParams.append("sortBy", currentParams.sortBy);
+      if (currentParams.sortOrder) queryParams.append("sortOrder", currentParams.sortOrder);
 
       const url = `${API_BASE_URL}${API_ENDPOINTS.marketplaceBookings}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
       const response = await fetch(url, createAuthFetchOptions());
@@ -87,22 +129,40 @@ export function useBookings(params: BookingsParams = {}) {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      logger.error("Error fetching bookings", err instanceof Error ? err : new Error(errorMessage));
+      // Only log network errors at debug level to reduce console noise
+      // Critical errors (like 401, 403) are still logged as errors
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("NetworkError")) {
+        logger.debug("Network error fetching bookings", { error: errorMessage });
+      } else {
+        logger.error("Error fetching bookings", err instanceof Error ? err : new Error(errorMessage));
+      }
       if (mountedRef.current) {
         setError(errorMessage);
         setBookings([]);
         setLoading(false);
       }
     }
+  }, []); // Empty deps - params accessed via ref
+
+  // Update params ref when params change
+  useEffect(() => {
+    paramsRef.current = params;
   }, [params]);
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchBookings();
+    
+    // Only fetch if params actually changed or this is the first fetch
+    if (!hasFetchedRef.current || previousParamsKeyRef.current !== paramsKey) {
+      previousParamsKeyRef.current = paramsKey;
+      hasFetchedRef.current = true;
+      fetchBookings();
+    }
+    
     return () => {
       mountedRef.current = false;
     };
-  }, [fetchBookings]);
+  }, [paramsKey, fetchBookings]); // Use paramsKey instead of params object
 
   return {
     bookings,

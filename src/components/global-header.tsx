@@ -28,7 +28,6 @@ import {
   GraduationCap,
   Car,
   Briefcase,
-  BarChart3,
   Shield,
   HelpCircle,
   Filter,
@@ -40,12 +39,8 @@ import {
   DollarSign,
   Gift,
   Building,
-  Users,
-  FileText,
-  AlertCircle,
-  Wrench,
   UserCircle,
-  Sparkles,
+  Sparkles
 } from "lucide-react";
 import { Modal } from "@/shared/components/ui/modal";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
@@ -100,11 +95,6 @@ export function GlobalHeader({
   const pathname = usePathname();
   const {
     isAdmin,
-    isProvider,
-    isSupplier,
-    isInstructor,
-    isAgencyOwner,
-    isAgencyAdmin,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isBusinessRole: _isBusinessRole,
   } = useRoleAccess();
@@ -132,8 +122,10 @@ export function GlobalHeader({
   const hasMultipleRoles = userRoles.length > 1;
   const shouldShowSwitcher = hasMultipleRoles && session;
 
-  // Canonical role view (syncs via localStorage + roleViewChanged event)
+  // Canonical role view (syncs via localStorage + roleViewChanged event + backend)
   const { roleView, setRoleView } = useRoleView({ userRoles: userRoles.length ? userRoles : ["client"] });
+
+
 
   // State management
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -874,17 +866,6 @@ export function GlobalHeader({
                         <span>My Bookings</span>
                       </Link>
                     )}
-                    {/* Show "My Services" only in provider view (provider, agency_owner, agency_admin, admin) */}
-                    {roleView !== 'client' && ['provider', 'agency_owner', 'agency_admin', 'admin'].includes(roleView) && userRoles.includes(roleView) && (
-                      <Link
-                        href="/marketplace/my-services"
-                        className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        <BarChart3 className="w-4 h-4 text-gray-500" aria-hidden="true" />
-                        <span>My Services</span>
-                      </Link>
-                    )}
                     <Link
                       href="/wallet"
                       className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -1036,288 +1017,6 @@ export function GlobalHeader({
               </Link>
             )}
 
-            {/* Provider-specific navigation */}
-            {session && roleView === 'provider' && userRoles.includes('provider') && (
-              <>
-                <Link
-                  href="/dashboard"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname === "/dashboard" || pathname?.startsWith("/dashboard")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname === "/dashboard" || pathname?.startsWith("/dashboard") ? "page" : undefined}
-                >
-                  <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                  <span>Provider Dashboard</span>
-                </Link>
-                <Link
-                  href="/marketplace/bookings"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/marketplace/bookings")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/marketplace/bookings") ? "page" : undefined}
-                >
-                  <Calendar className="w-4 h-4" aria-hidden="true" />
-                  <span>Bookings</span>
-                </Link>
-                {isFeatureEnabled('finance') && (
-                  <Link
-                    href="/finance"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/finance")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
-                  >
-                    <DollarSign className="w-4 h-4" aria-hidden="true" />
-                    <span>Earnings</span>
-                  </Link>
-                )}
-                {isFeatureEnabled('analytics') && (
-                  <Link
-                    href="/analytics"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/analytics")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                    <span>Analytics</span>
-                  </Link>
-                )}
-              </>
-            )}
-
-            {/* Supplier-specific navigation */}
-            {session && roleView === 'supplier' && userRoles.includes('supplier') && (
-              <>
-                <Link
-                  href="/supplies/my-products"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/supplies/my-products")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/supplies/my-products") ? "page" : undefined}
-                >
-                  <Package className="w-4 h-4" aria-hidden="true" />
-                  <span>My Products</span>
-                </Link>
-                <Link
-                  href="/supplies/my-orders"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/supplies/my-orders")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/supplies/my-orders") ? "page" : undefined}
-                >
-                  <FileText className="w-4 h-4" aria-hidden="true" />
-                  <span>Orders</span>
-                </Link>
-                {isFeatureEnabled('analytics') && (
-                  <Link
-                    href="/analytics"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/analytics")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                    <span>Analytics</span>
-                  </Link>
-                )}
-              </>
-            )}
-
-            {/* Instructor-specific navigation */}
-            {session && roleView === 'instructor' && userRoles.includes('instructor') && (
-              <>
-                <Link
-                  href="/academy/my-courses"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/academy/my-courses")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/academy/my-courses") ? "page" : undefined}
-                >
-                  <GraduationCap className="w-4 h-4" aria-hidden="true" />
-                  <span>My Courses</span>
-                </Link>
-                <Link
-                  href="/academy/students"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/academy/students")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/academy/students") ? "page" : undefined}
-                >
-                  <Users className="w-4 h-4" aria-hidden="true" />
-                  <span>Students</span>
-                </Link>
-                {isFeatureEnabled('analytics') && (
-                  <Link
-                    href="/analytics"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/analytics")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                    <span>Analytics</span>
-                  </Link>
-                )}
-              </>
-            )}
-
-            {/* Agency Owner/Admin-specific navigation */}
-            {session && (roleView === 'agency_owner' || roleView === 'agency_admin') && (userRoles.includes('agency_owner') || userRoles.includes('agency_admin')) && (
-              <>
-                <Link
-                  href="/agencies/dashboard"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/agencies/dashboard")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/agencies/dashboard") ? "page" : undefined}
-                >
-                  <Building className="w-4 h-4" aria-hidden="true" />
-                  <span>Agency Dashboard</span>
-                </Link>
-                <Link
-                  href="/agencies/team"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/agencies/team")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/agencies/team") ? "page" : undefined}
-                >
-                  <Users className="w-4 h-4" aria-hidden="true" />
-                  <span>Team Management</span>
-                </Link>
-                {isFeatureEnabled('analytics') && (
-                  <Link
-                    href="/analytics"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/analytics")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                    <span>Agency Analytics</span>
-                  </Link>
-                )}
-                <Link
-                  href="/agencies/settings"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/agencies/settings")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/agencies/settings") ? "page" : undefined}
-                >
-                  <Settings className="w-4 h-4" aria-hidden="true" />
-                  <span>Agency Settings</span>
-                </Link>
-              </>
-            )}
-
-            {/* Admin-specific navigation */}
-            {session && isAdmin && roleView === 'admin' && (
-              <>
-                <Link
-                  href="/admin"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/admin")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/admin") ? "page" : undefined}
-                >
-                  <Shield className="w-4 h-4" aria-hidden="true" />
-                  <span>Admin Dashboard</span>
-                </Link>
-                <Link
-                  href="/admin/users"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/admin/users")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/admin/users") ? "page" : undefined}
-                >
-                  <Users className="w-4 h-4" aria-hidden="true" />
-                  <span>User Management</span>
-                </Link>
-                {isFeatureEnabled('analytics') && (
-                  <Link
-                    href="/admin/analytics"
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      pathname?.startsWith("/admin/analytics")
-                        ? "text-accent bg-accent/10"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                    }`}
-                    aria-current={pathname?.startsWith("/admin/analytics") ? "page" : undefined}
-                  >
-                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
-                    <span>Platform Analytics</span>
-                  </Link>
-                )}
-                <Link
-                  href="/admin/settings"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/admin/settings")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/admin/settings") ? "page" : undefined}
-                >
-                  <Settings className="w-4 h-4" aria-hidden="true" />
-                  <span>System Settings</span>
-                </Link>
-                <Link
-                  href="/admin/audit-logs"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/admin/audit-logs")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/admin/audit-logs") ? "page" : undefined}
-                >
-                  <FileText className="w-4 h-4" aria-hidden="true" />
-                  <span>Audit Logs</span>
-                </Link>
-                <Link
-                  href="/admin/error-monitoring"
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                    pathname?.startsWith("/admin/error-monitoring")
-                      ? "text-accent bg-accent/10"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                  }`}
-                  aria-current={pathname?.startsWith("/admin/error-monitoring") ? "page" : undefined}
-                >
-                  <AlertCircle className="w-4 h-4" aria-hidden="true" />
-                  <span>Error Monitoring</span>
-                </Link>
-              </>
-            )}
-
             {/* Facility Care - check 'facilityCare' feature */}
             {isFeatureEnabled('facilityCare') && (
               <Link
@@ -1420,8 +1119,9 @@ export function GlobalHeader({
               <button
                 key={role}
                 onClick={() => {
-                  setRoleView(role);
+                  setRoleView(role as "client" | "provider" | "supplier" | "instructor" | "agency_owner" | "agency_admin" | "admin");
                   setShowRoleModal(false);
+                  // The useRoleView hook will automatically sync to backend
                   // Refresh page if on dashboard to update view
                   if (pathname?.startsWith('/dashboard')) {
                     router.refresh();
@@ -1520,6 +1220,7 @@ export function GlobalHeader({
                   onClick={() => {
                     setPreferredFeature(feature.id);
                     setShowFeatureModal(false);
+                    // The usePackageSwitcher hook will automatically sync to backend
                     // Navigate to the feature route
                     router.push(feature.route);
                   }}

@@ -147,12 +147,35 @@ export default function AuthenticatedLayout({
           fetchedUserIdRef.current = userId;
           fetchInProgressRef.current = false;
         } catch (error) {
-          logger.error('Error fetching user data', error instanceof Error ? error : new Error(String(error)), { userId });
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const isNetworkError = errorMessage.includes('Failed to fetch') || 
+                                 errorMessage.includes('NetworkError') ||
+                                 errorMessage.includes('Network request failed');
+          
+          // Log network errors at debug level to reduce console noise
+          // Critical errors (auth, server errors) are still logged as errors
+          if (isNetworkError) {
+            logger.debug('Network error fetching user data', { 
+              userId, 
+              errorMessage: errorMessage 
+            });
+            // For network errors, don't break the UI - just silently fail
+            // The session from useSession should be sufficient for most cases
+            fetchInProgressRef.current = false;
+            setLoading(false);
+            return;
+          }
+          
+          // Log other errors normally
+          logger.error('Error fetching user data', error instanceof Error ? error : new Error(errorMessage), { userId });
+          
           if (error instanceof Error && error.message.includes('401')) {
             redirectToLogin();
             fetchInProgressRef.current = false;
             return;
           }
+          
+          // Only set error state for non-network errors
           setError("Failed to load user data. Please try refreshing the page.");
           fetchInProgressRef.current = false;
         } finally {

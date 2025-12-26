@@ -12,6 +12,7 @@ import { SITE_CONFIG, PAGE_METADATA, generateKeywords } from "@/lib/seo-config";
 import { OrganizationJsonLd, WebsiteJsonLd } from "@/components/seo/json-ld";
 import { SWRProvider } from "@/providers/swr-provider";
 import { PackageSwitcherProvider } from "@/contexts/package-switcher-context";
+import { RoleViewProvider } from "@/contexts/role-view-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -191,13 +192,33 @@ export default function RootLayout({
         <ResourceHints />
         <WebVitalsReporter />
         <SWRProvider>
-          <PackageSwitcherProvider>
-            <AppSettingsProvider />
-            <LiveChatProvider>
-              {children}
-              <LiveChatWidget />
-            </LiveChatProvider>
-          </PackageSwitcherProvider>
+          {/* AppSettingsProvider: Makes app settings available throughout the entire app
+              - Available in all routes: authenticated, public, admin, auth
+              - Use via: useAppSettingsContext() or useAppSettings()
+              - Fetches settings once and shares across all components
+              - Manages global app settings (features, business info, etc.)
+              - Also renders MaintenanceMode and ForceUpdate components
+              - Should be early in the hierarchy as other providers may need feature flags */}
+          <AppSettingsProvider>
+            {/* PackageSwitcherProvider: Makes activePackage (feature switcher) available throughout the entire app
+                - Available in all routes: authenticated, public, admin, auth
+                - Use via: usePackageSwitcher() or usePreferredFeature()
+                - Handles storage, sync, and cross-tab updates automatically
+                - Manages user's preferred feature/package selection */}
+            <PackageSwitcherProvider>
+              {/* RoleViewProvider: Makes roleView available throughout the entire app
+                  - Available in all routes: authenticated, public, admin, auth
+                  - Use via: useRoleView({ userRoles }) or useActiveRoleView()
+                  - Handles storage, sync, and cross-tab updates automatically
+                  - Manages user's active role view (client, provider, etc.) */}
+              <RoleViewProvider>
+                <LiveChatProvider>
+                  {children}
+                  <LiveChatWidget />
+                </LiveChatProvider>
+              </RoleViewProvider>
+            </PackageSwitcherProvider>
+          </AppSettingsProvider>
         </SWRProvider>
         {CLIENT_CONFIG.googleTagManagerId && (
           <GoogleTagManager gtmId={CLIENT_CONFIG.googleTagManagerId} />

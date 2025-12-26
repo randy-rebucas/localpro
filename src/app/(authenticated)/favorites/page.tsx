@@ -26,14 +26,13 @@ import {
   Trash2,
   Eye,
   RefreshCw,
-  Grid,
-  List,
   CheckCircle,
   Edit,
   Tag,
   FileText,
   Briefcase
 } from "lucide-react";
+import { Broadcaster } from "@/components/broadcaster";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -320,7 +319,14 @@ export default function FavoritesPage() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  // Unused state variables - reserved for future features
+  const [viewMode] = useState<"grid" | "list">("grid");
+  // const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput] = useState("");
+  const [sortBy] = useState('dateAdded');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
+  // const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [tagFilter, setTagFilter] = useState<string>("");
   const [favoriteIds, setFavoriteIds] = useState<{
     services: string[];
     providers: string[];
@@ -338,6 +344,15 @@ export default function FavoritesPage() {
     total: number;
     byType: Record<ItemType, number>;
   } | null>(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0,
+    limit: 12,
+    count: 0
+  });
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   // Currency formatting helper
   const formatPrice = useCallback((price: number, currency?: string | null, suffix?: string) => {
@@ -599,6 +614,21 @@ export default function FavoritesPage() {
     fetchFavorites();
   }, [fetchFavorites]);
 
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchInput);
+    }, 300);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchInput]);
+
   // Add to favorites (unused but kept for potential future use)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _addFavorite = useCallback(async (itemType: ItemType, itemId: string, notes?: string, tags?: string[]) => {
@@ -689,8 +719,105 @@ export default function FavoritesPage() {
     }
   }, [fetchFavorites]);
 
-  // Filter favorites by active tab
-  const filteredFavorites = favorites.filter(fav => fav.type === activeTab);
+  // Filter favorites by active tab, search, and tags
+  const filteredFavorites = React.useMemo(() => {
+    return favorites.filter(fav => {
+      // Filter by active tab
+      if (fav.type !== activeTab) return false;
+      
+      // Filter by search query
+      if (debouncedSearchQuery) {
+        const searchLower = debouncedSearchQuery.toLowerCase();
+        const data = fav.data;
+        const title = (data.title || data.name || '').toString().toLowerCase();
+        const description = (data.description || '').toString().toLowerCase();
+        const notes = (fav.notes || '').toLowerCase();
+        
+        if (!title.includes(searchLower) && 
+            !description.includes(searchLower) && 
+            !notes.includes(searchLower)) {
+          return false;
+        }
+      }
+      
+      // Filter by tag
+      if (tagFilter && (!fav.tags || !fav.tags.includes(tagFilter))) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [favorites, activeTab, debouncedSearchQuery, tagFilter]);
+
+  // Sort favorites
+  const sortedFavorites = React.useMemo(() => {
+    return [...filteredFavorites].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+      
+      switch (sortBy) {
+        case 'name': {
+          const aName = (a.data.title || a.data.name || '').toString().toLowerCase();
+          const bName = (b.data.title || b.data.name || '').toString().toLowerCase();
+          aValue = aName;
+          bValue = bName;
+          break;
+        }
+        case 'dateAdded':
+        default: {
+          aValue = new Date(a._id ? new Date(a._id).getTime() : 0).getTime();
+          bValue = new Date(b._id ? new Date(b._id).getTime() : 0).getTime();
+          break;
+        }
+      }
+      
+      return sortOrder === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+    });
+  }, [filteredFavorites, sortBy, sortOrder]);
+
+  // Get all unique tags from favorites
+  // Unused - reserved for future tag filtering feature
+  // const allTags = React.useMemo(() => {
+  //   const tags = new Set<string>();
+  //   favorites.forEach(fav => {
+  //     if (fav.tags) {
+  //       fav.tags.forEach(tag => tags.add(tag));
+  //     }
+  //   });
+  //   return Array.from(tags).sort();
+  // }, [favorites]);
+
+  const activeFiltersCount = React.useMemo(() => {
+    let count = 0;
+    if (tagFilter) count++;
+    return count;
+  }, [tagFilter]);
+
+  const clearFilters = () => {
+    setTagFilter("");
+  };
+
+  // Client-side pagination
+  const paginatedFavorites = React.useMemo(() => {
+    const startIndex = (pagination.current - 1) * pagination.limit;
+    return sortedFavorites.slice(startIndex, startIndex + pagination.limit);
+  }, [sortedFavorites, pagination]);
+
+  const totalPages = Math.ceil(sortedFavorites.length / pagination.limit);
+
+  // Reset to page 1 when filters or search change
+  React.useEffect(() => {
+    if (pagination.current !== 1 && sortedFavorites.length > 0) {
+      setPagination(prev => ({ ...prev, current: 1 }));
+    }
+  }, [activeTab, debouncedSearchQuery, tagFilter, pagination, sortedFavorites.length]);
+
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setPagination(prev => ({ ...prev, current: page }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [totalPages]);
 
   // Get icon for type
   const getTypeIcon = (type: FavoriteType) => {
@@ -721,19 +848,19 @@ export default function FavoritesPage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
         {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 pb-8 space-y-6 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-accent/90 text-white flex items-center justify-center shadow-lg shadow-accent/30">
               <Heart className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-1">Favorites</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Favorites</h1>
               <p className="text-sm text-gray-600">Your saved items and services</p>
             </div>
           </div>
@@ -754,150 +881,223 @@ export default function FavoritesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-8 space-y-6 relative z-10">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30">
-              <Heart className="w-6 h-6" />
-            </div>
+      <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
+
+        {/* Header Section - Following Reference Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent mb-1">Favorites</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Favorites — Your Saved Items & Services
+              </h1>
+              <p className="text-gray-600">
                 {totalFavorites > 0 ? (
-                  <span className="font-medium text-gray-700">{totalFavorites} saved item{totalFavorites !== 1 ? 's' : ''}</span>
+                  <span>{totalFavorites} saved item{totalFavorites !== 1 ? 's' : ''} across all categories</span>
                 ) : (
-                  <span>Your saved items and services</span>
+                  <span>Save items you love for easy access later</span>
                 )}
               </p>
             </div>
           </div>
-          {filteredFavorites.length > 0 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
-                className={`p-2.5 rounded-lg transition-all border shadow-sm hover:shadow-md ${
-                  viewMode === "grid"
-                    ? "bg-gradient-to-br from-emerald-50 to-accent/10 border-emerald-200 text-emerald-700"
-                    : "bg-gradient-to-br from-white to-gray-50 border-gray-200 text-gray-600 hover:from-gray-50 hover:to-gray-100"
-                }`}
-                title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
-              >
-                {viewMode === "grid" ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-              </button>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+          {/* Tabs */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+            <div className="flex flex-wrap gap-1 p-2">
+              {(['services', 'providers', 'courses', 'supplies', 'jobs'] as FavoriteType[]).map((type) => {
+                const Icon = getTypeIcon(type);
+                const count = getTabCount(type);
+                const isActive = activeTab === type;
+                
+                return (
+                  <button
+                    key={type}
+                    onClick={() => setActiveTab(type)}
+                    className={`px-4 py-2.5 flex items-center gap-2 rounded-lg transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-md shadow-accent/30 font-semibold transform hover:scale-105'
+                        : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-accent/10 hover:text-gray-900'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="capitalize font-medium">{type}</span>
+                    {count > 0 && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
 
-      {/* Tabs */}
-      <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md border border-gray-200 overflow-hidden backdrop-blur-sm">
-        <div className="flex flex-wrap gap-1 p-2">
-          {(['services', 'providers', 'courses', 'supplies', 'jobs'] as FavoriteType[]).map((type) => {
-            const Icon = getTypeIcon(type);
-            const count = getTabCount(type);
-            const isActive = activeTab === type;
-            
-            return (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type)}
-                className={`px-4 py-2.5 flex items-center gap-2 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/30 font-semibold transform hover:scale-105'
-                    : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-emerald-50/30 hover:text-gray-900'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="capitalize font-medium">{type}</span>
-                {count > 0 && (
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {count}
-                  </span>
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0 space-y-6">
+
+              {/* Results Count */}
+              <div className="text-sm text-gray-600">
+                {sortedFavorites.length > 0 ? (
+                  <>
+                    Showing {((pagination.current - 1) * pagination.limit) + 1} to {Math.min(pagination.current * pagination.limit, sortedFavorites.length)} of {sortedFavorites.length} results
+                  </>
+                ) : (
+                  <>No results found</>
                 )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+              </div>
 
-      {/* Content */}
-      {error ? (
-        <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border border-red-200 shadow-md">
-          <EmptyState
-            icon={Heart}
-            iconColor="text-red-600"
-            iconBgColor="bg-red-100"
-            title="Unable to Load Favorites"
-            description={error}
-            actions={[
-              {
-                type: "button",
-                onClick: fetchFavorites,
-                label: "Try Again",
-                icon: RefreshCw,
-                variant: "primary"
-              }
-            ]}
-          />
+              {/* Content */}
+              {error ? (
+                <div className="bg-white rounded-xl border-2 border-red-200 shadow-lg">
+                  <EmptyState
+                    icon={Heart}
+                    iconColor="text-red-600"
+                    iconBgColor="bg-red-100"
+                    title="Unable to Load Favorites"
+                    description={error}
+                    actions={[
+                      {
+                        type: "button",
+                        onClick: fetchFavorites,
+                        label: "Try Again",
+                        icon: RefreshCw,
+                        variant: "primary"
+                      }
+                    ]}
+                  />
+                </div>
+              ) : sortedFavorites.length === 0 ? (
+                <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg">
+                  <EmptyState
+                    icon={Heart}
+                    iconColor="text-gray-600"
+                    iconBgColor="bg-gray-100"
+                    title={`No Favorite ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
+                    description={debouncedSearchQuery || activeFiltersCount > 0 
+                      ? `No ${activeTab} match your search or filters. Try adjusting your criteria.`
+                      : `You haven't saved any ${activeTab} to your favorites yet. Start exploring to find items you love!`
+                    }
+                    actions={[
+                      ...(activeFiltersCount > 0 ? [{
+                        type: "button" as const,
+                        onClick: clearFilters,
+                        label: "Clear Filters",
+                        variant: "primary" as const
+                      }] : []),
+                      {
+                        type: "link" as const,
+                        href: activeTab === 'services' ? '/marketplace' : 
+                              activeTab === 'providers' ? '/marketplace/providers' :
+                              activeTab === 'courses' ? '/academy' :
+                              activeTab === 'supplies' ? '/supplies' :
+                              '/jobs',
+                        label: `Browse ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`,
+                        variant: "primary" as const
+                      }
+                    ]}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className={`grid gap-4 ${
+                    viewMode === "grid" 
+                      ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                      : "grid-cols-1"
+                  }`}>
+                    {paginatedFavorites.map((favorite) => (
+                      <FavoriteCard
+                        key={`${favorite.type}-${favorite.id}`}
+                        favorite={favorite}
+                        viewMode={viewMode}
+                        onRemove={removeFavorite}
+                        onUpdate={updateFavorite}
+                        onView={(id, type) => {
+                          const routes: Record<FavoriteType, string> = {
+                            services: `/marketplace/services/${id}`,
+                            providers: `/marketplace/providers/${id}`,
+                            courses: `/academy/courses/${id}`,
+                            supplies: `/supplies/${id}`,
+                            jobs: `/jobs/${id}`
+                          };
+                          router.push(routes[type]);
+                        }}
+                        formatPrice={formatPrice}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="text-sm text-gray-600">
+                          Showing {((pagination.current - 1) * pagination.limit) + 1} to {Math.min(pagination.current * pagination.limit, sortedFavorites.length)} of {sortedFavorites.length} results
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handlePageChange(pagination.current - 1)}
+                            disabled={pagination.current === 1}
+                            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Previous
+                          </button>
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              let pageNum: number;
+                              if (totalPages <= 5) {
+                                pageNum = i + 1;
+                              } else if (pagination.current <= 3) {
+                                pageNum = i + 1;
+                              } else if (pagination.current >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                              } else {
+                                pageNum = pagination.current - 2 + i;
+                              }
+                              return (
+                                <button
+                                  key={pageNum}
+                                  onClick={() => handlePageChange(pageNum)}
+                                  className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                    pagination.current === pageNum
+                                      ? "bg-accent text-white"
+                                      : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {pageNum}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            onClick={() => handlePageChange(pagination.current + 1)}
+                            disabled={pagination.current === totalPages}
+                            className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      ) : filteredFavorites.length === 0 ? (
-        <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md">
-          <EmptyState
-            icon={Heart}
-            iconColor="text-gray-600"
-            iconBgColor="bg-gray-100"
-            title={`No Favorite ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-            description={`You haven't saved any ${activeTab} to your favorites yet. Start exploring to find items you love!`}
-            actions={[
-              {
-                type: "link",
-                href: activeTab === 'services' ? '/marketplace' : 
-                      activeTab === 'providers' ? '/marketplace/providers' :
-                      activeTab === 'courses' ? '/marketplace/courses' :
-                      activeTab === 'supplies' ? '/marketplace/supplies' :
-                      '/jobs',
-                label: `Browse ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`,
-                variant: "primary"
-              }
-            ]}
-          />
-        </div>
-      ) : (
-        <div className={`grid gap-4 ${
-          viewMode === "grid" 
-            ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
-            : "grid-cols-1"
-        }`}>
-          {filteredFavorites.map((favorite) => (
-            <FavoriteCard
-              key={`${favorite.type}-${favorite.id}`}
-              favorite={favorite}
-              viewMode={viewMode}
-              onRemove={removeFavorite}
-              onUpdate={updateFavorite}
-              onView={(id, type) => {
-                const routes: Record<FavoriteType, string> = {
-                  services: `/marketplace/services/${id}`,
-                  providers: `/marketplace/providers/${id}`,
-                  courses: `/marketplace/courses/${id}`,
-                  supplies: `/marketplace/supplies/${id}`,
-                  jobs: `/jobs/${id}`
-                };
-                router.push(routes[type]);
-              }}
-              formatPrice={formatPrice}
-            />
-          ))}
-        </div>
-      )}
       </div>
     </div>
   );
@@ -958,7 +1158,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
 
   return (
     <>
-      <Card className={`${viewMode === "list" ? "flex flex-col gap-4 p-5" : "relative flex flex-col"} group hover:shadow-xl transition-all duration-300 border border-gray-200 rounded-xl overflow-hidden bg-gradient-to-br from-white to-gray-50/50`}>
+      <Card className={`${viewMode === "list" ? "flex flex-col gap-4 p-5" : "relative flex flex-col"} group hover:shadow-xl transition-all duration-300 border-2 border-gray-200 hover:border-accent/30 rounded-xl overflow-hidden bg-white`}>
         <div className={viewMode === "list" ? "flex-1 relative" : "relative"}>
           {renderContent()}
           
@@ -966,15 +1166,15 @@ const FavoriteCard = React.memo(function FavoriteCard({
           {(notes || (tags && tags.length > 0)) && (
             <div className={`${viewMode === "list" ? "mt-4" : "p-5 pt-0"} space-y-2`}>
               {notes && (
-                <div className="flex items-start gap-2 text-sm text-gray-600 bg-gradient-to-r from-primary/10/50 to-emerald-50/50 p-2 rounded-lg">
-                  <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 text-sm text-gray-600 bg-accent/10 p-2 rounded-lg border border-accent/20">
+                  <FileText className="w-4 h-4 mt-0.5 flex-shrink-0 text-accent" />
                   <p className="line-clamp-2">{notes}</p>
                 </div>
               )}
               {tags && tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {tags.map((tag, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gradient-to-r from-purple-50 to-pink-50 text-purple-700 rounded-full">
+                    <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded-full border border-accent/20">
                       <Tag className="w-3 h-3" />
                       {tag}
                     </span>
@@ -991,10 +1191,10 @@ const FavoriteCard = React.memo(function FavoriteCard({
             size="sm"
             variant="ghost"
             onClick={() => onView(id, type)}
-            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-emerald-50 hover:to-accent/10 hover:border-emerald-400 transform hover:scale-110 hover:shadow-lg"
+            className="transition-all bg-white shadow-md border border-gray-300 hover:bg-accent/10 hover:border-accent transform hover:scale-110 hover:shadow-lg"
             title="View details"
           >
-            <Eye className="w-4 h-4 text-emerald-600" />
+            <Eye className="w-4 h-4 text-accent" />
           </Button>
           <Button
             size="sm"
@@ -1071,7 +1271,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
               </Button>
               <Button
                 onClick={handleUpdate}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-accent text-white hover:from-emerald-700 hover:to-accent"
+                className="flex-1 bg-gradient-to-r from-accent to-accent/90 text-white hover:from-accent/90 hover:to-accent"
                 disabled={isUpdating}
               >
                 {isUpdating ? 'Saving...' : 'Save'}
@@ -1119,10 +1319,10 @@ function ServiceCard({ service, viewMode, formatPrice }: { service: Service; vie
         </p>
         <div className="flex items-center justify-between text-sm mb-3">
           <span className="text-gray-600 font-medium">{providerName}</span>
-          <span className="font-semibold text-emerald-600">{price}</span>
+          <span className="font-semibold text-accent">{price}</span>
         </div>
         {service.serviceArea && service.serviceArea.length > 0 && (
-          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg inline-flex shadow-sm">
+          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex border border-gray-200">
             <MapPin className="w-3.5 h-3.5" />
             <span>{service.serviceArea[0]}</span>
           </div>
@@ -1177,18 +1377,18 @@ function ProviderCard({ provider, viewMode }: { provider: Provider; viewMode: "g
   return (
     <div className={viewMode === "list" ? "flex-1" : "p-5"}>
       <div className="flex items-start gap-4">
-        <div className={`${viewMode === "list" ? "w-12 h-12" : "w-16 h-16"} bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center text-white ${viewMode === "list" ? "text-lg" : "text-xl"} font-bold flex-shrink-0 shadow-lg shadow-emerald-500/30`}>
+        <div className={`${viewMode === "list" ? "w-12 h-12" : "w-16 h-16"} bg-gradient-to-br from-accent to-accent/90 rounded-xl flex items-center justify-center text-white ${viewMode === "list" ? "text-lg" : "text-xl"} font-bold flex-shrink-0 shadow-lg shadow-accent/30`}>
           {name.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className={`${viewMode === "list" ? "text-base" : "text-lg"} font-bold text-gray-900`}>{name}</h3>
             {isVerified && (
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
+              <CheckCircle className="w-4 h-4 text-accent" />
             )}
           </div>
           {location && (
-            <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg inline-flex shadow-sm">
+            <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex border border-gray-200">
               <MapPin className="w-3.5 h-3.5" />
               <span>{location}</span>
             </div>
@@ -1235,20 +1435,20 @@ function CourseCard({ course, viewMode, formatPrice }: { course: Course; viewMod
         <div className="flex items-center justify-between text-sm mb-3">
           <span className="text-gray-600 font-medium">{instructorName}</span>
           {course.price !== undefined && (
-            <span className="font-semibold text-emerald-600">
+            <span className="font-semibold text-accent">
               {formatPrice(course.price)}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3 mt-3">
           {course.rating && (
-            <div className="flex items-center gap-1.5 bg-gradient-to-r from-amber-50 to-yellow-50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 bg-amber-50 px-2.5 py-1.5 rounded-lg border border-amber-200">
               <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
               <span className="text-xs font-semibold text-gray-900">{course.rating.toFixed(1)}</span>
             </div>
           )}
           {course.studentsCount !== undefined && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
               <Clock className="w-3.5 h-3.5" />
               <span className="font-medium">{course.studentsCount} students</span>
             </div>
@@ -1296,10 +1496,10 @@ function SupplyCard({ supply, viewMode, formatPrice }: { supply: Supply; viewMod
         )}
         <div className="flex items-center justify-between text-sm mb-3">
           <span className="text-gray-600 font-medium">{supplierName}</span>
-          <span className="font-semibold text-emerald-600">{price}</span>
+          <span className="font-semibold text-accent">{price}</span>
         </div>
         {supply.location && (
-          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg inline-flex shadow-sm">
+          <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-lg inline-flex border border-gray-200">
             <MapPin className="w-3.5 h-3.5" />
             <span>{supply.location.city}{supply.location.state ? `, ${supply.location.state}` : ''}</span>
           </div>
@@ -1374,24 +1574,24 @@ function JobCard({ job, viewMode, formatPrice }: { job: Job; viewMode: "grid" | 
         <div className="flex items-center justify-between text-sm mb-3">
           <span className="text-gray-600 font-medium">{companyName}</span>
           {salaryDisplay !== 'Salary not specified' && (
-            <span className="font-semibold text-emerald-600">{salaryDisplay}</span>
+            <span className="font-semibold text-accent">{salaryDisplay}</span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-3">
           {categoryName && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-gray-50 to-primary/10/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
               <Briefcase className="w-3.5 h-3.5" />
               <span>{categoryName}</span>
             </div>
           )}
           {(location || isRemote) && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-gray-50 to-emerald-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
               <MapPin className="w-3.5 h-3.5" />
               <span>{isRemote ? 'Remote' : location || 'Location not specified'}</span>
             </div>
           )}
           {job.jobType && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-purple-50 to-pink-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
               <Clock className="w-3.5 h-3.5" />
               <span className="capitalize">{job.jobType.replace('_', ' ')}</span>
             </div>

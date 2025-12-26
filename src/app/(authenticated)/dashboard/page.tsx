@@ -3,8 +3,9 @@
 import { Suspense, useMemo } from "react";
 import ErrorBoundary from "@/components/error-boundary";
 import { AnnouncementCard } from "@/components/announcement-card";
+import { RoleDashboardWidgets } from "@/components/dashboard/role-dashboard-widgets";
 import { useActiveRoleView } from "@/shared/hooks/useActiveRoleView";
-import { getRoleDisplayName } from "@/shared/lib/role-utils";
+import { getRoleDisplayName, type UserRole } from "@/shared/lib/role-utils";
 import { 
   Sparkles, 
   TrendingUp, 
@@ -87,11 +88,28 @@ function DashboardLoading() {
 }
 
 // Role-specific welcome messages and tips
-const roleWelcomeMessages: Record<string, { title: string; description: string; icon: React.ReactNode; tips: string[]; quickLinks: { label: string; href: string; icon: React.ReactNode }[] }> = {
+interface RoleWelcomeConfig {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  tips: string[];
+  quickLinks: { label: string; href: string; icon: React.ReactNode }[];
+  colorScheme: {
+    iconBg: string;
+    iconColor: string;
+    badgeBg: string;
+    badgeText: string;
+    linkBg: string;
+    linkText: string;
+    linkHover: string;
+  };
+}
+
+const roleWelcomeMessages: Record<UserRole, RoleWelcomeConfig> = {
   client: {
     title: "Welcome back!",
     description: "Discover services, book appointments, and explore what LocalPro has to offer.",
-    icon: <Sparkles className="w-5 h-5 text-emerald-600" />,
+    icon: <Sparkles className="w-5 h-5" />,
     tips: [
       "Browse the marketplace to find services you need",
       "Save your favorite providers for quick access",
@@ -101,12 +119,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "Explore Marketplace", href: "/marketplace", icon: <Briefcase className="w-4 h-4" /> },
       { label: "My Bookings", href: "/marketplace/bookings", icon: <TrendingUp className="w-4 h-4" /> },
       { label: "Favorites", href: "/favorites", icon: <Sparkles className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      badgeBg: "bg-emerald-50",
+      badgeText: "text-emerald-700",
+      linkBg: "bg-emerald-50",
+      linkText: "text-emerald-700",
+      linkHover: "hover:bg-emerald-100"
+    }
   },
   provider: {
     title: "Provider Dashboard",
     description: "Manage your services, track bookings, and grow your business on LocalPro.",
-    icon: <Briefcase className="w-5 h-5 text-primary" />,
+    icon: <Briefcase className="w-5 h-5" />,
     tips: [
       "Complete your profile to attract more clients",
       "Create and manage your service listings",
@@ -116,12 +143,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "My Services", href: "/marketplace/my-services", icon: <Briefcase className="w-4 h-4" /> },
       { label: "Bookings", href: "/marketplace/my-bookings", icon: <TrendingUp className="w-4 h-4" /> },
       { label: "Finance", href: "/finance", icon: <TrendingUp className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-primary/10",
+      iconColor: "text-primary",
+      badgeBg: "bg-primary/10",
+      badgeText: "text-primary",
+      linkBg: "bg-primary/10",
+      linkText: "text-primary",
+      linkHover: "hover:bg-primary/20"
+    }
   },
   supplier: {
     title: "Supplier Dashboard",
     description: "Manage your inventory, track orders, and connect with buyers.",
-    icon: <Package className="w-5 h-5 text-amber-600" />,
+    icon: <Package className="w-5 h-5" />,
     tips: [
       "Keep your product catalog up to date",
       "Monitor orders and fulfill them promptly",
@@ -131,12 +167,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "My Supplies", href: "/supplies", icon: <Package className="w-4 h-4" /> },
       { label: "Orders", href: "/supplies/orders", icon: <TrendingUp className="w-4 h-4" /> },
       { label: "Finance", href: "/finance", icon: <TrendingUp className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      badgeBg: "bg-amber-50",
+      badgeText: "text-amber-700",
+      linkBg: "bg-amber-50",
+      linkText: "text-amber-700",
+      linkHover: "hover:bg-amber-100"
+    }
   },
   instructor: {
     title: "Instructor Dashboard",
     description: "Manage your courses, track enrollments, and help students learn.",
-    icon: <GraduationCap className="w-5 h-5 text-accent" />,
+    icon: <GraduationCap className="w-5 h-5" />,
     tips: [
       "Create engaging course content",
       "Track student progress and engagement",
@@ -146,12 +191,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "My Courses", href: "/academy/my-courses", icon: <GraduationCap className="w-4 h-4" /> },
       { label: "Enrollments", href: "/academy/enrollments", icon: <Users className="w-4 h-4" /> },
       { label: "Finance", href: "/finance", icon: <TrendingUp className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-accent/10",
+      iconColor: "text-accent",
+      badgeBg: "bg-accent/10",
+      badgeText: "text-accent",
+      linkBg: "bg-accent/10",
+      linkText: "text-accent",
+      linkHover: "hover:bg-accent/20"
+    }
   },
   agency_owner: {
     title: "Agency Dashboard",
     description: "Manage your agency, providers, and grow your business network.",
-    icon: <Building className="w-5 h-5 text-purple-600" />,
+    icon: <Building className="w-5 h-5" />,
     tips: [
       "Manage your agency profile and settings",
       "Oversee providers and their performance",
@@ -161,12 +215,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "Agency Management", href: "/agencies", icon: <Building className="w-4 h-4" /> },
       { label: "Providers", href: "/agencies/providers", icon: <Users className="w-4 h-4" /> },
       { label: "Analytics", href: "/analytics", icon: <TrendingUp className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+      badgeBg: "bg-purple-50",
+      badgeText: "text-purple-700",
+      linkBg: "bg-purple-50",
+      linkText: "text-purple-700",
+      linkHover: "hover:bg-purple-100"
+    }
   },
   agency_admin: {
     title: "Agency Admin Dashboard",
     description: "Help manage your agency's operations and support providers.",
-    icon: <Users className="w-5 h-5 text-blue-600" />,
+    icon: <Users className="w-5 h-5" />,
     tips: [
       "Assist with provider management",
       "Monitor agency activities",
@@ -176,12 +239,21 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "Agency Dashboard", href: "/agencies", icon: <Building className="w-4 h-4" /> },
       { label: "Providers", href: "/agencies/providers", icon: <Users className="w-4 h-4" /> },
       { label: "Bookings", href: "/marketplace/my-bookings", icon: <TrendingUp className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      badgeBg: "bg-blue-50",
+      badgeText: "text-blue-700",
+      linkBg: "bg-blue-50",
+      linkText: "text-blue-700",
+      linkHover: "hover:bg-blue-100"
+    }
   },
   admin: {
     title: "Admin Dashboard",
     description: "Manage the platform, users, and system-wide settings.",
-    icon: <Shield className="w-5 h-5 text-red-600" />,
+    icon: <Shield className="w-5 h-5" />,
     tips: [
       "Monitor platform health and performance",
       "Manage users and permissions",
@@ -191,39 +263,58 @@ const roleWelcomeMessages: Record<string, { title: string; description: string; 
       { label: "User Management", href: "/admin/users", icon: <Users className="w-4 h-4" /> },
       { label: "Analytics", href: "/analytics", icon: <TrendingUp className="w-4 h-4" /> },
       { label: "Settings", href: "/admin/settings", icon: <Shield className="w-4 h-4" /> }
-    ]
+    ],
+    colorScheme: {
+      iconBg: "bg-red-50",
+      iconColor: "text-red-600",
+      badgeBg: "bg-red-50",
+      badgeText: "text-red-700",
+      linkBg: "bg-red-50",
+      linkText: "text-red-700",
+      linkHover: "hover:bg-red-100"
+    }
   }
 };
 
 function DashboardWelcomeCard() {
-  const { roleView, userRoles } = useActiveRoleView();
+  const { roleView } = useActiveRoleView();
 
   const roleInfo = useMemo(() => {
-    const defaultInfo = roleWelcomeMessages.client;
-    return roleWelcomeMessages[roleView] || defaultInfo;
+    // Ensure roleView is a valid UserRole, default to client
+    const validRoleView = (roleView && roleView in roleWelcomeMessages) 
+      ? (roleView as UserRole) 
+      : "client";
+    return roleWelcomeMessages[validRoleView];
   }, [roleView]);
 
   const activeRoleLabel = useMemo(() => {
     try {
-      return getRoleDisplayName(roleView as never);
+      const validRoleView = (roleView && roleView in roleWelcomeMessages) 
+        ? (roleView as UserRole) 
+        : "client";
+      return getRoleDisplayName(validRoleView);
     } catch {
       return roleView || "Client";
     }
   }, [roleView]);
 
+  const colors = roleInfo.colorScheme;
+
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              {roleInfo.icon}
+          <div className="flex items-start gap-3 flex-1">
+            <div className={`p-2 ${colors.iconBg} rounded-lg flex-shrink-0`}>
+              <div className={colors.iconColor}>
+                {roleInfo.icon}
+              </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h2 className="text-lg font-semibold text-gray-900">{roleInfo.title}</h2>
-                <span className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-medium text-gray-700">
-                  <Shield className="w-3 h-3 text-gray-500" />
+                <span className={`inline-flex items-center gap-1 rounded-full border border-gray-200 ${colors.badgeBg} px-2 py-0.5 text-xs font-medium ${colors.badgeText}`}>
+                  <Shield className="w-3 h-3" />
                   {activeRoleLabel}
                 </span>
               </div>
@@ -239,7 +330,7 @@ function DashboardWelcomeCard() {
               <Link
                 key={index}
                 href={link.href}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium ${colors.linkText} ${colors.linkBg} ${colors.linkHover} rounded-lg transition-colors`}
               >
                 {link.icon}
                 {link.label}
@@ -253,13 +344,13 @@ function DashboardWelcomeCard() {
         {roleInfo.tips.length > 0 && (
           <div className="border-t border-gray-200 pt-4">
             <div className="flex items-start gap-2 mb-2">
-              <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5" />
+              <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
               <h3 className="text-sm font-medium text-gray-900">Quick Tips</h3>
             </div>
             <ul className="space-y-1.5">
               {roleInfo.tips.map((tip, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                  <span className="text-emerald-600 mt-1">•</span>
+                  <span className={`${colors.iconColor} mt-1 flex-shrink-0`}>•</span>
                   <span>{tip}</span>
                 </li>
               ))}
@@ -272,6 +363,8 @@ function DashboardWelcomeCard() {
 }
 
 export default function DashboardPage() {
+  const { roleView } = useActiveRoleView();
+
   return (
     <ErrorBoundary>
       <Suspense fallback={<DashboardLoading />}>
@@ -279,8 +372,13 @@ export default function DashboardPage() {
           {/* Role-aware welcome card */}
           <DashboardWelcomeCard />
           
-          {/* Announcements */}
+          {/* Announcements - shown for all roles */}
           <AnnouncementCard />
+
+          {/* Role-specific dashboard widgets - only shown if roleView is valid */}
+          {roleView && (
+            <RoleDashboardWidgets />
+          )}
         </div>
       </Suspense>
     </ErrorBoundary>

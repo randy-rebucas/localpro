@@ -126,6 +126,8 @@ export interface UserSettings {
       videoQuality: "low" | "medium" | "high";
       autoDownload: boolean;
     };
+    roleView?: string; // Selected role view (client, provider, etc.)
+    package?: string | null; // Selected app package (marketplace, academy, etc.)
   };
   analytics: {
     shareUsageData: boolean;
@@ -253,6 +255,8 @@ export const defaultUserSettings: UserSettings = {
       videoQuality: "medium",
       autoDownload: false,
     },
+    roleView: undefined,
+    package: undefined,
   },
   analytics: {
     shareUsageData: true,

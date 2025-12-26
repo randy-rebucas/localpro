@@ -24,7 +24,6 @@ import {
   Building,
   Wrench,
   BarChart3,
-  TrendingUp,
   Package
 } from "lucide-react";
 import { useDashboardAnalytics } from "@/features/analytics/hooks/useDashboardAnalytics";

@@ -9,6 +9,7 @@ import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { createAuthFetchOptions, getApiToken } from "@/lib/auth-utils";
 import { logger } from "@/lib/logger";
 import { CommunicationAPI } from "@/lib/communication-utils";
+import { Broadcaster } from "@/components/broadcaster";
 
 // Communication Data Entities (from features/communication/data-entities.md)
 
@@ -2102,10 +2103,20 @@ export default function MessagesPage() {
 
   if (loading) {
     return (
-      <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading conversations...</p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="h-[calc(100vh-12rem)] bg-white rounded-2xl shadow-lg border border-gray-200 flex items-center justify-center">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
+              <p className="text-gray-500">Loading conversations...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -2123,64 +2134,73 @@ export default function MessagesPage() {
     }
     
     return (
-      <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MessageSquare className="w-8 h-8 text-red-500" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load conversations</h3>
-          <p className="text-red-500 mb-4">{error}</p>
-          
-          {isAuthError && (
-            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                Redirecting to login page...
-              </p>
-            </div>
-          )}
-          
-          {isRetrying && !isAuthError && (
-            <div className="mb-4">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent"></div>
-                <span className="text-sm text-gray-500">Retrying... (Attempt {retryCount + 1}/3)</span>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="h-[calc(100vh-12rem)] bg-white rounded-2xl shadow-lg border border-gray-200 flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-red-500" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load conversations</h3>
+              <p className="text-red-500 mb-4">{error}</p>
+              
+              {isAuthError && (
+                <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    Redirecting to login page...
+                  </p>
+                </div>
+              )}
+              
+              {isRetrying && !isAuthError && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent"></div>
+                    <span className="text-sm text-gray-500">Retrying... (Attempt {retryCount + 1}/3)</span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="flex space-x-2">
+                {!isAuthError && (
+                  <button 
+                    onClick={fetchConversations}
+                    disabled={isRetrying}
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isRetrying ? 'Retrying...' : 'Try Again'}
+                  </button>
+                )}
+                {isAuthError && (
+                  <button 
+                    onClick={() => window.location.href = '/auth'}
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    Go to Login
+                  </button>
+                )}
+                {retryCount > 0 && !isAuthError && (
+                  <button 
+                    onClick={() => {
+                      setRetryCount(0);
+                      setError(null);
+                      setIsRetrying(false);
+                      if (retryTimeoutRef.current) {
+                        clearTimeout(retryTimeoutRef.current);
+                      }
+                    }}
+                    className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel Retry
+                  </button>
+                )}
               </div>
             </div>
-          )}
-          
-          <div className="flex space-x-2">
-            {!isAuthError && (
-              <button 
-                onClick={fetchConversations}
-                disabled={isRetrying}
-                className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isRetrying ? 'Retrying...' : 'Try Again'}
-              </button>
-            )}
-            {isAuthError && (
-              <button 
-                onClick={() => window.location.href = '/auth'}
-                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Go to Login
-              </button>
-            )}
-            {retryCount > 0 && !isAuthError && (
-              <button 
-                onClick={() => {
-                  setRetryCount(0);
-                  setError(null);
-                  setIsRetrying(false);
-                  if (retryTimeoutRef.current) {
-                    clearTimeout(retryTimeoutRef.current);
-                  }
-                }}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel Retry
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -2188,8 +2208,34 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-8rem)] bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col lg:flex-row relative overflow-hidden">
-      {/* Mobile overlay */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+      </div>
+
+      <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
+
+        {/* Header Section - Following Reference Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+          <div className="mb-4">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Messages — Stay Connected
+            </h1>
+            <p className="text-gray-600">
+              Communicate with providers, clients, and support team members.
+            </p>
+          </div>
+        </div>
+
+        {/* Main Messages Interface */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+          <div className="h-[calc(100vh-12rem)] bg-white rounded-2xl shadow-xl border border-gray-100 flex flex-col lg:flex-row relative overflow-hidden">
+            {/* Mobile overlay */}
       {showMobileConversations && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-20 transition-opacity"
@@ -2205,7 +2251,7 @@ export default function MessagesPage() {
         <div className="p-6 border-b border-gray-200/80 bg-white/95 backdrop-blur-sm shadow-sm">
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500/20">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent to-accent/90 text-white flex items-center justify-center shadow-lg shadow-accent/30 ring-2 ring-accent/20">
                 <MessageSquare className="w-6 h-6" />
               </div>
               <div>
@@ -2227,7 +2273,7 @@ export default function MessagesPage() {
               </button>
               <button
                 onClick={() => {/* TODO: Add new conversation */}}
-                className="p-2.5 hover:bg-emerald-50 rounded-xl transition-all duration-200 text-emerald-600 hover:scale-105 active:scale-95 hover:shadow-sm"
+                className="p-2.5 hover:bg-accent/10 rounded-xl transition-all duration-200 text-accent hover:scale-105 active:scale-95 hover:shadow-sm"
                 title="New conversation"
               >
                 <MessageSquare className="w-4 h-4" />
@@ -2244,7 +2290,7 @@ export default function MessagesPage() {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
+                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
               />
             </div>
           ) : (
@@ -2255,7 +2301,7 @@ export default function MessagesPage() {
                 placeholder="Search messages..."
                 value={messageSearchQuery}
                 onChange={(e) => setMessageSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
+                className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-accent focus:border-accent transition-all text-sm bg-white shadow-sm hover:shadow-md focus:shadow-md"
               />
             </div>
           )}
@@ -2265,7 +2311,7 @@ export default function MessagesPage() {
         <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
           {loading ? (
             <div className="p-8 text-center text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-3 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-accent border-t-transparent mx-auto mb-4"></div>
               <p className="text-sm font-medium">Loading conversations...</p>
             </div>
           ) : filteredConversations.length === 0 ? (
@@ -2287,7 +2333,7 @@ export default function MessagesPage() {
                   onClick={() => handleConversationSelect(conversation)}
                   className={`px-5 py-4 cursor-pointer transition-all duration-200 border-l-4 ${
                     isActive
-                      ? "bg-gradient-to-r from-emerald-50/50 to-white border-emerald-500 shadow-sm"
+                      ? "bg-gradient-to-r from-accent/10 to-white border-accent shadow-sm"
                       : "border-transparent hover:bg-white/70 hover:shadow-sm"
                   }`}
                 >
@@ -2302,7 +2348,7 @@ export default function MessagesPage() {
                           className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white shadow-md"
                         />
                       ) : (
-                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-md ring-2 ring-white">
+                        <div className="w-14 h-14 bg-gradient-to-br from-accent to-accent/90 rounded-2xl flex items-center justify-center shadow-md ring-2 ring-white">
                           <span className="text-base font-bold text-white">
                             {conversation.name?.charAt(0)?.toUpperCase() || 'U'}
                           </span>
@@ -2314,7 +2360,7 @@ export default function MessagesPage() {
                         </div>
                       )}
                       {isActive && (
-                        <div className="absolute inset-0 rounded-2xl ring-2 ring-emerald-400/50"></div>
+                        <div className="absolute inset-0 rounded-2xl ring-2 ring-accent/50"></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -2350,10 +2396,10 @@ export default function MessagesPage() {
                       </p>
                       <div className="flex items-center justify-between">
                         {conversation.isTyping && (
-                          <span className="text-xs text-emerald-600 font-semibold italic animate-pulse">typing...</span>
+                          <span className="text-xs text-accent font-semibold italic animate-pulse">typing...</span>
                         )}
                         {!conversation.isTyping && hasUnread && (
-                          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-2 text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full shadow-sm">
+                          <span className="inline-flex items-center justify-center min-w-[22px] h-5 px-2 text-xs font-bold text-white bg-gradient-to-r from-accent to-accent/90 rounded-full shadow-sm">
                             {conversation.unreadCount}
                           </span>
                         )}
@@ -2391,10 +2437,10 @@ export default function MessagesPage() {
                     alt={activeConversation.name || 'User'}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-2xl object-cover ring-2 ring-emerald-500/20 shadow-md"
+                    className="w-12 h-12 rounded-2xl object-cover ring-2 ring-accent/20 shadow-md"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-md ring-2 ring-emerald-500/20">
+                  <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent/90 rounded-2xl flex items-center justify-center shadow-md ring-2 ring-accent/20">
                     <span className="text-base font-bold text-white">
                       {activeConversation.name?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
@@ -2473,15 +2519,15 @@ export default function MessagesPage() {
               {loadingConversation ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
                     <p className="text-gray-500">Loading messages...</p>
                   </div>
                 </div>
               ) : memoizedMessages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center px-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                      <MessageSquare className="w-10 h-10 text-emerald-600" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-accent/20 to-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                      <MessageSquare className="w-10 h-10 text-accent" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">No messages yet</h3>
                     <p className="text-gray-500 font-medium">Start the conversation by sending a message below.</p>
@@ -2566,13 +2612,13 @@ export default function MessagesPage() {
                             <div
                               className={`px-4 py-2.5 rounded-2xl transition-all duration-200 ${
                                 message.isFromUser
-                                  ? "bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/35"
+                                  ? "bg-gradient-to-br from-accent to-accent/90 text-white shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/35"
                                   : "bg-white text-gray-900 border border-gray-200/80 shadow-md hover:shadow-lg"
                               } ${isGrouped && !isLastInGroup ? (message.isFromUser ? "rounded-br-md" : "rounded-bl-md") : ""} ${isGrouped && !showAvatar ? (message.isFromUser ? "rounded-tr-md" : "rounded-tl-md") : ""}`}
                             >
                               {message.metadata?.replyTo && (
                                 <div className={`text-xs mb-2 p-2 rounded-lg border-l-2 ${
-                                  message.isFromUser ? "bg-emerald-400/30 border-emerald-300" : "bg-gray-100 border-gray-300"
+                                  message.isFromUser ? "bg-accent/30 border-accent/50" : "bg-gray-100 border-gray-300"
                                 }`}>
                                   <p className="truncate font-medium">Replying to message</p>
                                 </div>
@@ -2592,7 +2638,7 @@ export default function MessagesPage() {
                                       rel="noopener noreferrer"
                                       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                         message.isFromUser 
-                                          ? 'bg-emerald-400/30 text-white hover:bg-emerald-400/40 backdrop-blur-sm' 
+                                          ? 'bg-accent/30 text-white hover:bg-accent/40 backdrop-blur-sm' 
                                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                       }`}
                                     >
@@ -2604,7 +2650,7 @@ export default function MessagesPage() {
                               )}
                               
                               <div className={`flex items-center gap-1.5 mt-1.5 ${message.isFromUser ? "justify-end" : "justify-start"} ${
-                                message.isFromUser ? "text-emerald-50/90" : "text-gray-500"
+                                message.isFromUser ? "text-white/90" : "text-gray-500"
                               }`}>
                                 {!message.isFromUser && (
                                   <span className="text-[10px] font-semibold opacity-70">
@@ -2671,9 +2717,9 @@ export default function MessagesPage() {
                 <div className="flex justify-start">
                   <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-gray-200/80 rounded-2xl px-5 py-3 shadow-md">
                     <div className="flex gap-1.5">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.3s' }}></div>
                     </div>
                     <span className="text-xs text-gray-600 font-semibold">
                       {activeConversation.typingUsers.length === 1 
@@ -2710,22 +2756,22 @@ export default function MessagesPage() {
 
             {/* Message Input */}
             <div className="p-5 border-t border-gray-200/80 bg-white/95 backdrop-blur-sm shadow-lg">
-              <div className="flex items-end gap-3">
+              <div className="flex items-center gap-3">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-3 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="flex-shrink-0 p-3 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center"
                   title="Attach file"
                 >
                   <Paperclip className="w-5 h-5 text-gray-600" />
                 </button>
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="p-3 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="flex-shrink-0 p-3 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center"
                   title="Add emoji"
                 >
                   <Smile className="w-5 h-5 text-gray-600" />
                 </button>
-                <div className="flex-1 relative">
+                <div className="flex-1 relative flex items-center">
                   <textarea
                     value={newMessage}
                     onChange={(e) => {
@@ -2741,7 +2787,7 @@ export default function MessagesPage() {
                     placeholder="Type a message..."
                     disabled={sendingMessage}
                     rows={1}
-                    className="w-full px-5 py-3.5 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base bg-white resize-none min-h-[52px] max-h-[120px] overflow-y-auto shadow-sm hover:shadow-md focus:shadow-md"
+                    className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-2xl focus:ring-2 focus:ring-accent focus:border-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base bg-white resize-none min-h-[52px] max-h-[120px] overflow-y-auto shadow-sm hover:shadow-md focus:shadow-md"
                     style={{ height: 'auto' }}
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement;
@@ -2753,7 +2799,7 @@ export default function MessagesPage() {
                 <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendingMessage}
-                  className="p-3.5 bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 text-white rounded-2xl hover:from-emerald-600 hover:via-emerald-700 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 hover:scale-105 active:scale-95"
+                  className="flex-shrink-0 p-3 bg-gradient-to-r from-accent to-accent/90 text-white rounded-2xl hover:from-accent/90 hover:to-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg shadow-accent/30 hover:shadow-xl hover:shadow-accent/40 hover:scale-105 active:scale-95 flex items-center justify-center"
                 >
                   {sendingMessage ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
@@ -2801,14 +2847,17 @@ export default function MessagesPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50/50 to-white">
             <div className="text-center px-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <MessageSquare className="w-10 h-10 text-emerald-600" />
+              <div className="w-20 h-20 bg-gradient-to-br from-accent/20 to-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <MessageSquare className="w-10 h-10 text-accent" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2 tracking-tight">No conversation selected</h3>
               <p className="text-gray-500 font-medium">Choose a conversation from the sidebar to start messaging.</p>
             </div>
           </div>
         )}
+          </div>
+        </div>
+        </div>
       </div>
 
       {/* Call Interface */}
@@ -2826,7 +2875,7 @@ export default function MessagesPage() {
                 />
               )}
               {callType === 'voice' && (
-                <div className="w-full h-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-accent to-accent/90 flex items-center justify-center">
                   <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
                     <Phone className="w-10 h-10 text-white" />
                   </div>
@@ -2865,10 +2914,10 @@ export default function MessagesPage() {
                             alt={activeConversation.name || 'User'}
                             width={128}
                             height={128}
-                            className="w-32 h-32 rounded-full mx-auto mb-4 ring-4 ring-emerald-500/50"
+                            className="w-32 h-32 rounded-full mx-auto mb-4 ring-4 ring-accent/50"
                           />
                         ) : (
-                          <div className="w-32 h-32 bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-emerald-500/50">
+                          <div className="w-32 h-32 bg-gradient-to-br from-accent to-accent/90 rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-accent/50">
                             <span className="text-4xl font-bold text-white">
                               {activeConversation?.name?.charAt(0)?.toUpperCase() || 'U'}
                             </span>
@@ -2912,10 +2961,10 @@ export default function MessagesPage() {
                         alt={activeConversation.name || 'User'}
                         width={160}
                         height={160}
-                        className="w-40 h-40 rounded-full mx-auto mb-6 ring-4 ring-emerald-500/50 shadow-2xl"
+                        className="w-40 h-40 rounded-full mx-auto mb-6 ring-4 ring-accent/50 shadow-2xl"
                       />
                     ) : (
-                      <div className="w-40 h-40 bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-emerald-500/50 shadow-2xl">
+                      <div className="w-40 h-40 bg-gradient-to-br from-accent to-accent/90 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-accent/50 shadow-2xl">
                         <span className="text-5xl font-bold text-white">
                           {activeConversation?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </span>

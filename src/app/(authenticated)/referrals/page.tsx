@@ -26,7 +26,12 @@ import {
   Twitter,
   Linkedin,
   Target,
-  Sparkles
+  Sparkles,
+  Filter,
+  Grid3x3,
+  List,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
 import { createAuthFetchOptions } from "@/lib/auth-utils";
@@ -34,6 +39,7 @@ import { logger } from "@/lib/logger";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/currency-utils";
 import { useAppSettings } from "@/hooks/useAppSettings";
 import toast from "react-hot-toast";
+import { Broadcaster } from "@/components/broadcaster";
 
 export const dynamic = 'force-dynamic';
 
@@ -117,16 +123,31 @@ export default function ReferralsPage() {
   const [refreshing, setRefreshing] = useState(false);
   
   // Filters
-  const [searchQuery, setSearchQuery] = useState("");
+  // const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [timeRange, setTimeRange] = useState<string>("all");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
+  const [sortBy, setSortBy] = useState('referredAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0,
+    limit: 20,
+    count: 0
+  });
   
   // Active tab
   const [activeTab, setActiveTab] = useState<'overview' | 'referrals' | 'leaderboard'>('overview');
+  
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   
   // Invite modal
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -339,6 +360,21 @@ export default function ReferralsPage() {
     }
   }, [mounted, fetchReferralData]);
 
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchInput);
+    }, 300);
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchInput]);
+
   const handleRefresh = () => {
     fetchReferralData(true);
   };
@@ -437,15 +473,62 @@ export default function ReferralsPage() {
       const refereeName = ref.referee?.name || 
         `${ref.referee?.firstName || ''} ${ref.referee?.lastName || ''}`.trim();
       
-      const matchesSearch = !searchQuery || 
-        refereeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ref.referralCode?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = !debouncedSearchQuery || 
+        refereeName.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        ref.referralCode?.toLowerCase().includes(debouncedSearchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || ref.status === statusFilter;
       
       return matchesSearch && matchesStatus;
     });
-  }, [referrals, searchQuery, statusFilter]);
+  }, [referrals, debouncedSearchQuery, statusFilter]);
+
+  const sortedReferrals = useMemo(() => {
+    return [...filteredReferrals].sort((a, b) => {
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
+      switch (sortBy) {
+        case 'name': {
+          const aName = a.referee?.name || `${a.referee?.firstName || ''} ${a.referee?.lastName || ''}`.trim();
+          const bName = b.referee?.name || `${b.referee?.firstName || ''} ${b.referee?.lastName || ''}`.trim();
+          aValue = aName.toLowerCase();
+          bValue = bName.toLowerCase();
+          break;
+        }
+        case 'reward': {
+          aValue = a.rewardDistribution?.referrerReward?.amount || a.reward?.amount || 0;
+          bValue = b.rewardDistribution?.referrerReward?.amount || b.reward?.amount || 0;
+          break;
+        }
+        default: {
+          aValue = new Date(a.timeline?.referredAt || a.timeline?.completedAt || 0).getTime();
+          bValue = new Date(b.timeline?.referredAt || b.timeline?.completedAt || 0).getTime();
+          break;
+        }
+      }
+      return sortOrder === 'asc' ? (aValue > bValue ? 1 : -1) : (aValue < bValue ? 1 : -1);
+    });
+  }, [filteredReferrals, sortBy, sortOrder]);
+
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter !== 'all') count++;
+    if (timeRange !== 'all') count++;
+    return count;
+  }, [statusFilter, timeRange]);
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setTimeRange('all');
+    setSearchInput("");
+  };
+
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [totalPages]);
 
   const getStatusBadge = (status: string) => {
     const statusClasses: Record<string, string> = {
@@ -486,130 +569,131 @@ export default function ReferralsPage() {
 
   if (!mounted || settingsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-orange-200/30 to-amber-300/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-yellow-200/30 to-orange-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-amber-100/20 to-yellow-200/10 rounded-full blur-2xl" />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Gift className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-600 via-amber-600 to-yellow-600 bg-clip-text text-transparent">
-                  Referral Program
-                </h1>
-                <p className="text-gray-600 text-sm">Invite friends & earn rewards together</p>
-              </div>
-            </div>
-          </div>
+      <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="p-2.5 rounded-xl bg-white border-2 border-gray-200 hover:border-orange-300 hover:shadow-md transition-all disabled:opacity-50"
-            >
-              <RefreshCw className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={() => setShowInviteModal(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/25"
-            >
-              <Send className="w-4 h-4" />
-              <span>Invite Friends</span>
-            </button>
+        {/* Header Section - Following Reference Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Referral Program — Invite Friends & Earn Rewards Together
+              </h1>
+              <p className="text-gray-600">
+                Share your referral link and earn rewards when friends join and complete actions.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-2.5 rounded-xl bg-white border-2 border-gray-200 hover:border-accent hover:shadow-md transition-all disabled:opacity-50"
+              >
+                <RefreshCw className={`w-5 h-5 text-gray-600 ${refreshing ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => setShowInviteModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent/90 rounded-lg hover:from-accent/90 hover:to-accent transition-all shadow-lg shadow-accent/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
+              >
+                <Send className="w-4 h-4" />
+                Invite Friends
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Sub Navigation */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border-2 border-gray-200 p-2 mb-6 shadow-sm">
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        {/* Quick Links Row */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-b border-gray-200 pb-4">
             <Link
               href="/referrals"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white font-medium shadow-md"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Gift className="w-4 h-4" />
-              <span>My Referrals</span>
+              <Gift className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">My Referrals</span>
             </Link>
             <Link
               href="/finance"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors font-medium"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Coins className="w-4 h-4" />
-              <span>Earnings</span>
+              <Coins className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Earnings</span>
             </Link>
             <Link
               href="/support"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-gray-700 hover:bg-orange-50 hover:text-orange-700 transition-colors font-medium"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Headphones className="w-4 h-4" />
-              <span>Support</span>
+              <Headphones className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Support</span>
             </Link>
           </div>
         </div>
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-red-700 flex-1">{error}</p>
-            <button
-              onClick={() => fetchReferralData()}
-              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && !stats && (
-          <div className="grid gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border-2 border-gray-200 p-5 animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
-                  <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                </div>
-              ))}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+              <p className="text-red-700 flex-1">{error}</p>
+              <button
+                onClick={() => fetchReferralData()}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-medium"
+              >
+                Retry
+              </button>
             </div>
-            <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 animate-pulse">
-              <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
-              <div className="space-y-3">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
+          )}
+
+          {/* Loading State */}
+          {loading && !stats && (
+            <div className="grid gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border-2 border-gray-200 p-5 animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                    <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+                  </div>
                 ))}
               </div>
+              <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+                <div className="space-y-3">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Main Content */}
-        {!loading && (
-          <>
+          {/* Main Content */}
+          {!loading && (
+            <>
             {/* Referral Link Card */}
-            <div className="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 rounded-2xl p-6 mb-6 text-white shadow-xl">
+            <div className="bg-gradient-to-r from-accent via-accent/90 to-accent rounded-2xl p-6 mb-6 text-white shadow-xl">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h2 className="text-xl font-bold mb-2">Your Referral Link</h2>
-                  <p className="text-orange-100 text-sm mb-3">Share this link to invite friends and earn rewards</p>
+                  <p className="text-accent-100 text-sm mb-3">Share this link to invite friends and earn rewards</p>
                   <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-3">
-                    <Link2 className="w-5 h-5 text-orange-100" />
+                    <Link2 className="w-5 h-5 text-accent-100" />
                     <span className="text-sm font-mono truncate max-w-xs">
                       {referralLink?.shortUrl || referralLink?.url || 'Loading...'}
                     </span>
@@ -623,7 +707,7 @@ export default function ReferralsPage() {
                 </div>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-orange-100">Code:</span>
+                    <span className="text-sm text-accent-100">Code:</span>
                     <span className="font-mono font-bold text-lg">{referralLink?.code || '---'}</span>
                     <button
                       onClick={copyReferralCode}
@@ -668,11 +752,11 @@ export default function ReferralsPage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-orange-300 hover:shadow-lg transition-all">
+              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-accent/30 hover:shadow-lg transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-gray-600 text-sm font-medium">Total Referrals</p>
-                  <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <Users className="w-5 h-5 text-orange-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-accent" />
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{stats?.totalReferrals || 0}</p>
@@ -690,11 +774,11 @@ export default function ReferralsPage() {
                 <p className="text-gray-500 text-xs mt-1">{stats?.conversionRate ? `${(stats.conversionRate * 100).toFixed(1)}%` : '0%'} conversion</p>
               </div>
 
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-amber-300 hover:shadow-lg transition-all">
+              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-accent/30 hover:shadow-lg transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-gray-600 text-sm font-medium">Total Earnings</p>
-                  <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <Coins className="w-5 h-5 text-amber-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <Coins className="w-5 h-5 text-accent" />
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats?.totalEarnings || 0)}</p>
@@ -754,7 +838,7 @@ export default function ReferralsPage() {
                 onClick={() => setActiveTab('overview')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'overview'
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -764,7 +848,7 @@ export default function ReferralsPage() {
                 onClick={() => setActiveTab('referrals')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'referrals'
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -774,7 +858,7 @@ export default function ReferralsPage() {
                 onClick={() => setActiveTab('leaderboard')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'leaderboard'
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-accent to-accent/90 text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -874,73 +958,273 @@ export default function ReferralsPage() {
             )}
 
             {activeTab === 'referrals' && (
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
-                {/* Search & Filters */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search referrals..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="completed">Completed</option>
-                      <option value="expired">Expired</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                    <select
-                      value={timeRange}
-                      onChange={(e) => setTimeRange(e.target.value)}
-                      className="px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all"
-                    >
-                      <option value="all">All Time</option>
-                      <option value="week">This Week</option>
-                      <option value="month">This Month</option>
-                      <option value="year">This Year</option>
-                    </select>
-                  </div>
-                </div>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+                  {/* Left Sidebar - Filters */}
+                  <>
+                    {/* Mobile Filter Drawer Overlay */}
+                    {filterDrawerOpen && (
+                      <div
+                        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                        onClick={() => setFilterDrawerOpen(false)}
+                      />
+                    )}
 
-                {/* Referral List */}
-                {filteredReferrals.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Users className="w-10 h-10 text-gray-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Referrals Found</h3>
-                    <p className="text-gray-500 mb-4">
-                      {searchQuery ? 'Try adjusting your search or filters' : 'Start inviting friends to see your referrals here'}
-                    </p>
-                    <button
-                      onClick={() => setShowInviteModal(true)}
-                      className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-medium hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/25"
+                    {/* Filter Sidebar */}
+                    <aside
+                      className={`bg-white rounded-2xl shadow-lg border border-gray-100 lg:w-[280px] flex-shrink-0 lg:sticky lg:top-24 ${
+                        filterDrawerOpen
+                          ? "fixed right-0 top-0 h-full w-80 z-50 lg:relative lg:w-[280px] lg:h-auto"
+                          : "hidden lg:block"
+                      }`}
                     >
-                      Invite Friends
+                      {/* Header Section */}
+                      <div className="bg-gradient-to-r from-accent/10 to-emerald-50 px-6 py-4 border-b border-accent/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-md">
+                              <Filter className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                              <p className="text-xs text-gray-600">Refine your search</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => setFilterDrawerOpen(false)}
+                            className="lg:hidden text-gray-500 hover:text-gray-700"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Filter Content Area */}
+                      <div className="p-6 space-y-8">
+                        {/* Status Filter */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-accent" />
+                            <label className="text-sm font-semibold text-gray-900">Status</label>
+                          </div>
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                          >
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="expired">Expired</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
+
+                        {/* Time Range Filter */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-accent" />
+                            <label className="text-sm font-semibold text-gray-900">Time Range</label>
+                          </div>
+                          <select
+                            value={timeRange}
+                            onChange={(e) => setTimeRange(e.target.value)}
+                            className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                          >
+                            <option value="all">All Time</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                          </select>
+                        </div>
+
+                        {/* Clear Filters */}
+                        {activeFiltersCount > 0 && (
+                          <button
+                            onClick={clearFilters}
+                            className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+                          >
+                            <X className="w-4 h-4" />
+                            Clear Filters
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Help Section */}
+                      <div className="px-6 pb-6">
+                        <div className="bg-gradient-to-br from-accent/10 to-emerald-50 rounded-lg p-4 border border-accent/20">
+                          <div className="flex items-start gap-3 mb-3">
+                            <HelpCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                            <div>
+                              <h3 className="font-semibold text-gray-900 text-sm">Need Help?</h3>
+                              <p className="text-xs text-gray-600 mt-1">Learn how to maximize your referral earnings.</p>
+                            </div>
+                          </div>
+                          <Link
+                            href="/support"
+                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-accent rounded-lg hover:bg-accent/10 transition-all border border-accent/20 font-medium text-sm"
+                          >
+                            <Headphones className="w-4 h-4" />
+                            Contact Support
+                          </Link>
+                        </div>
+                      </div>
+                    </aside>
+                  </>
+
+                  {/* Main Content Area */}
+                  <div className="flex-1 min-w-0 space-y-6">
+                    {/* Mobile Filter Button */}
+                    <button
+                      onClick={() => setFilterDrawerOpen(true)}
+                      className="lg:hidden w-full px-4 py-3 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center justify-center gap-2 text-gray-700 font-medium hover:bg-gray-50"
+                    >
+                      <Filter className="w-4 h-4" />
+                      Filters
+                      {activeFiltersCount > 0 && (
+                        <span className="px-2 py-0.5 bg-accent text-white text-xs font-medium rounded-full">
+                          {activeFiltersCount}
+                        </span>
+                      )}
                     </button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredReferrals.map((ref) => {
+
+                    {/* Unified Controls Bar */}
+                    <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                        {/* Search - 70% */}
+                        <div className="w-full sm:w-[70%] relative">
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                            <Search className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Search referrals..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="w-full pl-9 pr-9 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+                          />
+                          {searchInput && (
+                            <button
+                              onClick={() => {
+                                setSearchInput("");
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Sort - 20% */}
+                        <div className="w-full sm:w-[20%] flex items-center gap-1.5">
+                          <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="flex-1 px-3 py-2.5 text-sm border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-white"
+                          >
+                            <option value="referredAt">Date</option>
+                            <option value="name">Name</option>
+                            <option value="reward">Reward</option>
+                          </select>
+                          <button
+                            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                            className="flex-shrink-0 w-10 h-10 flex items-center justify-center border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            title={sortOrder === "asc" ? "Ascending" : "Descending"}
+                          >
+                            {sortOrder === "asc" ? (
+                              <ArrowUp className="w-4 h-4 text-gray-600" />
+                            ) : (
+                              <ArrowDown className="w-4 h-4 text-gray-600" />
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Display Mode - 10% */}
+                        <div className="w-full sm:w-[10%] flex items-center justify-end">
+                          <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
+                            <button
+                              onClick={() => setViewMode("grid")}
+                              className={`p-1.5 rounded transition-all ${
+                                viewMode === "grid"
+                                  ? "bg-white text-accent shadow-sm"
+                                  : "text-gray-600 hover:text-gray-900"
+                              }`}
+                              title="Grid view"
+                            >
+                              <Grid3x3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setViewMode("list")}
+                              className={`p-1.5 rounded transition-all ${
+                                viewMode === "list"
+                                  ? "bg-white text-accent shadow-sm"
+                                  : "text-gray-600 hover:text-gray-900"
+                              }`}
+                              title="List view"
+                            >
+                              <List className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Results Count */}
+                    <div className="text-sm text-gray-600">
+                      {sortedReferrals.length > 0 ? (
+                        <>
+                          Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, sortedReferrals.length)} of {sortedReferrals.length} results
+                        </>
+                      ) : (
+                        <>No results found</>
+                      )}
+                    </div>
+
+                    {/* Referral List */}
+                    {sortedReferrals.length === 0 ? (
+                      <div className="bg-white rounded-xl border-2 border-gray-200 shadow-lg p-8 text-center">
+                        <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Users className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">No Referrals Found</h3>
+                        <p className="text-gray-500 mb-4">
+                          {debouncedSearchQuery || activeFiltersCount > 0 ? 'Try adjusting your search or filters' : 'Start inviting friends to see your referrals here'}
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                          {activeFiltersCount > 0 && (
+                            <button
+                              onClick={clearFilters}
+                              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all"
+                            >
+                              Clear Filters
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setShowInviteModal(true)}
+                            className="px-6 py-3 bg-gradient-to-r from-accent to-accent/90 text-white rounded-xl font-medium hover:from-accent/90 hover:to-accent transition-all shadow-lg shadow-accent/30 hover:shadow-xl hover:scale-105"
+                          >
+                            Invite Friends
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={viewMode === "grid" 
+                          ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                          : "space-y-3"
+                        }>
+                          {sortedReferrals.map((ref) => {
                       const refereeName = ref.referee?.name || 
                         `${ref.referee?.firstName || ''} ${ref.referee?.lastName || ''}`.trim() || 'Anonymous';
                       
                       return (
                         <div
                           key={ref._id || ref.id}
-                          className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                          className={`flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-accent/30 hover:shadow-lg transition-all ${
+                            viewMode === "list" ? "" : "flex-col"
+                          }`}
                         >
-                          <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                          <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent/90 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                             {refereeName.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -980,31 +1264,65 @@ export default function ReferralsPage() {
                         </div>
                       );
                     })}
-                  </div>
-                )}
+                        </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Previous
-                    </button>
-                    <span className="px-4 py-2 text-gray-600">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 rounded-lg border-2 border-gray-200 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                    >
-                      Next
-                    </button>
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                              <div className="text-sm text-gray-600">
+                                Showing {((currentPage - 1) * pagination.limit) + 1} to {Math.min(currentPage * pagination.limit, sortedReferrals.length)} of {sortedReferrals.length} results
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handlePageChange(currentPage - 1)}
+                                  disabled={currentPage === 1}
+                                  className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Previous
+                                </button>
+                                <div className="flex items-center gap-1">
+                                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum: number;
+                                    if (totalPages <= 5) {
+                                      pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                      pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                      pageNum = totalPages - 4 + i;
+                                    } else {
+                                      pageNum = currentPage - 2 + i;
+                                    }
+                                    return (
+                                      <button
+                                        key={pageNum}
+                                        onClick={() => handlePageChange(pageNum)}
+                                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                                          currentPage === pageNum
+                                            ? "bg-accent text-white"
+                                            : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                                        }`}
+                                      >
+                                        {pageNum}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <button
+                                  onClick={() => handlePageChange(currentPage + 1)}
+                                  disabled={currentPage === totalPages}
+                                  className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Next
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             )}
 
@@ -1064,38 +1382,39 @@ export default function ReferralsPage() {
               </div>
             )}
 
-            {/* Help Section */}
-            <div className="mt-8 bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 rounded-2xl p-6 text-white">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
-                    <HelpCircle className="w-7 h-7" />
+              {/* Help Section */}
+              <div className="mt-8 bg-gradient-to-r from-accent via-accent/90 to-accent rounded-2xl p-6 text-white">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
+                      <HelpCircle className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">Need Help with Referrals?</h3>
+                      <p className="text-accent-100">Learn how to maximize your referral earnings</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold">Need Help with Referrals?</h3>
-                    <p className="text-orange-100">Learn how to maximize your referral earnings</p>
+                  <div className="flex gap-3">
+                    <Link
+                      href="/support"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white text-accent rounded-xl font-medium hover:bg-accent/10 transition-colors"
+                    >
+                      <Headphones className="w-4 h-4" />
+                      Contact Support
+                    </Link>
+                    <Link
+                      href="/support#faq"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-white/20 text-white rounded-xl font-medium hover:bg-white/30 transition-colors"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      FAQs
+                    </Link>
                   </div>
-                </div>
-                <div className="flex gap-3">
-                  <Link
-                    href="/support"
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 rounded-xl font-medium hover:bg-orange-50 transition-colors"
-                  >
-                    <Headphones className="w-4 h-4" />
-                    Contact Support
-                  </Link>
-                  <Link
-                    href="/support#faq"
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white/20 text-white rounded-xl font-medium hover:bg-white/30 transition-colors"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    FAQs
-                  </Link>
                 </div>
               </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Invite Modal */}

@@ -26,16 +26,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/not-found.js"
     ],
-    "/(public)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(public)/layout.js"
-    ],
-    "/(public)/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(public)/page.js"
-    ],
     "/(authenticated)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -50,6 +40,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(authenticated)/loading.js"
+    ],
+    "/(authenticated)/favorites/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/favorites/page.js"
     ],
     "/(authenticated)/dashboard/layout": [
       "static/chunks/webpack.js",
@@ -136,10 +131,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(authenticated)/marketplace/page.js"
     ],
-    "/admin/users/page": [
+    "/(authenticated)/messages/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/admin/users/page.js"
+      "static/chunks/app/(authenticated)/messages/page.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/_not-found/page.js"
+    ],
+    "/(authenticated)/notifications/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/notifications/page.js"
+    ],
+    "/(authenticated)/marketplace/services/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/services/[id]/page.js"
     ]
   }
 }

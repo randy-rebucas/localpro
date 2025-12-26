@@ -18,8 +18,12 @@ import {
   LucideIcon,
   X,
   RefreshCw,
-  TestTube2
+  TestTube2,
+  Headphones,
+  User
 } from "lucide-react";
+import Link from "next/link";
+import { Broadcaster } from "@/components/broadcaster";
 import { useState, useEffect, useCallback } from "react";
 import { defaultUserSettings, type UserSettings } from "@/types/user-settings";
 import { useSession } from "@/hooks/useAuth";
@@ -243,52 +247,93 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 relative z-10">
-        {/* Header with Save Button */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
-              <SettingsIcon className="w-7 h-7" />
-            </div>
+      <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
+
+        {/* Header Section - Following Reference Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-emerald-600 bg-clip-text text-transparent">Settings</h1>
-              <p className="text-sm text-gray-500 mt-1">Manage your account preferences and privacy</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Settings — Manage Your Account Preferences
+              </h1>
+              <p className="text-gray-600">
+                Configure your privacy, notifications, communication, and app preferences.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {lastSaved && (
+                <span className="text-xs text-gray-500 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+                  <span className="hidden sm:inline">Saved {lastSaved.toLocaleTimeString()}</span>
+                </span>
+              )}
+              {hasChanges && (
+                <span className="text-xs text-amber-600 flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Unsaved changes</span>
+                </span>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={!hasChanges || saving}
+                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 shadow-sm ${
+                  hasChanges
+                    ? 'bg-gradient-to-r from-accent to-accent/90 text-white hover:from-accent/90 hover:to-accent shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Save className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save Changes'}</span>
+                <span className="sm:hidden">{saving ? 'Saving...' : 'Save'}</span>
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-          {lastSaved && (
-            <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
-              <span className="hidden sm:inline">Saved {lastSaved.toLocaleTimeString()}</span>
-            </span>
-          )}
-          {hasChanges && (
-            <span className="text-xs text-amber-600 flex items-center gap-1.5">
-              <AlertCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Unsaved changes</span>
-            </span>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={!hasChanges || saving}
-            className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm ${
-              hasChanges
-                ? 'bg-gradient-to-r from-accent to-emerald-600 text-white hover:from-accent hover:to-emerald-700 shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <Save className={`w-4 h-4 ${saving ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save Changes'}</span>
-            <span className="sm:hidden">{saving ? 'Saving...' : 'Save'}</span>
-          </button>
         </div>
-      </div>
+
+        {/* Quick Links Row */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-b border-gray-200 pb-4">
+            <Link
+              href="/profile"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <User className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Profile</span>
+            </Link>
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <SettingsIcon className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Settings</span>
+            </Link>
+            <Link
+              href="/security"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <Shield className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Security</span>
+            </Link>
+            <Link
+              href="/support"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <Headphones className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Support</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings Column */}
@@ -920,17 +965,22 @@ export default function SettingsPage() {
           </SettingsSection>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-8 lg:sticky lg:top-8">
-          <div className="bg-gradient-to-br from-accent/10 via-emerald-50 to-accent/10 rounded-xl p-6 border border-accent/20 shadow-md hover:shadow-lg transition-all duration-300">
-            <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
-            <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
-            <button className="w-full px-4 py-2 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:from-accent/10 hover:to-emerald-50 transition-all duration-300 border border-gray-200 hover:border-accent/30 shadow-sm hover:shadow-md transform hover:scale-105">
-              Contact Support
-            </button>
+          {/* Sidebar */}
+          <div className="space-y-8 lg:sticky lg:top-8">
+            <div className="bg-gradient-to-br from-accent/10 via-emerald-50 to-accent/10 rounded-xl p-6 border border-accent/20 shadow-md hover:shadow-lg transition-all duration-300">
+              <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+              <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
+              <Link
+                href="/support"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-white text-accent rounded-lg hover:bg-accent/10 transition-all border border-accent/20 font-medium text-sm shadow-sm hover:shadow-md transform hover:scale-105"
+              >
+                <Headphones className="w-4 h-4" />
+                Contact Support
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+        </div>
       </div>
     </div>
   );

@@ -11,12 +11,13 @@ import { Users } from "lucide-react";
 import { BarChart3 } from "lucide-react";
 import { Calendar } from "lucide-react";
 import { Headphones } from "lucide-react";
+import { Building, ArrowUpRight } from "lucide-react";
 import { useActiveRoleView } from "@/shared/hooks/useActiveRoleView";
 import { Broadcaster } from "@/components/broadcaster";
 
 export default function MarketplacePage() {
   const { data: session } = useSession();
-  const { isProviderView } = useActiveRoleView();
+  const { roleView, userRoles } = useActiveRoleView();
 
   // Get user name for marketplace components
   const userName = getUserName(session);
@@ -45,7 +46,7 @@ export default function MarketplacePage() {
                 Find skilled professionals, post services, and connect with trusted service providers.
               </p>
             </div>
-            {isProviderView && (
+            {roleView === "provider" && (
               <Link
                 href="/marketplace/create-service"
                 className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent rounded-lg hover:from-accent hover:to-accent transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
@@ -73,7 +74,7 @@ export default function MarketplacePage() {
               <Users className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Find Providers</span>
             </Link>
-            {isProviderView && (
+            {roleView === "provider" && (
               <Link
                 href="/marketplace/my-services"
                 className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
@@ -98,6 +99,31 @@ export default function MarketplacePage() {
             </Link>
           </div>
         </div>
+
+        {/* Become Agency CTA - Show for providers who are not agency owners/admins */}
+        {roleView === "provider" && !userRoles.includes("agency_owner") && !userRoles.includes("agency_admin") && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+            <Link
+              href="/agencies/create"
+              className="block bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 border-2 border-purple-200 hover:border-purple-300 group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                  <Building className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-purple-900 mb-1">Become Agency</h3>
+                  <p className="text-sm text-purple-700 mb-2">Scale your business with a team and manage multiple providers</p>
+                  <div className="flex items-center gap-1 text-sm font-semibold text-purple-700 group-hover:text-purple-900">
+                    Get started
+                    <ArrowUpRight className="w-4 h-4" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
         {/* Main Marketplace Content - Following Reference Layout */}
         {/* ServiceMarketplace component handles: Filters Sidebar (left) + Main Content (right) */}
         {/* Main Content includes: Search + View Toggle + Service Grid/List + Pagination */}

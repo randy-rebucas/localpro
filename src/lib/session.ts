@@ -37,6 +37,8 @@ export interface SessionData extends JWTPayload {
   isVerified?: boolean;
   apiToken?: string; // Store the actual API token from external service
   fingerprint?: string; // Session fingerprint for security
+  roleView?: string; // Selected role view (client, provider, etc.)
+  package?: string | null; // Selected app package (marketplace, academy, etc.)
 }
 
 // Generate unique session ID using Web Crypto API
@@ -77,6 +79,8 @@ export async function createSession(
     updatedAt?: string;
     isVerified?: boolean;
     apiToken?: string;
+    roleView?: string;
+    package?: string | null;
   },
   userAgent?: string,
   ipAddress?: string

@@ -6,6 +6,7 @@ import { useSession } from "@/hooks/useAuth";
 import { getUserName } from "@/lib/utils/user-name";
 import { JobMarketplace } from "@/components/marketplace/job-marketplace";
 import { Loading } from "@/components/ui/loading";
+import { Broadcaster } from "@/components/broadcaster";
 
 export default function BrowseJobsPage() {
   const { data: session, status } = useSession();
@@ -39,6 +40,9 @@ export default function BrowseJobsPage() {
       </div>
 
       <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
+
         {/* Job Marketplace Component */}
         <JobMarketplace userName={userName} />
       </div>

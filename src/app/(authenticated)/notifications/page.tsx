@@ -15,13 +15,19 @@ import {
   Clock,
   CheckCircle2,
   Trash2,
-  TestTube2,
-  Smartphone
+  Headphones,
+  Search,
+  Grid3x3,
+  List,
+  ArrowUp,
+  ArrowDown,
+  Tag,
+  Award
 } from "lucide-react";
+import Link from "next/link";
+import { Broadcaster } from "@/components/broadcaster";
 import { 
   useNotifications, 
-  useNotificationAdmin,
-  useFCMDevices,
   type NotificationType, 
   type NotificationPriority,
   type NotificationChannels
@@ -168,7 +174,7 @@ const formatNotificationDate = (dateString: string): string => {
 // Helper function to get notification icon and color based on type
 const getNotificationIcon = (type: NotificationType) => {
   if (type.includes('payment') || type.includes('booking_completed') || type.includes('referral_reward')) {
-    return { icon: <CheckCircle className="w-5 h-5" />, bgColor: "bg-emerald-100", iconColor: "text-emerald-600" };
+    return { icon: <CheckCircle className="w-5 h-5" />, bgColor: "bg-accent/20", iconColor: "text-accent" };
   }
   if (type.includes('failed') || type.includes('cancelled') || type.includes('rejected')) {
     return { icon: <AlertCircle className="w-5 h-5" />, bgColor: "bg-red-100", iconColor: "text-red-600" };
@@ -186,13 +192,13 @@ const getNotificationIcon = (type: NotificationType) => {
 const getPriorityBadge = (priority: NotificationPriority) => {
   switch (priority) {
     case 'urgent':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm">Urgent</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-red-100 text-red-700 border border-red-200">Urgent</span>;
     case 'high':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm">High</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200">High</span>;
     case 'medium':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Medium</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">Low</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">Low</span>;
   }
 };
 
@@ -241,123 +247,133 @@ const NotificationItemComponent = ({
     }
   };
 
-  const getBorderColor = () => {
-    if (notification.isRead) return "border-gray-200";
+  const getCardStyles = () => {
+    if (notification.isRead) {
+      return "bg-white border-gray-200 opacity-75";
+    }
     switch (notification.priority) {
-      case 'urgent': return "border-red-500";
-      case 'high': return "border-orange-500";
-      case 'medium': return "border-amber-500";
-      default: return "border-primary/30";
+      case 'urgent':
+        return "bg-white border-l-4 border-red-500 shadow-lg ring-1 ring-red-100";
+      case 'high':
+        return "bg-white border-l-4 border-orange-500 shadow-md ring-1 ring-orange-50";
+      case 'medium':
+        return "bg-white border-l-4 border-amber-500 shadow-sm";
+      default:
+        return "bg-white border-l-4 border-accent/30 shadow-sm";
     }
   };
 
   return (
     <div 
-      className={`group relative bg-gradient-to-br from-white to-gray-50/50 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 p-5 border-l-4 backdrop-blur-sm ${
-        notification.isRead 
-          ? "opacity-70 border-gray-200" 
-          : `${getBorderColor()} ${notification.priority === 'urgent' ? 'ring-2 ring-red-50 shadow-lg' : ''}`
-      } ${notification.href && !isExpired ? "cursor-pointer hover:scale-[1.02]" : ""}`}
+      className={`group relative rounded-xl transition-all duration-300 p-6 border ${getCardStyles()} ${
+        notification.href && !isExpired ? "cursor-pointer hover:shadow-xl hover:-translate-y-0.5" : ""
+      }`}
       onClick={notification.href && !isExpired ? handleClick : undefined}
     >
-      {/* Unread indicator dot */}
+      {/* Unread indicator */}
       {!notification.isRead && (
-        <div className="absolute top-5 right-5 w-3 h-3 bg-gradient-to-br from-primary to-primary rounded-full animate-pulse shadow-md shadow-blue-500/50" />
+        <div className="absolute top-6 right-6 w-2.5 h-2.5 bg-accent rounded-full animate-pulse shadow-sm shadow-accent/50" />
       )}
       
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4 flex-1 min-w-0">
-          {/* Icon */}
-          <div className={`flex-shrink-0 w-11 h-11 rounded-xl ${iconData.bgColor} flex items-center justify-center shadow-md transform group-hover:scale-110 transition-transform ${notification.isRead ? 'opacity-60' : ''}`}>
-            <div className={iconData.iconColor}>
-              {iconData.icon}
-            </div>
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className={`flex-shrink-0 w-12 h-12 rounded-xl ${iconData.bgColor} flex items-center justify-center shadow-sm transform group-hover:scale-105 transition-transform ${notification.isRead ? 'opacity-50' : ''}`}>
+          <div className={iconData.iconColor}>
+            {iconData.icon}
           </div>
-          
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="flex items-start gap-2 flex-wrap flex-1">
-                <h3 className={`text-base font-semibold text-gray-900 ${!notification.isRead ? '' : 'font-normal'}`}>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Header Row */}
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h3 className={`text-lg font-semibold text-gray-900 ${notification.isRead ? 'font-normal' : ''} line-clamp-2`}>
                   {notification.title}
                 </h3>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
                 {getPriorityBadge(notification.priority)}
                 {isExpired && (
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-gray-100 to-gray-200 text-gray-600 border border-gray-300 shadow-sm">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                     Expired
                   </span>
                 )}
               </div>
             </div>
-            
-            <p className="text-sm text-gray-600 mb-3 leading-relaxed">{notification.message}</p>
-            
-            {/* Metadata */}
-            <div className="flex items-center gap-3 flex-wrap mb-4">
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 px-2.5 py-1 rounded-md border border-gray-200 shadow-sm">
-                {getTypeLabel(notification.type)}
+          </div>
+          
+          {/* Message */}
+          <p className="text-sm text-gray-700 mb-4 leading-relaxed line-clamp-3">
+            {notification.message}
+          </p>
+          
+          {/* Metadata Row */}
+          <div className="flex items-center gap-2 flex-wrap mb-4 pb-4 border-b border-gray-100">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200">
+              {getTypeLabel(notification.type)}
+            </span>
+            {(notification.channels.email || notification.channels.sms || notification.channels.push) && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-gray-600 bg-primary/5 border border-primary/20">
+                <Mail className="w-3 h-3" />
+                {[
+                  notification.channels.email && 'Email',
+                  notification.channels.sms && 'SMS',
+                  notification.channels.push && 'Push'
+                ].filter(Boolean).join(', ')}
               </span>
-              {(notification.channels.email || notification.channels.sms || notification.channels.push) && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-primary/10/50 to-primary/50 px-2 py-1 rounded-md border border-primary/20">
-                  <Mail className="w-3.5 h-3.5" />
-                  {[
-                    notification.channels.email && 'Email',
-                    notification.channels.sms && 'SMS',
-                    notification.channels.push && 'Push'
-                  ].filter(Boolean).join(', ')}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50/50 px-2 py-1 rounded-md">
-                <Clock className="w-3.5 h-3.5" />
-                {formatNotificationDate(notification.createdAt)}
-              </span>
-            </div>
-            
-            {/* Action buttons */}
-            <div className="flex items-center gap-2">
-              {!notification.isRead && (
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMarkAsRead(notificationId);
-                  }} 
-                  disabled={actionLoading.has(notificationId)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-accent/10 hover:from-emerald-100 hover:to-accent/10 rounded-lg transition-all border border-emerald-200 hover:border-emerald-300 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  {actionLoading.has(notificationId) ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Mark as read</span>
-                    </>
-                  )}
-                </button>
-              )}
+            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-gray-500 bg-gray-50">
+              <Clock className="w-3 h-3" />
+              {formatNotificationDate(notification.createdAt)}
+            </span>
+          </div>
+          
+          {/* Action buttons */}
+          <div className="flex items-center gap-2">
+            {!notification.isRead && (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(notificationId);
+                  onMarkAsRead(notificationId);
                 }} 
                 disabled={actionLoading.has(notificationId)}
-                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-red-50 hover:to-pink-50 hover:text-red-600 rounded-lg transition-all border border-gray-200 hover:border-red-200 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent bg-accent/10 hover:bg-accent/20 rounded-lg transition-all border border-accent/20 hover:border-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {actionLoading.has(notificationId) ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Deleting...</span>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4" />
-                    <span>Delete</span>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Mark as read</span>
                   </>
                 )}
               </button>
-            </div>
+            )}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(notificationId);
+              }} 
+              disabled={actionLoading.has(notificationId)}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all border border-gray-200 hover:border-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {actionLoading.has(notificationId) ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -379,27 +395,18 @@ export default function NotificationsPage() {
     deleteAllNotifications,
   } = useNotifications({ limit: 100 });
 
-  // Admin notification functions
-  const { 
-    sendTestNotification, 
-    loading: adminLoading 
-  } = useNotificationAdmin();
-
-  // FCM Devices
-  const {
-    devices,
-    loading: devicesLoading,
-    removeToken,
-    // registerToken and getDeviceInfo available for push notification setup
-  } = useFCMDevices();
-
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [actionLoading, setActionLoading] = useState<Set<string>>(new Set());
   const [markAllLoading, setMarkAllLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [typeFilter, setTypeFilter] = useState<NotificationType | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<NotificationPriority | 'all'>('all');
-  const [showDevices, setShowDevices] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "priority" | "type">("newest");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   // Sync notifications from hook to local state with normalization
   useEffect(() => {
@@ -575,44 +582,17 @@ export default function NotificationsPage() {
     }
   }, [deleteAllNotifications]);
 
-  // Send test notification
-  const handleSendTestNotification = useCallback(async () => {
-    try {
-      const success = await sendTestNotification({
-        title: "Test Notification",
-        message: "This is a test notification to verify your notification setup is working correctly.",
-        type: "system_announcement"
-      });
-      if (success) {
-        toast.success("Test notification sent! Refresh to see it.");
-        setTimeout(() => load(), 1000);
-      } else {
-        toast.error("Failed to send test notification");
-      }
-    } catch (err) {
-      logger.error("Error sending test notification", err instanceof Error ? err : new Error(String(err)));
-      toast.error("Failed to send test notification");
-    }
-  }, [sendTestNotification, load]);
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
-  // Remove FCM device
-  const handleRemoveDevice = useCallback(async (deviceId: string) => {
-    try {
-      const success = await removeToken(deviceId);
-      if (success) {
-        toast.success("Device removed successfully");
-      } else {
-        toast.error("Failed to remove device");
-      }
-    } catch (err) {
-      logger.error("Error removing device", err instanceof Error ? err : new Error(String(err)));
-      toast.error("Failed to remove device");
-    }
-  }, [removeToken]);
-
-  // Filter notifications based on current filters
+  // Filter and sort notifications based on current filters
   const filteredItems = useMemo(() => {
-    return items.filter(item => {
+    let filtered = items.filter(item => {
       // Filter by read status
       if (filter === 'unread' && item.isRead) return false;
       if (filter === 'read' && !item.isRead) return false;
@@ -623,9 +603,59 @@ export default function NotificationsPage() {
       // Filter by priority
       if (priorityFilter !== 'all' && item.priority !== priorityFilter) return false;
       
+      // Filter by search query
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = item.title.toLowerCase().includes(query);
+        const matchesMessage = item.message.toLowerCase().includes(query);
+        const matchesType = getTypeLabel(item.type).toLowerCase().includes(query);
+        if (!matchesTitle && !matchesMessage && !matchesType) return false;
+      }
+      
       return true;
     });
-  }, [items, filter, typeFilter, priorityFilter]);
+
+    // Sort notifications
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'newest':
+        case 'oldest':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'priority':
+          const priorityOrder: Record<NotificationPriority, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
+          comparison = (priorityOrder[b.priority] || 0) - (priorityOrder[a.priority] || 0);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [items, filter, typeFilter, priorityFilter, searchQuery, sortBy, sortOrder]);
+
+  // Active filters count
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filter !== 'all') count++;
+    if (typeFilter !== 'all') count++;
+    if (priorityFilter !== 'all') count++;
+    if (searchQuery.trim()) count++;
+    return count;
+  }, [filter, typeFilter, priorityFilter, searchQuery]);
+
+  const clearFilters = useCallback(() => {
+    setFilter('all');
+    setTypeFilter('all');
+    setPriorityFilter('all');
+    setSearchInput('');
+    setSearchQuery('');
+  }, []);
 
   // Statistics
   const stats = useMemo(() => {
@@ -642,12 +672,12 @@ export default function NotificationsPage() {
   // Show loading state while notifications are loading
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
         {/* Animated Background Blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10 space-y-6">
@@ -686,82 +716,48 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 transform hover:scale-105 transition-transform">
-                <Bell className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-primary bg-clip-text text-transparent mb-1">Notifications</h1>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <span className="font-medium">
-                    {stats.unreadCount > 0 ? (
-                      <span className="text-emerald-600 font-semibold">{stats.unreadCount} unread</span>
-                    ) : (
-                      <span>All caught up!</span>
-                    )}
-                  </span>
-                  {stats.urgentCount > 0 && (
-                    <>
-                      <span className="text-gray-400">•</span>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-red-100 to-pink-100 text-red-700 border border-red-200 shadow-sm">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {stats.urgentCount} urgent
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Test Notification Button */}
-              <button
-                onClick={handleSendTestNotification}
-                disabled={adminLoading}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-purple-700 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg hover:from-purple-100 hover:to-purple-200 hover:border-purple-300 transition-all shadow-md hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Send a test notification to yourself"
-              >
-                {adminLoading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+      <div className="relative z-0">
+        {/* Broadcaster - Only shown for clients */}
+        <Broadcaster />
+
+        {/* Header Section - Following Reference Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                Notifications — Stay Updated
+              </h1>
+              <p className="text-gray-600">
+                {stats.unreadCount > 0 ? (
+                  <span className="font-medium text-accent">{stats.unreadCount} unread notification{stats.unreadCount !== 1 ? 's' : ''}</span>
                 ) : (
-                  <TestTube2 className="w-4 h-4" />
+                  <span>All caught up! No new notifications.</span>
                 )}
-                <span className="hidden sm:inline">Test</span>
-              </button>
-
-              {/* Devices Button */}
-              <button
-                onClick={() => setShowDevices(!showDevices)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-105 ${
-                  showDevices 
-                    ? "text-primary bg-gradient-to-br from-primary/10 to-blue-200 border-2 border-primary/30" 
-                    : "text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:from-gray-50 hover:to-gray-100 hover:border-gray-300"
-                }`}
-                title="Manage registered devices"
-              >
-                <Smartphone className="w-4 h-4" />
-                <span className="hidden sm:inline">Devices</span>
-                {devices.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs font-semibold bg-primary text-white rounded-full">{devices.length}</span>
+                {stats.urgentCount > 0 && (
+                  <>
+                    <span className="text-gray-400 mx-2">•</span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      {stats.urgentCount} urgent
+                    </span>
+                  </>
                 )}
-              </button>
-
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap flex-shrink-0">
               {stats.unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
                   disabled={markAllLoading}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent/90 rounded-lg hover:from-accent/90 hover:to-accent transition-all shadow-lg shadow-accent/30 hover:shadow-xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {markAllLoading ? (
                     <>
@@ -780,7 +776,7 @@ export default function NotificationsPage() {
               {items.length > 0 && (
                 <button
                   onClick={handleDeleteAll}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-700 bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-lg hover:from-red-100 hover:to-red-200 hover:border-red-300 transition-all shadow-md hover:shadow-lg hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-red-700 bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-lg hover:from-red-100 hover:to-red-200 hover:border-red-300 transition-all shadow-lg shadow-red-200/30 hover:shadow-xl hover:scale-105"
                   title="Delete all notifications"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -790,174 +786,286 @@ export default function NotificationsPage() {
 
               <button
                 onClick={load}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-lg hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all shadow-md hover:shadow-lg hover:scale-105"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-lg hover:from-gray-50 hover:to-gray-100 hover:border-gray-300 transition-all shadow-lg shadow-gray-200/30 hover:shadow-xl hover:scale-105"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Refresh</span>
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Filters */}
-          <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 p-4 shadow-lg backdrop-blur-sm">
-            <div className="flex items-center gap-2 mb-3">
-              <Filter className="w-4 h-4 text-emerald-600" />
-              <h2 className="text-sm font-semibold text-gray-700">Filters</h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              {/* Read status filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-600">Status:</label>
-                <select
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value as 'all' | 'unread' | 'read')}
-                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer shadow-sm hover:shadow-md hover:border-gray-400"
-                >
-                  <option value="all">All</option>
-                  <option value="unread">Unread</option>
-                  <option value="read">Read</option>
-                </select>
-              </div>
-
-              {/* Type filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-600">Type:</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
-                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer min-w-[180px] shadow-sm hover:shadow-md hover:border-gray-400"
-                >
-                  <option value="all">All Types</option>
-                  <option value="booking_created">Booking Created</option>
-                  <option value="booking_confirmed">Booking Confirmed</option>
-                  <option value="booking_cancelled">Booking Cancelled</option>
-                  <option value="booking_completed">Booking Completed</option>
-                  <option value="job_application">Job Application</option>
-                  <option value="application_status_update">Application Update</option>
-                  <option value="job_posted">Job Posted</option>
-                  <option value="message_received">New Message</option>
-                  <option value="payment_received">Payment Received</option>
-                  <option value="payment_failed">Payment Failed</option>
-                  <option value="referral_reward">Referral Reward</option>
-                  <option value="course_enrollment">Course Enrollment</option>
-                  <option value="order_confirmation">Order Confirmation</option>
-                  <option value="subscription_renewal">Subscription Renewal</option>
-                  <option value="subscription_cancelled">Subscription Cancelled</option>
-                  <option value="system_announcement">System Announcement</option>
-                </select>
-              </div>
-
-              {/* Priority filter */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-600">Priority:</label>
-                <select
-                  value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value as NotificationPriority | 'all')}
-                  className="px-3 py-2 text-sm border-2 border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all cursor-pointer shadow-sm hover:shadow-md hover:border-gray-400"
-                >
-                  <option value="all">All Priorities</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="high">High</option>
-                  <option value="medium">Medium</option>
-                  <option value="low">Low</option>
-                </select>
-              </div>
-            </div>
+        {/* Quick Links Row */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-b border-gray-200 pb-4">
+            <Link
+              href="/messages"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <MessageSquare className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Messages</span>
+            </Link>
+            <Link
+              href="/favorites"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <Bell className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Favorites</span>
+            </Link>
+            <Link
+              href="/support"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
+            >
+              <Headphones className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium">Support</span>
+            </Link>
           </div>
+        </div>
 
-          {/* Registered Devices Panel */}
-          {showDevices && (
-            <div className="bg-gradient-to-br from-white to-primary/10/50 rounded-xl border-2 border-primary/20 p-5 shadow-lg backdrop-blur-sm transition-all animate-fade-in-up">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold text-gray-900">Registered Devices</h2>
+        {/* Main Content - Two Column Layout */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Filter Sidebar */}
+            <aside className={`lg:w-[280px] flex-shrink-0 ${filterDrawerOpen ? "block" : "hidden lg:block"}`}>
+              {/* Mobile Overlay */}
+              {filterDrawerOpen && (
+                <div
+                  className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                  onClick={() => setFilterDrawerOpen(false)}
+                />
+              )}
+
+              <div
+                className={`bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden sticky top-24 ${
+                  filterDrawerOpen
+                    ? "fixed right-0 top-0 h-full w-80 z-50 overflow-y-auto lg:relative lg:w-auto lg:h-auto lg:z-auto"
+                    : ""
+                }`}
+              >
+                {/* Header */}
+                <div className="bg-gradient-to-r from-accent/10 to-emerald-50 px-6 py-4 border-b border-accent/20">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-md">
+                        <Filter className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+                        <p className="text-xs text-gray-600">Refine your search</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setFilterDrawerOpen(false)}
+                      className="lg:hidden p-2 rounded-lg hover:bg-white/50 transition-colors"
+                      aria-label="Close filters"
+                    >
+                      <X className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
                 </div>
-                <span className="text-sm text-gray-500">
-                  {devices.length} device{devices.length !== 1 ? 's' : ''} registered
-                </span>
+
+                {/* Filter Content */}
+                <div className="p-6 space-y-8">
+                  {/* Read Status Filter */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-accent" />
+                      <label className="text-sm font-semibold text-gray-900">Status</label>
+                    </div>
+                    <select
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value as 'all' | 'unread' | 'read')}
+                      className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-gray-700"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="unread">Unread</option>
+                      <option value="read">Read</option>
+                    </select>
+                  </div>
+
+                  {/* Type Filter */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-accent" />
+                      <label className="text-sm font-semibold text-gray-900">Type</label>
+                    </div>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value as NotificationType | 'all')}
+                      className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-gray-700"
+                    >
+                      <option value="all">All Types</option>
+                      <option value="booking_created">Booking Created</option>
+                      <option value="booking_confirmed">Booking Confirmed</option>
+                      <option value="booking_cancelled">Booking Cancelled</option>
+                      <option value="booking_completed">Booking Completed</option>
+                      <option value="job_application">Job Application</option>
+                      <option value="application_status_update">Application Update</option>
+                      <option value="job_posted">Job Posted</option>
+                      <option value="message_received">New Message</option>
+                      <option value="payment_received">Payment Received</option>
+                      <option value="payment_failed">Payment Failed</option>
+                      <option value="referral_reward">Referral Reward</option>
+                      <option value="course_enrollment">Course Enrollment</option>
+                      <option value="order_confirmation">Order Confirmation</option>
+                      <option value="subscription_renewal">Subscription Renewal</option>
+                      <option value="subscription_cancelled">Subscription Cancelled</option>
+                      <option value="system_announcement">System Announcement</option>
+                    </select>
+                  </div>
+
+                  {/* Priority Filter */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-accent" />
+                      <label className="text-sm font-semibold text-gray-900">Priority</label>
+                    </div>
+                    <select
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value as NotificationPriority | 'all')}
+                      className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-gray-700"
+                    >
+                      <option value="all">All Priorities</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+
+                  {/* Clear Filters Button */}
+                  {activeFiltersCount > 0 && (
+                    <button
+                      onClick={clearFilters}
+                      className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all border-2 border-transparent hover:border-gray-300 flex items-center justify-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Clear All Filters
+                    </button>
+                  )}
+                </div>
               </div>
-              
-              {devicesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-primary" />
-                  <span className="ml-2 text-gray-500">Loading devices...</span>
-                </div>
-              ) : devices.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Smartphone className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="font-medium">No devices registered</p>
-                  <p className="text-sm mt-1">Push notifications will be enabled when you allow notifications in your browser.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {devices.map((device) => {
-                    const deviceId = device._id || device.id || '';
-                    return (
-                      <div 
-                        key={deviceId} 
-                        className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                            device.deviceType === 'ios' ? 'bg-gray-100' :
-                            device.deviceType === 'android' ? 'bg-accent/10' :
-                            'bg-primary/10'
-                          }`}>
-                            <Smartphone className={`w-5 h-5 ${
-                              device.deviceType === 'ios' ? 'text-gray-600' :
-                              device.deviceType === 'android' ? 'text-accent' :
-                              'text-primary'
-                            }`} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{device.deviceName || 'Unknown Device'}</p>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <span className="capitalize">{device.deviceType || 'web'}</span>
-                              {device.browser && (
-                                <>
-                                  <span>•</span>
-                                  <span>{device.browser}</span>
-                                </>
-                              )}
-                              {device.lastUsed && (
-                                <>
-                                  <span>•</span>
-                                  <span>Last used: {formatNotificationDate(device.lastUsed as string)}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile Filter Button */}
+              <div className="lg:hidden mb-4">
+                <button
+                  onClick={() => setFilterDrawerOpen(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
+                  aria-label="Open filters"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>Filters</span>
+                  {activeFiltersCount > 0 && (
+                    <span className="ml-1 px-2 py-0.5 bg-accent text-white rounded-full text-xs font-semibold">
+                      {activeFiltersCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Controls Bar */}
+              <div className="mb-6">
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    {/* Search */}
+                    <div className="relative w-full sm:w-[70%]">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search notifications..."
+                        className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-all text-gray-700"
+                        aria-label="Search notifications"
+                      />
+                      {searchInput.trim().length > 0 && (
                         <button
-                          onClick={() => handleRemoveDevice(deviceId)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                          title="Remove device"
+                          type="button"
+                          onClick={() => {
+                            setSearchInput("");
+                            setSearchQuery("");
+                          }}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                          aria-label="Clear search"
                         >
                           <X className="w-4 h-4" />
                         </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                      )}
+                    </div>
 
-        {/* Notifications List */}
-        <div className="space-y-4">
-          {filteredItems.length === 0 ? (
-            <div className="text-center py-16 bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-gray-200 shadow-lg backdrop-blur-sm">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-md">
-                <Bell className="w-8 h-8 text-gray-400" />
+                    {/* Sort Controls */}
+                    <div className="flex items-center gap-2 w-full sm:w-[20%]">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as "newest" | "oldest" | "priority" | "type")}
+                          className="flex-1 min-w-0 px-2.5 py-2 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-all text-gray-700 cursor-pointer"
+                          aria-label="Sort notifications by"
+                        >
+                          <option value="newest">Date</option>
+                          <option value="priority">Priority</option>
+                          <option value="type">Type</option>
+                        </select>
+                        <button
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                          className="p-2 border border-gray-300 rounded-lg bg-white hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-all text-gray-700 cursor-pointer flex-shrink-0"
+                          aria-label={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                          title={`Sort ${sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                        >
+                          {sortOrder === 'asc' ? (
+                            <ArrowUp className="w-4 h-4" />
+                          ) : (
+                            <ArrowDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Display Mode Toggle */}
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-[10%] justify-center sm:justify-start">
+                      <button
+                        onClick={() => setViewMode('grid')}
+                        className={`p-2 rounded-md transition-all duration-200 ${
+                          viewMode === 'grid'
+                            ? 'bg-white text-emerald-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="Grid View"
+                        aria-label="Switch to grid view"
+                      >
+                        <Grid3x3 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-md transition-all duration-200 ${
+                          viewMode === 'list'
+                            ? 'bg-white text-emerald-600 shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                        title="List View"
+                        aria-label="Switch to list view"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {items.length === 0 ? "No notifications" : "No notifications match your filters"}
+
+              {/* Notifications List */}
+              {filteredItems.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+              <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center border-2 border-gray-200">
+                <Bell className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {items.length === 0 ? "All caught up!" : "No matching notifications"}
               </h3>
-              <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+              <p className="text-gray-500 text-sm mb-6 max-w-sm mx-auto">
                 {items.length === 0 
-                  ? "You're all caught up! No new notifications at this time." 
+                  ? "You're all set! No new notifications at this time." 
                   : "Try adjusting your filters to see more notifications."}
               </p>
               {items.length > 0 && filteredItems.length === 0 && (
@@ -967,7 +1075,7 @@ export default function NotificationsPage() {
                     setTypeFilter('all');
                     setPriorityFilter('all');
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-accent/10 hover:from-emerald-100 hover:to-accent/10 rounded-lg transition-all border-2 border-emerald-200 hover:border-emerald-300 shadow-md hover:shadow-lg hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-accent bg-accent/10 hover:bg-accent/20 rounded-lg transition-all border border-accent/30 hover:border-accent/50"
                 >
                   <X className="w-4 h-4" />
                   Clear Filters
@@ -975,19 +1083,33 @@ export default function NotificationsPage() {
               )}
             </div>
           ) : (
-            filteredItems.map((notification) => {
-              const notificationId = notification.id || notification._id;
-              return (
-                <NotificationItemComponent
-                  key={notificationId}
-                  notification={notification}
-                  onMarkAsRead={markAsRead}
-                  onDelete={deleteNotification}
-                  actionLoading={actionLoading}
-                />
-              );
-            })
+            <>
+              {/* Results count */}
+              <div className="mb-2 px-1">
+                <p className="text-sm text-gray-500">
+                  Showing <span className="font-semibold text-gray-700">{filteredItems.length}</span> notification{filteredItems.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              
+              {/* Notifications grid */}
+              <div className="space-y-3">
+                {filteredItems.map((notification) => {
+                  const notificationId = notification.id || notification._id;
+                  return (
+                    <NotificationItemComponent
+                      key={notificationId}
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                      actionLoading={actionLoading}
+                    />
+                  );
+                })}
+              </div>
+            </>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

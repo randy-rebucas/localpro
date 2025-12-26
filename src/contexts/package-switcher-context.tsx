@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { AppPackage } from "@/shared/types/app-package";
 import { PACKAGE_IDS } from "@/shared/config/package-registry";
+import { updatePackagePreference, getSessionPreferences } from "@/lib/session-preferences";
 
 // Re-export for backward compatibility (existing imports expect this type here)
 export type { AppPackage };
@@ -28,8 +29,25 @@ function normalizePackage(raw: string | null): AppPackage {
   return VALID_PACKAGES.has(raw as Exclude<AppPackage, null>) ? (raw as AppPackage) : null;
 }
 
-function readFromStorage(): AppPackage {
+async function readFromStorage(): Promise<AppPackage> {
   if (typeof window === "undefined") return null;
+  
+  // First try to get from backend session preferences
+  try {
+    const preferences = await getSessionPreferences();
+    if (preferences?.package) {
+      const normalized = normalizePackage(preferences.package);
+      if (normalized) {
+        // Sync to localStorage for faster access
+        writeToStorageSync(normalized);
+        return normalized;
+      }
+    }
+  } catch {
+    // Fallback to localStorage if backend fetch fails
+  }
+
+  // Fallback to localStorage
   try {
     const raw = localStorage.getItem(PACKAGE_SWITCHER_KEY);
     const normalized = normalizePackage(raw);
@@ -58,7 +76,7 @@ function readFromStorage(): AppPackage {
   return null;
 }
 
-function writeToStorage(pkg: AppPackage): void {
+function writeToStorageSync(pkg: AppPackage): void {
   if (typeof window === "undefined") return;
   try {
     if (pkg) {
@@ -75,10 +93,14 @@ export function PackageSwitcherProvider({ children }: { children: React.ReactNod
   const [activePackage, setActivePackageState] = useState<AppPackage>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initial load
+  // Initial load from backend/localStorage
   useEffect(() => {
-    setActivePackageState(readFromStorage());
-    setIsLoading(false);
+    const initializePackage = async () => {
+      const saved = await readFromStorage();
+      setActivePackageState(saved);
+      setIsLoading(false);
+    };
+    initializePackage();
   }, []);
 
   // Cross-component sync within the same tab.
@@ -86,18 +108,25 @@ export function PackageSwitcherProvider({ children }: { children: React.ReactNod
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const handler = (event: Event) => {
+    const handler = async (event: Event) => {
       const custom = event as CustomEvent<{ activePackage?: AppPackage }>;
-      const next = custom.detail?.activePackage ?? readFromStorage();
+      const next = custom.detail?.activePackage ?? await readFromStorage();
       setActivePackageState(next);
     };
 
     window.addEventListener(PACKAGE_SWITCHER_EVENT, handler);
 
-    const storageHandler = (e: StorageEvent) => {
+    const storageHandler = async (e: StorageEvent) => {
       if (e.key !== PACKAGE_SWITCHER_KEY) return;
+      // If localStorage changed, also check backend for consistency
       const next = normalizePackage(e.newValue);
-      setActivePackageState(next);
+      if (next) {
+        setActivePackageState(next);
+      } else {
+        // If cleared locally, check backend
+        const saved = await readFromStorage();
+        setActivePackageState(saved);
+      }
     };
     window.addEventListener("storage", storageHandler);
 
@@ -108,8 +137,15 @@ export function PackageSwitcherProvider({ children }: { children: React.ReactNod
   }, []);
 
   const setActivePackage = useCallback((pkg: AppPackage) => {
-    writeToStorage(pkg);
+    // Update localStorage immediately for responsive UI
+    writeToStorageSync(pkg);
     setActivePackageState(pkg);
+    
+    // Sync with backend (non-blocking)
+    updatePackagePreference(pkg).catch(() => {
+      // Silently fail - localStorage is the source of truth for UI
+    });
+    
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent(PACKAGE_SWITCHER_EVENT, { detail: { activePackage: pkg } }));
     }
