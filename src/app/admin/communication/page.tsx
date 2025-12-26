@@ -296,7 +296,7 @@ export default function AdminCommunication() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
+      case 'active': return 'text-accent bg-accent/10';
       case 'archived': return 'text-gray-600 bg-gray-100';
       case 'blocked': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -308,7 +308,7 @@ export default function AdminCommunication() {
       case 'urgent': return 'text-red-600 bg-red-100';
       case 'high': return 'text-orange-600 bg-orange-100';
       case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-green-600 bg-green-100';
+      case 'low': return 'text-accent bg-accent/10';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -373,7 +373,7 @@ export default function AdminCommunication() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -384,7 +384,7 @@ export default function AdminCommunication() {
       {/* Stats Overview */}
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Conversations</p>
@@ -395,13 +395,13 @@ export default function AdminCommunication() {
                   {overview.stats.unreadMessages} unread
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <MessageSquare className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Messages</p>
@@ -412,8 +412,8 @@ export default function AdminCommunication() {
                   {overview.stats.responseTime}s avg response
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <Send className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <Send className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -468,7 +468,7 @@ export default function AdminCommunication() {
                 onClick={() => setActiveTab(tab.id as 'overview' | 'conversations' | 'notifications')}
                 className={`py-2 px-1 border-b-2 font-medium text-xs flex items-center space-x-1 ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -491,7 +491,7 @@ export default function AdminCommunication() {
                   placeholder="Search conversations, users, or messages..."
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
@@ -499,7 +499,7 @@ export default function AdminCommunication() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="all">All Types</option>
                 <option value="message">Messages</option>
@@ -511,7 +511,7 @@ export default function AdminCommunication() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -548,7 +548,7 @@ export default function AdminCommunication() {
                           {conversation.status}
                         </span>
                         {conversation.unreadCount > 0 && (
-                          <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                          <span className="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
                             {conversation.unreadCount}
                           </span>
                         )}
@@ -565,7 +565,7 @@ export default function AdminCommunication() {
                   {overview.recentNotifications.slice(0, 5).map((notification) => (
                     <div key={notification.id} className="flex items-center justify-between p-1.5 bg-white rounded border">
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
-                        <div className="text-blue-500 flex-shrink-0">
+                        <div className="text-primary flex-shrink-0">
                           {getNotificationTypeIcon(notification.type)}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -578,7 +578,7 @@ export default function AdminCommunication() {
                           {notification.priority}
                         </span>
                         {!notification.isRead && (
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                         )}
                       </div>
                     </div>
@@ -622,7 +622,7 @@ export default function AdminCommunication() {
                           {conversation.status}
                         </span>
                         {conversation.unreadCount > 0 && (
-                          <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                          <span className="bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
                             {conversation.unreadCount}
                           </span>
                         )}
@@ -653,7 +653,7 @@ export default function AdminCommunication() {
                   <div key={notification.id} className="border border-gray-200 rounded p-2 hover:bg-gray-50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2 min-w-0 flex-1">
-                        <div className="text-blue-500 flex-shrink-0">
+                        <div className="text-primary flex-shrink-0">
                           {getNotificationTypeIcon(notification.type)}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -667,7 +667,7 @@ export default function AdminCommunication() {
                           {notification.priority}
                         </span>
                         {!notification.isRead && (
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                         )}
                         <button className="p-0.5 text-gray-400 hover:text-gray-600">
                           <MoreVertical className="w-3 h-3" />

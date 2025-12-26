@@ -22,12 +22,12 @@ export default function MarketplacePage() {
   const userName = getUserName(session);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-green-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
       <div className="relative z-0">
@@ -48,7 +48,7 @@ export default function MarketplacePage() {
             {isProviderView && (
               <Link
                 href="/marketplace/create-service"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent rounded-lg hover:from-accent hover:to-accent transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105 flex-shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 Post Service
@@ -61,39 +61,39 @@ export default function MarketplacePage() {
           <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-b border-gray-200 pb-4">
             <Link
               href="/marketplace"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Briefcase className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <Briefcase className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Browse Services</span>
             </Link>
             <Link
               href="/marketplace/providers"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Users className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <Users className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Find Providers</span>
             </Link>
             {isProviderView && (
               <Link
                 href="/marketplace/my-services"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+                className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
               >
-                <BarChart3 className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+                <BarChart3 className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium">My Services</span>
               </Link>
             )}
             <Link
               href="/marketplace/my-bookings"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Calendar className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <Calendar className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">My Bookings</span>
             </Link>
             <Link
               href="/support"
-              className="inline-flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors group"
+              className="inline-flex items-center gap-2 text-gray-600 hover:text-accent transition-colors group"
             >
-              <Headphones className="w-4 h-4 text-green-500 group-hover:scale-110 transition-transform" />
+              <Headphones className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
               <span className="text-sm font-medium">Support</span>
             </Link>
           </div>

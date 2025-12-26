@@ -101,9 +101,9 @@ const getTypeIcon = (type: string) => {
 const getConditionColor = (condition: string) => {
   switch (condition) {
     case 'excellent':
-      return 'text-green-600 bg-green-100';
+      return 'text-accent bg-accent/10';
     case 'good':
-      return 'text-blue-600 bg-blue-100';
+      return 'text-primary bg-primary/10';
     case 'fair':
       return 'text-yellow-600 bg-yellow-100';
     case 'poor':
@@ -116,9 +116,9 @@ const getConditionColor = (condition: string) => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'available':
-      return 'text-green-600 bg-green-100';
+      return 'text-accent bg-accent/10';
     case 'rented':
-      return 'text-blue-600 bg-blue-100';
+      return 'text-primary bg-primary/10';
     case 'maintenance':
       return 'text-yellow-600 bg-yellow-100';
     case 'unavailable':
@@ -347,7 +347,7 @@ export default function RentalDetailPage() {
                         key={index}
                         onClick={() => setSelectedImage(index)}
                         className={`relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 ${
-                          selectedImage === index ? 'ring-2 ring-blue-500' : ''
+                          selectedImage === index ? 'ring-2 ring-ring' : ''
                         }`}
                       >
                         <Image
@@ -410,7 +410,7 @@ export default function RentalDetailPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {rental.features.map((feature, index) => (
                     <div key={index} className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span className="text-gray-700">{feature}</span>
                     </div>
                   ))}
@@ -538,7 +538,7 @@ export default function RentalDetailPage() {
                   <div className="flex items-center gap-2">
                     <h4 className="font-medium text-gray-900">{rental.owner.name}</h4>
                     {rental.owner.verified && (
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                     )}
                   </div>
                   <div className="flex items-center gap-1">

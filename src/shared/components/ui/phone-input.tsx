@@ -131,7 +131,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-slate-300">
+        <label className="block text-sm font-medium text-foreground">
           {label}
         </label>
       )}
@@ -139,8 +139,8 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           {isDetectingCountry ? (
-            <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
-          ) : leftIcon || <Phone className="w-5 h-5 text-slate-500" />}
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          ) : leftIcon || <Phone className="w-5 h-5 text-muted-foreground" />}
         </div>
         
         <input
@@ -156,13 +156,13 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           autoComplete={autoComplete}
           className={`
             block w-full pl-10 pr-10 py-3 border rounded-xl text-lg
-            bg-slate-800 !text-white placeholder:text-slate-500
-            focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent
-            disabled:bg-slate-900 disabled:text-slate-500 disabled:cursor-not-allowed
+            bg-background text-foreground placeholder:text-muted-foreground
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+            disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed
             transition-all duration-200
             ${error 
-              ? 'border-red-500/50 focus:ring-red-500' 
-              : 'border-slate-700 focus:border-emerald-500'
+              ? 'border-destructive focus-visible:ring-destructive' 
+              : 'border-input hover:border-border focus-visible:border-ring'
             }
             ${className}
           `}
@@ -175,7 +175,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCountryInfo(!showCountryInfo)}
-                className="flex items-center space-x-1 text-xs text-slate-400 hover:text-emerald-400 transition-colors"
+                className="flex items-center space-x-1 text-xs text-muted-foreground hover:text-primary transition-colors"
                 title={`Detected: ${detectedCountry.name}`}
               >
                 <Globe className="w-4 h-4" />
@@ -188,15 +188,15 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {/* Country info tooltip */}
       {showCountryInfo && detectedCountry && (
-        <div className="absolute z-10 mt-1 w-64 bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-3">
+        <div className="absolute z-10 mt-1 w-64 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-3">
           <div className="flex items-center space-x-2">
-            <Globe className="w-4 h-4 text-emerald-400" />
+            <Globe className="w-4 h-4 text-accent" />
             <div>
-              <p className="text-sm font-medium text-white">{detectedCountry.name}</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm font-medium text-foreground">{detectedCountry.name}</p>
+              <p className="text-xs text-muted-foreground">
                 Format: {detectedCountry.format}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Example: {detectedCountry.example}
               </p>
             </div>
@@ -206,14 +206,14 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {/* Error message */}
       {error && (
-        <p className="text-sm text-red-400 flex items-center space-x-1">
+        <p className="text-sm text-destructive flex items-center space-x-1">
           <span>⚠</span>
           <span>{error}</span>
         </p>
       )}
       
       {/* Helper text */}
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-muted-foreground">
         {detectedCountry 
           ? `Enter your number without spaces - we'll format it for ${detectedCountry.name}`
           : "Enter your number without spaces - we'll automatically detect your country and format it"

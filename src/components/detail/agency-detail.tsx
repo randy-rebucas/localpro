@@ -92,7 +92,7 @@ export function AgencyDetail({
           <div className="flex flex-wrap gap-2">
             {agency.status && (
               <span className={`px-3 py-1 rounded-full text-sm ${
-                agency.status === "active" ? "bg-green-100 text-green-800" :
+                agency.status === "active" ? "bg-accent/10 text-accent" :
                 agency.status === "pending" ? "bg-yellow-100 text-yellow-800" :
                 "bg-gray-100 text-gray-800"
               }`}>
@@ -100,7 +100,7 @@ export function AgencyDetail({
               </span>
             )}
             {agency.verification?.isVerified && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm flex items-center gap-1">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 Verified
               </span>
@@ -183,7 +183,7 @@ export function AgencyDetail({
               {agency.contact.email && (
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-400" />
-                  <a href={`mailto:${agency.contact.email}`} className="text-blue-600 hover:underline">
+                  <a href={`mailto:${agency.contact.email}`} className="text-primary hover:underline">
                     {agency.contact.email}
                   </a>
                 </div>
@@ -191,7 +191,7 @@ export function AgencyDetail({
               {agency.contact.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-gray-400" />
-                  <a href={`tel:${agency.contact.phone}`} className="text-blue-600 hover:underline">
+                  <a href={`tel:${agency.contact.phone}`} className="text-primary hover:underline">
                     {agency.contact.phone}
                   </a>
                 </div>
@@ -203,7 +203,7 @@ export function AgencyDetail({
                     href={agency.contact.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {agency.contact.website}
                   </a>
@@ -232,7 +232,7 @@ export function AgencyDetail({
               {agency.services.map((service, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                 >
                   {service.category?.replace("_", " ")}
                 </span>
@@ -255,7 +255,7 @@ export function AgencyDetail({
                   </span>
                   {provider.status && (
                     <span className={`text-xs px-2 py-1 rounded ${
-                      provider.status === "active" ? "bg-green-100 text-green-800" :
+                      provider.status === "active" ? "bg-accent/10 text-accent" :
                       "bg-gray-100 text-gray-800"
                     }`}>
                       {provider.status}

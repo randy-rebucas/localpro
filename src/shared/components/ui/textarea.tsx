@@ -10,12 +10,13 @@ export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextArea
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, helperText, variant = 'default', ...props }, ref) => {
-    const baseClasses = "w-full px-4 py-3 bg-white border rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none transition-all duration-200 shadow-sm resize-none";
+    const baseClasses =
+      "w-full px-4 py-3 bg-background border border-input rounded-lg text-foreground placeholder:text-muted-foreground shadow-sm resize-none transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
     
     const variantClasses = {
-      default: "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500",
-      error: "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500",
-      success: "border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+      default: "hover:border-border focus-visible:border-ring",
+      error: "border-destructive focus-visible:ring-destructive",
+      success: "hover:border-border focus-visible:border-ring"
     };
 
     const textareaClasses = cn(
@@ -27,7 +28,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="space-y-1">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-foreground">
             {label}
           </label>
         )}
@@ -37,10 +38,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-destructive">{error}</p>
         )}
         {helperText && !error && (
-          <p className="text-sm text-gray-500">{helperText}</p>
+          <p className="text-sm text-muted-foreground">{helperText}</p>
         )}
       </div>
     );

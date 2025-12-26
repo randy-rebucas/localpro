@@ -43,15 +43,15 @@ interface AnnouncementsProps {
 const getAnnouncementIcon = (type: Announcement['type']) => {
   switch (type) {
     case 'success':
-      return <CheckCircle className="w-5 h-5 text-green-600" />;
+      return <CheckCircle className="w-5 h-5 text-accent" />;
     case 'warning':
       return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
     case 'error':
       return <AlertCircle className="w-5 h-5 text-red-600" />;
     case 'feature':
-      return <Megaphone className="w-5 h-5 text-blue-600" />;
+      return <Megaphone className="w-5 h-5 text-primary" />;
     default:
-      return <Info className="w-5 h-5 text-blue-600" />;
+      return <Info className="w-5 h-5 text-primary" />;
   }
 };
 
@@ -59,8 +59,8 @@ const getAnnouncementStyles = (type: Announcement['type'], priority: Announcemen
   const baseStyles = "border-l-4 rounded-lg p-4 shadow-sm";
   
   const typeStyles = {
-    info: "bg-blue-50 border-blue-500 text-blue-900",
-    success: "bg-green-50 border-green-500 text-green-900",
+    info: "bg-primary/5 border-primary text-primary",
+    success: "bg-accent/5 border-accent text-accent",
     warning: "bg-yellow-50 border-yellow-500 text-yellow-900",
     error: "bg-red-50 border-red-500 text-red-900",
     feature: "bg-purple-50 border-purple-500 text-purple-900"
@@ -248,7 +248,7 @@ export default function Announcements({
           <Megaphone className="w-5 h-5 text-gray-600" />
           <h3 className="text-lg font-semibold text-gray-800">Announcements</h3>
           {visibleAnnouncements.length > 0 && (
-            <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+            <span className="bg-accent/10 text-accent text-xs font-medium px-2 py-1 rounded-full">
               {visibleAnnouncements.length}
             </span>
           )}
@@ -311,7 +311,7 @@ export default function Announcements({
                     {isLongMessage && (
                       <button
                         onClick={() => toggleExpanded(announcement.id)}
-                        className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-1 transition-colors"
+                        className="text-xs text-primary hover:text-primary font-medium mt-1 transition-colors"
                       >
                         {isExpanded ? 'Show less' : 'Read more'}
                       </button>
@@ -321,7 +321,7 @@ export default function Announcements({
                       <div className="mt-3">
                         <a
                           href={announcement.actionUrl}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary transition-colors"
                         >
                           {announcement.actionText}
                           <ExternalLink className="w-3 h-3" />

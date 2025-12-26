@@ -29,9 +29,9 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-accent/10 text-accent border-accent/20";
       case "confirmed":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-primary/10 text-primary border-primary/20";
       case "in_progress":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "cancelled":
@@ -181,7 +181,7 @@ export function BookingDetail({ booking, onStatusChange, onMessage }: BookingDet
             <div className="flex justify-between">
               <span className="text-gray-600">Status</span>
               <span className={`font-semibold ${
-                booking.payment.status === "paid" ? "text-green-600" :
+                booking.payment.status === "paid" ? "text-accent" :
                 booking.payment.status === "pending" ? "text-yellow-600" :
                 "text-red-600"
               }`}>

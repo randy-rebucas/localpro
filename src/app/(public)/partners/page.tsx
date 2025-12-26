@@ -138,7 +138,7 @@ export default function Partners() {
       icon: <Globe className="w-6 h-6" />,
       title: "Market Expansion",
       description: "Reach new markets and customer segments through our platform",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Users className="w-6 h-6" />,
@@ -162,7 +162,7 @@ export default function Partners() {
       icon: <Heart className="w-6 h-6" />,
       title: "Mutual Growth",
       description: "Collaborative approach to growing both businesses together",
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     }
   ];
 
@@ -370,20 +370,20 @@ export default function Partners() {
               </div>
 
               {/* EVSU-ORMOC Partnership */}
-              <div className="relative p-6 rounded-2xl bg-slate-800/50 border border-blue-500/30 overflow-hidden group hover:border-blue-500/50 transition-all">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
+              <div className="relative p-6 rounded-2xl bg-slate-800/50 border border-primary/30 overflow-hidden group hover:border-primary/50 transition-all">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
                 
                 <div className="relative">
                   <div className="flex items-center space-x-4 mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <div className="w-16 h-16 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                       <Building2 className="w-8 h-8" />
                     </div>
                     <div>
-                      <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30 mb-1">
+                      <span className="inline-block px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30 mb-1">
                         In Progress
                       </span>
                       <h4 className="text-xl font-bold text-white">EVSU-ORMOC</h4>
-                      <p className="text-blue-400 text-sm font-medium">Academic Institution Partner</p>
+                      <p className="text-primary text-sm font-medium">Academic Institution Partner</p>
                     </div>
                   </div>
                   
@@ -402,14 +402,14 @@ export default function Partners() {
                         "Technology and entrepreneurship workshops"
                       ].map((item, index) => (
                         <li key={index} className="flex items-start text-sm text-slate-400">
-                          <CheckCircle className="w-4 h-4 mr-2 text-blue-400 mt-0.5 flex-shrink-0" />
+                          <CheckCircle className="w-4 h-4 mr-2 text-primary mt-0.5 flex-shrink-0" />
                           {item}
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <div className="flex items-center text-blue-400 text-sm">
+                  <div className="flex items-center text-primary text-sm">
                     <BookOpen className="w-4 h-4 mr-2" />
                     <span>Academic Year 2025 Integration Target</span>
                   </div>
@@ -519,7 +519,7 @@ export default function Partners() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: "1", title: "Apply", desc: "Submit your partnership application with company details and goals", color: "from-blue-500 to-indigo-600" },
+              { step: "1", title: "Apply", desc: "Submit your partnership application with company details and goals", color: "from-primary to-indigo-600" },
               { step: "2", title: "Review", desc: "Our team reviews your application and determines the best partnership tier", color: "from-emerald-500 to-teal-600" },
               { step: "3", title: "Launch", desc: "Complete integration and launch your partnership with full support", color: "from-purple-500 to-pink-600" }
             ].map((item, index) => (

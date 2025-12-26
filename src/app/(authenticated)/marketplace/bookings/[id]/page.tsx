@@ -686,11 +686,11 @@ export default function BookingDetailPage() {
       case "PENDING":
         return "bg-yellow-100 text-yellow-800";
       case "CONFIRMED":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "IN_PROGRESS":
         return "bg-purple-100 text-purple-800";
       case "COMPLETED":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "CANCELLED":
         return "bg-red-100 text-red-800";
       default:
@@ -813,7 +813,7 @@ export default function BookingDetailPage() {
                     return (
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
                         paymentStatus === "PAID" || paymentStatus === "paid"
-                          ? "bg-green-100 text-green-800" 
+                          ? "bg-accent/10 text-accent" 
                           : paymentStatus === "PENDING" || paymentStatus === "pending"
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-red-100 text-red-800"
@@ -939,7 +939,7 @@ export default function BookingDetailPage() {
               <div className="border-t border-gray-200 pt-2 mt-1.5">
                 <div className="flex justify-between items-center">
                   <span className="text-base font-semibold text-gray-700">Total</span>
-                  <span className="text-base font-bold text-green-600">{formatPrice(booking.totalPrice || booking.pricing?.totalAmount || 0, booking.pricing?.currency || booking.service?.pricing?.currency)}</span>
+                  <span className="text-base font-bold text-accent">{formatPrice(booking.totalPrice || booking.pricing?.totalAmount || 0, booking.pricing?.currency || booking.service?.pricing?.currency)}</span>
                 </div>
               </div>
               {(booking.paymentMethod || booking.payment?.method) && (
@@ -1059,7 +1059,7 @@ export default function BookingDetailPage() {
               )}
 
               {booking.status === "COMPLETED" && (
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-accent/30 text-accent rounded-lg hover:bg-accent/5 transition-colors">
                   <Star className="w-4 h-4" />
                   Leave Review
                 </button>
@@ -1076,7 +1076,7 @@ export default function BookingDetailPage() {
               {(booking.service?.id || booking.service?._id) && (
                 <button
                   onClick={handleViewService}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-lg hover:bg-primary/5 transition-colors"
                 >
                   View Service
                 </button>
@@ -1099,7 +1099,7 @@ export default function BookingDetailPage() {
                 {(isServiceProvider || isAdmin) && (
                   <Link
                     href="/marketplace/my-services"
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-accent/30 text-accent rounded-lg hover:bg-accent/5 transition-colors"
                   >
                     <BarChart3 className="w-4 h-4" />
                     My Services
@@ -1114,7 +1114,7 @@ export default function BookingDetailPage() {
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Booking Timeline</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-accent rounded-full"></div>
                 <div>
                   <p className="text-sm font-medium text-gray-700">Booking Created</p>
                   <p className="text-xs text-gray-500">{new Date(booking.createdAt).toLocaleDateString()}</p>
@@ -1122,7 +1122,7 @@ export default function BookingDetailPage() {
               </div>
               {booking.status !== "PENDING" && (
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-primary rounded-full"></div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">Booking Confirmed</p>
                     <p className="text-xs text-gray-500">{new Date(booking.updatedAt).toLocaleDateString()}</p>
@@ -1131,7 +1131,7 @@ export default function BookingDetailPage() {
               )}
               {booking.status === "COMPLETED" && (
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-accent rounded-full"></div>
                   <div>
                     <p className="text-sm font-medium text-gray-700">Service Completed</p>
                     <p className="text-xs text-gray-500">{new Date(booking.updatedAt).toLocaleDateString()}</p>

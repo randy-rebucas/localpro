@@ -135,7 +135,7 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
                 </span>
               )}
               {provider.verification?.identityVerified && (
-                <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium flex items-center gap-1.5">
+                <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4" />
                   Verified
                 </span>
@@ -147,7 +147,7 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
                 </span>
               )}
               {provider.providerType && (
-                <span className="px-3 py-1.5 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium flex items-center gap-1.5">
+                <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-full text-sm font-medium flex items-center gap-1.5">
                   <Building2 className="w-4 h-4" />
                   {provider.providerType === 'business' ? 'Business' : 
                    provider.providerType === 'agency' ? 'Agency' : 'Individual'}
@@ -418,8 +418,8 @@ export function ProviderDetail({ provider, onContact, onFavorite }: ProviderDeta
                 </div>
               )}
               {provider.performance.completionRate !== undefined && (
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
+                <div className="text-center p-4 bg-primary/5 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
                     {provider.performance.completionRate}%
                   </div>
                   <div className="text-sm text-gray-600 mt-1">Completion Rate</div>

@@ -144,7 +144,7 @@ export function ServiceGrid({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
           <p className="text-sm text-gray-600">Loading services...</p>
         </div>
       </div>
@@ -187,8 +187,8 @@ export function ServiceGrid({
           </div>
         )}
         {categoryName && !hasActiveFilters && (
-          <div className="mt-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-            <span className="text-xs font-medium text-green-700">Category: {categoryName}</span>
+          <div className="mt-2 px-3 py-1.5 bg-accent/5 border border-accent/20 rounded-lg">
+            <span className="text-xs font-medium text-accent">Category: {categoryName}</span>
           </div>
         )}
       </div>
@@ -201,7 +201,7 @@ export function ServiceGrid({
       {featuredServicesToRender.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-6 bg-green-600 rounded-full"></div>
+            <div className="w-1 h-6 bg-accent rounded-full"></div>
             <h2 className="text-xl font-bold text-gray-900">Featured Services</h2>
             {featuredServicesToRender.length > 0 && (
               <span className="text-sm text-gray-500">({featuredServicesToRender.length})</span>
@@ -256,7 +256,7 @@ export function ServiceGrid({
               className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 pagination.current === 1 || loading
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -297,8 +297,8 @@ export function ServiceGrid({
                     disabled={loading}
                     className={`w-10 h-10 text-sm font-medium rounded-lg transition-all ${
                       pagination.current === pageNum
-                        ? "bg-green-600 text-white shadow-md"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                        ? "bg-accent text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
                     } ${loading ? "cursor-not-allowed opacity-50" : ""}`}
                   >
                     {pageNum}
@@ -314,7 +314,7 @@ export function ServiceGrid({
               className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 pagination.current === pagination.pages || loading
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
               }`}
             >
               Next

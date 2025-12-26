@@ -416,7 +416,7 @@ export default function SettingsPage() {
           requireInstructorVerification: true,
           description: "Learn new skills with expert-led courses",
           icon: "GraduationCap",
-          color: "bg-blue-100 text-blue-700",
+          color: "bg-primary/10 text-primary",
           services: ["Web Development", "Design", "Marketing", "Business"],
           route: "/academy",
           category: "Education",
@@ -430,7 +430,7 @@ export default function SettingsPage() {
           requireCompanyVerification: true,
           description: "Find your next career opportunity",
           icon: "Briefcase",
-          color: "bg-green-100 text-green-700",
+          color: "bg-accent/10 text-accent",
           services: ["Full-time", "Part-time", "Contract", "Freelance"],
           route: "/jobs",
           category: "Employment",
@@ -499,7 +499,7 @@ export default function SettingsPage() {
           enabled: false,
           description: "Professional facility maintenance services",
           icon: "Building",
-          color: "bg-indigo-100 text-indigo-700",
+          color: "bg-primary/10 text-primary",
           services: ["Maintenance", "Cleaning", "Repairs", "Inspection"],
           route: "/facility-care",
           category: "Services",
@@ -1082,7 +1082,7 @@ export default function SettingsPage() {
           <button
             onClick={loadDefaultValues}
             disabled={saving || loading}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             title="Load default values"
           >
             <RotateCcw className="w-3 h-3 mr-1" />
@@ -1091,7 +1091,7 @@ export default function SettingsPage() {
           <button
             onClick={fetchSettings}
             disabled={saving}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -1099,7 +1099,7 @@ export default function SettingsPage() {
           <button
             onClick={saveSettings}
             disabled={saving || !settings}
-            className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <Save className={`w-3 h-3 mr-1 ${saving ? 'animate-spin' : ''}`} />
             {saving ? "Saving..." : "Save"}
@@ -1116,9 +1116,9 @@ export default function SettingsPage() {
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded p-3 flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-          <p className="text-green-600 text-xs">Settings saved successfully</p>
+        <div className="bg-accent/5 border border-accent/20 rounded p-3 flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-accent flex-shrink-0" />
+          <p className="text-accent text-xs">Settings saved successfully</p>
         </div>
       )}
 
@@ -1135,7 +1135,7 @@ export default function SettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-2 px-2 py-1.5 rounded transition-colors text-xs font-medium ${
                       activeTab === tab.id
-                        ? "bg-blue-50 text-blue-700 border-l-4 border-blue-500"
+                        ? "bg-primary/5 text-primary border-l-4 border-primary"
                         : "text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -1157,7 +1157,7 @@ export default function SettingsPage() {
                 {activeTab === "general" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Settings className="w-4 h-4 text-blue-600" />
+                      <Settings className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">General Settings</h2>
                     </div>
                     
@@ -1175,7 +1175,7 @@ export default function SettingsPage() {
                               general: { ...settings.general, appName: e.target.value },
                             })
                           }
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                         />
                       </div>
                       
@@ -1192,7 +1192,7 @@ export default function SettingsPage() {
                               general: { ...settings.general, appVersion: e.target.value },
                             })
                           }
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                         />
                       </div>
                       
@@ -1208,7 +1208,7 @@ export default function SettingsPage() {
                               general: { ...settings.general, environment: e.target.value as "development" | "staging" | "production" },
                             })
                           }
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                         >
                           <option value="development">Development</option>
                           <option value="staging">Staging</option>
@@ -1233,7 +1233,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                           <label className="text-xs font-medium text-gray-700">
                             Maintenance Mode
@@ -1257,7 +1257,7 @@ export default function SettingsPage() {
                               }
                               placeholder="Maintenance message"
                               rows={2}
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                             <input
                               type="datetime-local"
@@ -1274,7 +1274,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         )}
@@ -1297,7 +1297,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                           <label className="text-xs font-medium text-gray-700">
                             Force Update
@@ -1321,7 +1321,7 @@ export default function SettingsPage() {
                                 })
                               }
                               placeholder="Minimum version (e.g., 1.0.0)"
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                             <textarea
                               value={settings.general.forceUpdate.message ?? ""}
@@ -1339,7 +1339,7 @@ export default function SettingsPage() {
                               }
                               placeholder="Force update message"
                               rows={2}
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         )}
@@ -1352,7 +1352,7 @@ export default function SettingsPage() {
                 {activeTab === "business" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Building2 className="w-4 h-4 text-blue-600" />
+                      <Building2 className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Business Settings</h2>
                     </div>
                     
@@ -1371,7 +1371,7 @@ export default function SettingsPage() {
                                 business: { ...settings.business, companyName: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1388,7 +1388,7 @@ export default function SettingsPage() {
                                 business: { ...settings.business, companyEmail: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1405,7 +1405,7 @@ export default function SettingsPage() {
                                 business: { ...settings.business, companyPhone: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1428,7 +1428,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       </div>
@@ -1454,7 +1454,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Street"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                           <input
                             type="text"
@@ -1472,7 +1472,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="City"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                           <input
                             type="text"
@@ -1490,7 +1490,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="State"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                           <input
                             type="text"
@@ -1508,7 +1508,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Zip Code"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                           <input
                             type="text"
@@ -1526,7 +1526,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Country"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       </div>
@@ -1557,7 +1557,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           
@@ -1584,7 +1584,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           
@@ -1613,7 +1613,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                         </div>
@@ -1626,7 +1626,7 @@ export default function SettingsPage() {
                 {activeTab === "security" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Shield className="w-4 h-4 text-blue-600" />
+                      <Shield className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Security Settings</h2>
                     </div>
                     
@@ -1651,7 +1651,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1674,7 +1674,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1697,7 +1697,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -1720,7 +1720,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       </div>
@@ -1746,7 +1746,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         
@@ -1770,7 +1770,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         
@@ -1794,7 +1794,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         
@@ -1818,7 +1818,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         
@@ -1842,7 +1842,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                       </div>
@@ -1854,7 +1854,7 @@ export default function SettingsPage() {
                 {activeTab === "uploads" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Upload className="w-4 h-4 text-blue-600" />
+                      <Upload className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Upload Settings</h2>
                     </div>
                     
@@ -1873,7 +1873,7 @@ export default function SettingsPage() {
                                 uploads: { ...settings.uploads, maxFileSize: parseInt(e.target.value) || 10485760 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                           <p className="text-xs text-gray-500 mt-1">{(settings.uploads.maxFileSize ?? 10485760) / 1048576} MB</p>
                         </div>
@@ -1891,7 +1891,7 @@ export default function SettingsPage() {
                                 uploads: { ...settings.uploads, maxImagesPerUpload: parseInt(e.target.value) || 10 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       </div>
@@ -1916,7 +1916,7 @@ export default function SettingsPage() {
                               },
                             })
                           }
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                         />
                       </div>
                       
@@ -1942,7 +1942,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       )}
@@ -1963,7 +1963,7 @@ export default function SettingsPage() {
                             })
                           }
                           rows={4}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           placeholder="image/jpeg&#10;image/png&#10;image/gif&#10;image/webp"
                         />
                       </div>
@@ -1984,7 +1984,7 @@ export default function SettingsPage() {
                             })
                           }
                           rows={4}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           placeholder="application/pdf&#10;application/msword"
                         />
                       </div>
@@ -1996,7 +1996,7 @@ export default function SettingsPage() {
                 {activeTab === "notifications" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-blue-600" />
+                      <Bell className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Notification Settings</h2>
                     </div>
                     
@@ -2022,7 +2022,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.notifications.email.enabled && (
@@ -2043,7 +2043,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               >
                                 <option value="nodemailer">Nodemailer</option>
                                 <option value="sendgrid">SendGrid</option>
@@ -2068,7 +2068,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             <div className="md:col-span-2">
@@ -2088,7 +2088,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                           </div>
@@ -2116,7 +2116,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.notifications.sms.enabled && (
@@ -2137,7 +2137,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               >
                                 <option value="twilio">Twilio</option>
                                 <option value="vonage">Vonage</option>
@@ -2161,7 +2161,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                           </div>
@@ -2189,7 +2189,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.notifications.push.enabled && (
@@ -2209,7 +2209,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             >
                               <option value="firebase">Firebase</option>
                               <option value="onesignal">OneSignal</option>
@@ -2226,7 +2226,7 @@ export default function SettingsPage() {
                 {activeTab === "payments" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-blue-600" />
+                      <CreditCard className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Payment Settings</h2>
                     </div>
                     
@@ -2244,7 +2244,7 @@ export default function SettingsPage() {
                                 payments: { ...settings.payments, defaultCurrency: e.target.value },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           >
                             <option value="PHP">PHP</option>
                           </select>
@@ -2270,7 +2270,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -2294,7 +2294,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                         
@@ -2311,7 +2311,7 @@ export default function SettingsPage() {
                                 payments: { ...settings.payments, minimumPayout: parseFloat(e.target.value) || 0 },
                               })
                             }
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                           />
                         </div>
                       </div>
@@ -2333,7 +2333,7 @@ export default function SettingsPage() {
                             })
                           }
                           placeholder="PHP"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                         />
                       </div>
                       
@@ -2356,7 +2356,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             >
                               <option value="daily">Daily</option>
                               <option value="weekly">Weekly</option>
@@ -2382,7 +2382,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                           <div>
@@ -2404,7 +2404,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         </div>
@@ -2417,7 +2417,7 @@ export default function SettingsPage() {
                 {activeTab === "features" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-blue-600" />
+                      <Zap className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Feature Toggles</h2>
                     </div>
                     
@@ -2443,7 +2443,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.features.marketplace.enabled && (
@@ -2467,7 +2467,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="Connect with service providers and customers"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2489,7 +2489,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="Shield"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2511,7 +2511,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="bg-gray-100 text-gray-700"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2533,7 +2533,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="/marketplace"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2555,7 +2555,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="Services"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2576,7 +2576,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2598,7 +2598,7 @@ export default function SettingsPage() {
                                     })
                                   }
                                   placeholder="2 hours ago"
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               
@@ -2619,7 +2619,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                                 />
                               </div>
                             </div>
@@ -2642,7 +2642,7 @@ export default function SettingsPage() {
                                   })
                                 }
                                 placeholder="Cleaning, Plumbing, Electrical, Moving"
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             
@@ -2666,7 +2666,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             
@@ -2690,7 +2690,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                           </div>
@@ -2718,7 +2718,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.features.academy.enabled && (
@@ -2741,7 +2741,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2761,7 +2761,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2781,7 +2781,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2801,7 +2801,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2821,7 +2821,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2841,7 +2841,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -2861,7 +2861,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div className="flex items-center justify-between">
@@ -2881,7 +2881,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                                 />
                               </div>
                             </div>
@@ -2903,7 +2903,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             
@@ -2927,7 +2927,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             
@@ -2951,7 +2951,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                           </div>
@@ -2993,7 +2993,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             {feature?.enabled && (
@@ -3016,7 +3016,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3036,7 +3036,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3056,7 +3056,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3076,7 +3076,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3096,7 +3096,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3116,7 +3116,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div>
@@ -3136,7 +3136,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                      className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                     />
                                   </div>
                                   <div className="flex items-center justify-between">
@@ -3156,7 +3156,7 @@ export default function SettingsPage() {
                                           },
                                         })
                                       }
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                                     />
                                   </div>
                                 </div>
@@ -3178,7 +3178,7 @@ export default function SettingsPage() {
                                         },
                                       })
                                     }
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                   />
                                 </div>
                               </div>
@@ -3205,7 +3205,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.features.jobBoard.enabled && (
@@ -3228,7 +3228,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3248,7 +3248,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3268,7 +3268,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3288,7 +3288,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3308,7 +3308,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3328,7 +3328,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3348,7 +3348,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div className="flex items-center justify-between">
@@ -3368,7 +3368,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                                 />
                               </div>
                             </div>
@@ -3390,7 +3390,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             
@@ -3414,7 +3414,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             
@@ -3438,7 +3438,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                           </div>
@@ -3463,7 +3463,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.features.referrals.enabled && (
@@ -3486,7 +3486,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3506,7 +3506,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3526,7 +3526,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3546,7 +3546,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3566,7 +3566,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3586,7 +3586,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3606,7 +3606,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div className="flex items-center justify-between">
@@ -3626,7 +3626,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                                 />
                               </div>
                             </div>
@@ -3648,7 +3648,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             
@@ -3670,7 +3670,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                               <div>
@@ -3690,7 +3690,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                             </div>
@@ -3721,7 +3721,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -3744,7 +3744,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -3767,7 +3767,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -3790,7 +3790,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                         </div>
@@ -3816,7 +3816,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -3836,7 +3836,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                           <div className="flex items-center justify-between">
@@ -3856,7 +3856,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                             />
                           </div>
                         </div>
@@ -3869,7 +3869,7 @@ export default function SettingsPage() {
                 {activeTab === "analytics" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4 text-blue-600" />
+                      <BarChart3 className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Analytics Settings</h2>
                     </div>
                     
@@ -3892,7 +3892,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.analytics.googleAnalytics.enabled && (
@@ -3914,7 +3914,7 @@ export default function SettingsPage() {
                                 })
                               }
                               placeholder="UA-XXXXXXXXX-X"
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         )}
@@ -3938,7 +3938,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.analytics.mixpanel.enabled && (
@@ -3960,7 +3960,7 @@ export default function SettingsPage() {
                                 })
                               }
                               placeholder="your-mixpanel-project-token"
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         )}
@@ -3984,7 +3984,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.analytics.customAnalytics.enabled && (
@@ -4005,7 +4005,7 @@ export default function SettingsPage() {
                                   },
                                 })
                               }
-                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                              className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                             />
                           </div>
                         )}
@@ -4018,7 +4018,7 @@ export default function SettingsPage() {
                 {activeTab === "integrations" && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <Plug className="w-4 h-4 text-blue-600" />
+                      <Plug className="w-4 h-4 text-primary" />
                       <h2 className="text-base font-semibold text-gray-900">Integration Settings</h2>
                     </div>
                     
@@ -4041,7 +4041,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.integrations.googleMaps.enabled && (
@@ -4063,7 +4063,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             <div>
@@ -4085,7 +4085,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                           </div>
@@ -4110,7 +4110,7 @@ export default function SettingsPage() {
                                 },
                               })
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                           />
                         </div>
                         {settings.integrations.cloudinary.enabled && (
@@ -4132,7 +4132,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             <div>
@@ -4152,7 +4152,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                             <div>
@@ -4172,7 +4172,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                               />
                             </div>
                           </div>
@@ -4203,7 +4203,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             {settings.integrations.socialLogin.google.enabled && (
@@ -4227,7 +4227,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                             )}
@@ -4254,7 +4254,7 @@ export default function SettingsPage() {
                                     },
                                   })
                                 }
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                               />
                             </div>
                             {settings.integrations.socialLogin.facebook.enabled && (
@@ -4278,7 +4278,7 @@ export default function SettingsPage() {
                                       },
                                     })
                                   }
-                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs"
+                                  className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-ring focus:border-primary text-xs"
                                 />
                               </div>
                             )}

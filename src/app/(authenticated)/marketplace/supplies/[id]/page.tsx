@@ -539,7 +539,7 @@ export default function SupplyDetailPage() {
         <p className="text-gray-600 mb-6">{error || "The supply you're looking for doesn't exist."}</p>
         <Link
           href="/marketplace/supplies"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-block"
+          className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors inline-block"
         >
           Back to Supplies
         </Link>
@@ -597,7 +597,7 @@ export default function SupplyDetailPage() {
                       onClick={() => setSelectedImageIndex(index)}
                       className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                         selectedImageIndex === index
-                          ? 'border-green-500 ring-2 ring-green-200'
+                          ? 'border-accent ring-2 ring-ring'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
@@ -681,7 +681,7 @@ export default function SupplyDetailPage() {
             {/* Price */}
             <div className="mb-4">
               <div className="flex items-baseline gap-3">
-                <span className="text-4xl font-bold text-green-600">
+                <span className="text-4xl font-bold text-accent">
                   {formatPrice(product.pricing.retailPrice, product.pricing.currency)}
                 </span>
                 {product.pricing.wholesalePrice && (
@@ -691,7 +691,7 @@ export default function SupplyDetailPage() {
                 )}
               </div>
               {product.isSubscriptionEligible && (
-                <p className="text-sm text-green-600 mt-1">Subscription eligible</p>
+                <p className="text-sm text-accent mt-1">Subscription eligible</p>
               )}
             </div>
 
@@ -699,8 +699,8 @@ export default function SupplyDetailPage() {
             <div className="flex items-center gap-2 mb-4">
               {isInStock ? (
                 <>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-green-600 font-medium">In Stock</span>
+                  <CheckCircle className="w-5 h-5 text-accent" />
+                  <span className="text-accent font-medium">In Stock</span>
                   <span className="text-gray-600">({product.inventory.quantity} available)</span>
                 </>
               ) : (
@@ -759,7 +759,7 @@ export default function SupplyDetailPage() {
               onClick={handleAddToCart}
               className={`relative flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
                 isInStock && !isAddingToCart && !isOwnSupply
-                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  ? 'bg-accent text-white hover:bg-accent/90'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
               disabled={!isInStock || isAddingToCart || isOwnSupply}
@@ -776,7 +776,7 @@ export default function SupplyDetailPage() {
               onClick={() => setShowOrderModal(true)}
               className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
                 isInStock && !isOwnSupply
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-primary text-white hover:bg-primary/90'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
               disabled={!isInStock || isOwnSupply}
@@ -788,7 +788,7 @@ export default function SupplyDetailPage() {
           
           {/* Own Supply Warning */}
           {isOwnSupply && (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700">
+            <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg text-primary">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">This is your own listing. You cannot order or add your own supplies to cart.</span>
             </div>
@@ -814,7 +814,7 @@ export default function SupplyDetailPage() {
               <p className="text-sm text-gray-600 mb-2">Supplier:</p>
               <Link
                 href={`/marketplace/providers/${product.supplier.id || product.supplier._id}`}
-                className="text-green-600 hover:text-green-700 font-medium"
+                className="text-accent hover:text-accent font-medium"
               >
                 {getSupplierName()}
               </Link>
@@ -887,7 +887,7 @@ export default function SupplyDetailPage() {
                 {product.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                    className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
                   >
                     {tag}
                   </span>
@@ -1006,7 +1006,7 @@ export default function SupplyDetailPage() {
           {/* Guarantee */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-start gap-3">
-              <Shield className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+              <Shield className="w-6 h-6 text-accent flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold text-gray-700 mb-1">Quality Guaranteed</h3>
                 <p className="text-sm text-gray-600">
@@ -1042,7 +1042,7 @@ export default function SupplyDetailPage() {
               <div className="mb-4 p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-gray-700">{product.name}</span>
-                  <span className="font-bold text-green-600">
+                  <span className="font-bold text-accent">
                     {formatPrice(product.pricing.retailPrice * quantity, product.pricing.currency)}
                   </span>
                 </div>
@@ -1223,7 +1223,7 @@ export default function SupplyDetailPage() {
                     }
                   }}
                   disabled={orderLoading || !isInStock || isOwnSupply}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {orderLoading ? 'Placing Order...' : 'Place Order'}
                 </button>

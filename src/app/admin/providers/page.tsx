@@ -1696,7 +1696,7 @@ export default function ProvidersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
+      case 'active': return 'text-accent bg-accent/10';
       case 'inactive': return 'text-gray-600 bg-gray-100';
       case 'pending': return 'text-yellow-600 bg-yellow-100';
       case 'suspended': return 'text-red-600 bg-red-100';
@@ -1706,7 +1706,7 @@ export default function ProvidersPage() {
   };
 
   const getVerificationColor = (verified: boolean) => {
-    return verified ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100';
+    return verified ? 'text-accent bg-accent/10' : 'text-yellow-600 bg-yellow-100';
   };
 
   if (loading) {
@@ -1755,7 +1755,7 @@ export default function ProvidersPage() {
           )}
           <button
             onClick={() => router.push('/admin/users?create=provider')}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
             Add Provider
@@ -1763,7 +1763,7 @@ export default function ProvidersPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -1774,7 +1774,7 @@ export default function ProvidersPage() {
       {/* Stats Overview */}
       {(stats || loading) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Providers</p>
@@ -1785,13 +1785,13 @@ export default function ProvidersPage() {
                   {loading ? '...' : (stats?.newProvidersToday || 0)} today
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <Users2 className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <Users2 className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Providers</p>
@@ -1802,8 +1802,8 @@ export default function ProvidersPage() {
                   Currently active
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <UserCheck className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <UserCheck className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -1852,12 +1852,12 @@ export default function ProvidersPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
               </button>
-              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring">
                 <Download className="w-3 h-3 mr-1" />
                 Export
               </button>
@@ -1877,7 +1877,7 @@ export default function ProvidersPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search providers..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1887,7 +1887,7 @@ export default function ProvidersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -1903,7 +1903,7 @@ export default function ProvidersPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Categories</option>
                   <option value="cleaning">Cleaning</option>
@@ -1944,7 +1944,7 @@ export default function ProvidersPage() {
               <button
                 onClick={() => handleSort('name')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'name' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'name' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Name
@@ -1955,7 +1955,7 @@ export default function ProvidersPage() {
               <button
                 onClick={() => handleSort('status')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'status' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'status' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Status
@@ -1966,7 +1966,7 @@ export default function ProvidersPage() {
               <button
                 onClick={() => handleSort('rating')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'rating' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'rating' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Rating
@@ -1977,7 +1977,7 @@ export default function ProvidersPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Date
@@ -2049,7 +2049,7 @@ export default function ProvidersPage() {
                       )}
                       {provider.performance?.completionRate && (
                         <div className="flex items-center">
-                          <TrendingUp className="w-3 h-3 mr-1 text-green-500" />
+                          <TrendingUp className="w-3 h-3 mr-1 text-accent" />
                           <span>{provider.performance.completionRate}% completion</span>
                         </div>
                       )}
@@ -2077,14 +2077,14 @@ export default function ProvidersPage() {
                     <div className="flex items-center space-x-2">
                       <button 
                         onClick={() => provider._id && handleViewProvider(provider._id)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary hover:text-primary"
                         title="View provider details"
                       >
                         <Eye className="w-3 h-3" />
                       </button>
                       <button 
                         onClick={() => provider._id && handleEditProvider(provider._id)}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-accent hover:text-accent"
                         title="Edit provider"
                       >
                         <Edit className="w-3 h-3" />
@@ -2100,7 +2100,7 @@ export default function ProvidersPage() {
                       ) : (
                         <button 
                           onClick={() => provider._id && handleUpdateProviderStatus(provider._id, 'active')}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-accent hover:text-accent"
                           title="Activate provider"
                         >
                           <UserCheck className="w-3 h-3" />
@@ -2151,7 +2151,7 @@ export default function ProvidersPage() {
             <button
               onClick={handleUpdateProvider}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Provider'}
             </button>
@@ -2165,7 +2165,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('basic')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'basic'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2177,7 +2177,7 @@ export default function ProvidersPage() {
                 onClick={() => setActiveTab('business')}
                 className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'business'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -2189,7 +2189,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('professional')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'professional'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2200,7 +2200,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('verification')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'verification'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2211,7 +2211,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('financial')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'financial'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2222,7 +2222,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('preferences')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'preferences'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2233,7 +2233,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('onboarding')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'onboarding'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2244,7 +2244,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('metadata')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'metadata'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2255,7 +2255,7 @@ export default function ProvidersPage() {
               onClick={() => setActiveTab('performance')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'performance'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -2283,7 +2283,7 @@ export default function ProvidersPage() {
                       <select
                         value={basicInfoForm.status}
                         onChange={(e) => setBasicInfoForm({ ...basicInfoForm, status: e.target.value as typeof basicInfoForm.status })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="pending">Pending</option>
                         <option value="active">Active</option>
@@ -2297,7 +2297,7 @@ export default function ProvidersPage() {
                       <select
                         value={basicInfoForm.providerType}
                         onChange={(e) => setBasicInfoForm({ ...basicInfoForm, providerType: e.target.value as typeof basicInfoForm.providerType })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="individual">Individual</option>
                         <option value="business">Business</option>
@@ -2318,7 +2318,7 @@ export default function ProvidersPage() {
                           ...basicInfoForm,
                           settings: { ...basicInfoForm.settings, profileVisibility: e.target.value as typeof basicInfoForm.settings.profileVisibility }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="public">Public</option>
                         <option value="private">Private</option>
@@ -2413,7 +2413,7 @@ export default function ProvidersPage() {
                         type="text"
                         value={businessInfoForm.businessName || ''}
                         onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessName: e.target.value })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         required
                       />
                     </div>
@@ -2424,7 +2424,7 @@ export default function ProvidersPage() {
                           type="text"
                           value={businessInfoForm.businessType || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessType: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2433,7 +2433,7 @@ export default function ProvidersPage() {
                           type="text"
                           value={businessInfoForm.businessRegistration || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessRegistration: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2442,7 +2442,7 @@ export default function ProvidersPage() {
                           type="text"
                           value={businessInfoForm.taxId || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, taxId: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2451,7 +2451,7 @@ export default function ProvidersPage() {
                           type="tel"
                           value={businessInfoForm.businessPhone || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessPhone: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2460,7 +2460,7 @@ export default function ProvidersPage() {
                           type="email"
                           value={businessInfoForm.businessEmail || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessEmail: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2469,7 +2469,7 @@ export default function ProvidersPage() {
                           type="url"
                           value={businessInfoForm.website || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, website: e.target.value })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2478,7 +2478,7 @@ export default function ProvidersPage() {
                           type="number"
                           value={businessInfoForm.yearEstablished || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, yearEstablished: e.target.value ? parseInt(e.target.value) : undefined })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2487,7 +2487,7 @@ export default function ProvidersPage() {
                           type="number"
                           value={businessInfoForm.numberOfEmployees || ''}
                           onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, numberOfEmployees: e.target.value ? parseInt(e.target.value) : undefined })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                     </div>
@@ -2497,7 +2497,7 @@ export default function ProvidersPage() {
                         value={businessInfoForm.businessDescription || ''}
                         onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessDescription: e.target.value })}
                         rows={3}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -2515,7 +2515,7 @@ export default function ProvidersPage() {
                           ...businessInfoForm,
                           businessAddress: { ...(businessInfoForm.businessAddress || {}), street: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -2528,7 +2528,7 @@ export default function ProvidersPage() {
                             ...businessInfoForm,
                             businessAddress: { ...(businessInfoForm.businessAddress || {}), city: e.target.value }
                           })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2540,7 +2540,7 @@ export default function ProvidersPage() {
                             ...businessInfoForm,
                             businessAddress: { ...(businessInfoForm.businessAddress || {}), state: e.target.value }
                           })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2552,7 +2552,7 @@ export default function ProvidersPage() {
                             ...businessInfoForm,
                             businessAddress: { ...(businessInfoForm.businessAddress || {}), zipCode: e.target.value }
                           })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2564,7 +2564,7 @@ export default function ProvidersPage() {
                             ...businessInfoForm,
                             businessAddress: { ...(businessInfoForm.businessAddress || {}), country: e.target.value }
                           })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2583,7 +2583,7 @@ export default function ProvidersPage() {
                             }
                           }
                         })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                       <div>
@@ -2602,7 +2602,7 @@ export default function ProvidersPage() {
                             }
                           }
                         })}
-                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                       </div>
                     </div>
@@ -2650,7 +2650,7 @@ export default function ProvidersPage() {
                                 }
                               }}
                               disabled={loadingCategories}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                             >
                               <option value="">
                                 {loadingCategories ? 'Loading categories...' : 'Select category'}
@@ -2673,7 +2673,7 @@ export default function ProvidersPage() {
                                 newSpecialties[index] = { ...specialty, experience: parseInt(e.target.value) || 0 };
                                 setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                               }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                             />
                           </div>
                           <div>
@@ -2688,7 +2688,7 @@ export default function ProvidersPage() {
                                 newSpecialties[index] = { ...specialty, hourlyRate: parseFloat(e.target.value) || 0 };
                                 setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                               }}
-                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                             />
                           </div>
                         </div>
@@ -2709,7 +2709,7 @@ export default function ProvidersPage() {
                                     const skillObjName = (typeof skillIdOrObj === 'object' && skillIdOrObj !== null) ? (skillIdOrObj as { name?: string; _id?: string; id?: string })?.name : undefined;
                                     const skillName = skill?.name || skillObjName || skillId;
                                     return (
-                                      <span key={skillIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                                      <span key={skillIdx} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary/10 text-primary">
                                         {skillName}
                                         <button
                                           type="button"
@@ -2721,7 +2721,7 @@ export default function ProvidersPage() {
                                             };
                                             setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                                           }}
-                                          className="ml-1 text-blue-600 hover:text-blue-800"
+                                          className="ml-1 text-primary hover:text-primary"
                                         >
                                           ×
                                         </button>
@@ -2753,7 +2753,7 @@ export default function ProvidersPage() {
                                   }
                                 }}
                                 disabled={loadingSkills[specialty.category!]}
-                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
                               >
                                 <option value="">
                                   {loadingSkills[specialty.category!] ? 'Loading skills...' : 'Select a skill to add'}
@@ -2870,7 +2870,7 @@ export default function ProvidersPage() {
                               };
                               setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                             }}
-                            className="text-xs text-blue-600 hover:text-blue-700"
+                            className="text-xs text-primary hover:text-primary"
                           >
                             + Add Service Area
                           </button>
@@ -2993,7 +2993,7 @@ export default function ProvidersPage() {
                               };
                               setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                             }}
-                            className="text-xs text-blue-600 hover:text-blue-700"
+                            className="text-xs text-primary hover:text-primary"
                           >
                             + Add Certification
                           </button>
@@ -3023,7 +3023,7 @@ export default function ProvidersPage() {
                         }];
                         setProfessionalInfoForm({ ...professionalInfoForm, specialties: newSpecialties });
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-700"
+                      className="text-xs text-primary hover:text-primary"
                     >
                       + Add Specialty
                     </button>
@@ -3060,7 +3060,7 @@ export default function ProvidersPage() {
                         e.currentTarget.value = '';
                       }
                     }}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -3152,7 +3152,7 @@ export default function ProvidersPage() {
                       min="0"
                       value={professionalInfoForm.travelDistance || 0}
                       onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, travelDistance: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3162,7 +3162,7 @@ export default function ProvidersPage() {
                       min="0"
                       value={professionalInfoForm.minimumJobValue || 0}
                       onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, minimumJobValue: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3172,7 +3172,7 @@ export default function ProvidersPage() {
                       min="0"
                       value={professionalInfoForm.maximumJobValue || 0}
                       onChange={(e) => setProfessionalInfoForm({ ...professionalInfoForm, maximumJobValue: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -3211,7 +3211,7 @@ export default function ProvidersPage() {
                         type="text"
                         value={onboardingForm.currentStep}
                         onChange={(e) => setOnboardingForm({ ...onboardingForm, currentStep: e.target.value })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3222,7 +3222,7 @@ export default function ProvidersPage() {
                         max="100"
                         value={onboardingForm.progress}
                         onChange={(e) => setOnboardingForm({ ...onboardingForm, progress: parseInt(e.target.value) || 0 })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -3296,7 +3296,7 @@ export default function ProvidersPage() {
                           steps: [...onboardingForm.steps, { step: '', completed: false, completedAt: '', data: {} }]
                         });
                       }}
-                      className="text-xs text-blue-600 hover:text-blue-700"
+                      className="text-xs text-primary hover:text-primary"
                     >
                       + Add Step
                     </button>
@@ -3326,7 +3326,7 @@ export default function ProvidersPage() {
                         type="datetime-local"
                         value={metadataForm.lastActive ? new Date(metadataForm.lastActive).toISOString().slice(0, 16) : ''}
                         onChange={(e) => setMetadataForm({ ...metadataForm, lastActive: e.target.value ? new Date(e.target.value).toISOString() : '' })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3336,7 +3336,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={metadataForm.profileViews}
                         onChange={(e) => setMetadataForm({ ...metadataForm, profileViews: parseInt(e.target.value) || 0 })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3346,7 +3346,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={metadataForm.searchRanking}
                         onChange={(e) => setMetadataForm({ ...metadataForm, searchRanking: parseInt(e.target.value) || 0 })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div className="space-y-2">
@@ -3404,7 +3404,7 @@ export default function ProvidersPage() {
                         e.currentTarget.value = '';
                       }
                     }}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
 
@@ -3415,7 +3415,7 @@ export default function ProvidersPage() {
                     onChange={(e) => setMetadataForm({ ...metadataForm, notes: e.target.value })}
                     rows={4}
                     placeholder="Admin notes about this provider..."
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </>
@@ -3468,7 +3468,7 @@ export default function ProvidersPage() {
                           ...verificationForm,
                           backgroundCheck: { ...verificationForm.backgroundCheck, status: e.target.value as typeof verificationForm.backgroundCheck.status }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="pending">Pending</option>
                         <option value="passed">Passed</option>
@@ -3485,7 +3485,7 @@ export default function ProvidersPage() {
                           ...verificationForm,
                           backgroundCheck: { ...verificationForm.backgroundCheck, dateCompleted: e.target.value ? new Date(e.target.value).toISOString() : undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3497,7 +3497,7 @@ export default function ProvidersPage() {
                           ...verificationForm,
                           backgroundCheck: { ...verificationForm.backgroundCheck, reportId: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -3529,7 +3529,7 @@ export default function ProvidersPage() {
                               ...verificationForm,
                               insurance: { ...verificationForm.insurance, insuranceProvider: e.target.value }
                             })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </div>
                         <div>
@@ -3541,7 +3541,7 @@ export default function ProvidersPage() {
                               ...verificationForm,
                               insurance: { ...verificationForm.insurance, policyNumber: e.target.value }
                             })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </div>
                         <div>
@@ -3554,7 +3554,7 @@ export default function ProvidersPage() {
                               ...verificationForm,
                               insurance: { ...verificationForm.insurance, coverageAmount: e.target.value ? parseFloat(e.target.value) : undefined }
                             })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </div>
                         <div>
@@ -3566,7 +3566,7 @@ export default function ProvidersPage() {
                               ...verificationForm,
                               insurance: { ...verificationForm.insurance, expiryDate: e.target.value ? new Date(e.target.value).toISOString() : undefined }
                             })}
-                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                           />
                         </div>
                       </div>
@@ -3600,7 +3600,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           bankAccount: { ...financialInfoForm.bankAccount, accountHolder: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3612,7 +3612,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           bankAccount: { ...financialInfoForm.bankAccount, accountNumber: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3624,7 +3624,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           bankAccount: { ...financialInfoForm.bankAccount, routingNumber: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3636,7 +3636,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           bankAccount: { ...financialInfoForm.bankAccount, bankName: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3647,7 +3647,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           bankAccount: { ...financialInfoForm.bankAccount, accountType: e.target.value as 'checking' | 'savings' | undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="">Select type</option>
                         <option value="checking">Checking</option>
@@ -3669,7 +3669,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           taxInfo: { ...financialInfoForm.taxInfo, ssn: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3681,7 +3681,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           taxInfo: { ...financialInfoForm.taxInfo, ein: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3693,7 +3693,7 @@ export default function ProvidersPage() {
                           ...financialInfoForm,
                           taxInfo: { ...financialInfoForm.taxInfo, taxClassification: e.target.value }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3725,7 +3725,7 @@ export default function ProvidersPage() {
                         step="0.01"
                         value={financialInfoForm.commissionRate || 0.1}
                         onChange={(e) => setFinancialInfoForm({ ...financialInfoForm, commissionRate: parseFloat(e.target.value) || 0.1 })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3735,7 +3735,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={financialInfoForm.minimumPayout || 50}
                         onChange={(e) => setFinancialInfoForm({ ...financialInfoForm, minimumPayout: parseInt(e.target.value) || 50 })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -3794,7 +3794,7 @@ export default function ProvidersPage() {
                             maxJobsPerDay: parseInt(e.target.value) || 5
                           }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3810,7 +3810,7 @@ export default function ProvidersPage() {
                             advanceBookingDays: parseInt(e.target.value) || 30
                           }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -3830,7 +3830,7 @@ export default function ProvidersPage() {
                             preferredContactMethod: e.target.value as 'phone' | 'email' | 'sms' | 'app'
                           }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       >
                         <option value="app">App</option>
                         <option value="phone">Phone</option>
@@ -3851,7 +3851,7 @@ export default function ProvidersPage() {
                             responseTimeExpectation: e.target.value || '60'
                           }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3900,7 +3900,7 @@ export default function ProvidersPage() {
                         step="0.1"
                         value={performanceForm.rating || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, rating: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3910,7 +3910,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={performanceForm.totalReviews || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, totalReviews: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3920,7 +3920,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={performanceForm.totalJobs || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, totalJobs: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3930,7 +3930,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={performanceForm.completedJobs || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, completedJobs: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3940,7 +3940,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={performanceForm.cancelledJobs || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, cancelledJobs: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3950,7 +3950,7 @@ export default function ProvidersPage() {
                         min="0"
                         value={performanceForm.responseTime || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, responseTime: e.target.value ? parseInt(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3961,7 +3961,7 @@ export default function ProvidersPage() {
                         max="100"
                         value={performanceForm.completionRate || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, completionRate: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -3972,7 +3972,7 @@ export default function ProvidersPage() {
                         max="100"
                         value={performanceForm.repeatCustomerRate || ''}
                         onChange={(e) => setPerformanceForm({ ...performanceForm, repeatCustomerRate: e.target.value ? parseFloat(e.target.value) : undefined })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -3991,7 +3991,7 @@ export default function ProvidersPage() {
                           ...performanceForm,
                           earnings: { ...performanceForm.earnings, total: e.target.value ? parseFloat(e.target.value) : undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -4004,7 +4004,7 @@ export default function ProvidersPage() {
                           ...performanceForm,
                           earnings: { ...performanceForm.earnings, thisMonth: e.target.value ? parseFloat(e.target.value) : undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -4017,7 +4017,7 @@ export default function ProvidersPage() {
                           ...performanceForm,
                           earnings: { ...performanceForm.earnings, lastMonth: e.target.value ? parseFloat(e.target.value) : undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                     <div>
@@ -4030,7 +4030,7 @@ export default function ProvidersPage() {
                           ...performanceForm,
                           earnings: { ...performanceForm.earnings, pending: e.target.value ? parseFloat(e.target.value) : undefined }
                         })}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -4101,7 +4101,7 @@ export default function ProvidersPage() {
             <button
               onClick={handleCreateProvider}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Provider'}
             </button>
@@ -4119,7 +4119,7 @@ export default function ProvidersPage() {
                   type="text"
                   value={createFormData.firstName}
                   onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   required
                 />
               </div>
@@ -4129,7 +4129,7 @@ export default function ProvidersPage() {
                   type="text"
                   value={createFormData.lastName}
                   onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   required
                 />
               </div>
@@ -4139,7 +4139,7 @@ export default function ProvidersPage() {
                   type="email"
                   value={createFormData.email}
                   onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   required
                 />
               </div>
@@ -4149,7 +4149,7 @@ export default function ProvidersPage() {
                   type="tel"
                   value={createFormData.phoneNumber}
                   onChange={(e) => setCreateFormData({ ...createFormData, phoneNumber: e.target.value })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   required
                 />
               </div>
@@ -4165,7 +4165,7 @@ export default function ProvidersPage() {
                 <select
                   value={createFormData.providerType}
                   onChange={(e) => setCreateFormData({ ...createFormData, providerType: e.target.value as 'individual' | 'business' | 'agency' })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="individual">Individual</option>
                   <option value="business">Business</option>
@@ -4177,7 +4177,7 @@ export default function ProvidersPage() {
                 <select
                   value={createFormData.status}
                   onChange={(e) => setCreateFormData({ ...createFormData, status: e.target.value as 'pending' | 'active' | 'suspended' | 'inactive' | 'rejected' })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="pending">Pending</option>
                   <option value="active">Active</option>
@@ -4203,7 +4203,7 @@ export default function ProvidersPage() {
                       ...createFormData,
                       businessInfo: { ...createFormData.businessInfo, businessName: e.target.value }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     required
                   />
                 </div>
@@ -4217,7 +4217,7 @@ export default function ProvidersPage() {
                         ...createFormData,
                         businessInfo: { ...createFormData.businessInfo, businessType: e.target.value }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -4229,7 +4229,7 @@ export default function ProvidersPage() {
                         ...createFormData,
                         businessInfo: { ...createFormData.businessInfo, businessPhone: e.target.value }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -4241,7 +4241,7 @@ export default function ProvidersPage() {
                         ...createFormData,
                         businessInfo: { ...createFormData.businessInfo, businessEmail: e.target.value }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -4253,7 +4253,7 @@ export default function ProvidersPage() {
                         ...createFormData,
                         businessInfo: { ...createFormData.businessInfo, website: e.target.value }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -4266,7 +4266,7 @@ export default function ProvidersPage() {
                       businessInfo: { ...createFormData.businessInfo, businessDescription: e.target.value }
                     })}
                     rows={3}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -4287,7 +4287,7 @@ export default function ProvidersPage() {
                     ...createFormData,
                     professionalInfo: { ...createFormData.professionalInfo, travelDistance: parseInt(e.target.value) || 0 }
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
@@ -4300,7 +4300,7 @@ export default function ProvidersPage() {
                       ...createFormData,
                       professionalInfo: { ...createFormData.professionalInfo, emergencyServices: e.target.checked }
                     })}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-primary focus:ring-ring"
                   />
                   <span className="ml-2 text-xs text-gray-600">Available for emergency services</span>
                 </div>
@@ -4338,7 +4338,7 @@ export default function ProvidersPage() {
                     handleEditProvider(selectedProviderForView._id);
                   }
                 }}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90"
               >
                 Edit Provider
               </button>
@@ -4348,7 +4348,7 @@ export default function ProvidersPage() {
       >
         {loadingViewData ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : selectedProviderForView ? (
           <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-2">
@@ -4379,7 +4379,7 @@ export default function ProvidersPage() {
                 <div>
                   <p className="text-xs text-gray-600 mb-0.5">Status</p>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                    selectedProviderForView.status === 'active' ? 'bg-green-100 text-green-800' :
+                    selectedProviderForView.status === 'active' ? 'bg-accent/10 text-accent' :
                     selectedProviderForView.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     selectedProviderForView.status === 'suspended' ? 'bg-red-100 text-red-800' :
                     'bg-gray-100 text-gray-800'
@@ -4456,7 +4456,7 @@ export default function ProvidersPage() {
                       <p className="text-xs text-gray-600 mb-0.5">Specialties</p>
                       <div className="flex flex-wrap gap-1">
                         {selectedProviderForView.professionalInfo.specialties.map((spec, idx) => (
-                          <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs">
+                          <span key={idx} className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">
                             {typeof spec === 'string' ? spec : 
                              (spec as { name?: string; category?: { name?: string } }).name || 
                              (spec as { category?: { name?: string } }).category?.name || 

@@ -25,8 +25,8 @@ interface EmptyStateProps {
 
 export function EmptyState({
   icon: Icon,
-  iconColor = "text-gray-600",
-  iconBgColor = "bg-gray-100",
+  iconColor = "text-muted-foreground",
+  iconBgColor = "bg-muted",
   title,
   description,
   actions = [],
@@ -37,11 +37,11 @@ export function EmptyState({
     
     switch (variant) {
       case "primary":
-        return `${baseStyles} bg-green-600 text-white hover:bg-green-700`;
+        return `${baseStyles} bg-primary text-primary-foreground hover:bg-primary/90`;
       case "secondary":
-        return `${baseStyles} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+        return `${baseStyles} bg-secondary text-secondary-foreground hover:bg-secondary/80`;
       case "outline":
-        return `${baseStyles} border border-gray-300 text-gray-700 hover:bg-gray-50`;
+        return `${baseStyles} border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground`;
       default:
         return baseStyles;
     }
@@ -52,8 +52,8 @@ export function EmptyState({
       <div className={`w-16 h-16 ${iconBgColor} rounded-full flex items-center justify-center mx-auto mb-4`}>
         <Icon className={`w-8 h-8 ${iconColor}`} />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">{description}</p>
+      <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
+      <p className="text-muted-foreground mb-6 max-w-md mx-auto">{description}</p>
       
       {actions.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -103,7 +103,7 @@ export function EmptyStateCard(props: EmptyStateCardProps) {
   const { ...emptyStateProps } = props;
   
   return (
-    <div className="bg-white rounded-lg shadow-sm" style={{ padding: 0 }}>
+    <div className="bg-card text-card-foreground rounded-lg border border-border shadow-sm" style={{ padding: 0 }}>
       <EmptyState {...emptyStateProps} />
     </div>
   );

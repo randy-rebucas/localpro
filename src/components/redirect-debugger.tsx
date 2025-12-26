@@ -83,14 +83,14 @@ export function RedirectDebugger() {
       <div className="space-y-2">
         <button
           onClick={testRedirect}
-          className="w-full bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600"
+          className="w-full bg-primary text-white text-xs px-2 py-1 rounded hover:bg-primary/90"
         >
           Test redirectToLogin()
         </button>
         
         <button
           onClick={testWindowRedirect}
-          className="w-full bg-green-500 text-white text-xs px-2 py-1 rounded hover:bg-green-600"
+          className="w-full bg-accent text-white text-xs px-2 py-1 rounded hover:bg-accent/90"
         >
           Test window.location
         </button>

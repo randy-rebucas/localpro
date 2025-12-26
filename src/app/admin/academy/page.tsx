@@ -1171,7 +1171,7 @@ export default function AcademyPage() {
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={refreshData}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
           >
             Retry
           </button>
@@ -1199,7 +1199,7 @@ export default function AcademyPage() {
               <button
                 onClick={refreshData}
                 disabled={refreshing}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
               >
                 <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1209,7 +1209,7 @@ export default function AcademyPage() {
                   resetForm();
                   setCreateModalOpen(true);
                 }}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
               >
                 <Plus className="w-3 h-3 mr-1" />
                 Add Course
@@ -1219,7 +1219,7 @@ export default function AcademyPage() {
             <button
               onClick={fetchCategories}
               disabled={categoryLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             >
               <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -1235,7 +1235,7 @@ export default function AcademyPage() {
             <button
               onClick={() => setActiveTab('courses')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === 'courses'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1245,7 +1245,7 @@ export default function AcademyPage() {
             <button
               onClick={() => setActiveTab('categories')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === 'categories'
-                ? 'border-blue-500 text-blue-600'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1261,25 +1261,25 @@ export default function AcademyPage() {
           {/* Statistics Cards */}
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+              <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-500">Total Courses</p>
                     <p className="text-lg font-bold text-gray-900">{stats.totalCourses || 0}</p>
                   </div>
-                  <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                    <BookOpen className="w-5 h-5 text-blue-600" />
+                  <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                    <BookOpen className="w-5 h-5 text-primary" />
                   </div>
                 </div>
               </div>
-              <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+              <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs font-medium text-gray-500">Active Courses</p>
                     <p className="text-lg font-bold text-gray-900">{stats.activeCourses || 0}</p>
                   </div>
-                  <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                    <TrendingUp className="w-5 h-5 text-accent" />
                   </div>
                 </div>
               </div>
@@ -1318,7 +1318,7 @@ export default function AcademyPage() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                   >
                     <Filter className="w-3 h-3 mr-1" />
                     {showFilters ? 'Hide' : 'Show'} Filters
@@ -1342,7 +1342,7 @@ export default function AcademyPage() {
                         placeholder="Search courses..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -1351,7 +1351,7 @@ export default function AcademyPage() {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="all">All Categories</option>
                       {categoryOptions.map(cat => (
@@ -1364,7 +1364,7 @@ export default function AcademyPage() {
                     <select
                       value={levelFilter}
                       onChange={(e) => setLevelFilter(e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="all">All Levels</option>
                       {courseLevels.map(level => (
@@ -1442,12 +1442,12 @@ export default function AcademyPage() {
                           </div>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                             {getCategoryLabel(course.category)}
                           </span>
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
                             {course.level}
                           </span>
                         </td>
@@ -1459,7 +1459,7 @@ export default function AcademyPage() {
                                   <span className="line-through text-gray-400">
                                     {formatCurrency(course.pricing.regularPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
                                   </span>
-                                  <span className="ml-2 text-green-600 font-medium">
+                                  <span className="ml-2 text-accent font-medium">
                                     {formatCurrency(course.pricing.discountedPrice, course.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
                                   </span>
                                 </>
@@ -1474,7 +1474,7 @@ export default function AcademyPage() {
                         <td className="px-3 py-2 whitespace-nowrap">
                           <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                             course.isActive 
-                              ? 'bg-green-100 text-green-800' 
+                              ? 'bg-accent/10 text-accent' 
                               : 'bg-gray-100 text-gray-800'
                           }`}>
                             {course.isActive ? 'Active' : 'Inactive'}
@@ -1487,14 +1487,14 @@ export default function AcademyPage() {
                                 setSelectedCourse(course);
                                 setViewModalOpen(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-primary hover:text-primary"
                               title="View course details"
                             >
                               <Eye className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => openEditModal(course)}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-accent hover:text-accent"
                               title="Edit course"
                             >
                               <Edit className="w-3 h-3" />
@@ -1514,7 +1514,7 @@ export default function AcademyPage() {
                                 setSelectedCourse(course);
                                 setVideoModalOpen(true);
                               }}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-accent hover:text-accent"
                               title="Upload Video"
                             >
                               <Video className="w-3 h-3" />
@@ -1551,7 +1551,7 @@ export default function AcademyPage() {
             <button
               onClick={fetchCategories}
               disabled={categoryLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             >
               <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -1567,7 +1567,7 @@ export default function AcademyPage() {
                   value={categoryForm.name}
                   onChange={(e) => setCategoryForm({ ...categoryForm, name: sanitizeCategoryName(e.target.value) })}
                   placeholder="e.g., cleaning"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">Required, unique, stored in lowercase.</p>
@@ -1578,7 +1578,7 @@ export default function AcademyPage() {
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="Optional short description"
                 />
               </div>
@@ -1587,7 +1587,7 @@ export default function AcademyPage() {
                   type="checkbox"
                   checked={categoryForm.isActive}
                   onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
                 />
                 <label className="ml-2 block text-sm text-gray-700">Active</label>
               </div>
@@ -1604,7 +1604,7 @@ export default function AcademyPage() {
                 <button
                   type="submit"
                   disabled={categorySubmitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                 >
                   {categorySubmitting ? 'Saving...' : editingCategory ? 'Update Category' : 'Create Category'}
                 </button>
@@ -1634,7 +1634,7 @@ export default function AcademyPage() {
                           <td className="px-3 py-2 text-xs font-semibold text-gray-900">{cat}</td>
                           <td className="px-3 py-2 text-xs text-gray-600">Default category</td>
                           <td className="px-3 py-2">
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                               Active
                             </span>
                           </td>
@@ -1651,7 +1651,7 @@ export default function AcademyPage() {
                           </td>
                           <td className="px-3 py-2">
                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                              category.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                              category.isActive ? 'bg-accent/10 text-accent' : 'bg-gray-100 text-gray-800'
                             }`}>
                               {category.isActive ? 'Active' : 'Inactive'}
                             </span>
@@ -1663,7 +1663,7 @@ export default function AcademyPage() {
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => handleEditCategory(category)}
-                                className="text-blue-600 hover:text-blue-900"
+                                className="text-primary hover:text-primary"
                                 title="Edit category"
                               >
                                 <Edit className="w-3 h-3" />
@@ -1706,7 +1706,7 @@ export default function AcademyPage() {
               type="text"
               value={courseFormData.title}
               onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1716,7 +1716,7 @@ export default function AcademyPage() {
               value={courseFormData.description}
               onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1726,7 +1726,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.category}
                 onChange={(e) => setCourseFormData({ ...courseFormData, category: e.target.value as CourseCategory })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 {categoryOptions.map(cat => (
@@ -1739,7 +1739,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.level}
                 onChange={(e) => setCourseFormData({ ...courseFormData, level: e.target.value as CourseLevel })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 {courseLevels.map(level => (
@@ -1781,7 +1781,7 @@ export default function AcademyPage() {
                       }
                     }
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="Search for instructor by name or email..."
                 />
                 {selectedInstructor && (
@@ -1807,7 +1807,7 @@ export default function AcademyPage() {
                       <div
                         key={instructor._id}
                         onClick={() => handleInstructorSelect(instructor)}
-                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-primary/5 transition-colors"
                       >
                         <div className="font-medium text-gray-900">
                           {instructor.firstName} {instructor.lastName}
@@ -1825,11 +1825,11 @@ export default function AcademyPage() {
               )}
               
               {selectedInstructor && (
-                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm font-medium text-blue-900">
+                <div className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="text-sm font-medium text-primary">
                     Selected: {selectedInstructor.firstName} {selectedInstructor.lastName}
                   </div>
-                  <div className="text-xs text-blue-700">{selectedInstructor.email}</div>
+                  <div className="text-xs text-primary">{selectedInstructor.email}</div>
                 </div>
               )}
             </div>
@@ -1841,7 +1841,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.regularPrice}
                 onChange={(e) => setCourseFormData({ ...courseFormData, regularPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
                 required
@@ -1853,7 +1853,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.discountedPrice}
                 onChange={(e) => setCourseFormData({ ...courseFormData, discountedPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -1863,7 +1863,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.currency}
                 onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="PHP">PHP</option>
               </select>
@@ -1876,7 +1876,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.hours}
                 onChange={(e) => setCourseFormData({ ...courseFormData, hours: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 required
               />
@@ -1887,7 +1887,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.weeks}
                 onChange={(e) => setCourseFormData({ ...courseFormData, weeks: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
               />
             </div>
@@ -1898,7 +1898,7 @@ export default function AcademyPage() {
               type="number"
               value={courseFormData.maxCapacity}
               onChange={(e) => setCourseFormData({ ...courseFormData, maxCapacity: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               min="0"
             />
           </div>
@@ -1907,7 +1907,7 @@ export default function AcademyPage() {
               type="checkbox"
               checked={courseFormData.isActive}
               onChange={(e) => setCourseFormData({ ...courseFormData, isActive: e.target.checked })}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
             />
             <label className="ml-2 block text-sm text-gray-700">Active</label>
           </div>
@@ -1924,7 +1924,7 @@ export default function AcademyPage() {
             <button
               onClick={handleCreateCourse}
               disabled={submitting || !courseFormData.title || !courseFormData.description}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Course'}
             </button>
@@ -1949,7 +1949,7 @@ export default function AcademyPage() {
               type="text"
               value={courseFormData.title}
               onChange={(e) => setCourseFormData({ ...courseFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1959,7 +1959,7 @@ export default function AcademyPage() {
               value={courseFormData.description}
               onChange={(e) => setCourseFormData({ ...courseFormData, description: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1969,7 +1969,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.category}
                 onChange={(e) => setCourseFormData({ ...courseFormData, category: e.target.value as CourseCategory })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 {categoryOptions.map(cat => (
@@ -1982,7 +1982,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.level}
                 onChange={(e) => setCourseFormData({ ...courseFormData, level: e.target.value as CourseLevel })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 {courseLevels.map(level => (
@@ -2024,7 +2024,7 @@ export default function AcademyPage() {
                       }
                     }
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="Search for instructor by name or email..."
                 />
                 {selectedInstructor && (
@@ -2050,7 +2050,7 @@ export default function AcademyPage() {
                       <div
                         key={instructor._id}
                         onClick={() => handleInstructorSelect(instructor)}
-                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-primary/5 transition-colors"
                       >
                         <div className="font-medium text-gray-900">
                           {instructor.firstName} {instructor.lastName}
@@ -2068,11 +2068,11 @@ export default function AcademyPage() {
               )}
               
               {selectedInstructor && (
-                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm font-medium text-blue-900">
+                <div className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="text-sm font-medium text-primary">
                     Selected: {selectedInstructor.firstName} {selectedInstructor.lastName}
                   </div>
-                  <div className="text-xs text-blue-700">{selectedInstructor.email}</div>
+                  <div className="text-xs text-primary">{selectedInstructor.email}</div>
                 </div>
               )}
             </div>
@@ -2084,7 +2084,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.regularPrice}
                 onChange={(e) => setCourseFormData({ ...courseFormData, regularPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
                 required
@@ -2096,7 +2096,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.discountedPrice}
                 onChange={(e) => setCourseFormData({ ...courseFormData, discountedPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2106,7 +2106,7 @@ export default function AcademyPage() {
               <select
                 value={courseFormData.currency}
                 onChange={(e) => setCourseFormData({ ...courseFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="PHP">PHP</option>
               </select>
@@ -2119,7 +2119,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.hours}
                 onChange={(e) => setCourseFormData({ ...courseFormData, hours: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 required
               />
@@ -2130,7 +2130,7 @@ export default function AcademyPage() {
                 type="number"
                 value={courseFormData.weeks}
                 onChange={(e) => setCourseFormData({ ...courseFormData, weeks: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
               />
             </div>
@@ -2141,7 +2141,7 @@ export default function AcademyPage() {
               type="number"
               value={courseFormData.maxCapacity}
               onChange={(e) => setCourseFormData({ ...courseFormData, maxCapacity: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               min="0"
             />
           </div>
@@ -2150,7 +2150,7 @@ export default function AcademyPage() {
               type="checkbox"
               checked={courseFormData.isActive}
               onChange={(e) => setCourseFormData({ ...courseFormData, isActive: e.target.checked })}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
             />
             <label className="ml-2 block text-sm text-gray-700">Active</label>
           </div>
@@ -2167,7 +2167,7 @@ export default function AcademyPage() {
             <button
               onClick={handleUpdateCourse}
               disabled={submitting || !courseFormData.title || !courseFormData.description}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Course'}
             </button>
@@ -2220,7 +2220,7 @@ export default function AcademyPage() {
             <button
               onClick={handleUploadThumbnail}
               disabled={submitting || !thumbnailFile}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Thumbnail'}
             </button>
@@ -2246,7 +2246,7 @@ export default function AcademyPage() {
               type="text"
               value={videoTitle}
               onChange={(e) => setVideoTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="Lesson title"
             />
           </div>
@@ -2256,7 +2256,7 @@ export default function AcademyPage() {
               type="number"
               value={videoDuration}
               onChange={(e) => setVideoDuration(parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               min="0"
               placeholder="90"
             />
@@ -2287,7 +2287,7 @@ export default function AcademyPage() {
             <button
               onClick={handleUploadVideo}
               disabled={submitting || !videoFile}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Video'}
             </button>
@@ -2367,7 +2367,7 @@ export default function AcademyPage() {
               <p className="mt-1 text-sm text-gray-900">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   selectedCourse.isActive 
-                    ? 'bg-green-100 text-green-800' 
+                    ? 'bg-accent/10 text-accent' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
                   {selectedCourse.isActive ? 'Active' : 'Inactive'}
@@ -2379,7 +2379,7 @@ export default function AcademyPage() {
                 <h3 className="text-sm font-medium text-gray-500 mb-2">Curriculum</h3>
                 <div className="space-y-2">
                   {selectedCourse.curriculum.map((module, idx) => (
-                    <div key={idx} className="border-l-2 border-blue-500 pl-3">
+                    <div key={idx} className="border-l-2 border-primary pl-3">
                       <p className="text-sm font-medium text-gray-900">{module.module}</p>
                       {module.lessons && module.lessons.length > 0 && (
                         <ul className="mt-1 space-y-1">

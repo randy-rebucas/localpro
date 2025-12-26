@@ -35,7 +35,7 @@ export function QuickActions({
       <div className="space-y-2">
         <button
           onClick={() => onViewPublicProfile?.()}
-          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
         >
           View Public Profile
         </button>
@@ -44,7 +44,7 @@ export function QuickActions({
         {isBusinessRole && (
           <button
             onClick={() => onDownloadResume?.()}
-            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
           >
             Download Resume
           </button>
@@ -53,7 +53,7 @@ export function QuickActions({
         {isServiceProvider && (
           <button
             onClick={() => onServiceDashboard?.()}
-            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
           >
             Service Dashboard
           </button>
@@ -62,7 +62,7 @@ export function QuickActions({
         {isSupplier && (
           <button
             onClick={() => onSupplyDashboard?.()}
-            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
           >
             Supply Dashboard
           </button>
@@ -71,7 +71,7 @@ export function QuickActions({
         {isInstructor && (
           <button
             onClick={() => onAcademyDashboard?.()}
-            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
           >
             Academy Dashboard
           </button>
@@ -80,7 +80,7 @@ export function QuickActions({
         {isAdministrative && (
           <button
             onClick={() => onAgencyDashboard?.()}
-            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+            className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
           >
             Agency Dashboard
           </button>
@@ -88,7 +88,7 @@ export function QuickActions({
         
         <button
           onClick={() => onPrivacySettings?.()}
-          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 hover:text-green-700 rounded-xl transition-all duration-200 hover:shadow-md"
+          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gradient-to-r hover:from-accent/10 hover:to-primary/10 hover:text-accent rounded-xl transition-all duration-200 hover:shadow-md"
         >
           Privacy Settings
         </button>

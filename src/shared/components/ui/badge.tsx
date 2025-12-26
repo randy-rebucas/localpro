@@ -7,13 +7,14 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
   ({ className = '', variant = 'default', ...props }, ref) => {
-    const baseClasses = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2';
+    const baseClasses =
+      'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background';
     
     const variants = {
-      default: 'bg-gray-100 text-gray-800',
-      secondary: 'bg-gray-100 text-gray-900',
-      destructive: 'bg-red-100 text-red-800',
-      outline: 'border border-gray-300 bg-transparent text-gray-900',
+      default: 'border-transparent bg-primary text-primary-foreground',
+      secondary: 'border-transparent bg-secondary text-secondary-foreground',
+      destructive: 'border-transparent bg-destructive text-destructive-foreground',
+      outline: 'text-foreground',
     };
 
     return (

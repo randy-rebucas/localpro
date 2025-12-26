@@ -716,7 +716,7 @@ export default function BroadcasterPage() {
       case 'event':
       case 'general':
       default:
-        return 'text-blue-600 bg-blue-100';
+        return 'text-primary bg-primary/10';
     }
   };
 
@@ -736,7 +736,7 @@ export default function BroadcasterPage() {
   const getStatusColor = (status: Broadcaster['status']) => {
     switch (status) {
       case 'active':
-        return 'text-green-600 bg-green-100';
+        return 'text-accent bg-accent/10';
       case 'draft':
         return 'text-gray-600 bg-gray-100';
       default:
@@ -771,7 +771,7 @@ export default function BroadcasterPage() {
             <button
               onClick={refreshData}
               disabled={refreshing}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             >
               <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -781,7 +781,7 @@ export default function BroadcasterPage() {
                 resetForm();
                 setCreateModalOpen(true);
               }}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
             >
               <Plus className="w-3 h-3 mr-1" />
               Create Broadcast
@@ -792,36 +792,36 @@ export default function BroadcasterPage() {
         {/* Statistics Cards */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+            <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Total Broadcasts</p>
                   <p className="text-lg font-bold text-gray-900">{stats.totalBroadcasts || 0}</p>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                  <Radio className="w-5 h-5 text-blue-600" />
+                <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                  <Radio className="w-5 h-5 text-primary" />
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+            <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Active</p>
                   <p className="text-lg font-bold text-gray-900">{stats.activeBroadcasts || 0}</p>
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                  <CheckCircle className="w-5 h-5 text-accent" />
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded shadow p-3 border-l-4 border-indigo-500">
+            <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Total Views</p>
                   <p className="text-lg font-bold text-gray-900">{(stats.totalViews || 0).toLocaleString()}</p>
                 </div>
-                <div className="p-3 bg-indigo-100 rounded-lg flex-shrink-0 ml-4">
-                  <Eye className="w-5 h-5 text-indigo-600" />
+                <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                  <Eye className="w-5 h-5 text-primary" />
                 </div>
               </div>
             </div>
@@ -849,7 +849,7 @@ export default function BroadcasterPage() {
                 placeholder="Search broadcasts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
@@ -904,7 +904,7 @@ export default function BroadcasterPage() {
                       <tr key={broadcast._id} className="hover:bg-gray-50">
                         <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            {broadcast.isSticky && <Radio className="w-3 h-3 text-blue-500" />}
+                            {broadcast.isSticky && <Radio className="w-3 h-3 text-primary" />}
                             <div>
                               <div className="text-xs font-semibold text-gray-900">{broadcast.title}</div>
                               <div className="text-xs text-gray-500 truncate max-w-xs">
@@ -948,14 +948,14 @@ export default function BroadcasterPage() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleView(broadcast)}
-                              className="text-blue-600 hover:text-blue-900 transition-colors"
+                              className="text-primary hover:text-primary transition-colors"
                               title="View details"
                             >
                               <Eye className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => handleEdit(broadcast)}
-                              className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                              className="text-primary hover:text-primary transition-colors"
                               title="Edit broadcast"
                             >
                               <Edit className="w-3 h-3" />
@@ -1039,7 +1039,7 @@ export default function BroadcasterPage() {
                     href={selectedBroadcast.actionUrl || selectedBroadcast.link?.url} 
                     target={selectedBroadcast.link?.openInNewTab !== false ? "_blank" : undefined}
                     rel={selectedBroadcast.link?.openInNewTab !== false ? "noopener noreferrer" : undefined}
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {selectedBroadcast.actionText || selectedBroadcast.link?.text || selectedBroadcast.actionUrl || selectedBroadcast.link?.url}
                   </a>
@@ -1066,7 +1066,7 @@ export default function BroadcasterPage() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Enter broadcast title"
               />
             </div>
@@ -1076,7 +1076,7 @@ export default function BroadcasterPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Enter broadcast message"
               />
             </div>
@@ -1086,7 +1086,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as 'info' | 'success' | 'warning' | 'error' | 'promotion' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="info">Info</option>
                   <option value="success">Success</option>
@@ -1100,7 +1100,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1115,7 +1115,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'active' | 'inactive' | 'archived' | 'published' | 'scheduled' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="draft">Draft</option>
                   <option value="active">Active</option>
@@ -1130,7 +1130,7 @@ export default function BroadcasterPage() {
                       type="checkbox"
                       checked={formData.isSticky}
                       onChange={(e) => setFormData({ ...formData, isSticky: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-primary focus:ring-ring"
                     />
                     <span className="ml-2 text-sm text-gray-700">Pin to top</span>
                   </label>
@@ -1144,7 +1144,7 @@ export default function BroadcasterPage() {
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 />
               </div>
               <div>
@@ -1153,7 +1153,7 @@ export default function BroadcasterPage() {
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 />
               </div>
             </div>
@@ -1163,7 +1163,7 @@ export default function BroadcasterPage() {
                 type="url"
                 value={formData.actionUrl}
                 onChange={(e) => setFormData({ ...formData, actionUrl: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="https://example.com"
               />
             </div>
@@ -1173,7 +1173,7 @@ export default function BroadcasterPage() {
                 type="text"
                 value={formData.actionText}
                 onChange={(e) => setFormData({ ...formData, actionText: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Learn More"
               />
             </div>
@@ -1207,14 +1207,14 @@ export default function BroadcasterPage() {
                   setCreateModalOpen(false);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreate}
                 disabled={submitting || !formData.title || !formData.message}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Creating...' : 'Create Broadcast'}
               </button>
@@ -1239,7 +1239,7 @@ export default function BroadcasterPage() {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               />
             </div>
             <div>
@@ -1248,7 +1248,7 @@ export default function BroadcasterPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1257,7 +1257,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as 'info' | 'success' | 'warning' | 'error' | 'promotion' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="info">Info</option>
                   <option value="success">Success</option>
@@ -1271,7 +1271,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.priority}
                   onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -1286,7 +1286,7 @@ export default function BroadcasterPage() {
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'active' | 'inactive' | 'archived' | 'published' | 'scheduled' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 >
                   <option value="draft">Draft</option>
                   <option value="active">Active</option>
@@ -1301,7 +1301,7 @@ export default function BroadcasterPage() {
                       type="checkbox"
                       checked={formData.isSticky}
                       onChange={(e) => setFormData({ ...formData, isSticky: e.target.checked })}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 text-primary focus:ring-ring"
                     />
                     <span className="ml-2 text-sm text-gray-700">Pin to top</span>
                   </label>
@@ -1315,7 +1315,7 @@ export default function BroadcasterPage() {
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 />
               </div>
               <div>
@@ -1324,7 +1324,7 @@ export default function BroadcasterPage() {
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 />
               </div>
             </div>
@@ -1334,7 +1334,7 @@ export default function BroadcasterPage() {
                 type="url"
                 value={formData.actionUrl}
                 onChange={(e) => setFormData({ ...formData, actionUrl: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               />
             </div>
             <div>
@@ -1343,7 +1343,7 @@ export default function BroadcasterPage() {
                 type="text"
                 value={formData.actionText}
                 onChange={(e) => setFormData({ ...formData, actionText: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               />
             </div>
             <div>
@@ -1376,14 +1376,14 @@ export default function BroadcasterPage() {
                   setEditModalOpen(false);
                   resetForm();
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdate}
                 disabled={submitting || !formData.title || !formData.message}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? 'Updating...' : 'Update Broadcast'}
               </button>

@@ -364,8 +364,8 @@ export default function VerifiedSuppliersPage() {
         {/* Trust Badges */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-accent" />
             </div>
             <div>
               <p className="font-semibold text-gray-900 text-sm">Identity Verified</p>
@@ -373,8 +373,8 @@ export default function VerifiedSuppliersPage() {
             </div>
           </div>
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Zap className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary" />
             </div>
             <div>
               <p className="font-semibold text-gray-900 text-sm">Quality Assured</p>

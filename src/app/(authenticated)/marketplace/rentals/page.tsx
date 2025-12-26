@@ -677,7 +677,7 @@ export default function MarketplaceRentalsPage() {
                         label: "Use Current Location",
                         icon: MapPin,
                         variant: "outline",
-                        className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                        className: "text-sm bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
                     },
                     // Only show "List Your Rental" button for admin or provider roles
                     ...(isAdmin || isProvider ? [{
@@ -709,7 +709,7 @@ export default function MarketplaceRentalsPage() {
                                 <select
                                     value={filters.category}
                                     onChange={(e) => handleFilterChange("category", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     {categories.map(category => (
                                         <option key={category.value} value={category.value}>
@@ -730,7 +730,7 @@ export default function MarketplaceRentalsPage() {
                                         placeholder="Min"
                                         value={filters.priceRange[0]}
                                         onChange={(e) => handleFilterChange("priceRange", [Number(e.target.value), filters.priceRange[1]])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                     <span className="text-gray-500">to</span>
                                     <input
@@ -738,7 +738,7 @@ export default function MarketplaceRentalsPage() {
                                         placeholder="Max"
                                         value={filters.priceRange[1]}
                                         onChange={(e) => handleFilterChange("priceRange", [filters.priceRange[0], Number(e.target.value)])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -751,7 +751,7 @@ export default function MarketplaceRentalsPage() {
                                 <select
                                     value={filters.rating}
                                     onChange={(e) => handleFilterChange("rating", Number(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     <option value={0}>Any Rating</option>
                                     <option value={4}>4+ Stars</option>
@@ -770,7 +770,7 @@ export default function MarketplaceRentalsPage() {
                                     placeholder="City, State"
                                     value={filters.location}
                                     onChange={(e) => handleFilterChange("location", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 />
                             </div>
 
@@ -795,13 +795,13 @@ export default function MarketplaceRentalsPage() {
                             {/* Search */}
                             <div className="flex-1">
                                 <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-accent transition-colors" />
                                     <input
                                         type="text"
                                         placeholder="Search rentals, locations..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 hover:border-gray-400"
                                     />
                                     {searchQuery && (
                                         <button
@@ -818,16 +818,16 @@ export default function MarketplaceRentalsPage() {
 
                     {/* Call-out Card for Clients to Become Providers */}
                     {isClient && !isProvider && !isAdmin && (
-                        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
+                        <Card className="bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/20">
                             <div className="px-3 py-1">
                                 <div className="flex items-center justify-between gap-4">
                                     <p className="text-lg font-medium text-gray-700 flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4 text-green-600" />
+                                        <Sparkles className="w-4 h-4 text-accent" />
                                         <span>List your equipment and start earning as a provider</span>
                                     </p>
                                     <Link
                                         href="/plus?upgrade=provider"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium whitespace-nowrap"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white rounded-md hover:bg-accent/90 transition-colors text-sm font-medium whitespace-nowrap"
                                     >
                                         Upgrade
                                         <ArrowRight className="w-3.5 h-3.5" />
@@ -1093,7 +1093,7 @@ const RentalCard = React.memo(function RentalCard({
                             </div>
                             <div className="text-right ml-3 flex-shrink-0">
                                 {priceDisplay && (
-                                    <div className="text-xl font-bold text-green-600">
+                                    <div className="text-xl font-bold text-accent">
                                         {formatPrice(priceDisplay.amount, priceDisplay.currency)}
                                     </div>
                                 )}
@@ -1132,7 +1132,7 @@ const RentalCard = React.memo(function RentalCard({
                             <div className="mb-2">
                                 <div className="flex flex-wrap gap-1">
                                     {rental.tags.slice(0, 3).map((tag, index) => (
-                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
                                             {tag}
                                         </span>
                                     ))}
@@ -1149,7 +1149,7 @@ const RentalCard = React.memo(function RentalCard({
                         <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1">
-                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${isAvailable ? 'bg-accent/10 text-accent' : 'bg-red-100 text-red-800'}`}>
                                         {isAvailable ? 'Available' : 'Unavailable'}
                                     </span>
                                 </div>
@@ -1176,7 +1176,7 @@ const RentalCard = React.memo(function RentalCard({
 
                         {/* Rental Badges */}
                         <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded-full">
                                 {rental.category?.replace(/\b\w/g, l => l.toUpperCase()) || 'Rental'}
                             </span>
                             {rental.subcategory && (
@@ -1191,15 +1191,15 @@ const RentalCard = React.memo(function RentalCard({
                                 </span>
                             )}
                             {rental.location?.deliveryAvailable && (
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                                     <Truck className="w-3 h-3 inline mr-1" />
                                     Delivery Available
                                 </span>
                             )}
                             {rental.specifications?.condition && (
                                 <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                                    rental.specifications.condition === 'excellent' ? 'bg-green-100 text-green-800' :
-                                    rental.specifications.condition === 'good' ? 'bg-blue-100 text-blue-800' :
+                                    rental.specifications.condition === 'excellent' ? 'bg-accent/10 text-accent' :
+                                    rental.specifications.condition === 'good' ? 'bg-primary/10 text-primary' :
                                     rental.specifications.condition === 'fair' ? 'bg-yellow-100 text-yellow-800' :
                                     'bg-red-100 text-red-800'
                                 }`}>

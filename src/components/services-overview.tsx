@@ -31,8 +31,8 @@ const serviceModules: ServiceModule[] = [
     name: "Marketplace",
     description: "Buy & sell locally",
     icon: <Store className="w-8 h-8" />,
-    iconBgColor: "bg-blue-100",
-    iconTextColor: "text-blue-600",
+    iconBgColor: "bg-primary/10",
+    iconTextColor: "text-primary",
     route: PACKAGE_REGISTRY.marketplace.route,
   },
   {
@@ -49,8 +49,8 @@ const serviceModules: ServiceModule[] = [
     name: "Academy",
     description: "Learn & grow",
     icon: <GraduationCap className="w-8 h-8" />,
-    iconBgColor: "bg-green-100",
-    iconTextColor: "text-green-600",
+    iconBgColor: "bg-accent/10",
+    iconTextColor: "text-accent",
     route: PACKAGE_REGISTRY.academy.route,
   },
   {
@@ -126,7 +126,7 @@ export function ServicesOverview() {
           {/* Welcome Header */}
           <div className="mb-8 lg:mb-12">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-14 h-14 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white text-2xl font-bold">P</span>
               </div>
               <div>
@@ -156,7 +156,7 @@ export function ServicesOverview() {
             <button
               key={module.id}
               onClick={() => handleServiceClick(module.route)}
-              className="group bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-green-300 transition-all duration-300 transform hover:-translate-y-1 text-left"
+              className="group bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-accent/30 transition-all duration-300 transform hover:-translate-y-1 text-left"
             >
               <div className="flex items-start justify-between mb-4">
                 <div
@@ -166,10 +166,10 @@ export function ServicesOverview() {
                     {module.icon}
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-accent group-hover:translate-x-1 transition-all duration-300 flex-shrink-0" />
               </div>
               
-              <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-green-700 transition-colors">
+              <h4 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-accent transition-colors">
                 {module.name}
               </h4>
               <p className="text-sm text-gray-600 leading-relaxed">

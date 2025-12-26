@@ -102,7 +102,7 @@ export function AdminDashboardSummary({
                   Last 15 min: {realtime.activeUsersLast15Min || 0}
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-blue-500" />
+              <Activity className="w-8 h-8 text-primary" />
             </div>
           </Card>
           <Card className="p-4 border-l-4 border-l-green-500">
@@ -114,7 +114,7 @@ export function AdminDashboardSummary({
                   Last hour: {realtime.recentBookingsLastHour || 0}
                 </p>
               </div>
-              <ShoppingCart className="w-8 h-8 text-green-500" />
+              <ShoppingCart className="w-8 h-8 text-accent" />
             </div>
           </Card>
           <Card className="p-4 border-l-4 border-l-purple-500">
@@ -147,18 +147,18 @@ export function AdminDashboardSummary({
                 {growth?.users && (
                   <div className="flex items-center mt-1">
                     {growth.users.trend === "up" ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-accent mr-1" />
                     ) : growth.users.trend === "down" ? (
                       <TrendingUp className="w-4 h-4 text-red-500 mr-1 rotate-180" />
                     ) : null}
-                    <p className={`text-xs ${growth.users.trend === "up" ? "text-green-600" : growth.users.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
+                    <p className={`text-xs ${growth.users.trend === "up" ? "text-accent" : growth.users.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
                       {growth.users.trend === "up" ? "+" : ""}{growth.users.percentage.toFixed(1)}%
                     </p>
                   </div>
                 )}
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg">
+                <Users className="w-6 h-6 text-primary" />
               </div>
             </div>
           </Card>
@@ -173,18 +173,18 @@ export function AdminDashboardSummary({
                 {growth?.bookings && (
                   <div className="flex items-center mt-1">
                     {growth.bookings.trend === "up" ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-accent mr-1" />
                     ) : growth.bookings.trend === "down" ? (
                       <TrendingUp className="w-4 h-4 text-red-500 mr-1 rotate-180" />
                     ) : null}
-                    <p className={`text-xs ${growth.bookings.trend === "up" ? "text-green-600" : growth.bookings.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
+                    <p className={`text-xs ${growth.bookings.trend === "up" ? "text-accent" : growth.bookings.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
                       {growth.bookings.trend === "up" ? "+" : ""}{growth.bookings.percentage.toFixed(1)}%
                     </p>
                   </div>
                 )}
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg">
+                <ShoppingCart className="w-6 h-6 text-accent" />
               </div>
             </div>
           </Card>
@@ -199,11 +199,11 @@ export function AdminDashboardSummary({
                 {growth?.revenue && (
                   <div className="flex items-center mt-1">
                     {growth.revenue.trend === "up" ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-accent mr-1" />
                     ) : growth.revenue.trend === "down" ? (
                       <TrendingUp className="w-4 h-4 text-red-500 mr-1 rotate-180" />
                     ) : null}
-                    <p className={`text-xs ${growth.revenue.trend === "up" ? "text-green-600" : growth.revenue.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
+                    <p className={`text-xs ${growth.revenue.trend === "up" ? "text-accent" : growth.revenue.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
                       {growth.revenue.trend === "up" ? "+" : ""}{growth.revenue.percentage.toFixed(1)}%
                     </p>
                   </div>

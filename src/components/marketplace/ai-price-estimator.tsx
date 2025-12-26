@@ -74,7 +74,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Calculator className="w-5 h-5 text-green-600" />
+          <Calculator className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Price Estimator</h3>
         </div>
         <p className="text-sm text-gray-600 mb-4">
@@ -82,7 +82,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
         </p>
         <button
           onClick={() => setShowForm(true)}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+          className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
         >
           Get Price Estimate
         </button>
@@ -94,7 +94,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Price Estimator</h3>
         </div>
         {estimate && (
@@ -121,7 +121,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               value={formData.serviceType}
               onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
               placeholder="e.g., House cleaning, Plumbing repair"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               required
             />
           </div>
@@ -133,7 +133,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: "" })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               required
             >
               <option value="">Select category</option>
@@ -155,7 +155,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               <select
                 value={formData.subcategory}
                 onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Select subcategory (optional)</option>
                 <option value="residential_cleaning">Residential Cleaning</option>
@@ -179,7 +179,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
                 placeholder="e.g., 3"
                 min="1"
                 step="0.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
 
@@ -192,7 +192,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
                 onChange={(e) =>
                   setFormData({ ...formData, complexity: e.target.value as "simple" | "moderate" | "complex" | "standard" })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="standard">Standard</option>
                 <option value="simple">Simple</option>
@@ -211,7 +211,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               value={formData.propertySize}
               onChange={(e) => setFormData({ ...formData, propertySize: e.target.value })}
               placeholder="e.g., 1500"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -224,7 +224,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="City or address (e.g., Manila)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
@@ -236,7 +236,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               value={formData.additionalInfo}
               onChange={(e) => setFormData({ ...formData, additionalInfo: e.target.value })}
               placeholder="e.g., 3 bedroom house, regular cleaning"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[80px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring min-h-[80px]"
               rows={3}
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -247,7 +247,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -270,12 +270,12 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
         </form>
       ) : (
         <div className="space-y-4">
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+          <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-accent" />
               <h4 className="font-semibold text-gray-900">Estimated Price Range</h4>
             </div>
-            <div className="text-3xl font-bold text-green-600 mb-1">
+            <div className="text-3xl font-bold text-accent mb-1">
               {formatPrice(estimate.estimatedPrice?.min || 0, estimate.estimatedPrice?.currency)} - {formatPrice(estimate.estimatedPrice?.max || 0, estimate.estimatedPrice?.currency)}
             </div>
             <div className="text-sm text-gray-600">
@@ -288,7 +288,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               {estimate.aiConfidence && (
                 <span className={`px-2 py-0.5 rounded-full font-medium ${
                   estimate.aiConfidence === 'high' 
-                    ? 'bg-green-100 text-green-700' 
+                    ? 'bg-accent/10 text-accent' 
                     : estimate.aiConfidence === 'medium'
                     ? 'bg-yellow-100 text-yellow-700'
                     : 'bg-gray-100 text-gray-700'
@@ -315,7 +315,7 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
                       className="flex items-start gap-2 p-2 bg-gray-50 rounded text-sm"
                     >
                       {factorImpact === "positive" ? (
-                        <TrendingDown className="w-4 h-4 text-green-600 mt-0.5" />
+                        <TrendingDown className="w-4 h-4 text-accent mt-0.5" />
                       ) : factorImpact === "negative" ? (
                         <TrendingUp className="w-4 h-4 text-red-600 mt-0.5" />
                       ) : (
@@ -343,13 +343,13 @@ export function AIPriceEstimator({ onEstimateComplete }: AIPriceEstimatorProps) 
               <h4 className="font-semibold text-gray-900 mb-2">Market Comparison</h4>
               {estimate.marketComparison ? (
                 <div className="grid grid-cols-3 gap-2 text-sm">
-                  <div className="bg-blue-50 p-2 rounded text-center">
+                  <div className="bg-primary/5 p-2 rounded text-center">
                     <div className="text-xs text-gray-600">25th Percentile</div>
                     <div className="font-semibold">
                       {formatPrice(estimate.marketComparison.percentile25 || 0, estimate.estimatedPrice?.currency)}
                     </div>
                   </div>
-                  <div className="bg-green-50 p-2 rounded text-center">
+                  <div className="bg-accent/5 p-2 rounded text-center">
                     <div className="text-xs text-gray-600">50th Percentile</div>
                     <div className="font-semibold">
                       {formatPrice(estimate.marketComparison.percentile50 || 0, estimate.estimatedPrice?.currency)}

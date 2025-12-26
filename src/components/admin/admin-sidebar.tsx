@@ -241,7 +241,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             onFocus={() => preloadRoute(item.href)}
             className={`flex items-center px-2 py-1.5 text-sm font-medium rounded-md transition-all duration-200 flex-1 ${
               isActive
-                ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-l-4 border-blue-500 shadow-sm'
+                ? 'bg-gradient-to-r from-primary/10 to-purple-50 text-primary border-l-4 border-primary shadow-sm'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
             }`}
             onClick={() => {
@@ -250,7 +250,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               }
             }}
           >
-            <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-blue-600' : 'text-gray-600'}`} />
+            <item.icon className={`w-5 h-5 mr-3 ${isActive ? 'text-primary' : 'text-gray-600'}`} />
             <span>{item.name}</span>
             {item.badge && (
               <span className="ml-auto bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
@@ -302,7 +302,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* Header */}
           <div className="flex items-center justify-between p-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-sm">N</span>
               </div>
               <div>

@@ -639,7 +639,7 @@ export default function CreateCoursePage() {
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-800 pb-2 border-b-2 border-gray-200">Review & Submit</h2>
 
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-200 space-y-5 shadow-sm">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 md:p-8 border-2 border-primary/20 space-y-5 shadow-sm">
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-1">{form.title || "Course title"}</h3>
                 <p className="text-gray-700">{form.category || "Category"}</p>
@@ -679,7 +679,7 @@ export default function CreateCoursePage() {
                     {form.learningOutcomes.filter(Boolean).map((out, idx) => (
                       <span
                         key={idx}
-                        className="inline-block px-3 py-1.5 text-sm font-medium bg-green-100 text-green-800 rounded-full border border-green-200"
+                        className="inline-block px-3 py-1.5 text-sm font-medium bg-accent/10 text-accent rounded-full border border-accent/20"
                       >
                         {out}
                       </span>
@@ -727,8 +727,8 @@ export default function CreateCoursePage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         {/* Header */}
@@ -761,7 +761,7 @@ export default function CreateCoursePage() {
                 <p className="text-red-700 font-semibold text-base">{error}</p>
               </div>
             )}
-            {success && <div className="text-green-600 text-sm mt-2">Course created successfully! Redirecting...</div>}
+            {success && <div className="text-accent text-sm mt-2">Course created successfully! Redirecting...</div>}
             <div className="flex justify-between items-center pt-8 border-t-2 border-gray-300">
               <div>
                 {currentStep > 1 && (

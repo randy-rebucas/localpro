@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { Filter, Grid3x3, List, Search, X } from "lucide-react";
+import { Filter, Grid3x3, List, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { FilterSidebar } from "@/components/marketplace/filter-sidebar";
 import { ServiceGrid } from "@/components/marketplace/service-grid";
 import { ServiceCategory } from "@/components/marketplace/categories-carousel";
@@ -188,66 +188,66 @@ export function ServiceMarketplace({ userName }: ServiceMarketplaceProps) {
               </button>
             </div>
 
-            {/* Controls Bar */}
+            {/* Search | Sort | Display Mode Bar */}
             <div className="mb-6">
               <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
-                  {/* Left Side - Search + Sort Controls */}
-                  <div className="flex flex-col gap-3 w-full sm:w-auto">
-                    {/* Search */}
-                    <div className="relative w-full sm:w-96">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        placeholder="Search services..."
-                        className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
-                        aria-label="Search services"
-                      />
-                      {searchInput.trim().length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSearchInput("");
-                            filters.setSearch("");
-                          }}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
-                          aria-label="Clear search"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  {/* Search */}
+                  <div className="relative w-full sm:w-[70%]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Search services..."
+                      className="w-full pl-9 pr-9 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                      aria-label="Search services"
+                    />
+                    {searchInput.trim().length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchInput("");
+                          filters.setSearch("");
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition-colors"
+                        aria-label="Clear search"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
 
-                    {/* Sort */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      <label className="text-xs font-medium text-gray-700 hidden sm:block">Sort by:</label>
+                  {/* Sort Controls */}
+                  <div className="flex items-center gap-2 w-full sm:w-[20%]">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <select
                         value={filters.sortBy}
                         onChange={(e) => filters.setSortBy(e.target.value)}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
+                        className="flex-1 min-w-0 px-2.5 py-2 text-xs font-medium border border-gray-300 rounded-lg bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700 cursor-pointer"
                         aria-label="Sort services by"
                       >
-                        <option value="createdAt">Date Created</option>
+                        <option value="createdAt">Date</option>
                         <option value="basePrice">Price</option>
                         <option value="rating">Rating</option>
                         <option value="title">Title</option>
                       </select>
-
-                      <select
-                        value={filters.sortOrder}
-                        onChange={(e) => filters.setSortOrder(e.target.value as 'asc' | 'desc')}
-                        className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700"
-                        aria-label="Sort order"
+                      <button
+                        onClick={() => filters.setSortOrder(filters.sortOrder === 'asc' ? 'desc' : 'asc')}
+                        className="p-2 border border-gray-300 rounded-lg bg-white hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all text-gray-700 cursor-pointer flex-shrink-0"
+                        aria-label={`Sort ${filters.sortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                        title={`Sort ${filters.sortOrder === 'asc' ? 'descending' : 'ascending'}`}
                       >
-                        <option value="desc">Descending</option>
-                        <option value="asc">Ascending</option>
-                      </select>
+                        {filters.sortOrder === 'asc' ? (
+                          <ArrowUp className="w-4 h-4" />
+                        ) : (
+                          <ArrowDown className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Right Side - View Mode Toggle */}
-                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                  {/* Display Mode Toggle */}
+                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-full sm:w-[10%] justify-center sm:justify-start">
                     <button
                       onClick={() => filters.setViewMode('grid')}
                       className={`p-2 rounded-md transition-all duration-200 ${

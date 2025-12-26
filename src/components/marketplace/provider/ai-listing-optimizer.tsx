@@ -51,7 +51,7 @@ export function AIListingOptimizer({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Listing Optimizer</h3>
       </div>
 
@@ -64,7 +64,7 @@ export function AIListingOptimizer({
           <button
             onClick={handleOptimize}
             disabled={loading}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -97,9 +97,9 @@ export function AIListingOptimizer({
             </button>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
-              <Target className="w-5 h-5 text-blue-600" />
+              <Target className="w-5 h-5 text-primary" />
               <h5 className="font-semibold text-gray-900">Overall Score</h5>
             </div>
             <div className="flex items-center gap-4">
@@ -112,7 +112,7 @@ export function AIListingOptimizer({
               <div className="text-gray-400">/</div>
               <div>
                 <div className="text-sm text-gray-600">Potential</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-accent">
                   {optimization.maxScore?.toFixed(0) || 100}
                 </div>
               </div>
@@ -120,7 +120,7 @@ export function AIListingOptimizer({
           </div>
 
           {optimization.seoScore && (
-            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+            <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
               <h5 className="font-semibold text-gray-900 mb-2">SEO Score</h5>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Current</span>
@@ -130,7 +130,7 @@ export function AIListingOptimizer({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Potential</span>
-                <span className="font-semibold text-green-600">
+                <span className="font-semibold text-accent">
                   {optimization.seoScore.potential?.toFixed(0)}/100
                 </span>
               </div>
@@ -141,7 +141,7 @@ export function AIListingOptimizer({
                     {optimization.seoScore.keywords.map((keyword: string, i: number) => (
                       <span
                         key={i}
-                        className="px-2 py-0.5 bg-green-200 text-green-800 rounded text-xs"
+                        className="px-2 py-0.5 bg-accent/20 text-accent rounded text-xs"
                       >
                         {keyword}
                       </span>
@@ -166,7 +166,7 @@ export function AIListingOptimizer({
                         {improvement.impact === "high" ? (
                           <AlertCircle className="w-5 h-5 text-red-600" />
                         ) : (
-                          <CheckCircle className="w-5 h-5 text-blue-600" />
+                          <CheckCircle className="w-5 h-5 text-primary" />
                         )}
                         <span className="font-semibold text-gray-900">{improvement.area}</span>
                       </div>
@@ -191,7 +191,7 @@ export function AIListingOptimizer({
                       </div>
                       <div>
                         <div className="text-gray-600 mb-1">Suggested:</div>
-                        <div className="text-gray-900 bg-green-50 p-2 rounded border border-green-200">
+                        <div className="text-gray-900 bg-accent/5 p-2 rounded border border-accent/20">
                           {improvement.suggested}
                         </div>
                       </div>

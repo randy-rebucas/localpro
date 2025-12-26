@@ -363,9 +363,9 @@ export default function JobDetailPage() {
   const getExperienceLevelColor = (level: string) => {
     switch (level?.toLowerCase()) {
       case "entry":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "junior":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "mid":
         return "bg-yellow-100 text-yellow-800";
       case "senior":
@@ -653,10 +653,10 @@ export default function JobDetailPage() {
         <div className="flex flex-wrap items-center gap-2 mb-6">
           {job.status && (
             <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-              job.status === 'active' ? 'bg-green-100 text-green-800' :
+              job.status === 'active' ? 'bg-accent/10 text-accent' :
               job.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
               job.status === 'closed' ? 'bg-gray-100 text-gray-800' :
-              job.status === 'filled' ? 'bg-blue-100 text-blue-800' :
+              job.status === 'filled' ? 'bg-primary/10 text-primary' :
               'bg-gray-100 text-gray-800'
             }`}>
               {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
@@ -672,7 +672,7 @@ export default function JobDetailPage() {
             <span className={`px-3 py-1 text-xs font-medium rounded-full flex items-center gap-1 ${
               job.promoted.promotionType === 'premium' ? 'bg-yellow-100 text-yellow-800' :
               job.promoted.promotionType === 'urgent' ? 'bg-red-100 text-red-800' :
-              'bg-blue-100 text-blue-800'
+              'bg-primary/10 text-primary'
             }`}>
               <TrendingUp className="w-3 h-3" />
               {job.promoted.promotionType ? job.promoted.promotionType.charAt(0).toUpperCase() + job.promoted.promotionType.slice(1) : 'Promoted'}
@@ -686,7 +686,7 @@ export default function JobDetailPage() {
             const salaryCurrency = normalizeCurrencyCode(job.salary.currency);
             return (
               <div>
-                <div className="text-4xl font-bold text-green-600 mb-2">
+                <div className="text-4xl font-bold text-accent mb-2">
                   {formatCurrency(job.salary.min || 0, salaryCurrency, { appSettings })}
                   {job.salary.max && ` - ${formatCurrency(job.salary.max, salaryCurrency, { appSettings })}`}
                   {job.salary.period && (
@@ -696,7 +696,7 @@ export default function JobDetailPage() {
                 <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                   <span>Salary Range</span>
                   {job.salary.isNegotiable && (
-                    <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-md text-xs font-medium border border-green-200">Negotiable</span>
+                    <span className="px-2.5 py-1 bg-accent/5 text-accent rounded-md text-xs font-medium border border-accent/20">Negotiable</span>
                   )}
                   {job.salary.isConfidential && (
                     <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium border border-gray-200">Confidential</span>
@@ -715,7 +715,7 @@ export default function JobDetailPage() {
                 }
                 setShowApplicationForm(true);
               }}
-              className="bg-green-600 text-white px-8 py-3.5 rounded-lg hover:bg-green-700 active:bg-green-800 transition-all font-semibold text-base shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="bg-accent text-white px-8 py-3.5 rounded-lg hover:bg-accent/90 active:bg-accent/80 transition-all font-semibold text-base shadow-md hover:shadow-lg w-full sm:w-auto"
             >
               Apply Now
             </button>
@@ -742,7 +742,7 @@ export default function JobDetailPage() {
                 {job.requirements.skills.map((skill, index) => (
                   <span
                     key={index}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-blue-50 text-blue-700 rounded-lg border border-blue-200"
+                    className="inline-block px-4 py-2 text-sm font-medium bg-primary/5 text-primary rounded-lg border border-primary/20"
                   >
                     {skill}
                   </span>
@@ -761,7 +761,7 @@ export default function JobDetailPage() {
                 {job.requirements.education && (
                   <div className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
                     <div className="flex items-center gap-3 mb-3">
-                      <GraduationCap className="w-6 h-6 text-blue-600" />
+                      <GraduationCap className="w-6 h-6 text-primary" />
                       <h3 className="text-lg font-semibold text-gray-900">Education</h3>
                     </div>
                     <div className="space-y-2 ml-9">
@@ -788,7 +788,7 @@ export default function JobDetailPage() {
                 {job.requirements.experience && (
                   <div className="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
                     <div className="flex items-center gap-3 mb-3">
-                      <Clock className="w-6 h-6 text-green-600" />
+                      <Clock className="w-6 h-6 text-accent" />
                       <h3 className="text-lg font-semibold text-gray-900">Experience</h3>
                     </div>
                     <p className="text-gray-700 text-base ml-9">
@@ -863,7 +863,7 @@ export default function JobDetailPage() {
               <ul className="space-y-3">
                 {job.responsibilities.map((responsibility: string, index: number) => (
                   <li key={index} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700 text-base leading-relaxed">{responsibility}</span>
                   </li>
                 ))}
@@ -894,7 +894,7 @@ export default function JobDetailPage() {
                 {job.benefits.map((benefit: string, index: number) => (
                   <span
                     key={index}
-                    className="inline-block px-4 py-2 text-sm font-medium bg-green-50 text-green-700 rounded-lg border border-green-200"
+                    className="inline-block px-4 py-2 text-sm font-medium bg-accent/5 text-accent rounded-lg border border-accent/20"
                   >
                     {benefit.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
@@ -919,7 +919,7 @@ export default function JobDetailPage() {
                 {job.applicationProcess.contactEmail && (
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                    <a href={`mailto:${job.applicationProcess.contactEmail}`} className="text-base text-green-600 hover:text-green-700 hover:underline font-medium">
+                    <a href={`mailto:${job.applicationProcess.contactEmail}`} className="text-base text-accent hover:text-accent hover:underline font-medium">
                       {job.applicationProcess.contactEmail}
                     </a>
                   </div>
@@ -927,14 +927,14 @@ export default function JobDetailPage() {
                 {job.applicationProcess.contactPhone && (
                   <div className="flex items-center gap-3">
                     <Phone className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                    <a href={`tel:${job.applicationProcess.contactPhone}`} className="text-base text-green-600 hover:text-green-700 hover:underline font-medium">
+                    <a href={`tel:${job.applicationProcess.contactPhone}`} className="text-base text-accent hover:text-accent hover:underline font-medium">
                       {job.applicationProcess.contactPhone}
                     </a>
                   </div>
                 )}
                 {job.applicationProcess.applicationUrl && (
                   <div className="flex items-center gap-3">
-                    <Link href={job.applicationProcess.applicationUrl} target="_blank" rel="noopener noreferrer" className="text-base text-green-600 hover:text-green-700 hover:underline font-medium">
+                    <Link href={job.applicationProcess.applicationUrl} target="_blank" rel="noopener noreferrer" className="text-base text-accent hover:text-accent hover:underline font-medium">
                       Apply via Website →
                     </Link>
                   </div>
@@ -977,13 +977,13 @@ export default function JobDetailPage() {
                   <Link
                     key={relatedJob.id}
                     href={`/jobs/${relatedJob.id}`}
-                    className="block p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors"
+                    className="block p-4 border border-gray-200 rounded-lg hover:border-accent/30 hover:bg-accent/5 transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-700 mb-1">{relatedJob.title}</h3>
                         <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="text-green-600 font-medium">{formatPrice(relatedJob.budget, defaultCurrency)}</span>
+                          <span className="text-accent font-medium">{formatPrice(relatedJob.budget, defaultCurrency)}</span>
                           <span>Due {new Date(relatedJob.deadline).toLocaleDateString()}</span>
                         </div>
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -1030,7 +1030,7 @@ export default function JobDetailPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-medium text-gray-700">{job.company.name}</h4>
-                    <CheckCircle className="w-4 h-4 text-green-500" />
+                    <CheckCircle className="w-4 h-4 text-accent" />
                   </div>
                   {job.company.industry && (
                     <div className="text-sm text-gray-500">
@@ -1049,7 +1049,7 @@ export default function JobDetailPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Mail className="w-4 h-4" />
-                    <a href={job.company.website} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">
+                    <a href={job.company.website} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
                       {job.company.website}
                     </a>
                   </div>
@@ -1097,7 +1097,7 @@ export default function JobDetailPage() {
               {job.jobType && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Job Type</span>
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-100 text-blue-800 border border-blue-200`}>
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20`}>
                     {job.jobType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
                 </div>
@@ -1113,7 +1113,7 @@ export default function JobDetailPage() {
               {getIsRemote() !== undefined && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Remote</span>
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${getIsRemote() ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
+                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${getIsRemote() ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-gray-100 text-gray-800 border border-gray-200'}`}>
                     {getIsRemote() ? 'Yes' : 'No'}
                   </span>
                 </div>
@@ -1135,10 +1135,10 @@ export default function JobDetailPage() {
                 <div className="flex justify-between items-center py-2">
                   <span className="text-gray-600 text-sm font-medium">Status</span>
                   <span className={`px-2.5 py-1 text-xs font-semibold rounded-lg ${
-                    job.status === 'active' ? 'bg-green-100 text-green-800 border border-green-200' :
+                    job.status === 'active' ? 'bg-accent/10 text-accent border border-accent/20' :
                     job.status === 'paused' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
                     job.status === 'closed' ? 'bg-gray-100 text-gray-800 border border-gray-200' :
-                    job.status === 'filled' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                    job.status === 'filled' ? 'bg-primary/10 text-primary border border-primary/20' :
                     'bg-gray-100 text-gray-800 border border-gray-200'
                   }`}>
                     {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
@@ -1201,15 +1201,15 @@ export default function JobDetailPage() {
             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-3 border-b border-gray-200">Safety & Trust</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <Shield className="w-5 h-5 text-accent flex-shrink-0" />
                 <span className="text-base text-gray-700 font-medium">Secure payments</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-accent flex-shrink-0" />
                 <span className="text-base text-gray-700 font-medium">Company verified</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-accent flex-shrink-0" />
                 <span className="text-base text-gray-700 font-medium">Quality guarantee</span>
               </div>
             </div>
@@ -1248,7 +1248,7 @@ export default function JobDetailPage() {
                     rows={4}
                     value={applicationForm.coverLetter}
                     onChange={(e) => setApplicationForm(prev => ({ ...prev, coverLetter: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     placeholder="Tell the client why you're the right fit for this job..."
                   />
                 </div>
@@ -1268,7 +1268,7 @@ export default function JobDetailPage() {
                       required
                       value={applicationForm.expectedSalary || ""}
                       onChange={(e) => setApplicationForm(prev => ({ ...prev, expectedSalary: Number(e.target.value) || 0 }))}
-                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                       placeholder="0.00"
                     />
                   </div>
@@ -1289,7 +1289,7 @@ export default function JobDetailPage() {
                       const file = e.target.files?.[0] || null;
                       setResumeFile(file);
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-accent/5 file:text-accent hover:file:bg-accent/10"
                   />
                   {resumeFile && (
                     <p className="mt-1 text-sm text-gray-600">
@@ -1306,7 +1306,7 @@ export default function JobDetailPage() {
                     type="url"
                     value={applicationForm.portfolio}
                     onChange={(e) => setApplicationForm(prev => ({ ...prev, portfolio: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     placeholder="https://yourportfolio.com"
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1323,7 +1323,7 @@ export default function JobDetailPage() {
                     required
                     value={applicationForm.availability}
                     onChange={(e) => setApplicationForm(prev => ({ ...prev, availability: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     min={new Date().toISOString().split('T')[0]}
                   />
                   <p className="mt-1 text-xs text-gray-500">
@@ -1343,7 +1343,7 @@ export default function JobDetailPage() {
                   <button
                     type="submit"
                     disabled={applicationLoading}
-                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
                     {applicationLoading ? "Submitting..." : "Submit Application"}

@@ -719,11 +719,11 @@ export default function FavoritesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
@@ -752,11 +752,11 @@ export default function FavoritesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
@@ -784,7 +784,7 @@ export default function FavoritesPage() {
                 onClick={() => setViewMode(viewMode === "grid" ? "list" : "grid")}
                 className={`p-2.5 rounded-lg transition-all border shadow-sm hover:shadow-md ${
                   viewMode === "grid"
-                    ? "bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 text-emerald-700"
+                    ? "bg-gradient-to-br from-emerald-50 to-accent/10 border-emerald-200 text-emerald-700"
                     : "bg-gradient-to-br from-white to-gray-50 border-gray-200 text-gray-600 hover:from-gray-50 hover:to-gray-100"
                 }`}
                 title={viewMode === "grid" ? "Switch to list view" : "Switch to grid view"}
@@ -966,7 +966,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
           {(notes || (tags && tags.length > 0)) && (
             <div className={`${viewMode === "list" ? "mt-4" : "p-5 pt-0"} space-y-2`}>
               {notes && (
-                <div className="flex items-start gap-2 text-sm text-gray-600 bg-gradient-to-r from-blue-50/50 to-emerald-50/50 p-2 rounded-lg">
+                <div className="flex items-start gap-2 text-sm text-gray-600 bg-gradient-to-r from-primary/10/50 to-emerald-50/50 p-2 rounded-lg">
                   <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <p className="line-clamp-2">{notes}</p>
                 </div>
@@ -991,7 +991,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
             size="sm"
             variant="ghost"
             onClick={() => onView(id, type)}
-            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-emerald-50 hover:to-green-50 hover:border-emerald-400 transform hover:scale-110 hover:shadow-lg"
+            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-emerald-50 hover:to-accent/10 hover:border-emerald-400 transform hover:scale-110 hover:shadow-lg"
             title="View details"
           >
             <Eye className="w-4 h-4 text-emerald-600" />
@@ -1000,10 +1000,10 @@ const FavoriteCard = React.memo(function FavoriteCard({
             size="sm"
             variant="ghost"
             onClick={() => setShowEditModal(true)}
-            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-blue-50 hover:to-indigo-50 hover:border-blue-400 transform hover:scale-110 hover:shadow-lg"
+            className="transition-all bg-gradient-to-br from-white to-gray-50 shadow-md border border-gray-300 hover:from-primary/10 hover:to-primary/5 hover:border-primary transform hover:scale-110 hover:shadow-lg"
             title="Edit notes and tags"
           >
-            <Edit className="w-4 h-4 text-blue-600" />
+            <Edit className="w-4 h-4 text-primary" />
           </Button>
           <Button
             size="sm"
@@ -1071,7 +1071,7 @@ const FavoriteCard = React.memo(function FavoriteCard({
               </Button>
               <Button
                 onClick={handleUpdate}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-700 hover:to-green-700"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-accent text-white hover:from-emerald-700 hover:to-accent"
                 disabled={isUpdating}
               >
                 {isUpdating ? 'Saving...' : 'Save'}
@@ -1360,7 +1360,7 @@ function JobCard({ job, viewMode, formatPrice }: { job: Job; viewMode: "grid" | 
         </div>
       )}
       {!companyLogo && (
-        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-md flex items-center justify-center`}>
+        <div className={`${viewMode === "list" ? "w-48 h-32 flex-shrink-0" : "w-full h-48"} bg-gradient-to-br from-primary to-indigo-600 rounded-xl overflow-hidden ${viewMode === "list" ? "" : "mb-4"} shadow-md flex items-center justify-center`}>
           <Briefcase className="w-16 h-16 text-white" />
         </div>
       )}
@@ -1379,7 +1379,7 @@ function JobCard({ job, viewMode, formatPrice }: { job: Job; viewMode: "grid" | 
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-3">
           {categoryName && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-gray-50 to-blue-50/50 px-2.5 py-1.5 rounded-lg shadow-sm">
+            <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gradient-to-r from-gray-50 to-primary/10/50 px-2.5 py-1.5 rounded-lg shadow-sm">
               <Briefcase className="w-3.5 h-3.5" />
               <span>{categoryName}</span>
             </div>

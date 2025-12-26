@@ -59,7 +59,7 @@ export function AIDemandForecast({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Demand Forecast</h3>
       </div>
 
@@ -79,7 +79,7 @@ export function AIDemandForecast({
                 onClick={() => setTimeframe(period)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   timeframe === period
-                    ? "bg-green-600 text-white"
+                    ? "bg-accent text-white"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
@@ -98,7 +98,7 @@ export function AIDemandForecast({
         <button
           onClick={handleFetch}
           disabled={loading}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -121,9 +121,9 @@ export function AIDemandForecast({
 
         {forecast && (
           <div className="space-y-4 mt-4">
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
               <div className="flex items-center gap-2 mb-2">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+                <BarChart3 className="w-5 h-5 text-primary" />
                 <h5 className="font-semibold text-gray-900">Trend Analysis</h5>
               </div>
               <div className="text-sm">
@@ -132,7 +132,7 @@ export function AIDemandForecast({
                   <span
                     className={`font-semibold ${
                       forecast.trends?.overall === "increasing"
-                        ? "text-green-600"
+                        ? "text-accent"
                         : forecast.trends?.overall === "decreasing"
                         ? "text-red-600"
                         : "text-gray-600"
@@ -202,7 +202,7 @@ export function AIDemandForecast({
                 <ul className="space-y-1">
                   {forecast.trends.recommendations.map((rec: string, i: number) => (
                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">•</span>
+                      <span className="text-accent mt-0.5">•</span>
                       <span>{rec}</span>
                     </li>
                   ))}

@@ -135,7 +135,7 @@ export default function NotificationChannels({
               onClick={() => setActiveChannel('email')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
                 activeChannel === 'email'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  ? 'bg-primary/10 text-primary border border-primary/20'
                   : 'bg-gray-100 text-gray-700 border border-gray-200'
               }`}
             >
@@ -146,7 +146,7 @@ export default function NotificationChannels({
               onClick={() => setActiveChannel('sms')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${
                 activeChannel === 'sms'
-                  ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                  ? 'bg-primary/10 text-primary border border-primary/20'
                   : 'bg-gray-100 text-gray-700 border border-gray-200'
               }`}
             >
@@ -168,7 +168,7 @@ export default function NotificationChannels({
                   type="email"
                   value={emailData.to}
                   onChange={(e) => setEmailData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                   placeholder="user@example.com"
                 />
               </div>
@@ -181,7 +181,7 @@ export default function NotificationChannels({
                   type="text"
                   value={emailData.subject}
                   onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                   placeholder="Email subject"
                 />
               </div>
@@ -193,7 +193,7 @@ export default function NotificationChannels({
                 <textarea
                   value={emailData.content}
                   onChange={(e) => setEmailData(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                   rows={4}
                   placeholder="Enter your message content..."
                 />
@@ -206,7 +206,7 @@ export default function NotificationChannels({
                 <select
                   value={emailData.template}
                   onChange={(e) => setEmailData(prev => ({ ...prev, template: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                 >
                   <option value="">No Template (Plain Text)</option>
                   <option value="default">Default Template</option>
@@ -226,7 +226,7 @@ export default function NotificationChannels({
                   type="tel"
                   value={smsData.to}
                   onChange={(e) => setSmsData(prev => ({ ...prev, to: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                   placeholder="+1234567890"
                 />
               </div>
@@ -238,7 +238,7 @@ export default function NotificationChannels({
                 <textarea
                   value={smsData.message}
                   onChange={(e) => setSmsData(prev => ({ ...prev, message: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-primary focus:outline-none"
                   rows={3}
                   placeholder="Enter your SMS message..."
                   maxLength={160}
@@ -259,7 +259,7 @@ export default function NotificationChannels({
           )}
 
           {success && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
+            <div className="mt-4 p-3 bg-accent/5 border border-accent/20 rounded-lg text-accent text-sm flex items-center gap-2">
               <Check className="h-4 w-4" />
               {activeChannel === 'email' ? 'Email sent successfully!' : 'SMS sent successfully!'}
             </div>
@@ -277,7 +277,7 @@ export default function NotificationChannels({
           <button
             onClick={activeChannel === 'email' ? handleEmailSend : handleSmsSend}
             disabled={sending}
-            className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {sending ? (
               <>

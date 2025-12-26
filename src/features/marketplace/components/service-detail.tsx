@@ -106,17 +106,17 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
 
           <div className="flex flex-wrap gap-2">
             {service.category && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                 {service.category}
               </span>
             )}
             {service.serviceType && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
                 {service.serviceType.replace("_", " ")}
               </span>
             )}
             {service.isActive && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center gap-1">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 Active
               </span>
@@ -169,7 +169,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
             <ul className="space-y-2">
               {service.features.map((feature, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <CheckCircle2 className="w-4 h-4 text-accent" />
                   <span>{feature}</span>
                 </li>
               ))}
@@ -183,7 +183,7 @@ export function ServiceDetail({ service, onBook, onEdit, onFavorite }: ServiceDe
             <ul className="space-y-2">
               {service.requirements.map((requirement, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-blue-500" />
+                  <Shield className="w-4 h-4 text-primary" />
                   <span>{requirement}</span>
                 </li>
               ))}

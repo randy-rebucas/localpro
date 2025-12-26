@@ -512,7 +512,7 @@ export default function AdminDatabasePage() {
           <p className="text-slate-600 mb-4">{error}</p>
           <button
             onClick={fetchMonitoringData}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
             Try Again
           </button>
@@ -527,7 +527,7 @@ export default function AdminDatabasePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Database className="w-7 h-7 text-indigo-600" />
+            <Database className="w-7 h-7 text-primary" />
             Database Management
           </h1>
           <p className="text-slate-600 text-sm mt-1">Monitor performance, optimize queries, and manage database operations</p>
@@ -598,7 +598,7 @@ export default function AdminDatabasePage() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
@@ -664,7 +664,7 @@ export default function AdminDatabasePage() {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <Server className="w-4 h-4 text-indigo-600" />
+                  <Server className="w-4 h-4 text-primary" />
                   Connection Pool
                 </h3>
               </div>
@@ -672,7 +672,7 @@ export default function AdminDatabasePage() {
                 <div className="p-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center p-3 bg-slate-50 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600">{connections.current}</p>
+                      <p className="text-2xl font-bold text-primary">{connections.current}</p>
                       <p className="text-xs text-slate-500">Current</p>
                     </div>
                     <div className="text-center p-3 bg-slate-50 rounded-lg">
@@ -696,7 +696,7 @@ export default function AdminDatabasePage() {
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2">
                       <div
-                        className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
                         style={{ width: `${connections.available > 0 ? (connections.current / (connections.current + connections.available)) * 100 : 0}%` }}
                       />
                     </div>
@@ -714,7 +714,7 @@ export default function AdminDatabasePage() {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
                 <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-indigo-600" />
+                  <Activity className="w-4 h-4 text-primary" />
                   Query Performance
                 </h3>
               </div>
@@ -726,7 +726,7 @@ export default function AdminDatabasePage() {
                       <p className="text-xs text-slate-500">Total Queries</p>
                     </div>
                     <div className="text-center p-3 bg-slate-50 rounded-lg">
-                      <p className="text-2xl font-bold text-indigo-600">{queryStats.avgExecutionTime}</p>
+                      <p className="text-2xl font-bold text-primary">{queryStats.avgExecutionTime}</p>
                       <p className="text-xs text-slate-500">Avg Execution</p>
                     </div>
                     <div className="text-center p-3 bg-slate-50 rounded-lg">
@@ -777,7 +777,7 @@ export default function AdminDatabasePage() {
               </button>
               <button
                 onClick={() => setShowBackupModal(true)}
-                className="inline-flex items-center px-3 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
+                className="inline-flex items-center px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
               >
                 <Download className="w-4 h-4 mr-1.5" />
                 Backup
@@ -802,7 +802,7 @@ export default function AdminDatabasePage() {
             <button
               onClick={refreshData}
               disabled={refreshing}
-              className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-indigo-700 bg-indigo-100 hover:bg-indigo-200 disabled:opacity-50"
+              className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded-lg text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50"
             >
               <RefreshCw className={`w-3.5 h-3.5 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -840,7 +840,7 @@ export default function AdminDatabasePage() {
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <span className="text-slate-500">{collection.size}</span>
-                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">
                         {collection.indexes} indexes
                       </span>
                     </div>
@@ -1021,7 +1021,7 @@ export default function AdminDatabasePage() {
                           setSelectedRecommendation(rec);
                           setShowIndexModal(true);
                         }}
-                        className="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                        className="inline-flex items-center px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
                       >
                         <Play className="w-3.5 h-3.5 mr-1" />
                         Create
@@ -1089,7 +1089,7 @@ export default function AdminDatabasePage() {
             <button
               onClick={handleBackup}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Backup'}
             </button>
@@ -1152,7 +1152,7 @@ export default function AdminDatabasePage() {
               type="file"
               accept=".bson,.gz,.zip"
               onChange={(e) => setBackupFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary/5 file:text-primary hover:file:bg-primary/10"
             />
           </div>
           {backupFile && (
@@ -1188,7 +1188,7 @@ export default function AdminDatabasePage() {
             <button
               onClick={handleCreateIndex}
               disabled={submitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Index'}
             </button>

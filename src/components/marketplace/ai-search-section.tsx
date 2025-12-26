@@ -37,7 +37,7 @@ export function AISearchSection({
     <div className="mb-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-5">
         <label className="block text-sm font-semibold text-gray-700 mb-2">
-          <Sparkles className="w-4 h-4 inline mr-1 text-green-600" />
+          <Sparkles className="w-4 h-4 inline mr-1 text-accent" />
           Discover Services
         </label>
         <LazyAINaturalLanguageSearch

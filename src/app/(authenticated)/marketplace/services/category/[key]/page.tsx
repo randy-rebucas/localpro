@@ -506,7 +506,7 @@ export default function CategoryServicesPage() {
         {category && category.statistics && (
           <div className="flex items-center flex-wrap gap-4 text-sm text-gray-600 mt-4">
             <div>
-              <span className="font-semibold text-green-600">
+              <span className="font-semibold text-accent">
                 {category.statistics.totalServices}
               </span>
               {" "}services available
@@ -576,13 +576,13 @@ export default function CategoryServicesPage() {
                   fetchServices();
                 }
               }}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
           >
             <option value="newest">Newest First</option>
             <option value="price_low">Price: Low to High</option>
@@ -593,7 +593,7 @@ export default function CategoryServicesPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`px-4 py-2 border rounded-lg transition-colors flex items-center gap-2 ${
               showFilters 
-                ? "bg-green-100 border-green-300 text-green-700" 
+                ? "bg-accent/10 border-accent/30 text-accent" 
                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
@@ -615,7 +615,7 @@ export default function CategoryServicesPage() {
                   placeholder="Min"
                   value={priceRange[0]}
                   onChange={(e) => setPriceRange([Number(e.target.value), priceRange[1]])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
                 <span className="text-gray-500">-</span>
                 <input
@@ -623,7 +623,7 @@ export default function CategoryServicesPage() {
                   placeholder="Max"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -634,7 +634,7 @@ export default function CategoryServicesPage() {
               <select
                 value={minRating}
                 onChange={(e) => setMinRating(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               >
                 <option value="0">All Ratings</option>
                 <option value="4">4+ Stars</option>
@@ -669,7 +669,7 @@ export default function CategoryServicesPage() {
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === "grid" 
-                    ? "bg-green-100 text-green-700" 
+                    ? "bg-accent/10 text-accent" 
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -679,7 +679,7 @@ export default function CategoryServicesPage() {
                 onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === "list" 
-                    ? "bg-green-100 text-green-700" 
+                    ? "bg-accent/10 text-accent" 
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -722,7 +722,7 @@ export default function CategoryServicesPage() {
                         </div>
                       </div>
                       <div className="p-4 flex-1 flex flex-col">
-                        <h3 className="font-semibold text-gray-700 mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
+                        <h3 className="font-semibold text-gray-700 mb-2 line-clamp-2 group-hover:text-accent transition-colors">
                           {service.title}
                         </h3>
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2 flex-1">
@@ -750,7 +750,7 @@ export default function CategoryServicesPage() {
                             </span>
                           </div>
                           <div className="text-right">
-                            <div className="text-lg font-bold text-green-600">
+                            <div className="text-lg font-bold text-accent">
                               {formatPrice(service.pricing.basePrice, service.pricing.currency)}
                             </div>
                             <div className="text-xs text-gray-500">
@@ -799,11 +799,11 @@ export default function CategoryServicesPage() {
                         <div className="flex-1 p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <h3 className="text-xl font-semibold text-gray-700 mb-2 group-hover:text-green-600 transition-colors">
+                              <h3 className="text-xl font-semibold text-gray-700 mb-2 group-hover:text-accent transition-colors">
                                 {service.title}
                               </h3>
                               <div className="flex items-center gap-4 mb-3 text-sm text-gray-600">
-                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                <span className="px-2 py-1 bg-accent/10 text-accent text-xs rounded-full">
                                   {getCategoryName(service.category)}
                                 </span>
                                 {service.serviceArea && service.serviceArea.length > 0 && (
@@ -821,7 +821,7 @@ export default function CategoryServicesPage() {
                               </div>
                             </div>
                             <div className="text-right ml-4">
-                              <div className="text-2xl font-bold text-green-600 mb-1">
+                              <div className="text-2xl font-bold text-accent mb-1">
                                 {formatPrice(service.pricing.basePrice, service.pricing.currency)}
                               </div>
                               <div className="text-xs text-gray-500">

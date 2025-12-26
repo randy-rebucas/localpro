@@ -115,7 +115,7 @@ export default function ConversationWithUser({
             )}
           </div>
           {user.isOnline && (
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent border-2 border-white rounded-full"></div>
           )}
         </div>
         
@@ -135,12 +135,12 @@ export default function ConversationWithUser({
 
       {conversation ? (
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-primary/5 rounded-lg">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium text-blue-700">Existing Conversation</span>
+              <MessageSquare className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Existing Conversation</span>
             </div>
-            <span className="text-xs text-blue-600">
+            <span className="text-xs text-primary">
               {conversation.lastMessage ? MessageUtils.getMessagePreview(conversation.lastMessage.content) : 'No messages yet'}
             </span>
           </div>
@@ -148,7 +148,7 @@ export default function ConversationWithUser({
           <div className="flex gap-2">
             <button
               onClick={() => onConversationFound(conversation)}
-              className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 text-sm font-medium"
+              className="flex-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 text-sm font-medium"
             >
               Open Conversation
             </button>
@@ -169,7 +169,7 @@ export default function ConversationWithUser({
           <button
             onClick={startConversation}
             disabled={loading}
-            className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 text-sm font-medium"
+            className="w-full bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 disabled:opacity-50 text-sm font-medium"
           >
             {loading ? 'Starting conversation...' : 'Start Conversation'}
           </button>

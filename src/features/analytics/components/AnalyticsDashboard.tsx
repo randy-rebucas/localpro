@@ -85,7 +85,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-2xl font-bold">{realtime.activeUsers || 0}</p>
                 <p className="text-xs text-gray-400">Last 15 min: {realtime.activeUsersLast15Min || 0}</p>
               </div>
-              <Activity className="w-8 h-8 text-blue-500" />
+              <Activity className="w-8 h-8 text-primary" />
             </div>
           </Card>
           <Card className="p-4">
@@ -95,7 +95,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-2xl font-bold">{realtime.recentBookings || 0}</p>
                 <p className="text-xs text-gray-400">Last hour: {realtime.recentBookingsLastHour || 0}</p>
               </div>
-              <Calendar className="w-8 h-8 text-green-500" />
+              <Calendar className="w-8 h-8 text-accent" />
             </div>
           </Card>
           <Card className="p-4">
@@ -105,7 +105,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-2xl font-bold capitalize">{realtime.systemHealth?.status || "healthy"}</p>
                 <p className="text-xs text-gray-400">Response: {realtime.systemHealth?.responseTime || 0}ms</p>
               </div>
-              <Activity className="w-8 h-8 text-green-500" />
+              <Activity className="w-8 h-8 text-accent" />
             </div>
           </Card>
         </div>
@@ -120,12 +120,12 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-sm text-gray-500">Total Users</p>
                 <p className="text-2xl font-bold">{formatAdminNumber(summary.totalUsers || 0)}</p>
                 {growth?.users && (
-                  <p className={`text-xs ${growth.users.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-xs ${growth.users.trend === "up" ? "text-accent" : "text-red-600"}`}>
                     {growth.users.trend === "up" ? "+" : ""}{growth.users.percentage.toFixed(1)}%
                   </p>
                 )}
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
+              <Users className="w-8 h-8 text-primary" />
             </div>
           </Card>
           <Card className="p-6">
@@ -134,12 +134,12 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-sm text-gray-500">Total Bookings</p>
                 <p className="text-2xl font-bold">{formatAdminNumber(summary.totalBookings || 0)}</p>
                 {growth?.bookings && (
-                  <p className={`text-xs ${growth.bookings.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-xs ${growth.bookings.trend === "up" ? "text-accent" : "text-red-600"}`}>
                     {growth.bookings.trend === "up" ? "+" : ""}{growth.bookings.percentage.toFixed(1)}%
                   </p>
                 )}
               </div>
-              <Calendar className="w-8 h-8 text-green-500" />
+              <Calendar className="w-8 h-8 text-accent" />
             </div>
           </Card>
           <Card className="p-6">
@@ -148,7 +148,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-sm text-gray-500">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatAdminCurrency(summary.totalRevenue || 0)}</p>
                 {growth?.revenue && (
-                  <p className={`text-xs ${growth.revenue.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-xs ${growth.revenue.trend === "up" ? "text-accent" : "text-red-600"}`}>
                     {growth.revenue.trend === "up" ? "+" : ""}{growth.revenue.percentage.toFixed(1)}%
                   </p>
                 )}
@@ -162,7 +162,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
                 <p className="text-sm text-gray-500">Total Services</p>
                 <p className="text-2xl font-bold">{formatAdminNumber(summary.totalServices || 0)}</p>
                 {growth?.services && (
-                  <p className={`text-xs ${growth.services.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+                  <p className={`text-xs ${growth.services.trend === "up" ? "text-accent" : "text-red-600"}`}>
                     {growth.services.trend === "up" ? "+" : ""}{growth.services.percentage.toFixed(1)}%
                   </p>
                 )}
@@ -191,7 +191,7 @@ export function AnalyticsDashboard({ defaultTimeframe = "30d" }: AnalyticsDashbo
           </div>
           <div className="mt-4 pt-4 border-t">
             <p className="text-sm text-gray-500">Change</p>
-            <p className={`text-xl font-bold ${comparison.change.trend === "up" ? "text-green-600" : comparison.change.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
+            <p className={`text-xl font-bold ${comparison.change.trend === "up" ? "text-accent" : comparison.change.trend === "down" ? "text-red-600" : "text-gray-600"}`}>
               {comparison.change.trend === "up" ? "+" : ""}{comparison.change.percentage.toFixed(1)}%
             </p>
           </div>

@@ -57,9 +57,9 @@ export function ProviderFilterSidebar({
           isOpen ? "fixed lg:relative inset-y-0 right-0 z-50 lg:z-auto w-80 lg:w-full overflow-y-auto" : ""
         }`}
       >
-        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50/50 to-blue-50/50 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-accent/10/50 to-primary/10/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
+            <div className="p-2 bg-gradient-to-br from-accent to-accent rounded-lg shadow-md">
               <Filter className="w-5 h-5 text-white" />
             </div>
             <h2 className="font-bold text-gray-900 text-lg">Filters</h2>
@@ -81,7 +81,7 @@ export function ProviderFilterSidebar({
             <select
               value={status}
               onChange={(e) => onStatusChange(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all hover:border-accent hover:shadow-md font-medium"
             >
               <option value="">All Statuses</option>
               {providerStatuses.map((s) => (
@@ -110,7 +110,7 @@ export function ProviderFilterSidebar({
                     value={type.value}
                     checked={providerType === type.value}
                     onChange={(e) => onProviderTypeChange(e.target.value)}
-                    className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                    className="w-4 h-4 text-accent border-gray-300 focus:ring-ring"
                   />
                   <span className="text-sm text-gray-700">{type.label}</span>
                 </label>
@@ -122,7 +122,7 @@ export function ProviderFilterSidebar({
                   value=""
                   checked={providerType === ""}
                   onChange={(e) => onProviderTypeChange(e.target.value)}
-                  className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                  className="w-4 h-4 text-accent border-gray-300 focus:ring-ring"
                 />
                 <span className="text-sm text-gray-700">All Types</span>
               </label>
@@ -140,7 +140,7 @@ export function ProviderFilterSidebar({
               value={location}
               onChange={(e) => onLocationChange(e.target.value)}
               placeholder="Enter location..."
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all hover:border-accent hover:shadow-md font-medium"
             />
           </div>
 

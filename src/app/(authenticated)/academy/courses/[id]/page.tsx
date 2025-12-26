@@ -247,7 +247,7 @@ export default function AcademyCourseDetailPage() {
     if (!level) return "";
     switch (level) {
       case "beginner":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "intermediate":
         return "bg-yellow-100 text-yellow-800";
       case "advanced":
@@ -410,7 +410,7 @@ export default function AcademyCourseDetailPage() {
         </div>
         <Link
           href="/academy/courses"
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to courses
@@ -456,7 +456,7 @@ export default function AcademyCourseDetailPage() {
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
           <BookOpen className="w-6 h-6" />
         </div>
         <div>
@@ -480,7 +480,7 @@ export default function AcademyCourseDetailPage() {
                 {course.level?.charAt(0).toUpperCase() + course.level?.slice(1)}
               </span>
               {categoryName && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/5 text-primary border border-primary/20">
                   {categoryName}
                 </span>
               )}
@@ -539,7 +539,7 @@ export default function AcademyCourseDetailPage() {
             <div className="flex items-baseline gap-2">
               {priceDisplay.discounted !== undefined ? (
                 <>
-                  <span className="text-2xl font-bold text-green-700">
+                  <span className="text-2xl font-bold text-accent">
                     {formatCurrency(priceDisplay.discounted, priceDisplay.currency, { appSettings })}
                   </span>
                   <span className="text-sm text-gray-500 line-through">
@@ -558,19 +558,19 @@ export default function AcademyCourseDetailPage() {
           <button
             onClick={handleEnroll}
             disabled={isEnrolling || isOwner}
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             title={isOwner ? "You cannot enroll in a course you created" : "Enroll now"}
           >
             {isOwner ? "Your course" : isEnrolling ? "Enrolling..." : "Enroll now"}
           </button>
-          <div className="flex items-center gap-2 text-sm text-green-700">
+          <div className="flex items-center gap-2 text-sm text-accent">
             <ShieldCheck className="w-4 h-4" />
             <span>14-day satisfaction guarantee</span>
           </div>
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={handleShare}
-              className="relative p-2.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all shadow-sm hover:shadow-md"
+              className="relative p-2.5 rounded-lg bg-primary/5 text-primary hover:bg-primary/10 transition-all shadow-sm hover:shadow-md"
               title="Share course"
             >
               <Share2 className="w-4 h-4" />
@@ -656,7 +656,7 @@ export default function AcademyCourseDetailPage() {
           {course.curriculum && course.curriculum.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center gap-2 mb-4">
-                <BookOpen className="w-5 h-5 text-blue-600" />
+                <BookOpen className="w-5 h-5 text-primary" />
                 <h2 className="text-lg font-semibold text-gray-900">Curriculum</h2>
               </div>
               <div className="space-y-4">
@@ -672,7 +672,7 @@ export default function AcademyCourseDetailPage() {
                       {module.lessons?.map((lesson, lessonIdx) => (
                         <div key={lessonIdx} className="py-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-xs font-semibold">
+                            <div className="w-8 h-8 rounded-full bg-primary/5 text-primary flex items-center justify-center text-xs font-semibold">
                               {lessonIdx + 1}
                             </div>
                             <div>
@@ -736,7 +736,7 @@ export default function AcademyCourseDetailPage() {
                   unoptimized
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-semibold">
+                <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary font-semibold">
                   {instructorName.slice(0, 1)}
                 </div>
               )}

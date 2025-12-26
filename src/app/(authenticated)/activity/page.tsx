@@ -357,17 +357,17 @@ const getActivityIcon = (category: ActivityCategory) => {
   // Category-based icons
   switch (category) {
     case 'authentication':
-      return <CheckCircle className="w-4 h-4 text-green-600" />;
+      return <CheckCircle className="w-4 h-4 text-accent" />;
     case 'profile':
-      return <User className="w-4 h-4 text-indigo-600" />;
+      return <User className="w-4 h-4 text-primary" />;
     case 'marketplace':
-      return <ShoppingCart className="w-4 h-4 text-blue-600" />;
+      return <ShoppingCart className="w-4 h-4 text-primary" />;
     case 'job_board':
       return <Briefcase className="w-4 h-4 text-purple-600" />;
     case 'academy':
       return <BookOpen className="w-4 h-4 text-yellow-600" />;
     case 'financial':
-      return <DollarSign className="w-4 h-4 text-green-600" />;
+      return <DollarSign className="w-4 h-4 text-accent" />;
     case 'communication':
       return <MessageSquare className="w-4 h-4 text-orange-600" />;
     case 'agency':
@@ -379,7 +379,7 @@ const getActivityIcon = (category: ActivityCategory) => {
     case 'supplies':
       return <Truck className="w-4 h-4 text-gray-600" />;
     case 'rentals':
-      return <Home className="w-4 h-4 text-blue-600" />;
+      return <Home className="w-4 h-4 text-primary" />;
     case 'advertising':
       return <Bell className="w-4 h-4 text-yellow-600" />;
     case 'system':
@@ -387,7 +387,7 @@ const getActivityIcon = (category: ActivityCategory) => {
     case 'social':
       return <Heart className="w-4 h-4 text-red-600" />;
     default:
-      return <Activity className="w-4 h-4 text-blue-600" />;
+      return <Activity className="w-4 h-4 text-primary" />;
   }
 };
 
@@ -401,7 +401,7 @@ const getImpactBadge = (impact: ActivityImpact) => {
     case 'medium':
       return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Low</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">Low</span>;
   }
 };
 
@@ -567,7 +567,7 @@ export default function ActivityPage() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <Activity className="w-5 h-5 text-green-600" />
+            <Activity className="w-5 h-5 text-accent" />
             <h1 className="text-xl font-bold text-gray-800">Activity Log</h1>
             <span className="text-sm text-gray-500">
               ({filteredActivities.length} of {activities.length})
@@ -600,7 +600,7 @@ export default function ActivityPage() {
             placeholder="Search activities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-green-500 focus:shadow-md transition-shadow"
+            className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-ring focus:shadow-md transition-shadow"
           />
         </div>
 
@@ -627,7 +627,7 @@ export default function ActivityPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value as ActivityCategory | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Categories</option>
                   {availableCategories.map(cat => (
@@ -642,7 +642,7 @@ export default function ActivityPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as ActivityType | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Types</option>
                   {availableTypes.map(type => (
@@ -657,7 +657,7 @@ export default function ActivityPage() {
                 <select
                   value={impactFilter}
                   onChange={(e) => setImpactFilter(e.target.value as ActivityImpact | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Impact Levels</option>
                   <option value="low">Low</option>
@@ -690,7 +690,7 @@ export default function ActivityPage() {
                   setTypeFilter('all');
                   setImpactFilter('all');
                 }}
-                className="mt-4 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                className="mt-4 px-4 py-2 text-sm font-medium text-accent bg-accent/5 rounded-lg hover:bg-accent/10 transition-colors"
               >
                 Clear Filters
               </button>
@@ -702,7 +702,7 @@ export default function ActivityPage() {
             return (
               <div
                 key={activityId}
-                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4 border-l-4 border-green-500"
+                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all p-4 border-l-4 border-accent"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-1">
@@ -744,7 +744,7 @@ export default function ActivityPage() {
                             {activity.targetEntity.url && (
                               <a
                                 href={activity.targetEntity.url}
-                                className="ml-1 text-blue-600 hover:underline"
+                                className="ml-1 text-primary hover:underline"
                               >
                                 View →
                               </a>
@@ -798,7 +798,7 @@ export default function ActivityPage() {
                             {activity.tags.map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700"
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/5 text-primary"
                               >
                                 #{tag}
                               </span>

@@ -66,12 +66,12 @@ export function CourseCard({ course, viewMode = "list", onEnroll, onFavorite }: 
 
           <div className="flex flex-wrap gap-2 mb-2">
             {course.category && (
-              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+              <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded">
                 {course.category}
               </span>
             )}
             {course.level && (
-              <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+              <span className="inline-block px-2 py-1 bg-accent/10 text-accent text-xs rounded">
                 {course.level}
               </span>
             )}

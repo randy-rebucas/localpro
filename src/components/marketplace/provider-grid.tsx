@@ -146,7 +146,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
       className={`bg-white overflow-hidden transition-all duration-300 group relative ${isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'}`}
     >
       {/* Decorative gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50/0 to-blue-50/0 group-hover:from-green-50/50 group-hover:to-blue-50/30 transition-all duration-300 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/10/0 to-primary/10/0 group-hover:from-accent/10/50 group-hover:to-primary/10/30 transition-all duration-300 pointer-events-none"></div>
       
       {/* Favorite Button - Top Right (hidden if own profile) */}
       {!isOwnProfile && (
@@ -167,7 +167,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
       )}
       
       {/* Provider Image */}
-      <div className={`relative ${isGrid ? 'w-full h-48' : 'w-48 flex-shrink-0'} bg-gradient-to-br from-green-100 via-green-200 to-blue-100 overflow-hidden ${isGrid ? '' : 'self-stretch'} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
+      <div className={`relative ${isGrid ? 'w-full h-48' : 'w-48 flex-shrink-0'} bg-gradient-to-br from-accent/10 via-green-200 to-primary/10 overflow-hidden ${isGrid ? '' : 'self-stretch'} flex items-center justify-center group-hover:scale-105 transition-transform duration-300`}>
         {hasAvatar && avatarUrl ? (
           <Image
             src={avatarUrl}
@@ -179,12 +179,12 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
           />
         ) : (
           <div className={`w-full h-full flex items-center justify-center ${isGrid ? 'h-48' : 'min-h-[12rem]'} relative`}>
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 via-green-500 to-green-600 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
+            <div className="w-20 h-20 bg-gradient-to-br from-green-400 via-accent to-accent rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300">
               {initials}
             </div>
             {/* Animated ring */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-24 h-24 border-2 border-green-300/50 rounded-full animate-pulse"></div>
+              <div className="w-24 h-24 border-2 border-accent/50 rounded-full animate-pulse"></div>
             </div>
           </div>
         )}
@@ -196,15 +196,15 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-green-700 transition-colors">{name}</h3>
+                <h3 className="text-lg font-bold text-gray-900 truncate group-hover:text-accent transition-colors">{name}</h3>
                 {provider?.verification?.identityVerified && (
-                  <div className="flex items-center gap-1 bg-green-100 px-2 py-0.5 rounded-full">
-                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <span className="text-xs text-green-700 font-medium">Verified</span>
+                  <div className="flex items-center gap-1 bg-accent/10 px-2 py-0.5 rounded-full">
+                    <CheckCircle className="w-4 h-4 text-accent flex-shrink-0" />
+                    <span className="text-xs text-accent font-medium">Verified</span>
                   </div>
                 )}
                 {provider?.providerType && (
-                  <span className="text-xs bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-semibold flex-shrink-0 border border-blue-200">
+                  <span className="text-xs bg-gradient-to-r from-primary/10 to-primary/10 text-primary px-2.5 py-1 rounded-full font-semibold flex-shrink-0 border border-primary/20">
                     {provider.providerType === 'business' ? 'Business' : 
                      provider.providerType === 'agency' ? 'Agency' : 'Individual'}
                   </span>
@@ -214,7 +214,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
               {/* Location */}
               {location && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3 group-hover:text-gray-700 transition-colors">
-                  <MapPin className="w-4 h-4 flex-shrink-0 text-green-600" />
+                  <MapPin className="w-4 h-4 flex-shrink-0 text-accent" />
                   <span className="truncate font-medium">{location}</span>
                 </div>
               )}
@@ -249,7 +249,7 @@ function ProviderCard({ user, viewMode }: { user: User; viewMode: 'grid' | 'list
                 e.preventDefault();
                 window.location.href = `/marketplace/provider/${providerId}`;
               }}
-              className={`${isGrid ? 'w-full' : ''} px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl text-sm font-semibold hover:from-green-700 hover:to-green-800 active:scale-95 transition-all shadow-md hover:shadow-lg group-hover:shadow-xl`}
+              className={`${isGrid ? 'w-full' : ''} px-5 py-2.5 bg-gradient-to-r from-accent to-accent text-white rounded-xl text-sm font-semibold hover:from-accent hover:to-green-800 active:scale-95 transition-all shadow-md hover:shadow-lg group-hover:shadow-xl`}
             >
               View Profile
             </button>

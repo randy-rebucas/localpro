@@ -259,13 +259,13 @@ export function ServiceForm({ initialData, onSubmit, onCancel, loading = false }
               {serviceAreas.map((area, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                 >
                   {area}
                   <button
                     type="button"
                     onClick={() => removeServiceArea(index)}
-                    className="hover:text-blue-600"
+                    className="hover:text-primary"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -301,13 +301,13 @@ export function ServiceForm({ initialData, onSubmit, onCancel, loading = false }
               {features.map((feature, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"
                 >
                   {feature}
                   <button
                     type="button"
                     onClick={() => removeFeature(index)}
-                    className="hover:text-green-600"
+                    className="hover:text-accent"
                   >
                     <X className="w-3 h-3" />
                   </button>

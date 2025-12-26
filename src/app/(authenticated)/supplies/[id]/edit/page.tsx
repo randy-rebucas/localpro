@@ -764,7 +764,7 @@ export default function EditSupplyPage() {
                   type="checkbox"
                   checked={formData.delivery.available}
                   onChange={(e) => handleDeliveryChange('available', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                 />
                 <label className="text-sm font-medium text-gray-700">
                   Delivery Available
@@ -833,7 +833,7 @@ export default function EditSupplyPage() {
                     type="checkbox"
                     checked={formData.features.includes(feature)}
                     onChange={() => handleFeatureToggle(feature)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                   />
                   <span className="text-sm text-gray-700">{feature}</span>
                 </label>
@@ -861,12 +861,12 @@ export default function EditSupplyPage() {
                   {formData.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                     >
                       {tag}
                       <button
                         onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 hover:text-blue-900"
+                        className="ml-1 hover:text-primary"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -942,7 +942,7 @@ export default function EditSupplyPage() {
                 {formData.features.slice(0, 3).map((feature) => (
                   <span
                     key={feature}
-                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                    className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
                   >
                     {feature}
                   </span>
@@ -972,11 +972,11 @@ export default function EditSupplyPage() {
                 <p>Use high-quality images to showcase your supply</p>
               </div>
               <div className="flex items-start gap-2">
-                <Coins className="w-4 h-4 text-green-500 mt-0.5" />
+                <Coins className="w-4 h-4 text-accent mt-0.5" />
                 <p>Set competitive pricing based on market rates</p>
               </div>
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-blue-500 mt-0.5" />
+                <MapPin className="w-4 h-4 text-primary mt-0.5" />
                 <p>Accurate location helps buyers find you</p>
               </div>
               <div className="flex items-start gap-2">

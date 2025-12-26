@@ -251,7 +251,7 @@ export function MobileAuthForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-accent/10 via-white to-primary/10 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className={`transition-all duration-500 ${isAnimating ? 'scale-105' : 'scale-100'}`}>
           <div className="flex justify-center">
@@ -305,7 +305,7 @@ export function MobileAuthForm() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="group relative w-full flex justify-center items-center py-4 px-6 border border-transparent text-base font-semibold rounded-xl text-white bg-gradient-to-r from-accent to-accent hover:from-accent hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isLoading ? (
                     <>
@@ -325,10 +325,10 @@ export function MobileAuthForm() {
         ) : (
           <div className={`transition-all duration-500 ${isAnimating ? 'opacity-50' : 'opacity-100'}`}>
             <div className="mt-8 space-y-6">
-              <div className="text-center bg-green-50 rounded-xl p-4 border border-green-200">
+              <div className="text-center bg-accent/5 rounded-xl p-4 border border-accent/20">
                 <div className="flex items-center justify-center mb-2">
-                  <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                  <p className="text-sm font-medium text-green-800">Code sent successfully!</p>
+                  <CheckCircle className="w-5 h-5 text-accent mr-2" />
+                  <p className="text-sm font-medium text-accent">Code sent successfully!</p>
                 </div>
                 <p className="text-sm text-gray-600 mb-1">
                   We&apos;ve sent a verification code to:
@@ -378,7 +378,7 @@ export function MobileAuthForm() {
                   type="button"
                   onClick={verifyAndSignIn}
                   disabled={isLoading || verificationCode.length !== 6}
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 shadow-lg hover:shadow-xl transition-all duration-200"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-accent to-accent text-white rounded-xl hover:from-accent hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-ring shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   {isLoading ? (
                     <>
@@ -400,12 +400,12 @@ export function MobileAuthForm() {
                       sendVerificationCode(phoneNumber);
                     }}
                     disabled={isLoading || countdown > 0}
-                    className="text-sm text-green-600 hover:text-green-500 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="text-sm text-accent hover:text-accent disabled:text-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {countdown > 0 ? `Resend in ${countdown}s` : "Resend Code"}
                   </button>
                   {countdown > 0 && (
-                    <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
                   )}
                 </div>
                 <p className="mt-2 text-xs text-gray-500">

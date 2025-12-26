@@ -41,7 +41,7 @@ export function SkipLink({ href, children }: { href: string; children: React.Rea
   return (
     <a
       href={href}
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-primary text-white px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
     >
       {children}
     </a>
@@ -72,7 +72,7 @@ export function AccessibleButton({
       disabled={disabled}
       aria-label={ariaLabel}
       aria-describedby={ariaDescribedBy}
-      className={`focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>
@@ -101,7 +101,7 @@ export function AccessibleLink({
       aria-label={ariaLabel}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className={`focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${className}`}
+      className={`focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}
     >
       {children}
       {external && (

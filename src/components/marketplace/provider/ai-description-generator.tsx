@@ -89,7 +89,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Description Generator</h3>
       </div>
 
@@ -108,7 +108,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
               value={formData.serviceType}
               onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
               placeholder="e.g., Professional House Cleaning"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               required
             />
           </div>
@@ -120,7 +120,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               required
             >
               <option value="">Select category</option>
@@ -150,7 +150,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                   }
                 }}
                 placeholder="Add a feature and press Enter"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <button
                 type="button"
@@ -165,13 +165,13 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                 {formData.keyFeatures.map((feature) => (
                   <span
                     key={feature}
-                    className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded text-sm"
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded text-sm"
                   >
                     {feature}
                     <button
                       type="button"
                       onClick={() => handleRemoveFeature(feature)}
-                      className="text-green-700 hover:text-green-900"
+                      className="text-accent hover:text-accent"
                     >
                       ×
                     </button>
@@ -194,7 +194,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                     pricing: { ...formData.pricing, type: e.target.value },
                   })
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="fixed">Fixed</option>
                 <option value="hourly">Hourly</option>
@@ -222,7 +222,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                   placeholder="0.00"
                   min="0"
                   step="0.01"
-                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
             </div>
@@ -237,14 +237,14 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               placeholder="City or service area"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -291,7 +291,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
               <label className="text-sm font-medium text-gray-700">Title</label>
               <button
                 onClick={() => handleCopy(generated.title || "", "title")}
-                className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                className="text-xs text-accent hover:text-accent flex items-center gap-1"
               >
                 {copied === "title" ? (
                   <>
@@ -316,7 +316,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
               <label className="text-sm font-medium text-gray-700">Description</label>
               <button
                 onClick={() => handleCopy(generated.description || "", "description")}
-                className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                className="text-xs text-accent hover:text-accent flex items-center gap-1"
               >
                 {copied === "description" ? (
                   <>
@@ -342,7 +342,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                 <label className="text-sm font-medium text-gray-700">Short Description</label>
                 <button
                   onClick={() => handleCopy(generated.shortDescription || "", "short")}
-                  className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1"
+                  className="text-xs text-accent hover:text-accent flex items-center gap-1"
                 >
                   {copied === "short" ? (
                     <>
@@ -370,7 +370,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
                 {generated.keywords.map((keyword: string, i: number) => (
                   <span
                     key={i}
-                    className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-sm"
+                    className="px-2 py-1 bg-primary/10 text-primary rounded text-sm"
                   >
                     {keyword}
                   </span>
@@ -387,7 +387,7 @@ export function AIDescriptionGenerator({ onDescriptionGenerated }: AIDescription
               <ul className="space-y-1 text-sm text-gray-600">
                 {generated.seoSuggestions.map((suggestion: string, i: number) => (
                   <li key={i} className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                     <span>{suggestion}</span>
                   </li>
                 ))}

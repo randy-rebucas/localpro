@@ -124,12 +124,12 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
       </h3>
       
       {/* How It Works Section */}
-      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="mb-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
         <div className="flex items-start gap-2">
-          <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+          <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-blue-900 mb-1">How It Works</h4>
-            <p className="text-xs text-blue-800 leading-relaxed">
+            <h4 className="text-sm font-semibold text-primary mb-1">How It Works</h4>
+            <p className="text-xs text-primary leading-relaxed">
               Share your unique referral code with friends and family. When they sign up using your code, you both earn rewards! 
               Track your referrals and see your tier improve as you refer more people. 
               Tiers: Bronze (0-4), Silver (5-19), Gold (20-49), Platinum (50+).
@@ -227,7 +227,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
             <button
               onClick={handleCopyLink}
               disabled={!referralLink}
-              className="flex flex-col items-center justify-center gap-1 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex flex-col items-center justify-center gap-1 p-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Copy Link"
             >
               <Share2 className="w-5 h-5" />
@@ -272,7 +272,7 @@ export function ReferralInfo({ profile }: ReferralInfoProps) {
             {profile.referral.referralStats.totalRewardsEarned !== undefined && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Rewards Earned</span>
-                <span className="text-sm font-medium text-green-600">
+                <span className="text-sm font-medium text-accent">
                   {profile.referral.referralStats.totalRewardsEarned}
                 </span>
               </div>

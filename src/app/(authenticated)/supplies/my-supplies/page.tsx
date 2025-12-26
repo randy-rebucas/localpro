@@ -343,10 +343,10 @@ const statuses = [
 
 const getStatusColor = (status: Supply['status']) => {
   switch (status) {
-    case 'available': return 'bg-gradient-to-r from-emerald-500 to-green-500 text-white';
+    case 'available': return 'bg-gradient-to-r from-emerald-500 to-accent text-white';
     case 'out-of-stock': return 'bg-gradient-to-r from-red-500 to-rose-500 text-white';
     case 'discontinued': return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
-    case 'pre-order': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white';
+    case 'pre-order': return 'bg-gradient-to-r from-primary to-cyan-500 text-white';
     default: return 'bg-gray-100 text-gray-800';
   }
 };
@@ -519,7 +519,7 @@ export default function MySuppliesPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-pulse"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -550,8 +550,8 @@ export default function MySuppliesPage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -595,7 +595,7 @@ export default function MySuppliesPage() {
                 <p className="text-sm text-gray-500 font-medium">Total Listings</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{supplies.length}</p>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary rounded-xl flex items-center justify-center shadow-md">
                 <Package className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -607,7 +607,7 @@ export default function MySuppliesPage() {
                 <p className="text-sm text-gray-500 font-medium">Total Orders</p>
                 <p className="text-3xl font-bold text-emerald-600 mt-1">{totalOrders}</p>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-accent rounded-xl flex items-center justify-center shadow-md">
                 <ShoppingCart className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -867,7 +867,7 @@ export default function MySuppliesPage() {
                           {getTypeIcon(supply.type)}
                           <span className="capitalize">{supply.type}</span>
                         </span>
-                        <span className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg font-medium">
+                        <span className="text-xs bg-primary/5 text-primary px-2.5 py-1 rounded-lg font-medium">
                           {supply.category}
                         </span>
                         <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
@@ -905,13 +905,13 @@ export default function MySuppliesPage() {
                           <span>{supply.ordersCount} orders</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Eye className="w-4 h-4 text-blue-500" />
+                          <Eye className="w-4 h-4 text-primary" />
                           <span>{supply.viewsCount} views</span>
                         </div>
                       </div>
 
                       {/* Revenue */}
-                      <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg mb-4">
+                      <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-emerald-50 to-accent/10 rounded-lg mb-4">
                         <div className="flex items-center gap-2">
                           <BarChart3 className="w-4 h-4 text-emerald-600" />
                           <span className="text-sm font-semibold text-emerald-700">

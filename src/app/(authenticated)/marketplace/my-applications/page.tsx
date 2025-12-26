@@ -79,10 +79,10 @@ export default function MyApplicationsPage() {
   const getStatusColor = (status?: ApplicationStatus) => {
     switch (status) {
       case "hired":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-accent/10 text-accent border-accent/20";
       case "shortlisted":
       case "interviewed":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-primary/10 text-primary border-primary/20";
       case "reviewing":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "rejected":

@@ -24,7 +24,7 @@ export function QuickTabs({ activeTab, onTabChange }: QuickTabsProps) {
           onClick={() => onTabChange(tab.id)}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === tab.id
-              ? "bg-green-600 text-white"
+              ? "bg-accent text-white"
               : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
           }`}
         >

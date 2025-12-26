@@ -2287,7 +2287,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
     return (
       <div className="min-h-[200px] bg-gray-50 flex items-center justify-center rounded-lg">
         <div className="bg-white rounded-lg p-6">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -2303,14 +2303,14 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
               <div className="flex items-center space-x-2 text-sm">
                 {autoSaveStatus === 'saving' && (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-600"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent"></div>
                     <span className="text-gray-600">Saving...</span>
                   </>
                 )}
                 {autoSaveStatus === 'saved' && (
                   <>
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span className="text-green-600">Saved</span>
+                    <CheckCircle className="w-4 h-4 text-accent" />
+                    <span className="text-accent">Saved</span>
                   </>
                 )}
                 {autoSaveStatus === 'error' && (
@@ -2364,8 +2364,8 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                   <p className="text-gray-600 capitalize">{(profile?.roles && profile.roles.length > 0) ? profile.roles[0] : "User"}</p>
                   {profile?.isVerified && (
                     <div className="flex items-center mt-1">
-                      <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
-                      <span className="text-xs text-green-600 font-medium">Verified</span>
+                      <CheckCircle className="w-4 h-4 text-accent mr-1" />
+                      <span className="text-xs text-accent font-medium">Verified</span>
                     </div>
                   )}
                 </div>
@@ -2387,7 +2387,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                       <input
                         {...register("name")}
                         type="text"
-                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300"
                       />
                       {errors.name && (
                         <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
@@ -2447,23 +2447,23 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Street</label>
-                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    <input {...register("profile.address.street")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    <input {...register("profile.address.city")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Province</label>
-                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    <input {...register("profile.address.state")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
-                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    <input {...register("profile.address.zipCode")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                    <input {...register("profile.address.country")} type="text" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                   </div>
                 </div>
 
@@ -2543,7 +2543,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                         {...register("profile.skills")}
                         type="text"
                         placeholder="Enter skills separated by commas"
-                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300"
+                        className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300"
                       />
                     </div>
 
@@ -2552,11 +2552,11 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Service Areas</label>
-                          <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                          <input {...register("profile.serviceAreas")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
-                          <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                          <input {...register("profile.specialties")} type="text" placeholder="Comma-separated" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                         </div>
                       </div>
                     )}
@@ -2586,12 +2586,12 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                         {isServiceProvider ? "Service Experience" : isInstructor ? "Teaching Experience" : "Professional Experience"}
                       </label>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input {...register("profile.experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
-                        <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
-                        <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.experience")} type="number" placeholder="Years of experience" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.yearsInBusiness")} type="number" placeholder="Years in business" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
+                        <input {...register("profile.businessName")} type="text" placeholder="Business name" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <select {...register("profile.businessType")} className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300">
+                        <select {...register("profile.businessType")} className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300">
                           <option value="">Select business type</option>
                           <option value="individual">Individual</option>
                           <option value="small_business">Small Business</option>
@@ -2629,7 +2629,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     <div className="h-px bg-gray-200" />
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <button type="button" onClick={() => addCertification({ name: "", issuer: "", issueDate: "", expiryDate: "", document: { url: "", publicId: "", filename: "" } })} className="text-green-600 text-sm">Add</button>
+                        <button type="button" onClick={() => addCertification({ name: "", issuer: "", issueDate: "", expiryDate: "", document: { url: "", publicId: "", filename: "" } })} className="text-accent text-sm">Add</button>
                       </div>
                       {certificationFields.map((field, idx) => (
                         <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
@@ -2699,7 +2699,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     <div className="h-px bg-gray-200" />
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <button type="button" onClick={() => addSchedule({ day: "monday", startTime: "08:00", endTime: "17:00", isAvailable: true })} className="text-green-600 text-sm">Add day</button>
+                        <button type="button" onClick={() => addSchedule({ day: "monday", startTime: "08:00", endTime: "17:00", isAvailable: true })} className="text-accent text-sm">Add day</button>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <input {...register("profile.availability.timezone")} placeholder="Timezone (e.g. Asia/Manila)" className="px-3 py-2 border border-gray-200 rounded" />
@@ -2764,14 +2764,14 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                     {/* Tags */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                      <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all shadow-sm hover:border-gray-300" />
+                      <input {...register("tags")} type="text" placeholder="Comma-separated (e.g. top_rated, fast_response)" className="w-full px-4 py-3 bg-white border border-gray-100 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all shadow-sm hover:border-gray-300" />
                     </div>
 
                     {/* Notes */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="block text-sm font-medium text-gray-700">Notes</label>
-                        <button type="button" onClick={() => addNote({ note: "" })} className="text-green-600 text-sm">Add note</button>
+                        <button type="button" onClick={() => addNote({ note: "" })} className="text-accent text-sm">Add note</button>
                       </div>
                       {noteFields.map((field, idx) => (
                         <div key={field.id} className="flex items-center gap-2">
@@ -2790,7 +2790,7 @@ export function EditProfileForm({ initialProfile }: EditProfileFormProps = {}) {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                  className="flex items-center space-x-2 px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isLoading ? "Saving..." : "Save Changes"}</span>

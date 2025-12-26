@@ -22,7 +22,7 @@ export function Logo({ withText = false, size = 40, className, href }: LogoProps
 				unoptimized
 			/>
 			{withText && (
-				<span className="ml-3 text-xl font-semibold text-gray-700 dark:text-white">LocalPro Super App</span>
+				<span className="ml-3 text-xl font-semibold text-foreground">LocalPro Super App</span>
 			)}
 		</>
 	);

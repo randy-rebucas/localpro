@@ -944,7 +944,7 @@ export default function ServiceDetailPage() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Available Add-ons</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {service.addOns.map((addon, idx) => (
-                  <div key={addon._id || addon.id || `addon-${idx}`} className="bg-blue-50/50 border border-blue-200 rounded-lg p-4 hover:shadow-md transition-all">
+                  <div key={addon._id || addon.id || `addon-${idx}`} className="bg-primary/50 border border-primary/20 rounded-lg p-4 hover:shadow-md transition-all">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-semibold text-gray-900">{addon.name || 'Add-on'}</h3>
                       <span className="text-lg font-bold text-emerald-600">
@@ -952,7 +952,7 @@ export default function ServiceDetailPage() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{addon.description || 'No description available'}</p>
-                    <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                    <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
                       {addon.category || 'General'}
                     </span>
                   </div>
@@ -980,13 +980,13 @@ export default function ServiceDetailPage() {
                   <h3 className="font-medium text-gray-700 mb-2">Equipment & Materials</h3>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span className="text-sm text-gray-600">
                         Equipment {service.equipmentProvided ? 'provided' : 'not provided'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span className="text-sm text-gray-600">
                         Materials {service.materialsIncluded ? 'included' : 'not included'}
                       </span>
@@ -999,7 +999,7 @@ export default function ServiceDetailPage() {
                   <h3 className="font-medium text-gray-700 mb-2">Service Areas</h3>
                   <div className="flex flex-wrap gap-1">
                     {service.serviceArea?.map((area, index) => (
-                      <span key={index} className="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs rounded-full border border-blue-300">
+                      <span key={index} className="px-2 py-1 bg-gradient-to-r from-primary/10 to-blue-200 text-primary text-xs rounded-full border border-primary/30">
                         {area}
                       </span>
                     )) || <span className="text-sm text-gray-500">No service areas specified</span>}
@@ -1049,8 +1049,8 @@ export default function ServiceDetailPage() {
                   }
                 </p>
               </div>
-              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <Shield className="w-8 h-8 text-blue-500 mx-auto mb-2" aria-hidden="true" />
+              <div className="text-center p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <Shield className="w-8 h-8 text-primary mx-auto mb-2" aria-hidden="true" />
                 <h3 className="font-medium text-gray-900 mb-1">Insurance</h3>
                 <p className="text-sm text-gray-600">
                   {service.insurance?.covered 
@@ -1159,7 +1159,7 @@ export default function ServiceDetailPage() {
                         {providerId ? (
                           <Link
                             href={`/marketplace/providers/${providerId}`}
-                            className="font-medium text-gray-700 hover:text-green-600 transition-colors cursor-pointer"
+                            className="font-medium text-gray-700 hover:text-accent transition-colors cursor-pointer"
                           >
                             {providerName}
                           </Link>
@@ -1168,7 +1168,7 @@ export default function ServiceDetailPage() {
                             {providerName}
                           </h4>
                         )}
-                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <CheckCircle className="w-4 h-4 text-accent" />
                       </div>
                       <div className="flex items-center gap-1">
                         {renderStars(providerRating)}
@@ -1232,7 +1232,7 @@ export default function ServiceDetailPage() {
                                 <Link
                                   href={`/marketplace/providers/${otherProviderId}`}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="text-sm font-medium text-gray-700 truncate hover:text-green-600 transition-colors cursor-pointer"
+                                  className="text-sm font-medium text-gray-700 truncate hover:text-accent transition-colors cursor-pointer"
                                 >
                                   {otherProviderName}
                                 </Link>
@@ -1241,7 +1241,7 @@ export default function ServiceDetailPage() {
                                   {otherProviderName}
                                 </h5>
                               )}
-                              <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                              <CheckCircle className="w-3 h-3 text-accent flex-shrink-0" />
                             </div>
                             <div className="flex items-center gap-1">
                               <div className="flex items-center gap-0.5">
@@ -1276,7 +1276,7 @@ export default function ServiceDetailPage() {
                 {typeof service?.provider === 'object' && service.provider && (
                   <Link
                     href={`/marketplace/providers/${service.provider._id || service.provider.id}`}
-                    className="text-xs text-green-600 hover:text-green-700 font-medium"
+                    className="text-xs text-accent hover:text-accent font-medium"
                   >
                     View All →
                   </Link>
@@ -1324,12 +1324,12 @@ export default function ServiceDetailPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-green-600 transition-colors text-sm">
+                          <h4 className="font-medium text-gray-900 mb-1 line-clamp-1 group-hover:text-accent transition-colors text-sm">
                             {otherService.title}
                           </h4>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-1">
-                              <span className="text-sm font-bold text-green-600">
+                              <span className="text-sm font-bold text-accent">
                                 {currencySymbol}{price.toLocaleString()}
                               </span>
                               {otherService.pricing?.type && (

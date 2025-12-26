@@ -44,11 +44,11 @@ export function FinanceTransactionsTable({
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'revenue':
-        return <TrendingUp className="w-4 h-4 text-green-600" />;
+        return <TrendingUp className="w-4 h-4 text-accent" />;
       case 'expense':
         return <TrendingDown className="w-4 h-4 text-red-600" />;
       case 'withdrawal':
-        return <DollarSign className="w-4 h-4 text-blue-600" />;
+        return <DollarSign className="w-4 h-4 text-primary" />;
       default:
         return <CreditCard className="w-4 h-4 text-gray-600" />;
     }
@@ -57,11 +57,11 @@ export function FinanceTransactionsTable({
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'revenue':
-        return 'bg-green-100 text-green-800';
+        return 'bg-accent/10 text-accent';
       case 'expense':
         return 'bg-red-100 text-red-800';
       case 'withdrawal':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary/10 text-primary';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -70,7 +70,7 @@ export function FinanceTransactionsTable({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-accent/10 text-accent';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
       case 'failed':
@@ -163,7 +163,7 @@ export function FinanceTransactionsTable({
                   </Td>
                   <Td>
                     <span className={`font-medium ${
-                      transaction.type === 'revenue' ? 'text-green-600' : 'text-red-600'
+                      transaction.type === 'revenue' ? 'text-accent' : 'text-red-600'
                     }`}>
                       {formatAmount(transaction.amount, transaction.type)}
                     </span>

@@ -390,8 +390,8 @@ export default function AdminHealthPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'excellent':
-      case 'healthy': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
+      case 'healthy': return 'text-accent bg-accent/10';
+      case 'good': return 'text-primary bg-primary/10';
       case 'warning': return 'text-yellow-600 bg-yellow-100';
       case 'critical': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -401,8 +401,8 @@ export default function AdminHealthPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'excellent':
-      case 'healthy': return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'good': return <Activity className="w-5 h-5 text-blue-500" />;
+      case 'healthy': return <CheckCircle className="w-5 h-5 text-accent" />;
+      case 'good': return <Activity className="w-5 h-5 text-primary" />;
       case 'warning': return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case 'critical': return <XCircle className="w-5 h-5 text-red-500" />;
       default: return <AlertCircle className="w-5 h-5 text-gray-500" />;
@@ -446,7 +446,7 @@ export default function AdminHealthPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -501,7 +501,7 @@ export default function AdminHealthPage() {
               <div className="space-y-1">
                 {analysis.overall.insights.map((insight, idx) => (
                   <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                    <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                    <CheckCircle className="w-3 h-3 mt-0.5 text-accent flex-shrink-0" />
                     <span>{insight}</span>
                   </div>
                 ))}
@@ -517,7 +517,7 @@ export default function AdminHealthPage() {
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Database className="w-5 h-5 text-green-600" />
+                <Database className="w-5 h-5 text-accent" />
                 <h3 className="text-sm font-medium text-gray-900">Database</h3>
               </div>
               {getStatusIcon(analysis.database.status)}
@@ -548,7 +548,7 @@ export default function AdminHealthPage() {
               <p className="text-xs font-medium text-gray-700">Details:</p>
               {analysis.database.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-3 h-3 mt-0.5 text-accent flex-shrink-0" />
                   <span>{insight}</span>
                 </div>
               ))}
@@ -578,7 +578,7 @@ export default function AdminHealthPage() {
                   <div 
                     className={`h-1.5 rounded-full transition-all duration-300 ${
                       analysis.system.memoryUsage > 90 ? 'bg-red-500' : 
-                      analysis.system.memoryUsage > 80 ? 'bg-yellow-500' : 'bg-green-500'
+                      analysis.system.memoryUsage > 80 ? 'bg-yellow-500' : 'bg-accent'
                     }`}
                     style={{ width: `${analysis.system.memoryUsage}%` }}
                   ></div>
@@ -609,7 +609,7 @@ export default function AdminHealthPage() {
               <p className="text-xs font-medium text-gray-700">System Information:</p>
               {analysis.system.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-3 h-3 mt-0.5 text-accent flex-shrink-0" />
                   <span>{insight}</span>
                 </div>
               ))}
@@ -624,7 +624,7 @@ export default function AdminHealthPage() {
           <div className="px-4 py-3 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <TrendingUp className="w-5 h-5 text-primary" />
                 <h3 className="text-sm font-medium text-gray-900">Performance Metrics</h3>
               </div>
               {getStatusIcon(analysis.performance.status)}
@@ -661,7 +661,7 @@ export default function AdminHealthPage() {
               <p className="text-xs font-medium text-gray-700">Performance Insights:</p>
               {analysis.performance.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-3 h-3 mt-0.5 text-accent flex-shrink-0" />
                   <span>{insight}</span>
                 </div>
               ))}
@@ -703,7 +703,7 @@ export default function AdminHealthPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-600">Maintenance Mode:</span>
-                    <span className={`text-xs font-medium ${healthData.services.app.maintenanceMode ? 'text-yellow-600' : 'text-green-600'}`}>
+                    <span className={`text-xs font-medium ${healthData.services.app.maintenanceMode ? 'text-yellow-600' : 'text-accent'}`}>
                       {healthData.services.app.maintenanceMode ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
@@ -715,7 +715,7 @@ export default function AdminHealthPage() {
                   {Object.entries(healthData.services.app.features).map(([feature, enabled]) => (
                     <div key={feature} className="flex items-center space-x-1">
                       {enabled ? (
-                        <CheckCircle className="w-3 h-3 text-green-500" />
+                        <CheckCircle className="w-3 h-3 text-accent" />
                       ) : (
                         <XCircle className="w-3 h-3 text-gray-400" />
                       )}
@@ -729,7 +729,7 @@ export default function AdminHealthPage() {
               <p className="text-xs font-medium text-gray-700">Service Details:</p>
               {analysis.services.insights.map((insight, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-gray-600">
-                  <CheckCircle className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-3 h-3 mt-0.5 text-accent flex-shrink-0" />
                   <span>{insight}</span>
                 </div>
               ))}

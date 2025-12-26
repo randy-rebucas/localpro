@@ -27,7 +27,7 @@ import Link from "next/link";
 function getAnnouncementIcon(type?: AnnouncementType) {
   switch (type) {
     case 'system':
-      return <AlertCircle className="w-5 h-5 text-blue-600" />;
+      return <AlertCircle className="w-5 h-5 text-primary" />;
     case 'maintenance':
       return <Wrench className="w-5 h-5 text-orange-600" />;
     case 'feature':
@@ -37,13 +37,13 @@ function getAnnouncementIcon(type?: AnnouncementType) {
     case 'promotion':
       return <Gift className="w-5 h-5 text-yellow-600" />;
     case 'policy':
-      return <FileText className="w-5 h-5 text-indigo-600" />;
+      return <FileText className="w-5 h-5 text-primary" />;
     case 'event':
-      return <Calendar className="w-5 h-5 text-green-600" />;
+      return <Calendar className="w-5 h-5 text-accent" />;
     case 'emergency':
       return <AlertTriangle className="w-5 h-5 text-red-600" />;
     case 'update':
-      return <Bell className="w-5 h-5 text-blue-600" />;
+      return <Bell className="w-5 h-5 text-primary" />;
     default:
       return <Megaphone className="w-5 h-5 text-gray-600" />;
   }
@@ -52,15 +52,15 @@ function getAnnouncementIcon(type?: AnnouncementType) {
 // Helper function to get announcement styles based on type and priority
 function getAnnouncementStyles(type?: AnnouncementType, priority?: Priority) {
   const typeStyles: Record<AnnouncementType | 'general', string> = {
-    system: "bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/60",
+    system: "bg-gradient-to-br from-primary/10 to-primary/10/50 border border-primary/60",
     maintenance: "bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200/60",
     feature: "bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/60",
     security: "bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200/60",
     promotion: "bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200/60",
-    policy: "bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/60",
-    event: "bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/60",
+    policy: "bg-gradient-to-br from-primary/5 to-primary/50 border border-primary/60",
+    event: "bg-gradient-to-br from-accent/10 to-accent/10/50 border border-accent/60",
     emergency: "bg-gradient-to-br from-red-100 to-red-200/50 border-2 border-red-400 ring-2 ring-red-200/50",
-    update: "bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/60",
+    update: "bg-gradient-to-br from-primary/10 to-primary/10/50 border border-primary/60",
     general: "bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200/60"
   };
   
@@ -68,7 +68,7 @@ function getAnnouncementStyles(type?: AnnouncementType, priority?: Priority) {
     urgent: "border-l-[5px] border-red-500",
     high: "border-l-[5px] border-orange-500",
     medium: "border-l-[5px] border-yellow-500",
-    low: "border-l-[5px] border-blue-500"
+    low: "border-l-[5px] border-primary"
   };
   
   return `${typeStyles[type || 'general']} ${priorityBorder[priority || 'medium']} rounded-lg`;
@@ -84,7 +84,7 @@ function getPriorityBadge(priority?: Priority) {
     case 'medium':
       return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-200">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">Low</span>;
+      return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">Low</span>;
     default:
       return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">Medium</span>;
   }
@@ -188,14 +188,14 @@ export function AnnouncementCard() {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-md">
       <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-blue-50 rounded-lg">
-            <Megaphone className="w-4 h-4 text-blue-600" />
+          <div className="p-1.5 bg-primary/5 rounded-lg">
+            <Megaphone className="w-4 h-4 text-primary" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">Latest Announcement</h2>
         </div>
         <Link 
           href="/announcements"
-          className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1.5 transition-colors duration-200"
+          className="text-sm font-medium text-primary hover:text-primary flex items-center gap-1.5 transition-colors duration-200"
         >
           View all
           <ExternalLink className="w-3.5 h-3.5" />
@@ -237,7 +237,7 @@ export function AnnouncementCard() {
                   <Clock className="w-3.5 h-3.5" />
                   {formatDate(publishedDate)}
                 </span>
-                <span className="text-xs font-medium text-blue-600 flex items-center gap-1 ml-auto">
+                <span className="text-xs font-medium text-primary flex items-center gap-1 ml-auto">
                   Read more
                   <ExternalLink className="w-3 h-3" />
                 </span>

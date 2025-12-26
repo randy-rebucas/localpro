@@ -571,7 +571,7 @@ export function LocationAutocomplete({
             }
           }}
           disabled={disabled || isLoading || isLoadingDetails}
-          className={`w-full pl-11 pr-24 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm font-medium bg-white hover:border-gray-300 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed ${className}`}
+          className={`w-full pl-11 pr-24 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-ring focus:border-accent text-sm font-medium bg-white hover:border-gray-300 transition-colors disabled:bg-gray-50 disabled:cursor-not-allowed ${className}`}
           aria-label="Location search"
           aria-autocomplete="list"
           aria-expanded={showSuggestions}
@@ -597,7 +597,7 @@ export function LocationAutocomplete({
           <button
             onClick={handleDetectLocation}
             disabled={disabled || isLoading || isLoadingDetails}
-            className="px-3 py-1.5 text-xs font-semibold text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-semibold text-accent bg-accent/5 rounded-lg hover:bg-accent/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             title="Detect current location"
             type="button"
           >
@@ -631,7 +631,7 @@ export function LocationAutocomplete({
                 onMouseEnter={() => setSelectedIndex(index)}
                 className={`px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
                   index === selectedIndex
-                    ? 'bg-green-50 border-green-200'
+                    ? 'bg-accent/5 border-accent/20'
                     : 'hover:bg-gray-50'
                 }`}
                 role="option"

@@ -130,13 +130,13 @@ export function formatAdminNumber(value: number): string {
  */
 export function getStatusColor(status: string): string {
   const statusColors: Record<string, string> = {
-    active: "bg-green-100 text-green-800",
+    active: "bg-accent/10 text-accent",
     inactive: "bg-gray-100 text-gray-800",
     pending: "bg-yellow-100 text-yellow-800",
     suspended: "bg-red-100 text-red-800",
-    approved: "bg-green-100 text-green-800",
+    approved: "bg-accent/10 text-accent",
     rejected: "bg-red-100 text-red-800",
-    completed: "bg-blue-100 text-blue-800",
+    completed: "bg-primary/10 text-primary",
     cancelled: "bg-gray-100 text-gray-800",
   };
 
@@ -229,8 +229,8 @@ export function formatUserStatus(status: string): {
   const statusMap: Record<string, { label: string; color: string; badge: string }> = {
     active: {
       label: "Active",
-      color: "text-green-600",
-      badge: "bg-green-100 text-green-800",
+      color: "text-accent",
+      badge: "bg-accent/10 text-accent",
     },
     inactive: {
       label: "Inactive",

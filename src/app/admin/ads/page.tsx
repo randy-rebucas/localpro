@@ -1203,7 +1203,7 @@ export default function AdminAdsPage() {
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={fetchData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
           >
             Retry
           </button>
@@ -1230,7 +1230,7 @@ export default function AdminAdsPage() {
           )}
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
             Create Ad
@@ -1238,7 +1238,7 @@ export default function AdminAdsPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -1248,7 +1248,7 @@ export default function AdminAdsPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Ads</p>
@@ -1259,8 +1259,8 @@ export default function AdminAdsPage() {
                   All campaigns
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <BarChart3 className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <BarChart3 className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
@@ -1282,7 +1282,7 @@ export default function AdminAdsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active</p>
@@ -1293,8 +1293,8 @@ export default function AdminAdsPage() {
                   Currently running
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -1329,7 +1329,7 @@ export default function AdminAdsPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
@@ -1353,7 +1353,7 @@ export default function AdminAdsPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search ads..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1363,7 +1363,7 @@ export default function AdminAdsPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   {categories.map(cat => (
                     <option key={cat} value={cat}>
@@ -1378,7 +1378,7 @@ export default function AdminAdsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Statuses</option>
                   {statuses.map(status => (
@@ -1476,7 +1476,7 @@ export default function AdminAdsPage() {
                           )}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                             {ad.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                           </span>
                         </td>
@@ -1496,7 +1496,7 @@ export default function AdminAdsPage() {
                             ad.status === 'pending' 
                               ? 'bg-yellow-100 text-yellow-800'
                               : ad.status === 'approved' || ad.status === 'active'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-accent/10 text-accent'
                               : ad.status === 'rejected'
                               ? 'bg-red-100 text-red-800'
                               : 'bg-gray-100 text-gray-800'
@@ -1511,14 +1511,14 @@ export default function AdminAdsPage() {
                                 setSelectedAd(ad);
                                 setViewModalOpen(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-primary hover:text-primary"
                               title="View ad details"
                             >
                               <Eye className="w-3 h-3" />
                             </button>
                             <button
                               onClick={() => openEditModal(ad)}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-accent hover:text-accent"
                               title="Edit ad"
                             >
                               <Edit className="w-3 h-3" />
@@ -1540,7 +1540,7 @@ export default function AdminAdsPage() {
                                     setSelectedAd(ad);
                                     setApproveModalOpen(true);
                                   }}
-                                  className="text-green-600 hover:text-green-900"
+                                  className="text-accent hover:text-accent"
                                   title="Approve ad"
                                 >
                                   <CheckCircle className="w-3 h-3" />
@@ -1630,7 +1630,7 @@ export default function AdminAdsPage() {
               type="text"
               value={createFormData.title}
               onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               placeholder="Enter ad title"
             />
           </div>
@@ -1642,7 +1642,7 @@ export default function AdminAdsPage() {
             <textarea
               value={createFormData.description}
               onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               rows={4}
               placeholder="Enter ad description"
             />
@@ -1656,7 +1656,7 @@ export default function AdminAdsPage() {
               <select
                 value={createFormData.type}
                 onChange={(e) => setCreateFormData({ ...createFormData, type: e.target.value as AdType })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="banner">Banner</option>
                 <option value="sponsored_listing">Sponsored Listing</option>
@@ -1673,7 +1673,7 @@ export default function AdminAdsPage() {
               <select
                 value={createFormData.category}
                 onChange={(e) => setCreateFormData({ ...createFormData, category: e.target.value as AdCategory })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="hardware_stores">Hardware Stores</option>
                 <option value="suppliers">Suppliers</option>
@@ -1695,7 +1695,7 @@ export default function AdminAdsPage() {
                 min="0"
                 value={createFormData.budgetTotal}
                 onChange={(e) => setCreateFormData({ ...createFormData, budgetTotal: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="0.00"
               />
             </div>
@@ -1709,7 +1709,7 @@ export default function AdminAdsPage() {
                 min="0"
                 value={createFormData.budgetDaily}
                 onChange={(e) => setCreateFormData({ ...createFormData, budgetDaily: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="0.00"
               />
             </div>
@@ -1720,7 +1720,7 @@ export default function AdminAdsPage() {
               <select
                 value={createFormData.currency}
                 onChange={(e) => setCreateFormData({ ...createFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="PHP">PHP</option>
               </select>
@@ -1736,7 +1736,7 @@ export default function AdminAdsPage() {
                 type="date"
                 value={createFormData.startDate}
                 onChange={(e) => setCreateFormData({ ...createFormData, startDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               />
             </div>
 
@@ -1748,7 +1748,7 @@ export default function AdminAdsPage() {
                 type="date"
                 value={createFormData.endDate}
                 onChange={(e) => setCreateFormData({ ...createFormData, endDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 min={createFormData.startDate}
               />
             </div>
@@ -1766,7 +1766,7 @@ export default function AdminAdsPage() {
                     timeSlots: [...createFormData.timeSlots, { day: '', startTime: '', endTime: '' }]
                   });
                 }}
-                className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary/90"
               >
                 + Add Time Slot
               </button>
@@ -1784,7 +1784,7 @@ export default function AdminAdsPage() {
                           newSlots[index].day = e.target.value;
                           setCreateFormData({ ...createFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       >
                         <option value="">Select day</option>
                         <option value="monday">Monday</option>
@@ -1806,7 +1806,7 @@ export default function AdminAdsPage() {
                           newSlots[index].startTime = e.target.value;
                           setCreateFormData({ ...createFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       />
                     </div>
                     <div>
@@ -1819,7 +1819,7 @@ export default function AdminAdsPage() {
                           newSlots[index].endTime = e.target.value;
                           setCreateFormData({ ...createFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       />
                     </div>
                     <button
@@ -1850,7 +1850,7 @@ export default function AdminAdsPage() {
                   max="100"
                   value={createFormData.ageRangeMin}
                   onChange={(e) => setCreateFormData({ ...createFormData, ageRangeMin: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="25"
                 />
               </div>
@@ -1862,7 +1862,7 @@ export default function AdminAdsPage() {
                   max="100"
                   value={createFormData.ageRangeMax}
                   onChange={(e) => setCreateFormData({ ...createFormData, ageRangeMax: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="65"
                 />
               </div>
@@ -1876,7 +1876,7 @@ export default function AdminAdsPage() {
                   ...createFormData, 
                   targetLocations: e.target.value.split(',').map(l => l.trim()).filter(l => l)
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="Manila, Quezon City, Makati"
               />
             </div>
@@ -1889,7 +1889,7 @@ export default function AdminAdsPage() {
                   ...createFormData, 
                   interests: e.target.value.split(',').map(i => i.trim()).filter(i => i)
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="cleaning, home_services, maintenance"
               />
             </div>
@@ -1905,7 +1905,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={createFormData.city}
                   onChange={(e) => setCreateFormData({ ...createFormData, city: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Manila"
                 />
               </div>
@@ -1915,7 +1915,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={createFormData.state}
                   onChange={(e) => setCreateFormData({ ...createFormData, state: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Metro Manila"
                 />
               </div>
@@ -1925,7 +1925,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={createFormData.country}
                   onChange={(e) => setCreateFormData({ ...createFormData, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Philippines"
                 />
               </div>
@@ -1938,7 +1938,7 @@ export default function AdminAdsPage() {
                   step="0.000001"
                   value={createFormData.latitude}
                   onChange={(e) => setCreateFormData({ ...createFormData, latitude: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="14.5995"
                 />
               </div>
@@ -1949,7 +1949,7 @@ export default function AdminAdsPage() {
                   step="0.000001"
                   value={createFormData.longitude}
                   onChange={(e) => setCreateFormData({ ...createFormData, longitude: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="120.9842"
                 />
               </div>
@@ -1965,7 +1965,7 @@ export default function AdminAdsPage() {
                 type="text"
                 value={createFormData.headline}
                 onChange={(e) => setCreateFormData({ ...createFormData, headline: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="20% Off Cleaning Services"
               />
             </div>
@@ -1974,7 +1974,7 @@ export default function AdminAdsPage() {
               <textarea
                 value={createFormData.body}
                 onChange={(e) => setCreateFormData({ ...createFormData, body: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 rows={3}
                 placeholder="Professional cleaning services at discounted rates. Book now and save!"
               />
@@ -1986,7 +1986,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={createFormData.callToActionText}
                   onChange={(e) => setCreateFormData({ ...createFormData, callToActionText: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Book Now"
                 />
               </div>
@@ -1996,7 +1996,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={createFormData.callToActionUrl}
                   onChange={(e) => setCreateFormData({ ...createFormData, callToActionUrl: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="/book-cleaning"
                 />
               </div>
@@ -2012,7 +2012,7 @@ export default function AdminAdsPage() {
                 <select
                   value={createFormData.biddingStrategy}
                   onChange={(e) => setCreateFormData({ ...createFormData, biddingStrategy: e.target.value as BiddingStrategy })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 >
                   <option value="cpc">CPC</option>
                   <option value="cpm">CPM</option>
@@ -2028,7 +2028,7 @@ export default function AdminAdsPage() {
                   min="0"
                   value={createFormData.bidAmount}
                   onChange={(e) => setCreateFormData({ ...createFormData, bidAmount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="2.50"
                 />
               </div>
@@ -2040,7 +2040,7 @@ export default function AdminAdsPage() {
                   min="0"
                   value={createFormData.maxBid}
                   onChange={(e) => setCreateFormData({ ...createFormData, maxBid: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="5.00"
                 />
               </div>
@@ -2056,7 +2056,7 @@ export default function AdminAdsPage() {
                 <select
                   value={createFormData.status}
                   onChange={(e) => setCreateFormData({ ...createFormData, status: e.target.value as CampaignStatus })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 >
                   <option value="draft">Draft</option>
                   <option value="pending">Pending</option>
@@ -2136,7 +2136,7 @@ export default function AdminAdsPage() {
             <button
               onClick={handleCreateAd}
               disabled={submitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-xs"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-xs"
             >
               {submitting ? 'Creating...' : 'Create Ad'}
             </button>
@@ -2236,7 +2236,7 @@ export default function AdminAdsPage() {
                     ad.status === 'pending' 
                       ? 'bg-yellow-100 text-yellow-800'
                       : ad.status === 'approved' || ad.status === 'active'
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-accent/10 text-accent'
                       : ad.status === 'rejected'
                       ? 'bg-red-100 text-red-800'
                       : 'bg-gray-100 text-gray-800'
@@ -2293,7 +2293,7 @@ export default function AdminAdsPage() {
               type="text"
               value={editFormData.title}
               onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               placeholder="Enter ad title"
             />
           </div>
@@ -2305,7 +2305,7 @@ export default function AdminAdsPage() {
             <textarea
               value={editFormData.description}
               onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               rows={4}
               placeholder="Enter ad description"
             />
@@ -2319,7 +2319,7 @@ export default function AdminAdsPage() {
               <select
                 value={editFormData.type}
                 onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value as AdType })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="banner">Banner</option>
                 <option value="sponsored_listing">Sponsored Listing</option>
@@ -2336,7 +2336,7 @@ export default function AdminAdsPage() {
               <select
                 value={editFormData.category}
                 onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value as AdCategory })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="hardware_stores">Hardware Stores</option>
                 <option value="suppliers">Suppliers</option>
@@ -2358,7 +2358,7 @@ export default function AdminAdsPage() {
                 min="0"
                 value={editFormData.budgetTotal}
                 onChange={(e) => setEditFormData({ ...editFormData, budgetTotal: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="0.00"
               />
             </div>
@@ -2372,7 +2372,7 @@ export default function AdminAdsPage() {
                 min="0"
                 value={editFormData.budgetDaily}
                 onChange={(e) => setEditFormData({ ...editFormData, budgetDaily: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="0.00"
               />
             </div>
@@ -2383,7 +2383,7 @@ export default function AdminAdsPage() {
               <select
                 value={editFormData.currency}
                 onChange={(e) => setEditFormData({ ...editFormData, currency: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               >
                 <option value="PHP">PHP</option>
               </select>
@@ -2399,7 +2399,7 @@ export default function AdminAdsPage() {
                 type="date"
                 value={editFormData.startDate}
                 onChange={(e) => setEditFormData({ ...editFormData, startDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
               />
             </div>
 
@@ -2411,7 +2411,7 @@ export default function AdminAdsPage() {
                 type="date"
                 value={editFormData.endDate}
                 onChange={(e) => setEditFormData({ ...editFormData, endDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 min={editFormData.startDate}
               />
             </div>
@@ -2429,7 +2429,7 @@ export default function AdminAdsPage() {
                     timeSlots: [...editFormData.timeSlots, { day: '', startTime: '', endTime: '' }]
                   });
                 }}
-                className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary/90"
               >
                 + Add Time Slot
               </button>
@@ -2447,7 +2447,7 @@ export default function AdminAdsPage() {
                           newSlots[index].day = e.target.value;
                           setEditFormData({ ...editFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       >
                         <option value="">Select day</option>
                         <option value="monday">Monday</option>
@@ -2469,7 +2469,7 @@ export default function AdminAdsPage() {
                           newSlots[index].startTime = e.target.value;
                           setEditFormData({ ...editFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       />
                     </div>
                     <div>
@@ -2482,7 +2482,7 @@ export default function AdminAdsPage() {
                           newSlots[index].endTime = e.target.value;
                           setEditFormData({ ...editFormData, timeSlots: newSlots });
                         }}
-                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                       />
                     </div>
                     <button
@@ -2513,7 +2513,7 @@ export default function AdminAdsPage() {
                   max="100"
                   value={editFormData.ageRangeMin}
                   onChange={(e) => setEditFormData({ ...editFormData, ageRangeMin: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="25"
                 />
               </div>
@@ -2525,7 +2525,7 @@ export default function AdminAdsPage() {
                   max="100"
                   value={editFormData.ageRangeMax}
                   onChange={(e) => setEditFormData({ ...editFormData, ageRangeMax: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="65"
                 />
               </div>
@@ -2539,7 +2539,7 @@ export default function AdminAdsPage() {
                   ...editFormData, 
                   targetLocations: e.target.value.split(',').map(l => l.trim()).filter(l => l)
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="Manila, Quezon City, Makati"
               />
             </div>
@@ -2552,7 +2552,7 @@ export default function AdminAdsPage() {
                   ...editFormData, 
                   interests: e.target.value.split(',').map(i => i.trim()).filter(i => i)
                 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="cleaning, home_services, maintenance"
               />
             </div>
@@ -2568,7 +2568,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={editFormData.city}
                   onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Manila"
                 />
               </div>
@@ -2578,7 +2578,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={editFormData.state}
                   onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Metro Manila"
                 />
               </div>
@@ -2588,7 +2588,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={editFormData.country}
                   onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Philippines"
                 />
               </div>
@@ -2601,7 +2601,7 @@ export default function AdminAdsPage() {
                   step="0.000001"
                   value={editFormData.latitude}
                   onChange={(e) => setEditFormData({ ...editFormData, latitude: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="14.5995"
                 />
               </div>
@@ -2612,7 +2612,7 @@ export default function AdminAdsPage() {
                   step="0.000001"
                   value={editFormData.longitude}
                   onChange={(e) => setEditFormData({ ...editFormData, longitude: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="120.9842"
                 />
               </div>
@@ -2628,7 +2628,7 @@ export default function AdminAdsPage() {
                 type="text"
                 value={editFormData.headline}
                 onChange={(e) => setEditFormData({ ...editFormData, headline: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 placeholder="20% Off Cleaning Services"
               />
             </div>
@@ -2637,7 +2637,7 @@ export default function AdminAdsPage() {
               <textarea
                 value={editFormData.body}
                 onChange={(e) => setEditFormData({ ...editFormData, body: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 rows={3}
                 placeholder="Professional cleaning services at discounted rates. Book now and save!"
               />
@@ -2649,7 +2649,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={editFormData.callToActionText}
                   onChange={(e) => setEditFormData({ ...editFormData, callToActionText: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="Book Now"
                 />
               </div>
@@ -2659,7 +2659,7 @@ export default function AdminAdsPage() {
                   type="text"
                   value={editFormData.callToActionUrl}
                   onChange={(e) => setEditFormData({ ...editFormData, callToActionUrl: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="/book-cleaning"
                 />
               </div>
@@ -2675,7 +2675,7 @@ export default function AdminAdsPage() {
                 <select
                   value={editFormData.biddingStrategy}
                   onChange={(e) => setEditFormData({ ...editFormData, biddingStrategy: e.target.value as BiddingStrategy })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 >
                   <option value="cpc">CPC</option>
                   <option value="cpm">CPM</option>
@@ -2691,7 +2691,7 @@ export default function AdminAdsPage() {
                   min="0"
                   value={editFormData.bidAmount}
                   onChange={(e) => setEditFormData({ ...editFormData, bidAmount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="2.50"
                 />
               </div>
@@ -2703,7 +2703,7 @@ export default function AdminAdsPage() {
                   min="0"
                   value={editFormData.maxBid}
                   onChange={(e) => setEditFormData({ ...editFormData, maxBid: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                   placeholder="5.00"
                 />
               </div>
@@ -2719,7 +2719,7 @@ export default function AdminAdsPage() {
                 <select
                   value={editFormData.status}
                   onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as CampaignStatus })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 >
                   <option value="draft">Draft</option>
                   <option value="pending">Pending</option>
@@ -2766,7 +2766,7 @@ export default function AdminAdsPage() {
             <button
               onClick={handleUpdateAd}
               disabled={submitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-xs"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-xs"
             >
               {submitting ? 'Updating...' : 'Update Ad'}
             </button>
@@ -2838,7 +2838,7 @@ export default function AdminAdsPage() {
                 const files = Array.from(e.target.files || []);
                 setSelectedFiles(files);
               }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
             />
             <p className="text-xs text-gray-500 mt-1">
               You can select multiple images at once
@@ -2875,7 +2875,7 @@ export default function AdminAdsPage() {
             <button
               onClick={handleUploadImages}
               disabled={submitting || selectedFiles.length === 0}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-xs"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 text-xs"
             >
               {submitting ? 'Uploading...' : 'Upload Images'}
             </button>
@@ -2915,7 +2915,7 @@ export default function AdminAdsPage() {
             <button
               onClick={handleApprove}
               disabled={submitting}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-xs"
+              className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 text-xs"
             >
               {submitting ? 'Approving...' : 'Approve'}
             </button>

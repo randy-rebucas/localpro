@@ -275,7 +275,7 @@ export default function Community() {
                           <button className="p-2 text-slate-500 hover:text-rose-400 transition-colors">
                             <Heart className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-slate-500 hover:text-blue-400 transition-colors">
+                          <button className="p-2 text-slate-500 hover:text-primary transition-colors">
                             <Share2 className="w-4 h-4" />
                           </button>
                           <button className="p-2 text-slate-500 hover:text-amber-400 transition-colors">

@@ -361,7 +361,7 @@ export default function AdminAgenciesPage() {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -387,7 +387,7 @@ export default function AdminAgenciesPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -404,16 +404,16 @@ export default function AdminAgenciesPage() {
                 <p className="text-xs text-gray-500">Total Agencies</p>
                 <p className="text-2xl font-bold text-gray-900">{statistics.totalAgencies || 0}</p>
               </div>
-              <Building2 className="w-8 h-8 text-blue-500" />
+              <Building2 className="w-8 h-8 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Active Agencies</p>
-                <p className="text-2xl font-bold text-green-600">{statistics.activeAgencies || 0}</p>
+                <p className="text-2xl font-bold text-accent">{statistics.activeAgencies || 0}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <CheckCircle className="w-8 h-8 text-accent" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -479,7 +479,7 @@ export default function AdminAgenciesPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search agencies..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -489,7 +489,7 @@ export default function AdminAgenciesPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -502,7 +502,7 @@ export default function AdminAgenciesPage() {
                 <select
                   value={verificationFilter}
                   onChange={(e) => setVerificationFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All</option>
                   <option value="verified">Verified</option>
@@ -540,7 +540,7 @@ export default function AdminAgenciesPage() {
               <button
                 onClick={() => handleSort('name')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'name' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'name' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Name
@@ -551,7 +551,7 @@ export default function AdminAgenciesPage() {
               <button
                 onClick={() => handleSort('providers')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'providers' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'providers' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Providers
@@ -562,7 +562,7 @@ export default function AdminAgenciesPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Date
@@ -594,8 +594,8 @@ export default function AdminAgenciesPage() {
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-8 w-8">
-                        <div className="h-8 w-8 rounded bg-blue-100 flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-blue-600" />
+                        <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center">
+                          <Building2 className="w-4 h-4 text-primary" />
                         </div>
                       </div>
                       <div className="ml-3">
@@ -619,7 +619,7 @@ export default function AdminAgenciesPage() {
                     </div>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                       <Users className="w-3 h-3 mr-1" />
                       {agency.providers?.length || 0}
                     </span>
@@ -629,7 +629,7 @@ export default function AdminAgenciesPage() {
                       onClick={() => handleToggleStatus(agency)}
                       className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                         agency.isActive 
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                          ? 'bg-accent/10 text-accent hover:bg-accent/20' 
                           : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                       }`}
                     >
@@ -655,7 +655,7 @@ export default function AdminAgenciesPage() {
                     <div className="flex items-center space-x-2">
                       <button 
                         onClick={() => handleViewAgency(agency)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary hover:text-primary"
                         title="View details"
                       >
                         <Eye className="w-3 h-3" />
@@ -724,7 +724,7 @@ export default function AdminAgenciesPage() {
                 <div>
                   <label className="text-xs font-medium text-gray-500">Status</label>
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedAgency.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                    selectedAgency.isActive ? 'bg-accent/10 text-accent' : 'bg-gray-100 text-gray-800'
                   }`}>
                     {selectedAgency.isActive ? 'Active' : 'Inactive'}
                   </span>
@@ -792,7 +792,7 @@ export default function AdminAgenciesPage() {
                         <p className="text-xs text-gray-500">Commission: {provider.commissionRate}%</p>
                       </div>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        provider.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        provider.status === 'active' ? 'bg-accent/10 text-accent' : 'bg-gray-100 text-gray-800'
                       }`}>
                         {provider.status}
                       </span>
@@ -807,13 +807,13 @@ export default function AdminAgenciesPage() {
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Analytics</h4>
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-3 rounded">
+                  <div className="bg-primary/5 p-3 rounded">
                     <p className="text-xs text-gray-500">Total Bookings</p>
-                    <p className="text-lg font-bold text-blue-600">{selectedAgency.analytics.totalBookings || 0}</p>
+                    <p className="text-lg font-bold text-primary">{selectedAgency.analytics.totalBookings || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-3 rounded">
+                  <div className="bg-accent/5 p-3 rounded">
                     <p className="text-xs text-gray-500">Total Revenue (PHP)</p>
-                    <p className="text-lg font-bold text-green-600">₱{(selectedAgency.analytics.totalRevenue || 0).toLocaleString()}</p>
+                    <p className="text-lg font-bold text-accent">₱{(selectedAgency.analytics.totalRevenue || 0).toLocaleString()}</p>
                   </div>
                   <div className="bg-yellow-50 p-3 rounded">
                     <p className="text-xs text-gray-500">Avg Rating</p>
@@ -862,7 +862,7 @@ export default function AdminAgenciesPage() {
               <button
                 onClick={() => handleVerifyAgency(true)}
                 disabled={submitting}
-                className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                className="px-3 py-1.5 text-xs font-medium text-white bg-accent rounded-md hover:bg-accent/90 disabled:opacity-50"
               >
                 {submitting ? 'Verifying...' : 'Verify Agency'}
               </button>

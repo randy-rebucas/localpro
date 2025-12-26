@@ -174,7 +174,7 @@ const getNotificationIcon = (type: NotificationType) => {
     return { icon: <AlertCircle className="w-5 h-5" />, bgColor: "bg-red-100", iconColor: "text-red-600" };
   }
   if (type.includes('message')) {
-    return { icon: <MessageSquare className="w-5 h-5" />, bgColor: "bg-blue-100", iconColor: "text-blue-600" };
+    return { icon: <MessageSquare className="w-5 h-5" />, bgColor: "bg-primary/10", iconColor: "text-primary" };
   }
   if (type.includes('application') || type.includes('job')) {
     return { icon: <AlertTriangle className="w-5 h-5" />, bgColor: "bg-amber-100", iconColor: "text-amber-600" };
@@ -192,7 +192,7 @@ const getPriorityBadge = (priority: NotificationPriority) => {
     case 'medium':
       return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Low</span>;
+      return <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">Low</span>;
   }
 };
 
@@ -247,7 +247,7 @@ const NotificationItemComponent = ({
       case 'urgent': return "border-red-500";
       case 'high': return "border-orange-500";
       case 'medium': return "border-amber-500";
-      default: return "border-blue-300";
+      default: return "border-primary/30";
     }
   };
 
@@ -262,7 +262,7 @@ const NotificationItemComponent = ({
     >
       {/* Unread indicator dot */}
       {!notification.isRead && (
-        <div className="absolute top-5 right-5 w-3 h-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full animate-pulse shadow-md shadow-blue-500/50" />
+        <div className="absolute top-5 right-5 w-3 h-3 bg-gradient-to-br from-primary to-primary rounded-full animate-pulse shadow-md shadow-blue-500/50" />
       )}
       
       <div className="flex items-start justify-between gap-4">
@@ -298,7 +298,7 @@ const NotificationItemComponent = ({
                 {getTypeLabel(notification.type)}
               </span>
               {(notification.channels.email || notification.channels.sms || notification.channels.push) && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 px-2 py-1 rounded-md border border-blue-100">
+                <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gradient-to-r from-primary/10/50 to-primary/50 px-2 py-1 rounded-md border border-primary/20">
                   <Mail className="w-3.5 h-3.5" />
                   {[
                     notification.channels.email && 'Email',
@@ -322,7 +322,7 @@ const NotificationItemComponent = ({
                     onMarkAsRead(notificationId);
                   }} 
                   disabled={actionLoading.has(notificationId)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-lg transition-all border border-emerald-200 hover:border-emerald-300 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-accent/10 hover:from-emerald-100 hover:to-accent/10 rounded-lg transition-all border border-emerald-200 hover:border-emerald-300 shadow-sm hover:shadow-md hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {actionLoading.has(notificationId) ? (
                     <>
@@ -646,8 +646,8 @@ export default function NotificationsPage() {
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10 space-y-6">
@@ -690,8 +690,8 @@ export default function NotificationsPage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -703,7 +703,7 @@ export default function NotificationsPage() {
                 <Bell className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent mb-1">Notifications</h1>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-primary bg-clip-text text-transparent mb-1">Notifications</h1>
                 <div className="flex items-center gap-3 text-sm text-gray-600">
                   <span className="font-medium">
                     {stats.unreadCount > 0 ? (
@@ -745,7 +745,7 @@ export default function NotificationsPage() {
                 onClick={() => setShowDevices(!showDevices)}
                 className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all shadow-md hover:shadow-lg hover:scale-105 ${
                   showDevices 
-                    ? "text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200 border-2 border-blue-300" 
+                    ? "text-primary bg-gradient-to-br from-primary/10 to-blue-200 border-2 border-primary/30" 
                     : "text-gray-700 bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 hover:from-gray-50 hover:to-gray-100 hover:border-gray-300"
                 }`}
                 title="Manage registered devices"
@@ -753,7 +753,7 @@ export default function NotificationsPage() {
                 <Smartphone className="w-4 h-4" />
                 <span className="hidden sm:inline">Devices</span>
                 {devices.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-xs font-semibold bg-blue-500 text-white rounded-full">{devices.length}</span>
+                  <span className="px-1.5 py-0.5 text-xs font-semibold bg-primary text-white rounded-full">{devices.length}</span>
                 )}
               </button>
 
@@ -867,10 +867,10 @@ export default function NotificationsPage() {
 
           {/* Registered Devices Panel */}
           {showDevices && (
-            <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-xl border-2 border-blue-200 p-5 shadow-lg backdrop-blur-sm transition-all animate-fade-in-up">
+            <div className="bg-gradient-to-br from-white to-primary/10/50 rounded-xl border-2 border-primary/20 p-5 shadow-lg backdrop-blur-sm transition-all animate-fade-in-up">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-blue-600" />
+                  <Smartphone className="w-5 h-5 text-primary" />
                   <h2 className="text-lg font-semibold text-gray-900">Registered Devices</h2>
                 </div>
                 <span className="text-sm text-gray-500">
@@ -880,7 +880,7 @@ export default function NotificationsPage() {
               
               {devicesLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+                  <RefreshCw className="w-6 h-6 animate-spin text-primary" />
                   <span className="ml-2 text-gray-500">Loading devices...</span>
                 </div>
               ) : devices.length === 0 ? (
@@ -901,13 +901,13 @@ export default function NotificationsPage() {
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                             device.deviceType === 'ios' ? 'bg-gray-100' :
-                            device.deviceType === 'android' ? 'bg-green-100' :
-                            'bg-blue-100'
+                            device.deviceType === 'android' ? 'bg-accent/10' :
+                            'bg-primary/10'
                           }`}>
                             <Smartphone className={`w-5 h-5 ${
                               device.deviceType === 'ios' ? 'text-gray-600' :
-                              device.deviceType === 'android' ? 'text-green-600' :
-                              'text-blue-600'
+                              device.deviceType === 'android' ? 'text-accent' :
+                              'text-primary'
                             }`} />
                           </div>
                           <div>
@@ -967,7 +967,7 @@ export default function NotificationsPage() {
                     setTypeFilter('all');
                     setPriorityFilter('all');
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-lg transition-all border-2 border-emerald-200 hover:border-emerald-300 shadow-md hover:shadow-lg hover:scale-105"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-emerald-700 bg-gradient-to-r from-emerald-50 to-accent/10 hover:from-emerald-100 hover:to-accent/10 rounded-lg transition-all border-2 border-emerald-200 hover:border-emerald-300 shadow-md hover:shadow-lg hover:scale-105"
                 >
                   <X className="w-4 h-4" />
                   Clear Filters

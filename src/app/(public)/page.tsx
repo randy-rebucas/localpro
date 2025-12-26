@@ -75,7 +75,7 @@ export default function Home() {
       icon: <ShoppingBag className="w-7 h-7" />,
       title: "Supplies Marketplace",
       description: "Buy and sell equipment, materials, and business supplies",
-      color: "from-blue-500 to-indigo-600",
+      color: "from-primary to-indigo-600",
       link: "/supplies",
       image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
@@ -99,7 +99,7 @@ export default function Home() {
       icon: <Wrench className="w-7 h-7" />,
       title: "Facility Care",
       description: "Janitorial, landscaping, pest control, and maintenance",
-      color: "from-cyan-500 to-blue-600",
+      color: "from-cyan-500 to-primary",
       link: "/facility-care",
       image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
     },
@@ -179,7 +179,7 @@ export default function Home() {
       author: "James Rodriguez",
       role: "Property Manager",
       initials: "JR",
-      bgColor: "bg-blue-500",
+      bgColor: "bg-primary",
       rating: 5
     },
     {

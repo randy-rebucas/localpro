@@ -59,7 +59,7 @@ const serviceModules: ServiceModule[] = [
     name: "Academy",
     description: "Educational and certification services",
     icon: <GraduationCap className="w-8 h-8" />,
-    color: "bg-green-100 text-green-700",
+    color: "bg-accent/10 text-accent",
     services: ["Partner with TES", "Run courses", "Certification"],
     route: PACKAGE_REGISTRY.academy.route
   },
@@ -68,7 +68,7 @@ const serviceModules: ServiceModule[] = [
     name: "Rentals",
     description: "Equipment and vehicle rentals",
     icon: <Car className="w-8 h-8" />,
-    color: "bg-blue-100 text-blue-700",
+    color: "bg-primary/10 text-primary",
     services: ["Tool and vehicle rentals"],
     route: PACKAGE_REGISTRY.rentals.route
   },
@@ -265,11 +265,11 @@ export function Dashboard() {
                   <div className={`w-12 h-12 rounded-lg ${module.color} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                     {module.icon}
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-accent group-hover:translate-x-1 transition-all duration-300" />
                 </div>
                 
                 <div className="mb-3">
-                  <h3 className="text-base font-semibold text-gray-700 mb-1 group-hover:text-green-700 transition-colors">
+                  <h3 className="text-base font-semibold text-gray-700 mb-1 group-hover:text-accent transition-colors">
                     {module.name}
                   </h3>
                   <p className="text-sm text-gray-500">
@@ -280,7 +280,7 @@ export function Dashboard() {
                 <div className="space-y-1">
                   {module.services.slice(0, 3).map((service, index) => (
                     <div key={index} className="flex items-center text-sm text-gray-600">
-                      <div className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></div>
+                      <div className="w-1.5 h-1.5 bg-accent/40 rounded-full mr-2"></div>
                       {service}
                     </div>
                   ))}
@@ -310,29 +310,29 @@ export function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-accent" />
                   </div>
-                  <TrendingUp className="w-4 h-4 text-green-500" />
+                  <TrendingUp className="w-4 h-4 text-accent" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-700 mb-1">
                   Active Services
                 </h3>
-                <p className="text-2xl font-bold text-green-600 mb-1">8</p>
+                <p className="text-2xl font-bold text-accent mb-1">8</p>
                 <p className="text-sm text-gray-500">All modules available</p>
               </div>
               
               <div className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600" />
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
                   </div>
-                  <CheckCircle className="w-4 h-4 text-blue-500" />
+                  <CheckCircle className="w-4 h-4 text-primary" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-700 mb-1">
                   User Roles
                 </h3>
-                <p className="text-2xl font-bold text-blue-600 mb-1 capitalize">
+                <p className="text-2xl font-bold text-primary mb-1 capitalize">
                   {user?.roles && user.roles.length > 0
                     ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' ')).join(', ')
                     : "User"}
@@ -382,18 +382,18 @@ export function Dashboard() {
               
               <div className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-accent" />
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs text-green-600 font-medium">Live</span>
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                    <span className="text-xs text-accent font-medium">Live</span>
                   </div>
                 </div>
                 <h3 className="text-base font-semibold text-gray-700 mb-1">
                   Platform Status
                 </h3>
-                <p className="text-2xl font-bold text-green-600 mb-1">Online</p>
+                <p className="text-2xl font-bold text-accent mb-1">Online</p>
                 <p className="text-sm text-gray-500">All systems operational</p>
               </div>
             </div>
@@ -433,7 +433,7 @@ export function Dashboard() {
               </div>
               {recentActivity.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-200">
-                  <button className="w-full text-sm text-green-600 hover:text-green-700 font-medium flex items-center justify-center">
+                  <button className="w-full text-sm text-accent hover:text-accent font-medium flex items-center justify-center">
                     View all activity
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </button>

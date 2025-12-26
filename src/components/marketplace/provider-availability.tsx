@@ -50,7 +50,7 @@ export const ProviderAvailability: React.FC<ProviderAvailabilityProps> = ({
               key={day} 
               className={`p-3 rounded-lg border ${
                 isAvailable 
-                  ? 'bg-green-50 border-green-200' 
+                  ? 'bg-accent/5 border-accent/20' 
                   : 'bg-gray-50 border-gray-200'
               }`}
             >

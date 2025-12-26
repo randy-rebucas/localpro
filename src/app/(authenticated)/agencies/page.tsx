@@ -226,7 +226,7 @@ export default function AgenciesPage() {
                     {agency.services && agency.services.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {agency.services.slice(0, 3).map((service, idx) => (
-                          <span key={idx} className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                          <span key={idx} className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded">
                             {service.category}
                           </span>
                         ))}

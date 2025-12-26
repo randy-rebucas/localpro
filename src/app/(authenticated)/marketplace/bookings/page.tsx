@@ -407,11 +407,11 @@ export default function BookingsPage() {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
       case "confirmed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "in_progress":
         return "bg-purple-100 text-purple-800";
       case "completed":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
@@ -454,7 +454,7 @@ export default function BookingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
       </div>
     );
   }
@@ -525,7 +525,7 @@ export default function BookingsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   {statusOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -543,7 +543,7 @@ export default function BookingsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Bookings</option>
                   <option value="client">As Client</option>
@@ -560,7 +560,7 @@ export default function BookingsPage() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
               
@@ -573,7 +573,7 @@ export default function BookingsPage() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
@@ -603,8 +603,8 @@ export default function BookingsPage() {
           <Card interactive={false}>
             <EmptyState
               icon={Calendar}
-              iconColor="text-blue-600"
-              iconBgColor="bg-blue-100"
+              iconColor="text-primary"
+              iconBgColor="bg-primary/10"
               title="No Bookings Found"
               description={
                 statusFilter === "all" 
@@ -690,11 +690,11 @@ export default function BookingsPage() {
                             </span>
                             <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                               paymentStatus === "paid" || paymentStatus === "PAID"
-                                ? "bg-green-100 text-green-800" 
+                                ? "bg-accent/10 text-accent" 
                                 : paymentStatus === "pending" || paymentStatus === "PENDING"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : paymentStatus === "refunded" || paymentStatus === "REFUNDED"
-                                ? "bg-blue-100 text-blue-800"
+                                ? "bg-primary/10 text-primary"
                                 : "bg-red-100 text-red-800"
                             }`}>
                               {formatStatusLabel(paymentStatus)}
@@ -702,7 +702,7 @@ export default function BookingsPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-2xl font-bold text-green-600">
+                          <div className="text-2xl font-bold text-accent">
                             {new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(totalPrice)}
                           </div>
                           <div className="text-sm text-gray-500">Total</div>
@@ -785,14 +785,14 @@ export default function BookingsPage() {
                       )}
 
                       {booking.status === "completed" && !booking.review?.rating && (
-                        <button className="flex items-center justify-center gap-2 px-4 py-2 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors">
+                        <button className="flex items-center justify-center gap-2 px-4 py-2 border border-accent/30 text-accent rounded-lg hover:bg-accent/5 transition-colors">
                           <Star className="w-4 h-4" />
                           Leave Review
                         </button>
                       )}
 
                       {booking.communication && (
-                        <button className="flex items-center justify-center gap-2 px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors">
+                        <button className="flex items-center justify-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-lg hover:bg-primary/5 transition-colors">
                           <MessageCircle className="w-4 h-4" />
                           Message {booking.status === 'completed' ? 'Provider' : 'Provider'}
                         </button>

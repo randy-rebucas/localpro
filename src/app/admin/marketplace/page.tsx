@@ -1147,8 +1147,8 @@ export default function MarketplacePage() {
   const getCategoryColor = (category: string) => {
     const key = sanitizeCategoryKey(category);
     const colors: Record<string, string> = {
-      cleaning: 'bg-blue-100 text-blue-800',
-      plumbing: 'bg-green-100 text-green-800',
+      cleaning: 'bg-primary/10 text-primary',
+      plumbing: 'bg-accent/10 text-accent',
       electrical: 'bg-yellow-100 text-yellow-800',
       moving: 'bg-purple-100 text-purple-800',
       landscaping: 'bg-emerald-100 text-emerald-800',
@@ -1162,7 +1162,7 @@ export default function MarketplacePage() {
   };
 
   const getStatusColor = (isActive: boolean | undefined) => {
-    return isActive ? 'text-green-600 bg-green-100' : 'text-gray-600 bg-gray-100';
+    return isActive ? 'text-accent bg-accent/10' : 'text-gray-600 bg-gray-100';
   };
 
   const categoriesToDisplay: MarketplaceCategory[] = categoriesData.length
@@ -1185,7 +1185,7 @@ export default function MarketplacePage() {
     return (
       <span
         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-          category.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+          category.isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-800"
         }`}
       >
         {category.isActive ? "Active" : "Inactive"}
@@ -1219,7 +1219,7 @@ export default function MarketplacePage() {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -1248,7 +1248,7 @@ export default function MarketplacePage() {
             <>
               <button
                 onClick={() => setCreateModalOpen(true)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
               >
                 <Plus className="w-3 h-3 mr-1" />
                 Add Service
@@ -1256,7 +1256,7 @@ export default function MarketplacePage() {
               <button
                 onClick={refreshData}
                 disabled={refreshing}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
               >
                 <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1266,7 +1266,7 @@ export default function MarketplacePage() {
             <button
               onClick={fetchCategories}
               disabled={categoryLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             >
               <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -1283,7 +1283,7 @@ export default function MarketplacePage() {
               onClick={() => setActiveTab('services')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === 'services'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1294,7 +1294,7 @@ export default function MarketplacePage() {
               onClick={() => setActiveTab('categories')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === 'categories'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1315,12 +1315,12 @@ export default function MarketplacePage() {
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                   >
                     <Filter className="w-3 h-3 mr-1" />
                     {showFilters ? 'Hide' : 'Show'} Filters
                   </button>
-                  <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring">
                     <Download className="w-3 h-3 mr-1" />
                     Export
                   </button>
@@ -1340,7 +1340,7 @@ export default function MarketplacePage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search services..."
-                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                     </div>
                   </div>
@@ -1350,7 +1350,7 @@ export default function MarketplacePage() {
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(sanitizeCategoryKey(e.target.value))}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="all">All Categories</option>
                       {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
@@ -1371,7 +1371,7 @@ export default function MarketplacePage() {
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="all">All Status</option>
                       <option value="active">Active</option>
@@ -1409,7 +1409,7 @@ export default function MarketplacePage() {
                   <button
                     onClick={() => handleSort('title')}
                     className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                      sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                      sortBy === 'title' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     Title
@@ -1420,7 +1420,7 @@ export default function MarketplacePage() {
                   <button
                     onClick={() => handleSort('category')}
                     className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                      sortBy === 'category' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                      sortBy === 'category' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     Category
@@ -1431,7 +1431,7 @@ export default function MarketplacePage() {
                   <button
                     onClick={() => handleSort('createdAt')}
                     className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                      sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                      sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
                     Date
@@ -1515,7 +1515,7 @@ export default function MarketplacePage() {
                             <>
                               <button 
                                 onClick={() => handleViewService(service._id!)}
-                                className="text-blue-600 hover:text-blue-900"
+                                className="text-primary hover:text-primary"
                                 title="View service details"
                               >
                                 <Eye className="w-3 h-3" />
@@ -1537,7 +1537,7 @@ export default function MarketplacePage() {
                                 });
                                 setEditModalOpen(true);
                               }}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-accent hover:text-accent"
                                 title="Edit service"
                               >
                                 <Edit className="w-3 h-3" />
@@ -1547,7 +1547,7 @@ export default function MarketplacePage() {
                                   setSelectedService(service);
                                   setImageUploadModalOpen(true);
                                 }}
-                                className="text-indigo-600 hover:text-indigo-900"
+                                className="text-primary hover:text-primary"
                                 title="Upload images"
                               >
                                 <ImageIcon className="w-3 h-3" />
@@ -1599,7 +1599,7 @@ export default function MarketplacePage() {
               <button
                 onClick={fetchCategories}
                 disabled={categoryLoading}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
               >
                 <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -1618,7 +1618,7 @@ export default function MarketplacePage() {
                     setCategoryForm({ ...categoryForm, key: sanitizeCategoryKey(e.target.value) })
                   }
                   placeholder="e.g., cleaning"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -1632,7 +1632,7 @@ export default function MarketplacePage() {
                   value={categoryForm.name}
                   onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                   placeholder="Cleaning Services"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   required
                 />
               </div>
@@ -1642,7 +1642,7 @@ export default function MarketplacePage() {
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   placeholder="Optional short description"
                 />
               </div>
@@ -1653,7 +1653,7 @@ export default function MarketplacePage() {
                   value={categoryForm.icon}
                   onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
                   placeholder="e.g., sparkles"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                 />
               </div>
               <div>
@@ -1665,7 +1665,7 @@ export default function MarketplacePage() {
                     setCategoryForm({ ...categoryForm, displayOrder: e.target.value })
                   }
                   placeholder="0"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                 />
               </div>
               <div className="flex items-center">
@@ -1673,7 +1673,7 @@ export default function MarketplacePage() {
                   type="checkbox"
                   checked={categoryForm.isActive}
                   onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
                 />
                 <label className="ml-2 block text-xs text-gray-700">Active</label>
               </div>
@@ -1690,7 +1690,7 @@ export default function MarketplacePage() {
                 <button
                   type="submit"
                   disabled={categorySubmitting}
-                  className="px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 disabled:opacity-50"
+                  className="px-2.5 py-1.5 bg-primary text-white rounded-md text-xs hover:bg-primary/90 disabled:opacity-50"
                 >
                   {categorySubmitting
                     ? editingCategory
@@ -1754,7 +1754,7 @@ export default function MarketplacePage() {
                                 <div className="flex items-center space-x-2">
                                   <button
                                     onClick={() => handleEditCategory(category)}
-                                    className="text-blue-600 hover:text-blue-900"
+                                    className="text-primary hover:text-primary"
                                     title="Edit category"
                                   >
                                     <Edit className="w-3 h-3" />
@@ -1851,7 +1851,7 @@ export default function MarketplacePage() {
             <button
               onClick={handleCreateService}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Service'}
             </button>
@@ -1888,7 +1888,7 @@ export default function MarketplacePage() {
             <button
               onClick={handleUpdateService}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Service'}
             </button>
@@ -1969,7 +1969,7 @@ export default function MarketplacePage() {
             <button
               onClick={handleUploadImages}
               disabled={submitting || !selectedFiles || selectedFiles.length === 0}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Images'}
             </button>
@@ -2029,7 +2029,7 @@ function CreateServiceForm({
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
             required
           />
         </div>
@@ -2043,7 +2043,7 @@ function CreateServiceForm({
                 category: normalizeServiceCategory(e.target.value),
               })
             }
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
               (categoryKey) => {
@@ -2063,7 +2063,7 @@ function CreateServiceForm({
             type="text"
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
         <div>
@@ -2071,7 +2071,7 @@ function CreateServiceForm({
           <select
             value={formData.pricingType}
             onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="fixed">Fixed</option>
             <option value="hourly">Hourly</option>
@@ -2086,7 +2086,7 @@ function CreateServiceForm({
             step="0.01"
             value={formData.basePrice}
             onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
             required
           />
         </div>
@@ -2095,7 +2095,7 @@ function CreateServiceForm({
           <select
             value={formData.currency}
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="PHP">PHP</option>
           </select>
@@ -2107,7 +2107,7 @@ function CreateServiceForm({
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
       </div>
@@ -2116,7 +2116,7 @@ function CreateServiceForm({
         <select
           value={formData.serviceType}
           onChange={(e) => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="one_time">One Time</option>
           <option value="recurring">Recurring</option>
@@ -2132,7 +2132,7 @@ function CreateServiceForm({
           value={formData.serviceArea}
           onChange={(e) => setFormData({ ...formData, serviceArea: e.target.value })}
           placeholder="e.g., New York, Los Angeles"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
     </div>
@@ -2180,7 +2180,7 @@ function EditServiceForm({
             type="text"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
             required
           />
         </div>
@@ -2194,7 +2194,7 @@ function EditServiceForm({
                 category: normalizeServiceCategory(e.target.value),
               })
             }
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             {(categoryOptions.length ? categoryOptions : defaultServiceCategories).map(
               (categoryKey) => {
@@ -2214,7 +2214,7 @@ function EditServiceForm({
             type="text"
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
         <div>
@@ -2222,7 +2222,7 @@ function EditServiceForm({
           <select
             value={formData.pricingType}
             onChange={(e) => setFormData({ ...formData, pricingType: e.target.value as PricingType })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="fixed">Fixed</option>
             <option value="hourly">Hourly</option>
@@ -2237,7 +2237,7 @@ function EditServiceForm({
             step="0.01"
             value={formData.basePrice}
             onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
             required
           />
         </div>
@@ -2246,7 +2246,7 @@ function EditServiceForm({
           <select
             value={formData.currency}
             onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value="PHP">PHP</option>
           </select>
@@ -2258,7 +2258,7 @@ function EditServiceForm({
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
           required
         />
       </div>
@@ -2267,7 +2267,7 @@ function EditServiceForm({
         <select
           value={formData.serviceType}
           onChange={(e) => setFormData({ ...formData, serviceType: e.target.value as ServiceType })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="one_time">One Time</option>
           <option value="recurring">Recurring</option>
@@ -2283,7 +2283,7 @@ function EditServiceForm({
           value={formData.serviceArea}
           onChange={(e) => setFormData({ ...formData, serviceArea: e.target.value })}
           placeholder="e.g., New York, Los Angeles"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         />
       </div>
       <div>
@@ -2292,7 +2292,7 @@ function EditServiceForm({
             type="checkbox"
             checked={formData.isActive}
             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            className="rounded border-gray-300 text-primary focus:ring-ring"
           />
           <span className="text-sm text-gray-700">Active</span>
         </label>
@@ -2330,7 +2330,7 @@ function ImageUploadForm({
           multiple
           accept="image/*"
           onChange={handleFileChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
         />
         <p className="text-xs text-gray-500 mt-1">You can select multiple images</p>
       </div>

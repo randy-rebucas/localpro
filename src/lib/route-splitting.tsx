@@ -17,14 +17,14 @@ import dynamic from 'next/dynamic';
 export const LazyAdminUsersPage = dynamic(
   () => import('@/app/admin/users/page'),
   {
-    loading: () => <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>,
+    loading: () => <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>,
   }
 );
 
 export const LazyAdminAnalyticsPage = dynamic(
   () => import('@/app/admin/analytics/page'),
   {
-    loading: () => <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>,
+    loading: () => <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>,
   }
 );
 

@@ -118,12 +118,12 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading, userName }: A
             alt="Avatar"
             width={96}
             height={96}
-            className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-green-300 transition-colors"
+            className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 group-hover:border-accent/30 transition-colors"
             onError={() => setImageError(true)}
             priority
           />
         ) : (
-          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center border-4 border-gray-200 group-hover:border-green-300 transition-colors">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center border-4 border-gray-200 group-hover:border-accent/30 transition-colors">
             {getInitials() ? (
               <span className="text-2xl font-semibold text-gray-600">{getInitials()}</span>
             ) : (
@@ -134,7 +134,7 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading, userName }: A
         
         {/* Upload Overlay */}
         <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <label className="bg-green-600 text-white p-2 rounded-full cursor-pointer hover:bg-green-700 transition-colors">
+          <label className="bg-accent text-white p-2 rounded-full cursor-pointer hover:bg-accent/90 transition-colors">
             <Camera className="w-4 h-4" />
             <input
               ref={fileInputRef}
@@ -246,7 +246,7 @@ export function AvatarUpload({ currentAvatar, onUpload, isLoading, userName }: A
               <button
                 onClick={handleCrop}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                className="flex-1 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
               >
                 <Upload className="w-4 h-4" />
                 <span>{isLoading ? "Uploading..." : "Upload Avatar"}</span>

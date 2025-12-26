@@ -74,7 +74,7 @@ export function AISchedulingAssistant({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Scheduling Assistant</h3>
       </div>
 
@@ -92,7 +92,7 @@ export function AISchedulingAssistant({
               type="date"
               value={dateRange.start}
               onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
@@ -103,7 +103,7 @@ export function AISchedulingAssistant({
               type="date"
               value={dateRange.end}
               onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -111,7 +111,7 @@ export function AISchedulingAssistant({
         <button
           onClick={handleGetRecommendations}
           disabled={loading}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -143,7 +143,7 @@ export function AISchedulingAssistant({
                 className="border border-gray-200 rounded-lg p-4 bg-gray-50"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <Calendar className="w-5 h-5 text-green-600" />
+                  <Calendar className="w-5 h-5 text-accent" />
                   <div>
                     <div className="font-semibold text-gray-900">
                       {formatDateWithUserSettings(rec.date, userSettings)}
@@ -179,15 +179,15 @@ export function AISchedulingAssistant({
 
                 {rec.optimization && (
                   <div className="grid grid-cols-3 gap-2 text-sm mb-3">
-                    <div className="bg-blue-50 p-2 rounded text-center">
+                    <div className="bg-primary/5 p-2 rounded text-center">
                       <div className="text-xs text-gray-600">Travel Time</div>
                       <div className="font-semibold text-gray-900">
                         {rec.optimization.travelTime} min
                       </div>
                     </div>
-                    <div className="bg-green-50 p-2 rounded text-center">
+                    <div className="bg-accent/5 p-2 rounded text-center">
                       <div className="text-xs text-gray-600">Efficiency</div>
-                      <div className="font-semibold text-green-700">
+                      <div className="font-semibold text-accent">
                         {Math.round((rec.optimization.efficiency || 0) * 100)}%
                       </div>
                     </div>
@@ -206,7 +206,7 @@ export function AISchedulingAssistant({
                     <ul className="text-xs text-gray-600 space-y-1">
                       {rec.suggestions.map((suggestion: string, i: number) => (
                         <li key={i} className="flex items-start gap-1">
-                          <TrendingUp className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                          <TrendingUp className="w-3 h-3 text-accent mt-0.5 flex-shrink-0" />
                           <span>{suggestion}</span>
                         </li>
                       ))}

@@ -20,7 +20,7 @@ export function ScrollProgress() {
   return (
     <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 dark:bg-slate-700 z-50">
       <div
-        className="h-full bg-gradient-to-r from-blue-600 to-emerald-600 transition-all duration-150 ease-out"
+        className="h-full bg-gradient-to-r from-primary to-emerald-600 transition-all duration-150 ease-out"
         style={{ width: `${scrollProgress}%` }}
       />
     </div>
@@ -55,7 +55,7 @@ export function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-8 right-8 w-12 h-12 bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-40 flex items-center justify-center group"
+      className="fixed bottom-8 right-8 w-12 h-12 bg-gradient-to-r from-primary to-emerald-600 hover:from-primary hover:to-emerald-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 z-40 flex items-center justify-center group"
       aria-label="Scroll to top"
     >
       <svg

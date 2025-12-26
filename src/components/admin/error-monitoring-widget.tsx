@@ -79,7 +79,7 @@ export function ErrorMonitoringWidget({ className = "" }: ErrorMonitoringWidgetP
     return (
       <div className={`bg-white p-6 rounded-lg shadow border ${className}`}>
         <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       </div>
     );
@@ -97,13 +97,13 @@ export function ErrorMonitoringWidget({ className = "" }: ErrorMonitoringWidgetP
   }
 
   const getStatusColor = (count: number, threshold: number = 5) => {
-    if (count === 0) return 'text-green-600';
+    if (count === 0) return 'text-accent';
     if (count <= threshold) return 'text-yellow-600';
     return 'text-red-600';
   };
 
   const getStatusIcon = (count: number, threshold: number = 5) => {
-    if (count === 0) return <CheckCircle className="w-5 h-5 text-green-600" />;
+    if (count === 0) return <CheckCircle className="w-5 h-5 text-accent" />;
     if (count <= threshold) return <AlertCircle className="w-5 h-5 text-yellow-600" />;
     return <XCircle className="w-5 h-5 text-red-600" />;
   };
@@ -122,7 +122,7 @@ export function ErrorMonitoringWidget({ className = "" }: ErrorMonitoringWidgetP
         </div>
         <Link
           href="/admin/errors"
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="text-sm text-primary hover:text-primary font-medium"
         >
           View Details →
         </Link>
@@ -154,8 +154,8 @@ export function ErrorMonitoringWidget({ className = "" }: ErrorMonitoringWidgetP
         
         <div className="text-center">
           <div className="flex items-center justify-center mb-1">
-            <Activity className="w-5 h-5 text-blue-600" />
-            <span className="ml-1 text-lg font-bold text-blue-600">
+            <Activity className="w-5 h-5 text-primary" />
+            <span className="ml-1 text-lg font-bold text-primary">
               {stats.todayCount}
             </span>
           </div>

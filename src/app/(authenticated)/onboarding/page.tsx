@@ -385,12 +385,12 @@ export default function OnboardingPage() {
   const progress = ((currentStep - 1) / (steps.length - 1)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-accent/10 via-white to-primary/10 flex items-center justify-center p-4 relative">
       {/* Loading Overlay for Redirect */}
       {isRedirecting && (
         <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 text-green-600 animate-spin" />
+            <Loader2 className="w-12 h-12 text-accent animate-spin" />
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">Setup Complete!</h3>
               <p className="text-sm text-gray-600">Redirecting to your dashboard...</p>
@@ -401,7 +401,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent to-accent rounded-2xl mb-4 shadow-lg">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to LocalPro!</h1>
@@ -418,7 +418,7 @@ export default function OnboardingPage() {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-green-600 to-green-700 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-accent to-accent h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -437,16 +437,16 @@ export default function OnboardingPage() {
                 {index < steps.length - 1 && (
                   <div
                     className={`absolute top-6 left-[60%] w-[80%] h-0.5 z-0 ${
-                      isCompleted ? "bg-green-600" : "bg-gray-200"
+                      isCompleted ? "bg-accent" : "bg-gray-200"
                     }`}
                   />
                 )}
                 <div
                   className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all relative z-10 ${
                     isCompleted
-                      ? "bg-green-600 text-white"
+                      ? "bg-accent text-white"
                       : isCurrent
-                      ? "bg-green-100 text-green-700 border-2 border-green-600"
+                      ? "bg-accent/10 text-accent border-2 border-accent"
                       : "bg-gray-200 text-gray-400"
                   }`}
                 >
@@ -459,7 +459,7 @@ export default function OnboardingPage() {
                 <div className="text-center">
                   <p
                     className={`text-xs font-medium ${
-                      isCurrent ? "text-green-700" : isCompleted ? "text-gray-700" : "text-gray-400"
+                      isCurrent ? "text-accent" : isCompleted ? "text-gray-700" : "text-gray-400"
                     }`}
                   >
                     {step.title}
@@ -475,9 +475,9 @@ export default function OnboardingPage() {
           {currentStepData && (
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                   {currentStepData.icon && (
-                    <currentStepData.icon className="w-5 h-5 text-green-700" />
+                    <currentStepData.icon className="w-5 h-5 text-accent" />
                   )}
                 </div>
                 <div>
@@ -530,7 +530,7 @@ export default function OnboardingPage() {
                         className={`w-full px-4 py-3 pr-10 bg-white border rounded-lg text-gray-700 focus:outline-none transition-all duration-200 shadow-sm appearance-none ${
                           errors.gender 
                             ? "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500" 
-                            : "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            : "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-ring focus:border-accent"
                         }`}
                       >
                         <option value="">Select your gender</option>
@@ -570,11 +570,11 @@ export default function OnboardingPage() {
                     </p>
                     
                     <div className="space-y-3">
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeClient")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-accent border-gray-300 rounded focus:ring-ring"
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Client only</div>
@@ -584,11 +584,11 @@ export default function OnboardingPage() {
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeProvider")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-accent border-gray-300 rounded focus:ring-ring"
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Service Provider</div>
@@ -598,11 +598,11 @@ export default function OnboardingPage() {
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeSupplier")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-accent border-gray-300 rounded focus:ring-ring"
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Supplier</div>
@@ -612,11 +612,11 @@ export default function OnboardingPage() {
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all">
+                      <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-lg hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
                         <input
                           type="checkbox"
                           {...register("wantsToBeInstructor")}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                          className="mt-1 w-5 h-5 text-accent border-gray-300 rounded focus:ring-ring"
                         />
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">Instructor</div>
@@ -627,8 +627,8 @@ export default function OnboardingPage() {
                       </label>
                     </div>
 
-                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-sm text-blue-800">
+                    <div className="mt-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <p className="text-sm text-primary">
                         <strong>Note:</strong> You can always add or change your roles later in your profile settings. 
                         Everyone starts as a Client to access basic platform features.
                       </p>
@@ -816,7 +816,7 @@ export default function OnboardingPage() {
                         }
                         await handleNext();
                       }}
-                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-accent to-accent text-white rounded-lg hover:from-accent hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
                     >
                       {isSubmitting ? (
                         <>

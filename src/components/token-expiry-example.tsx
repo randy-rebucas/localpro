@@ -181,9 +181,9 @@ export function TokenExpiryExample() {
 
         {/* User Data Display */}
         {userData && (
-          <div className="mb-6 p-4 bg-green-50 rounded-lg">
-            <h2 className="text-lg font-semibold mb-2 text-green-800">User Data</h2>
-            <pre className="text-sm text-green-700">
+          <div className="mb-6 p-4 bg-accent/5 rounded-lg">
+            <h2 className="text-lg font-semibold mb-2 text-accent">User Data</h2>
+            <pre className="text-sm text-accent">
               {JSON.stringify(userData, null, 2)}
             </pre>
           </div>
@@ -202,7 +202,7 @@ export function TokenExpiryExample() {
           <button
             onClick={fetchUserDataSafe}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? "Loading..." : "Safe API Call"}
           </button>
@@ -210,7 +210,7 @@ export function TokenExpiryExample() {
           <button
             onClick={fetchUserDataWithValidation}
             disabled={loading}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+            className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 disabled:opacity-50"
           >
             {loading ? "Loading..." : "With Validation"}
           </button>
@@ -225,9 +225,9 @@ export function TokenExpiryExample() {
         </div>
 
         {/* Instructions */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-blue-800 mb-2">How to Use</h3>
-          <ul className="text-sm text-blue-700 space-y-1">
+        <div className="mt-6 p-4 bg-primary/5 rounded-lg">
+          <h3 className="font-semibold text-primary mb-2">How to Use</h3>
+          <ul className="text-sm text-primary space-y-1">
             <li><strong>Safe API Call:</strong> Uses automatic token expiry handling</li>
             <li><strong>With Validation:</strong> Validates token before making API call</li>
             <li><strong>With Error Handler:</strong> Uses custom error handling with fallback</li>

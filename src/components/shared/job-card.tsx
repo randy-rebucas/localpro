@@ -55,7 +55,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
                 <h3 className="font-semibold text-gray-900">{job.title}</h3>
                 {job.status && (
                   <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                    job.status === "active" ? "bg-green-100 text-green-800" :
+                    job.status === "active" ? "bg-accent/10 text-accent" :
                     job.status === "paused" ? "bg-yellow-100 text-yellow-800" :
                     "bg-gray-100 text-gray-800"
                   }`}>
@@ -93,12 +93,12 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
           {/* Job Tags - Category, Type, Experience */}
           <div className="flex flex-wrap gap-1.5 mb-3">
             {job.category && (
-              <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-md font-medium">
+              <span className="text-xs bg-accent/5 text-accent px-2 py-0.5 rounded-md font-medium">
                 {typeof job.category === 'object' ? job.category.name : job.category}
               </span>
             )}
             {job.jobType && (
-              <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-medium">
+              <span className="text-xs bg-primary/5 text-primary px-2 py-0.5 rounded-md font-medium">
                 {job.jobType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
               </span>
             )}
@@ -136,7 +136,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
             {job.salary && (
               <div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-green-600`}>
+                  <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-accent`}>
                     ₱{job.salary.min?.toLocaleString()}
                     {job.salary.max && ` - ₱${job.salary.max.toLocaleString()}`}
                   </span>
@@ -159,7 +159,7 @@ export function JobCard({ job, viewMode = "list", onApply }: JobCardProps) {
             {onApply && job.status === "active" && (
               <button 
                 onClick={() => onApply(job._id || "")}
-                className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1`}
+                className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90 active:bg-accent/80 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-1`}
               >
                 <Briefcase className="w-4 h-4" />
                 Apply Now

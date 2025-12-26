@@ -12,26 +12,26 @@ import {
 
 export function SkeletonShowcase() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold text-gray-700 dark:text-white">
+          <h1 className="text-3xl font-bold text-foreground">
             Loading Skeleton Showcase
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground">
             Beautiful loading states for your LocalPro application
           </p>
         </div>
 
         {/* Basic Skeletons */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Basic Skeletons
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-lg font-medium text-foreground">
                 Default Pulse
               </h3>
               <div className="space-y-3">
@@ -42,7 +42,7 @@ export function SkeletonShowcase() {
             </div>
             
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-lg font-medium text-foreground">
                 Shimmer Effect
               </h3>
               <div className="space-y-3">
@@ -53,7 +53,7 @@ export function SkeletonShowcase() {
             </div>
             
             <div className="space-y-4">
-              <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-lg font-medium text-foreground">
                 Wave Effect
               </h3>
               <div className="space-y-3">
@@ -67,7 +67,7 @@ export function SkeletonShowcase() {
 
         {/* Card Skeletons */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Card Skeletons
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -79,7 +79,7 @@ export function SkeletonShowcase() {
 
         {/* Table Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Table Skeleton
           </h2>
           <SkeletonTable />
@@ -87,7 +87,7 @@ export function SkeletonShowcase() {
 
         {/* Dashboard Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Dashboard Skeleton
           </h2>
           <SkeletonDashboard />
@@ -95,7 +95,7 @@ export function SkeletonShowcase() {
 
         {/* Profile Skeleton */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-700 dark:text-white">
+          <h2 className="text-2xl font-semibold text-foreground">
             Profile Skeleton
           </h2>
           <SkeletonProfile />

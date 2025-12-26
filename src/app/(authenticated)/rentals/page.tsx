@@ -384,7 +384,7 @@ export default function RentalsPage() {
         {/* Animated Background Blobs */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
           <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -437,7 +437,7 @@ export default function RentalsPage() {
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-emerald-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
 
@@ -622,7 +622,7 @@ export default function RentalsPage() {
               {/* Want to List Rentals - for clients */}
               {isClient && !isProvider && !isAdmin && (
                 <div className="pt-6 border-t-2 border-gray-200">
-                  <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                  <div className="bg-gradient-to-br from-emerald-50 to-accent/10 rounded-lg p-4 border border-emerald-200">
                     <div className="flex items-start gap-3 mb-3">
                       <Building2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                       <div>
@@ -675,7 +675,7 @@ export default function RentalsPage() {
 
               {/* Need Help Section */}
               <div className="pt-6 border-t-2 border-gray-200">
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border border-emerald-200">
+                <div className="bg-gradient-to-br from-emerald-50 to-accent/10 rounded-lg p-4 border border-emerald-200">
                   <div className="flex items-start gap-3 mb-3">
                     <HelpCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
                     <div>

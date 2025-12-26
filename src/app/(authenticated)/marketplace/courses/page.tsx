@@ -620,7 +620,7 @@ export default function MarketplaceCoursesPage() {
 
     const getLevelColor = (level: Course['level']) => {
         switch (level) {
-            case 'beginner': return 'bg-green-100 text-green-800';
+            case 'beginner': return 'bg-accent/10 text-accent';
             case 'intermediate': return 'bg-yellow-100 text-yellow-800';
             case 'advanced': return 'bg-orange-100 text-orange-800';
             case 'expert': return 'bg-red-100 text-red-800';
@@ -863,7 +863,7 @@ export default function MarketplaceCoursesPage() {
                                 <select
                                     value={filters.category}
                                     onChange={(e) => handleFilterChange("category", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     {courseCategories.map(category => (
                                         <option key={category.value} value={category.value}>
@@ -881,7 +881,7 @@ export default function MarketplaceCoursesPage() {
                                 <select
                                     value={filters.level}
                                     onChange={(e) => handleFilterChange("level", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     {levels.map(level => (
                                         <option key={level.value} value={level.value}>
@@ -902,7 +902,7 @@ export default function MarketplaceCoursesPage() {
                                         placeholder="Min"
                                         value={filters.priceRange[0]}
                                         onChange={(e) => handleFilterChange("priceRange", [Number(e.target.value), filters.priceRange[1]])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                     <span className="text-gray-500">to</span>
                                     <input
@@ -910,7 +910,7 @@ export default function MarketplaceCoursesPage() {
                                         placeholder="Max"
                                         value={filters.priceRange[1]}
                                         onChange={(e) => handleFilterChange("priceRange", [filters.priceRange[0], Number(e.target.value)])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -923,7 +923,7 @@ export default function MarketplaceCoursesPage() {
                                 <select
                                     value={filters.language}
                                     onChange={(e) => handleFilterChange("language", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     {languages.map(lang => (
                                         <option key={lang.value} value={lang.value}>
@@ -941,7 +941,7 @@ export default function MarketplaceCoursesPage() {
                                 <select
                                     value={filters.rating}
                                     onChange={(e) => handleFilterChange("rating", Number(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     <option value={0}>Any Rating</option>
                                     <option value={4}>4+ Stars</option>
@@ -961,7 +961,7 @@ export default function MarketplaceCoursesPage() {
                                         placeholder="Min"
                                         value={filters.duration[0]}
                                         onChange={(e) => handleFilterChange("duration", [Number(e.target.value), filters.duration[1]])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                     <span className="text-gray-500">to</span>
                                     <input
@@ -969,7 +969,7 @@ export default function MarketplaceCoursesPage() {
                                         placeholder="Max"
                                         value={filters.duration[1]}
                                         onChange={(e) => handleFilterChange("duration", [filters.duration[0], Number(e.target.value)])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -981,7 +981,7 @@ export default function MarketplaceCoursesPage() {
                                         type="checkbox"
                                         checked={filters.isFree}
                                         onChange={(e) => handleFilterChange("isFree", e.target.checked)}
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className="rounded border-gray-300 text-primary focus:ring-ring"
                                     />
                                     <span className="ml-2 text-sm text-gray-700">Free courses only</span>
                                 </label>
@@ -990,7 +990,7 @@ export default function MarketplaceCoursesPage() {
                                         type="checkbox"
                                         checked={filters.isFeatured}
                                         onChange={(e) => handleFilterChange("isFeatured", e.target.checked)}
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        className="rounded border-gray-300 text-primary focus:ring-ring"
                                     />
                                     <span className="ml-2 text-sm text-gray-700">Featured courses only</span>
                                 </label>
@@ -1017,13 +1017,13 @@ export default function MarketplaceCoursesPage() {
                             {/* Search */}
                             <div className="flex-1">
                                 <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-500 transition-colors" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-primary transition-colors" />
                                     <input
                                         type="text"
                                         placeholder="Search courses, instructors, or topics..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 hover:border-gray-400"
                                     />
                                     {searchQuery && (
                                         <button
@@ -1084,8 +1084,8 @@ export default function MarketplaceCoursesPage() {
                             <Card interactive={false}>
                                 <EmptyState
                                     icon={BookOpen}
-                                    iconColor="text-blue-600"
-                                    iconBgColor="bg-blue-100"
+                                    iconColor="text-primary"
+                                    iconBgColor="bg-primary/10"
                                     title="No Courses Found"
                                     description="We couldn't find any courses matching your criteria. Try adjusting your search terms or filters."
                                     actions={[
@@ -1277,7 +1277,7 @@ const CourseCard = React.memo(function CourseCard({
                                 {course.title || 'Untitled Course'}
                             </h3>
                             <div className="text-right ml-3 flex-shrink-0">
-                                <div className="text-xl font-bold text-blue-600">
+                                <div className="text-xl font-bold text-primary">
                                     {formatPrice(pricing)}
                                 </div>
                                 {discountedPrice && discountedPrice < regularPrice && (
@@ -1366,7 +1366,7 @@ const CourseCard = React.memo(function CourseCard({
                             <div className="mb-2">
                                 <div className="flex flex-wrap gap-1">
                                     {course.tags.slice(0, 3).map((tag, index) => (
-                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
                                             {tag}
                                         </span>
                                     ))}
@@ -1396,19 +1396,19 @@ const CourseCard = React.memo(function CourseCard({
                                 </span>
                             )}
                             {course.isEnrolled && (
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded-full">
                                     <GraduationCap className="w-3 h-3 inline mr-1" />
                                     Enrolled
                                 </span>
                             )}
                             {course.certification?.isAvailable && (
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                                     <Award className="w-3 h-3 inline mr-1" />
                                     Certificate Available
                                 </span>
                             )}
                             {instructor.verified && (
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded-full">
                                     Verified Instructor
                                 </span>
                             )}

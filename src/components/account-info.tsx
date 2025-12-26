@@ -37,7 +37,7 @@ export function AccountInfo({ profile, formattedCreatedAt }: AccountInfoProps) {
         
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-600">Status</span>
-          <span className="flex items-center text-sm font-medium text-green-600">
+          <span className="flex items-center text-sm font-medium text-accent">
             <CheckCircle className="w-4 h-4 mr-1" />
             {profile?.status === 'active' ? 'Active' : profile?.status || 'Active'}
           </span>
@@ -47,7 +47,7 @@ export function AccountInfo({ profile, formattedCreatedAt }: AccountInfoProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Verification</span>
             <span className={`flex items-center text-sm font-medium ${
-              profile.isVerified ? 'text-green-600' : 'text-yellow-600'
+              profile.isVerified ? 'text-accent' : 'text-yellow-600'
             }`}>
               {profile.isVerified ? (
                 <>
@@ -67,7 +67,7 @@ export function AccountInfo({ profile, formattedCreatedAt }: AccountInfoProps) {
         {profile?.trustScore !== undefined && profile.trustScore > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-600">Trust Score</span>
-            <span className="flex items-center text-sm font-medium text-blue-600">
+            <span className="flex items-center text-sm font-medium text-primary">
               <Shield className="w-4 h-4 mr-1" />
               {profile.trustScore}/100
             </span>

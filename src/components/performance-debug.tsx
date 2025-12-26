@@ -19,7 +19,7 @@ interface PerformanceMetric {
 }
 
 const RATING_COLORS = {
-  good: 'text-green-600 bg-green-50',
+  good: 'text-accent bg-accent/5',
   'needs-improvement': 'text-yellow-600 bg-yellow-50',
   poor: 'text-red-600 bg-red-50',
 };
@@ -93,7 +93,7 @@ export function PerformanceDebug() {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 left-4 z-[9999] bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 flex items-center gap-2"
+        className="fixed bottom-4 left-4 z-[9999] bg-primary hover:bg-primary/90 text-white p-3 rounded-full shadow-lg transition-all duration-200 flex items-center gap-2"
         aria-label="Toggle Performance Debug"
       >
         <Activity className="w-5 h-5" />
@@ -110,7 +110,7 @@ export function PerformanceDebug() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
             <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-600" />
+              <Zap className="w-5 h-5 text-primary" />
               <h3 className="font-semibold text-gray-900">Performance Debug</h3>
             </div>
             <button

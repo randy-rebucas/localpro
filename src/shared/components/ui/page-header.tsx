@@ -36,11 +36,11 @@ export function PageHeader({
     
     switch (variant) {
       case "primary":
-        return `${baseStyles} bg-green-600 text-white hover:bg-green-700`;
+        return `${baseStyles} bg-primary text-primary-foreground hover:bg-primary/90`;
       case "secondary":
-        return `${baseStyles} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+        return `${baseStyles} bg-secondary text-secondary-foreground hover:bg-secondary/80`;
       case "outline":
-        return `${baseStyles} border border-gray-300 text-gray-700 hover:bg-gray-50`;
+        return `${baseStyles} border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground`;
       default:
         return baseStyles;
     }
@@ -49,10 +49,10 @@ export function PageHeader({
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between ${className}`}>
       <div>
-        <h1 className={`${titleSizes[titleSize]} font-bold text-gray-700`}>
+        <h1 className={`${titleSizes[titleSize]} font-bold text-foreground`}>
           {title}
         </h1>
-        <p className="text-gray-600 mt-1">{subtitle}</p>
+        <p className="text-muted-foreground mt-1">{subtitle}</p>
       </div>
       
       {actions.length > 0 && (

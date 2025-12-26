@@ -378,8 +378,8 @@ export default function AdminAnnouncementsPage() {
 
   const getTypeColor = (type?: string) => {
     const colors: Record<string, string> = {
-      general: 'bg-blue-100 text-blue-800',
-      update: 'bg-green-100 text-green-800',
+      general: 'bg-primary/10 text-primary',
+      update: 'bg-accent/10 text-accent',
       maintenance: 'bg-yellow-100 text-yellow-800',
       promotion: 'bg-purple-100 text-purple-800',
       alert: 'bg-red-100 text-red-800'
@@ -390,7 +390,7 @@ export default function AdminAnnouncementsPage() {
   const getPriorityColor = (priority?: string) => {
     const colors: Record<string, string> = {
       low: 'bg-gray-100 text-gray-800',
-      medium: 'bg-blue-100 text-blue-800',
+      medium: 'bg-primary/10 text-primary',
       high: 'bg-orange-100 text-orange-800',
       urgent: 'bg-red-100 text-red-800'
     };
@@ -400,8 +400,8 @@ export default function AdminAnnouncementsPage() {
   const getStatusColor = (status?: string) => {
     const colors: Record<string, string> = {
       draft: 'bg-gray-100 text-gray-800',
-      published: 'bg-green-100 text-green-800',
-      scheduled: 'bg-blue-100 text-blue-800',
+      published: 'bg-accent/10 text-accent',
+      scheduled: 'bg-primary/10 text-primary',
       archived: 'bg-yellow-100 text-yellow-800'
     };
     return colors[status || 'draft'] || 'bg-gray-100 text-gray-800';
@@ -423,7 +423,7 @@ export default function AdminAnnouncementsPage() {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -451,7 +451,7 @@ export default function AdminAnnouncementsPage() {
               resetFormData();
               setCreateModalOpen(true);
             }}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90"
           >
             <Plus className="w-3 h-3 mr-1" />
             Create
@@ -476,16 +476,16 @@ export default function AdminAnnouncementsPage() {
                 <p className="text-xs text-gray-500">Total</p>
                 <p className="text-xl font-bold text-gray-900">{statistics.totalAnnouncements || 0}</p>
               </div>
-              <Megaphone className="w-6 h-6 text-blue-500" />
+              <Megaphone className="w-6 h-6 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Published</p>
-                <p className="text-xl font-bold text-green-600">{statistics.publishedAnnouncements || 0}</p>
+                <p className="text-xl font-bold text-accent">{statistics.publishedAnnouncements || 0}</p>
               </div>
-              <CheckCircle className="w-6 h-6 text-green-500" />
+              <CheckCircle className="w-6 h-6 text-accent" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -501,9 +501,9 @@ export default function AdminAnnouncementsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Scheduled</p>
-                <p className="text-xl font-bold text-blue-600">{statistics.scheduledAnnouncements || 0}</p>
+                <p className="text-xl font-bold text-primary">{statistics.scheduledAnnouncements || 0}</p>
               </div>
-              <Clock className="w-6 h-6 text-blue-500" />
+              <Clock className="w-6 h-6 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -651,7 +651,7 @@ export default function AdminAnnouncementsPage() {
               <button
                 onClick={() => handleSort('title')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'title' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'title' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Title
@@ -662,7 +662,7 @@ export default function AdminAnnouncementsPage() {
               <button
                 onClick={() => handleSort('priority')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'priority' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'priority' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Priority
@@ -673,7 +673,7 @@ export default function AdminAnnouncementsPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Date
@@ -752,14 +752,14 @@ export default function AdminAnnouncementsPage() {
                           setSelectedAnnouncement(announcement);
                           setViewModalOpen(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary hover:text-primary"
                         title="View"
                       >
                         <Eye className="w-3 h-3" />
                       </button>
                       <button 
                         onClick={() => openEditModal(announcement)}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-accent hover:text-accent"
                         title="Edit"
                       >
                         <Edit className="w-3 h-3" />
@@ -857,13 +857,13 @@ export default function AdminAnnouncementsPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500">Analytics</label>
                 <div className="grid grid-cols-3 gap-4 mt-2">
-                  <div className="bg-blue-50 p-3 rounded">
+                  <div className="bg-primary/5 p-3 rounded">
                     <p className="text-xs text-gray-500">Views</p>
-                    <p className="text-lg font-bold text-blue-600">{selectedAnnouncement.analytics.views || 0}</p>
+                    <p className="text-lg font-bold text-primary">{selectedAnnouncement.analytics.views || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-3 rounded">
+                  <div className="bg-accent/5 p-3 rounded">
                     <p className="text-xs text-gray-500">Acknowledged</p>
-                    <p className="text-lg font-bold text-green-600">{selectedAnnouncement.analytics.acknowledged || 0}</p>
+                    <p className="text-lg font-bold text-accent">{selectedAnnouncement.analytics.acknowledged || 0}</p>
                   </div>
                   <div className="bg-purple-50 p-3 rounded">
                     <p className="text-xs text-gray-500">Comments</p>
@@ -903,7 +903,7 @@ export default function AdminAnnouncementsPage() {
             <button
               onClick={createModalOpen ? handleCreateAnnouncement : handleUpdateAnnouncement}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Saving...' : (createModalOpen ? 'Create' : 'Update')}
             </button>
@@ -1040,7 +1040,7 @@ export default function AdminAnnouncementsPage() {
                 type="checkbox"
                 checked={formData.isSticky}
                 onChange={(e) => setFormData({ ...formData, isSticky: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm text-gray-700">Pin to top</span>
             </label>
@@ -1050,7 +1050,7 @@ export default function AdminAnnouncementsPage() {
                 type="checkbox"
                 checked={formData.allowComments}
                 onChange={(e) => setFormData({ ...formData, allowComments: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm text-gray-700">Allow comments</span>
             </label>
@@ -1060,7 +1060,7 @@ export default function AdminAnnouncementsPage() {
                 type="checkbox"
                 checked={formData.requireAcknowledgment}
                 onChange={(e) => setFormData({ ...formData, requireAcknowledgment: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm text-gray-700">Require acknowledgment</span>
             </label>

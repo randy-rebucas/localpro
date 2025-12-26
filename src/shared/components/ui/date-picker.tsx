@@ -134,15 +134,15 @@ export function DatePicker({
           disabled={disabled}
           className="cursor-pointer pr-10"
         />
-        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg p-4 w-80">
+        <div className="absolute z-50 mt-2 bg-popover text-popover-foreground border border-border rounded-lg shadow-lg p-4 w-80">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigateMonth("prev")}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-accent rounded"
             >
               ←
             </button>
@@ -154,7 +154,7 @@ export function DatePicker({
             </h3>
             <button
               onClick={() => navigateMonth("next")}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-accent rounded"
             >
               →
             </button>
@@ -162,7 +162,7 @@ export function DatePicker({
 
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-gray-600 py-1">
+              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
                 {day}
               </div>
             ))}
@@ -186,10 +186,10 @@ export function DatePicker({
                   }}
                   disabled={disabled}
                   className={`
-                    aspect-square rounded hover:bg-gray-100 transition-colors
-                    ${disabled ? "text-gray-300 cursor-not-allowed" : "cursor-pointer"}
-                    ${selected ? "bg-blue-500 text-white hover:bg-blue-600" : ""}
-                    ${today && !selected ? "border-2 border-blue-500" : ""}
+                    aspect-square rounded hover:bg-muted transition-colors
+                    ${disabled ? "text-muted-foreground/40 cursor-not-allowed" : "cursor-pointer"}
+                    ${selected ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+                    ${today && !selected ? "border-2 border-primary" : ""}
                   `}
                 >
                   {day}
@@ -199,8 +199,8 @@ export function DatePicker({
           </div>
 
           {showTime && selectedDate && (
-            <div className="mt-4 pt-4 border-t">
-              <label className="block text-sm font-medium mb-2">Time</label>
+            <div className="mt-4 pt-4 border-t border-border">
+              <label className="block text-sm font-medium mb-2 text-foreground">Time</label>
               <Input
                 type="time"
                 value={

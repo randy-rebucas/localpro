@@ -262,13 +262,13 @@ export default function AdminActivityPage() {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      marketplace: 'bg-blue-100 text-blue-800',
-      job_board: 'bg-green-100 text-green-800',
+      marketplace: 'bg-primary/10 text-primary',
+      job_board: 'bg-accent/10 text-accent',
       academy: 'bg-purple-100 text-purple-800',
       financial: 'bg-yellow-100 text-yellow-800',
       communication: 'bg-cyan-100 text-cyan-800',
       authentication: 'bg-gray-100 text-gray-800',
-      profile: 'bg-indigo-100 text-indigo-800',
+      profile: 'bg-primary/10 text-primary',
       agency: 'bg-orange-100 text-orange-800',
       referral: 'bg-pink-100 text-pink-800',
       verification: 'bg-emerald-100 text-emerald-800',
@@ -284,7 +284,7 @@ export default function AdminActivityPage() {
   const getImpactColor = (impact: string) => {
     const colors: Record<string, string> = {
       low: 'bg-gray-100 text-gray-800',
-      medium: 'bg-blue-100 text-blue-800',
+      medium: 'bg-primary/10 text-primary',
       high: 'bg-orange-100 text-orange-800',
       critical: 'bg-red-100 text-red-800'
     };
@@ -320,7 +320,7 @@ export default function AdminActivityPage() {
             <button
               onClick={fetchData}
               disabled={loading}
-              className="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="inline-flex items-center justify-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Try Again
@@ -371,16 +371,16 @@ export default function AdminActivityPage() {
                 <p className="text-xs text-gray-500">Total Activities</p>
                 <p className="text-2xl font-bold text-gray-900">{statistics.totalActivities?.toLocaleString() || 0}</p>
               </div>
-              <Activity className="w-8 h-8 text-blue-500" />
+              <Activity className="w-8 h-8 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Total Points</p>
-                <p className="text-2xl font-bold text-green-600">{statistics.totalPoints?.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold text-accent">{statistics.totalPoints?.toLocaleString() || 0}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-8 h-8 text-accent" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -547,7 +547,7 @@ export default function AdminActivityPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Time
@@ -558,7 +558,7 @@ export default function AdminActivityPage() {
               <button
                 onClick={() => handleSort('points')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'points' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'points' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Points
@@ -569,7 +569,7 @@ export default function AdminActivityPage() {
               <button
                 onClick={() => handleSort('impact')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'impact' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'impact' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Impact
@@ -628,7 +628,7 @@ export default function AdminActivityPage() {
                     </span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
-                    <span className="text-xs font-medium text-green-600">+{activity.points}</span>
+                    <span className="text-xs font-medium text-accent">+{activity.points}</span>
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap">
                     <div className="flex items-center text-xs text-gray-500">
@@ -642,7 +642,7 @@ export default function AdminActivityPage() {
                         setSelectedActivity(activity);
                         setViewModalOpen(true);
                       }}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary"
                       title="View details"
                     >
                       <Eye className="w-3 h-3" />
@@ -687,7 +687,7 @@ export default function AdminActivityPage() {
                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getImpactColor(selectedActivity.impact)}`}>
                   {selectedActivity.impact}
                 </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
                   +{selectedActivity.points} pts
                 </span>
               </div>
@@ -757,17 +757,17 @@ export default function AdminActivityPage() {
               <div>
                 <label className="text-xs font-medium text-gray-500">Analytics</label>
                 <div className="grid grid-cols-4 gap-2 mt-1">
-                  <div className="bg-blue-50 p-2 rounded text-center">
+                  <div className="bg-primary/5 p-2 rounded text-center">
                     <p className="text-xs text-gray-500">Views</p>
-                    <p className="text-sm font-bold text-blue-600">{selectedActivity.analytics.views || 0}</p>
+                    <p className="text-sm font-bold text-primary">{selectedActivity.analytics.views || 0}</p>
                   </div>
                   <div className="bg-red-50 p-2 rounded text-center">
                     <p className="text-xs text-gray-500">Likes</p>
                     <p className="text-sm font-bold text-red-600">{selectedActivity.analytics.likes || 0}</p>
                   </div>
-                  <div className="bg-green-50 p-2 rounded text-center">
+                  <div className="bg-accent/5 p-2 rounded text-center">
                     <p className="text-xs text-gray-500">Shares</p>
-                    <p className="text-sm font-bold text-green-600">{selectedActivity.analytics.shares || 0}</p>
+                    <p className="text-sm font-bold text-accent">{selectedActivity.analytics.shares || 0}</p>
                   </div>
                   <div className="bg-purple-50 p-2 rounded text-center">
                     <p className="text-xs text-gray-500">Comments</p>

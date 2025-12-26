@@ -226,7 +226,7 @@ const normalizeAnnouncement = (announcement: Record<string, unknown>, currentUse
 const getAnnouncementIcon = (type: AnnouncementType) => {
   switch (type) {
     case 'system':
-      return <AlertCircle className="w-5 h-5 text-blue-600" />;
+      return <AlertCircle className="w-5 h-5 text-primary" />;
     case 'maintenance':
       return <Wrench className="w-5 h-5 text-orange-600" />;
     case 'feature':
@@ -236,13 +236,13 @@ const getAnnouncementIcon = (type: AnnouncementType) => {
     case 'promotion':
       return <Gift className="w-5 h-5 text-yellow-600" />;
     case 'policy':
-      return <FileText className="w-5 h-5 text-indigo-600" />;
+      return <FileText className="w-5 h-5 text-primary" />;
     case 'event':
-      return <Calendar className="w-5 h-5 text-green-600" />;
+      return <Calendar className="w-5 h-5 text-accent" />;
     case 'emergency':
       return <AlertTriangle className="w-5 h-5 text-red-600" />;
     case 'update':
-      return <Bell className="w-5 h-5 text-blue-600" />;
+      return <Bell className="w-5 h-5 text-primary" />;
     default:
       return <Megaphone className="w-5 h-5 text-gray-600" />;
   }
@@ -251,15 +251,15 @@ const getAnnouncementIcon = (type: AnnouncementType) => {
 // Helper function to get announcement styles based on type and priority
 const getAnnouncementStyles = (type: AnnouncementType, priority: AnnouncementPriority) => {
   const typeStyles: Record<AnnouncementType, string> = {
-    system: "bg-blue-50 border-blue-200",
+    system: "bg-primary/5 border-primary/20",
     maintenance: "bg-orange-50 border-orange-200",
     feature: "bg-purple-50 border-purple-200",
     security: "bg-red-50 border-red-200",
     promotion: "bg-yellow-50 border-yellow-200",
-    policy: "bg-indigo-50 border-indigo-200",
-    event: "bg-green-50 border-green-200",
+    policy: "bg-primary/5 border-primary/20",
+    event: "bg-accent/5 border-accent/20",
     emergency: "bg-red-100 border-red-500 ring-2 ring-red-200",
-    update: "bg-blue-50 border-blue-200",
+    update: "bg-primary/5 border-primary/20",
     general: "bg-gray-50 border-gray-200"
   };
   
@@ -267,7 +267,7 @@ const getAnnouncementStyles = (type: AnnouncementType, priority: AnnouncementPri
     urgent: "border-l-4 border-red-500",
     high: "border-l-4 border-orange-500",
     medium: "border-l-4 border-yellow-500",
-    low: "border-l-4 border-blue-500"
+    low: "border-l-4 border-primary"
   };
   
   return `${typeStyles[type]} ${priorityBorder[priority]} rounded-lg`;
@@ -283,7 +283,7 @@ const getPriorityBadge = (priority: AnnouncementPriority) => {
     case 'medium':
       return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Medium</span>;
     case 'low':
-      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">Low</span>;
+      return <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">Low</span>;
   }
 };
 
@@ -483,7 +483,7 @@ export default function AnnouncementsPage() {
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <Megaphone className="w-5 h-5 text-blue-600" />
+            <Megaphone className="w-5 h-5 text-primary" />
             <h1 className="text-xl font-bold text-gray-800">Announcements</h1>
             <span className="text-sm text-gray-500">
               ({filteredAnnouncements.length} of {announcements.length})
@@ -516,7 +516,7 @@ export default function AnnouncementsPage() {
             placeholder="Search announcements..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:shadow-md transition-shadow"
+            className="w-full pl-10 pr-4 py-2 border-0 shadow-sm rounded-lg focus:ring-2 focus:ring-ring focus:shadow-md transition-shadow"
           />
         </div>
 
@@ -543,7 +543,7 @@ export default function AnnouncementsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value as AnnouncementType | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Types</option>
                   {availableTypes.map(type => (
@@ -558,7 +558,7 @@ export default function AnnouncementsPage() {
                 <select
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value as AnnouncementPriority | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Priorities</option>
                   <option value="urgent">Urgent</option>
@@ -574,7 +574,7 @@ export default function AnnouncementsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as AnnouncementStatus | 'all')}
-                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="all">All Statuses</option>
                   <option value="published">Published</option>
@@ -607,7 +607,7 @@ export default function AnnouncementsPage() {
                   setPriorityFilter('all');
                   setStatusFilter('all');
                 }}
-                className="mt-4 px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                className="mt-4 px-4 py-2 text-sm font-medium text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
               >
                 Clear Filters
               </button>
@@ -637,7 +637,7 @@ export default function AnnouncementsPage() {
                             <h3 className="text-base font-semibold text-gray-800">
                               {announcement.title}
                               {announcement.isSticky && (
-                                <span className="ml-2 text-xs text-blue-600">📌 Pinned</span>
+                                <span className="ml-2 text-xs text-primary">📌 Pinned</span>
                               )}
                             </h3>
                             {getPriorityBadge(announcement.priority)}
@@ -685,7 +685,7 @@ export default function AnnouncementsPage() {
                               </span>
                             )}
                             {announcement.analytics?.totalAcknowledged !== undefined && announcement.analytics.totalAcknowledged > 0 && (
-                              <span className="flex items-center gap-1 text-green-600">
+                              <span className="flex items-center gap-1 text-accent">
                                 <CheckCircle className="w-3 h-3" />
                                 {announcement.analytics.totalAcknowledged} acknowledged
                               </span>
@@ -705,7 +705,7 @@ export default function AnnouncementsPage() {
                               {announcement.tags.map((tag, idx) => (
                                 <span
                                   key={idx}
-                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700"
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/5 text-primary"
                                 >
                                   #{tag}
                                 </span>
@@ -723,7 +723,7 @@ export default function AnnouncementsPage() {
                                   href={attachment.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800"
+                                  className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary"
                                 >
                                   {attachment.filename}
                                   <ExternalLink className="w-2 h-2" />
@@ -737,7 +737,7 @@ export default function AnnouncementsPage() {
                             {hasMoreContent && (
                               <button
                                 onClick={() => setExpandedId(isExpanded ? null : announcementId)}
-                                className="text-xs text-blue-600 hover:text-blue-800"
+                                className="text-xs text-primary hover:text-primary"
                               >
                                 {isExpanded ? 'Show less' : 'Read more'}
                               </button>
@@ -745,14 +745,14 @@ export default function AnnouncementsPage() {
                             {announcement.canAcknowledge && (
                               <button
                                 onClick={() => handleAcknowledge(announcementId)}
-                                className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800"
+                                className="flex items-center gap-1 text-xs text-accent hover:text-accent"
                               >
                                 <CheckCircle className="w-3 h-3" />
                                 Acknowledge
                               </button>
                             )}
                             {announcement.isAcknowledged && (
-                              <span className="flex items-center gap-1 text-xs text-green-600">
+                              <span className="flex items-center gap-1 text-xs text-accent">
                                 <CheckCircle className="w-3 h-3" />
                                 Acknowledged
                               </span>

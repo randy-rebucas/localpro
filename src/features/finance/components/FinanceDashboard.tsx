@@ -71,8 +71,8 @@ export function FinanceDashboard({ timeframe = "month", startDate, endDate }: Fi
           change={`${earningsGrowth.trend === "up" ? "+" : ""}${earningsGrowth.percentage.toFixed(1)}%`}
           changeType={earningsGrowth.trend === "up" ? "positive" : "negative"}
           icon={TrendingUp}
-          iconColor="text-green-600"
-          iconBg="bg-green-100"
+          iconColor="text-accent"
+          iconBg="bg-accent/10"
         />
         <FinanceStatsCard
           title="Total Expenses"
@@ -89,8 +89,8 @@ export function FinanceDashboard({ timeframe = "month", startDate, endDate }: Fi
           change={`${netIncome >= 0 ? "+" : ""}${((netIncome / totalEarnings) * 100).toFixed(1)}%`}
           changeType={netIncome >= 0 ? "positive" : "negative"}
           icon={DollarSign}
-          iconColor="text-blue-600"
-          iconBg="bg-blue-100"
+          iconColor="text-primary"
+          iconBg="bg-primary/10"
         />
         <FinanceStatsCard
           title="Available Balance"

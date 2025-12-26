@@ -65,7 +65,7 @@ export function SupplyCard({ supply, viewMode = "list", onAddToCart, onFavorite 
           </div>
 
           {supply.category && (
-            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mb-2">
+            <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded mb-2">
               {supply.category}
             </span>
           )}
@@ -87,7 +87,7 @@ export function SupplyCard({ supply, viewMode = "list", onAddToCart, onFavorite 
 
           {supply.inventory && (
             <div className="text-sm text-gray-600 mb-2">
-              <span className={supply.inventory.quantity > 0 ? "text-green-600" : "text-red-600"}>
+              <span className={supply.inventory.quantity > 0 ? "text-accent" : "text-red-600"}>
                 {supply.inventory.quantity > 0 ? `In Stock (${supply.inventory.quantity})` : "Out of Stock"}
               </span>
             </div>

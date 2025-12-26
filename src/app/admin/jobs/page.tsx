@@ -839,13 +839,13 @@ export default function AdminJobsPage() {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "paused":
         return "bg-yellow-100 text-yellow-800";
       case "closed":
         return "bg-red-100 text-red-800";
       case "filled":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "draft":
         return "bg-gray-100 text-gray-800";
       default:
@@ -871,9 +871,9 @@ export default function AdminJobsPage() {
   const getApplicationStatusColor = (status?: string) => {
     switch (status) {
       case "hired":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "shortlisted":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "interviewed":
         return "bg-purple-100 text-purple-800";
       case "reviewing":
@@ -1152,7 +1152,7 @@ export default function AdminJobsPage() {
     return (
       <span
         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-          category.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
+          category.isActive ? "bg-accent/10 text-accent" : "bg-gray-100 text-gray-800"
         }`}
       >
         {category.isActive ? "Active" : "Inactive"}
@@ -1193,7 +1193,7 @@ export default function AdminJobsPage() {
           {activeTab === "jobs" && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
             >
               <Plus className="w-3 h-3 mr-1" />
               Create Job
@@ -1203,7 +1203,7 @@ export default function AdminJobsPage() {
             <button
               onClick={fetchCategories}
               disabled={categoryLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
             >
               <RefreshCw className={`w-3 h-3 mr-1 ${categoryLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -1220,7 +1220,7 @@ export default function AdminJobsPage() {
               onClick={() => setActiveTab('jobs')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === 'jobs'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1231,7 +1231,7 @@ export default function AdminJobsPage() {
               onClick={() => setActiveTab('categories')}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === 'categories'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1253,7 +1253,7 @@ export default function AdminJobsPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
@@ -1277,7 +1277,7 @@ export default function AdminJobsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by title, company, description..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1286,7 +1286,7 @@ export default function AdminJobsPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Statuses</option>
                   <option value="active">Active</option>
@@ -1301,7 +1301,7 @@ export default function AdminJobsPage() {
                 <select
                   value={filters.jobType}
                   onChange={(e) => setFilters({ ...filters, jobType: e.target.value, page: 1 })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Types</option>
                   <option value="full_time">Full Time</option>
@@ -1316,7 +1316,7 @@ export default function AdminJobsPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
                 <button
                   onClick={() => fetchJobs()}
-                  className="w-full inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="w-full inline-flex items-center justify-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
                 >
                   <RefreshCw className="w-3 h-3 mr-1" />
                   Refresh
@@ -1382,7 +1382,7 @@ export default function AdminJobsPage() {
                               </>
                             )}
                             {job.company?.location?.isRemote && (
-                              <span className="ml-1 text-blue-600">(Remote)</span>
+                              <span className="ml-1 text-primary">(Remote)</span>
                             )}
                           </div>
                           {job.salary && (
@@ -1421,7 +1421,7 @@ export default function AdminJobsPage() {
                     </td>
                     <td className="px-3 py-1.5 whitespace-nowrap">
                       <div className="space-y-0.5">
-                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
                           {job.jobType?.replace("_", " ").toUpperCase()}
                         </span>
                         <div>
@@ -1451,7 +1451,7 @@ export default function AdminJobsPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => openViewModal(job)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-primary hover:text-primary"
                           title="View Details"
                         >
                           <Eye className="w-3 h-3" />
@@ -1465,7 +1465,7 @@ export default function AdminJobsPage() {
                         </button>
                         <button
                           onClick={() => handleViewApplications(job)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-accent hover:text-accent"
                           title="View Applications"
                         >
                           <Users className="w-3 h-3" />
@@ -1479,7 +1479,7 @@ export default function AdminJobsPage() {
                         </button>
                         <button
                           onClick={() => openEditModal(job)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-accent hover:text-accent"
                           title="Edit"
                         >
                           <Edit className="w-3 h-3" />
@@ -1539,7 +1539,7 @@ export default function AdminJobsPage() {
                     setCategoryForm({ ...categoryForm, key: sanitizeCategoryKey(e.target.value) })
                   }
                   placeholder="e.g., software_engineering"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -1553,7 +1553,7 @@ export default function AdminJobsPage() {
                   value={categoryForm.name}
                   onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                   placeholder="Software Engineering"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   required
                 />
               </div>
@@ -1563,7 +1563,7 @@ export default function AdminJobsPage() {
                   value={categoryForm.description}
                   onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                   rows={3}
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                   placeholder="Optional short description"
                 />
               </div>
@@ -1574,7 +1574,7 @@ export default function AdminJobsPage() {
                   value={categoryForm.icon}
                   onChange={(e) => setCategoryForm({ ...categoryForm, icon: e.target.value })}
                   placeholder="e.g., code"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                 />
               </div>
               <div>
@@ -1586,7 +1586,7 @@ export default function AdminJobsPage() {
                     setCategoryForm({ ...categoryForm, displayOrder: e.target.value })
                   }
                   placeholder="0"
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-ring focus:border-primary text-sm"
                 />
               </div>
               <div className="flex items-center">
@@ -1594,7 +1594,7 @@ export default function AdminJobsPage() {
                   type="checkbox"
                   checked={categoryForm.isActive}
                   onChange={(e) => setCategoryForm({ ...categoryForm, isActive: e.target.checked })}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
                 />
                 <label className="ml-2 block text-xs text-gray-700">Active</label>
               </div>
@@ -1611,7 +1611,7 @@ export default function AdminJobsPage() {
                 <button
                   type="submit"
                   disabled={categorySubmitting}
-                  className="px-2.5 py-1.5 bg-blue-600 text-white rounded-md text-xs hover:bg-blue-700 disabled:opacity-50"
+                  className="px-2.5 py-1.5 bg-primary text-white rounded-md text-xs hover:bg-primary/90 disabled:opacity-50"
                 >
                   {categorySubmitting
                     ? editingCategory
@@ -1673,7 +1673,7 @@ export default function AdminJobsPage() {
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => handleEditCategory(category)}
-                                  className="text-blue-600 hover:text-blue-900"
+                                  className="text-primary hover:text-primary"
                                   title="Edit category"
                                 >
                                   <Edit className="w-3 h-3" />

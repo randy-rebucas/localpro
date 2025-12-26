@@ -185,8 +185,8 @@ interface Rental {
 
 const getStatusColor = (status: string) => {
   switch (status) {
-    case 'available': return 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 border-2 border-green-300';
-    case 'rented': return 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border-2 border-blue-300';
+    case 'available': return 'bg-gradient-to-r from-accent/10 to-green-200 text-accent border-2 border-accent/30';
+    case 'rented': return 'bg-gradient-to-r from-primary/10 to-blue-200 text-primary border-2 border-primary/30';
     case 'maintenance': return 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 border-2 border-yellow-300';
     case 'unavailable': return 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 border-2 border-red-300';
     default: return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border-2 border-gray-300';
@@ -196,8 +196,8 @@ const getStatusColor = (status: string) => {
 const getConditionColor = (condition: 'excellent' | 'good' | 'fair' | 'poor' | undefined) => {
   if (!condition) return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border-2 border-gray-300';
   switch (condition) {
-    case 'excellent': return 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 border-2 border-green-300';
-    case 'good': return 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border-2 border-blue-300';
+    case 'excellent': return 'bg-gradient-to-r from-accent/10 to-green-200 text-accent border-2 border-accent/30';
+    case 'good': return 'bg-gradient-to-r from-primary/10 to-blue-200 text-primary border-2 border-primary/30';
     case 'fair': return 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-700 border-2 border-yellow-300';
     case 'poor': return 'bg-gradient-to-r from-red-100 to-red-200 text-red-700 border-2 border-red-300';
     default: return 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 border-2 border-gray-300';
@@ -466,8 +466,8 @@ export default function RentalDetailPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
         <div className="relative z-10 p-6 space-y-6">
           <div className="flex items-center gap-4">
@@ -485,7 +485,7 @@ export default function RentalDetailPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-screen">
           <div className="bg-gradient-to-br from-white to-red-50/30 rounded-xl border-2 border-red-200 shadow-lg p-8 backdrop-blur-sm text-center">
@@ -511,8 +511,8 @@ export default function RentalDetailPage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -659,7 +659,7 @@ export default function RentalDetailPage() {
                   {rental.subcategory && (
                     <div>
                       <h3 className="font-medium text-gray-900 mb-2">Subcategory</h3>
-                      <span className="inline-block bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-3 py-1.5 rounded-full text-sm font-medium border-2 border-blue-300 shadow-sm">
+                      <span className="inline-block bg-gradient-to-r from-primary/10 to-primary/10 text-primary px-3 py-1.5 rounded-full text-sm font-medium border-2 border-primary/30 shadow-sm">
                         {rental.subcategory}
                       </span>
                     </div>
@@ -673,7 +673,7 @@ export default function RentalDetailPage() {
                       {rental.specifications.features.map((feature, index) => (
                         <span
                           key={index}
-                          className="bg-gradient-to-r from-green-100 to-green-200 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium border-2 border-green-300 shadow-sm"
+                          className="bg-gradient-to-r from-accent/10 to-green-200 text-accent px-3 py-1.5 rounded-full text-sm font-medium border-2 border-accent/30 shadow-sm"
                         >
                           {feature}
                         </span>
@@ -870,16 +870,16 @@ export default function RentalDetailPage() {
               <div className="space-y-4">
                 <div className="text-center">
                 {rental.pricing.hourly && (
-                  <div className="mb-3 p-3 bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-200">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                  <div className="mb-3 p-3 bg-gradient-to-br from-emerald-50 to-accent/10 rounded-lg border-2 border-emerald-200">
+                    <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-accent bg-clip-text text-transparent">
                       {formatCurrency(rental.pricing.hourly, rental.pricing.currency || 'PHP', { appSettings })}
                       <span className="text-lg text-gray-500">/hour</span>
                     </div>
                   </div>
                 )}
                 {rental.pricing.daily && (
-                  <div className="mb-3 p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-                    <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  <div className="mb-3 p-3 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
+                    <div className="text-2xl font-bold bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">
                       {formatCurrency(rental.pricing.daily, rental.pricing.currency || 'PHP', { appSettings })}
                       <span className="text-lg text-gray-500">/day</span>
                     </div>
@@ -909,7 +909,7 @@ export default function RentalDetailPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Availability</span>
-                  <span className={`font-medium ${rental.availability.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`font-medium ${rental.availability.isAvailable ? 'text-accent' : 'text-red-600'}`}>
                     {rental.availability.isAvailable ? 'Available' : 'Not Available'}
                   </span>
                 </div>
@@ -958,7 +958,7 @@ export default function RentalDetailPage() {
                   className="w-12 h-12 rounded-full object-cover border-4 border-white shadow-lg"
                 />
               ) : (
-                <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-full flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-lg">
                     {rental.owner.name?.charAt(0) || rental.owner.firstName?.charAt(0) || rental.owner.lastName?.charAt(0) || "U"}
                   </span>
@@ -968,7 +968,7 @@ export default function RentalDetailPage() {
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{rental.owner.name || 'Unknown Owner'}</span>
                   {rental.owner.verified && (
-                    <CheckCircle className="w-4 h-4 text-blue-500" />
+                    <CheckCircle className="w-4 h-4 text-primary" />
                   )}
                 </div>
                 {(rental.owner.profile?.rating || rental.owner.rating) && (

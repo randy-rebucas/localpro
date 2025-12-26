@@ -20,7 +20,7 @@ export function ActivitySummary({ profile }: ActivitySummaryProps) {
   return (
     <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-2xl shadow-xl border border-gray-200/50 p-6 hover:shadow-2xl transition-all duration-300">
       <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <Activity className="w-5 h-5 text-blue-600" />
+        <Activity className="w-5 h-5 text-primary" />
         Activity
       </h3>
       {hasActivityData ? (

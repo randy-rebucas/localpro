@@ -38,8 +38,8 @@ const featureOptions: FeatureOption[] = [
     name: "Marketplace",
     description: "Buy & sell locally",
     icon: <Store className="w-6 h-6" />,
-    iconBgColor: "bg-blue-100",
-    iconTextColor: "text-blue-600",
+    iconBgColor: "bg-primary/10",
+    iconTextColor: "text-primary",
     route: PACKAGE_REGISTRY.marketplace.route,
   },
   {
@@ -47,8 +47,8 @@ const featureOptions: FeatureOption[] = [
     name: "Academy",
     description: "Learn & grow",
     icon: <GraduationCap className="w-6 h-6" />,
-    iconBgColor: "bg-green-100",
-    iconTextColor: "text-green-600",
+    iconBgColor: "bg-accent/10",
+    iconTextColor: "text-accent",
     route: PACKAGE_REGISTRY.academy.route,
   },
   {
@@ -101,8 +101,8 @@ const featureOptions: FeatureOption[] = [
     name: "Jobs",
     description: "Find work opportunities",
     icon: <Briefcase className="w-6 h-6" />,
-    iconBgColor: "bg-indigo-100",
-    iconTextColor: "text-indigo-600",
+    iconBgColor: "bg-primary/10",
+    iconTextColor: "text-primary",
     route: PACKAGE_REGISTRY.jobs.route,
   },
   {
@@ -176,7 +176,7 @@ export function PreferredFeatureSelector() {
   // Show compact card when feature is selected and not changing
   if (hasPreferredFeature && currentFeature && !isChanging) {
     return (
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-md border border-green-200 p-4 mb-6">
+      <div className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-xl shadow-md border border-accent/20 p-4 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1 min-w-0">
             <div className={`w-12 h-12 ${currentFeature.iconBgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -184,7 +184,7 @@ export function PreferredFeatureSelector() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
-                <Sparkles className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <Sparkles className="w-4 h-4 text-accent flex-shrink-0" />
                 <h3 className="text-sm font-semibold text-gray-900">Preferred Feature</h3>
               </div>
               <p className="text-base font-bold text-gray-900 truncate">{currentFeature.name}</p>
@@ -194,7 +194,7 @@ export function PreferredFeatureSelector() {
           <div className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
             <button
               onClick={() => router.push(currentFeature.route)}
-              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex-1 sm:flex-initial"
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent/90 rounded-lg transition-colors flex-1 sm:flex-initial"
             >
               <ArrowRight className="w-4 h-4" />
               <span className="sm:inline">Go</span>
@@ -224,7 +224,7 @@ export function PreferredFeatureSelector() {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:p-8 mb-6">
       <div className="flex items-start gap-4 mb-6">
-        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0">
+        <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-xl flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1">
@@ -252,7 +252,7 @@ export function PreferredFeatureSelector() {
                 relative p-4 rounded-lg border-2 transition-all duration-200 overflow-hidden
                 ${
                   isSelected
-                    ? "border-green-500 bg-green-50 shadow-md"
+                    ? "border-accent bg-accent/5 shadow-md"
                     : isEnabled
                     ? "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                     : "border-gray-100 bg-gray-50 cursor-not-allowed"
@@ -281,7 +281,7 @@ export function PreferredFeatureSelector() {
                   <h4
                     className={`
                       text-sm font-semibold mb-1
-                      ${isSelected ? "text-green-700" : "text-gray-900"}
+                      ${isSelected ? "text-accent" : "text-gray-900"}
                     `}
                   >
                     {feature.name}
@@ -290,7 +290,7 @@ export function PreferredFeatureSelector() {
                 </div>
                 {isSelected && (
                   <div className="absolute top-2 right-2 z-20">
-                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <CheckCircle2 className="w-5 h-5 text-accent" />
                   </div>
                 )}
               </div>
@@ -316,7 +316,7 @@ export function PreferredFeatureSelector() {
             transition-all duration-200
             ${
               selectedFeature
-                ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg"
+                ? "bg-gradient-to-r from-accent to-accent hover:from-accent hover:to-green-800 shadow-md hover:shadow-lg"
                 : "bg-gray-300 cursor-not-allowed"
             }
           `}

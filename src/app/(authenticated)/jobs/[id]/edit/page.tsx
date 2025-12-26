@@ -599,7 +599,7 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addSkill}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -643,7 +643,7 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addRequirement}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -687,7 +687,7 @@ export default function EditJobPage() {
                   <button
                     type="button"
                     onClick={addDeliverable}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -754,7 +754,7 @@ export default function EditJobPage() {
                   />
                   <label
                     htmlFor="image-upload"
-                    className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer transition-colors"
+                    className="inline-block bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 cursor-pointer transition-colors"
                   >
                     Choose Images
                   </label>
@@ -821,7 +821,7 @@ export default function EditJobPage() {
                       {form.skills.map((skill, index) => (
                         <span
                           key={index}
-                          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded"
+                          className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded"
                         >
                           {skill}
                         </span>

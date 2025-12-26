@@ -478,7 +478,7 @@ export default function EditAdPage() {
                     type="checkbox"
                     checked={formData.targetAudience.includes(audience)}
                     onChange={() => handleAudienceToggle(audience)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-ring"
                   />
                   <span className="text-sm text-gray-700">{audience}</span>
                 </label>
@@ -546,12 +546,12 @@ export default function EditAdPage() {
                   {formData.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                     >
                       {tag}
                       <button
                         onClick={() => handleRemoveTag(tag)}
-                        className="ml-1 hover:text-blue-600"
+                        className="ml-1 hover:text-primary"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -627,7 +627,7 @@ export default function EditAdPage() {
                 {formData.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded"
+                    className="text-xs bg-primary/10 text-primary px-2 py-1 rounded"
                   >
                     {tag}
                   </span>

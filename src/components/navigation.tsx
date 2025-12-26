@@ -45,7 +45,7 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/marketplace" className="text-xl font-bold text-green-600">
+              <Link href="/marketplace" className="text-xl font-bold text-accent">
                 LocalPro
               </Link>
             </div>
@@ -60,7 +60,7 @@ export default function Navigation() {
                     href={item.href}
                     className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors ${
                       isActive
-                        ? "border-green-500 text-gray-700"
+                        ? "border-accent text-gray-700"
                         : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
                   >
@@ -82,14 +82,14 @@ export default function Navigation() {
             </Link>
             <Link
               href="/rentals/create"
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary hover:bg-primary/90 transition-colors"
             >
               <Truck className="w-4 h-4 mr-1" />
               List Rental
             </Link>
             <Link
               href="/marketplace/create-service"
-              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors"
+              className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-accent hover:bg-accent/90 transition-colors"
             >
               <Plus className="w-4 h-4 mr-1" />
               List Service

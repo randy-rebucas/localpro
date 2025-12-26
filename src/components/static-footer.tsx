@@ -26,7 +26,7 @@ const socialLinks: SocialLink[] = [
     href: "https://facebook.com/localpro",
     label: "Facebook",
     icon: "f",
-    gradient: "from-blue-500 to-blue-600"
+    gradient: "from-primary to-primary"
   },
   {
     href: "https://twitter.com/localpro",
@@ -46,7 +46,7 @@ const footerSections: FooterSection[] = [
   {
     title: "Platform",
     links: [
-      { href: "/marketplace", label: "Marketplace", color: "bg-blue-500" },
+      { href: "/marketplace", label: "Marketplace", color: "bg-primary" },
       { href: "/academy", label: "Academy", color: "bg-emerald-500" },
       { href: "/rentals", label: "Rentals", color: "bg-purple-500" },
       { href: "/supplies", label: "Supplies", color: "bg-orange-500" }
@@ -55,7 +55,7 @@ const footerSections: FooterSection[] = [
   {
     title: "Support",
     links: [
-      { href: "/help-center", label: "Help Center", color: "bg-blue-500" },
+      { href: "/help-center", label: "Help Center", color: "bg-primary" },
       { href: "/contact", label: "Contact Us", color: "bg-emerald-500" },
       { href: "/help-center#faqs", label: "FAQs", color: "bg-purple-500" },
       { href: "/community", label: "Community", color: "bg-orange-500" }
@@ -64,7 +64,7 @@ const footerSections: FooterSection[] = [
   {
     title: "Legal",
     links: [
-      { href: "/privacy", label: "Privacy Policy", color: "bg-blue-500" },
+      { href: "/privacy", label: "Privacy Policy", color: "bg-primary" },
       { href: "/terms", label: "Terms of Service", color: "bg-emerald-500" },
       { href: "/security", label: "Security", color: "bg-purple-500" },
       { href: "/about", label: "About Us", color: "bg-orange-500" }
@@ -97,7 +97,7 @@ function FooterLink({ link }: { link: FooterLink }) {
     <li>
       <Link 
         href={link.href} 
-        className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors duration-200 flex items-center group"
+        className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors duration-200 flex items-center group"
       >
         <span className={`w-1 h-1 ${link.color} rounded-full mr-3 group-hover:scale-150 transition-transform`}></span>
         {link.label}
@@ -135,9 +135,9 @@ function NewsletterSection() {
           <input
             type="email"
             placeholder="Enter your email"
-            className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            className="flex-1 px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
           />
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
+          <button className="bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm">
             Subscribe
           </button>
         </div>

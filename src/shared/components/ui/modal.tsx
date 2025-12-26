@@ -56,15 +56,15 @@ export function Modal({
         width: 8px;
       }
       .modal-content-scroll::-webkit-scrollbar-track {
-        background: #f1f5f9;
+        background: hsl(var(--muted));
         border-radius: 4px;
       }
       .modal-content-scroll::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: hsl(var(--border));
         border-radius: 4px;
       }
       .modal-content-scroll::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: hsl(var(--muted-foreground));
       }
     `;
     document.head.appendChild(style);
@@ -123,19 +123,19 @@ export function Modal({
       }}
     >
       <div
-        className={`bg-white shadow-xl h-screen flex flex-col transform transition-transform duration-300 ease-out ${sizeClasses[size]} ${className} ${
+        className={`bg-background text-foreground shadow-xl h-screen flex flex-col transform transition-transform duration-300 ease-out ${sizeClasses[size]} ${className} ${
           isVisible ? 'translate-x-0' : 'translate-x-full'
         }`}
         style={{ width: size === 'full' ? '100%' : undefined }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
-            {title && <h2 className="text-lg font-semibold text-gray-900">{title}</h2>}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-background flex-shrink-0">
+            {title && <h2 className="text-lg font-semibold text-foreground">{title}</h2>}
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-600 hover:text-gray-900"
+                className="p-1 hover:bg-accent rounded-full transition-colors text-muted-foreground hover:text-accent-foreground"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
@@ -144,15 +144,15 @@ export function Modal({
           </div>
         )}
         <div 
-          className="flex-1 overflow-y-auto px-4 py-3 text-gray-900 leading-normal text-sm antialiased modal-content-scroll"
+          className="flex-1 overflow-y-auto px-4 py-3 text-foreground leading-normal text-sm antialiased modal-content-scroll"
           style={{
             scrollbarWidth: 'thin',
-            scrollbarColor: '#cbd5e1 #f1f5f9'
+            scrollbarColor: 'hsl(var(--border)) hsl(var(--muted))'
           }}
         >
           {children}
         </div>
-        {footer && <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex-shrink-0">{footer}</div>}
+        {footer && <div className="px-4 py-3 border-t border-border bg-muted/30 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );

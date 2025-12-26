@@ -59,7 +59,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
           <button
             onClick={() => setViewMode('grid')}
             className={`p-2 rounded-lg transition-colors ${
-              viewMode === 'grid' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'
+              viewMode === 'grid' ? 'bg-accent/10 text-accent' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             <Grid className="w-4 h-4" />
@@ -67,7 +67,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
           <button
             onClick={() => setViewMode('list')}
             className={`p-2 rounded-lg transition-colors ${
-              viewMode === 'list' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'
+              viewMode === 'list' ? 'bg-accent/10 text-accent' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             <List className="w-4 h-4" />
@@ -79,8 +79,8 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragOver 
-            ? 'border-green-400 bg-green-50' 
-            : 'border-gray-300 hover:border-green-400 hover:bg-green-50'
+            ? 'border-accent bg-accent/5' 
+            : 'border-gray-300 hover:border-accent hover:bg-accent/5'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -88,7 +88,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
       >
         <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600 mb-2">Drag and drop images here, or</p>
-        <label className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer transition-colors">
+        <label className="inline-flex items-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 cursor-pointer transition-colors">
           <Plus className="w-4 h-4 mr-2" />
           Choose Files
           <input
@@ -228,7 +228,7 @@ export function PortfolioGallery({ portfolio, onUpload, onDelete, isLoading }: P
       {/* Loading State */}
       {isLoading && (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-2"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-2"></div>
           <p className="text-gray-600">Uploading images...</p>
         </div>
       )}

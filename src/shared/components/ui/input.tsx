@@ -14,15 +14,16 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, label, error, helperText, leftIcon, rightIcon, variant = 'default', required = false, ...props }, ref) => {
     // Base classes without bg/text colors to allow override via className
-    const baseClasses = "w-full px-4 py-3 border rounded-lg focus:outline-none transition-all duration-200";
+    const baseClasses =
+      "w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
     
-    // Default light theme classes (can be overridden by className)
-    const defaultColorClasses = "bg-white placeholder-gray-500 shadow-sm";
+    // Default classes (can be overridden by className)
+    const defaultColorClasses = "shadow-sm";
     
     const variantClasses = {
-      default: "border-gray-200 hover:border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500",
-      error: "border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500",
-      success: "border-green-300 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+      default: "border-input hover:border-border focus-visible:border-ring",
+      error: "border-destructive focus-visible:ring-destructive",
+      success: "border-input focus-visible:border-ring"
     };
 
     const inputClasses = cn(
@@ -39,7 +40,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label className="block text-sm font-medium text-inherit">
             {label}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-destructive ml-1">*</span>}
           </label>
         )}
         <div className="relative">
@@ -65,7 +66,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p className="text-sm text-red-500">{error}</p>
+          <p className="text-sm text-destructive">{error}</p>
         )}
         {helperText && !error && (
           <p className="text-sm opacity-60">{helperText}</p>

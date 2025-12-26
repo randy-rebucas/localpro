@@ -103,10 +103,10 @@ const paymentStatuses = [
 const getStatusColor = (status: SupplyOrder['status']) => {
   switch (status) {
     case 'pending': return 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white';
-    case 'confirmed': return 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white';
+    case 'confirmed': return 'bg-gradient-to-r from-primary to-cyan-500 text-white';
     case 'processing': return 'bg-gradient-to-r from-purple-500 to-violet-500 text-white';
-    case 'shipped': return 'bg-gradient-to-r from-indigo-500 to-blue-500 text-white';
-    case 'delivered': return 'bg-gradient-to-r from-emerald-500 to-green-500 text-white';
+    case 'shipped': return 'bg-gradient-to-r from-indigo-500 to-primary text-white';
+    case 'delivered': return 'bg-gradient-to-r from-emerald-500 to-accent text-white';
     case 'cancelled': return 'bg-gradient-to-r from-red-500 to-rose-500 text-white';
     case 'returned': return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white';
     default: return 'bg-gray-100 text-gray-800';
@@ -447,7 +447,7 @@ export default function MyOrdersPage() {
         {/* Animated Background Blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-pulse"></div>
         </div>
         
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -478,8 +478,8 @@ export default function MyOrdersPage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -518,7 +518,7 @@ export default function MyOrdersPage() {
                 <p className="text-sm text-gray-500 font-medium">Total Orders</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{totalOrders}</p>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary rounded-xl flex items-center justify-center shadow-md">
                 <Package className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -542,7 +542,7 @@ export default function MyOrdersPage() {
                 <p className="text-sm text-gray-500 font-medium">Delivered</p>
                 <p className="text-3xl font-bold text-emerald-600 mt-1">{deliveredOrders}</p>
               </div>
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-accent rounded-xl flex items-center justify-center shadow-md">
                 <CheckCircle className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -784,7 +784,7 @@ export default function MyOrdersPage() {
                             {order.delivery.trackingNumber && order.status === 'shipped' && (
                               <button
                                 onClick={() => handleTrackOrder(order)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                                 Track via {order.delivery.carrier}

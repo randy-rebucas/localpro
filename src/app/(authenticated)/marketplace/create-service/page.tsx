@@ -1064,7 +1064,7 @@ export default function CreateServicePage() {
                         type="button"
                         onClick={handleGenerateDescription}
                         disabled={aiGenerating}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-primary text-white rounded-lg hover:from-purple-700 hover:to-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
                       >
                         {aiGenerating ? (
                           <>
@@ -1247,12 +1247,12 @@ export default function CreateServicePage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {form.serviceArea.map((area, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1 rounded-full text-sm border border-blue-200 shadow-sm">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/10 text-primary px-3 py-1 rounded-full text-sm border border-primary/20 shadow-sm">
                       <span>{area}</span>
                       <button
                         type="button"
                         onClick={() => removeServiceArea(index)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1629,7 +1629,7 @@ export default function CreateServicePage() {
                       <button
                         type="button"
                         onClick={addPackage}
-                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        className="w-full bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors"
                       >
                         Add Package
                       </button>
@@ -1719,7 +1719,7 @@ export default function CreateServicePage() {
                       <button
                         type="button"
                         onClick={addAddon}
-                        className="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        className="w-full bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors"
                       >
                         Add Add-on
                       </button>
@@ -1748,7 +1748,7 @@ export default function CreateServicePage() {
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
                           <span>{formatCurrency(addon.price, 'PHP', { appSettings })}</span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                             {addon.category}
                           </span>
                         </div>
@@ -1913,13 +1913,13 @@ export default function CreateServicePage() {
             <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Images & Final Review</h2>
             
             {/* Validation Summary */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Form Validation Status
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className={`flex items-center gap-2 ${form.title.trim() && form.description.trim() && form.category && form.subcategory && form.serviceType && form.teamSize > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-2 ${form.title.trim() && form.description.trim() && form.category && form.subcategory && form.serviceType && form.teamSize > 0 ? 'text-accent' : 'text-red-600'}`}>
                   {form.title.trim() && form.description.trim() && form.category && form.subcategory && form.serviceType && form.teamSize > 0 ? (
                     <CheckCircle2 className="w-4 h-4" />
                   ) : (
@@ -1927,7 +1927,7 @@ export default function CreateServicePage() {
                   )}
                   <span>Step 1: Basic Information</span>
                 </div>
-                <div className={`flex items-center gap-2 ${form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-2 ${form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? 'text-accent' : 'text-red-600'}`}>
                   {form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? (
                     <CheckCircle2 className="w-4 h-4" />
                   ) : (
@@ -2047,7 +2047,7 @@ export default function CreateServicePage() {
             {/* Review Summary */}
             <div>
               <h3 className="text-lg font-semibold text-gray-700 mb-4">Review Summary</h3>
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border-2 border-blue-200 space-y-4">
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-6 border-2 border-primary/20 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium text-gray-700">Service Title:</span>

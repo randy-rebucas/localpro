@@ -41,7 +41,7 @@ export default function Contact() {
       responseTime: "Within 24 hours",
       action: "Send Email",
       href: "mailto:admin@localpro.asia",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Phone className="w-6 h-6" />,
@@ -412,7 +412,7 @@ export default function Contact() {
             <Link href="/community" className="group">
               <div className="p-6 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-emerald-500/30 transition-all">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-r from-primary to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
                     <Users className="w-6 h-6 text-white" />
                   </div>
                   <div className="text-left flex-1">

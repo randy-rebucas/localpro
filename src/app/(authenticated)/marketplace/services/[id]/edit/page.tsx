@@ -1077,7 +1077,7 @@ export default function EditServicePage() {
                         type="button"
                         onClick={handleGenerateDescription}
                         disabled={aiGenerating}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-primary text-white rounded-lg hover:from-purple-700 hover:to-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
                       >
                         {aiGenerating ? (
                           <>
@@ -1260,12 +1260,12 @@ export default function EditServicePage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {form.serviceArea.map((area, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 px-3 py-1 rounded-full text-sm border border-blue-200 shadow-sm">
+                    <div key={index} className="flex items-center gap-2 bg-gradient-to-r from-primary/10 to-primary/10 text-primary px-3 py-1 rounded-full text-sm border border-primary/20 shadow-sm">
                       <span>{area}</span>
                       <button
                         type="button"
                         onClick={() => removeServiceArea(index)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-primary hover:text-primary"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -1757,7 +1757,7 @@ export default function EditServicePage() {
                         </div>
                         <div className="flex justify-between items-center text-sm text-gray-600">
                           <span>{formatCurrency(addon.price, 'PHP', { appSettings })}</span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
                             {addon.category}
                           </span>
                         </div>
@@ -1922,13 +1922,13 @@ export default function EditServicePage() {
             <h2 className="text-xl font-semibold bg-gradient-to-r from-gray-700 to-gray-900 bg-clip-text text-transparent mb-4">Images & Final Review</h2>
             
             {/* Validation Summary */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
-              <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-lg p-4 mb-6">
+              <h3 className="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
                 Form Validation Status
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className={`flex items-center gap-2 ${form.title.trim() && form.description.trim() && form.category && (subcategories[form.category as keyof typeof subcategories]?.length === 0 || form.subcategory) && form.serviceType && form.teamSize > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-2 ${form.title.trim() && form.description.trim() && form.category && (subcategories[form.category as keyof typeof subcategories]?.length === 0 || form.subcategory) && form.serviceType && form.teamSize > 0 ? 'text-accent' : 'text-red-600'}`}>
                   {form.title.trim() && form.description.trim() && form.category && (subcategories[form.category as keyof typeof subcategories]?.length === 0 || form.subcategory) && form.serviceType && form.teamSize > 0 ? (
                     <CheckCircle2 className="w-4 h-4" />
                   ) : (
@@ -1936,7 +1936,7 @@ export default function EditServicePage() {
                   )}
                   <span>Step 1: Basic Information</span>
                 </div>
-                <div className={`flex items-center gap-2 ${form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? 'text-green-700' : 'text-red-600'}`}>
+                <div className={`flex items-center gap-2 ${form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? 'text-accent' : 'text-red-600'}`}>
                   {form.pricing.basePrice > 0 && form.pricing.type && form.estimatedDuration.min > 0 && form.estimatedDuration.max > 0 ? (
                     <CheckCircle2 className="w-4 h-4" />
                   ) : (
@@ -2097,8 +2097,8 @@ export default function EditServicePage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
         <div className="relative z-10 flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
@@ -2112,8 +2112,8 @@ export default function EditServicePage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
         </div>
         <div className="relative z-10 text-center py-12">
           <div className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border-2 border-red-200 shadow-lg p-8 max-w-md mx-auto">
@@ -2137,8 +2137,8 @@ export default function EditServicePage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">

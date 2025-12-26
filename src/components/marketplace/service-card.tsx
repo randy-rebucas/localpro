@@ -90,7 +90,7 @@ export function ServiceCard({
   
   return (
     <div
-      className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-green-200 overflow-hidden transition-all group relative ${
+      className={`bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-accent/20 overflow-hidden transition-all group relative ${
         isGrid ? 'flex flex-col h-full' : 'flex flex-row items-stretch'
       }`}
     >
@@ -129,10 +129,10 @@ export function ServiceCard({
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <h3 className="font-semibold text-gray-900">{title}</h3>
                 {isVerified && (
-                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0" />
                 )}
                 {subcategory && (
-                  <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-md font-medium">
+                  <span className="text-xs bg-accent/5 text-accent px-2 py-0.5 rounded-md font-medium">
                     {subcategory.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </span>
                 )}
@@ -186,7 +186,7 @@ export function ServiceCard({
             {/* Price */}
             <div>
               <div className="flex items-baseline gap-1">
-                <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-green-600`}>
+                <span className={`${isGrid ? 'text-2xl' : 'text-xl'} font-bold text-accent`}>
                   {currencySymbol}{price.toLocaleString()}
                 </span>
                 <span className="text-xs text-gray-500">/{pricingTypeLabel}</span>
@@ -226,7 +226,7 @@ export function ServiceCard({
             <button 
               onClick={handleBookNow}
               disabled={!isActive || isNavigating}
-              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 active:bg-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md`}
+              className={`${isGrid ? 'w-full' : ''} px-4 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent/90 active:bg-accent/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md`}
             >
               {isNavigating ? 'Loading...' : 'Book Now'}
             </button>

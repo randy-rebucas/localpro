@@ -168,12 +168,12 @@ export default function MarketplaceNav() {
                   href={item.href}
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center ${
                     isActive(item.href)
-                      ? "bg-green-100 text-green-700 shadow-sm border border-green-200"
+                      ? "bg-accent/10 text-accent shadow-sm border border-accent/20"
                       : "text-gray-600 hover:text-gray-700 hover:bg-gray-50 hover:shadow-sm"
                   }`}
                 >
                   <IconComponent className={`w-4 h-4 mr-2 transition-colors ${
-                    isActive(item.href) ? "text-green-600" : "text-gray-400"
+                    isActive(item.href) ? "text-accent" : "text-gray-400"
                   }`} />
                   {item.label}
                 </Link>
@@ -198,12 +198,12 @@ export default function MarketplaceNav() {
                   href={item.href}
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center ${
                     isActive(item.href)
-                      ? "bg-green-100 text-green-700 shadow-sm border border-green-200"
+                      ? "bg-accent/10 text-accent shadow-sm border border-accent/20"
                       : "text-gray-600 hover:text-gray-700 hover:bg-gray-50 hover:shadow-sm"
                   }`}
                 >
                   <IconComponent className={`w-4 h-4 mr-2 transition-colors ${
-                    isActive(item.href) ? "text-green-600" : "text-gray-400"
+                    isActive(item.href) ? "text-accent" : "text-gray-400"
                   }`} />
                   {item.label}
                 </Link>

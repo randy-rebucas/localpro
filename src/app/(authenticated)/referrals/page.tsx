@@ -449,7 +449,7 @@ export default function ReferralsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusClasses: Record<string, string> = {
-      completed: 'bg-green-100 text-green-700 border-green-200',
+      completed: 'bg-accent/10 text-accent border-accent/20',
       pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       expired: 'bg-gray-100 text-gray-700 border-gray-200',
       cancelled: 'bg-red-100 text-red-700 border-red-200'
@@ -679,14 +679,14 @@ export default function ReferralsPage() {
                 <p className="text-gray-500 text-xs mt-1">{stats?.pendingReferrals || 0} pending</p>
               </div>
 
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-green-300 hover:shadow-lg transition-all">
+              <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-accent/30 hover:shadow-lg transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-gray-600 text-sm font-medium">Completed</p>
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-accent" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-green-600">{stats?.completedReferrals || 0}</p>
+                <p className="text-2xl font-bold text-accent">{stats?.completedReferrals || 0}</p>
                 <p className="text-gray-500 text-xs mt-1">{stats?.conversionRate ? `${(stats.conversionRate * 100).toFixed(1)}%` : '0%'} conversion</p>
               </div>
 
@@ -739,7 +739,7 @@ export default function ReferralsPage() {
                   <p className="text-sm text-gray-600">They complete their first action</p>
                 </div>
                 <div className="text-center">
-                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                  <div className="w-14 h-14 bg-gradient-to-br from-accent to-accent rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
                     <Gift className="w-7 h-7 text-white" />
                   </div>
                   <h4 className="font-semibold text-gray-900 mb-1">4. Earn</h4>
@@ -825,7 +825,7 @@ export default function ReferralsPage() {
                             <div className="text-right">
                               {getStatusBadge(ref.status)}
                               {ref.rewardDistribution?.referrerReward && (
-                                <p className="text-sm font-semibold text-green-600 mt-1">
+                                <p className="text-sm font-semibold text-accent mt-1">
                                   +{formatCurrency(ref.rewardDistribution.referrerReward.amount)}
                                 </p>
                               )}
@@ -841,9 +841,9 @@ export default function ReferralsPage() {
                 <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-sm">
                   <h3 className="text-lg font-bold text-gray-900 mb-4">Reward Types</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                        <Coins className="w-6 h-6 text-green-600" />
+                    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-accent/10 to-emerald-50 rounded-xl border border-accent/20">
+                      <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                        <Coins className="w-6 h-6 text-accent" />
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">Wallet Credit</p>
@@ -859,9 +859,9 @@ export default function ReferralsPage() {
                         <p className="text-sm text-gray-600">Get exclusive discounts on services</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                        <Star className="w-6 h-6 text-blue-600" />
+                    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Star className="w-6 h-6 text-primary" />
                       </div>
                       <div>
                         <p className="font-semibold text-gray-900">Plus Subscription Days</p>
@@ -962,7 +962,7 @@ export default function ReferralsPage() {
                             {ref.rewardDistribution?.referrerReward ? (
                               <p className={`text-lg font-bold ${
                                 ref.rewardDistribution.referrerReward.status === 'processed' || ref.rewardDistribution.referrerReward.status === 'paid'
-                                  ? 'text-green-600' : 'text-yellow-600'
+                                  ? 'text-accent' : 'text-yellow-600'
                               }`}>
                                 +{formatCurrency(ref.rewardDistribution.referrerReward.amount)}
                               </p>
@@ -1053,7 +1053,7 @@ export default function ReferralsPage() {
                             <p className="text-sm text-gray-500">{entry.referralCount} referrals</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-green-600">{formatCurrency(entry.totalEarnings)}</p>
+                            <p className="text-lg font-bold text-accent">{formatCurrency(entry.totalEarnings)}</p>
                             <p className="text-xs text-gray-500">earned</p>
                           </div>
                         </div>

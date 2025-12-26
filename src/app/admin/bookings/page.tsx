@@ -255,9 +255,9 @@ export default function AdminBookingsPage() {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
+      confirmed: 'bg-primary/10 text-primary',
       in_progress: 'bg-purple-100 text-purple-800',
-      completed: 'bg-green-100 text-green-800',
+      completed: 'bg-accent/10 text-accent',
       cancelled: 'bg-red-100 text-red-800',
       rejected: 'bg-gray-100 text-gray-800'
     };
@@ -267,7 +267,7 @@ export default function AdminBookingsPage() {
   const getPaymentStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
-      paid: 'bg-green-100 text-green-800',
+      paid: 'bg-accent/10 text-accent',
       failed: 'bg-red-100 text-red-800',
       refunded: 'bg-purple-100 text-purple-800'
     };
@@ -290,7 +290,7 @@ export default function AdminBookingsPage() {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -333,7 +333,7 @@ export default function AdminBookingsPage() {
                 <p className="text-xs text-gray-500">Total</p>
                 <p className="text-xl font-bold text-gray-900">{statistics.totalBookings || 0}</p>
               </div>
-              <Calendar className="w-6 h-6 text-blue-500" />
+              <Calendar className="w-6 h-6 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -349,18 +349,18 @@ export default function AdminBookingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Confirmed</p>
-                <p className="text-xl font-bold text-blue-600">{statistics.confirmedBookings || 0}</p>
+                <p className="text-xl font-bold text-primary">{statistics.confirmedBookings || 0}</p>
               </div>
-              <CheckCircle className="w-6 h-6 text-blue-500" />
+              <CheckCircle className="w-6 h-6 text-primary" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Completed</p>
-                <p className="text-xl font-bold text-green-600">{statistics.completedBookings || 0}</p>
+                <p className="text-xl font-bold text-accent">{statistics.completedBookings || 0}</p>
               </div>
-              <CheckCircle className="w-6 h-6 text-green-500" />
+              <CheckCircle className="w-6 h-6 text-accent" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -376,11 +376,11 @@ export default function AdminBookingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Revenue</p>
-                <p className="text-xl font-bold text-green-600">
+                <p className="text-xl font-bold text-accent">
                   {formatCurrency(statistics.totalRevenue || 0, getDefaultCurrency(appSettings), { appSettings })}
                 </p>
               </div>
-              <Coins className="w-6 h-6 text-green-500" />
+              <Coins className="w-6 h-6 text-accent" />
             </div>
           </div>
           <div className="bg-white rounded-lg shadow p-4">
@@ -494,7 +494,7 @@ export default function AdminBookingsPage() {
               <button
                 onClick={() => handleSort('bookingDate')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'bookingDate' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'bookingDate' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Date
@@ -505,7 +505,7 @@ export default function AdminBookingsPage() {
               <button
                 onClick={() => handleSort('totalAmount')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'totalAmount' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'totalAmount' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Amount
@@ -516,7 +516,7 @@ export default function AdminBookingsPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Created
@@ -603,7 +603,7 @@ export default function AdminBookingsPage() {
                           setSelectedBooking(booking);
                           setViewModalOpen(true);
                         }}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-primary hover:text-primary"
                         title="View details"
                       >
                         <Eye className="w-3 h-3" />
@@ -612,7 +612,7 @@ export default function AdminBookingsPage() {
                         <>
                           <button 
                             onClick={() => handleUpdateStatus(booking._id, 'confirmed')}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-accent hover:text-accent"
                             title="Confirm"
                             disabled={submitting}
                           >
@@ -670,7 +670,7 @@ export default function AdminBookingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Client</h4>
-                <div className="bg-blue-50 p-3 rounded">
+                <div className="bg-primary/5 p-3 rounded">
                   <p className="font-medium">{selectedBooking.client?.firstName} {selectedBooking.client?.lastName}</p>
                   <p className="text-sm text-gray-600">{selectedBooking.client?.email}</p>
                   <p className="text-sm text-gray-600">{selectedBooking.client?.phoneNumber}</p>
@@ -678,7 +678,7 @@ export default function AdminBookingsPage() {
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3">Provider</h4>
-                <div className="bg-green-50 p-3 rounded">
+                <div className="bg-accent/5 p-3 rounded">
                   <p className="font-medium">{selectedBooking.provider?.firstName} {selectedBooking.provider?.lastName}</p>
                   <p className="text-sm text-gray-600">{selectedBooking.provider?.email}</p>
                   <p className="text-sm text-gray-600">{selectedBooking.provider?.phoneNumber}</p>
@@ -742,7 +742,7 @@ export default function AdminBookingsPage() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-gray-50 p-3 rounded">
                   <label className="text-xs font-medium text-gray-500">Amount</label>
-                  <p className="text-lg font-bold text-green-600">
+                  <p className="text-lg font-bold text-accent">
                     {formatCurrency(selectedBooking.pricing.totalAmount, selectedBooking.pricing.currency || getDefaultCurrency(appSettings), { appSettings })}
                   </p>
                 </div>
@@ -789,7 +789,7 @@ export default function AdminBookingsPage() {
                       handleUpdateStatus(selectedBooking._id, 'confirmed');
                       setViewModalOpen(false);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                    className="px-4 py-2 text-sm font-medium text-white bg-accent rounded-md hover:bg-accent/90"
                     disabled={submitting}
                   >
                     Confirm Booking
@@ -812,7 +812,7 @@ export default function AdminBookingsPage() {
                     handleUpdateStatus(selectedBooking._id, 'completed');
                     setViewModalOpen(false);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90"
                   disabled={submitting}
                 >
                   Mark Completed

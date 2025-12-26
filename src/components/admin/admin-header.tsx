@@ -110,9 +110,9 @@ export function AdminHeader({
       case 'warning':
         return 'border-l-yellow-500 bg-yellow-50';
       case 'success':
-        return 'border-l-green-500 bg-green-50';
+        return 'border-l-green-500 bg-accent/5';
       default:
-        return 'border-l-blue-500 bg-blue-50';
+        return 'border-l-blue-500 bg-primary/5';
     }
   };
 
@@ -129,7 +129,7 @@ export function AdminHeader({
           </button>
           
           <div className="hidden lg:block">
-            <h1 className="text-lg font-semibold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-lg font-semibold text-gray-800 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               LocalPro Admin
             </h1>
           </div>
@@ -147,8 +147,8 @@ export function AdminHeader({
               onChange={(e) => handleSearch(e.target.value)}
               onFocus={() => setIsSearchFocused(true)}
               onBlur={() => setIsSearchFocused(false)}
-              className={`w-full pl-8 pr-10 py-2 text-sm font-medium text-gray-900 placeholder-gray-500 border rounded-md transition-all duration-200 hover:border-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                isSearchFocused ? 'border-blue-500 shadow-lg' : 'border-gray-300'
+              className={`w-full pl-8 pr-10 py-2 text-sm font-medium text-gray-900 placeholder-gray-500 border rounded-md transition-all duration-200 hover:border-gray-400 focus:ring-2 focus:ring-ring focus:border-primary ${
+                isSearchFocused ? 'border-primary shadow-lg' : 'border-gray-300'
               }`}
               aria-label="Search admin panel"
             />
@@ -173,7 +173,7 @@ export function AdminHeader({
           <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 hover:bg-gray-100 rounded-md relative transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="p-2 hover:bg-gray-100 rounded-md relative transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label={`Notifications ${notificationCount > 0 ? `(${notificationCount} unread)` : ''}`}
               aria-expanded={showNotifications}
             >
@@ -192,7 +192,7 @@ export function AdminHeader({
                   {notificationCount > 0 && onMarkAllRead && (
                     <button
                       onClick={onMarkAllRead}
-                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      className="text-xs text-primary hover:text-primary font-medium"
                     >
                       Mark all read
                     </button>
@@ -205,7 +205,7 @@ export function AdminHeader({
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification.id)}
                         className={`p-3 border-b hover:bg-gray-50 cursor-pointer transition-colors border-l-4 ${getNotificationTypeStyle(notification.type)} ${
-                          !notification.read ? 'bg-blue-50' : ''
+                          !notification.read ? 'bg-primary/5' : ''
                         }`}
                       >
                         <div className="flex items-start justify-between">
@@ -221,7 +221,7 @@ export function AdminHeader({
                             </p>
                           </div>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1 ml-2" />
+                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1 ml-2" />
                           )}
                         </div>
                       </div>
@@ -235,7 +235,7 @@ export function AdminHeader({
                 </div>
                 {notifications.length > 0 && (
                   <div className="p-3 border-t">
-                    <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <button className="text-sm text-primary hover:text-primary font-medium">
                       View all notifications
                     </button>
                   </div>
@@ -248,11 +248,11 @@ export function AdminHeader({
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-1.5 p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex items-center space-x-1.5 p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label="User menu"
               aria-expanded={showUserMenu}
             >
-              <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center overflow-hidden">
                 {user.avatar ? (
                   <Image 
                     src={user.avatar} 
@@ -282,7 +282,7 @@ export function AdminHeader({
                   <div className="px-3 py-2 border-b">
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                     <p className="text-xs font-medium text-gray-600">{user.email}</p>
-                    <p className="text-xs text-blue-600 font-medium mt-1">
+                    <p className="text-xs text-primary font-medium mt-1">
                       {user.roles && user.roles.length > 0 
                         ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
                         : 'User'}

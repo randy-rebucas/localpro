@@ -29,7 +29,7 @@ export function AIFeaturesToggle({
       <div className="hidden lg:flex fixed bottom-6 right-6 z-[9998] flex-col gap-3">
         <button
           onClick={() => onToggleAIFeatures({ ...showAIFeatures, priceEstimator: !showAIFeatures.priceEstimator })}
-          className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+          className="w-14 h-14 bg-gradient-to-br from-primary to-primary hover:from-primary hover:to-blue-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
           aria-label="Toggle AI Price Estimator"
           title="AI Price Estimator"
         >
@@ -45,7 +45,7 @@ export function AIFeaturesToggle({
         </button>
         <button
           onClick={() => onTogglePreferredFeatureSelector(!preferredFeatureSelectorOpen)}
-          className="w-14 h-14 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
+          className="w-14 h-14 bg-gradient-to-br from-accent to-accent hover:from-accent hover:to-green-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group"
           aria-label="Toggle preferred feature selector"
           title="Preferred Feature"
         >

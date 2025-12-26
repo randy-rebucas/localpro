@@ -53,11 +53,11 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Review Insights</h3>
         </div>
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-accent" />
         </div>
       </div>
     );
@@ -67,7 +67,7 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Review Insights</h3>
         </div>
         <select
@@ -91,7 +91,7 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
       {insights && (
         <div className="space-y-4">
           {insights.summary && (
-            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
               <h5 className="font-semibold text-gray-900 mb-3">Summary</h5>
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
@@ -114,7 +114,7 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
                   <div
                     className={`font-semibold ${
                       insights.summary.sentimentTrend === "improving"
-                        ? "text-green-600"
+                        ? "text-accent"
                         : insights.summary.sentimentTrend === "declining"
                         ? "text-red-600"
                         : "text-gray-600"
@@ -130,14 +130,14 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
           {insights.strengths && insights.strengths.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+                <TrendingUp className="w-5 h-5 text-accent" />
                 <h5 className="font-semibold text-gray-900">Strengths</h5>
               </div>
               <div className="space-y-2">
                 {insights.strengths.map((strength, i: number) => (
                   <div
                     key={i}
-                    className="flex items-start justify-between p-3 bg-green-50 rounded-lg border border-green-200"
+                    className="flex items-start justify-between p-3 bg-accent/5 rounded-lg border border-accent/20"
                   >
                     <div className="flex-1">
                       <div className="font-medium text-gray-900 mb-1">{strength.strength}</div>
@@ -148,7 +148,7 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
                     <span
                       className={`text-xs px-2 py-1 rounded ${
                         strength.impact === "high"
-                          ? "bg-green-200 text-green-800"
+                          ? "bg-accent/20 text-accent"
                           : strength.impact === "medium"
                           ? "bg-yellow-100 text-yellow-800"
                           : "bg-gray-100 text-gray-800"
@@ -221,7 +221,7 @@ export function AIReviewInsights({ serviceId, providerId }: AIReviewInsightsProp
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           theme.sentiment === "positive"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-accent/10 text-accent"
                             : theme.sentiment === "negative"
                             ? "bg-red-100 text-red-700"
                             : "bg-gray-100 text-gray-700"

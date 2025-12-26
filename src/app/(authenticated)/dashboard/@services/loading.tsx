@@ -4,8 +4,8 @@ export default function ServicesLoading() {
   const serviceModules = [
     { icon: <Shield className="w-8 h-8" />, color: "bg-gray-100" },
     { icon: <Package className="w-8 h-8" />, color: "bg-amber-100" },
-    { icon: <GraduationCap className="w-8 h-8" />, color: "bg-green-100" },
-    { icon: <Car className="w-8 h-8" />, color: "bg-blue-100" },
+    { icon: <GraduationCap className="w-8 h-8" />, color: "bg-accent/10" },
+    { icon: <Car className="w-8 h-8" />, color: "bg-primary/10" },
     { icon: <Star className="w-8 h-8" />, color: "bg-yellow-100" },
     { icon: <Home className="w-8 h-8" />, color: "bg-emerald-100" },
     { icon: <Megaphone className="w-8 h-8" />, color: "bg-purple-100" },

@@ -216,7 +216,7 @@ export default function CreateCoursePage() {
                                             type="text"
                                             value={formData.title}
                                             onChange={(e) => handleInputChange('title', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="Enter course title"
                                             required
                                         />
@@ -230,7 +230,7 @@ export default function CreateCoursePage() {
                                             type="text"
                                             value={formData.shortDescription}
                                             onChange={(e) => handleInputChange('shortDescription', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="Brief description (max 160 characters)"
                                             maxLength={160}
                                             required
@@ -247,7 +247,7 @@ export default function CreateCoursePage() {
                                         <textarea
                                             value={formData.description}
                                             onChange={(e) => handleInputChange('description', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             rows={6}
                                             placeholder="Detailed course description"
                                             required
@@ -269,7 +269,7 @@ export default function CreateCoursePage() {
                                         <select
                                             value={formData.category}
                                             onChange={(e) => handleInputChange('category', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             required
                                         >
                                             {categories.map(category => (
@@ -287,7 +287,7 @@ export default function CreateCoursePage() {
                                         <select
                                             value={formData.level}
                                             onChange={(e) => handleInputChange('level', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             required
                                         >
                                             {levels.map(level => (
@@ -305,7 +305,7 @@ export default function CreateCoursePage() {
                                         <select
                                             value={formData.language}
                                             onChange={(e) => handleInputChange('language', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             required
                                         >
                                             {languages.map(lang => (
@@ -324,7 +324,7 @@ export default function CreateCoursePage() {
                                             type="text"
                                             value={formData.subcategory}
                                             onChange={(e) => handleInputChange('subcategory', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="e.g., React, Photoshop, Digital Marketing"
                                         />
                                     </div>
@@ -345,7 +345,7 @@ export default function CreateCoursePage() {
                                             <select
                                                 value={formData.currency}
                                                 onChange={(e) => handleInputChange('currency', e.target.value)}
-                                                className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="px-3 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             >
                                                 {currencies.map(currency => (
                                                     <option key={currency.value} value={currency.value}>
@@ -357,7 +357,7 @@ export default function CreateCoursePage() {
                                                 type="number"
                                                 value={formData.price}
                                                 onChange={(e) => handleInputChange('price', Number(e.target.value))}
-                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                                 placeholder="0.00"
                                                 min="0"
                                                 step="0.01"
@@ -383,13 +383,13 @@ export default function CreateCoursePage() {
                                             value={newTag}
                                             onChange={(e) => setNewTag(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="Add a tag"
                                         />
                                         <button
                                             type="button"
                                             onClick={addTag}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                         >
                                             Add
                                         </button>
@@ -398,13 +398,13 @@ export default function CreateCoursePage() {
                                         {formData.tags.map((tag, index) => (
                                             <span
                                                 key={index}
-                                                className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                                                className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                                             >
                                                 {tag}
                                                 <button
                                                     type="button"
                                                     onClick={() => removeTag(tag)}
-                                                    className="hover:text-blue-600"
+                                                    className="hover:text-primary"
                                                 >
                                                     <X className="w-3 h-3" />
                                                 </button>
@@ -426,13 +426,13 @@ export default function CreateCoursePage() {
                                             value={newLearningOutcome}
                                             onChange={(e) => setNewLearningOutcome(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addLearningOutcome())}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="What will students achieve after completing this course?"
                                         />
                                         <button
                                             type="button"
                                             onClick={addLearningOutcome}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                         >
                                             Add
                                         </button>
@@ -469,13 +469,13 @@ export default function CreateCoursePage() {
                                             value={newWhatYouWillLearn}
                                             onChange={(e) => setNewWhatYouWillLearn(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addWhatYouWillLearn())}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="What specific skills or knowledge will students gain?"
                                         />
                                         <button
                                             type="button"
                                             onClick={addWhatYouWillLearn}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                         >
                                             Add
                                         </button>
@@ -512,13 +512,13 @@ export default function CreateCoursePage() {
                                             value={newPrerequisite}
                                             onChange={(e) => setNewPrerequisite(e.target.value)}
                                             onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addPrerequisite())}
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                             placeholder="What should students know before taking this course?"
                                         />
                                         <button
                                             type="button"
                                             onClick={addPrerequisite}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
                                         >
                                             Add
                                         </button>
@@ -585,7 +585,7 @@ export default function CreateCoursePage() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                                        className="w-full bg-primary text-white py-3 px-4 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                                     >
                                         {loading ? (
                                             <>

@@ -266,11 +266,11 @@ export default function AdAnalyticsPage() {
               <p className="text-sm text-gray-600">Impressions</p>
               <p className="text-2xl font-bold text-gray-900">{analytics.impressions.toLocaleString()}</p>
             </div>
-            <Eye className="w-8 h-8 text-blue-600" />
+            <Eye className="w-8 h-8 text-primary" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+12.5%</span>
+            <TrendingUp className="w-4 h-4 text-accent mr-1" />
+            <span className="text-accent">+12.5%</span>
           </div>
         </Card>
 
@@ -280,11 +280,11 @@ export default function AdAnalyticsPage() {
               <p className="text-sm text-gray-600">Clicks</p>
               <p className="text-2xl font-bold text-gray-900">{analytics.clicks.toLocaleString()}</p>
             </div>
-            <MousePointer className="w-8 h-8 text-green-600" />
+            <MousePointer className="w-8 h-8 text-accent" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+8.3%</span>
+            <TrendingUp className="w-4 h-4 text-accent mr-1" />
+            <span className="text-accent">+8.3%</span>
           </div>
         </Card>
 
@@ -311,8 +311,8 @@ export default function AdAnalyticsPage() {
             <DollarSign className="w-8 h-8 text-yellow-600" />
           </div>
           <div className="mt-2 flex items-center text-sm">
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-            <span className="text-green-600">+15.2%</span>
+            <TrendingUp className="w-4 h-4 text-accent mr-1" />
+            <span className="text-accent">+15.2%</span>
           </div>
         </Card>
       </div>
@@ -350,11 +350,11 @@ export default function AdAnalyticsPage() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">ROI</span>
-              <span className="font-medium text-green-600">{analytics.roi.toFixed(1)}%</span>
+              <span className="font-medium text-accent">{analytics.roi.toFixed(1)}%</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600">Profit</span>
-              <span className="font-medium text-green-600">
+              <span className="font-medium text-accent">
                 ${(analytics.revenue - analytics.spend).toLocaleString()}
               </span>
             </div>
@@ -395,7 +395,7 @@ export default function AdAnalyticsPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full"
+                      className="bg-primary h-2 rounded-full"
                       style={{ width: `${(item.impressions / analytics.impressions) * 100}%` }}
                     />
                   </div>
@@ -422,7 +422,7 @@ export default function AdAnalyticsPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
-                      className="bg-green-600 h-2 rounded-full"
+                      className="bg-accent h-2 rounded-full"
                       style={{ width: `${item.percentage}%` }}
                     />
                   </div>

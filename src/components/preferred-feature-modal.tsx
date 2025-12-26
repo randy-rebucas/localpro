@@ -38,8 +38,8 @@ const allFeatureOptions: FeatureOption[] = [
     name: "Marketplace",
     description: "Buy & sell locally",
     icon: <Store className="w-6 h-6" />,
-    iconBgColor: "bg-blue-100",
-    iconTextColor: "text-blue-600",
+    iconBgColor: "bg-primary/10",
+    iconTextColor: "text-primary",
     route: PACKAGE_REGISTRY.marketplace.route,
     featureKey: "marketplace",
   },
@@ -58,8 +58,8 @@ const allFeatureOptions: FeatureOption[] = [
     name: "Academy",
     description: "Learn & grow",
     icon: <GraduationCap className="w-6 h-6" />,
-    iconBgColor: "bg-green-100",
-    iconTextColor: "text-green-600",
+    iconBgColor: "bg-accent/10",
+    iconTextColor: "text-accent",
     route: PACKAGE_REGISTRY.academy.route,
     featureKey: "academy",
   },
@@ -78,8 +78,8 @@ const allFeatureOptions: FeatureOption[] = [
     name: "Jobs",
     description: "Find work opportunities",
     icon: <Briefcase className="w-6 h-6" />,
-    iconBgColor: "bg-indigo-100",
-    iconTextColor: "text-indigo-600",
+    iconBgColor: "bg-primary/10",
+    iconTextColor: "text-primary",
     route: PACKAGE_REGISTRY.jobs.route,
     featureKey: "jobBoard",
   },
@@ -242,7 +242,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
         {/* Header - Sticky */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-accent to-accent rounded-lg flex items-center justify-center flex-shrink-0">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div className="min-w-0">
@@ -263,7 +263,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
         <div className="flex-1 overflow-y-auto">
           {/* Current Selection */}
           {currentFeature && (
-            <div className="flex-shrink-0 px-4 sm:px-6 py-4 bg-green-50 border-b border-green-200">
+            <div className="flex-shrink-0 px-4 sm:px-6 py-4 bg-accent/5 border-b border-accent/20">
               <p className="text-sm font-medium text-gray-700 mb-2">Current Selection:</p>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 ${currentFeature.iconBgColor} rounded-lg flex items-center justify-center flex-shrink-0`}>
@@ -290,7 +290,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
                     relative p-4 rounded-lg border-2 transition-all duration-200 overflow-hidden
                     ${
                       isSelected
-                        ? "border-green-500 bg-green-50 shadow-md"
+                        ? "border-accent bg-accent/5 shadow-md"
                         : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                     }
                   `}
@@ -309,7 +309,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
                       <h4
                         className={`
                           text-xs sm:text-sm font-semibold mb-1 truncate
-                          ${isSelected ? "text-green-700" : "text-gray-900"}
+                          ${isSelected ? "text-accent" : "text-gray-900"}
                         `}
                       >
                         {feature.name}
@@ -318,7 +318,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
                     </div>
                     {isSelected && (
                       <div className="absolute top-2 right-2 z-20">
-                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                        <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
                       </div>
                     )}
                   </div>
@@ -349,7 +349,7 @@ export function PreferredFeatureModal({ isOpen, onClose }: PreferredFeatureModal
                     px-4 sm:px-6 py-2 text-sm font-semibold text-white rounded-lg transition-all duration-200 whitespace-nowrap
                     ${
                       selectedFeature
-                        ? "bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 shadow-md hover:shadow-lg"
+                        ? "bg-gradient-to-r from-accent to-accent hover:from-accent hover:to-green-800 shadow-md hover:shadow-lg"
                         : "bg-gray-300 cursor-not-allowed"
                     }
                   `}

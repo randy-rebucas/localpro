@@ -557,7 +557,7 @@ export default function MarketplaceSuppliesPage() {
         
         if (quantity === 0) return { status: 'out-of-stock', color: 'bg-red-100 text-red-800', label: 'Out of Stock' };
         if (quantity <= minStock) return { status: 'low-stock', color: 'bg-yellow-100 text-yellow-800', label: 'Low Stock' };
-        return { status: 'in-stock', color: 'bg-green-100 text-green-800', label: 'In Stock' };
+        return { status: 'in-stock', color: 'bg-accent/10 text-accent', label: 'In Stock' };
     };
 
     const getCategoryIcon = (category: Product['category']) => {
@@ -678,7 +678,7 @@ export default function MarketplaceSuppliesPage() {
                         label: "Use Current Location",
                         icon: MapPin,
                         variant: "outline",
-                        className: "text-sm bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                        className: "text-sm bg-primary/5 text-primary border-primary/20 hover:bg-primary/10"
                     },
                     {
                         type: "link",
@@ -709,7 +709,7 @@ export default function MarketplaceSuppliesPage() {
                                 <select
                                     value={filters.category}
                                     onChange={(e) => handleFilterChange("category", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     {categories.map(category => (
                                         <option key={category.value} value={category.value}>
@@ -730,7 +730,7 @@ export default function MarketplaceSuppliesPage() {
                                         placeholder="Min"
                                         value={filters.priceRange[0]}
                                         onChange={(e) => handleFilterChange("priceRange", [Number(e.target.value), filters.priceRange[1]])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                     <span className="text-gray-500">to</span>
                                     <input
@@ -738,7 +738,7 @@ export default function MarketplaceSuppliesPage() {
                                         placeholder="Max"
                                         value={filters.priceRange[1]}
                                         onChange={(e) => handleFilterChange("priceRange", [filters.priceRange[0], Number(e.target.value)])}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -751,7 +751,7 @@ export default function MarketplaceSuppliesPage() {
                                 <select
                                     value={filters.rating}
                                     onChange={(e) => handleFilterChange("rating", Number(e.target.value))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 >
                                     <option value={0}>Any Rating</option>
                                     <option value={4}>4+ Stars</option>
@@ -770,7 +770,7 @@ export default function MarketplaceSuppliesPage() {
                                     placeholder="City, State"
                                     value={filters.location}
                                     onChange={(e) => handleFilterChange("location", e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                                 />
                             </div>
 
@@ -795,13 +795,13 @@ export default function MarketplaceSuppliesPage() {
                             {/* Search */}
                             <div className="flex-1">
                                 <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-accent transition-colors" />
                                     <input
                                         type="text"
                                         placeholder="Search supplies, suppliers, or locations..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 hover:border-gray-400"
                                     />
                                     {searchQuery && (
                                         <button
@@ -1051,7 +1051,7 @@ const SupplyCard = React.memo(function SupplyCard({
                                 )}
                             </div>
                             <div className="text-right ml-3 flex-shrink-0">
-                                <div className="text-xl font-bold text-green-600">
+                                <div className="text-xl font-bold text-accent">
                                     {formatPrice(retailPrice, currency)}
                                 </div>
                                 {wholesalePrice && wholesalePrice < retailPrice && (
@@ -1094,7 +1094,7 @@ const SupplyCard = React.memo(function SupplyCard({
                             <div className="mb-2">
                                 <div className="flex flex-wrap gap-1">
                                     {supply.tags.slice(0, 3).map((tag, index) => (
-                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                                        <span key={index} className="inline-block px-2 py-1 text-xs bg-primary/10 text-primary rounded-full">
                                             {tag}
                                         </span>
                                     ))}
@@ -1123,7 +1123,7 @@ const SupplyCard = React.memo(function SupplyCard({
                                 </div>
                                 {stockQuantity > 0 && (
                                     <div className="flex items-center gap-1">
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+                                        <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded">
                                             {stockQuantity} in stock
                                         </span>
                                     </div>
@@ -1137,7 +1137,7 @@ const SupplyCard = React.memo(function SupplyCard({
 
                         {/* Product Badges */}
                         <div className="mt-2 flex flex-wrap gap-1">
-                            <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                            <span className="inline-block px-2 py-1 text-xs font-medium bg-accent/10 text-accent rounded-full">
                                 {supply.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Product'}
                             </span>
                             {supply.subcategory && (
@@ -1158,7 +1158,7 @@ const SupplyCard = React.memo(function SupplyCard({
                                 </span>
                             )}
                             {supply.specifications?.warranty && (
-                                <span className="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full">
                                     Warranty Included
                                 </span>
                             )}

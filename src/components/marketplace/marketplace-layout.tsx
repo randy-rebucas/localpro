@@ -252,7 +252,7 @@ function MarketplaceLayoutContent() {
                       <button
                         onClick={handleDetectLocation}
                         disabled={detectingLocation}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                       >
                         {detectingLocation ? (
                           <>
@@ -269,7 +269,7 @@ function MarketplaceLayoutContent() {
                       
                       {locationCoordinates && (
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Navigation className="w-4 h-4 text-green-600" />
+                          <Navigation className="w-4 h-4 text-accent" />
                           <span className="font-medium">{(radius / 1000).toFixed(1)} km radius</span>
                           <button
                             onClick={() => {
@@ -313,7 +313,7 @@ function MarketplaceLayoutContent() {
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                     >
                       <option value="createdAt">Date Created</option>
                       <option value="basePrice">Price</option>
@@ -325,7 +325,7 @@ function MarketplaceLayoutContent() {
                     <select
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                     >
                       <option value="desc">Descending</option>
                       <option value="asc">Ascending</option>
@@ -337,7 +337,7 @@ function MarketplaceLayoutContent() {
                         type="checkbox"
                         checked={groupByCategory}
                         onChange={(e) => setGroupByCategory(e.target.checked)}
-                        className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-ring"
                       />
                       <span className="text-sm text-gray-700">Group by Category</span>
                     </label>
@@ -348,7 +348,7 @@ function MarketplaceLayoutContent() {
                         onClick={() => setViewMode('grid')}
                         className={`p-2 rounded-md transition-colors ${
                           viewMode === 'grid'
-                            ? 'bg-white text-green-700 shadow-sm'
+                            ? 'bg-white text-accent shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
                         }`}
                         title="Grid View"
@@ -359,7 +359,7 @@ function MarketplaceLayoutContent() {
                         onClick={() => setViewMode('list')}
                         className={`p-2 rounded-md transition-colors ${
                           viewMode === 'list'
-                            ? 'bg-white text-green-700 shadow-sm'
+                            ? 'bg-white text-accent shadow-sm'
                             : 'text-gray-600 hover:text-gray-900'
                         }`}
                         title="List View"

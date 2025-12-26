@@ -431,7 +431,7 @@ const getVerificationBadge = (verification?: Verification) => {
   if (verifiedCount === 0) return null;
   
   return (
-    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
+    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-accent/10 text-accent">
       <Shield className="w-3 h-3 mr-1" />
       {verifiedCount}/6 Verified
     </span>
@@ -442,13 +442,13 @@ const getVerificationBadge = (verification?: Verification) => {
 const getBadgeIcon = (badgeType?: BadgeType) => {
   switch (badgeType) {
     case 'verified_provider':
-      return <Shield className="w-4 h-4 text-blue-600" />;
+      return <Shield className="w-4 h-4 text-primary" />;
     case 'top_rated':
       return <Star className="w-4 h-4 text-yellow-600" />;
     case 'fast_response':
-      return <Zap className="w-4 h-4 text-green-600" />;
+      return <Zap className="w-4 h-4 text-accent" />;
     case 'reliable':
-      return <CheckCircle className="w-4 h-4 text-green-600" />;
+      return <CheckCircle className="w-4 h-4 text-accent" />;
     case 'expert':
       return <Award className="w-4 h-4 text-purple-600" />;
     case 'newcomer':
@@ -704,7 +704,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
         <p className="text-gray-500 mb-4">Unable to load profile information.</p>
         <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
         >
           Refresh Page
         </button>
@@ -733,7 +733,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg"
                     />
                   ) : (
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-20 h-20 bg-gradient-to-br from-accent to-accent rounded-full flex items-center justify-center shadow-lg">
                       <span className="text-white font-bold text-2xl">
                         {profile?.name?.charAt(0) || profile?.firstName?.charAt(0) || "U"}
                       </span>
@@ -748,14 +748,14 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                   <p className="text-gray-600 capitalize mt-1">{primaryRole || "User"}</p>
                   {profile?.isVerified && (
                     <div className="flex items-center justify-center sm:justify-start mt-1">
-                      <CheckCircle className="w-4 h-4 text-green-600 mr-1" />
-                      <span className="text-xs text-green-600 font-medium">Verified Account</span>
+                      <CheckCircle className="w-4 h-4 text-accent mr-1" />
+                      <span className="text-xs text-accent font-medium">Verified Account</span>
                     </div>
                   )}
                   {profile?.trustScore !== undefined && profile.trustScore > 0 && (
                     <div className="flex items-center justify-center sm:justify-start mt-1">
-                      <Shield className="w-3 h-3 text-blue-600 mr-1" />
-                      <span className="text-xs text-blue-600 font-medium">Trust Score: {profile.trustScore}/100</span>
+                      <Shield className="w-3 h-3 text-primary mr-1" />
+                      <span className="text-xs text-primary font-medium">Trust Score: {profile.trustScore}/100</span>
                     </div>
                   )}
                 </div>
@@ -895,7 +895,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                     {profile.profile.skills.map((skill, index) => (
                       <span
                         key={`${skill}-${index}`}
-                        className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                        className="px-3 py-1 bg-accent/10 text-accent text-sm rounded-full"
                       >
                         {skill}
                       </span>
@@ -935,7 +935,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                     {profile.profile.serviceAreas.map((area, index) => (
                       <span
                         key={`${area}-${index}`}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                        className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
                       >
                         {area}
                       </span>
@@ -1066,7 +1066,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                         Status: {profile.profile.backgroundCheck.status || 'pending'}
                       </span>
                       {profile.profile.backgroundCheck.status === 'approved' && (
-                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <CheckCircle className="w-5 h-5 text-accent" />
                       )}
                       {profile.profile.backgroundCheck.status === 'rejected' && (
                         <AlertCircle className="w-5 h-5 text-red-600" />
@@ -1131,12 +1131,12 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                       const verified = profile.verification?.[key as keyof Verification];
                       return (
                         <div key={key} className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                          <Icon className={`w-4 h-4 ${verified ? 'text-green-600' : 'text-gray-400'}`} />
-                          <span className={`text-sm ${verified ? 'text-green-700 font-medium' : 'text-gray-500'}`}>
+                          <Icon className={`w-4 h-4 ${verified ? 'text-accent' : 'text-gray-400'}`} />
+                          <span className={`text-sm ${verified ? 'text-accent font-medium' : 'text-gray-500'}`}>
                             {label}
                           </span>
                           {verified ? (
-                            <CheckCircle className="w-4 h-4 text-green-600 ml-auto" />
+                            <CheckCircle className="w-4 h-4 text-accent ml-auto" />
                           ) : (
                             <AlertCircle className="w-4 h-4 text-gray-400 ml-auto" />
                           )}
@@ -1183,7 +1183,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                     {profile.responseTime?.average !== undefined && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
-                          <Clock className="w-4 h-4 text-blue-600" />
+                          <Clock className="w-4 h-4 text-primary" />
                           <span className="text-sm font-medium text-gray-700">Response Time</span>
                         </div>
                         <p className="text-lg font-semibold text-gray-700">
@@ -1199,7 +1199,7 @@ export function UserProfile({ initialProfile }: { initialProfile?: UserProfileDa
                     {profile?.completionRate !== undefined && (
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-accent" />
                           <span className="text-sm font-medium text-gray-700">Completion Rate</span>
                         </div>
                         <p className="text-lg font-semibold text-gray-700">{profile.completionRate}%</p>

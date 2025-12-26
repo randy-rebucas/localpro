@@ -119,8 +119,8 @@ export function SkillsBadgeFilter({
               "group inline-flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200",
               "focus:outline-none focus:ring-2 focus:ring-offset-1",
               selected
-                ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 border-2 border-green-500"
-                : "bg-white text-gray-700 border border-gray-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md"
+                ? "bg-gradient-to-r from-accent to-accent text-white shadow-lg shadow-green-500/30 border-2 border-accent"
+                : "bg-white text-gray-700 border border-gray-200 hover:border-accent hover:bg-accent/5 hover:shadow-md"
             )}
             style={
               selected
@@ -137,7 +137,7 @@ export function SkillsBadgeFilter({
             {icon && (
               <div className={cn(
                 "w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200",
-                selected ? "bg-white/20" : "bg-gray-100 group-hover:bg-green-100"
+                selected ? "bg-white/20" : "bg-gray-100 group-hover:bg-accent/10"
               )}>
                 <span className="text-base">{icon}</span>
               </div>

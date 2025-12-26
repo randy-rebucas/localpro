@@ -50,11 +50,11 @@ export function AIReviewSentiment({
     return (
       <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
         <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-4 h-4 text-green-600" />
+          <Sparkles className="w-4 h-4 text-accent" />
           <span className="text-sm font-medium text-gray-700">Analyzing reviews...</span>
         </div>
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+          <Loader2 className="w-4 h-4 animate-spin text-accent" />
         </div>
       </div>
     );
@@ -64,14 +64,14 @@ export function AIReviewSentiment({
 
   const sentimentColor =
     sentiment.overallSentiment === "positive"
-      ? "text-green-600"
+      ? "text-accent"
       : sentiment.overallSentiment === "negative"
       ? "text-red-600"
       : "text-gray-600";
 
   const sentimentBg =
     sentiment.overallSentiment === "positive"
-      ? "bg-green-50 border-green-200"
+      ? "bg-accent/5 border-accent/20"
       : sentiment.overallSentiment === "negative"
       ? "bg-red-50 border-red-200"
       : "bg-gray-50 border-gray-200";
@@ -99,7 +99,7 @@ export function AIReviewSentiment({
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Review Analysis</h3>
         </div>
         <button
@@ -130,13 +130,13 @@ export function AIReviewSentiment({
           {sentiment.strengths && sentiment.strengths.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-green-600" />
+                <TrendingUp className="w-4 h-4 text-accent" />
                 <h4 className="font-semibold text-gray-900">Strengths</h4>
               </div>
               <ul className="space-y-1">
                 {sentiment.strengths.map((strength: string, i: number) => (
                   <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <span className="text-green-600 mt-0.5">•</span>
+                    <span className="text-accent mt-0.5">•</span>
                     <span>{strength}</span>
                   </li>
                 ))}
@@ -172,7 +172,7 @@ export function AIReviewSentiment({
                       <span
                         className={`text-xs px-2 py-0.5 rounded ${
                           theme.sentiment === "positive"
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-accent/10 text-accent"
                             : theme.sentiment === "negative"
                             ? "bg-red-100 text-red-700"
                             : "bg-gray-100 text-gray-700"

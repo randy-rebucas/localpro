@@ -10,12 +10,13 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 
 const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, error, helperText, variant = 'default', ...props }, ref) => {
-    const baseClasses = "w-4 h-4 rounded border text-green-600 focus:ring-2 focus:ring-green-500 focus:ring-offset-0";
+    const baseClasses =
+      "w-4 h-4 rounded border border-input text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
     
     const variantClasses = {
-      default: "border-gray-300",
-      error: "border-red-300 focus:ring-red-500",
-      success: "border-green-300 focus:ring-green-500"
+      default: "",
+      error: "border-destructive",
+      success: ""
     };
 
     const checkboxClasses = cn(
@@ -26,7 +27,7 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <div className="space-y-1">
-        <label className="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+        <label className="inline-flex items-center gap-2 text-sm text-foreground cursor-pointer">
           <input
             type="checkbox"
             className={checkboxClasses}
@@ -36,10 +37,10 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           {label && <span>{label}</span>}
         </label>
         {error && (
-          <p className="text-sm text-red-600">{error}</p>
+          <p className="text-sm text-destructive">{error}</p>
         )}
         {helperText && !error && (
-          <p className="text-sm text-gray-500">{helperText}</p>
+          <p className="text-sm text-muted-foreground">{helperText}</p>
         )}
       </div>
     );

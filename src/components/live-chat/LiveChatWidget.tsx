@@ -601,8 +601,8 @@ export function LiveChatWidget() {
                 <div className="flex items-center gap-1.5">
                   {isConnected ? (
                     <>
-                      <Wifi className="w-3 h-3 text-green-300" />
-                      <span className="w-2 h-2 bg-green-300 rounded-full animate-pulse" />
+                      <Wifi className="w-3 h-3 text-accent" />
+                      <span className="w-2 h-2 bg-accent/30 rounded-full animate-pulse" />
                       <span className="text-xs text-white/80">Connected</span>
                     </>
                   ) : isChatEnded ? (

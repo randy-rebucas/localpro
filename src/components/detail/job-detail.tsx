@@ -87,12 +87,12 @@ export function JobDetail({
 
           <div className="flex flex-wrap gap-2">
             {job.category && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                 {String(job.category)}
               </span>
             )}
             {job.jobType && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
                 {job.jobType.replace("_", " ")}
               </span>
             )}
@@ -108,7 +108,7 @@ export function JobDetail({
             )}
             {job.status && (
               <span className={`px-3 py-1 rounded-full text-sm ${
-                job.status === "active" ? "bg-green-100 text-green-800" :
+                job.status === "active" ? "bg-accent/10 text-accent" :
                 job.status === "paused" ? "bg-yellow-100 text-yellow-800" :
                 "bg-gray-100 text-gray-800"
               }`}>
@@ -141,10 +141,10 @@ export function JobDetail({
           </div>
 
           {hasApplied && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-blue-600" />
-                <p className="font-semibold text-blue-800">You have applied for this position</p>
+                <CheckCircle2 className="w-5 h-5 text-primary" />
+                <p className="font-semibold text-primary">You have applied for this position</p>
               </div>
             </div>
           )}
@@ -196,7 +196,7 @@ export function JobDetail({
                     href={job.company.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     {job.company.website}
                   </a>
@@ -239,7 +239,7 @@ export function JobDetail({
                   <ul className="space-y-1">
                     {job.benefits.map((benefit, index) => (
                       <li key={index} className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                        <CheckCircle2 className="w-4 h-4 text-accent" />
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -257,7 +257,7 @@ export function JobDetail({
               {job.requirements.skills.map((skill: string, index: number) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                  className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                 >
                   {skill}
                 </span>
@@ -272,7 +272,7 @@ export function JobDetail({
             <ul className="space-y-2">
               {job.requirements.other.map((requirement: string, index: number) => (
                 <li key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-primary mt-0.5" />
                   <span>{requirement}</span>
                 </li>
               ))}
@@ -300,7 +300,7 @@ export function JobDetail({
             <ul className="space-y-2">
               {job.qualifications.map((qualification, index) => (
                 <li key={index} className="flex items-start gap-2">
-                  <Users className="w-4 h-4 text-green-500 mt-0.5" />
+                  <Users className="w-4 h-4 text-accent mt-0.5" />
                   <span>{qualification}</span>
                 </li>
               ))}

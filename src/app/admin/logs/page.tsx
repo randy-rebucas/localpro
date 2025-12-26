@@ -837,7 +837,7 @@ export default function AdminLogsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="w-7 h-7 text-indigo-600" />
+            <FileText className="w-7 h-7 text-primary" />
             System Logs
           </h1>
           <p className="text-slate-600 text-sm">Monitor system activity, configure logging, and analyze performance</p>
@@ -875,7 +875,7 @@ export default function AdminLogsPage() {
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'border-indigo-600 text-indigo-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
               }`}
             >
@@ -955,7 +955,7 @@ export default function AdminLogsPage() {
           {/* Correlation Search */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
             <div className="flex items-center gap-3">
-              <Link2 className="w-5 h-5 text-indigo-600" />
+              <Link2 className="w-5 h-5 text-primary" />
               <h3 className="font-semibold text-slate-900">Correlation Search</h3>
             </div>
             <div className="mt-3 flex gap-2">
@@ -964,12 +964,12 @@ export default function AdminLogsPage() {
                 value={correlationSearchId}
                 onChange={(e) => setCorrelationSearchId(e.target.value)}
                 placeholder="Enter correlation ID..."
-                className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <button
                 onClick={searchByCorrelationId}
                 disabled={searchingCorrelation}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm font-medium"
               >
                 {searchingCorrelation ? 'Searching...' : 'Search'}
               </button>
@@ -1158,7 +1158,7 @@ export default function AdminLogsPage() {
                       key={field}
                       onClick={() => handleSort(field)}
                       className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-lg ${
-                        sortBy === field ? 'bg-indigo-100 text-indigo-800' : 'text-slate-600 hover:bg-slate-100'
+                        sortBy === field ? 'bg-primary/10 text-primary' : 'text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {field.charAt(0).toUpperCase() + field.slice(1)}
@@ -1215,7 +1215,7 @@ export default function AdminLogsPage() {
                       <td className="px-3 py-2 whitespace-nowrap">
                         <button
                           onClick={() => handleViewLogDetails(log)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="text-primary hover:text-primary"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -1244,7 +1244,7 @@ export default function AdminLogsPage() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
               <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                <Settings className="w-4 h-4 text-indigo-600" />
+                <Settings className="w-4 h-4 text-primary" />
                 Global Log Level
               </h3>
             </div>
@@ -1267,7 +1267,7 @@ export default function AdminLogsPage() {
                 <button
                   onClick={() => updateGlobalLogLevel(selectedLevel)}
                   disabled={configEditing || selectedLevel === logConfig?.globalLevel}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium flex items-center gap-2"
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 text-sm font-medium flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   {configEditing ? 'Saving...' : 'Save'}
@@ -1285,7 +1285,7 @@ export default function AdminLogsPage() {
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
               <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-indigo-600" />
+                <Layers className="w-4 h-4 text-primary" />
                 Module-Specific Overrides
               </h3>
             </div>
@@ -1562,7 +1562,7 @@ export default function AdminLogsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                          <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">
                             {op.type}
                           </span>
                           <span className="font-medium text-slate-900">{op.name}</span>

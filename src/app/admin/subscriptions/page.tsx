@@ -337,7 +337,7 @@ export default function AdminSubscriptionsPage() {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "cancelled":
         return "bg-red-100 text-red-800";
       case "expired":
@@ -345,7 +345,7 @@ export default function AdminSubscriptionsPage() {
       case "suspended":
         return "bg-yellow-100 text-yellow-800";
       case "pending":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -399,7 +399,7 @@ export default function AdminSubscriptionsPage() {
         <div className="mt-2 sm:mt-0">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
             Create Manual Subscription
@@ -415,7 +415,7 @@ export default function AdminSubscriptionsPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
@@ -439,7 +439,7 @@ export default function AdminSubscriptionsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by user email, name, or subscription ID..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function AdminSubscriptionsPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Statuses</option>
                   <option value="active">Active</option>
@@ -463,7 +463,7 @@ export default function AdminSubscriptionsPage() {
                 <select
                   value={filters.isManual}
                   onChange={(e) => setFilters({ ...filters, isManual: e.target.value, page: 1 })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Types</option>
                   <option value="true">Manual Only</option>
@@ -475,7 +475,7 @@ export default function AdminSubscriptionsPage() {
                 <select
                   value={filters.planId}
                   onChange={(e) => setFilters({ ...filters, planId: e.target.value, page: 1 })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Plans</option>
                   {plans?.map((plan: SubscriptionPlan) => (
@@ -505,7 +505,7 @@ export default function AdminSubscriptionsPage() {
               </button>
               <button
                 onClick={() => fetchSubscriptions(convertFilters(filters))}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Refresh
@@ -611,7 +611,7 @@ export default function AdminSubscriptionsPage() {
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         {subscription.isManual ? (
-                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
                             Manual
                           </span>
                         ) : (
@@ -624,7 +624,7 @@ export default function AdminSubscriptionsPage() {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => openViewModal(subscription)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-primary hover:text-primary"
                             title="View Details"
                           >
                             <Eye className="w-3 h-3" />
@@ -633,7 +633,7 @@ export default function AdminSubscriptionsPage() {
                             <>
                               <button
                                 onClick={() => openEditModal(subscription)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-accent hover:text-accent"
                                 title="Edit"
                               >
                                 <Edit className="w-3 h-3" />
@@ -688,7 +688,7 @@ export default function AdminSubscriptionsPage() {
               type="button"
               onClick={handleCreate}
               disabled={loading}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "Creating..." : "Create Subscription"}
             </button>
@@ -730,7 +730,7 @@ export default function AdminSubscriptionsPage() {
                         }
                       }
                     }}
-                    className="w-full pl-7 pr-7 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-7 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     placeholder="Search for user by name or email..."
                     required
                   />
@@ -757,7 +757,7 @@ export default function AdminSubscriptionsPage() {
                         <div
                           key={user._id}
                           onClick={() => handleUserSelect(user)}
-                          className="px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                          className="px-3 py-2 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-primary/5 transition-colors"
                         >
                           <div className="font-medium text-xs text-gray-900">
                             {user.firstName} {user.lastName}
@@ -775,11 +775,11 @@ export default function AdminSubscriptionsPage() {
                 )}
                 
                 {selectedUser && (
-                  <div className="mt-1.5 px-2 py-1.5 bg-blue-50 border border-blue-200 rounded-md">
-                    <div className="text-xs font-medium text-blue-900">
+                  <div className="mt-1.5 px-2 py-1.5 bg-primary/5 border border-primary/20 rounded-md">
+                    <div className="text-xs font-medium text-primary">
                       Selected: {selectedUser.firstName} {selectedUser.lastName}
                     </div>
-                    <div className="text-xs text-blue-700">{selectedUser.email}</div>
+                    <div className="text-xs text-primary">{selectedUser.email}</div>
                   </div>
                 )}
               </div>
@@ -789,7 +789,7 @@ export default function AdminSubscriptionsPage() {
               <select
                 value={createForm.planId}
                 onChange={(e) => setCreateForm({ ...createForm, planId: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               >
                 <option value="">Select a plan</option>
@@ -811,7 +811,7 @@ export default function AdminSubscriptionsPage() {
                       billingCycle: e.target.value as "monthly" | "yearly",
                     })
                   }
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
@@ -828,7 +828,7 @@ export default function AdminSubscriptionsPage() {
                     const date = e.target.value ? new Date(e.target.value) : new Date();
                     setCreateForm({ ...createForm, startDate: date });
                   }}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
@@ -841,7 +841,7 @@ export default function AdminSubscriptionsPage() {
                     setCreateForm({ ...createForm, endDate: date });
                   }}
                   min={createForm.startDate.toISOString().split('T')[0]}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
@@ -852,7 +852,7 @@ export default function AdminSubscriptionsPage() {
                 value={createForm.reason}
                 onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })}
                 placeholder="e.g., Free trial for new user"
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -862,7 +862,7 @@ export default function AdminSubscriptionsPage() {
                 onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
                 placeholder="Additional admin notes"
                 rows={3}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
@@ -888,7 +888,7 @@ export default function AdminSubscriptionsPage() {
               type="button"
               onClick={handleEdit}
               disabled={loading}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "Updating..." : "Update Subscription"}
             </button>
@@ -902,7 +902,7 @@ export default function AdminSubscriptionsPage() {
               <select
                 value={editForm.planId}
                 onChange={(e) => setEditForm({ ...editForm, planId: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="">Keep current plan</option>
                 {plans.map((plan: SubscriptionPlan) => (
@@ -922,7 +922,7 @@ export default function AdminSubscriptionsPage() {
                     status: e.target.value as UserSubscription["status"],
                   })
                 }
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="active">Active</option>
                 <option value="cancelled">Cancelled</option>
@@ -942,7 +942,7 @@ export default function AdminSubscriptionsPage() {
                       billingCycle: e.target.value as "monthly" | "yearly",
                     })
                   }
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="monthly">Monthly</option>
                   <option value="yearly">Yearly</option>
@@ -959,7 +959,7 @@ export default function AdminSubscriptionsPage() {
                     const date = e.target.value ? new Date(e.target.value) : new Date();
                     setEditForm({ ...editForm, startDate: date });
                   }}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
@@ -972,7 +972,7 @@ export default function AdminSubscriptionsPage() {
                     setEditForm({ ...editForm, endDate: date });
                   }}
                   min={editForm.startDate.toISOString().split('T')[0]}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
@@ -983,7 +983,7 @@ export default function AdminSubscriptionsPage() {
                 value={editForm.reason}
                 onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })}
                 placeholder="e.g., Plan upgrade"
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -993,7 +993,7 @@ export default function AdminSubscriptionsPage() {
                 onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                 placeholder="Additional admin notes"
                 rows={3}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>
@@ -1131,7 +1131,7 @@ export default function AdminSubscriptionsPage() {
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Enter reason for cancellation"
                 rows={3}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </div>

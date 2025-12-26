@@ -56,7 +56,7 @@ export default function AdminPlusPage() {
             <button
               onClick={() => setActiveTab("plans")}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === "plans"
-                  ? "border-blue-500 text-blue-600"
+                  ? "border-primary text-primary"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
@@ -66,7 +66,7 @@ export default function AdminPlusPage() {
             <button
               onClick={() => setActiveTab("subscriptions")}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === "subscriptions"
-                  ? "border-blue-500 text-blue-600"
+                  ? "border-primary text-primary"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
@@ -76,7 +76,7 @@ export default function AdminPlusPage() {
             <button
               onClick={() => setActiveTab("analytics")}
               className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === "analytics"
-                  ? "border-blue-500 text-blue-600"
+                  ? "border-primary text-primary"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
             >
@@ -252,7 +252,7 @@ function PlansTab() {
         <h2 className="text-sm font-medium text-gray-900">Subscription Plans</h2>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
         >
           <Plus className="w-3 h-3 mr-1" />
           Create Plan
@@ -288,7 +288,7 @@ function PlansTab() {
                     <td className="px-3 py-2 whitespace-nowrap">
                       <div className="text-xs font-semibold text-gray-900">{plan.name}</div>
                       {plan.isPopular && (
-                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                        <span className="inline-block mt-0.5 px-1.5 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded">
                           Popular
                         </span>
                       )}
@@ -317,7 +317,7 @@ function PlansTab() {
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${plan.isActive
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-accent/10 text-accent"
                             : "bg-gray-100 text-gray-800"
                           }`}
                       >
@@ -328,7 +328,7 @@ function PlansTab() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => openEditModal(plan)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-primary hover:text-primary"
                           title="Edit"
                         >
                           <Edit className="w-3 h-3" />
@@ -806,7 +806,7 @@ function SubscriptionsTab() {
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "active":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "cancelled":
         return "bg-red-100 text-red-800";
       case "expired":
@@ -814,7 +814,7 @@ function SubscriptionsTab() {
       case "suspended":
         return "bg-yellow-100 text-yellow-800";
       case "pending":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -863,7 +863,7 @@ function SubscriptionsTab() {
         <h2 className="text-sm font-medium text-gray-900">Subscriptions</h2>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
         >
           <Plus className="w-3 h-3 mr-1" />
           Create Subscription
@@ -892,7 +892,7 @@ function SubscriptionsTab() {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="">All Status</option>
                 <option value="active">Active</option>
@@ -907,7 +907,7 @@ function SubscriptionsTab() {
               <select
                 value={filters.isManual}
                 onChange={(e) => setFilters({ ...filters, isManual: e.target.value, page: 1 })}
-                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 <option value="">All Types</option>
                 <option value="true">Manual</option>
@@ -1004,7 +1004,7 @@ function SubscriptionsTab() {
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
                         {subscription.isManual ? (
-                          <span className="px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                          <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-medium">
                             Manual
                           </span>
                         ) : (
@@ -1017,7 +1017,7 @@ function SubscriptionsTab() {
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => openViewModal(subscription)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-primary hover:text-primary"
                             title="View Details"
                           >
                             <Eye className="w-3 h-3" />
@@ -1026,7 +1026,7 @@ function SubscriptionsTab() {
                             <>
                               <button
                                 onClick={() => openEditModal(subscription)}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-accent hover:text-accent"
                                 title="Edit"
                               >
                                 <Edit className="w-3 h-3" />
@@ -1369,7 +1369,7 @@ function AnalyticsTab() {
         <h2 className="text-sm font-medium text-gray-900">Subscription Analytics</h2>
         <button
           onClick={refetch}
-          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+          className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
         >
           <RefreshCw className="w-3 h-3 mr-1" />
           Refresh
@@ -1378,31 +1378,31 @@ function AnalyticsTab() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Total Subscriptions</p>
               <p className="text-lg font-bold text-gray-900">{analytics.totalSubscriptions || 0}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+              <Users className="w-5 h-5 text-primary" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Active Subscriptions</p>
               <p className="text-lg font-bold text-gray-900">{analytics.activeSubscriptions || 0}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+              <CheckCircle2 className="w-5 h-5 text-accent" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Total Revenue</p>
@@ -1414,13 +1414,13 @@ function AnalyticsTab() {
                 )}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-              <Coins className="w-5 h-5 text-green-600" />
+            <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+              <Coins className="w-5 h-5 text-accent" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Monthly Revenue</p>
@@ -1432,8 +1432,8 @@ function AnalyticsTab() {
                 )}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+            <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+              <TrendingUp className="w-5 h-5 text-primary" />
             </div>
           </div>
         </div>

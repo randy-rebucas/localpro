@@ -64,7 +64,7 @@ export default function About() {
       icon: <Shield className="w-6 h-6" />,
       title: "Trust & Security",
       description: "We maintain the highest standards of security and transparency in everything we do",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Handshake className="w-6 h-6" />,
@@ -76,7 +76,7 @@ export default function About() {
       icon: <Globe className="w-6 h-6" />,
       title: "Global Impact",
       description: "We're building solutions that empower professionals worldwide",
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     },
     {
       icon: <Rocket className="w-6 h-6" />,

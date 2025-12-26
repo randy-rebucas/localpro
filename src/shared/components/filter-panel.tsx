@@ -62,7 +62,7 @@ export function FilterPanel({ filters, values, onChange, onReset, className = ""
             <Filter className="w-4 h-4" />
             <span>Filters</span>
             {activeFilterCount > 0 && (
-              <span className="bg-blue-500 text-white text-xs rounded-full px-2 py-0.5">
+              <span className="bg-primary text-white text-xs rounded-full px-2 py-0.5">
                 {activeFilterCount}
               </span>
             )}

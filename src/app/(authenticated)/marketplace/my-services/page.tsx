@@ -324,7 +324,7 @@ export default function MyServicesPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200";
+        return "bg-gradient-to-r from-accent/10 to-emerald-100 text-accent border border-accent/20";
       case "INACTIVE":
         return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200";
       case "PENDING":
@@ -564,7 +564,7 @@ export default function MyServicesPage() {
               <div className="text-sm text-gray-500">Inactive</div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalBookings}</div>
+              <div className="text-2xl font-bold text-primary">{stats.totalBookings}</div>
               <div className="text-sm text-gray-500">Total Bookings</div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
@@ -691,7 +691,7 @@ export default function MyServicesPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                        <div className="text-xl font-bold bg-gradient-to-r from-emerald-600 to-accent bg-clip-text text-transparent">
                           {formatPrice(service.price, service.pricing?.currency)}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -711,11 +711,11 @@ export default function MyServicesPage() {
                     <p className="text-gray-600 mb-3 line-clamp-2">{service.description}</p>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                      <div className="text-center bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-3 rounded-lg border border-blue-100">
+                      <div className="text-center bg-gradient-to-br from-primary/10/50 to-primary/50 p-3 rounded-lg border border-primary/20">
                         <div className="text-xl font-bold text-gray-700">{service.bookingCount}</div>
                         <div className="text-sm text-gray-500">Bookings</div>
                       </div>
-                      <div className="text-center bg-gradient-to-br from-green-50/50 to-emerald-50/50 p-3 rounded-lg border border-green-100">
+                      <div className="text-center bg-gradient-to-br from-accent/10/50 to-emerald-50/50 p-3 rounded-lg border border-accent/20">
                         <div className="text-xl font-bold text-gray-700">{formatPrice(service.totalEarnings, service.pricing?.currency)}</div>
                         <div className="text-sm text-gray-500">Earnings</div>
                       </div>
@@ -741,7 +741,7 @@ export default function MyServicesPage() {
                     
                     <Link
                       href={`/marketplace/services/${service.id}/edit`}
-                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-blue-300 text-blue-700 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
+                      className="flex items-center justify-center gap-2 px-4 py-2.5 border border-primary/30 text-primary rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/10 hover:to-primary/10 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                     >
                       <Edit className="w-4 h-4" />
                       Edit
@@ -757,7 +757,7 @@ export default function MyServicesPage() {
                     ) : (
                       <button
                         onClick={() => updateServiceStatus(service.id, "ACTIVE")}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-green-300 text-green-700 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 border border-accent/30 text-accent rounded-xl bg-gradient-to-r from-accent/10 to-emerald-50 hover:from-accent/10 hover:to-emerald-100 transition-all shadow-sm hover:shadow-lg hover:scale-105"
                       >
                         Activate
                       </button>

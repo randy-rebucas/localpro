@@ -84,12 +84,12 @@ export function CourseDetail({
 
           <div className="flex flex-wrap gap-2">
             {course.category && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                 {course.category}
               </span>
             )}
             {course.level && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
                 {course.level}
               </span>
             )}
@@ -161,8 +161,8 @@ export function CourseDetail({
 
           {enrollmentStatus && (
             <div className={`px-4 py-2 rounded-lg ${
-              enrollmentStatus === "completed" ? "bg-green-100 text-green-800" :
-              enrollmentStatus === "in_progress" ? "bg-blue-100 text-blue-800" :
+              enrollmentStatus === "completed" ? "bg-accent/10 text-accent" :
+              enrollmentStatus === "in_progress" ? "bg-primary/10 text-primary" :
               "bg-gray-100 text-gray-800"
             }`}>
               <span className="font-semibold capitalize">{enrollmentStatus.replace("_", " ")}</span>
@@ -204,7 +204,7 @@ export function CourseDetail({
             <ul className="space-y-2">
               {course.learningOutcomes.map((outcome, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
+                  <CheckCircle2 className="w-4 h-4 text-accent" />
                   <span>{outcome}</span>
                 </li>
               ))}
@@ -218,7 +218,7 @@ export function CourseDetail({
             <ul className="space-y-2">
               {course.prerequisites.map((prerequisite, index) => (
                 <li key={index} className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-blue-500" />
+                  <BookOpen className="w-4 h-4 text-primary" />
                   <span>{prerequisite}</span>
                 </li>
               ))}
@@ -257,7 +257,7 @@ export function CourseDetail({
               <div className="flex justify-between">
                 <span className="text-gray-600">Status</span>
                 <span className={`font-semibold ${
-                  course.enrollment.isOpen ? "text-green-600" : "text-red-600"
+                  course.enrollment.isOpen ? "text-accent" : "text-red-600"
                 }`}>
                   {course.enrollment.isOpen ? "Open" : "Closed"}
                 </span>
@@ -273,7 +273,7 @@ export function CourseDetail({
           <h2 className="text-xl font-semibold mb-4">Curriculum</h2>
           <div className="space-y-4">
             {course.curriculum.map((module, moduleIndex) => (
-              <div key={moduleIndex} className="border-l-4 border-blue-500 pl-4">
+              <div key={moduleIndex} className="border-l-4 border-primary pl-4">
                 <h3 className="font-semibold mb-2">{module.module}</h3>
                 {module.lessons && module.lessons.length > 0 && (
                   <ul className="space-y-1 ml-4">
@@ -284,7 +284,7 @@ export function CourseDetail({
                           {lesson.title}
                           {lesson.duration && ` (${lesson.duration} min)`}
                           {lesson.isFree && (
-                            <span className="ml-2 text-green-600">Free</span>
+                            <span className="ml-2 text-accent">Free</span>
                           )}
                         </span>
                       </li>

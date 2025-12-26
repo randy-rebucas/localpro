@@ -138,10 +138,10 @@ export default function StatsPage() {
             className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <CalendarDays className="w-6 h-6 text-blue-700" />
+              <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <CalendarDays className="w-6 h-6 text-primary" />
               </div>
-              <ArrowUpRight className="w-4 h-4 text-blue-700" />
+              <ArrowUpRight className="w-4 h-4 text-primary" />
             </div>
             <h3 className="text-sm font-medium text-gray-700 mb-1">My bookings</h3>
             <p className="text-xs text-gray-500">Track upcoming and past bookings</p>
@@ -201,10 +201,10 @@ export default function StatsPage() {
           {/* Users */}
           <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 group">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                <UsersIcon className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-blue-200 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <UsersIcon className="w-6 h-6 text-primary" />
               </div>
-              <div className="flex items-center gap-1 text-blue-600">
+              <div className="flex items-center gap-1 text-primary">
                 <ArrowUpRight className="w-4 h-4" />
                 <span className="text-xs font-medium">30d</span>
               </div>
@@ -276,8 +276,8 @@ export default function StatsPage() {
         {/* User Role Card */}
         <div className="bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-2xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-indigo-600" />
+            <div className="w-12 h-12 bg-gradient-to-br from-primary/10 to-primary/20 rounded-2xl flex items-center justify-center">
+              <CheckCircle className="w-6 h-6 text-primary" />
             </div>
             <div>
               <h3 className="text-sm font-medium text-gray-600 mb-1">Account Type</h3>
@@ -306,27 +306,27 @@ export default function StatsPage() {
         </div>
 
         {/* Quick Actions Card */}
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
+        <div className="bg-gradient-to-br from-accent/10 to-accent/10 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-2xl flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-medium text-green-700 mb-1">Quick Actions</h3>
-              <p className="text-xs text-green-600 mb-2">
+              <h3 className="text-sm font-medium text-accent mb-1">Quick Actions</h3>
+              <p className="text-xs text-accent mb-2">
                 {isClientView ? "Complete onboarding to unlock business tools" : "Create and manage your services"}
               </p>
               {isClientView ? (
                 <Link
                   href="/onboarding"
-                  className="inline-flex text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
+                  className="inline-flex text-xs bg-accent text-white px-3 py-1 rounded-lg hover:bg-accent/90 transition-colors"
                 >
                   Continue onboarding
                 </Link>
               ) : (
                 <Link
                   href="/marketplace/create-service"
-                  className="inline-flex text-xs bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-colors"
+                  className="inline-flex text-xs bg-accent text-white px-3 py-1 rounded-lg hover:bg-accent/90 transition-colors"
                 >
                   Create service
                 </Link>

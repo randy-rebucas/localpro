@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
     {
       title: "Information We Collect",
       icon: <Database className="w-5 h-5" />,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-primary to-indigo-600",
       content: [
         "Personal information (name, email, phone number, address)",
         "Profile information (business details, service categories, certifications)",
@@ -89,7 +89,7 @@ export default function PrivacyPolicy() {
     {
       title: "Cookies and Tracking",
       icon: <Eye className="w-5 h-5" />,
-      color: "from-cyan-500 to-blue-600",
+      color: "from-cyan-500 to-primary",
       content: [
         "We use cookies to improve your experience",
         "We use analytics cookies to understand usage patterns",

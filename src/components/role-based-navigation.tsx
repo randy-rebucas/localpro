@@ -330,14 +330,14 @@ export function RoleBasedNavigation() {
           href={item.href}
           className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
             isActive
-              ? 'bg-blue-100 text-blue-700'
+              ? 'bg-primary/10 text-primary'
               : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
           }`}
         >
           <item.icon className="w-5 h-5 mr-3" />
           <span>{item.name}</span>
           {item.badge && (
-            <span className="ml-auto bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+            <span className="ml-auto bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
               {item.badge}
             </span>
           )}

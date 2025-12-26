@@ -70,11 +70,11 @@ export function AIServiceRecommendations({
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Recommendations for You</h3>
         </div>
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-accent" />
         </div>
       </div>
     );
@@ -90,10 +90,10 @@ export function AIServiceRecommendations({
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Recommendations for You</h3>
         </div>
-        <TrendingUp className="w-5 h-5 text-green-600" />
+        <TrendingUp className="w-5 h-5 text-accent" />
       </div>
 
       <div className="space-y-4">
@@ -105,7 +105,7 @@ export function AIServiceRecommendations({
           return (
             <div
               key={service._id || service.id || index}
-              className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all"
+              className="border border-gray-200 rounded-lg p-4 hover:border-accent/30 hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
@@ -119,7 +119,7 @@ export function AIServiceRecommendations({
                   )}
                 </div>
                 <div className="ml-4 text-right">
-                  <div className="text-xs font-medium text-green-600 mb-1">
+                  <div className="text-xs font-medium text-accent mb-1">
                     {Math.round(score * 100)}% match
                   </div>
                   {service.pricing?.basePrice && (
@@ -136,7 +136,7 @@ export function AIServiceRecommendations({
                   <ul className="text-xs text-gray-600 space-y-1">
                     {reasons.slice(0, 2).map((reason: string, i: number) => (
                       <li key={i} className="flex items-start gap-1">
-                        <span className="text-green-600 mt-0.5">•</span>
+                        <span className="text-accent mt-0.5">•</span>
                         <span>{reason}</span>
                       </li>
                     ))}
@@ -170,7 +170,7 @@ export function AIServiceRecommendations({
               <div className="mt-3 flex gap-2">
                 <Link
                   href={`/marketplace/services/${service._id || service.id}`}
-                  className="flex-1 text-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  className="flex-1 text-center px-3 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
                   onClick={() => onServiceClick?.(service)}
                 >
                   View Service
@@ -184,7 +184,7 @@ export function AIServiceRecommendations({
       {recommendations.length > limit && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-4 w-full text-center text-sm text-green-600 hover:text-green-700 font-medium"
+          className="mt-4 w-full text-center text-sm text-accent hover:text-accent font-medium"
         >
           {showAll ? "Show Less" : `Show ${recommendations.length - limit} More Recommendations`}
         </button>

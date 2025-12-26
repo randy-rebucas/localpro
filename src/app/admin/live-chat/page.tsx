@@ -77,13 +77,13 @@ interface Analytics {
 // Status/Priority configs
 const statusConfig = {
   pending: { color: "bg-yellow-100 text-yellow-800", icon: Clock, label: "Pending" },
-  active: { color: "bg-green-100 text-green-800", icon: CheckCircle, label: "Active" },
+  active: { color: "bg-accent/10 text-accent", icon: CheckCircle, label: "Active" },
   closed: { color: "bg-gray-100 text-gray-800", icon: XCircle, label: "Closed" },
   archived: { color: "bg-slate-100 text-slate-800", icon: Archive, label: "Archived" },
 };
 
 const priorityConfig = {
-  low: { color: "bg-blue-100 text-blue-800" },
+  low: { color: "bg-primary/10 text-primary" },
   medium: { color: "bg-yellow-100 text-yellow-800" },
   high: { color: "bg-orange-100 text-orange-800" },
   urgent: { color: "bg-red-100 text-red-800" },
@@ -140,12 +140,12 @@ function ChatMessageBubble({ message, userName }: { message: ChatMessage; userNa
           <span className="text-xs font-medium text-gray-700">{isUser ? userName.split(' ')[0] : message.agentName || "Agent"}</span>
           <span className="text-xs text-gray-400">{formatTime(message.createdAt)}</span>
         </div>
-        <div className={`px-2.5 py-1.5 rounded-lg text-xs ${isUser ? "bg-emerald-50 text-gray-800" : "bg-blue-50 text-gray-800"}`}>
+        <div className={`px-2.5 py-1.5 rounded-lg text-xs ${isUser ? "bg-emerald-50 text-gray-800" : "bg-primary/5 text-gray-800"}`}>
           {message.content && <p className="whitespace-pre-wrap">{message.content}</p>}
           {imageAttachments.length > 0 && (
             <div className={`${message.content ? "mt-1.5" : ""} grid gap-1.5 ${imageAttachments.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
               {imageAttachments.map((att) => (
-                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="group relative block rounded overflow-hidden border border-gray-200 hover:border-blue-400">
+                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="group relative block rounded overflow-hidden border border-gray-200 hover:border-primary">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={att.url} alt={att.name} className="w-full h-auto max-h-32 object-cover" loading="lazy" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
@@ -465,7 +465,7 @@ export default function AdminLiveChat() {
               <p className="text-xs text-gray-500">Total</p>
               <p className="text-xl font-bold text-gray-900">{totalSessions}</p>
             </div>
-            <MessageCircle className="w-6 h-6 text-blue-500" />
+            <MessageCircle className="w-6 h-6 text-primary" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
@@ -481,9 +481,9 @@ export default function AdminLiveChat() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500">Active</p>
-              <p className="text-xl font-bold text-green-600">{statusCounts.active}</p>
+              <p className="text-xl font-bold text-accent">{statusCounts.active}</p>
             </div>
-            <CheckCircle className="w-6 h-6 text-green-500" />
+            <CheckCircle className="w-6 h-6 text-accent" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
@@ -508,9 +508,9 @@ export default function AdminLiveChat() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500">Avg Response</p>
-              <p className="text-xl font-bold text-blue-600">{((analytics?.responseTime?.avgResponseTime ?? 0) / 1000).toFixed(0)}s</p>
+              <p className="text-xl font-bold text-primary">{((analytics?.responseTime?.avgResponseTime ?? 0) / 1000).toFixed(0)}s</p>
             </div>
-            <BarChart3 className="w-6 h-6 text-blue-500" />
+            <BarChart3 className="w-6 h-6 text-primary" />
           </div>
         </div>
       </div>
@@ -519,7 +519,7 @@ export default function AdminLiveChat() {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {[{ id: "sessions", name: "Sessions", icon: MessageCircle, count: totalSessions }, { id: "analytics", name: "Analytics", icon: BarChart3 }].map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as "sessions" | "analytics")} className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab.id ? "border-blue-500 text-blue-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id as "sessions" | "analytics")} className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
               <tab.icon className="w-4 h-4" />
               <span>{tab.name}</span>
               {tab.count !== undefined && <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{tab.count}</span>}
@@ -595,10 +595,10 @@ export default function AdminLiveChat() {
                 <h3 className="text-sm font-medium text-gray-900">Chat Sessions</h3>
                 <div className="flex items-center space-x-1">
                   <span className="text-xs text-gray-500">Sort:</span>
-                  <button onClick={() => handleSort('createdAt')} className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <button onClick={() => handleSort('createdAt')} className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'}`}>
                     Date{sortBy === 'createdAt' && (sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />)}
                   </button>
-                  <button onClick={() => handleSort('messageCount')} className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'messageCount' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'}`}>
+                  <button onClick={() => handleSort('messageCount')} className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${sortBy === 'messageCount' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'}`}>
                     Messages{sortBy === 'messageCount' && (sortOrder === 'asc' ? <ChevronUp className="w-2 h-2 ml-0.5" /> : <ChevronDown className="w-2 h-2 ml-0.5" />)}
                   </button>
                 </div>
@@ -665,7 +665,7 @@ export default function AdminLiveChat() {
                             <div className="text-xs text-gray-500">{formatTimeAgo(session.createdAt)}</div>
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
-                            <button onClick={() => handleViewSession(session)} className="text-blue-600 hover:text-blue-900 mr-2"><Eye className="w-4 h-4" /></button>
+                            <button onClick={() => handleViewSession(session)} className="text-primary hover:text-primary mr-2"><Eye className="w-4 h-4" /></button>
                           </td>
                         </tr>
                       );
@@ -682,13 +682,13 @@ export default function AdminLiveChat() {
       {activeTab === "analytics" && analytics && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
-              <p className="text-xs font-medium text-blue-600">Total Sessions</p>
-              <p className="text-2xl font-bold text-blue-900">{analytics.overview?.totalSessions ?? 0}</p>
+            <div className="bg-gradient-to-br from-primary/10 to-primary/10 rounded-lg p-4">
+              <p className="text-xs font-medium text-primary">Total Sessions</p>
+              <p className="text-2xl font-bold text-primary">{analytics.overview?.totalSessions ?? 0}</p>
             </div>
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
-              <p className="text-xs font-medium text-green-600">Avg Messages</p>
-              <p className="text-2xl font-bold text-green-900">{analytics.overview?.avgMessages?.toFixed(1) ?? "0.0"}</p>
+            <div className="bg-gradient-to-br from-accent/10 to-accent/10 rounded-lg p-4">
+              <p className="text-xs font-medium text-accent">Avg Messages</p>
+              <p className="text-2xl font-bold text-accent">{analytics.overview?.avgMessages?.toFixed(1) ?? "0.0"}</p>
             </div>
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
               <p className="text-xs font-medium text-purple-600">Closed</p>
@@ -704,7 +704,7 @@ export default function AdminLiveChat() {
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Response Time</h3>
             <div className="grid grid-cols-3 gap-4">
               <div><p className="text-xs text-gray-500">Average</p><p className="text-lg font-semibold text-gray-900">{((analytics.responseTime?.avgResponseTime ?? 0) / 1000).toFixed(0)}s</p></div>
-              <div><p className="text-xs text-gray-500">Fastest</p><p className="text-lg font-semibold text-green-600">{((analytics.responseTime?.minResponseTime ?? 0) / 1000).toFixed(0)}s</p></div>
+              <div><p className="text-xs text-gray-500">Fastest</p><p className="text-lg font-semibold text-accent">{((analytics.responseTime?.minResponseTime ?? 0) / 1000).toFixed(0)}s</p></div>
               <div><p className="text-xs text-gray-500">Slowest</p><p className="text-lg font-semibold text-red-600">{((analytics.responseTime?.maxResponseTime ?? 0) / 1000).toFixed(0)}s</p></div>
             </div>
           </div>
@@ -716,7 +716,7 @@ export default function AdminLiveChat() {
                 {analytics.sessionsByDay.slice(-14).map((day) => {
                   const maxCount = Math.max(...analytics.sessionsByDay.map((d) => d.count));
                   const height = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
-                  return <div key={day._id} className="flex-1 bg-blue-400 rounded-t hover:bg-blue-500 transition-colors" style={{ height: `${Math.max(height, 5)}%` }} title={`${day._id}: ${day.count}`} />;
+                  return <div key={day._id} className="flex-1 bg-primary/40 rounded-t hover:bg-primary transition-colors" style={{ height: `${Math.max(height, 5)}%` }} title={`${day._id}: ${day.count}`} />;
                 })}
               </div>
               <div className="flex justify-between mt-2 text-xs text-gray-500"><span>14 days ago</span><span>Today</span></div>
@@ -730,7 +730,7 @@ export default function AdminLiveChat() {
                 {analytics.topAgents.slice(0, 5).map((agent, index) => (
                   <div key={agent._id} className="flex items-center justify-between bg-gray-50 p-2 rounded">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-semibold">{index + 1}</span>
+                      <span className="w-6 h-6 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-semibold">{index + 1}</span>
                       <span className="text-sm text-gray-900">{agent._id}</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs">
@@ -760,7 +760,7 @@ export default function AdminLiveChat() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {selectedSession.status === "pending" && <button onClick={() => handleUpdateStatus("active")} className="text-xs px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600">Accept</button>}
+                  {selectedSession.status === "pending" && <button onClick={() => handleUpdateStatus("active")} className="text-xs px-2 py-1 bg-accent text-white rounded hover:bg-accent/90">Accept</button>}
                   {selectedSession.status === "active" && <button onClick={() => handleUpdateStatus("closed")} className="text-xs px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600">Close</button>}
                   {selectedSession.status === "closed" && <button onClick={() => handleUpdateStatus("archived")} className="text-xs px-2 py-1 bg-slate-500 text-white rounded hover:bg-slate-600">Archive</button>}
                 </div>
@@ -814,8 +814,8 @@ export default function AdminLiveChat() {
             {/* Reply Input */}
             {canReply ? (
               <div className="flex gap-2">
-                <input type="text" value={replyContent} onChange={(e) => setReplyContent(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendReply()} placeholder="Type your reply..." className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400" />
-                <button onClick={handleSendReply} disabled={isSending || !replyContent.trim()} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                <input type="text" value={replyContent} onChange={(e) => setReplyContent(e.target.value)} onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendReply()} placeholder="Type your reply..." className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-ring" />
+                <button onClick={handleSendReply} disabled={isSending || !replyContent.trim()} className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
                   {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </div>

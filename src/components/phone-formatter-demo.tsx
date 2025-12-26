@@ -44,25 +44,25 @@ export const PhoneFormatterDemo: React.FC = () => {
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Phone Number Formatter Demo</h2>
       
       {/* Detected Country Info */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <h3 className="text-lg font-semibold text-blue-800 mb-2">Detected Country</h3>
+      <div className="mb-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+        <h3 className="text-lg font-semibold text-primary mb-2">Detected Country</h3>
         {detectedCountry ? (
           <div className="space-y-1">
-            <p className="text-blue-700">
+            <p className="text-primary">
               <strong>Country:</strong> {detectedCountry.name} ({detectedCountry.code})
             </p>
-            <p className="text-blue-700">
+            <p className="text-primary">
               <strong>Dial Code:</strong> {detectedCountry.dialCode}
             </p>
-            <p className="text-blue-700">
+            <p className="text-primary">
               <strong>Format:</strong> {detectedCountry.format}
             </p>
-            <p className="text-blue-700">
+            <p className="text-primary">
               <strong>Example:</strong> {detectedCountry.example}
             </p>
           </div>
         ) : (
-          <p className="text-blue-700">Detecting country...</p>
+          <p className="text-primary">Detecting country...</p>
         )}
       </div>
 
@@ -85,11 +85,11 @@ export const PhoneFormatterDemo: React.FC = () => {
           </p>
         </div>
 
-        <div className={`p-4 rounded-lg ${validation.isValid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-          <h3 className={`text-lg font-semibold mb-2 ${validation.isValid ? 'text-green-800' : 'text-red-800'}`}>
+        <div className={`p-4 rounded-lg ${validation.isValid ? 'bg-accent/5 border border-accent/20' : 'bg-red-50 border border-red-200'}`}>
+          <h3 className={`text-lg font-semibold mb-2 ${validation.isValid ? 'text-accent' : 'text-red-800'}`}>
             Validation
           </h3>
-          <p className={validation.isValid ? 'text-green-700' : 'text-red-700'}>
+          <p className={validation.isValid ? 'text-accent' : 'text-red-700'}>
             {validation.isValid ? '✅ Valid phone number' : `❌ ${validation.error}`}
           </p>
         </div>

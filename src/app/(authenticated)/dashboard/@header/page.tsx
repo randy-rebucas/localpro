@@ -196,7 +196,7 @@ export default function HeaderPage() {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "online":
-        return "text-green-600";
+        return "text-accent";
       case "maintenance":
         return "text-yellow-600";
       case "degraded":
@@ -217,7 +217,7 @@ export default function HeaderPage() {
           {/* Left side - Greeting and info */}
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-accent to-accent rounded-2xl flex items-center justify-center shadow-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -249,7 +249,7 @@ export default function HeaderPage() {
                 <p className="text-xs text-gray-500">Platform Status</p>
               </div>
               <div className="text-center">
-                <div className="flex items-center gap-1 text-blue-600">
+                <div className="flex items-center gap-1 text-primary">
                   <Zap className="w-4 h-4" />
                   <span className="text-sm font-medium">
                     {loading ? "..." : activeServices > 0 ? `${activeServices}` : "Active"}

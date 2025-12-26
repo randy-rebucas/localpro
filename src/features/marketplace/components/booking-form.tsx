@@ -52,7 +52,7 @@ export function BookingForm({
   return (
     <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-6">
       {serviceTitle && (
-        <Card className="p-4 bg-blue-50">
+        <Card className="p-4 bg-primary/5">
           <p className="text-sm text-gray-600">Booking for:</p>
           <p className="font-semibold">{serviceTitle}</p>
         </Card>

@@ -44,9 +44,9 @@ export function ServiceFilterSidebar({
           isOpen ? "fixed lg:relative inset-y-0 right-0 z-50 lg:z-auto w-80 lg:w-full overflow-y-auto" : ""
         }`}
       >
-        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50/50 to-blue-50/50 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-accent/10/50 to-primary/10/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
+            <div className="p-2 bg-gradient-to-br from-accent to-accent rounded-lg shadow-md">
               <Filter className="w-5 h-5 text-white" />
             </div>
             <h2 className="font-bold text-gray-900 text-lg">Filters</h2>
@@ -85,7 +85,7 @@ export function ServiceFilterSidebar({
                       value={status.value}
                       checked={statusFilter === status.value}
                       onChange={(e) => onStatusFilterChange(e.target.value)}
-                      className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                      className="w-4 h-4 text-accent border-gray-300 focus:ring-ring"
                     />
                     <Icon className="w-4 h-4 text-gray-500" />
                     <span className="text-sm text-gray-700">{status.label}</span>

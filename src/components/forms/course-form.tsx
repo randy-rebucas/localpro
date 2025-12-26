@@ -216,13 +216,13 @@ export function CourseForm({ initialData, onSubmit, onCancel, loading = false }:
               {learningOutcomes.map((outcome, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"
                 >
                   {outcome}
                   <button
                     type="button"
                     onClick={() => removeOutcome(index)}
-                    className="hover:text-green-600"
+                    className="hover:text-accent"
                   >
                     <X className="w-3 h-3" />
                   </button>

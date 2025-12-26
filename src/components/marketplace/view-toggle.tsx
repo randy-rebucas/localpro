@@ -15,7 +15,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange("grid")}
         className={`p-2 rounded-md transition-colors ${
           viewMode === "grid"
-            ? "bg-green-100 text-green-700"
+            ? "bg-accent/10 text-accent"
             : "text-gray-600 hover:bg-gray-100"
         }`}
         title="Grid View"
@@ -27,7 +27,7 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
         onClick={() => onViewChange("map")}
         className={`p-2 rounded-md transition-colors ${
           viewMode === "map"
-            ? "bg-green-100 text-green-700"
+            ? "bg-accent/10 text-accent"
             : "text-gray-600 hover:bg-gray-100"
         }`}
         title="Map View"

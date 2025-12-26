@@ -76,9 +76,9 @@ export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
                     <div
                       className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 ${
                         status === "completed"
-                          ? "border-green-600 bg-green-600"
+                          ? "border-accent bg-accent"
                           : status === "current"
-                          ? "border-green-600 bg-white"
+                          ? "border-accent bg-white"
                           : "border-gray-300 bg-white"
                       }`}
                     >
@@ -86,7 +86,7 @@ export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
                         <CheckCircle className="h-6 w-6 text-white" />
                       ) : (
                         <Icon className={`h-5 w-5 ${
-                          status === "current" ? "text-green-600" : "text-gray-400"
+                          status === "current" ? "text-accent" : "text-gray-400"
                         }`} />
                       )}
                     </div>
@@ -94,7 +94,7 @@ export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
                     {/* Step Info */}
                     <div className="ml-4 min-w-0">
                       <div className={`text-sm font-medium ${
-                        status === "current" ? "text-green-600" : 
+                        status === "current" ? "text-accent" : 
                         status === "completed" ? "text-gray-700" : "text-gray-500"
                       }`}>
                         {step.title}
@@ -106,7 +106,7 @@ export function ProfileSteps({ currentStep, profileData }: ProfileStepsProps) {
                         <div className="mt-1">
                           <div className="w-20 bg-gray-200 rounded-full h-1">
                             <div 
-                              className="bg-green-600 h-1 rounded-full transition-all duration-300"
+                              className="bg-accent h-1 rounded-full transition-all duration-300"
                               style={{ width: `${completion}%` }}
                             ></div>
                           </div>

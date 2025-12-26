@@ -62,16 +62,16 @@ type TabType = "campaigns" | "subscribers" | "analytics";
 // Status badge colors
 const statusColors: Record<CampaignStatus, string> = {
   draft: "bg-gray-100 text-gray-800",
-  scheduled: "bg-blue-100 text-blue-800",
+  scheduled: "bg-primary/10 text-primary",
   sending: "bg-yellow-100 text-yellow-800",
   paused: "bg-orange-100 text-orange-800",
-  sent: "bg-green-100 text-green-800",
+  sent: "bg-accent/10 text-accent",
   cancelled: "bg-red-100 text-red-800",
 };
 
 const subscriberStatusColors: Record<SubscriberStatus, string> = {
   pending: "bg-yellow-100 text-yellow-800",
-  confirmed: "bg-green-100 text-green-800",
+  confirmed: "bg-accent/10 text-accent",
   unsubscribed: "bg-gray-100 text-gray-800",
   bounced: "bg-red-100 text-red-800",
   complained: "bg-purple-100 text-purple-800",
@@ -468,7 +468,7 @@ export default function EmailMarketingPage() {
           {activeTab === "campaigns" && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
+              className="inline-flex items-center px-3 py-1 bg-primary text-white text-xs font-medium rounded hover:bg-primary/90"
             >
               <Plus className="w-3 h-3 mr-1" />
               Create Campaign
@@ -478,7 +478,7 @@ export default function EmailMarketingPage() {
             <button
               onClick={handleExportSubscribers}
               disabled={subscriberCrudLoading}
-              className="inline-flex items-center px-3 py-1 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 disabled:opacity-50"
+              className="inline-flex items-center px-3 py-1 bg-accent text-white text-xs font-medium rounded hover:bg-accent/90 disabled:opacity-50"
             >
               <Download className="w-3 h-3 mr-1" />
               Export
@@ -490,28 +490,28 @@ export default function EmailMarketingPage() {
       {/* Statistics Cards */}
       {(activeTab === "campaigns" || activeTab === "analytics") && analytics && !analyticsLoading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Total Sent</p>
                 <p className="text-xl font-bold text-gray-900">{analytics.totalSent?.toLocaleString() || 0}</p>
                 <p className="text-xs text-gray-500">{analytics.averageOpenRate?.toFixed(1) || 0}% open rate</p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Send className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Send className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Opens</p>
                 <p className="text-xl font-bold text-gray-900">{analytics.totalOpened?.toLocaleString() || 0}</p>
                 <p className="text-xs text-gray-500">{analytics.averageClickRate?.toFixed(1) || 0}% click rate</p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <MailOpen className="w-5 h-5 text-green-600" />
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <MailOpen className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -546,26 +546,26 @@ export default function EmailMarketingPage() {
       
       {activeTab === "subscribers" && subscriberStats && !statsLoading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Total</p>
                 <p className="text-xl font-bold text-gray-900">{subscriberStats.total?.toLocaleString() || 0}</p>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Users className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500">Confirmed</p>
-                <p className="text-xl font-bold text-green-600">{subscriberStats.confirmed?.toLocaleString() || 0}</p>
+                <p className="text-xl font-bold text-accent">{subscriberStats.confirmed?.toLocaleString() || 0}</p>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -606,14 +606,14 @@ export default function EmailMarketingPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
+                    ? "border-primary text-primary"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 {tab.label}
                 {tab.count !== undefined && (
                   <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                    activeTab === tab.id ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                    activeTab === tab.id ? "bg-primary/10 text-primary" : "bg-gray-100 text-gray-600"
                   }`}>
                     {tab.count ? tab.count.toLocaleString() : 0}
                   </span>
@@ -651,7 +651,7 @@ export default function EmailMarketingPage() {
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
                     placeholder="Search..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -663,7 +663,7 @@ export default function EmailMarketingPage() {
                     <select
                       value={campaignFilters.status || ""}
                       onChange={(e) => handleCampaignFilterChange("status", e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="">All Statuses</option>
                       <option value="draft">Draft</option>
@@ -679,7 +679,7 @@ export default function EmailMarketingPage() {
                     <select
                       value={campaignFilters.type || ""}
                       onChange={(e) => handleCampaignFilterChange("type", e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="">All Types</option>
                       {Object.entries(campaignTypeLabels).map(([value, label]) => (
@@ -692,7 +692,7 @@ export default function EmailMarketingPage() {
                     <select
                       value={campaignFilters.targetAudience || ""}
                       onChange={(e) => handleCampaignFilterChange("targetAudience", e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="">All Audiences</option>
                       {Object.entries(audienceLabels).map(([value, label]) => (
@@ -710,7 +710,7 @@ export default function EmailMarketingPage() {
                     <select
                       value={subscriberFilters.status || ""}
                       onChange={(e) => handleSubscriberFilterChange("status", e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     >
                       <option value="">All Statuses</option>
                       <option value="pending">Pending</option>
@@ -727,7 +727,7 @@ export default function EmailMarketingPage() {
                       placeholder="Filter by source"
                       value={subscriberFilters.source || ""}
                       onChange={(e) => handleSubscriberFilterChange("source", e.target.value)}
-                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </>
@@ -750,7 +750,7 @@ export default function EmailMarketingPage() {
                 <p className="text-gray-500 mb-4">Create your first email campaign to get started.</p>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Campaign
@@ -794,11 +794,11 @@ export default function EmailMarketingPage() {
                           <td className="px-4 py-3">
                             {campaign.analytics ? (
                               <div className="flex items-center space-x-3 text-xs">
-                                <span className="text-green-600">
+                                <span className="text-accent">
                                   <MailOpen className="w-3 h-3 inline mr-1" />
                                   {campaign.analytics.openRate.toFixed(1)}%
                                 </span>
-                                <span className="text-blue-600">
+                                <span className="text-primary">
                                   <MousePointerClick className="w-3 h-3 inline mr-1" />
                                   {campaign.analytics.clickRate.toFixed(1)}%
                                 </span>
@@ -839,7 +839,7 @@ export default function EmailMarketingPage() {
                                       </button>
                                       <button
                                         onClick={() => handleSendCampaign(campaign)}
-                                        className="w-full text-left px-3 py-1.5 text-xs text-green-700 hover:bg-green-50 flex items-center"
+                                        className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-accent/5 flex items-center"
                                       >
                                         <Play className="w-3 h-3 mr-2" />
                                         Send Now
@@ -859,7 +859,7 @@ export default function EmailMarketingPage() {
                                     <>
                                       <button
                                         onClick={() => handleResumeCampaign(campaign)}
-                                        className="w-full text-left px-3 py-1.5 text-xs text-green-700 hover:bg-green-50 flex items-center"
+                                        className="w-full text-left px-3 py-1.5 text-xs text-accent hover:bg-accent/5 flex items-center"
                                       >
                                         <Play className="w-3 h-3 mr-2" />
                                         Resume
@@ -1072,7 +1072,7 @@ export default function EmailMarketingPage() {
                         <tr key={campaign._id} className="hover:bg-gray-50">
                           <td className="px-4 py-2">
                             <div className="flex items-center space-x-2">
-                              <span className="w-5 h-5 flex items-center justify-center bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                              <span className="w-5 h-5 flex items-center justify-center bg-primary/10 text-primary text-xs font-bold rounded-full">
                                 {idx + 1}
                               </span>
                               <div>
@@ -1094,22 +1094,22 @@ export default function EmailMarketingPage() {
                             <div className="flex items-center">
                               <div className="w-12 h-1.5 bg-gray-200 rounded-full mr-2">
                                 <div
-                                  className="h-full bg-green-500 rounded-full"
+                                  className="h-full bg-accent rounded-full"
                                   style={{ width: `${Math.min(campaign.openRate, 100)}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-medium text-green-600">{campaign.openRate.toFixed(1)}%</span>
+                              <span className="text-xs font-medium text-accent">{campaign.openRate.toFixed(1)}%</span>
                             </div>
                           </td>
                           <td className="px-4 py-2">
                             <div className="flex items-center">
                               <div className="w-12 h-1.5 bg-gray-200 rounded-full mr-2">
                                 <div
-                                  className="h-full bg-blue-500 rounded-full"
+                                  className="h-full bg-primary rounded-full"
                                   style={{ width: `${Math.min(campaign.clickRate, 100)}%` }}
                                 />
                               </div>
-                              <span className="text-xs font-medium text-blue-600">{campaign.clickRate.toFixed(1)}%</span>
+                              <span className="text-xs font-medium text-primary">{campaign.clickRate.toFixed(1)}%</span>
                             </div>
                           </td>
                         </tr>
@@ -1144,7 +1144,7 @@ export default function EmailMarketingPage() {
                         <div key={stat.date} className="flex flex-col items-center">
                           <div className="w-full h-24 flex items-end justify-center mb-1">
                             <div
-                              className="w-6 bg-blue-500 rounded-t"
+                              className="w-6 bg-primary rounded-t"
                               style={{ height: `${Math.max(height, 5)}%` }}
                               title={`${stat.sent} sent`}
                             />
@@ -1177,7 +1177,7 @@ export default function EmailMarketingPage() {
               value={formData.name}
               onChange={(e) => handleFormChange("name", e.target.value)}
               placeholder="e.g., Monthly Newsletter - January 2025"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1188,7 +1188,7 @@ export default function EmailMarketingPage() {
               value={formData.subject}
               onChange={(e) => handleFormChange("subject", e.target.value)}
               placeholder="e.g., Your January Newsletter is Here!"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1199,7 +1199,7 @@ export default function EmailMarketingPage() {
               value={formData.preheader}
               onChange={(e) => handleFormChange("preheader", e.target.value)}
               placeholder="e.g., Discover what's new this month..."
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1209,7 +1209,7 @@ export default function EmailMarketingPage() {
               <select
                 value={formData.type}
                 onChange={(e) => handleFormChange("type", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {Object.entries(campaignTypeLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -1222,7 +1222,7 @@ export default function EmailMarketingPage() {
               <select
                 value={formData.targetAudience}
                 onChange={(e) => handleFormChange("targetAudience", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {Object.entries(audienceLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -1244,7 +1244,7 @@ export default function EmailMarketingPage() {
               onChange={(e) => handleFormChange("content", e.target.value)}
               placeholder="Write your email content here..."
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
           </div>
           
@@ -1255,7 +1255,7 @@ export default function EmailMarketingPage() {
               value={formData.tags?.join(", ") || ""}
               onChange={(e) => handleFormChange("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
               placeholder="e.g., newsletter, monthly, updates"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1269,7 +1269,7 @@ export default function EmailMarketingPage() {
             <button
               onClick={handleCreateCampaign}
               disabled={crudLoading || !formData.name || !formData.subject || !formData.content}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {crudLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Create Campaign
@@ -1295,7 +1295,7 @@ export default function EmailMarketingPage() {
               type="text"
               value={formData.name}
               onChange={(e) => handleFormChange("name", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1305,7 +1305,7 @@ export default function EmailMarketingPage() {
               type="text"
               value={formData.subject}
               onChange={(e) => handleFormChange("subject", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1315,7 +1315,7 @@ export default function EmailMarketingPage() {
               type="text"
               value={formData.preheader}
               onChange={(e) => handleFormChange("preheader", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1325,7 +1325,7 @@ export default function EmailMarketingPage() {
               <select
                 value={formData.type}
                 onChange={(e) => handleFormChange("type", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {Object.entries(campaignTypeLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -1338,7 +1338,7 @@ export default function EmailMarketingPage() {
               <select
                 value={formData.targetAudience}
                 onChange={(e) => handleFormChange("targetAudience", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               >
                 {Object.entries(audienceLabels).map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>
@@ -1353,7 +1353,7 @@ export default function EmailMarketingPage() {
               value={formData.content}
               onChange={(e) => handleFormChange("content", e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
           </div>
           
@@ -1363,7 +1363,7 @@ export default function EmailMarketingPage() {
               type="text"
               value={formData.tags?.join(", ") || ""}
               onChange={(e) => handleFormChange("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))}
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
           
@@ -1380,7 +1380,7 @@ export default function EmailMarketingPage() {
             <button
               onClick={handleUpdateCampaign}
               disabled={crudLoading || !formData.name || !formData.subject || !formData.content}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {crudLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Save Changes
@@ -1450,7 +1450,7 @@ export default function EmailMarketingPage() {
               value={testEmails}
               onChange={(e) => setTestEmails(e.target.value)}
               placeholder="email1@example.com, email2@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-ring"
             />
             <p className="text-xs text-gray-400 mt-1">Separate multiple emails with commas</p>
           </div>
@@ -1468,7 +1468,7 @@ export default function EmailMarketingPage() {
             <button
               onClick={handleSendTestEmail}
               disabled={actionLoading || !testEmails.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-primary text-white rounded text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {actionLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Send Test

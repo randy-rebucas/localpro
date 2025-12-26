@@ -430,9 +430,9 @@ export default function FinanceAdmin() {
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { color: string; icon: React.ComponentType<{ className?: string }>; label: string }> = {
       pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' },
-      approved: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Approved' },
+      approved: { color: 'bg-accent/10 text-accent', icon: CheckCircle, label: 'Approved' },
       rejected: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Rejected' },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Completed' },
+      completed: { color: 'bg-accent/10 text-accent', icon: CheckCircle, label: 'Completed' },
       cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
       failed: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Failed' }
     };
@@ -498,7 +498,7 @@ export default function FinanceAdmin() {
               onClick={() => setActiveTab('withdrawals')}
               className={`py-4 px-6 text-sm font-medium border-b-2 ${
                 activeTab === 'withdrawals'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -513,7 +513,7 @@ export default function FinanceAdmin() {
               onClick={() => setActiveTab('topups')}
               className={`py-4 px-6 text-sm font-medium border-b-2 ${
                 activeTab === 'topups'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -534,7 +534,7 @@ export default function FinanceAdmin() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
@@ -561,7 +561,7 @@ export default function FinanceAdmin() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder={activeTab === 'withdrawals' ? "Search withdrawals..." : "Search top-ups..."}
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -577,7 +577,7 @@ export default function FinanceAdmin() {
                       setTopUpStatusFilter(e.target.value as RequestStatus);
                     }
                   }}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -596,7 +596,7 @@ export default function FinanceAdmin() {
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                   <select
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     defaultValue="all"
                   >
                     <option value="all">All Methods</option>
@@ -612,7 +612,7 @@ export default function FinanceAdmin() {
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                   <select
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     defaultValue="all"
                   >
                     <option value="all">All Methods</option>
@@ -744,7 +744,7 @@ export default function FinanceAdmin() {
                                 setSelectedWithdrawal(request);
                                 setShowWithdrawalModal(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-primary hover:text-primary"
                               title="Review request"
                             >
                               <Eye className="w-3 h-3" />
@@ -827,7 +827,7 @@ export default function FinanceAdmin() {
                             href={request.receipt.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800"
+                            className="inline-flex items-center text-xs text-primary hover:text-primary"
                           >
                             <ImageIcon className="w-3 h-3 mr-1" />
                             View
@@ -854,7 +854,7 @@ export default function FinanceAdmin() {
                                 setSelectedTopUp(request);
                                 setShowTopUpModal(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-primary hover:text-primary"
                               title="Review request"
                             >
                               <Eye className="w-3 h-3" />
@@ -934,7 +934,7 @@ export default function FinanceAdmin() {
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
                     placeholder="Add notes for this request..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     rows={4}
                   />
                 </div>
@@ -943,7 +943,7 @@ export default function FinanceAdmin() {
                   <button
                     onClick={() => processWithdrawalRequest(selectedWithdrawal._id, 'approved')}
                     disabled={processingWithdrawal === selectedWithdrawal._id}
-                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded text-white bg-accent hover:bg-accent/90 disabled:opacity-50"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Approve
@@ -1028,7 +1028,7 @@ export default function FinanceAdmin() {
                       href={selectedTopUp.receipt.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-2 inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+                      className="mt-2 inline-flex items-center text-sm text-primary hover:text-primary"
                     >
                       <ImageIcon className="w-4 h-4 mr-1" />
                       Open in new tab
@@ -1042,7 +1042,7 @@ export default function FinanceAdmin() {
                     value={adminNotes}
                     onChange={(e) => setAdminNotes(e.target.value)}
                     placeholder="Add notes for this request..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                     rows={4}
                   />
                 </div>
@@ -1051,7 +1051,7 @@ export default function FinanceAdmin() {
                   <button
                     onClick={() => processTopUpRequest(selectedTopUp._id, 'approved')}
                     disabled={processingTopUp === selectedTopUp._id}
-                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                    className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded text-white bg-accent hover:bg-accent/90 disabled:opacity-50"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
                     Approve

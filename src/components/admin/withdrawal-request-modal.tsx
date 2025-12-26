@@ -78,7 +78,7 @@ export function WithdrawalRequestModal({
                   ...formData,
                   accountDetails: { ...formData.accountDetails, bankName: e.target.value }
                 })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -93,7 +93,7 @@ export function WithdrawalRequestModal({
                   ...formData,
                   accountDetails: { ...formData.accountDetails, accountNumber: e.target.value }
                 })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -108,7 +108,7 @@ export function WithdrawalRequestModal({
                   ...formData,
                   accountDetails: { ...formData.accountDetails, swiftCode: e.target.value }
                 })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
           </>
@@ -126,7 +126,7 @@ export function WithdrawalRequestModal({
                 ...formData,
                 accountDetails: { ...formData.accountDetails, paypalEmail: e.target.value }
               })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             />
           </div>
@@ -161,7 +161,7 @@ export function WithdrawalRequestModal({
             type="submit"
             form="withdrawal-form"
             disabled={loading || formData.amount > availableBalance || formData.amount <= 0}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? 'Processing...' : 'Request Withdrawal'}
           </button>
@@ -169,8 +169,8 @@ export function WithdrawalRequestModal({
       }
     >
       <form id="withdrawal-form" onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto overscroll-contain scroll-smooth modal-content-scroll" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-xs text-blue-800">
+        <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <p className="text-xs text-primary">
             Available Balance: <span className="font-semibold">${availableBalance.toFixed(2)}</span>
           </p>
         </div>
@@ -187,7 +187,7 @@ export function WithdrawalRequestModal({
               max={availableBalance}
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             />
             {formData.amount > availableBalance && (
@@ -202,7 +202,7 @@ export function WithdrawalRequestModal({
             <select
               value={formData.method}
               onChange={(e) => setFormData({ ...formData, method: e.target.value, accountDetails: {} })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             >
               <option value="">Select method</option>
@@ -226,7 +226,7 @@ export function WithdrawalRequestModal({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               rows={3}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               placeholder="Any additional notes..."
             />
           </div>

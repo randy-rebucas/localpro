@@ -437,7 +437,7 @@ export function GlobalHeader({
 
   const SearchBar = ({ isMobile = false }: { isMobile?: boolean }) => (
     <form onSubmit={handleSearch} className="relative w-full" ref={searchRef}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" aria-hidden="true" />
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
       <input
         type="text"
         value={searchQuery}
@@ -451,7 +451,7 @@ export function GlobalHeader({
           if (searchSuggestions.length > 0) setShowSearchSuggestions(true);
         }}
         placeholder="Search services, providers, or jobs…"
-        className={`w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200 transition ${isMobile ? 'text-sm' : ''
+        className={`w-full pl-10 pr-4 py-2.5 border-2 border-border rounded-lg focus-visible:outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring transition ${isMobile ? 'text-sm' : ''
           }`}
       />
 
@@ -477,7 +477,7 @@ export function GlobalHeader({
               ))}
               <button
                 type="submit"
-                className="w-full text-left px-4 py-2 hover:bg-green-50 transition-colors border-t border-gray-200 text-green-600 font-medium"
+                className="w-full text-left px-4 py-2 hover:bg-accent/5 transition-colors border-t border-gray-200 text-accent font-medium"
               >
                 View all results for &quot;{searchQuery}&quot;
               </button>
@@ -565,7 +565,7 @@ export function GlobalHeader({
                         <h3 className="font-semibold text-gray-800 text-sm">Notifications</h3>
                         <Link
                           href="/notifications"
-                          className="text-xs text-green-600 hover:text-green-700 font-medium"
+                          className="text-xs text-accent hover:text-accent font-medium"
                           onClick={() => setShowNotifications(false)}
                         >
                           View all
@@ -581,7 +581,7 @@ export function GlobalHeader({
                             <button
                               key={notification.id}
                               onClick={() => handleNotificationClick(notification.backendId)}
-                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${!notification.isRead ? 'bg-blue-50' : ''
+                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 ${!notification.isRead ? 'bg-primary/5' : ''
                                 }`}
                             >
                               <div className="flex items-start gap-2">
@@ -590,7 +590,7 @@ export function GlobalHeader({
                                   <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
                                 </div>
                                 {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                                  <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-1"></div>
                                 )}
                               </div>
                             </button>
@@ -606,7 +606,7 @@ export function GlobalHeader({
                 <Link
                   href="/notifications"
                   className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/notifications")
-                    ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                    ? "text-accent bg-accent/5 hover:text-accent hover:bg-accent/10"
                     : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                     }`}
                   title="Notifications"
@@ -626,7 +626,7 @@ export function GlobalHeader({
               <Link
                 href="/messages"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/messages")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  ? "text-accent bg-accent/5 hover:text-accent hover:bg-accent/10"
                   : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 title="Chat"
@@ -642,7 +642,7 @@ export function GlobalHeader({
               <Link
                 href="/favorites"
                 className={`p-2 rounded-lg transition-colors ${pathname?.startsWith("/favorites")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  ? "text-accent bg-accent/5 hover:text-accent hover:bg-accent/10"
                   : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 title="Favorites"
@@ -657,7 +657,7 @@ export function GlobalHeader({
               <Link
                 href="/cart"
                 className={`relative p-2 rounded-lg transition-colors ${pathname?.startsWith("/cart")
-                  ? "text-green-700 bg-green-50 hover:text-green-800 hover:bg-green-100"
+                  ? "text-accent bg-accent/5 hover:text-accent hover:bg-accent/10"
                   : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   }`}
                 title="Shopping Cart"
@@ -665,7 +665,7 @@ export function GlobalHeader({
               >
                 <ShoppingCart className="w-5 h-5" aria-hidden="true" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-green-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-accent text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 leading-none border-2 border-white">
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
@@ -698,7 +698,7 @@ export function GlobalHeader({
                           }
                         }}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap ${roleView === role
-                          ? 'bg-white text-green-700 shadow-sm'
+                          ? 'bg-white text-accent shadow-sm'
                           : 'text-gray-600 hover:text-gray-900'
                           }`}
                         title={`Switch to ${roleLabels[role] || role} view`}
@@ -721,7 +721,7 @@ export function GlobalHeader({
                   aria-label={`User menu for ${getUserDisplayName()}`}
                   aria-expanded={showUserMenu}
                 >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-gradient-to-br from-accent to-accent rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">{getUserInitial()}</span>
                   </div>
                   <span className="hidden lg:block text-sm font-medium text-gray-700">
@@ -843,7 +843,7 @@ export function GlobalHeader({
                 href="/marketplace"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/marketplace")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
@@ -859,7 +859,7 @@ export function GlobalHeader({
                 href="/supplies"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/supplies")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
@@ -875,7 +875,7 @@ export function GlobalHeader({
                 href="/academy"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/academy")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
@@ -891,7 +891,7 @@ export function GlobalHeader({
                 href="/rentals"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/rentals")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
@@ -907,7 +907,7 @@ export function GlobalHeader({
                 href="/jobs"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/jobs")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
@@ -923,7 +923,7 @@ export function GlobalHeader({
                 href="/facility-care"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/facility-care")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/facility-care") ? "page" : undefined}
@@ -955,7 +955,7 @@ export function GlobalHeader({
                 href="/ads"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/ads")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/ads") ? "page" : undefined}
@@ -971,7 +971,7 @@ export function GlobalHeader({
                 href="/finance"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/finance")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
@@ -987,7 +987,7 @@ export function GlobalHeader({
                 href="/referrals"
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                   pathname?.startsWith("/referrals")
-                    ? "text-green-700 bg-green-100"
+                    ? "text-accent bg-accent/10"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
                 aria-current={pathname?.startsWith("/referrals") ? "page" : undefined}

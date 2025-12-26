@@ -45,20 +45,20 @@ export function StaticHeader({ className = "" }: HeaderProps) {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-6">
-            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
+            <Link href="/" className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Home
-              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
             
             {/* Services Dropdown */}
             <div className="relative" ref={servicesDropdownRef}>
               <button 
                 onClick={toggleServices}
-                className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group"
+                className="flex items-center space-x-1 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group"
               >
                 <span>Services</span>
                 <ChevronDown className={`w-4 h-4 transition-transform ${isServicesOpen ? 'rotate-180' : ''}`} />
-                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
               </button>
               {isServicesOpen && (
                 <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50">
@@ -84,26 +84,26 @@ export function StaticHeader({ className = "" }: HeaderProps) {
               )}
             </div>
 
-            <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
+            <Link href="/about" className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               About
-              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
+            <Link href="/blog" className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Blog
-              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
-            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
+            <Link href="/contact" className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-1 relative group">
               Contact
-              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></div>
             </Link>
           </nav>
 
           {/* CTA Buttons */}
           <div className="hidden lg:flex items-center space-x-3">
-            <Link href="/auth" className="text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
+            <Link href="/auth" className="text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800">
               Sign In
             </Link>
-            <Link href="/auth" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-5 rounded-lg transition-all duration-200 flex items-center group">
+            <Link href="/auth" className="bg-primary hover:bg-primary/90 text-white font-semibold py-2.5 px-5 rounded-lg transition-all duration-200 flex items-center group">
               Get Started
               <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </Link>
@@ -122,7 +122,7 @@ export function StaticHeader({ className = "" }: HeaderProps) {
         {/* Mobile Menu */}
         <div className={`lg:hidden absolute top-full left-0 right-0 bg-white dark:bg-slate-900 z-40 transform transition-all duration-300 ease-in-out ${isMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
           <div className="px-4 py-6 space-y-4 border-t border-slate-200 dark:border-slate-700 shadow-xl">
-            <Link href="/" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+            <Link href="/" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
               Home
             </Link>
             
@@ -130,45 +130,45 @@ export function StaticHeader({ className = "" }: HeaderProps) {
             <div>
               <button
                 onClick={toggleServices}
-                className="flex items-center justify-between w-full py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3"
+                className="flex items-center justify-between w-full py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3"
               >
                 <span>Services</span>
                 <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isServicesOpen ? 'rotate-180' : ''}`} />
               </button>
               <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isServicesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="pl-4 space-y-2 mt-2">
-                  <Link href="/marketplace" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                  <Link href="/marketplace" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
                     Marketplace
                   </Link>
-                  <Link href="/academy" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                  <Link href="/academy" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
                     Academy
                   </Link>
-                  <Link href="/supplies" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                  <Link href="/supplies" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
                     Supplies
                   </Link>
-                  <Link href="/rentals" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+                  <Link href="/rentals" className="block py-2 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
                     Rentals
                   </Link>
                 </div>
               </div>
             </div>
 
-            <Link href="/about" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+            <Link href="/about" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
               About
             </Link>
-            <Link href="/blog" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+            <Link href="/blog" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
               Blog
             </Link>
-            <Link href="/contact" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
+            <Link href="/contact" className="block py-3 text-lg font-medium text-slate-900 dark:text-white hover:text-primary dark:hover:text-emerald-400 transition-colors rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 px-3" onClick={toggleMenu}>
               Contact
             </Link>
 
             {/* Mobile CTA Buttons */}
             <div className="pt-6 space-y-3 border-t border-slate-200 dark:border-slate-700">
-              <Link href="/auth" className="block w-full text-center py-3 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-emerald-400 transition-colors font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800" onClick={toggleMenu}>
+              <Link href="/auth" className="block w-full text-center py-3 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-emerald-400 transition-colors font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800" onClick={toggleMenu}>
                 Sign In
               </Link>
-              <Link href="/auth" className="block w-full text-center bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5" onClick={toggleMenu}>
+              <Link href="/auth" className="block w-full text-center bg-gradient-to-r from-primary to-emerald-600 hover:from-primary hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5" onClick={toggleMenu}>
                 Get Started
               </Link>
             </div>

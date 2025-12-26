@@ -103,7 +103,7 @@ export function AIServiceMatcher({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Service Matcher</h3>
       </div>
 
@@ -121,7 +121,7 @@ export function AIServiceMatcher({
             value={serviceType}
             onChange={(e) => setServiceType(e.target.value)}
             placeholder="e.g., house cleaning, plumbing repair"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             required
           />
         </div>
@@ -133,7 +133,7 @@ export function AIServiceMatcher({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">Select category (optional)</option>
             <option value="cleaning">Cleaning</option>
@@ -162,7 +162,7 @@ export function AIServiceMatcher({
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -174,7 +174,7 @@ export function AIServiceMatcher({
             <select
               value={preferredTime}
               onChange={(e) => setPreferredTime(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Select time (optional)</option>
               <option value="morning">Morning</option>
@@ -201,7 +201,7 @@ export function AIServiceMatcher({
                 }
               }}
               placeholder="e.g., eco-friendly products, pet-friendly"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <button
               type="button"
@@ -216,13 +216,13 @@ export function AIServiceMatcher({
               {specialRequirements.map((req, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs"
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 text-accent rounded-full text-xs"
                 >
                   {req}
                   <button
                     type="button"
                     onClick={() => handleRemoveRequirement(req)}
-                    className="text-green-600 hover:text-green-800"
+                    className="text-accent hover:text-accent"
                   >
                     ×
                   </button>
@@ -235,7 +235,7 @@ export function AIServiceMatcher({
         <button
           type="submit"
           disabled={loading || !serviceType.trim()}
-          className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -269,7 +269,7 @@ export function AIServiceMatcher({
             return (
               <div
                 key={service._id || service.id || index}
-                className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all"
+                className="border border-gray-200 rounded-lg p-4 hover:border-accent/30 hover:shadow-md transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -277,7 +277,7 @@ export function AIServiceMatcher({
                       <h5 className="font-semibold text-gray-900">
                         {service.title || service.name}
                       </h5>
-                      <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded">
+                      <span className="px-2 py-0.5 bg-accent/10 text-accent text-xs font-medium rounded">
                         {Math.round(matchScore * 100)}% match
                       </span>
                     </div>
@@ -295,7 +295,7 @@ export function AIServiceMatcher({
                     <ul className="text-xs text-gray-600 space-y-1">
                       {match.reasons.slice(0, 3).map((reason: string, i: number) => (
                         <li key={i} className="flex items-start gap-1">
-                          <CheckCircle className="w-3 h-3 text-green-600 mt-0.5 flex-shrink-0" />
+                          <CheckCircle className="w-3 h-3 text-accent mt-0.5 flex-shrink-0" />
                           <span>{reason}</span>
                         </li>
                       ))}
@@ -326,7 +326,7 @@ export function AIServiceMatcher({
 
                 <Link
                   href={`/marketplace/services/${service._id || service.id}`}
-                  className="block w-full text-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  className="block w-full text-center px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
                   onClick={() => onServiceSelect?.(service)}
                 >
                   View Service Details

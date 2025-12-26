@@ -74,12 +74,12 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
 
           <div className="flex flex-wrap gap-2">
             {supply.category && (
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm">
                 {supply.category}
               </span>
             )}
             {supply.subcategory && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
                 {supply.subcategory}
               </span>
             )}
@@ -89,7 +89,7 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
               </span>
             )}
             {supply.isActive && (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm flex items-center gap-1">
+              <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm flex items-center gap-1">
                 <CheckCircle2 className="w-3 h-3" />
                 Active
               </span>
@@ -135,12 +135,12 @@ export function SupplyDetail({ supply, onAddToCart, onEdit, onFavorite }: Supply
           {supply.inventory && (
             <div className={`p-4 rounded-lg ${
               supply.inventory.quantity > 0
-                ? "bg-green-50 border border-green-200"
+                ? "bg-accent/5 border border-accent/20"
                 : "bg-red-50 border border-red-200"
             }`}>
               <div className="flex items-center gap-2">
                 {supply.inventory.quantity > 0 ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <CheckCircle2 className="w-5 h-5 text-accent" />
                 ) : (
                   <AlertCircle className="w-5 h-5 text-red-600" />
                 )}

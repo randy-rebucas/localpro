@@ -26,7 +26,7 @@ export default function Security() {
     {
       title: "Data Encryption",
       icon: <Lock className="w-5 h-5" />,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-primary to-indigo-600",
       description: "All data is encrypted in transit and at rest using industry-standard AES-256 encryption",
       details: [
         "End-to-end encryption for sensitive communications",
@@ -368,7 +368,7 @@ export default function Security() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { icon: <Zap className="w-6 h-6" />, title: "Detection", desc: "24/7 monitoring and automated threat detection", color: "from-blue-500 to-indigo-600" },
+              { icon: <Zap className="w-6 h-6" />, title: "Detection", desc: "24/7 monitoring and automated threat detection", color: "from-primary to-indigo-600" },
               { icon: <AlertTriangle className="w-6 h-6" />, title: "Response", desc: "Immediate containment and investigation", color: "from-amber-500 to-orange-600" },
               { icon: <CheckCircle className="w-6 h-6" />, title: "Recovery", desc: "Rapid recovery and prevention measures", color: "from-emerald-500 to-teal-600" }
             ].map((item, index) => (

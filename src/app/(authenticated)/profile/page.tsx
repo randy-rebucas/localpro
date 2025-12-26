@@ -58,11 +58,11 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-green-200/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-purple-100/20 rounded-full blur-3xl animate-float animation-delay-4000"></div>
       </div>
       
@@ -70,17 +70,17 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 transition-transform duration-300">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-primary to-purple-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 transition-transform duration-300">
               <User className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-700 to-gray-900 bg-clip-text text-transparent mb-1">Profile</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-900 via-primary to-gray-900 bg-clip-text text-transparent mb-1">Profile</h1>
               <p className="text-sm sm:text-base text-gray-700 font-medium">Manage your account information and settings</p>
             </div>
           </div>
           <Link
             href="/profile/edit"
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary to-primary rounded-xl hover:from-primary hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105"
           >
             <Edit3 className="w-4 h-4" />
             Edit Profile

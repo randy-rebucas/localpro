@@ -104,10 +104,10 @@ export function FilterSidebar({
         }`}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-100">
+        <div className="bg-gradient-to-r from-accent/10 to-emerald-50 px-6 py-4 border-b border-accent/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-md">
                 <Filter className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -132,7 +132,7 @@ export function FilterSidebar({
             <>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-green-600" />
+                  <Tag className="w-4 h-4 text-accent" />
                   <label className="text-sm font-semibold text-gray-900">Category</label>
                 </div>
                 {categoriesLoading ? (
@@ -149,7 +149,7 @@ export function FilterSidebar({
                       const next = categories.find((c) => getCategoryValue(c) === value) ?? null;
                       onCategorySelect?.(next);
                     }}
-                    className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-gray-700"
+                    className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-gray-700"
                     aria-label="Select category"
                   >
                     <option value="">All Categories</option>
@@ -170,7 +170,7 @@ export function FilterSidebar({
           {/* Location Filter */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-green-600" />
+              <MapPin className="w-4 h-4 text-accent" />
               <label className="text-sm font-semibold text-gray-900">Location</label>
             </div>
             <div className="space-y-3">
@@ -188,7 +188,7 @@ export function FilterSidebar({
                         onLocationCoordinatesChange(null);
                       }
                     }}
-                    className="w-full px-4 py-2.5 pr-11 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 pr-11 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
                     aria-label="Location"
                   />
 
@@ -197,7 +197,7 @@ export function FilterSidebar({
                       type="button"
                       onClick={onDetectLocation}
                       disabled={detectingLocation}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-accent text-white hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label="Use current location"
                       title="Use current location"
                     >
@@ -254,22 +254,22 @@ export function FilterSidebar({
           {/* Price Range */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-green-600" />
+              <DollarSign className="w-4 h-4 text-accent" />
               <label className="text-sm font-semibold text-gray-900">Price Range</label>
             </div>
             <div className="space-y-5">
               {/* Price Display */}
-              <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3 border border-green-100">
+              <div className="flex items-center justify-between bg-accent/5 rounded-xl px-4 py-3 border border-accent/20">
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Min</p>
-                  <span className="text-base font-bold text-green-700">
+                  <span className="text-base font-bold text-accent">
                     ₱{priceRange[0].toLocaleString()}
                   </span>
                 </div>
-                <div className="w-px h-8 bg-green-200"></div>
+                <div className="w-px h-8 bg-accent/20"></div>
                 <div className="text-center">
                   <p className="text-xs text-gray-500 mb-1">Max</p>
-                  <span className="text-base font-bold text-green-700">
+                  <span className="text-base font-bold text-accent">
                     ₱{priceRange[1].toLocaleString()}
                   </span>
                 </div>
@@ -281,7 +281,7 @@ export function FilterSidebar({
                 <div className="absolute inset-0 h-2 bg-gray-200 rounded-full top-1/2 transform -translate-y-1/2"></div>
                 {/* Active Range */}
                 <div
-                  className="absolute h-2 bg-green-500 rounded-full top-1/2 transform -translate-y-1/2"
+                  className="absolute h-2 bg-accent rounded-full top-1/2 transform -translate-y-1/2"
                   style={{
                     left: `${leftPct}%`,
                     width: `${widthPct}%`,
@@ -369,7 +369,7 @@ export function FilterSidebar({
           {/* Ratings */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Award className="w-4 h-4 text-green-600" />
+              <Award className="w-4 h-4 text-accent" />
               <label className="text-sm font-semibold text-gray-900">Rating</label>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -377,7 +377,7 @@ export function FilterSidebar({
                 onClick={() => onMinRatingChange(0)}
                 className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   minRating === 0
-                    ? "bg-green-600 text-white shadow-md shadow-green-200"
+                    ? "bg-accent text-white shadow-md shadow-green-200"
                     : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
                 }`}
               >
@@ -389,7 +389,7 @@ export function FilterSidebar({
                   onClick={() => onMinRatingChange(rating)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     minRating === rating
-                      ? "bg-green-600 text-white shadow-md shadow-green-200"
+                      ? "bg-accent text-white shadow-md shadow-green-200"
                       : "bg-gray-50 text-gray-700 hover:bg-gray-100 border-2 border-gray-200"
                   }`}
                 >
@@ -407,7 +407,7 @@ export function FilterSidebar({
           {/* Availability Toggle */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-green-600" />
+              <Clock className="w-4 h-4 text-accent" />
               <label className="text-sm font-semibold text-gray-900">Availability</label>
             </div>
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
@@ -418,7 +418,7 @@ export function FilterSidebar({
               <button
                 onClick={() => onAvailabilityChange(!isAvailable)}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-200 ${
-                  isAvailable ? "bg-green-600 shadow-lg shadow-green-200" : "bg-gray-300"
+                  isAvailable ? "bg-accent shadow-lg shadow-green-200" : "bg-gray-300"
                 }`}
                 role="switch"
                 aria-checked={isAvailable}

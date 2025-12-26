@@ -310,9 +310,9 @@ export default function AdminTrustVerificationPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-100';
+      case 'approved': return 'text-accent bg-accent/10';
       case 'rejected': return 'text-red-600 bg-red-100';
-      case 'under_review': return 'text-blue-600 bg-blue-100';
+      case 'under_review': return 'text-primary bg-primary/10';
       case 'pending': return 'text-yellow-600 bg-yellow-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -346,7 +346,7 @@ export default function AdminTrustVerificationPage() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={fetchData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -368,12 +368,12 @@ export default function AdminTrustVerificationPage() {
         <div className="mt-2 sm:mt-0 flex items-center space-x-2">
           <button
             onClick={fetchData}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
           >
             <RefreshCw className="w-3 h-3 mr-1" />
             Refresh
           </button>
-          <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring">
             <Download className="w-3 h-3 mr-1" />
             Export
           </button>
@@ -384,14 +384,14 @@ export default function AdminTrustVerificationPage() {
       {stats && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+            <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Total Requests</p>
                   <p className="text-lg font-bold text-gray-900">{stats.totalRequests}</p>
                   <p className="text-xs text-gray-500">All time</p>
                 </div>
-                <Shield className="w-5 h-5 text-blue-600" />
+                <Shield className="w-5 h-5 text-primary" />
               </div>
             </div>
             
@@ -408,7 +408,7 @@ export default function AdminTrustVerificationPage() {
               </div>
             </div>
             
-            <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+            <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs font-medium text-gray-500">Approved</p>
@@ -419,7 +419,7 @@ export default function AdminTrustVerificationPage() {
                     {stats.verificationRate ? `${stats.verificationRate.toFixed(1)}%` : '0%'} rate
                   </p>
                 </div>
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-accent" />
               </div>
             </div>
             
@@ -511,7 +511,7 @@ export default function AdminTrustVerificationPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 Filters
@@ -533,7 +533,7 @@ export default function AdminTrustVerificationPage() {
                   <button
                     onClick={handleBulkAction}
                     disabled={!bulkAction}
-                    className="px-2 py-1 bg-blue-600 text-white text-xs rounded disabled:opacity-50 hover:bg-blue-700"
+                    className="px-2 py-1 bg-primary text-white text-xs rounded disabled:opacity-50 hover:bg-primary/90"
                   >
                     Apply
                   </button>
@@ -551,7 +551,7 @@ export default function AdminTrustVerificationPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({...filters, status: e.target.value})}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
@@ -566,7 +566,7 @@ export default function AdminTrustVerificationPage() {
                 <select
                   value={filters.type}
                   onChange={(e) => setFilters({...filters, type: e.target.value})}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Types</option>
                   <option value="identity_verification">Identity Verification</option>
@@ -581,7 +581,7 @@ export default function AdminTrustVerificationPage() {
                 <select
                   value={filters.dateRange}
                   onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -600,7 +600,7 @@ export default function AdminTrustVerificationPage() {
                     value={filters.search}
                     onChange={(e) => setFilters({...filters, search: e.target.value})}
                     placeholder="Search by name, email, or ID..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -617,7 +617,7 @@ export default function AdminTrustVerificationPage() {
               <div className="flex items-end">
                 <button
                   onClick={fetchData}
-                  className="w-full px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="w-full px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/90"
                 >
                   Apply
                 </button>
@@ -649,7 +649,7 @@ export default function AdminTrustVerificationPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="submittedAt">Date Submitted</option>
                   <option value="status">Status</option>
@@ -695,7 +695,7 @@ export default function AdminTrustVerificationPage() {
                             setSelectedRequests([]);
                           }
                         }}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-primary focus:ring-ring"
                       />
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
@@ -720,7 +720,7 @@ export default function AdminTrustVerificationPage() {
                               setSelectedRequests(selectedRequests.filter(id => id !== request._id));
                             }
                           }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-gray-300 text-primary focus:ring-ring"
                         />
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">
@@ -766,7 +766,7 @@ export default function AdminTrustVerificationPage() {
                           <FileText className="w-3 h-3 text-gray-400" />
                           <span className="text-xs text-gray-500">{request.documents?.length || 0}</span>
                           {request.documents && request.documents.length > 0 && request.documents.some(doc => doc.isVerified) && (
-                            <CheckCircle className="w-3 h-3 text-green-600" />
+                            <CheckCircle className="w-3 h-3 text-accent" />
                           )}
                         </div>
                       </td>
@@ -774,7 +774,7 @@ export default function AdminTrustVerificationPage() {
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={() => {/* View details modal */}}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-primary hover:text-primary"
                             title="View Details"
                           >
                             <Eye className="w-3 h-3" />
@@ -783,7 +783,7 @@ export default function AdminTrustVerificationPage() {
                             <>
                               <button
                                 onClick={() => handleStatusChange(request._id, 'approved')}
-                                className="text-green-600 hover:text-green-900"
+                                className="text-accent hover:text-accent"
                                 title="Approve"
                               >
                                 <Check className="w-3 h-3" />

@@ -14,14 +14,19 @@ const nextConfig: NextConfig = {
 
   // Performance optimizations
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-toast',
-      '@radix-ui/react-slot',
-      'recharts', // Optimize recharts imports (only load used components)
-    ],
+    // Windows/dev reliability: keep dev chunking simpler; enable in prod builds.
+    ...(process.env.NODE_ENV === "production"
+      ? {
+          optimizePackageImports: [
+            "lucide-react",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-toast",
+            "@radix-ui/react-slot",
+            "recharts", // Optimize recharts imports (only load used components)
+          ],
+        }
+      : {}),
   },
   
   // Compress output

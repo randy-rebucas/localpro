@@ -597,7 +597,7 @@ export default function MarketplaceAdsPage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   {categories.map(category => (
                     <option key={category.value} value={category.value}>
@@ -615,7 +615,7 @@ export default function MarketplaceAdsPage() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   {adTypes.map(type => (
                     <option key={type.value} value={type.value}>
@@ -650,13 +650,13 @@ export default function MarketplaceAdsPage() {
               {/* Search */}
               <div className="flex-1">
                 <div className="relative group">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-green-500 transition-colors" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-accent transition-colors" />
                   <input
                     type="text"
                     placeholder="Search ads, advertisers, or categories..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 hover:border-gray-400"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 hover:border-gray-400"
                   />
                   {searchQuery && (
                     <button
@@ -835,12 +835,12 @@ const AdCard = React.memo(function AdCard({ ad, viewMode, onView }: AdCardProps)
               <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
                 {ad.category?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
               </span>
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
                 {ad.type?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ad'}
               </span>
               {ad.status && (
                 <span className={`text-xs px-2 py-1 rounded ${
-                  ad.status === 'active' ? 'bg-green-100 text-green-700' :
+                  ad.status === 'active' ? 'bg-accent/10 text-accent' :
                   ad.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                   ad.status === 'paused' ? 'bg-orange-100 text-orange-700' :
                   ad.status === 'rejected' ? 'bg-red-100 text-red-700' :
@@ -882,7 +882,7 @@ const AdCard = React.memo(function AdCard({ ad, viewMode, onView }: AdCardProps)
                   </div>
                   {advertiser.verification?.isVerified && (
                     <div className="relative group">
-                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-gray-900 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                         Verified Advertiser
                       </span>

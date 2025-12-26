@@ -1233,7 +1233,7 @@ export default function RentalsPage() {
           <p className="text-red-600 mb-4">{error}</p>
           <button
             onClick={refreshData}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
           >
             Retry
           </button>
@@ -1263,7 +1263,7 @@ export default function RentalsPage() {
           <button
             onClick={refreshData}
             disabled={refreshing || transactionsLoading}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${(refreshing || transactionsLoading) ? 'animate-spin' : ''}`} />
             Refresh
@@ -1274,7 +1274,7 @@ export default function RentalsPage() {
                 resetForm();
                 setCreateModalOpen(true);
               }}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
             >
               <Plus className="w-3 h-3 mr-1" />
               Add Rental Item
@@ -1291,7 +1291,7 @@ export default function RentalsPage() {
               onClick={() => setActiveTab('items')}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'items'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1301,7 +1301,7 @@ export default function RentalsPage() {
               onClick={() => setActiveTab('transactions')}
               className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === 'transactions'
-                  ? 'border-blue-500 text-blue-600'
+                  ? 'border-primary text-primary'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
@@ -1318,25 +1318,25 @@ export default function RentalsPage() {
       {/* Statistics Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Rentals</p>
                 <p className="text-lg font-bold text-gray-900">{stats.totalRentals || 0}</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <Home className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <Home className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Rentals</p>
                 <p className="text-lg font-bold text-gray-900">{stats.activeRentals || 0}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <TrendingUp className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -1375,7 +1375,7 @@ export default function RentalsPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
@@ -1399,7 +1399,7 @@ export default function RentalsPage() {
                     placeholder="Search rentals..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1408,7 +1408,7 @@ export default function RentalsPage() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Categories</option>
                   {categories.map(cat => (
@@ -1421,7 +1421,7 @@ export default function RentalsPage() {
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Types</option>
                   {types.map(type => (
@@ -1500,12 +1500,12 @@ export default function RentalsPage() {
                       </div>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                         {rental.category || 'N/A'}
                       </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent">
                         {rental.type || 'N/A'}
                       </span>
                     </td>
@@ -1537,7 +1537,7 @@ export default function RentalsPage() {
                     <td className="px-3 py-2 whitespace-nowrap">
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                         rental.isActive && rental.availability?.isAvailable
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-accent/10 text-accent' 
                           : 'bg-gray-100 text-gray-800'
                       }`}>
                         {rental.isActive && rental.availability?.isAvailable ? 'Available' : 'Unavailable'}
@@ -1547,14 +1547,14 @@ export default function RentalsPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => rental._id && handleViewRental(rental._id)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-primary hover:text-primary"
                           title="View rental details"
                         >
                           <Eye className="w-3 h-3" />
                         </button>
                         <button
                           onClick={() => openEditModal(rental)}
-                          className="text-green-600 hover:text-green-900"
+                          className="text-accent hover:text-accent"
                           title="Edit rental"
                         >
                           <Edit className="w-3 h-3" />
@@ -1620,7 +1620,7 @@ export default function RentalsPage() {
                   <p className="text-red-600 mb-4">{transactionsError}</p>
                   <button
                     onClick={fetchTransactions}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
                   >
                     Retry
                   </button>
@@ -1704,8 +1704,8 @@ export default function RentalsPage() {
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                              status === 'completed' ? 'bg-green-100 text-green-800' :
-                              status === 'active' ? 'bg-blue-100 text-blue-800' :
+                              status === 'completed' ? 'bg-accent/10 text-accent' :
+                              status === 'active' ? 'bg-primary/10 text-primary' :
                               status === 'cancelled' ? 'bg-red-100 text-red-800' :
                               status === 'disputed' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
@@ -1715,7 +1715,7 @@ export default function RentalsPage() {
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap">
                             <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                              paymentStatus === 'paid' || paymentStatus === 'completed' ? 'bg-green-100 text-green-800' :
+                              paymentStatus === 'paid' || paymentStatus === 'completed' ? 'bg-accent/10 text-accent' :
                               paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                               'bg-gray-100 text-gray-800'
                             }`}>
@@ -1734,7 +1734,7 @@ export default function RentalsPage() {
                                   setViewModalOpen(true);
                                 }
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-primary hover:text-primary"
                               title="View details"
                             >
                               <Eye className="w-3 h-3" />
@@ -1771,7 +1771,7 @@ export default function RentalsPage() {
               type="text"
               value={rentalFormData.title}
               onChange={(e) => setRentalFormData({ ...rentalFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1781,7 +1781,7 @@ export default function RentalsPage() {
               value={rentalFormData.description}
               onChange={(e) => setRentalFormData({ ...rentalFormData, description: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -1791,7 +1791,7 @@ export default function RentalsPage() {
               <select
                 value={rentalFormData.category}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 <option value="">Select Category</option>
@@ -1806,7 +1806,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.subcategory}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, subcategory: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., pickup_truck, sedan"
               />
             </div>
@@ -1844,7 +1844,7 @@ export default function RentalsPage() {
                       }
                     }
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="Search for owner by name or email..."
                 />
                 {selectedOwner && (
@@ -1870,7 +1870,7 @@ export default function RentalsPage() {
                       <div
                         key={owner._id}
                         onClick={() => handleOwnerSelect(owner)}
-                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-primary/5 transition-colors"
                       >
                         <div className="font-medium text-gray-900">
                           {owner.firstName} {owner.lastName}
@@ -1888,11 +1888,11 @@ export default function RentalsPage() {
               )}
               
               {selectedOwner && (
-                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm font-medium text-blue-900">
+                <div className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="text-sm font-medium text-primary">
                     Selected: {selectedOwner.firstName} {selectedOwner.lastName}
                   </div>
-                  <div className="text-xs text-blue-700">{selectedOwner.email}</div>
+                  <div className="text-xs text-primary">{selectedOwner.email}</div>
                 </div>
               )}
             </div>
@@ -1904,7 +1904,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.hourlyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, hourlyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -1915,7 +1915,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.dailyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, dailyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -1926,7 +1926,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.weeklyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, weeklyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -1937,7 +1937,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.monthlyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, monthlyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -1948,7 +1948,7 @@ export default function RentalsPage() {
             <select
               value={rentalFormData.currency}
               onChange={(e) => setRentalFormData({ ...rentalFormData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="PHP">PHP</option>
             </select>
@@ -1960,7 +1960,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.street}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, street: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Street address"
               />
             </div>
@@ -1970,7 +1970,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.city}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, city: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="City"
               />
             </div>
@@ -1982,7 +1982,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.state}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, state: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="State"
               />
             </div>
@@ -1992,7 +1992,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.zipCode}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, zipCode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Zip Code"
               />
             </div>
@@ -2003,7 +2003,7 @@ export default function RentalsPage() {
               type="text"
               value={rentalFormData.country}
               onChange={(e) => setRentalFormData({ ...rentalFormData, country: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="Country"
             />
           </div>
@@ -2014,7 +2014,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.lat}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, lat: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., 34.0522"
               />
             </div>
@@ -2024,7 +2024,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.lng}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, lng: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., -118.2437"
               />
             </div>
@@ -2035,7 +2035,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.pickupRequired}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, pickupRequired: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Pickup Required</label>
             </div>
@@ -2044,7 +2044,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.deliveryAvailable}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryAvailable: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Delivery Available</label>
             </div>
@@ -2056,7 +2056,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.deliveryFee}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryFee: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2068,7 +2068,7 @@ export default function RentalsPage() {
               type="text"
               value={typeof rentalFormData.tags === 'string' ? rentalFormData.tags : rentalFormData.tags.join(', ')}
               onChange={(e) => setRentalFormData({ ...rentalFormData, tags: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="Comma-separated tags (e.g., pickup, truck, moving)"
             />
             <p className="mt-1 text-xs text-gray-500">Separate multiple tags with commas</p>
@@ -2079,7 +2079,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isAvailable}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isAvailable: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Available</label>
             </div>
@@ -2088,7 +2088,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isActive}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isActive: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Active</label>
             </div>
@@ -2097,7 +2097,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isFeatured}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isFeatured: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Featured</label>
             </div>
@@ -2116,7 +2116,7 @@ export default function RentalsPage() {
             <button
               onClick={handleCreateRental}
               disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create Rental'}
             </button>
@@ -2141,7 +2141,7 @@ export default function RentalsPage() {
               type="text"
               value={rentalFormData.title}
               onChange={(e) => setRentalFormData({ ...rentalFormData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -2151,7 +2151,7 @@ export default function RentalsPage() {
               value={rentalFormData.description}
               onChange={(e) => setRentalFormData({ ...rentalFormData, description: e.target.value })}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               required
             />
           </div>
@@ -2161,7 +2161,7 @@ export default function RentalsPage() {
               <select
                 value={rentalFormData.category}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 required
               >
                 <option value="">Select Category</option>
@@ -2176,7 +2176,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.subcategory}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, subcategory: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., pickup_truck, sedan"
               />
             </div>
@@ -2214,7 +2214,7 @@ export default function RentalsPage() {
                       }
                     }
                   }}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                   placeholder="Search for owner by name or email..."
                 />
                 {selectedOwner && (
@@ -2240,7 +2240,7 @@ export default function RentalsPage() {
                       <div
                         key={owner._id}
                         onClick={() => handleOwnerSelect(owner)}
-                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-blue-50 transition-colors"
+                        className="px-4 py-3 cursor-pointer border-b border-gray-100 last:border-b-0 hover:bg-primary/5 transition-colors"
                       >
                         <div className="font-medium text-gray-900">
                           {owner.firstName} {owner.lastName}
@@ -2258,11 +2258,11 @@ export default function RentalsPage() {
               )}
               
               {selectedOwner && (
-                <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="text-sm font-medium text-blue-900">
+                <div className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="text-sm font-medium text-primary">
                     Selected: {selectedOwner.firstName} {selectedOwner.lastName}
                   </div>
-                  <div className="text-xs text-blue-700">{selectedOwner.email}</div>
+                  <div className="text-xs text-primary">{selectedOwner.email}</div>
                 </div>
               )}
             </div>
@@ -2274,7 +2274,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.hourlyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, hourlyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2285,7 +2285,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.dailyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, dailyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2296,7 +2296,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.weeklyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, weeklyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2307,7 +2307,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.monthlyPrice}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, monthlyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2318,7 +2318,7 @@ export default function RentalsPage() {
             <select
               value={rentalFormData.currency}
               onChange={(e) => setRentalFormData({ ...rentalFormData, currency: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="PHP">PHP</option>
             </select>
@@ -2330,7 +2330,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.street}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, street: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Street address"
               />
             </div>
@@ -2340,7 +2340,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.city}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, city: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="City"
               />
             </div>
@@ -2352,7 +2352,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.state}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, state: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="State"
               />
             </div>
@@ -2362,7 +2362,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.zipCode}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, zipCode: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="Zip Code"
               />
             </div>
@@ -2373,7 +2373,7 @@ export default function RentalsPage() {
               type="text"
               value={rentalFormData.country}
               onChange={(e) => setRentalFormData({ ...rentalFormData, country: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="Country"
             />
           </div>
@@ -2384,7 +2384,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.lat}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, lat: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., 34.0522"
               />
             </div>
@@ -2394,7 +2394,7 @@ export default function RentalsPage() {
                 type="text"
                 value={rentalFormData.lng}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, lng: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 placeholder="e.g., -118.2437"
               />
             </div>
@@ -2405,7 +2405,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.pickupRequired}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, pickupRequired: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Pickup Required</label>
             </div>
@@ -2414,7 +2414,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.deliveryAvailable}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryAvailable: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Delivery Available</label>
             </div>
@@ -2426,7 +2426,7 @@ export default function RentalsPage() {
                 type="number"
                 value={rentalFormData.deliveryFee}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, deliveryFee: parseFloat(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
                 min="0"
                 step="0.01"
               />
@@ -2438,7 +2438,7 @@ export default function RentalsPage() {
               type="text"
               value={typeof rentalFormData.tags === 'string' ? rentalFormData.tags : rentalFormData.tags.join(', ')}
               onChange={(e) => setRentalFormData({ ...rentalFormData, tags: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-primary"
               placeholder="Comma-separated tags (e.g., pickup, truck, moving)"
             />
             <p className="mt-1 text-xs text-gray-500">Separate multiple tags with commas</p>
@@ -2449,7 +2449,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isAvailable}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isAvailable: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Available</label>
             </div>
@@ -2458,7 +2458,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isActive}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isActive: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Active</label>
             </div>
@@ -2467,7 +2467,7 @@ export default function RentalsPage() {
                 type="checkbox"
                 checked={rentalFormData.isFeatured}
                 onChange={(e) => setRentalFormData({ ...rentalFormData, isFeatured: e.target.checked })}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary focus:ring-ring border-gray-300 rounded"
               />
               <label className="ml-2 block text-sm text-gray-700">Featured</label>
             </div>
@@ -2485,7 +2485,7 @@ export default function RentalsPage() {
             <button
               onClick={handleUpdateRental}
               disabled={submitting || !rentalFormData.title || !rentalFormData.description || !rentalFormData.category}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Rental'}
             </button>
@@ -2580,7 +2580,7 @@ export default function RentalsPage() {
             <button
               onClick={handleUploadImages}
               disabled={submitting || imageFiles.length === 0}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Uploading...' : 'Upload Images'}
             </button>
@@ -2881,7 +2881,7 @@ export default function RentalsPage() {
                     <h4 className="text-sm font-medium text-gray-500">Features</h4>
                     <div className="mt-1 flex flex-wrap gap-2">
                       {selectedRental.specifications.features.map((feature, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
                           {feature}
                         </span>
                       ))}
@@ -2973,7 +2973,7 @@ export default function RentalsPage() {
                   <p className="mt-1">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       selectedRental.isActive && selectedRental.availability?.isAvailable
-                        ? 'bg-green-100 text-green-800' 
+                        ? 'bg-accent/10 text-accent' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
                       {selectedRental.isActive && selectedRental.availability?.isAvailable ? 'Available' : 'Unavailable'}

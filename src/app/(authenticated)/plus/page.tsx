@@ -69,8 +69,8 @@ const subscriptionPlans: SubscriptionPlan[] = [
       'Mobile app access'
     ],
     icon: <Star className="w-6 h-6" />,
-    color: 'text-blue-600',
-    bgGradient: 'from-blue-500 to-blue-600'
+    color: 'text-primary',
+    bgGradient: 'from-primary to-primary'
   },
   {
     id: 'pro',
@@ -142,13 +142,13 @@ const premiumFeatures = [
     title: 'Priority Support',
     description: 'Get faster response times and dedicated support channels',
     icon: <Phone className="w-6 h-6" />,
-    color: 'bg-green-100 text-green-600'
+    color: 'bg-accent/10 text-accent'
   },
   {
     title: 'Advanced Analytics',
     description: 'Detailed insights into your business performance',
     icon: <TrendingUp className="w-6 h-6" />,
-    color: 'bg-blue-100 text-blue-600'
+    color: 'bg-primary/10 text-primary'
   },
   {
     title: 'Enhanced Visibility',
@@ -372,7 +372,7 @@ export default function PlusPage() {
               <span className={`text-xs px-2 py-0.5 rounded-full ${
                 billingPeriod === 'annual' 
                   ? 'bg-white/30 text-white' 
-                  : 'bg-green-100 text-green-700'
+                  : 'bg-accent/10 text-accent'
               }`}>
                 Save 20%
               </span>
@@ -409,15 +409,15 @@ export default function PlusPage() {
         {stats && (stats.totalSubscribers > 0 || stats.activeSubscriptions > 0) && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white rounded-xl border-2 border-gray-200 p-4 text-center">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <Users className="w-5 h-5 text-primary" />
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.totalSubscribers.toLocaleString()}</p>
               <p className="text-xs text-gray-600">Total Subscribers</p>
             </div>
             <div className="bg-white rounded-xl border-2 border-gray-200 p-4 text-center">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
-                <TrendingUp className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <TrendingUp className="w-5 h-5 text-accent" />
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.activeSubscriptions.toLocaleString()}</p>
               <p className="text-xs text-gray-600">Active Plans</p>
@@ -485,7 +485,7 @@ export default function PlusPage() {
                     </span>
                   </div>
                   {billingPeriod === 'annual' && (
-                    <p className="text-xs text-green-600 font-medium mt-1">
+                    <p className="text-xs text-accent font-medium mt-1">
                       Save {formatCurrency(plan.monthlyPrice * 12 - plan.annualPrice, currency, { appSettings, showSymbol: true })} per year
                     </p>
                   )}
@@ -494,7 +494,7 @@ export default function PlusPage() {
                 <ul className="space-y-2.5 mb-6">
                   {plan.features.slice(0, 5).map((feature, index) => (
                     <li key={index} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                      <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-gray-700">{feature}</span>
                     </li>
                   ))}

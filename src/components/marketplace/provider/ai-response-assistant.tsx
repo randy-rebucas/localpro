@@ -57,7 +57,7 @@ export function AIResponseAssistant({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Response Assistant</h3>
       </div>
 
@@ -75,7 +75,7 @@ export function AIResponseAssistant({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Paste the client's message here..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[100px]"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px]"
               required
             />
           </div>
@@ -87,7 +87,7 @@ export function AIResponseAssistant({
             <select
               value={tone}
               onChange={(e) => setTone(e.target.value as "professional" | "friendly" | "formal")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="professional">Professional</option>
               <option value="friendly">Friendly</option>
@@ -98,7 +98,7 @@ export function AIResponseAssistant({
           <button
             type="submit"
             disabled={loading || !message.trim()}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -126,7 +126,7 @@ export function AIResponseAssistant({
             <div className="flex gap-2">
               <button
                 onClick={handleCopy}
-                className="text-sm text-green-600 hover:text-green-700 flex items-center gap-1"
+                className="text-sm text-accent hover:text-accent flex items-center gap-1"
               >
                 {copied ? (
                   <>
@@ -163,7 +163,7 @@ export function AIResponseAssistant({
                 {generated.alternatives.map((alt: string, i: number) => (
                   <div
                     key={i}
-                    className="p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm text-gray-700"
+                    className="p-3 bg-primary/5 rounded-lg border border-primary/20 text-sm text-gray-700"
                   >
                     {alt}
                   </div>
@@ -178,7 +178,7 @@ export function AIResponseAssistant({
               <ul className="space-y-1">
                 {generated.suggestedActions.map((action: string, i: number) => (
                   <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                    <Send className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <Send className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                     <span>{action}</span>
                   </li>
                 ))}

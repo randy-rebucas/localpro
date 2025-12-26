@@ -65,7 +65,7 @@ export default function SearchPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-primary/5 text-primary flex items-center justify-center">
           <Search className="w-4 h-4" />
         </div>
         <div>

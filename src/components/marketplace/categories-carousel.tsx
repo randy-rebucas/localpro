@@ -262,7 +262,7 @@ export function CategoriesCarousel({
     return (
       <div className={`flex items-center justify-center ${className}`}>
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
           <p className="text-sm text-gray-600">Loading categories...</p>
         </div>
       </div>
@@ -278,7 +278,7 @@ export function CategoriesCarousel({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-600 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent bg-accent/5 rounded-lg hover:bg-accent/10 transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Retry
@@ -303,7 +303,7 @@ export function CategoriesCarousel({
       {canScrollLeft && (
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-300 transition-all hover:scale-110"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-accent/5 hover:border-accent/30 transition-all hover:scale-110"
           aria-label="Scroll left"
         >
           <ChevronLeft className="w-4 h-4 text-gray-600" />
@@ -327,22 +327,22 @@ export function CategoriesCarousel({
                 onClick={() => handleCategoryClick(category)}
                 className={`group inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full transition-all duration-200 whitespace-nowrap ${
                   isSelected
-                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/30 border-2 border-green-500"
-                    : "bg-white text-gray-700 border border-gray-200 hover:border-green-400 hover:bg-green-50 hover:shadow-md"
+                    ? "bg-gradient-to-r from-accent to-accent text-white shadow-lg shadow-green-500/30 border-2 border-accent"
+                    : "bg-white text-gray-700 border border-gray-200 hover:border-accent hover:bg-accent/5 hover:shadow-md"
                 }`}
                 type="button"
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   isSelected 
                     ? 'bg-white/20' 
-                    : 'bg-gray-100 group-hover:bg-green-100'
+                    : 'bg-gray-100 group-hover:bg-accent/10'
                 }`}>
                   <IconComponent className={`w-4 h-4 ${
-                    isSelected ? 'text-white' : 'text-gray-600 group-hover:text-green-600'
+                    isSelected ? 'text-white' : 'text-gray-600 group-hover:text-accent'
                   }`} />
                 </div>
                 <span className={`text-sm font-semibold ${
-                  isSelected ? 'text-white' : 'text-gray-700 group-hover:text-green-700'
+                  isSelected ? 'text-white' : 'text-gray-700 group-hover:text-accent'
                 }`}>{category.name}</span>
               </button>
             );
@@ -354,7 +354,7 @@ export function CategoriesCarousel({
       {canScrollRight && (
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-green-50 hover:border-green-300 transition-all hover:scale-110"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-accent/5 hover:border-accent/30 transition-all hover:scale-110"
           aria-label="Scroll right"
         >
           <ChevronRight className="w-4 h-4 text-gray-600" />

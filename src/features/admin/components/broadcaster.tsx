@@ -172,7 +172,7 @@ export function Broadcaster({ className = "" }: BroadcasterProps) {
       case 'event':
       case 'general':
       default:
-        return 'bg-blue-50 border-blue-300 text-blue-900';
+        return 'bg-primary/5 border-primary/30 text-primary';
     }
   };
 
@@ -209,7 +209,7 @@ export function Broadcaster({ className = "" }: BroadcasterProps) {
                     target={broadcast.link?.openInNewTab !== false ? "_blank" : undefined}
                     rel={broadcast.link?.openInNewTab !== false ? "noopener noreferrer" : undefined}
                     onClick={() => trackClick(broadcast._id)}
-                    className="inline-flex items-center gap-1 text-sm font-medium text-blue-700 hover:text-blue-800 underline hover:no-underline transition-colors"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary underline hover:no-underline transition-colors"
                   >
                     {broadcast.actionText || broadcast.link?.text}
                     <ExternalLink className="w-3.5 h-3.5" />

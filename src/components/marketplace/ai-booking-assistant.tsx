@@ -57,11 +57,11 @@ export function AIBookingAssistant({
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-green-600" />
+          <Sparkles className="w-5 h-5 text-accent" />
           <h3 className="text-lg font-semibold text-gray-900">AI Booking Assistant</h3>
         </div>
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-green-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-accent" />
         </div>
       </div>
     );
@@ -70,7 +70,7 @@ export function AIBookingAssistant({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Booking Assistant</h3>
       </div>
 
@@ -86,12 +86,12 @@ export function AIBookingAssistant({
           {preferredDates.map((date) => (
             <div
               key={date}
-              className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm"
+              className="flex items-center gap-1 px-3 py-1 bg-accent/10 text-accent rounded-full text-sm"
             >
               <span>{formatDateWithUserSettings(date, userSettings)}</span>
               <button
                 onClick={() => handleDateRemove(date)}
-                className="ml-1 text-green-700 hover:text-green-900"
+                className="ml-1 text-accent hover:text-accent"
               >
                 ×
               </button>
@@ -103,7 +103,7 @@ export function AIBookingAssistant({
           onChange={(e) => {
             if (e.target.value) handleDateAdd(e.target.value);
           }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring text-sm"
         />
       </div>
 
@@ -121,11 +121,11 @@ export function AIBookingAssistant({
           {suggestions.map((suggestion, index) => (
             <div
               key={index}
-              className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all"
+              className="border border-gray-200 rounded-lg p-4 hover:border-accent/30 hover:shadow-md transition-all"
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-green-600" />
+                  <Calendar className="w-5 h-5 text-accent" />
                   <div>
                     <div className="font-semibold text-gray-900">
                       {formatDateWithUserSettings(suggestion.date, userSettings)}
@@ -137,13 +137,13 @@ export function AIBookingAssistant({
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs font-medium text-green-600 mb-1">
+                  <div className="text-xs font-medium text-accent mb-1">
                     {Math.round((suggestion.confidence || 0) * 100)}% confidence
                   </div>
                   {suggestion.providerAvailability !== undefined && (
                     <div className="text-xs text-gray-500">
                       {suggestion.providerAvailability ? (
-                        <span className="flex items-center gap-1 text-green-600">
+                        <span className="flex items-center gap-1 text-accent">
                           <CheckCircle className="w-3 h-3" />
                           Available
                         </span>
@@ -164,7 +164,7 @@ export function AIBookingAssistant({
 
               <button
                 onClick={() => onSuggestionSelect?.(suggestion)}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors text-sm font-medium"
               >
                 Book This Time
               </button>

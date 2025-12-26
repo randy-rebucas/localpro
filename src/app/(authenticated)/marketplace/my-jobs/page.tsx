@@ -186,14 +186,14 @@ export default function MyJobsPage() {
   const getStatusColor = (status?: JobStatus | string) => {
     switch (status) {
       case "active":
-        return "bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-2 border-green-300 shadow-sm shadow-green-500/20";
+        return "bg-gradient-to-r from-accent/10 to-emerald-100 text-accent border-2 border-accent/30 shadow-sm shadow-green-500/20";
       case "paused":
         return "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-2 border-yellow-300 shadow-sm shadow-yellow-500/20";
       case "closed":
       case "filled":
         return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-2 border-gray-300 shadow-sm";
       case "draft":
-        return "bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-2 border-blue-300 shadow-sm shadow-blue-500/20";
+        return "bg-gradient-to-r from-primary/10 to-primary/10 text-primary border-2 border-primary/30 shadow-sm shadow-blue-500/20";
       default:
         return "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-2 border-gray-300 shadow-sm";
     }
@@ -465,16 +465,16 @@ export default function MyJobsPage() {
                   <p className="text-sm text-gray-500 mb-1">Active Jobs</p>
                   <p className="text-2xl font-bold text-emerald-600">{stats.activeJobs}</p>
                 </div>
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <CheckCircle2 className="w-6 h-6 text-accent" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Applications</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalApplications}</p>
+                  <p className="text-2xl font-bold text-primary">{stats.totalApplications}</p>
                 </div>
-                <Users className="w-6 h-6 text-blue-600" />
+                <Users className="w-6 h-6 text-primary" />
               </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
@@ -673,7 +673,7 @@ export default function MyJobsPage() {
                             <div className="p-1.5 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-lg">
                               <DollarSign className="w-4 h-4 text-emerald-600" />
                             </div>
-                            <span className="font-semibold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+                            <span className="font-semibold bg-gradient-to-r from-emerald-600 to-accent bg-clip-text text-transparent">
                               {formatPrice(salary.min, salary.max, salary.currency, salary.period)}
                             </span>
                           </div>
@@ -700,7 +700,7 @@ export default function MyJobsPage() {
                           {job.tags.slice(0, 5).map((tag, index) => (
                             <span
                               key={index}
-                              className="px-2.5 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 text-xs font-medium rounded-full border-2 border-blue-300 shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                              className="px-2.5 py-1 bg-gradient-to-r from-primary/10 to-primary/10 text-primary text-xs font-medium rounded-full border-2 border-primary/30 shadow-sm hover:shadow-md hover:scale-105 transition-all"
                             >
                               {tag}
                             </span>
@@ -719,7 +719,7 @@ export default function MyJobsPage() {
                         </Link>
                         <Link
                           href={`/jobs/${jobId}/edit`}
-                          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold"
+                          className="px-4 py-2 bg-gradient-to-r from-primary to-primary text-white rounded-lg hover:from-primary hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold"
                         >
                           <Edit className="w-4 h-4" />
                           Edit

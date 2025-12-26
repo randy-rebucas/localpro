@@ -37,7 +37,7 @@ export function JobGrid({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
           <p className="text-sm text-gray-600">Loading jobs...</p>
         </div>
       </div>
@@ -82,7 +82,7 @@ export function JobGrid({
       {featuredJobs.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-6 bg-green-600 rounded-full"></div>
+            <div className="w-1 h-6 bg-accent rounded-full"></div>
             <h2 className="text-xl font-bold text-gray-900">Featured Jobs</h2>
             {featuredJobs.length > 0 && (
               <span className="text-sm text-gray-500">({featuredJobs.length})</span>
@@ -137,7 +137,7 @@ export function JobGrid({
               className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 pagination.current === 1 || loading
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
@@ -178,8 +178,8 @@ export function JobGrid({
                     disabled={loading}
                     className={`w-10 h-10 text-sm font-medium rounded-lg transition-all ${
                       pagination.current === pageNum
-                        ? "bg-green-600 text-white shadow-md"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                        ? "bg-accent text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
                     } ${loading ? "cursor-not-allowed opacity-50" : ""}`}
                   >
                     {pageNum}
@@ -195,7 +195,7 @@ export function JobGrid({
               className={`flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                 pagination.current === pagination.pages || loading
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-green-500"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-accent"
               }`}
             >
               Next

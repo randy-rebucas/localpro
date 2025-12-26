@@ -635,7 +635,7 @@ export default function MyBookingsPage() {
       case "pending":
         return "bg-yellow-50 text-yellow-700";
       case "confirmed":
-        return "bg-blue-50 text-blue-700";
+        return "bg-primary/5 text-primary";
       case "in_progress":
         return "bg-purple-50 text-purple-700";
       case "completed":
@@ -1046,7 +1046,7 @@ export default function MyBookingsPage() {
                                 : paymentStatus === "pending" || paymentStatus === "PENDING"
                                 ? "bg-yellow-50 text-yellow-700"
                                 : paymentStatus === "refunded" || paymentStatus === "REFUNDED"
-                                ? "bg-blue-50 text-blue-700"
+                                ? "bg-primary/5 text-primary"
                                 : "bg-red-50 text-red-700"
                             }`}>
                               {formatStatusLabel(paymentStatus)}
@@ -1075,8 +1075,8 @@ export default function MyBookingsPage() {
                         </div>
                         
                         <div className="flex items-start gap-2">
-                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-blue-50 flex items-center justify-center rounded`}>
-                            <Clock className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-blue-600`} />
+                          <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-primary/5 flex items-center justify-center rounded`}>
+                            <Clock className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Duration</div>
@@ -1134,8 +1134,8 @@ export default function MyBookingsPage() {
                           )}
                           {provider.email && (
                             <div className="flex items-center gap-2">
-                              <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-indigo-50 flex items-center justify-center rounded`}>
-                                <Mail className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-indigo-600`} />
+                              <div className={`flex-shrink-0 ${viewMode === 'grid' ? 'w-8 h-8' : 'w-10 h-10'} bg-primary/5 flex items-center justify-center rounded`}>
+                                <Mail className={`${viewMode === 'grid' ? 'w-4 h-4' : 'w-5 h-5'} text-primary`} />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email</div>
@@ -1209,7 +1209,7 @@ export default function MyBookingsPage() {
                         <button
                           onClick={() => handleMessage(booking)}
                           disabled={messaging === (booking.id || booking._id || '')}
-                          className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-blue-700 bg-white border-2 border-blue-300 hover:bg-blue-50 hover:border-blue-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded`}
+                          className={`inline-flex items-center gap-1.5 ${viewMode === 'grid' ? 'px-3 py-2 text-xs' : 'px-4 py-2.5 text-sm'} font-semibold text-primary bg-white border-2 border-primary/30 hover:bg-primary/5 hover:border-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed rounded`}
                           aria-label={`Message provider about ${serviceName}`}
                           aria-busy={messaging === (booking.id || booking._id || '')}
                         >

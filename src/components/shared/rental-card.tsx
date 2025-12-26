@@ -65,7 +65,7 @@ export function RentalCard({ rental, viewMode = "list", onBook, onFavorite }: Re
           </div>
 
           {rental.category && (
-            <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mb-2">
+            <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded mb-2">
               {rental.category}
             </span>
           )}
@@ -91,7 +91,7 @@ export function RentalCard({ rental, viewMode = "list", onBook, onFavorite }: Re
 
           {rental.availability && (
             <div className="text-sm mb-2">
-              <span className={rental.availability.isAvailable ? "text-green-600" : "text-red-600"}>
+              <span className={rental.availability.isAvailable ? "text-accent" : "text-red-600"}>
                 {rental.availability.isAvailable ? "Available" : "Unavailable"}
               </span>
             </div>

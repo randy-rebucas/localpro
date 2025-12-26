@@ -257,7 +257,7 @@ export default function AdminDashboard() {
       description: "Manage users, roles, and permissions",
       icon: Users,
       href: "/admin/users",
-      color: "bg-blue-500",
+      color: "bg-primary",
       stats: stats ? `${stats.totalUsers.toLocaleString()} users` : "Loading..."
     },
     {
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
       description: "Manage services, bookings, and reviews",
       icon: ShoppingCart,
       href: "/admin/marketplace",
-      color: "bg-green-500",
+      color: "bg-accent",
       stats: stats ? `${stats.activeServices.toLocaleString()} services` : "Loading..."
     },
     {
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
       description: "Manage courses and enrollments",
       icon: BookOpen,
       href: "/admin/academy",
-      color: "bg-indigo-500",
+      color: "bg-primary",
       stats: moduleStats.academy > 0 ? `${moduleStats.academy.toLocaleString()} courses` : "View courses"
     },
     {
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
           <select
             value={selectedTimeframe}
             onChange={(e) => setSelectedTimeframe(e.target.value as Timeframe)}
-            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="text-xs border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="24h">Last 24h</option>
             <option value="7d">Last 7 days</option>
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -433,14 +433,14 @@ export default function AdminDashboard() {
 
       {/* Real-time Status Bar */}
       {realtime && !realtimeLoading && (
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3">
+        <div className="bg-gradient-to-r from-accent/10 to-emerald-50 border border-accent/20 rounded-lg p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-green-800">Live</span>
+                <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-accent">Live</span>
               </div>
-              <div className="flex items-center space-x-6 text-sm text-green-700">
+              <div className="flex items-center space-x-6 text-sm text-accent">
                 <div className="flex items-center space-x-1">
                   <Eye className="w-4 h-4" />
                   <span><strong>{realtime.activeUsers?.last15Minutes || 0}</strong> active users</span>
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </div>
-            <span className="text-xs text-green-600">
+            <span className="text-xs text-accent">
               {realtime.timestamp ? new Date(realtime.timestamp).toLocaleTimeString() : ""}
             </span>
           </div>
@@ -468,7 +468,7 @@ export default function AdminDashboard() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Total Users</p>
@@ -479,23 +479,23 @@ export default function AdminDashboard() {
                 +{stats?.newUsersToday || 0} today
               </p>
             </div>
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Users className="w-5 h-5 text-primary" />
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
             {stats?.growthUsers && parseFloat(stats.growthUsers) > 0 ? (
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+              <TrendingUp className="w-3 h-3 text-accent mr-1" />
             ) : (
               <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
             )}
-            <span className={`font-medium ${stats?.growthUsers && parseFloat(stats.growthUsers) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`font-medium ${stats?.growthUsers && parseFloat(stats.growthUsers) > 0 ? 'text-accent' : 'text-red-600'}`}>
               {stats?.growthUsers || '0%'}
             </span>
           </div>
         </div>
         
-        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+        <div className="bg-white rounded-lg shadow p-4 border-l-4 border-accent">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Active Services</p>
@@ -506,17 +506,17 @@ export default function AdminDashboard() {
                 {stats?.activeBookings || 0} bookings ({stats?.completionRate || '0%'})
               </p>
             </div>
-            <div className="p-2 bg-green-100 rounded-lg">
-              <ShoppingCart className="w-5 h-5 text-green-600" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <ShoppingCart className="w-5 h-5 text-accent" />
             </div>
           </div>
           <div className="mt-2 flex items-center text-xs">
             {stats?.growthBookings && parseFloat(stats.growthBookings) > 0 ? (
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+              <TrendingUp className="w-3 h-3 text-accent mr-1" />
             ) : (
               <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
             )}
-            <span className={`font-medium ${stats?.growthBookings && parseFloat(stats.growthBookings) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`font-medium ${stats?.growthBookings && parseFloat(stats.growthBookings) > 0 ? 'text-accent' : 'text-red-600'}`}>
               {stats?.growthBookings || '0%'}
             </span>
           </div>
@@ -539,11 +539,11 @@ export default function AdminDashboard() {
           </div>
           <div className="mt-2 flex items-center text-xs">
             {(stats?.growthRevenue && parseFloat(stats.growthRevenue) > 0) || (financial?.summary?.growth && parseFloat(financial.summary.growth) > 0) ? (
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
+              <TrendingUp className="w-3 h-3 text-accent mr-1" />
             ) : (
               <TrendingDown className="w-3 h-3 text-red-500 mr-1" />
             )}
-            <span className={`font-medium ${(stats?.growthRevenue && parseFloat(stats.growthRevenue) > 0) || (financial?.summary?.growth && parseFloat(financial.summary.growth) > 0) ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`font-medium ${(stats?.growthRevenue && parseFloat(stats.growthRevenue) > 0) || (financial?.summary?.growth && parseFloat(financial.summary.growth) > 0) ? 'text-accent' : 'text-red-600'}`}>
               {financial?.summary?.growth || stats?.growthRevenue || '0%'}
             </span>
           </div>
@@ -623,7 +623,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-indigo-500">
+        <div className="bg-white rounded-lg shadow p-3 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-xs font-medium text-gray-500">Active Users</p>
@@ -634,8 +634,8 @@ export default function AdminDashboard() {
                 {activityStats?.activeUsersWeek || 0} this week
               </p>
             </div>
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Wifi className="w-4 h-4 text-indigo-600" />
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Wifi className="w-4 h-4 text-primary" />
             </div>
           </div>
         </div>
@@ -646,13 +646,13 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow p-3">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-medium text-gray-900">Log Summary</h3>
-            <Link href="/admin/logs" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
+            <Link href="/admin/logs" className="text-xs text-primary hover:text-primary">View All</Link>
           </div>
           <div className="grid grid-cols-5 gap-2">
             {logStats.byLevel && Object.entries(logStats.byLevel).map(([level, count]) => {
               const colors: Record<string, string> = {
                 debug: 'bg-gray-100 text-gray-700 border-gray-200',
-                info: 'bg-blue-100 text-blue-700 border-blue-200',
+                info: 'bg-primary/10 text-primary border-primary/20',
                 warn: 'bg-yellow-100 text-yellow-700 border-yellow-200',
                 error: 'bg-red-100 text-red-700 border-red-200',
                 fatal: 'bg-purple-100 text-purple-700 border-purple-200',
@@ -674,7 +674,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-base font-medium text-gray-900">Recent Activities</h3>
-            <Link href="/admin/activities" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
+            <Link href="/admin/activities" className="text-xs text-primary hover:text-primary">View All</Link>
           </div>
           <div className="p-4">
             {activitiesLoading ? (
@@ -687,10 +687,10 @@ export default function AdminDashboard() {
                   <div key={activity._id || activity.id} className="flex items-start space-x-2 p-2 rounded hover:bg-gray-50 transition-colors">
                     <div className="flex-shrink-0">
                       <div className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.category === 'financial' ? 'bg-green-500' :
-                        activity.category === 'marketplace' ? 'bg-blue-500' :
+                        activity.category === 'financial' ? 'bg-accent' :
+                        activity.category === 'marketplace' ? 'bg-primary' :
                         activity.category === 'social' ? 'bg-purple-500' :
-                        activity.category === 'learning' ? 'bg-indigo-500' :
+                        activity.category === 'learning' ? 'bg-primary' :
                         'bg-gray-500'
                       }`}></div>
                     </div>
@@ -727,7 +727,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-lg shadow">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-base font-medium text-gray-900">Recent Logs</h3>
-            <Link href="/admin/logs" className="text-xs text-blue-600 hover:text-blue-800">View All</Link>
+            <Link href="/admin/logs" className="text-xs text-primary hover:text-primary">View All</Link>
           </div>
           <div className="p-4">
             {logsLoading ? (
@@ -739,7 +739,7 @@ export default function AdminDashboard() {
                 {recentLogs.slice(0, 5).map((log: RecentLogItem, idx: number) => {
                   const levelColors: Record<string, string> = {
                     debug: 'bg-gray-100 text-gray-700',
-                    info: 'bg-blue-100 text-blue-700',
+                    info: 'bg-primary/10 text-primary',
                     warn: 'bg-yellow-100 text-yellow-700',
                     error: 'bg-red-100 text-red-700',
                     fatal: 'bg-purple-100 text-purple-700',
@@ -779,29 +779,29 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             <Link 
               href="/admin/users"
-              className="text-left px-3 py-2 bg-blue-50 hover:bg-blue-100 rounded transition-colors group block"
+              className="text-left px-3 py-2 bg-primary/5 hover:bg-primary/10 rounded transition-colors group block"
             >
               <div className="flex items-center">
-                <Users className="w-4 h-4 text-blue-600 mr-2" />
+                <Users className="w-4 h-4 text-primary mr-2" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">Manage Users</p>
                   <p className="text-xs text-gray-500">View and edit accounts</p>
                 </div>
-                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-blue-600 transition-colors" />
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-primary transition-colors" />
               </div>
             </Link>
             
             <Link 
               href="/admin/settings"
-              className="text-left px-3 py-2 bg-green-50 hover:bg-green-100 rounded transition-colors group block"
+              className="text-left px-3 py-2 bg-accent/5 hover:bg-accent/10 rounded transition-colors group block"
             >
               <div className="flex items-center">
-                <Settings className="w-4 h-4 text-green-600 mr-2" />
+                <Settings className="w-4 h-4 text-accent mr-2" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">System Settings</p>
                   <p className="text-xs text-gray-500">Configure platform</p>
                 </div>
-                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-green-600 transition-colors" />
+                <ArrowUpRight className="w-3 h-3 text-gray-400 group-hover:text-accent transition-colors" />
               </div>
             </Link>
             
@@ -850,7 +850,7 @@ export default function AdminDashboard() {
                   {dashboard.topMetrics.topProviders.slice(0, 5).map((provider, idx) => (
                     <div key={provider.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <div className="flex items-center space-x-2">
-                        <span className="w-5 h-5 flex items-center justify-center bg-blue-100 text-blue-600 text-xs font-bold rounded-full">
+                        <span className="w-5 h-5 flex items-center justify-center bg-primary/10 text-primary text-xs font-bold rounded-full">
                           {idx + 1}
                         </span>
                         <span className="text-sm text-gray-900 truncate">{provider.name}</span>
@@ -877,7 +877,7 @@ export default function AdminDashboard() {
                   {dashboard.topMetrics.topServices.slice(0, 5).map((service, idx) => (
                     <div key={service.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <div className="flex items-center space-x-2">
-                        <span className="w-5 h-5 flex items-center justify-center bg-green-100 text-green-600 text-xs font-bold rounded-full">
+                        <span className="w-5 h-5 flex items-center justify-center bg-accent/10 text-accent text-xs font-bold rounded-full">
                           {idx + 1}
                         </span>
                         <span className="text-sm text-gray-900 truncate">{service.name}</span>
@@ -924,7 +924,7 @@ export default function AdminDashboard() {
             <button 
               onClick={() => handleExport("json")}
               disabled={exportLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50"
             >
               <Download className="w-3 h-3 mr-1" />
               Export JSON
@@ -932,7 +932,7 @@ export default function AdminDashboard() {
             <button 
               onClick={() => handleExport("csv")}
               disabled={exportLoading}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50"
             >
               <Download className="w-3 h-3 mr-1" />
               Export CSV
@@ -944,14 +944,14 @@ export default function AdminDashboard() {
             <Link
               key={module.name}
               href={module.href}
-              className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-200 p-4 group border border-gray-200 hover:border-blue-300 hover:-translate-y-0.5"
+              className="bg-white rounded-lg shadow hover:shadow-lg transition-all duration-200 p-4 group border border-gray-200 hover:border-primary/30 hover:-translate-y-0.5"
             >
               <div className="flex flex-col items-center text-center space-y-2">
                 <div className={`p-3 rounded-lg ${module.color} text-white group-hover:scale-105 transition-transform duration-200`}>
                   <module.icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors duration-200">
+                  <h3 className="text-sm font-semibold text-gray-700 group-hover:text-primary transition-colors duration-200">
                     {module.name}
                   </h3>
                   <p className="text-xs text-gray-500 mt-1 line-clamp-2">

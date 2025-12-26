@@ -28,14 +28,14 @@ export default function Connect() {
       icon: <Facebook className="w-6 h-6" />,
       url: "https://www.facebook.com/localproasia",
       followers: "25K",
-      color: "from-blue-500 to-blue-600"
+      color: "from-primary to-primary"
     },
     {
       name: "LinkedIn",
       icon: <Linkedin className="w-6 h-6" />,
       url: "https://www.linkedin.com/company/localproasia/",
       followers: "15K",
-      color: "from-blue-600 to-blue-700"
+      color: "from-primary to-primary"
     }
   ];
 
@@ -56,7 +56,7 @@ export default function Connect() {
       contact: "support@localpro.com",
       responseTime: "Within 24 hours",
       action: "Send Email",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Phone className="w-6 h-6" />,
@@ -109,7 +109,7 @@ export default function Connect() {
       description: "Stay updated with our latest news and features",
       icon: <Mail className="w-6 h-6" />,
       action: "Subscribe",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       title: "Developer API",

@@ -82,12 +82,12 @@ const featureConfig: Record<string, { name: string; icon: React.ReactNode; color
   academy: {
     name: "Academy",
     icon: <GraduationCap className="w-6 h-6" />,
-    color: "bg-green-100 text-green-700"
+    color: "bg-accent/10 text-accent"
   },
   rentals: {
     name: "Rentals",
     icon: <Car className="w-6 h-6" />,
-    color: "bg-blue-100 text-blue-700"
+    color: "bg-primary/10 text-primary"
   },
   localProPlus: {
     name: "LocalPro Plus",
@@ -112,7 +112,7 @@ const featureConfig: Record<string, { name: string; icon: React.ReactNode; color
   jobBoard: {
     name: "Job Board",
     icon: <Shield className="w-6 h-6" />,
-    color: "bg-indigo-100 text-indigo-700"
+    color: "bg-primary/10 text-primary"
   },
   referrals: {
     name: "Referrals",
@@ -252,7 +252,7 @@ export default function ServicesPage() {
       <div className="mb-8">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent mb-4"></div>
             <p className="text-gray-600">Loading features...</p>
           </div>
         </div>
@@ -384,7 +384,7 @@ export default function ServicesPage() {
                     )}
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       feature.enabled 
-                        ? "bg-green-100 text-green-800" 
+                        ? "bg-accent/10 text-accent" 
                         : "bg-gray-100 text-gray-600"
                     }`}>
                       {feature.enabled ? (
@@ -414,7 +414,7 @@ export default function ServicesPage() {
                 
                 <div className="flex flex-wrap gap-1 mb-2">
                   {feature.category && (
-                    <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                    <span className="text-xs bg-primary/5 text-primary px-2 py-0.5 rounded-md border border-primary/20">
                       {feature.category}
                     </span>
                   )}
@@ -485,7 +485,7 @@ export default function ServicesPage() {
                 )}
                 <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                   feature.enabled 
-                    ? "bg-green-100 text-green-800" 
+                    ? "bg-accent/10 text-accent" 
                     : "bg-gray-100 text-gray-600"
                 }`}>
                   {feature.enabled ? (
@@ -515,7 +515,7 @@ export default function ServicesPage() {
             
             <div className="flex flex-wrap gap-1 mb-2">
               {feature.category && (
-                <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-200">
+                <span className="text-xs bg-primary/5 text-primary px-2 py-0.5 rounded-md border border-primary/20">
                   {feature.category}
                 </span>
               )}

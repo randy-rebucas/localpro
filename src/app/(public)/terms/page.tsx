@@ -35,7 +35,7 @@ export default function TermsOfService() {
     {
       title: "Description of Service",
       icon: <Globe className="w-5 h-5" />,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-primary to-indigo-600",
       content: [
         "LocalPro is a platform connecting service providers with customers",
         "We provide marketplace, academy, financial, and other professional services",
@@ -83,7 +83,7 @@ export default function TermsOfService() {
     {
       title: "Prohibited Activities",
       icon: <AlertTriangle className="w-5 h-5" />,
-      color: "from-cyan-500 to-blue-600",
+      color: "from-cyan-500 to-primary",
       content: [
         "You may not use our platform for illegal activities",
         "You may not harass, abuse, or harm other users",
@@ -107,7 +107,7 @@ export default function TermsOfService() {
     {
       title: "Limitation of Liability",
       icon: <Scale className="w-5 h-5" />,
-      color: "from-blue-500 to-indigo-600",
+      color: "from-primary to-indigo-600",
       content: [
         "LocalPro is not liable for the quality of services provided by third parties",
         "Our liability is limited to the amount you paid for our services",
@@ -250,7 +250,7 @@ export default function TermsOfService() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: "1", title: "Direct Resolution", desc: "Try to resolve disputes directly with the other party first", color: "from-blue-500 to-indigo-600" },
+              { step: "1", title: "Direct Resolution", desc: "Try to resolve disputes directly with the other party first", color: "from-primary to-indigo-600" },
               { step: "2", title: "Platform Mediation", desc: "Use our dispute resolution process if direct resolution fails", color: "from-emerald-500 to-teal-600" },
               { step: "3", title: "Legal Action", desc: "As a last resort, disputes may be resolved through legal channels", color: "from-purple-500 to-pink-600" }
             ].map((item, index) => (

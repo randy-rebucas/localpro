@@ -531,7 +531,7 @@ export default function CourseDetailPage() {
 
   const getLevelColor = (level: Course['level']) => {
     switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800';
+      case 'beginner': return 'bg-accent/10 text-accent';
       case 'intermediate': return 'bg-yellow-100 text-yellow-800';
       case 'advanced': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -591,7 +591,7 @@ export default function CourseDetailPage() {
         <p className="text-gray-600 mb-6">{error || "The course you're looking for doesn't exist."}</p>
         <Link
           href="/marketplace/courses"
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors inline-block"
+          className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90 transition-colors inline-block"
         >
           Back to Courses
         </Link>
@@ -749,7 +749,7 @@ export default function CourseDetailPage() {
                       href={course.partner.website}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-green-600 hover:text-green-700 text-sm"
+                      className="text-accent hover:text-accent text-sm"
                     >
                       Visit Website →
                     </a>
@@ -783,7 +783,7 @@ export default function CourseDetailPage() {
                       <ul className="space-y-1">
                         {course.certification.requirements.map((req, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
-                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                             <span>{req}</span>
                           </li>
                         ))}
@@ -854,7 +854,7 @@ export default function CourseDetailPage() {
                                 session.type === 'live' 
                                   ? 'bg-red-100 text-red-800' 
                                   : session.type === 'self-paced'
-                                  ? 'bg-blue-100 text-blue-800'
+                                  ? 'bg-primary/10 text-primary'
                                   : 'bg-gray-100 text-gray-800'
                               }`}>
                                 {session.type === 'live' ? 'Live' : session.type === 'self-paced' ? 'Self-Paced' : 'Recorded'}
@@ -893,7 +893,7 @@ export default function CourseDetailPage() {
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {(course.whatYouWillLearn || course.learningOutcomes || []).map((item, index) => (
                   <li key={index} className="flex items-start gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                     <span className="text-gray-600">{item}</span>
                   </li>
                 ))}
@@ -968,8 +968,8 @@ export default function CourseDetailPage() {
                                     {(lesson.isFree || lesson.isPreview) && (
                                       <span className={`px-2 py-0.5 text-xs rounded ${
                                         lesson.isFree 
-                                          ? 'bg-green-100 text-green-800' 
-                                          : 'bg-blue-100 text-blue-800'
+                                          ? 'bg-accent/10 text-accent' 
+                                          : 'bg-primary/10 text-primary'
                                       }`}>
                                         {lesson.isFree ? 'Free' : 'Preview'}
                                       </span>
@@ -1027,7 +1027,7 @@ export default function CourseDetailPage() {
                                     {lesson.type === 'assignment' && <BookOpen className="w-4 h-4 text-gray-400" />}
                                     <span className="text-gray-700">{lesson.title || 'Untitled Lesson'}</span>
                                     {lesson.isPreview && (
-                                      <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs rounded">
+                                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded">
                                         Preview
                                       </span>
                                     )}
@@ -1119,7 +1119,7 @@ export default function CourseDetailPage() {
               return (
                 <div className="mb-4">
                   <div className="flex items-baseline gap-3 mb-2">
-                    <span className="text-3xl font-bold text-green-600">
+                    <span className="text-3xl font-bold text-accent">
                       {formatPrice(displayPrice.price, displayPrice.currency)}
                     </span>
                     {displayPrice.originalPrice && displayPrice.originalPrice > displayPrice.price && (
@@ -1129,7 +1129,7 @@ export default function CourseDetailPage() {
                     )}
                   </div>
                   {displayPrice.originalPrice && displayPrice.originalPrice > displayPrice.price && (
-                    <span className="text-sm text-green-600 font-medium">
+                    <span className="text-sm text-accent font-medium">
                       Save {formatPrice(displayPrice.originalPrice - displayPrice.price, displayPrice.currency)}
                     </span>
                   )}
@@ -1145,12 +1145,12 @@ export default function CourseDetailPage() {
               return (
                 <div className={`mb-4 p-3 rounded-lg ${
                   enrollment.isOpen 
-                    ? 'bg-green-50 border border-green-200' 
+                    ? 'bg-accent/5 border border-accent/20' 
                     : 'bg-red-50 border border-red-200'
                 }`}>
                   <div className="flex items-center justify-between mb-1">
                     <span className={`text-sm font-medium ${
-                      enrollment.isOpen ? 'text-green-800' : 'text-red-800'
+                      enrollment.isOpen ? 'text-accent' : 'text-red-800'
                     }`}>
                       {enrollment.isOpen ? 'Enrollment Open' : 'Enrollment Closed'}
                     </span>
@@ -1164,7 +1164,7 @@ export default function CourseDetailPage() {
                     <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                       <div
                         className={`h-2 rounded-full ${
-                          enrollment.isOpen ? 'bg-green-500' : 'bg-red-500'
+                          enrollment.isOpen ? 'bg-accent' : 'bg-red-500'
                         }`}
                         style={{ width: `${Math.min(100, (enrollment.current / enrollment.maxCapacity) * 100)}%` }}
                       ></div>
@@ -1177,14 +1177,14 @@ export default function CourseDetailPage() {
             <button
               className={`w-full px-6 py-3 rounded-lg font-medium transition-colors ${
                 isEnrolled
-                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  ? 'bg-accent text-white hover:bg-accent/90'
                   : (course.enrollment && !course.enrollment.isOpen)
                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                   : (() => {
                       const displayPrice = getDisplayPrice();
                       return (displayPrice?.price === 0 || !displayPrice)
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-green-600 text-white hover:bg-green-700';
+                        ? 'bg-accent text-white hover:bg-accent/90'
+                        : 'bg-accent text-white hover:bg-accent/90';
                     })()
               }`}
               disabled={isEnrolled || ((course.enrollment || statistics?.enrollment) && !(course.enrollment?.isOpen ?? statistics?.enrollment?.isOpen ?? true))}
@@ -1245,7 +1245,7 @@ export default function CourseDetailPage() {
                   <p className="font-medium text-gray-700">{getInstructorName()}</p>
                   {course.instructor.verified && (
                     <div className="flex items-center gap-1 mt-1">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <CheckCircle className="w-4 h-4 text-accent" />
                       <span className="text-xs text-gray-600">Verified Instructor</span>
                     </div>
                   )}

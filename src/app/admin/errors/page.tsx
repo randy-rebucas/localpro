@@ -404,7 +404,7 @@ export default function ErrorMonitoringPage() {
       case "medium":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "low":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-primary/10 text-primary border-primary/20";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -419,7 +419,7 @@ export default function ErrorMonitoringPage() {
       case "authentication":
         return "bg-red-100 text-red-800";
       case "payment":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -478,7 +478,7 @@ export default function ErrorMonitoringPage() {
           {monitoringInfo.status && (
             <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
               monitoringInfo.status === 'active' || monitoringInfo.status === 'enabled' 
-                ? 'bg-green-100 text-green-800' 
+                ? 'bg-accent/10 text-accent' 
                 : monitoringInfo.status === 'inactive' || monitoringInfo.status === 'disabled'
                 ? 'bg-red-100 text-red-800'
                 : 'bg-gray-100 text-gray-800'
@@ -489,7 +489,7 @@ export default function ErrorMonitoringPage() {
           <button
             onClick={fetchAllData}
             disabled={loading}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${loading ? "animate-spin" : ""}`} />
             Refresh
@@ -499,21 +499,21 @@ export default function ErrorMonitoringPage() {
 
       {/* Monitoring Info Banner */}
       {(monitoringInfo.service || monitoringInfo.status || monitoringInfo.enabled !== undefined || monitoringInfo.version || Object.keys(monitoringInfo).length > 0) && (
-        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+        <div className="bg-primary/5 border border-primary/20 rounded p-3">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="text-xs font-medium text-blue-900 mb-1">
+              <h3 className="text-xs font-medium text-primary mb-1">
                 {monitoringInfo.service || "Error Monitoring System"}
               </h3>
-              <div className="flex flex-wrap gap-3 text-xs text-blue-700">
+              <div className="flex flex-wrap gap-3 text-xs text-primary">
                 {monitoringInfo.status && (
                   <span className="flex items-center">
                     Status: <span className={`ml-1 font-medium ${
                       monitoringInfo.status === 'active' || monitoringInfo.status === 'enabled' 
-                        ? 'text-green-700' 
+                        ? 'text-accent' 
                         : monitoringInfo.status === 'inactive' || monitoringInfo.status === 'disabled'
                         ? 'text-red-700'
-                        : 'text-blue-700'
+                        : 'text-primary'
                     }`}>
                       {monitoringInfo.status.charAt(0).toUpperCase() + monitoringInfo.status.slice(1)}
                     </span>
@@ -521,7 +521,7 @@ export default function ErrorMonitoringPage() {
                 )}
                 {monitoringInfo.enabled !== undefined && !monitoringInfo.status && (
                   <span className="flex items-center">
-                    Status: <span className={`ml-1 font-medium ${monitoringInfo.enabled ? 'text-green-700' : 'text-red-700'}`}>
+                    Status: <span className={`ml-1 font-medium ${monitoringInfo.enabled ? 'text-accent' : 'text-red-700'}`}>
                       {monitoringInfo.enabled ? 'Enabled' : 'Disabled'}
                     </span>
                   </span>
@@ -533,7 +533,7 @@ export default function ErrorMonitoringPage() {
               {monitoringInfo.features && monitoringInfo.features.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
                   {monitoringInfo.features.map((feature, idx) => (
-                    <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                    <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary">
                       {feature}
                     </span>
                   ))}
@@ -546,7 +546,7 @@ export default function ErrorMonitoringPage() {
 
       {/* Dashboard Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Total Errors</p>
@@ -557,7 +557,7 @@ export default function ErrorMonitoringPage() {
                 {stats.todayCount || 0} today
               </p>
             </div>
-            <AlertTriangle className="w-5 h-5 text-blue-600" />
+            <AlertTriangle className="w-5 h-5 text-primary" />
           </div>
         </div>
 
@@ -587,7 +587,7 @@ export default function ErrorMonitoringPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Resolved</p>
@@ -598,7 +598,7 @@ export default function ErrorMonitoringPage() {
                 {stats.weekCount || 0} this week
               </p>
             </div>
-            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <CheckCircle2 className="w-5 h-5 text-accent" />
           </div>
         </div>
       </div>
@@ -680,14 +680,14 @@ export default function ErrorMonitoringPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? "Hide" : "Show"} Filters
               </button>
               <button
                 onClick={exportErrors}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Download className="w-3 h-3 mr-1" />
                 CSV
@@ -708,7 +708,7 @@ export default function ErrorMonitoringPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search errors..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -718,7 +718,7 @@ export default function ErrorMonitoringPage() {
                 <select
                   value={selectedSeverity}
                   onChange={(e) => setSelectedSeverity(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Severities</option>
                   <option value="critical">Critical</option>
@@ -733,7 +733,7 @@ export default function ErrorMonitoringPage() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Types</option>
                   <option value="application">Application</option>
@@ -753,7 +753,7 @@ export default function ErrorMonitoringPage() {
                 <select
                   value={selectedStatus}
                   onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="resolved">Resolved</option>
@@ -859,7 +859,7 @@ export default function ErrorMonitoringPage() {
                       <span
                         className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                           error.resolved
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-accent/10 text-accent"
                             : "bg-red-100 text-red-800"
                         }`}
                       >
@@ -870,7 +870,7 @@ export default function ErrorMonitoringPage() {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handleViewDetails(error)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-primary hover:text-primary"
                           title="View Details"
                         >
                           <Eye className="w-3 h-3" />
@@ -878,7 +878,7 @@ export default function ErrorMonitoringPage() {
                         {!error.resolved && (
                           <button
                             onClick={() => handleResolve(error)}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-accent hover:text-accent"
                             title="Resolve"
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -947,7 +947,7 @@ export default function ErrorMonitoringPage() {
                 <span
                   className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                     selectedError.resolved
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-accent/10 text-accent"
                       : "bg-red-100 text-red-800"
                   }`}
                 >
@@ -1020,7 +1020,7 @@ export default function ErrorMonitoringPage() {
             {selectedError.resolution && (
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Resolution</label>
-                <p className="text-xs text-gray-900 bg-green-50 p-2 rounded">{selectedError.resolution}</p>
+                <p className="text-xs text-gray-900 bg-accent/5 p-2 rounded">{selectedError.resolution}</p>
                 {selectedError.resolvedAt && (
                   <p className="text-xs text-gray-500 mt-1">
                     Resolved at: {formatTimestamp(selectedError.resolvedAt)}

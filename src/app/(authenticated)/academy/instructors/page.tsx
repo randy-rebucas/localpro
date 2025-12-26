@@ -119,7 +119,7 @@ export default function AcademyInstructorsPage() {
         </div>
         <button
           onClick={fetchInstructors}
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -138,7 +138,7 @@ export default function AcademyInstructorsPage() {
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
           <GraduationCap className="w-6 h-6" />
         </div>
         <div className="flex-1">
@@ -181,7 +181,7 @@ export default function AcademyInstructorsPage() {
 
             return (
               <div key={instructor._id || instructor.id || name} className="bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex gap-3">
-                <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-blue-700 font-semibold overflow-hidden flex-shrink-0">
+                <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center text-primary font-semibold overflow-hidden flex-shrink-0">
                   {avatar ? (
                     <Image src={avatar} alt={name} width={64} height={64} className="w-full h-full object-cover" unoptimized />
                   ) : (
@@ -202,7 +202,7 @@ export default function AcademyInstructorsPage() {
                   {instructor.bio && <p className="text-xs text-gray-600 line-clamp-2">{instructor.bio}</p>}
                   <div className="flex items-center gap-3 text-xs text-gray-600 pt-1">
                     <div className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4 text-blue-600" />
+                      <BookOpen className="w-4 h-4 text-primary" />
                       <span>{coursesCount} course{coursesCount === 1 ? "" : "s"}</span>
                     </div>
                     {instructor.experience && (

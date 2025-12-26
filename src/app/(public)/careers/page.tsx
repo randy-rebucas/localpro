@@ -31,7 +31,7 @@ export default function Careers() {
       description: "Join our engineering team to build the next generation of professional services platform.",
       requirements: ["5+ years experience", "React/Next.js", "Node.js", "TypeScript"],
       benefits: ["Health insurance", "SSS/PhilHealth", "Flexible hours", "Remote work"],
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       id: 2,
@@ -96,7 +96,7 @@ export default function Careers() {
       description: "Analyze user behavior and platform metrics to drive data-driven decisions.",
       requirements: ["2+ years analytics experience", "SQL", "Python/R", "Statistics"],
       benefits: ["Health insurance", "Learning budget", "Remote work", "Data tools"],
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     }
   ];
 
@@ -135,7 +135,7 @@ export default function Careers() {
       icon: <GraduationCap className="w-6 h-6" />,
       title: "Learning & Development",
       description: "Annual learning budget, conference attendance, and professional development",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Laptop className="w-6 h-6" />,
@@ -147,7 +147,7 @@ export default function Careers() {
       icon: <Award className="w-6 h-6" />,
       title: "Career Growth",
       description: "Clear career paths, mentorship programs, and opportunities for advancement",
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     }
   ];
 
@@ -320,7 +320,7 @@ export default function Careers() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {[
-              { step: "1", title: "Apply", desc: "Submit your application with resume and cover letter", color: "from-blue-500 to-indigo-600" },
+              { step: "1", title: "Apply", desc: "Submit your application with resume and cover letter", color: "from-primary to-indigo-600" },
               { step: "2", title: "Screen", desc: "Initial phone/video screening with HR team", color: "from-emerald-500 to-teal-600" },
               { step: "3", title: "Interview", desc: "Technical and cultural fit interviews with team", color: "from-purple-500 to-pink-600" },
               { step: "4", title: "Decision", desc: "Final decision and offer within 1-2 weeks", color: "from-amber-500 to-orange-600" }

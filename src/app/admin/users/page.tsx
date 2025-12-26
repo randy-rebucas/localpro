@@ -1493,7 +1493,7 @@ export default function UsersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
+      case 'active': return 'text-accent bg-accent/10';
       case 'inactive': return 'text-gray-600 bg-gray-100';
       case 'pending': 
       case 'pending_verification': 
@@ -1507,10 +1507,10 @@ export default function UsersPage() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-purple-100 text-purple-800';
-      case 'provider': return 'bg-blue-100 text-blue-800';
-      case 'supplier': return 'bg-green-100 text-green-800';
+      case 'provider': return 'bg-primary/10 text-primary';
+      case 'supplier': return 'bg-accent/10 text-accent';
       case 'instructor': return 'bg-orange-100 text-orange-800';
-      case 'agency_owner': return 'bg-indigo-100 text-indigo-800';
+      case 'agency_owner': return 'bg-primary/10 text-primary';
       case 'agency_admin': return 'bg-cyan-100 text-cyan-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -1542,7 +1542,7 @@ export default function UsersPage() {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={fetchData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Try Again
           </button>
@@ -1569,7 +1569,7 @@ export default function UsersPage() {
           )}
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           >
             <Plus className="w-3 h-3 mr-1" />
             Add User
@@ -1586,7 +1586,7 @@ export default function UsersPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -1597,7 +1597,7 @@ export default function UsersPage() {
       {/* Stats Overview */}
       {(stats || loading) && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Users</p>
@@ -1608,13 +1608,13 @@ export default function UsersPage() {
                   {loading ? '...' : (stats?.newUsersToday || 0)} today
                 </p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <Users className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Active Users</p>
@@ -1625,8 +1625,8 @@ export default function UsersPage() {
                   Currently active
                 </p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <UserCheck className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <UserCheck className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
@@ -1675,12 +1675,12 @@ export default function UsersPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
               </button>
-              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <button className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring">
                 <Download className="w-3 h-3 mr-1" />
                 Export
               </button>
@@ -1700,11 +1700,11 @@ export default function UsersPage() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Search users..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   {searchTerm !== debouncedSearchTerm && (
                     <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" title="Searching..."></div>
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse" title="Searching..."></div>
                     </div>
                   )}
                 </div>
@@ -1715,7 +1715,7 @@ export default function UsersPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Roles</option>
                   <option value="client">Client</option>
@@ -1733,7 +1733,7 @@ export default function UsersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -1750,7 +1750,7 @@ export default function UsersPage() {
                 <select
                   value={isActiveFilter}
                   onChange={(e) => setIsActiveFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All</option>
                   <option value="true">Active</option>
@@ -1763,7 +1763,7 @@ export default function UsersPage() {
                 <select
                   value={isVerifiedFilter}
                   onChange={(e) => setIsVerifiedFilter(e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All</option>
                   <option value="true">Verified</option>
@@ -1803,7 +1803,7 @@ export default function UsersPage() {
               <button
                 onClick={() => handleSort('name')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'name' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'name' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Name
@@ -1814,7 +1814,7 @@ export default function UsersPage() {
               <button
                 onClick={() => handleSort('role')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'role' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'role' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Role
@@ -1825,7 +1825,7 @@ export default function UsersPage() {
               <button
                 onClick={() => handleSort('status')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'status' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'status' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Status
@@ -1836,7 +1836,7 @@ export default function UsersPage() {
               <button
                 onClick={() => handleSort('createdAt')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'createdAt' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'createdAt' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Date
@@ -1863,7 +1863,7 @@ export default function UsersPage() {
                         setSelectedUserIds([]);
                       }
                     }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-primary focus:ring-ring"
                   />
                 </th>
                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
@@ -1883,7 +1883,7 @@ export default function UsersPage() {
                         type="checkbox"
                         checked={selectedUserIds.includes(user._id)}
                         onChange={() => toggleUserSelection(user._id!)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-primary focus:ring-ring"
                       />
                     )}
                   </td>
@@ -1941,14 +1941,14 @@ export default function UsersPage() {
                         <>
                           <button 
                             onClick={() => handleViewUser(user._id!)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-primary hover:text-primary"
                             title="View user details"
                           >
                             <Eye className="w-3 h-3" />
                           </button>
                           <button 
                             onClick={() => handleEditUser(user)}
-                            className="text-green-600 hover:text-green-900"
+                            className="text-accent hover:text-accent"
                             title="Edit user"
                           >
                             <Edit className="w-3 h-3" />
@@ -1964,7 +1964,7 @@ export default function UsersPage() {
                           ) : (
                             <button 
                               onClick={() => handleUpdateStatus(user._id!, true, 'active')}
-                              className="text-green-600 hover:text-green-900"
+                              className="text-accent hover:text-accent"
                               title="Activate user"
                             >
                               <UserCheck className="w-3 h-3" />
@@ -1972,7 +1972,7 @@ export default function UsersPage() {
                           )}
                           <button 
                             onClick={() => handleOpenVerificationModal(user)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-primary hover:text-primary"
                             title="Update verification"
                           >
                             <CheckCircle2 className="w-3 h-3" />
@@ -2141,7 +2141,7 @@ export default function UsersPage() {
             <button
               onClick={handleCreateUser}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Creating...' : 'Create User'}
             </button>
@@ -2156,7 +2156,7 @@ export default function UsersPage() {
                 type="text"
                 value={createFormData.firstName}
                 onChange={(e) => setCreateFormData({ ...createFormData, firstName: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -2166,7 +2166,7 @@ export default function UsersPage() {
                 type="text"
                 value={createFormData.lastName}
                 onChange={(e) => setCreateFormData({ ...createFormData, lastName: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -2176,7 +2176,7 @@ export default function UsersPage() {
                 type="email"
                 value={createFormData.email}
                 onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -2186,7 +2186,7 @@ export default function UsersPage() {
                 type="tel"
                 value={createFormData.phoneNumber}
                 onChange={(e) => setCreateFormData({ ...createFormData, phoneNumber: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 required
               />
             </div>
@@ -2240,7 +2240,7 @@ export default function UsersPage() {
                     }
                   }}
                   placeholder="Type to search roles..."
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
                 
                 {/* Suggestions Dropdown */}
@@ -2349,7 +2349,7 @@ export default function UsersPage() {
                   type="button"
                   onClick={() => handleGenerateBio(true)}
                   disabled={generatingBio.create}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                   title="Generate bio with AI"
                 >
                   <Sparkles className="w-3 h-3" />
@@ -2366,7 +2366,7 @@ export default function UsersPage() {
                   }
                 })}
                 rows={3}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 placeholder={generatingBio.create ? "Generating bio..." : "Enter bio or click AI Generate to create one based on skills"}
               />
             </div>
@@ -2384,7 +2384,7 @@ export default function UsersPage() {
                       gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
                     }
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
@@ -2405,7 +2405,7 @@ export default function UsersPage() {
                       birthdate: e.target.value || undefined
                     }
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
@@ -2429,7 +2429,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2447,7 +2447,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2465,7 +2465,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2483,7 +2483,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2501,7 +2501,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -2524,7 +2524,7 @@ export default function UsersPage() {
                           }
                         }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -2546,7 +2546,7 @@ export default function UsersPage() {
                           }
                         }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -2581,7 +2581,7 @@ export default function UsersPage() {
             <button
               onClick={handleUpdateUser}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update User'}
             </button>
@@ -2598,7 +2598,7 @@ export default function UsersPage() {
                 type="text"
                 value={editFormData.firstName}
                 onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -2607,7 +2607,7 @@ export default function UsersPage() {
                 type="text"
                 value={editFormData.lastName}
                 onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -2616,7 +2616,7 @@ export default function UsersPage() {
                 type="email"
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -2625,7 +2625,7 @@ export default function UsersPage() {
                 type="tel"
                 value={editFormData.phoneNumber}
                 onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <div>
@@ -2678,7 +2678,7 @@ export default function UsersPage() {
                     }
                   }}
                   placeholder="Type to search roles..."
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
                 
                 {/* Suggestions Dropdown */}
@@ -2787,7 +2787,7 @@ export default function UsersPage() {
                   type="button"
                   onClick={() => handleGenerateBio(false)}
                   disabled={generatingBio.edit}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:text-primary disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
                   title="Generate bio with AI"
                 >
                   <Sparkles className="w-3 h-3" />
@@ -2804,7 +2804,7 @@ export default function UsersPage() {
                   }
                 })}
                 rows={3}
-                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 placeholder={generatingBio.edit ? "Generating bio..." : "Enter bio or click AI Generate to create one"}
               />
             </div>
@@ -2819,7 +2819,7 @@ export default function UsersPage() {
                     ...editFormData,
                     gender: e.target.value as "" | "male" | "female" | "other" | "prefer_not_to_say"
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">Select gender</option>
                   <option value="male">Male</option>
@@ -2837,7 +2837,7 @@ export default function UsersPage() {
                     ...editFormData,
                     birthdate: e.target.value || undefined
                   })}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
             </div>
@@ -2861,7 +2861,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2879,7 +2879,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2897,7 +2897,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2915,7 +2915,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -2933,7 +2933,7 @@ export default function UsersPage() {
                         }
                       }
                     })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -2956,7 +2956,7 @@ export default function UsersPage() {
                           }
                         }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -2978,7 +2978,7 @@ export default function UsersPage() {
                           }
                         }
                       })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -2999,7 +2999,7 @@ export default function UsersPage() {
                     type="text"
                     value={businessInfoForm.businessName || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessName: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3008,7 +3008,7 @@ export default function UsersPage() {
                     type="text"
                     value={businessInfoForm.businessType || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessType: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3017,7 +3017,7 @@ export default function UsersPage() {
                     type="text"
                     value={businessInfoForm.businessRegistration || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessRegistration: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3026,7 +3026,7 @@ export default function UsersPage() {
                     type="text"
                     value={businessInfoForm.taxId || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, taxId: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3035,7 +3035,7 @@ export default function UsersPage() {
                     type="tel"
                     value={businessInfoForm.businessPhone || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessPhone: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3044,7 +3044,7 @@ export default function UsersPage() {
                     type="email"
                     value={businessInfoForm.businessEmail || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessEmail: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3053,7 +3053,7 @@ export default function UsersPage() {
                     type="url"
                     value={businessInfoForm.website || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, website: e.target.value })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3064,7 +3064,7 @@ export default function UsersPage() {
                     max={new Date().getFullYear()}
                     value={businessInfoForm.yearEstablished || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, yearEstablished: parseInt(e.target.value) || undefined })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
                 <div>
@@ -3074,7 +3074,7 @@ export default function UsersPage() {
                     min="0"
                     value={businessInfoForm.numberOfEmployees || ''}
                     onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, numberOfEmployees: parseInt(e.target.value) || undefined })}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -3084,7 +3084,7 @@ export default function UsersPage() {
                   value={businessInfoForm.businessDescription || ''}
                   onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessDescription: e.target.value })}
                   rows={4}
-                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
               <div>
@@ -3096,7 +3096,7 @@ export default function UsersPage() {
                       type="text"
                       value={businessInfoForm.businessAddress?.street || ''}
                       onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, street: e.target.value } })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3105,7 +3105,7 @@ export default function UsersPage() {
                       type="text"
                       value={businessInfoForm.businessAddress?.city || ''}
                       onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, city: e.target.value } })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3114,7 +3114,7 @@ export default function UsersPage() {
                       type="text"
                       value={businessInfoForm.businessAddress?.state || ''}
                       onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, state: e.target.value } })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3123,7 +3123,7 @@ export default function UsersPage() {
                       type="text"
                       value={businessInfoForm.businessAddress?.zipCode || ''}
                       onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, zipCode: e.target.value } })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <div>
@@ -3132,7 +3132,7 @@ export default function UsersPage() {
                       type="text"
                       value={businessInfoForm.businessAddress?.country || ''}
                       onChange={(e) => setBusinessInfoForm({ ...businessInfoForm, businessAddress: { ...businessInfoForm.businessAddress, country: e.target.value } })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                 </div>
@@ -3163,7 +3163,7 @@ export default function UsersPage() {
             <button
               onClick={handleUpdateVerification}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update Verification'}
             </button>
@@ -3177,7 +3177,7 @@ export default function UsersPage() {
                 type="checkbox"
                 checked={value}
                 onChange={(e) => setVerificationFormData({ ...verificationFormData, [key]: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-primary focus:ring-ring"
               />
               <span className="text-sm text-gray-700 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
             </label>
@@ -3205,7 +3205,7 @@ export default function UsersPage() {
             <button
               onClick={handleAddBadge}
               disabled={submitting || !badgeFormData.type}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Adding...' : 'Add Badge'}
             </button>
@@ -3220,7 +3220,7 @@ export default function UsersPage() {
               value={badgeFormData.type}
               onChange={(e) => setBadgeFormData({ ...badgeFormData, type: e.target.value })}
               placeholder="e.g., top_rated, verified_provider"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
               required
             />
           </div>
@@ -3231,7 +3231,7 @@ export default function UsersPage() {
               onChange={(e) => setBadgeFormData({ ...badgeFormData, description: e.target.value })}
               placeholder="Badge description"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
@@ -3256,7 +3256,7 @@ export default function UsersPage() {
             <button
               onClick={handleBulkUpdate}
               disabled={submitting}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
             >
               {submitting ? 'Updating...' : 'Update'}
             </button>
@@ -3269,7 +3269,7 @@ export default function UsersPage() {
             <select
               value={bulkUpdateFormData.status || ''}
               onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, status: (e.target.value || undefined) as UserStatus | '' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">No change</option>
               <option value="active">Active</option>
@@ -3285,7 +3285,7 @@ export default function UsersPage() {
               value={bulkUpdateFormData.addRoles || ''}
               onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, addRoles: e.target.value })}
               placeholder="Comma-separated roles (e.g., provider, admin)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
           <div>
@@ -3295,7 +3295,7 @@ export default function UsersPage() {
               value={bulkUpdateFormData.removeRoles || ''}
               onChange={(e) => setBulkUpdateFormData({ ...bulkUpdateFormData, removeRoles: e.target.value })}
               placeholder="Comma-separated roles (e.g., provider, admin)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>

@@ -115,7 +115,7 @@ export default function MyCoursesPage() {
     if (discounted !== undefined) {
       return (
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-green-700">
+          <span className="text-sm font-semibold text-accent">
             {formatCurrency(discounted, currency, { appSettings })}
           </span>
           <span className="text-xs text-gray-500 line-through">
@@ -149,7 +149,7 @@ export default function MyCoursesPage() {
         </div>
         <button
           onClick={fetchCourses}
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -168,7 +168,7 @@ export default function MyCoursesPage() {
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20">
           <GraduationCap className="w-6 h-6" />
         </div>
         <div>
@@ -197,7 +197,7 @@ export default function MyCoursesPage() {
           <p className="text-sm text-gray-600">Browse the academy and start learning today.</p>
           <Link
             href="/academy/courses"
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
             Browse courses
           </Link>
@@ -231,7 +231,7 @@ export default function MyCoursesPage() {
                 <div className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs text-gray-600">
-                      <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                      <span className="px-2 py-1 rounded-full bg-primary/5 text-primary border border-primary/20">
                         {typeof course.category === "string"
                           ? course.category
                           : (course.category &&
@@ -269,7 +269,7 @@ export default function MyCoursesPage() {
                     {course.pricing ? formatPrice(course) : <span className="text-sm text-gray-500">Free</span>}
                     <Link
                       href={`/academy/courses/${course._id || course.title}`}
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                      className="text-sm font-semibold text-primary hover:text-primary"
                     >
                       View course
                     </Link>

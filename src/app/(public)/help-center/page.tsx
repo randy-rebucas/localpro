@@ -38,7 +38,7 @@ export default function HelpCenter() {
       name: "Account & Profile",
       icon: <Users className="w-5 h-5" />,
       articles: 8,
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       name: "Marketplace",
@@ -62,7 +62,7 @@ export default function HelpCenter() {
       name: "Security & Privacy",
       icon: <Shield className="w-5 h-5" />,
       articles: 9,
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     }
   ];
 
@@ -152,7 +152,7 @@ export default function HelpCenter() {
       description: "Send us a detailed message",
       availability: "24/7",
       responseTime: "Within 24 hours",
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Phone className="w-6 h-6" />,
@@ -360,7 +360,7 @@ export default function HelpCenter() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: <FileText className="w-8 h-8" />, title: "User Guide", desc: "Complete guide to using LocalPro", action: "Download PDF", actionIcon: <Download className="w-4 h-4" />, color: "text-blue-400" },
+              { icon: <FileText className="w-8 h-8" />, title: "User Guide", desc: "Complete guide to using LocalPro", action: "Download PDF", actionIcon: <Download className="w-4 h-4" />, color: "text-primary" },
               { icon: <Video className="w-8 h-8" />, title: "Video Tutorials", desc: "Step-by-step video guides", action: "Watch Now", actionIcon: <ExternalLink className="w-4 h-4" />, color: "text-emerald-400" },
               { icon: <MessageCircle className="w-8 h-8" />, title: "Community Forum", desc: "Connect with other users", action: "Join Discussion", actionIcon: <ExternalLink className="w-4 h-4" />, color: "text-purple-400" },
               { icon: <Settings className="w-8 h-8" />, title: "API Documentation", desc: "Developer resources and APIs", action: "View Docs", actionIcon: <ExternalLink className="w-4 h-4" />, color: "text-amber-400" }

@@ -2104,7 +2104,7 @@ export default function MessagesPage() {
     return (
       <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-gray-200 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-4"></div>
           <p className="text-gray-500">Loading conversations...</p>
         </div>
       </div>
@@ -2142,7 +2142,7 @@ export default function MessagesPage() {
           {isRetrying && !isAuthError && (
             <div className="mb-4">
               <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-500"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-accent"></div>
                 <span className="text-sm text-gray-500">Retrying... (Attempt {retryCount + 1}/3)</span>
               </div>
             </div>
@@ -2153,7 +2153,7 @@ export default function MessagesPage() {
               <button 
                 onClick={fetchConversations}
                 disabled={isRetrying}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isRetrying ? 'Retrying...' : 'Try Again'}
               </button>
@@ -2161,7 +2161,7 @@ export default function MessagesPage() {
             {isAuthError && (
               <button 
                 onClick={() => window.location.href = '/auth'}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
                 Go to Login
               </button>
@@ -2455,16 +2455,16 @@ export default function MessagesPage() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-white via-gray-50/30 to-white scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent" onScroll={handleScroll}>
               {/* Search Results */}
               {showMessageSearch && searchResults.length > 0 && (
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Search Results ({searchResults.length})</h4>
+                <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                  <h4 className="text-sm font-medium text-primary mb-2">Search Results ({searchResults.length})</h4>
                   <div className="space-y-2">
                     {searchResults.slice(0, 3).map((message) => (
-                      <div key={message.id || message._id} className="text-sm text-blue-800 bg-white p-2 rounded border">
+                      <div key={message.id || message._id} className="text-sm text-primary bg-white p-2 rounded border">
                         <span className="font-medium">{message.senderName}:</span> {message.content}
                       </div>
                     ))}
                     {searchResults.length > 3 && (
-                      <p className="text-xs text-blue-600">...and {searchResults.length - 3} more results</p>
+                      <p className="text-xs text-primary">...and {searchResults.length - 3} more results</p>
                     )}
                   </div>
                 </div>
@@ -2968,7 +2968,7 @@ export default function MessagesPage() {
                       </button>
                       <button
                         onClick={handleAnswerCall}
-                        className="p-4 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all duration-200 hover:scale-110"
+                        className="p-4 bg-accent text-white rounded-full hover:bg-accent/90 transition-all duration-200 hover:scale-110"
                         title="Answer"
                       >
                         <Phone className="w-6 h-6" />

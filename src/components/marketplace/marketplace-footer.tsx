@@ -12,17 +12,17 @@ export function MarketplaceFooter() {
             <h3 className="font-semibold text-gray-900 mb-4">About</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/about" className="hover:text-green-600 transition-colors">
+                <Link href="/about" className="hover:text-accent transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-green-600 transition-colors">
+                <Link href="/terms" className="hover:text-accent transition-colors">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-green-600 transition-colors">
+                <Link href="/privacy" className="hover:text-accent transition-colors">
                   Privacy Policy
                 </Link>
               </li>
@@ -32,17 +32,17 @@ export function MarketplaceFooter() {
             <h3 className="font-semibold text-gray-900 mb-4">Help</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li>
-                <Link href="/help-center" className="hover:text-green-600 transition-colors">
+                <Link href="/help-center" className="hover:text-accent transition-colors">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-green-600 transition-colors">
+                <Link href="/contact" className="hover:text-accent transition-colors">
                   Contact Us
                 </Link>
               </li>
               <li>
-                <Link href="/help-center#faqs" className="hover:text-green-600 transition-colors">
+                <Link href="/help-center#faqs" className="hover:text-accent transition-colors">
                   FAQs
                 </Link>
               </li>

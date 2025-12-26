@@ -110,7 +110,7 @@ export function AINaturalLanguageSearch({
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Try: 'I need someone to fix my leaky faucet this weekend' or 'affordable house cleaning near me'"
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
             disabled={loading}
           />
           {query && (
@@ -125,7 +125,7 @@ export function AINaturalLanguageSearch({
         <button
           onClick={handleSearch}
           disabled={loading || !query.trim()}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
+          className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 font-medium"
         >
           {loading ? (
             <>
@@ -149,10 +149,10 @@ export function AINaturalLanguageSearch({
 
       {/* AI Analysis Results */}
       {searchResult?.data?.aiAnalysis && !error && (
-        <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+        <div className="mt-4 p-4 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
-              <Info className="w-5 h-5 text-green-600" />
+              <Info className="w-5 h-5 text-accent" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2">
@@ -166,16 +166,16 @@ export function AINaturalLanguageSearch({
               
               {searchResult.data.aiAnalysis.priceRange && (
                 <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-white rounded p-2 border border-green-200">
+                  <div className="bg-white rounded p-2 border border-accent/20">
                     <div className="text-xs text-gray-600 mb-1">Estimated Price Range</div>
-                    <div className="text-sm font-semibold text-green-700">
+                    <div className="text-sm font-semibold text-accent">
                       {formatPrice(searchResult.data.aiAnalysis.priceRange.min, searchResult.data.aiAnalysis.currency)} - {formatPrice(searchResult.data.aiAnalysis.priceRange.max, searchResult.data.aiAnalysis.currency)}
                     </div>
                   </div>
                   {searchResult.data.aiAnalysis.estimatedPrice && (
-                    <div className="bg-white rounded p-2 border border-blue-200">
+                    <div className="bg-white rounded p-2 border border-primary/20">
                       <div className="text-xs text-gray-600 mb-1">Average Price</div>
-                      <div className="text-sm font-semibold text-blue-700">
+                      <div className="text-sm font-semibold text-primary">
                         {formatPrice(searchResult.data.aiAnalysis.estimatedPrice, searchResult.data.aiAnalysis.currency)}
                       </div>
                     </div>
@@ -185,7 +185,7 @@ export function AINaturalLanguageSearch({
 
               {searchResult.data.aiAnalysis.confidence !== undefined && (
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <TrendingUp className="w-4 h-4 text-accent" />
                   <span className="text-xs text-gray-600">
                     Confidence: <span className="font-semibold">{Math.round(searchResult.data.aiAnalysis.confidence * 100)}%</span>
                   </span>
@@ -199,7 +199,7 @@ export function AINaturalLanguageSearch({
                     {searchResult.data.aiAnalysis.factors.map((factor: string, i: number) => (
                       <span
                         key={i}
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent/10 text-accent"
                       >
                         {factor}
                       </span>
@@ -209,7 +209,7 @@ export function AINaturalLanguageSearch({
               )}
 
               {searchResult.interpretedQuery && searchResult.interpretedQuery !== query.trim() && (
-                <div className="mt-2 pt-2 border-t border-green-200">
+                <div className="mt-2 pt-2 border-t border-accent/20">
                   <div className="text-xs text-gray-600 mb-1">Interpreted as:</div>
                   <div className="text-xs text-gray-800 italic">&ldquo;{searchResult.interpretedQuery}&rdquo;</div>
                 </div>
@@ -226,9 +226,9 @@ export function AINaturalLanguageSearch({
       )}
 
       {isExpanded && (
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+        <div className="mt-3 p-3 bg-primary/5 rounded-lg text-sm text-primary">
           <p className="font-medium mb-1">💡 AI Search Tips:</p>
-          <ul className="list-disc list-inside space-y-1 text-blue-700">
+          <ul className="list-disc list-inside space-y-1 text-primary">
             <li>Describe what you need in natural language</li>
             <li>Mention your location or &ldquo;near me&rdquo;</li>
             <li>Include budget preferences like &ldquo;affordable&rdquo; or &ldquo;budget-friendly&rdquo;</li>

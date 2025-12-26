@@ -71,7 +71,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
             type="submit"
             form="expense-form"
             disabled={loading}
-            className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-primary rounded-md hover:bg-primary/90 disabled:opacity-50"
           >
             {loading ? 'Adding...' : 'Add Expense'}
           </button>
@@ -90,7 +90,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
               min="0"
               value={formData.amount}
               onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             />
           </div>
@@ -103,7 +103,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             />
           </div>
@@ -115,7 +115,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             >
               <option value="">Select category</option>
@@ -137,7 +137,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
               type="date"
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
               required
             />
           </div>
@@ -150,7 +150,7 @@ export function AddExpenseModal({ isOpen, onClose, onSubmit }: AddExpenseModalPr
               type="file"
               accept="image/*,.pdf"
               onChange={(e) => setFormData({ ...formData, receipt: e.target.files?.[0] })}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-ring"
             />
           </div>
         </div>

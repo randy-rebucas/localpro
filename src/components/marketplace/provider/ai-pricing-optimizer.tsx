@@ -75,7 +75,7 @@ export function AIPricingOptimizer({
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-green-600" />
+        <Sparkles className="w-5 h-5 text-accent" />
         <h3 className="text-lg font-semibold text-gray-900">AI Pricing Optimizer</h3>
       </div>
 
@@ -101,7 +101,7 @@ export function AIPricingOptimizer({
           <button
             onClick={handleOptimize}
             disabled={loading}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
+            className="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 disabled:opacity-50 transition-colors font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -134,9 +134,9 @@ export function AIPricingOptimizer({
             </button>
           </div>
 
-          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+          <div className="bg-accent/5 rounded-lg p-4 border border-accent/20">
             <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <DollarSign className="w-5 h-5 text-accent" />
               <h5 className="font-semibold text-gray-900">Recommended Price Range</h5>
             </div>
             <div className="grid grid-cols-3 gap-3 text-sm">
@@ -146,9 +146,9 @@ export function AIPricingOptimizer({
                   {formatPrice(optimization.recommendedPrice?.min || 0, optimization.recommendedPrice?.currency)}
                 </div>
               </div>
-              <div className="text-center bg-green-100 rounded p-2">
+              <div className="text-center bg-accent/10 rounded p-2">
                 <div className="text-gray-700 mb-1 font-medium">Optimal</div>
-                <div className="text-xl font-bold text-green-700">
+                <div className="text-xl font-bold text-accent">
                   {formatPrice(optimization.recommendedPrice?.optimal || 0, optimization.recommendedPrice?.currency)}
                 </div>
               </div>
@@ -161,9 +161,9 @@ export function AIPricingOptimizer({
             </div>
           </div>
 
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
             <div className="flex items-center gap-2 mb-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
+              <BarChart3 className="w-5 h-5 text-primary" />
               <h5 className="font-semibold text-gray-900">Market Comparison</h5>
             </div>
             <div className="text-sm">
@@ -178,7 +178,7 @@ export function AIPricingOptimizer({
                 <span
                   className={`font-semibold ${
                     optimization.competitiveness === "high"
-                      ? "text-green-600"
+                      ? "text-accent"
                       : optimization.competitiveness === "medium"
                       ? "text-yellow-600"
                       : "text-red-600"
@@ -199,7 +199,7 @@ export function AIPricingOptimizer({
                 <div
                   className={`font-semibold ${
                     (optimization.expectedImpact.bookings?.change ?? 0) >= 0
-                      ? "text-green-600"
+                      ? "text-accent"
                       : "text-red-600"
                   }`}
                 >
@@ -214,7 +214,7 @@ export function AIPricingOptimizer({
                 <div
                   className={`font-semibold ${
                     (optimization.expectedImpact.revenue?.change ?? 0) >= 0
-                      ? "text-green-600"
+                      ? "text-accent"
                       : "text-red-600"
                   }`}
                 >
@@ -237,7 +237,7 @@ export function AIPricingOptimizer({
                     key={i}
                     className="flex items-start gap-2 p-2 bg-gray-50 rounded text-sm"
                   >
-                    <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">{factor.factor}</div>
                       <div className="text-gray-600">{factor.recommendation}</div>

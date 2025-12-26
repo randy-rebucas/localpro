@@ -43,7 +43,7 @@ function collectServiceAreas(specialties?: ProviderServiceAreasProps['specialtie
  */
 function ServiceAreaBadge({ area, index }: { area: ServiceArea; index: number }) {
   return (
-    <div key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+    <div key={index} className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
       <MapPin className="w-3 h-3 inline mr-1" />
       {area.city || ''}{area.state ? `, ${area.state}` : ''}
       {area.radius ? ` (${area.radius} mi radius)` : ''}

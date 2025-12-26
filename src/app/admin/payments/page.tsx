@@ -823,14 +823,14 @@ export default function PaymentProcessingPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
           <button
             onClick={handleExportData}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
           >
             <Download className="w-3 h-3 mr-1" />
             Export
@@ -841,7 +841,7 @@ export default function PaymentProcessingPage() {
       {/* Stats Overview */}
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Revenue</p>
@@ -850,13 +850,13 @@ export default function PaymentProcessingPage() {
                 </p>
                 <p className="text-xs text-gray-500">+12.5% from last period</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg flex-shrink-0 ml-4">
-                <Coins className="w-5 h-5 text-green-600" />
+              <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0 ml-4">
+                <Coins className="w-5 h-5 text-accent" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Total Transactions</p>
@@ -867,8 +867,8 @@ export default function PaymentProcessingPage() {
                 </p>
                 <p className="text-xs text-gray-500">+8.2% from last period</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-lg flex-shrink-0 ml-4">
-                <CreditCard className="w-5 h-5 text-blue-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <CreditCard className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
@@ -954,7 +954,7 @@ export default function PaymentProcessingPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded shadow p-3 border-l-4 border-indigo-500">
+          <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Net Revenue</p>
@@ -963,8 +963,8 @@ export default function PaymentProcessingPage() {
                 </p>
                 <p className="text-xs text-gray-500">+11.8% from last period</p>
               </div>
-              <div className="p-3 bg-indigo-100 rounded-lg flex-shrink-0 ml-4">
-                <BarChart3 className="w-5 h-5 text-indigo-600" />
+              <div className="p-3 bg-primary/10 rounded-lg flex-shrink-0 ml-4">
+                <BarChart3 className="w-5 h-5 text-primary" />
               </div>
             </div>
           </div>
@@ -985,7 +985,7 @@ export default function PaymentProcessingPage() {
                 <div key={status} className="flex items-center justify-between py-1">
                   <div className="flex items-center">
                     <div className={`w-2.5 h-2.5 rounded-full mr-2 ${
-                      status === 'completed' ? 'bg-green-500' :
+                      status === 'completed' ? 'bg-accent' :
                       status === 'pending' ? 'bg-yellow-500' :
                       status === 'failed' ? 'bg-red-500' :
                       'bg-gray-500'
@@ -1009,7 +1009,7 @@ export default function PaymentProcessingPage() {
                 onClick={() => setActiveTab('transactions')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'transactions'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -1019,7 +1019,7 @@ export default function PaymentProcessingPage() {
                   {transactions.length > 0 && (
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       activeTab === 'transactions'
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-primary/10 text-primary'
                         : 'bg-gray-200 text-gray-600'
                     }`}>
                       {transactions.length}
@@ -1031,7 +1031,7 @@ export default function PaymentProcessingPage() {
                 onClick={() => setActiveTab('topups')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'topups'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -1041,7 +1041,7 @@ export default function PaymentProcessingPage() {
                   {topUpRequests.length > 0 && (
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       activeTab === 'topups'
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-primary/10 text-primary'
                         : 'bg-gray-200 text-gray-600'
                     }`}>
                       {topUpRequests.length}
@@ -1053,7 +1053,7 @@ export default function PaymentProcessingPage() {
                 onClick={() => setActiveTab('withdrawals')}
                 className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === 'withdrawals'
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
@@ -1063,7 +1063,7 @@ export default function PaymentProcessingPage() {
                   {withdrawalRequests.length > 0 && (
                     <span className={`px-2 py-0.5 text-xs rounded-full ${
                       activeTab === 'withdrawals'
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-primary/10 text-primary'
                         : 'bg-gray-200 text-gray-600'
                     }`}>
                       {withdrawalRequests.length}
@@ -1077,7 +1077,7 @@ export default function PaymentProcessingPage() {
                 <button
                   onClick={fetchTopUpRequests}
                   disabled={loadingTopUps}
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
                 >
                   <RefreshCw className={`w-3 h-3 mr-1 ${loadingTopUps ? 'animate-spin' : ''}`} />
                   Refresh
@@ -1087,7 +1087,7 @@ export default function PaymentProcessingPage() {
                 <button
                   onClick={fetchWithdrawalRequests}
                   disabled={loadingWithdrawals}
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
                 >
                   <RefreshCw className={`w-3 h-3 mr-1 ${loadingWithdrawals ? 'animate-spin' : ''}`} />
                   Refresh
@@ -1096,7 +1096,7 @@ export default function PaymentProcessingPage() {
               {activeTab === 'transactions' && (
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                  className="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
                 >
                   <Filter className="w-3 h-3 mr-1" />
                   {showFilters ? 'Hide' : 'Show'} Filters
@@ -1124,7 +1124,7 @@ export default function PaymentProcessingPage() {
                     value={filters.search}
                     onChange={(e) => handleFiltersChange({ ...filters, search: e.target.value })}
                     placeholder="Search transactions..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1134,7 +1134,7 @@ export default function PaymentProcessingPage() {
                 <select
                   value={filters.type}
                   onChange={(e) => handleFiltersChange({ ...filters, type: e.target.value })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Types</option>
                   <option value="income">Income</option>
@@ -1152,7 +1152,7 @@ export default function PaymentProcessingPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => handleFiltersChange({ ...filters, status: e.target.value })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Status</option>
                   <option value="completed">Completed</option>
@@ -1168,7 +1168,7 @@ export default function PaymentProcessingPage() {
                 <select
                   value={filters.method}
                   onChange={(e) => handleFiltersChange({ ...filters, method: e.target.value })}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="all">All Methods</option>
                   <option value="paypal">PayPal</option>
@@ -1187,13 +1187,13 @@ export default function PaymentProcessingPage() {
                     type="date"
                     value={filters.startDate}
                     onChange={(e) => handleFiltersChange({ ...filters, startDate: e.target.value })}
-                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <input
                     type="date"
                     value={filters.endDate}
                     onChange={(e) => handleFiltersChange({ ...filters, endDate: e.target.value })}
-                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -1241,14 +1241,14 @@ export default function PaymentProcessingPage() {
             <>
               {loadingTopUps ? (
                 <div className="p-16 text-center">
-                  <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
+                  <RefreshCw className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
                   <p className="text-gray-600 font-medium">Loading top-up requests...</p>
                   <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your data</p>
                 </div>
               ) : topUpRequests.length === 0 ? (
                 <div className="p-16 text-center">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center mx-auto mb-5 shadow-inner">
-                    <ArrowUpRight className="w-10 h-10 text-blue-400" />
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                    <ArrowUpRight className="w-10 h-10 text-primary" />
                   </div>
                   <p className="text-lg font-semibold text-gray-700 mb-1.5">No pending top-up requests</p>
                   <p className="text-sm text-gray-500 max-w-sm mx-auto">All top-up requests have been processed</p>
@@ -1271,10 +1271,10 @@ export default function PaymentProcessingPage() {
                       : null;
                     
                     return (
-                      <div key={request._id} className="p-5 hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30 transition-all duration-200 group">
+                      <div key={request._id} className="p-5 hover:bg-gradient-to-r hover:from-primary/10/30 hover:to-primary/30 transition-all duration-200 group">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
+                            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20">
                               <User className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1324,7 +1324,7 @@ export default function PaymentProcessingPage() {
                                       setSelectedTopUp(request);
                                       setShowTopUpModal(true);
                                     }}
-                                    className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-all hover:shadow-sm"
+                                    className="inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border border-primary/20 rounded transition-all hover:shadow-sm"
                                   >
                                     <ImageIcon className="w-3 h-3" />
                                     View Receipt
@@ -1339,7 +1339,7 @@ export default function PaymentProcessingPage() {
                                 setSelectedTopUp(request);
                                 setShowTopUpModal(true);
                               }}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all shadow-sm hover:shadow"
                             >
                               <Eye className="w-3 h-3 mr-1" />
                               Review
@@ -1359,7 +1359,7 @@ export default function PaymentProcessingPage() {
             <>
               {loadingWithdrawals ? (
                 <div className="p-16 text-center">
-                  <RefreshCw className="w-10 h-10 text-blue-500 animate-spin mx-auto mb-4" />
+                  <RefreshCw className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
                   <p className="text-gray-600 font-medium">Loading withdrawal requests...</p>
                   <p className="text-sm text-gray-500 mt-1">Please wait while we fetch your data</p>
                 </div>
@@ -1461,7 +1461,7 @@ export default function PaymentProcessingPage() {
                                 setSelectedWithdrawal(request);
                                 setShowWithdrawalModal(true);
                               }}
-                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm hover:shadow"
+                              className="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all shadow-sm hover:shadow"
                             >
                               <Eye className="w-3 h-3 mr-1" />
                               Review
@@ -1522,7 +1522,7 @@ export default function PaymentProcessingPage() {
                     </p>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 ${
                       tx.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-accent/10 text-accent'
                         : tx.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : tx.status === 'failed'
@@ -1572,7 +1572,7 @@ export default function PaymentProcessingPage() {
                     <label className="text-xs font-medium text-gray-500">Status</label>
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       tx.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-accent/10 text-accent'
                         : tx.status === 'pending'
                         ? 'bg-yellow-100 text-yellow-800'
                         : tx.status === 'failed'
@@ -1649,7 +1649,7 @@ export default function PaymentProcessingPage() {
                       setShowTransactionDetails(false);
                       setSelectedTransaction(undefined);
                     }}
-                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring transition-all duration-200"
                   >
                     Close
                   </button>
@@ -1676,7 +1676,7 @@ export default function PaymentProcessingPage() {
               <button
                 onClick={() => processTopUpRequest(selectedTopUp._id || selectedTopUp.id || '', 'approved', adminNotes)}
                 disabled={processingTopUp === (selectedTopUp._id || selectedTopUp.id)}
-                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200"
+                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
               >
                 <Check className="w-3 h-3 mr-1" />
                 {processingTopUp === (selectedTopUp._id || selectedTopUp.id) ? 'Processing...' : 'Approve Request'}
@@ -1697,8 +1697,8 @@ export default function PaymentProcessingPage() {
           <div className="space-y-4">
             {/* User Info */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <User className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <User className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900">
@@ -1781,7 +1781,7 @@ export default function PaymentProcessingPage() {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Add notes about this request..."
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 rows={3}
               />
             </div>
@@ -1805,7 +1805,7 @@ export default function PaymentProcessingPage() {
               <button
                 onClick={() => processWithdrawalRequest(selectedWithdrawal._id || selectedWithdrawal.id || '', 'approved', adminNotes)}
                 disabled={processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id)}
-                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition-all duration-200"
+                className="flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded text-white bg-accent hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
               >
                 <Check className="w-3 h-3 mr-1" />
                 {processingWithdrawal === (selectedWithdrawal._id || selectedWithdrawal.id) ? 'Processing...' : 'Approve Request'}
@@ -1921,7 +1921,7 @@ export default function PaymentProcessingPage() {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Add notes about this request..."
-                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 rows={3}
               />
             </div>

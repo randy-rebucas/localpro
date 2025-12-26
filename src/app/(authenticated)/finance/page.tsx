@@ -248,7 +248,7 @@ export default function FinancePage() {
       case 'topup':
       case 'top_up':
       case 'earning':
-        return <ArrowDownRight className="w-4 h-4 text-green-600" />;
+        return <ArrowDownRight className="w-4 h-4 text-accent" />;
       case 'debit':
       case 'withdrawal':
       case 'payment':
@@ -256,7 +256,7 @@ export default function FinancePage() {
         return <ArrowUpRight className="w-4 h-4 text-red-600" />;
       case 'loan':
       case 'payout':
-        return <Banknote className="w-4 h-4 text-blue-600" />;
+        return <Banknote className="w-4 h-4 text-primary" />;
       case 'repayment':
         return <RefreshCw className="w-4 h-4 text-purple-600" />;
       case 'refund':
@@ -268,12 +268,12 @@ export default function FinancePage() {
 
   const getStatusBadge = (status: string) => {
     const statusClasses: Record<string, string> = {
-      completed: 'bg-green-100 text-green-700 border-green-200',
+      completed: 'bg-accent/10 text-accent border-accent/20',
       pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
       failed: 'bg-red-100 text-red-700 border-red-200',
       cancelled: 'bg-gray-100 text-gray-700 border-gray-200',
-      active: 'bg-blue-100 text-blue-700 border-blue-200',
-      approved: 'bg-green-100 text-green-700 border-green-200',
+      active: 'bg-primary/10 text-primary border-primary/20',
+      approved: 'bg-accent/10 text-accent border-accent/20',
       disbursed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
       repaid: 'bg-purple-100 text-purple-700 border-purple-200',
       defaulted: 'bg-red-100 text-red-700 border-red-200',
@@ -298,19 +298,19 @@ export default function FinancePage() {
 
   if (!mounted || settingsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-accent/10 to-teal-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-accent/10 to-teal-50 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-emerald-200/30 to-green-300/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-teal-200/30 to-emerald-300/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-green-100/20 to-teal-200/10 rounded-full blur-2xl" />
+        <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-accent/10/20 to-teal-200/10 rounded-full blur-2xl" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -318,11 +318,11 @@ export default function FinancePage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-accent rounded-xl flex items-center justify-center shadow-lg">
                 <Coins className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-emerald-600 via-accent to-teal-600 bg-clip-text text-transparent">
                   Finance
                 </h1>
                 <p className="text-gray-600 text-sm">Manage your wallet, transactions & loans</p>
@@ -340,7 +340,7 @@ export default function FinancePage() {
             </button>
             <Link
               href="/wallet"
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/25"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-accent text-white rounded-xl font-medium hover:from-emerald-600 hover:to-accent transition-all shadow-lg shadow-emerald-500/25"
             >
               <Wallet className="w-4 h-4" />
               <span>Open Wallet</span>
@@ -353,7 +353,7 @@ export default function FinancePage() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <Link
               href="/finance"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white font-medium shadow-md"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-accent text-white font-medium shadow-md"
             >
               <Coins className="w-4 h-4" />
               <span>Overview</span>
@@ -427,7 +427,7 @@ export default function FinancePage() {
           <>
             {/* Balance Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-emerald-500 to-green-600 rounded-2xl p-5 text-white shadow-xl shadow-emerald-500/25">
+              <div className="bg-gradient-to-br from-emerald-500 to-accent rounded-2xl p-5 text-white shadow-xl shadow-emerald-500/25">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-emerald-100 text-sm font-medium">Total Balance</p>
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -441,8 +441,8 @@ export default function FinancePage() {
               <div className="bg-white rounded-2xl border-2 border-gray-200 p-5 hover:border-emerald-300 hover:shadow-lg transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-gray-600 text-sm font-medium">Monthly Earnings</p>
-                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  <div className="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-accent" />
                   </div>
                 </div>
                 <p className="text-2xl font-bold text-gray-900">{formatCurrency(overview?.monthlyEarnings?.totalEarnings || 0)}</p>
@@ -489,10 +489,10 @@ export default function FinancePage() {
 
               <Link
                 href="/wallet?action=withdraw"
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all group"
+                className="flex items-center gap-3 p-4 bg-white rounded-xl border-2 border-gray-200 hover:border-primary/30 hover:shadow-lg transition-all group"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                  <Send className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Send className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Withdraw</p>
@@ -533,7 +533,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab('overview')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'overview'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-emerald-500 to-accent text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -543,7 +543,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab('transactions')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'transactions'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-emerald-500 to-accent text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -553,7 +553,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab('loans')}
                 className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
                   activeTab === 'loans'
-                    ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-emerald-500 to-accent text-white shadow-md'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -600,7 +600,7 @@ export default function FinancePage() {
                           </div>
                           <div className="text-right">
                             <p className={`font-semibold ${
-                              isPositiveTransaction(tx.type) ? 'text-green-600' : 'text-red-600'
+                              isPositiveTransaction(tx.type) ? 'text-accent' : 'text-red-600'
                             }`}>
                               {isPositiveTransaction(tx.type) ? '+' : '-'}
                               {formatCurrency(tx.amount)}
@@ -640,7 +640,7 @@ export default function FinancePage() {
                         .map((loan) => (
                           <div
                             key={loan._id || loan.id}
-                            className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200"
+                            className="p-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl border border-primary/20"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <span className="font-semibold text-gray-900 capitalize">{loan.type.replace('_', ' ')} Loan</span>
@@ -662,7 +662,7 @@ export default function FinancePage() {
                   )}
 
                   {/* Loan CTA */}
-                  <div className="mt-4 p-4 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl text-white">
+                  <div className="mt-4 p-4 bg-gradient-to-r from-emerald-500 to-accent rounded-xl text-white">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                         <PiggyBank className="w-6 h-6" />
@@ -767,7 +767,7 @@ export default function FinancePage() {
                         </div>
                         <div className="text-right">
                           <p className={`text-lg font-bold ${
-                            isPositiveTransaction(tx.type) ? 'text-green-600' : 'text-red-600'
+                            isPositiveTransaction(tx.type) ? 'text-accent' : 'text-red-600'
                           }`}>
                             {isPositiveTransaction(tx.type) ? '+' : '-'}
                             {formatCurrency(tx.amount)}
@@ -807,15 +807,15 @@ export default function FinancePage() {
               <div className="space-y-6">
                 {/* Loan Types */}
                 <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-blue-300 hover:shadow-lg transition-all group cursor-pointer">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 hover:border-primary/30 hover:shadow-lg transition-all group cursor-pointer">
+                    <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                       <Banknote className="w-7 h-7 text-white" />
                     </div>
                     <h3 className="text-lg font-bold text-gray-900 mb-2">Micro Loan</h3>
                     <p className="text-gray-600 text-sm mb-4">Quick small loans for immediate needs. Up to ₱100,000</p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">Interest:</span>
-                      <span className="font-semibold text-blue-600">5% monthly</span>
+                      <span className="font-semibold text-primary">5% monthly</span>
                     </div>
                   </div>
 
@@ -855,7 +855,7 @@ export default function FinancePage() {
                       </div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">No Loans Yet</h3>
                       <p className="text-gray-500 mb-4">Apply for a loan to get started</p>
-                      <button className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-medium hover:from-emerald-600 hover:to-green-700 transition-all shadow-lg shadow-emerald-500/25">
+                      <button className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-accent text-white rounded-xl font-medium hover:from-emerald-600 hover:to-accent transition-all shadow-lg shadow-emerald-500/25">
                         Apply for Loan
                       </button>
                     </div>
@@ -868,7 +868,7 @@ export default function FinancePage() {
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                              <div className="w-12 h-12 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center">
                                 <Banknote className="w-6 h-6 text-white" />
                               </div>
                               <div>
@@ -905,7 +905,7 @@ export default function FinancePage() {
             )}
 
             {/* Help Section */}
-            <div className="mt-8 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-2xl p-6 text-white">
+            <div className="mt-8 bg-gradient-to-r from-emerald-500 via-accent to-teal-500 rounded-2xl p-6 text-white">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">

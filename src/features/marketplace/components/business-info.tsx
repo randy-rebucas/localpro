@@ -39,7 +39,7 @@ export function BusinessInfo({
             {businessInfo.companyEmail && (
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href={`mailto:${businessInfo.companyEmail}`} className="hover:text-blue-600">
+                <a href={`mailto:${businessInfo.companyEmail}`} className="hover:text-primary">
                   {businessInfo.companyEmail}
                 </a>
               </div>
@@ -47,7 +47,7 @@ export function BusinessInfo({
             {businessInfo.companyPhone && (
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <a href={`tel:${businessInfo.companyPhone}`} className="hover:text-blue-600">
+                <a href={`tel:${businessInfo.companyPhone}`} className="hover:text-primary">
                   {businessInfo.companyPhone}
                 </a>
               </div>
@@ -84,7 +84,7 @@ export function BusinessInfo({
             <Clock className="w-4 h-4 text-gray-500" />
             <h4 className="text-sm font-semibold text-gray-900">Business Hours</h4>
             <span className={`text-xs px-2 py-0.5 rounded-full ${
-              isOpen ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+              isOpen ? "bg-accent/10 text-accent" : "bg-red-100 text-red-800"
             }`}>
               {isOpen ? "Open" : "Closed"}
             </span>
@@ -112,7 +112,7 @@ export function BusinessInfo({
             {isSupportChannelEnabled("email", appSettings) && supportChannels.email?.address && (
               <div className="flex items-center gap-2 text-sm">
                 <Mail className="w-4 h-4 text-gray-500" />
-                <a href={`mailto:${supportChannels.email.address}`} className="text-blue-600 hover:underline">
+                <a href={`mailto:${supportChannels.email.address}`} className="text-primary hover:underline">
                   {supportChannels.email.address}
                 </a>
               </div>
@@ -120,7 +120,7 @@ export function BusinessInfo({
             {isSupportChannelEnabled("phone", appSettings) && supportChannels.phone?.number && (
               <div className="flex items-center gap-2 text-sm">
                 <Phone className="w-4 h-4 text-gray-500" />
-                <a href={`tel:${supportChannels.phone.number}`} className="text-blue-600 hover:underline">
+                <a href={`tel:${supportChannels.phone.number}`} className="text-primary hover:underline">
                   {supportChannels.phone.number}
                 </a>
               </div>

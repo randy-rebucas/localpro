@@ -17,7 +17,7 @@ export function LoadingState({
 }: LoadingStateProps) {
   const content = (
     <div className={`flex flex-col items-center justify-center ${fullScreen ? "min-h-screen" : "py-12"} ${className}`}>
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-4" />
+      <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
       <p className="text-gray-600">{message}</p>
     </div>
   );

@@ -8,9 +8,9 @@ export function Skeleton({ className, variant = "shimmer", ...props }: SkeletonP
   const baseClasses = "rounded-md relative overflow-hidden";
   
   const variantClasses = {
-    default: "animate-pulse bg-gray-200 dark:bg-gray-700",
-    shimmer: "bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] animate-[shimmer_2s_infinite]",
-    wave: "bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 dark:from-gray-700 dark:via-gray-600 dark:to-gray-700 bg-[length:200%_100%] animate-[wave_1.5s_ease-in-out_infinite]"
+    default: "animate-pulse bg-muted",
+    shimmer: "bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%] animate-[shimmer_2s_infinite]",
+    wave: "bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%] animate-[wave_1.5s_ease-in-out_infinite]"
   };
 
   return (
@@ -28,7 +28,7 @@ export function Skeleton({ className, variant = "shimmer", ...props }: SkeletonP
 // Predefined skeleton components for common use cases
 export function SkeletonCard() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200">
+    <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-4 hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center space-x-3">
         <Skeleton className="h-10 w-10 rounded-full" variant="shimmer" />
         <div className="space-y-2 flex-1">
@@ -47,7 +47,7 @@ export function SkeletonCard() {
 
 export function SkeletonServiceCard() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-lg transition-all duration-300 group">
+    <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-4 hover:shadow-lg transition-all duration-300 group">
       <div className="flex items-start space-x-3 mb-3">
         <Skeleton className="h-12 w-12 rounded-lg" variant="shimmer" />
         <div className="space-y-2 flex-1">
@@ -75,13 +75,13 @@ export function SkeletonServiceCard() {
 
 export function SkeletonTable() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+    <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border overflow-hidden">
+      <div className="p-4 border-b border-border">
         <Skeleton className="h-5 w-1/4" variant="shimmer" />
       </div>
-      <div className="divide-y divide-gray-100 dark:divide-gray-700">
+      <div className="divide-y divide-border">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="p-4 flex items-center space-x-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          <div key={i} className="p-4 flex items-center space-x-3 hover:bg-muted/50 transition-colors">
             <Skeleton className="h-8 w-8 rounded-full" variant="shimmer" />
             <div className="flex-1 space-y-1">
               <Skeleton className="h-4 w-1/3" variant="shimmer" />
@@ -97,7 +97,7 @@ export function SkeletonTable() {
 
 export function SkeletonStatsCard() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 hover:shadow-md transition-all duration-200">
+    <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-4 hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between mb-3">
         <div className="space-y-1">
           <Skeleton className="h-4 w-16" variant="shimmer" />
@@ -117,7 +117,7 @@ export function SkeletonDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6">
+      <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl p-6">
         <div className="flex items-center justify-between">
           <div className="space-y-3">
             <Skeleton className="h-6 w-64" variant="shimmer" />
@@ -164,7 +164,7 @@ export function SkeletonProfile() {
   return (
     <div className="space-y-6">
       {/* Profile Header */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+      <div className="bg-card text-card-foreground rounded-2xl shadow-sm border border-border p-6">
         <div className="flex items-center space-x-4">
           <Skeleton className="h-24 w-24 rounded-2xl" variant="shimmer" />
           <div className="space-y-3 flex-1">
@@ -186,7 +186,7 @@ export function SkeletonProfile() {
         {/* Personal Information */}
         <div className="space-y-4">
           <Skeleton className="h-5 w-32" variant="shimmer" />
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-3">
+          <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-4 space-y-3">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center justify-between">
                 <Skeleton className="h-4 w-20" variant="shimmer" />
@@ -199,7 +199,7 @@ export function SkeletonProfile() {
         {/* Professional Information */}
         <div className="space-y-4">
           <Skeleton className="h-5 w-40" variant="shimmer" />
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 space-y-3">
+          <div className="bg-card text-card-foreground rounded-xl shadow-sm border border-border p-4 space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-1">
                 <Skeleton className="h-4 w-16" variant="shimmer" />

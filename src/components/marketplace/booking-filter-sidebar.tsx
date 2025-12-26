@@ -64,9 +64,9 @@ export function BookingFilterSidebar({
           isOpen ? "fixed lg:relative inset-y-0 right-0 z-50 lg:z-auto w-80 lg:w-full overflow-y-auto" : ""
         }`}
       >
-        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-green-50/50 to-blue-50/50 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-200 bg-gradient-to-r from-accent/10/50 to-primary/10/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-md">
+            <div className="p-2 bg-gradient-to-br from-accent to-accent rounded-lg shadow-md">
               <Filter className="w-5 h-5 text-white" />
             </div>
             <h2 className="font-bold text-gray-900 text-lg">Filters</h2>
@@ -90,7 +90,7 @@ export function BookingFilterSidebar({
             <select
               value={statusFilter}
               onChange={(e) => onStatusFilterChange(e.target.value)}
-              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
+              className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all hover:border-accent hover:shadow-md font-medium"
               aria-label="Filter bookings by status"
             >
               {bookingStatuses.map((status) => (
@@ -119,7 +119,7 @@ export function BookingFilterSidebar({
                     value={type.value}
                     checked={typeFilter === type.value}
                     onChange={(e) => onTypeFilterChange(e.target.value)}
-                    className="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                    className="w-4 h-4 text-accent border-gray-300 focus:ring-ring"
                   />
                   <span className="text-sm text-gray-700">{type.label}</span>
                 </label>
@@ -142,7 +142,7 @@ export function BookingFilterSidebar({
                   type="date"
                   value={dateFrom}
                   onChange={(e) => onDateFromChange(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
+                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all hover:border-accent hover:shadow-md font-medium"
                   aria-label="Filter bookings from date"
                 />
               </div>
@@ -154,7 +154,7 @@ export function BookingFilterSidebar({
                   type="date"
                   value={dateTo}
                   onChange={(e) => onDateToChange(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all hover:border-green-400 hover:shadow-md font-medium"
+                  className="w-full px-4 py-2.5 text-sm border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent transition-all hover:border-accent hover:shadow-md font-medium"
                   aria-label="Filter bookings to date"
                 />
               </div>

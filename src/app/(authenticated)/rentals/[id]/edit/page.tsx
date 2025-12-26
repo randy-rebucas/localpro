@@ -721,8 +721,8 @@ export default function EditRentalPage() {
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-accent/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
@@ -804,7 +804,7 @@ export default function EditRentalPage() {
                       type="button"
                       onClick={handleGenerateDescription}
                       disabled={aiGenerating}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-primary text-white rounded-lg hover:from-purple-700 hover:to-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-purple-500/30 hover:shadow-lg hover:scale-105 text-xs font-medium"
                     >
                       {aiGenerating ? (
                         <>
@@ -1283,7 +1283,7 @@ export default function EditRentalPage() {
                   {formData.specifications.features.slice(0, 3).map((feature) => (
                     <span
                       key={feature}
-                      className="text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 px-2.5 py-1 rounded-full border-2 border-blue-300 shadow-sm"
+                      className="text-xs font-medium bg-gradient-to-r from-primary/10 to-primary/10 text-primary px-2.5 py-1 rounded-full border-2 border-primary/30 shadow-sm"
                     >
                       {feature}
                     </span>
@@ -1318,15 +1318,15 @@ export default function EditRentalPage() {
                   </div>
                   <p className="font-medium">Use high-quality images to showcase your rental</p>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg border border-green-200">
-                  <div className="p-1.5 bg-gradient-to-br from-green-100 to-green-200 rounded-lg">
-                    <DollarSign className="w-4 h-4 text-green-600" />
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-accent/10 to-accent/10/50 rounded-lg border border-accent/20">
+                  <div className="p-1.5 bg-gradient-to-br from-accent/10 to-green-200 rounded-lg">
+                    <DollarSign className="w-4 h-4 text-accent" />
                   </div>
                   <p className="font-medium">Set competitive pricing based on market rates</p>
                 </div>
-                <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg border border-blue-200">
-                  <div className="p-1.5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg">
-                    <MapPin className="w-4 h-4 text-blue-600" />
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-br from-primary/10 to-primary/10/50 rounded-lg border border-primary/20">
+                  <div className="p-1.5 bg-gradient-to-br from-primary/10 to-blue-200 rounded-lg">
+                    <MapPin className="w-4 h-4 text-primary" />
                   </div>
                   <p className="font-medium">Accurate location helps renters find you</p>
                 </div>

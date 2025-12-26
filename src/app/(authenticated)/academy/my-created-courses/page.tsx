@@ -117,7 +117,7 @@ export default function MyCreatedCoursesPage() {
     if (discounted !== undefined) {
       return (
         <div className="flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-green-700">
+          <span className="text-sm font-semibold text-accent">
             {formatCurrency(discounted, currency, { appSettings })}
           </span>
           <span className="text-xs text-gray-500 line-through">
@@ -151,7 +151,7 @@ export default function MyCreatedCoursesPage() {
         </div>
         <button
           onClick={fetchCourses}
-          className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           Retry
         </button>
@@ -170,7 +170,7 @@ export default function MyCreatedCoursesPage() {
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/20">
           <BookOpen className="w-6 h-6" />
         </div>
         <div className="flex-1">
@@ -179,7 +179,7 @@ export default function MyCreatedCoursesPage() {
         </div>
         <Link
           href="/academy/create-course"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent rounded-lg hover:from-accent hover:to-green-800 transition-all shadow-lg shadow-green-500/30 hover:shadow-xl hover:scale-105"
         >
           <Plus className="w-4 h-4" />
           Create Course
@@ -206,7 +206,7 @@ export default function MyCreatedCoursesPage() {
           <p className="text-sm text-gray-600">Create a course to share your expertise.</p>
           <Link
             href="/academy/create-course"
-            className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
             Create course
           </Link>
@@ -240,7 +240,7 @@ export default function MyCreatedCoursesPage() {
                 <div className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-                      <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                      <span className="px-2 py-1 rounded-full bg-primary/5 text-primary border border-primary/20">
                         {typeof course.category === "string"
                           ? course.category
                           : (course.category &&
@@ -293,7 +293,7 @@ export default function MyCreatedCoursesPage() {
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/academy/courses/${course._id || course.title}`}
-                        className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                        className="text-sm font-semibold text-primary hover:text-primary"
                       >
                         View
                       </Link>

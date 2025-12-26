@@ -91,8 +91,8 @@ export default function NotificationCenter({
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'message': return 'text-blue-500';
-      case 'email': return 'text-green-500';
+      case 'message': return 'text-primary';
+      case 'email': return 'text-accent';
       case 'booking': return 'text-purple-500';
       case 'payment': return 'text-yellow-500';
       default: return 'text-gray-500';
@@ -117,7 +117,7 @@ export default function NotificationCenter({
             {unreadCount > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-500 hover:text-blue-700"
+                className="text-sm text-primary hover:text-primary"
               >
                 Mark all read
               </button>
@@ -134,7 +134,7 @@ export default function NotificationCenter({
             <button
               onClick={() => setFilter('all')}
               className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                filter === 'all' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-700'
               }`}
             >
               All
@@ -142,7 +142,7 @@ export default function NotificationCenter({
             <button
               onClick={() => setFilter('unread')}
               className={`px-3 py-1 rounded-full text-sm ${
-                filter === 'unread' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                filter === 'unread' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-700'
               }`}
             >
               Unread ({unreadCount})
@@ -177,7 +177,7 @@ export default function NotificationCenter({
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-gray-50 cursor-pointer ${
-                    !notification.isRead ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                    !notification.isRead ? 'bg-primary/5 border-l-4 border-primary' : ''
                   }`}
                   onClick={() => {
                     if (!notification.isRead) {
@@ -203,7 +203,7 @@ export default function NotificationCenter({
                                 e.stopPropagation();
                                 markAsRead(notification.id);
                               }}
-                              className="p-1 text-gray-400 hover:text-blue-500"
+                              className="p-1 text-gray-400 hover:text-primary"
                             >
                               <Check className="h-3 w-3" />
                             </button>
@@ -229,8 +229,8 @@ export default function NotificationCenter({
                           {NotificationUtils.formatNotificationTime(notification.createdAt)}
                         </span>
                         <span className={`text-xs px-2 py-1 rounded-full ${
-                          notification.type === 'message' ? 'bg-blue-100 text-blue-700' :
-                          notification.type === 'email' ? 'bg-green-100 text-green-700' :
+                          notification.type === 'message' ? 'bg-primary/10 text-primary' :
+                          notification.type === 'email' ? 'bg-accent/10 text-accent' :
                           notification.type === 'booking' ? 'bg-purple-100 text-purple-700' :
                           notification.type === 'payment' ? 'bg-yellow-100 text-yellow-700' :
                           'bg-gray-100 text-gray-700'

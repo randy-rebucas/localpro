@@ -44,7 +44,7 @@ export default function Support() {
       description: "Payment issues, invoices, refunds",
       articles: 12,
       popular: ["Request refund", "Payment failed", "Update payment method"],
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       name: "Supplies & Products",
@@ -76,7 +76,7 @@ export default function Support() {
       description: "Verified suppliers, disputes, fraud",
       articles: 8,
       popular: ["Report issue", "Buyer protection", "Verified suppliers"],
-      color: "from-cyan-500 to-blue-600"
+      color: "from-cyan-500 to-primary"
     }
   ];
 
@@ -99,7 +99,7 @@ export default function Support() {
       responseTime: "Within 24 hours",
       action: "Send Email",
       recommended: false,
-      color: "from-blue-500 to-indigo-600"
+      color: "from-primary to-indigo-600"
     },
     {
       icon: <Phone className="w-6 h-6" />,
@@ -428,7 +428,7 @@ export default function Support() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[
               { icon: <FileText className="w-6 h-6" />, title: "Help Center", desc: "Browse guides, tutorials, and documentation", href: "/help-center", color: "from-emerald-500 to-teal-600" },
-              { icon: <Users className="w-6 h-6" />, title: "Community Forum", desc: "Connect with other users and share experiences", href: "/community", color: "from-blue-500 to-indigo-600" },
+              { icon: <Users className="w-6 h-6" />, title: "Community Forum", desc: "Connect with other users and share experiences", href: "/community", color: "from-primary to-indigo-600" },
               { icon: <Mail className="w-6 h-6" />, title: "Contact Us", desc: "Send us a message or find our office locations", href: "/contact", color: "from-emerald-500 to-teal-600" },
               { icon: <Headphones className="w-6 h-6" />, title: "Partner Support", desc: "Dedicated support for business partners", href: "/partners", color: "from-purple-500 to-pink-600" }
             ].map((item, index) => (

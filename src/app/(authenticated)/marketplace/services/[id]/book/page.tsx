@@ -765,13 +765,13 @@ export default function BookServicePage() {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
                         currentStep >= step
-                          ? 'bg-green-600 text-white'
+                          ? 'bg-accent text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}
                     >
                       {currentStep > step ? <CheckCircle2 className="w-5 h-5" /> : step}
                     </div>
-                    <span className={`text-xs mt-2 ${currentStep >= step ? 'text-green-600 font-medium' : 'text-gray-500'}`}>
+                    <span className={`text-xs mt-2 ${currentStep >= step ? 'text-accent font-medium' : 'text-gray-500'}`}>
                       {step === 1 && 'Date & Time'}
                       {step === 2 && 'Address'}
                       {step === 3 && 'Summary'}
@@ -782,7 +782,7 @@ export default function BookServicePage() {
                   {step < 5 && (
                     <div
                       className={`h-1 flex-1 mx-2 ${
-                        currentStep > step ? 'bg-green-600' : 'bg-gray-200'
+                        currentStep > step ? 'bg-accent' : 'bg-gray-200'
                       }`}
                     />
                   )}
@@ -822,7 +822,7 @@ export default function BookServicePage() {
                   min={new Date().toISOString().split('T')[0]}
                   value={formData.bookingDate}
                   onChange={(e) => setFormData(prev => ({ ...prev, bookingDate: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
               
@@ -835,7 +835,7 @@ export default function BookServicePage() {
                   required
                   value={formData.bookingTime}
                   onChange={(e) => setFormData(prev => ({ ...prev, bookingTime: e.target.value }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -875,7 +875,7 @@ export default function BookServicePage() {
                 min={1}
                 value={formData.duration}
                 onChange={(e) => setFormData(prev => ({ ...prev, duration: Number(e.target.value) }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               {service.estimatedDuration && (
                 <p className="text-xs text-gray-500 mt-1">
@@ -894,7 +894,7 @@ export default function BookServicePage() {
               <button
                 onClick={nextStep}
                 disabled={!validateStep(1)}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -923,7 +923,7 @@ export default function BookServicePage() {
                     ...prev,
                     address: { ...prev.address, street: e.target.value }
                   }))}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
@@ -940,7 +940,7 @@ export default function BookServicePage() {
                       ...prev,
                       address: { ...prev.address, city: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
 
@@ -956,7 +956,7 @@ export default function BookServicePage() {
                       ...prev,
                       address: { ...prev.address, state: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
               </div>
@@ -974,7 +974,7 @@ export default function BookServicePage() {
                       ...prev,
                       address: { ...prev.address, zipCode: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
 
@@ -990,7 +990,7 @@ export default function BookServicePage() {
                       ...prev,
                       address: { ...prev.address, country: e.target.value }
                     }))}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
               </div>
@@ -1005,7 +1005,7 @@ export default function BookServicePage() {
                   value={formData.specialInstructions}
                   onChange={(e) => setFormData(prev => ({ ...prev, specialInstructions: e.target.value }))}
                   placeholder="Any special instructions or requirements..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
             </div>
@@ -1020,7 +1020,7 @@ export default function BookServicePage() {
               <button
                 onClick={nextStep}
                 disabled={!validateStep(2)}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>
@@ -1128,7 +1128,7 @@ export default function BookServicePage() {
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex justify-between font-semibold">
                       <span className="text-gray-900">Total</span>
-                      <span className="text-green-600 text-lg">{formatPrice(formData.totalAmount, getCurrency(service.pricing.currency))}</span>
+                      <span className="text-accent text-lg">{formatPrice(formData.totalAmount, getCurrency(service.pricing.currency))}</span>
                     </div>
                   </div>
                 </div>
@@ -1144,7 +1144,7 @@ export default function BookServicePage() {
               </button>
               <button
                 onClick={nextStep}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
               >
                 Continue to Payment
               </button>
@@ -1180,7 +1180,7 @@ export default function BookServicePage() {
                   <div className="border-t border-gray-200 pt-2">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-gray-900">Total Amount</h3>
-                      <span className="text-2xl font-bold text-green-600">
+                      <span className="text-2xl font-bold text-accent">
                         {formatPrice(formData.totalAmount, getCurrency(service.pricing.currency))}
                       </span>
                     </div>
@@ -1190,14 +1190,14 @@ export default function BookServicePage() {
 
               <div className="space-y-3">
                 {isPaymentMethodEnabled('paypal', appSettings) && (
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-accent transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="paypal"
                       checked={formData.paymentMethod === 'paypal'}
                       onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paypal' }))}
-                      className="w-4 h-4 text-green-600"
+                      className="w-4 h-4 text-accent"
                     />
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">PayPal</div>
@@ -1207,14 +1207,14 @@ export default function BookServicePage() {
                 )}
 
                 {isPaymentMethodEnabled('paymaya', appSettings) && (
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-accent transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="paymaya"
                       checked={formData.paymentMethod === 'paymaya'}
                       onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'paymaya' }))}
-                      className="w-4 h-4 text-green-600"
+                      className="w-4 h-4 text-accent"
                     />
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">PayMaya</div>
@@ -1224,14 +1224,14 @@ export default function BookServicePage() {
                 )}
 
                 {isPaymentMethodEnabled('gcash', appSettings) && (
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-accent transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
                       value="gcash"
                       checked={formData.paymentMethod === 'gcash'}
                       onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'gcash' }))}
-                      className="w-4 h-4 text-green-600"
+                      className="w-4 h-4 text-accent"
                     />
                     <div className="flex-1">
                       <div className="font-medium text-gray-900">GCash</div>
@@ -1243,7 +1243,7 @@ export default function BookServicePage() {
                 {wallet && (
                   <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                     wallet.balance >= formData.totalAmount
-                      ? 'border-gray-200 hover:border-green-500'
+                      ? 'border-gray-200 hover:border-accent'
                       : 'border-gray-200 opacity-50 cursor-not-allowed'
                   }`}>
                     <input
@@ -1253,7 +1253,7 @@ export default function BookServicePage() {
                       checked={formData.paymentMethod === 'wallet'}
                       onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'wallet' }))}
                       disabled={wallet.balance < formData.totalAmount}
-                      className="w-4 h-4 text-green-600"
+                      className="w-4 h-4 text-accent"
                     />
                     <Wallet className="w-5 h-5 text-gray-600" />
                     <div className="flex-1">
@@ -1269,14 +1269,14 @@ export default function BookServicePage() {
                 )}
 
                 {/* Cash Payment */}
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-accent transition-colors">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="cash"
                     checked={formData.paymentMethod === 'cash'}
                     onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'cash' }))}
-                    className="w-4 h-4 text-green-600"
+                    className="w-4 h-4 text-accent"
                   />
                   <Banknote className="w-5 h-5 text-gray-600" />
                   <div className="flex-1">
@@ -1286,14 +1286,14 @@ export default function BookServicePage() {
                 </label>
 
                 {/* QR PH Payment */}
-                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-green-500 transition-colors">
+                <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-accent transition-colors">
                   <input
                     type="radio"
                     name="paymentMethod"
                     value="qr_ph"
                     checked={formData.paymentMethod === 'qr_ph'}
                     onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'qr_ph' }))}
-                    className="w-4 h-4 text-green-600"
+                    className="w-4 h-4 text-accent"
                   />
                   <QrCode className="w-5 h-5 text-gray-600" />
                   <div className="flex-1">
@@ -1315,7 +1315,7 @@ export default function BookServicePage() {
               <button
                 onClick={processBooking}
                 disabled={!formData.paymentMethod || processingPayment || !service || loading}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {processingPayment ? (
                   <>
@@ -1339,7 +1339,7 @@ export default function BookServicePage() {
             {currentStep === 5 && bookingId && (
               <div className="text-center space-y-8 py-12">
                 {/* Success Icon */}
-                <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-green-100 rounded-full flex items-center justify-center mx-auto shadow-lg">
+                <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-accent/10 rounded-full flex items-center justify-center mx-auto shadow-lg">
                   <CheckCircle className="w-16 h-16 text-emerald-600" />
                 </div>
                 
@@ -1354,7 +1354,7 @@ export default function BookServicePage() {
                 </div>
 
                 {/* Booking Details Card */}
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-6 max-w-md mx-auto shadow-md">
+                <div className="bg-gradient-to-br from-emerald-50 to-accent/10 border-2 border-emerald-200 rounded-xl p-6 max-w-md mx-auto shadow-md">
                   <div className="space-y-4">
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-1">Booking ID</p>

@@ -57,11 +57,11 @@ function SettingsSection({
     <section className="bg-gradient-to-br from-white to-gray-50/50 rounded-xl border border-gray-200 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden backdrop-blur-sm">
       <button
         onClick={onToggle}
-        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-5 border-b border-gray-200 hover:from-green-50/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
+        className="w-full bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-5 border-b border-gray-200 hover:from-accent/10/50 hover:via-white hover:to-emerald-50/50 transition-all duration-300"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent to-emerald-500 shadow-md shadow-green-500/30 flex items-center justify-center text-white">
               <Icon className="w-6 h-6" />
             </div>
             <div className="text-left">
@@ -241,11 +241,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50/30 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-accent/10/30 relative overflow-hidden">
       {/* Animated Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-200/20 rounded-full blur-3xl animate-blob animation-delay-4000"></div>
       </div>
 
@@ -253,18 +253,18 @@ export default function SettingsPage() {
         {/* Header with Save Button */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-accent to-emerald-500 text-white flex items-center justify-center shadow-lg shadow-green-500/30">
               <SettingsIcon className="w-7 h-7" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Settings</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-emerald-600 bg-clip-text text-transparent">Settings</h1>
               <p className="text-sm text-gray-500 mt-1">Manage your account preferences and privacy</p>
             </div>
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
           {lastSaved && (
             <span className="text-xs text-gray-500 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
               <span className="hidden sm:inline">Saved {lastSaved.toLocaleTimeString()}</span>
             </span>
           )}
@@ -279,7 +279,7 @@ export default function SettingsPage() {
             disabled={!hasChanges || saving}
             className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all flex items-center gap-2 shadow-sm ${
               hasChanges
-                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
+                ? 'bg-gradient-to-r from-accent to-emerald-600 text-white hover:from-accent hover:to-emerald-700 shadow-md hover:shadow-lg disabled:opacity-50 transform hover:scale-105'
                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
@@ -344,7 +344,7 @@ export default function SettingsPage() {
               {/* Push Notifications */}
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                   Push Notifications
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -366,7 +366,7 @@ export default function SettingsPage() {
               {/* Email Notifications */}
               <div className="pt-4 border-t border-gray-100">
                 <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent"></span>
                   Email Notifications
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -461,7 +461,7 @@ export default function SettingsPage() {
               {/* Device List */}
               {devicesLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-green-500" />
+                  <RefreshCw className="w-6 h-6 animate-spin text-accent" />
                   <span className="ml-2 text-gray-500">Loading devices...</span>
                 </div>
               ) : devices.length === 0 ? (
@@ -500,13 +500,13 @@ export default function SettingsPage() {
                         <div className="flex items-center gap-3">
                           <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                             device.deviceType === 'ios' ? 'bg-gray-100' :
-                            device.deviceType === 'android' ? 'bg-green-100' :
-                            'bg-blue-100'
+                            device.deviceType === 'android' ? 'bg-accent/10' :
+                            'bg-primary/10'
                           }`}>
                             <Smartphone className={`w-5 h-5 ${
                               device.deviceType === 'ios' ? 'text-gray-600' :
-                              device.deviceType === 'android' ? 'text-green-600' :
-                              'text-blue-600'
+                              device.deviceType === 'android' ? 'text-accent' :
+                              'text-primary'
                             }`} />
                           </div>
                           <div>
@@ -534,7 +534,7 @@ export default function SettingsPage() {
                               {device.isActive && (
                                 <>
                                   <span>•</span>
-                                  <span className="text-green-600 font-medium">Active</span>
+                                  <span className="text-accent font-medium">Active</span>
                                 </>
                               )}
                             </div>
@@ -562,8 +562,8 @@ export default function SettingsPage() {
               )}
 
               {/* Info */}
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-800">
+              <div className="mt-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                <p className="text-sm text-primary">
                   <strong>Tip:</strong> Push notifications help you stay updated on important events like new bookings, 
                   messages, and payment updates. Enable notifications in your browser to receive them even when you&apos;re 
                   not actively using the app.
@@ -922,10 +922,10 @@ export default function SettingsPage() {
 
         {/* Sidebar */}
         <div className="space-y-8 lg:sticky lg:top-8">
-          <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 rounded-xl p-6 border border-green-200 shadow-md hover:shadow-lg transition-all duration-300">
+          <div className="bg-gradient-to-br from-accent/10 via-emerald-50 to-accent/10 rounded-xl p-6 border border-accent/20 shadow-md hover:shadow-lg transition-all duration-300">
             <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
             <p className="text-sm text-gray-600 mb-4">Having trouble with your settings? We&apos;re here to help.</p>
-            <button className="w-full px-4 py-2 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:from-green-50 hover:to-emerald-50 transition-all duration-300 border border-gray-200 hover:border-green-300 shadow-sm hover:shadow-md transform hover:scale-105">
+            <button className="w-full px-4 py-2 bg-gradient-to-r from-white to-gray-50 text-gray-700 rounded-lg text-sm font-medium hover:from-accent/10 hover:to-emerald-50 transition-all duration-300 border border-gray-200 hover:border-accent/30 shadow-sm hover:shadow-md transform hover:scale-105">
               Contact Support
             </button>
           </div>
@@ -938,12 +938,12 @@ export default function SettingsPage() {
 
 function ToggleRow(props: { label: string; checked: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
   return (
-    <label className="flex items-center justify-between py-2 px-1 hover:bg-gradient-to-r hover:from-green-50/50 hover:to-emerald-50/50 rounded-lg transition-all duration-300 cursor-pointer group">
+    <label className="flex items-center justify-between py-2 px-1 hover:bg-gradient-to-r hover:from-accent/10/50 hover:to-emerald-50/50 rounded-lg transition-all duration-300 cursor-pointer group">
       <span className="text-sm text-gray-700 font-medium group-hover:text-gray-900 transition-colors">{props.label}</span>
       <span className="inline-flex items-center">
         <input type="checkbox" className="sr-only peer" checked={props.checked} onChange={props.onChange} />
         <span className={`w-11 h-6 rounded-full transition-all duration-200 relative shadow-inner ${
-          props.checked ? 'bg-gradient-to-r from-green-600 to-emerald-600 shadow-green-500/30' : 'bg-gray-300'
+          props.checked ? 'bg-gradient-to-r from-accent to-emerald-600 shadow-green-500/30' : 'bg-gray-300'
         }`}>
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-lg transition-transform duration-200 ${
             props.checked ? 'translate-x-5' : 'translate-x-0'
@@ -961,7 +961,7 @@ function RowInput(props: { label: string; value: string; onChange: (e: ChangeEve
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type={props.type || "text"}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
         value={props.value} 
         onChange={props.onChange} 
         placeholder={props.placeholder}
@@ -975,7 +975,7 @@ function RowSelect(props: { label: string; value: string; onChange: (value: stri
     <div className="flex items-center gap-4 py-2">
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <select
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg"
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all bg-white shadow-sm hover:shadow-md focus:shadow-lg"
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
       >
@@ -995,7 +995,7 @@ function RowNumberInput(props: { label: string; value: number; onChange: (e: Cha
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0">{props.label}</label>
       <input 
         type="number" 
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all shadow-sm hover:shadow-md focus:shadow-lg" 
         value={Number.isFinite(props.value) ? props.value : 0} 
         onChange={props.onChange} 
         min={props.min} 
@@ -1010,7 +1010,7 @@ function RowTextarea(props: { label: string; value: string; onChange: (e: Change
     <div className="flex items-start gap-4 py-2">
       <label className="text-sm font-medium text-gray-700 w-32 flex-shrink-0 pt-2">{props.label}</label>
       <textarea
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none shadow-sm hover:shadow-md focus:shadow-lg"
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all resize-none shadow-sm hover:shadow-md focus:shadow-lg"
         value={props.value}
         onChange={props.onChange}
         rows={props.rows || 3}

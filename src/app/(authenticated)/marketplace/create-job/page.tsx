@@ -1746,13 +1746,13 @@ export default function CreateJobPage() {
                     {form.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full border border-blue-200 shadow-sm"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-primary/10 to-primary/10 text-primary rounded-full border border-primary/20 shadow-sm"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag(index)}
-                          className="text-blue-600 hover:text-blue-800"
+                          className="text-primary hover:text-primary"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -1769,7 +1769,7 @@ export default function CreateJobPage() {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b-2 border-gray-200">Review & Submit</h2>
             
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 md:p-8 border-2 border-blue-200 space-y-6">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-6 md:p-8 border-2 border-primary/20 space-y-6">
               <div>
                 <h3 className="text-xl font-bold text-gray-800 mb-2">{form.title || "Job Title"}</h3>
                 <p className="text-gray-600">{form.company.name}</p>
@@ -1803,7 +1803,7 @@ export default function CreateJobPage() {
                     {form.requirements.skills.map((skill, index) => (
                       <span
                         key={index}
-                        className="inline-block px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full border border-blue-200 shadow-sm"
+                        className="inline-block px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-primary/10 to-primary/10 text-primary rounded-full border border-primary/20 shadow-sm"
                       >
                         {skill}
                       </span>
@@ -1830,7 +1830,7 @@ export default function CreateJobPage() {
                     {form.benefits.map((benefit, index) => (
                       <span
                         key={index}
-                        className="inline-block px-3 py-1.5 text-sm font-medium bg-green-100 text-green-800 rounded-full border border-green-200"
+                        className="inline-block px-3 py-1.5 text-sm font-medium bg-accent/10 text-accent rounded-full border border-accent/20"
                       >
                         {benefit.replace(/_/g, ' ')}
                       </span>

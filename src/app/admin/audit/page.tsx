@@ -458,10 +458,10 @@ export default function AdminAuditPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success': return 'text-green-600 bg-green-100';
+      case 'success': return 'text-accent bg-accent/10';
       case 'warning': return 'text-yellow-600 bg-yellow-100';
       case 'error': return 'text-red-600 bg-red-100';
-      case 'info': return 'text-blue-600 bg-blue-100';
+      case 'info': return 'text-primary bg-primary/10';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -471,7 +471,7 @@ export default function AdminAuditPage() {
       case 'critical': return 'text-red-600 bg-red-100';
       case 'high': return 'text-orange-600 bg-orange-100';
       case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-green-600 bg-green-100';
+      case 'low': return 'text-accent bg-accent/10';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -567,7 +567,7 @@ export default function AdminAuditPage() {
           <button
             onClick={refreshData}
             disabled={refreshing}
-            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-all duration-200"
+            className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:opacity-50 transition-all duration-200"
           >
             <RefreshCw className={`w-3 h-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -608,7 +608,7 @@ export default function AdminAuditPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded shadow p-3 border-l-4 border-blue-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-primary">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Total Logs</p>
@@ -619,7 +619,7 @@ export default function AdminAuditPage() {
                 {dashboardSummary.todayLogs || stats?.todayLogs || 0} today
               </p>
             </div>
-            <FileText className="w-5 h-5 text-blue-600" />
+            <FileText className="w-5 h-5 text-primary" />
           </div>
         </div>
 
@@ -638,7 +638,7 @@ export default function AdminAuditPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded shadow p-3 border-l-4 border-green-500">
+        <div className="bg-white rounded shadow p-3 border-l-4 border-accent">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-500">Active Users</p>
@@ -649,7 +649,7 @@ export default function AdminAuditPage() {
                 In selected period
               </p>
             </div>
-            <Users className="w-5 h-5 text-green-600" />
+            <Users className="w-5 h-5 text-accent" />
           </div>
         </div>
 
@@ -677,21 +677,21 @@ export default function AdminAuditPage() {
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Filter className="w-3 h-3 mr-1" />
                 {showFilters ? 'Hide' : 'Show'} Filters
               </button>
               <button
                 onClick={() => exportData('csv')}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Download className="w-3 h-3 mr-1" />
                 CSV
               </button>
               <button
                 onClick={() => exportData('json')}
-                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
               >
                 <Download className="w-3 h-3 mr-1" />
                 JSON
@@ -710,13 +710,13 @@ export default function AdminAuditPage() {
                     type="date"
                     value={filters.dateRange.start}
                     onChange={(e) => setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, start: e.target.value } }))}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <input
                     type="date"
                     value={filters.dateRange.end}
                     onChange={(e) => setFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: e.target.value } }))}
-                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -728,7 +728,7 @@ export default function AdminAuditPage() {
                   value={filters.user}
                   onChange={(e) => handleFilterChange('user', e.target.value)}
                   placeholder="Search by user..."
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -739,7 +739,7 @@ export default function AdminAuditPage() {
                   value={filters.action}
                   onChange={(e) => handleFilterChange('action', e.target.value)}
                   placeholder="Search by action..."
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 />
               </div>
 
@@ -748,7 +748,7 @@ export default function AdminAuditPage() {
                 <select
                   value={filters.category}
                   onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Categories</option>
                   {(metadataCategories.categories && metadataCategories.categories.length > 0
@@ -767,7 +767,7 @@ export default function AdminAuditPage() {
                 <select
                   value={filters.severity}
                   onChange={(e) => handleFilterChange('severity', e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Severities</option>
                   <option value="critical">Critical</option>
@@ -782,7 +782,7 @@ export default function AdminAuditPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                 >
                   <option value="">All Statuses</option>
                   <option value="success">Success</option>
@@ -801,7 +801,7 @@ export default function AdminAuditPage() {
                     value={filters.search}
                     onChange={(e) => handleFilterChange('search', e.target.value)}
                     placeholder="Search across all fields..."
-                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full pl-7 pr-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -832,7 +832,7 @@ export default function AdminAuditPage() {
               <button
                 onClick={() => handleSort('timestamp')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'timestamp' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'timestamp' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Time
@@ -843,7 +843,7 @@ export default function AdminAuditPage() {
               <button
                 onClick={() => handleSort('user')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'user' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'user' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 User
@@ -854,7 +854,7 @@ export default function AdminAuditPage() {
               <button
                 onClick={() => handleSort('action')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'action' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'action' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Action
@@ -865,7 +865,7 @@ export default function AdminAuditPage() {
               <button
                 onClick={() => handleSort('severity')}
                 className={`inline-flex items-center px-1 py-0.5 text-xs font-medium rounded ${
-                  sortBy === 'severity' ? 'bg-blue-100 text-blue-800' : 'text-gray-600 hover:bg-gray-100'
+                  sortBy === 'severity' ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 Severity
@@ -946,7 +946,7 @@ export default function AdminAuditPage() {
                   <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">
                     <button
                       onClick={() => handleViewLogDetails(log)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary hover:text-primary"
                       title="View Details"
                     >
                       <Eye className="w-3 h-3" />
@@ -1077,7 +1077,7 @@ export default function AdminAuditPage() {
                       <p className="font-medium">Modified Fields:</p>
                       <div className="mt-1 flex flex-wrap gap-1">
                         {selectedLog.changes.fields.map((field: string, index: number) => (
-                          <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                          <span key={index} className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-primary/10 text-primary">
                             {field}
                           </span>
                         ))}

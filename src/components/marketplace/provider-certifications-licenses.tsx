@@ -106,7 +106,7 @@ export const ProviderCertificationsLicenses: React.FC<ProviderCertificationsLice
           const expiryDate = license.expiresAt || license.expiryDate;
           return (
             <div key={`license-${idx}`} className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg">
-              <Shield className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="font-medium text-gray-700">{license.type}</div>
                 <div className="text-sm text-gray-600">License #{license.number}</div>

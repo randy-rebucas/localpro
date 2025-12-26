@@ -207,7 +207,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-emerald-50/30 relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
         </div>
         
         <div className="relative z-10 max-w-2xl mx-auto px-4 py-16">
@@ -275,7 +275,7 @@ export default function CheckoutPage() {
       {/* Background Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-200/30 rounded-full blur-3xl animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/30 rounded-full blur-3xl animate-blob animation-delay-2000"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -458,7 +458,7 @@ export default function CheckoutPage() {
                     <p className="font-semibold text-gray-900">GCash</p>
                     <p className="text-sm text-gray-500">Pay via GCash mobile wallet</p>
                   </div>
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">G</div>
+                  <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">G</div>
                 </label>
                 
                 <label

@@ -27,7 +27,7 @@ export function FinanceStatsCard({
   const getChangeColor = () => {
     switch (changeType) {
       case 'positive':
-        return 'text-green-600';
+        return 'text-accent';
       case 'negative':
         return 'text-red-600';
       default:

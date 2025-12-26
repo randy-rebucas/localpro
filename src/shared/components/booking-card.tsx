@@ -20,9 +20,9 @@ export function BookingCard({ booking, viewMode = "list", onStatusChange }: Book
   const getStatusColor = (status?: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-100 text-green-800";
+        return "bg-accent/10 text-accent";
       case "confirmed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-primary/10 text-primary";
       case "in_progress":
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":

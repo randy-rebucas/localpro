@@ -158,8 +158,8 @@ export function FileUpload({
         onDrop={handleDrop}
         className={`
           border-2 border-dashed rounded-lg p-6 text-center transition-colors
-          ${dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"}
-          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-gray-400"}
+          ${dragActive ? "border-ring bg-primary/5" : "border-border"}
+          ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:border-muted-foreground/50"}
         `}
         onClick={() => !disabled && fileInputRef.current?.click()}
       >
@@ -172,17 +172,17 @@ export function FileUpload({
           className="hidden"
           disabled={disabled}
         />
-        <Upload className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-        <p className="text-sm font-medium text-gray-700 mb-1">{label}</p>
-        <p className="text-xs text-gray-500">
+        <Upload className="w-12 h-12 mx-auto text-muted-foreground mb-2" />
+        <p className="text-sm font-medium text-foreground mb-1">{label}</p>
+        <p className="text-xs text-muted-foreground">
           Drag and drop files here, or click to select
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-muted-foreground/70 mt-1">
           Max size: {maxFileSizeMB}MB
           {type === "image" && multiple && ` • Max ${maxImages} images`}
         </p>
         {error && (
-          <p className="text-xs text-red-600 mt-2">{error}</p>
+          <p className="text-xs text-destructive mt-2">{error}</p>
         )}
       </div>
 
@@ -194,7 +194,7 @@ export function FileUpload({
                 {getFileIcon(file)}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                 </div>
               </div>
               {onRemove && (
@@ -203,9 +203,9 @@ export function FileUpload({
                     e.stopPropagation();
                     onRemove?.(index);
                   }}
-                  className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-1 hover:bg-accent rounded-full transition-colors"
                 >
-                  <X className="w-4 h-4 text-gray-500" />
+                  <X className="w-4 h-4 text-muted-foreground" />
                 </button>
               )}
             </Card>

@@ -130,7 +130,7 @@ export function VerificationModal({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         {isVerified ? (
           <div className="text-center">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <CheckCircle className="w-16 h-16 text-accent mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-700 mb-2">
               Verification Successful!
             </h2>
@@ -143,7 +143,7 @@ export function VerificationModal({
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
-              <Phone className="w-6 h-6 text-green-600" />
+              <Phone className="w-6 h-6 text-accent" />
               <h2 className="text-xl font-semibold text-gray-700">
                 Verify Phone Number
               </h2>
@@ -177,7 +177,7 @@ export function VerificationModal({
                   {...register("code")}
                   type="text"
                   placeholder="Enter verification code"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center text-lg tracking-widest"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-accent text-center text-lg tracking-widest"
                   maxLength={8}
                 />
                 {errors.code && (
@@ -198,7 +198,7 @@ export function VerificationModal({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 px-4 py-2 bg-accent text-white rounded-md hover:bg-accent/90 disabled:opacity-50"
                 >
                   {isLoading ? "Verifying..." : "Verify"}
                 </button>

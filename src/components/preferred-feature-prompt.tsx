@@ -125,7 +125,7 @@ export function PreferredFeaturePrompt() {
 
         {/* Content */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-gradient-to-br from-accent to-accent rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
           
@@ -148,7 +148,7 @@ export function PreferredFeaturePrompt() {
             </button>
             <button
               onClick={handleSetAsPreferred}
-              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-accent to-accent hover:from-accent hover:to-green-800 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
             >
               <CheckCircle2 className="w-4 h-4" />
               Yes, Set as Preferred

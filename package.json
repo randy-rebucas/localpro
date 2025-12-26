@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "clean": "node -e \"const fs=require('fs'); for (const p of ['.next','.next-dev']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "dev:clean": "pnpm -s clean && pnpm -s dev",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
