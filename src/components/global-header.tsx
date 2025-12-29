@@ -40,7 +40,12 @@ import {
   Gift,
   Building,
   UserCircle,
-  Sparkles
+  Sparkles,
+  BarChart3,
+  Users,
+  FileText,
+  AlertTriangle,
+  ShoppingCart
 } from "lucide-react";
 import { Modal } from "@/shared/components/ui/modal";
 import { usePreferredFeature, PreferredFeature } from "@/hooks/usePreferredFeature";
@@ -933,172 +938,422 @@ export function GlobalHeader({
         )}
       </div>
 
-      {/* Subheader - Navigation Links (based on app settings features) */}
-      <div className="border-t border-gray-100 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide">
-            {/* Marketplace - check 'marketplace' feature */}
-            {isFeatureEnabled('marketplace') && (
-              <Link
-                href="/marketplace"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/marketplace")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
-              >
-                <Store className="w-4 h-4" aria-hidden="true" />
-                <span>Marketplace</span>
-              </Link>
-            )}
+      {/* Subheader - Navigation Links (role-based, filtered by app settings features) */}
+      {session && (
+        <div className="border-t border-gray-100 bg-gray-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-1 py-2 overflow-x-auto scrollbar-hide">
+              {/* Client Role Subheader */}
+              {roleView === 'client' && (
+                <>
+                  {/* Marketplace - check 'marketplace' feature */}
+                  {isFeatureEnabled('marketplace') && (
+                    <Link
+                      href="/marketplace"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/marketplace")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/marketplace") ? "page" : undefined}
+                    >
+                      <Store className="w-4 h-4" aria-hidden="true" />
+                      <span>Marketplace</span>
+                    </Link>
+                  )}
 
-            {/* Supplies - check 'supplies' feature */}
-            {isFeatureEnabled('supplies') && (
-              <Link
-                href="/supplies"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/supplies")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
-              >
-                <Package className="w-4 h-4" aria-hidden="true" />
-                <span>Supplies</span>
-              </Link>
-            )}
+                  {/* Job Board - check 'jobBoard' feature */}
+                  {isFeatureEnabled('jobBoard') && (
+                    <Link
+                      href="/jobs"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/jobs")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
+                    >
+                      <Briefcase className="w-4 h-4" aria-hidden="true" />
+                      <span>Job Board</span>
+                    </Link>
+                  )}
 
-            {/* Academy - check 'academy' feature */}
-            {isFeatureEnabled('academy') && (
-              <Link
-                href="/academy"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/academy")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
-              >
-                <GraduationCap className="w-4 h-4" aria-hidden="true" />
-                <span>Academy</span>
-              </Link>
-            )}
+                  {/* Academy - check 'academy' feature */}
+                  {isFeatureEnabled('academy') && (
+                    <Link
+                      href="/academy"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/academy")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/academy") ? "page" : undefined}
+                    >
+                      <GraduationCap className="w-4 h-4" aria-hidden="true" />
+                      <span>Academy</span>
+                    </Link>
+                  )}
 
-            {/* Rentals - check 'rentals' feature */}
-            {isFeatureEnabled('rentals') && (
-              <Link
-                href="/rentals"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/rentals")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
-              >
-                <Car className="w-4 h-4" aria-hidden="true" />
-                <span>Rentals</span>
-              </Link>
-            )}
+                  {/* Supplies - check 'supplies' feature */}
+                  {isFeatureEnabled('supplies') && (
+                    <Link
+                      href="/supplies"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/supplies")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/supplies") ? "page" : undefined}
+                    >
+                      <Package className="w-4 h-4" aria-hidden="true" />
+                      <span>Supplies</span>
+                    </Link>
+                  )}
 
-            {/* Jobs - check 'jobBoard' feature */}
-            {isFeatureEnabled('jobBoard') && (
-              <Link
-                href="/jobs"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/jobs")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/jobs") ? "page" : undefined}
-              >
-                <Briefcase className="w-4 h-4" aria-hidden="true" />
-                <span>Jobs</span>
-              </Link>
-            )}
+                  {/* Rentals - check 'rentals' feature */}
+                  {isFeatureEnabled('rentals') && (
+                    <Link
+                      href="/rentals"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/rentals")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/rentals") ? "page" : undefined}
+                    >
+                      <Car className="w-4 h-4" aria-hidden="true" />
+                      <span>Rentals</span>
+                    </Link>
+                  )}
+                </>
+              )}
 
-            {/* Facility Care - check 'facilityCare' feature */}
-            {isFeatureEnabled('facilityCare') && (
-              <Link
-                href="/facility-care"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/facility-care")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/facility-care") ? "page" : undefined}
-              >
-                <Home className="w-4 h-4" aria-hidden="true" />
-                <span>Facility Care</span>
-              </Link>
-            )}
+              {/* Provider Role Subheader */}
+              {roleView === 'provider' && (
+                <>
+                  {/* Bookings */}
+                  <Link
+                    href="/marketplace/my-bookings"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/marketplace/my-bookings") || pathname?.startsWith("/marketplace/bookings")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/marketplace/my-bookings") || pathname?.startsWith("/marketplace/bookings") ? "page" : undefined}
+                  >
+                    <Calendar className="w-4 h-4" aria-hidden="true" />
+                    <span>Bookings</span>
+                  </Link>
 
-            {/* LocalPro Plus - check 'localProPlus' feature */}
-            {isFeatureEnabled('localProPlus') && (
-              <Link
-                href="/plus"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/plus")
-                    ? "text-yellow-700 bg-yellow-100"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/plus") ? "page" : undefined}
-              >
-                <Star className="w-4 h-4 text-yellow-500" aria-hidden="true" />
-                <span>LocalPro+</span>
-              </Link>
-            )}
+                  {/* Earnings */}
+                  {isFeatureEnabled('finance') && (
+                    <Link
+                      href="/finance"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/finance")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+                    >
+                      <DollarSign className="w-4 h-4" aria-hidden="true" />
+                      <span>Earnings</span>
+                    </Link>
+                  )}
 
-            {/* Ads - check 'ads' feature */}
-            {isFeatureEnabled('ads') && (
-              <Link
-                href="/ads"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/ads")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/ads") ? "page" : undefined}
-              >
-                <Megaphone className="w-4 h-4" aria-hidden="true" />
-                <span>Ads</span>
-              </Link>
-            )}
+                  {/* Analytics */}
+                  {isFeatureEnabled('analytics') && (
+                    <Link
+                      href="/analytics"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/analytics")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                    >
+                      <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                      <span>Analytics</span>
+                    </Link>
+                  )}
 
-            {/* Finance - check 'finance' feature */}
-            {isFeatureEnabled('finance') && (
-              <Link
-                href="/finance"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/finance")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
-              >
-                <DollarSign className="w-4 h-4" aria-hidden="true" />
-                <span>Finance</span>
-              </Link>
-            )}
+                  {/* Become Agency - Only show if user is not already an agency owner/admin */}
+                  {!userRoles.includes('agency_owner') && !userRoles.includes('agency_admin') && (
+                    <Link
+                      href="/agencies/create"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/agencies/create")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/agencies/create") ? "page" : undefined}
+                    >
+                      <Building className="w-4 h-4" aria-hidden="true" />
+                      <span>Become Agency</span>
+                    </Link>
+                  )}
+                </>
+              )}
 
-            {/* Referrals - check 'referrals' feature */}
-            {isFeatureEnabled('referrals') && (
-              <Link
-                href="/referrals"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                  pathname?.startsWith("/referrals")
-                    ? "text-accent bg-accent/10"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-                aria-current={pathname?.startsWith("/referrals") ? "page" : undefined}
-              >
-                <Gift className="w-4 h-4" aria-hidden="true" />
-                <span>Referrals</span>
-              </Link>
-            )}
+              {/* Supplier Role Subheader */}
+              {roleView === 'supplier' && (
+                <>
+                  {/* Orders */}
+                  <Link
+                    href="/supplies/my-orders"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/supplies/my-orders") || pathname?.startsWith("/supplies/orders")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/supplies/my-orders") || pathname?.startsWith("/supplies/orders") ? "page" : undefined}
+                  >
+                    <ShoppingCart className="w-4 h-4" aria-hidden="true" />
+                    <span>Orders</span>
+                  </Link>
+
+                  {/* Revenue */}
+                  {isFeatureEnabled('finance') && (
+                    <Link
+                      href="/finance"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/finance")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+                    >
+                      <DollarSign className="w-4 h-4" aria-hidden="true" />
+                      <span>Revenue</span>
+                    </Link>
+                  )}
+
+                  {/* Analytics */}
+                  {isFeatureEnabled('analytics') && (
+                    <Link
+                      href="/analytics"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/analytics")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                    >
+                      <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                      <span>Analytics</span>
+                    </Link>
+                  )}
+                </>
+              )}
+
+              {/* Instructor Role Subheader */}
+              {roleView === 'instructor' && (
+                <>
+                  {/* Students */}
+                  <Link
+                    href="/academy/students"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/academy/students") || pathname?.startsWith("/students")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/academy/students") || pathname?.startsWith("/students") ? "page" : undefined}
+                  >
+                    <Users className="w-4 h-4" aria-hidden="true" />
+                    <span>Students</span>
+                  </Link>
+
+                  {/* Analytics */}
+                  {isFeatureEnabled('analytics') && (
+                    <Link
+                      href="/analytics"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/analytics")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                    >
+                      <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                      <span>Analytics</span>
+                    </Link>
+                  )}
+
+                  {/* Earnings */}
+                  {isFeatureEnabled('finance') && (
+                    <Link
+                      href="/finance"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/finance")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+                    >
+                      <DollarSign className="w-4 h-4" aria-hidden="true" />
+                      <span>Earnings</span>
+                    </Link>
+                  )}
+                </>
+              )}
+
+              {/* Agency Owner/Admin Role Subheader */}
+              {(roleView === 'agency_owner' || roleView === 'agency_admin') && (
+                <>
+                  {/* Team Management */}
+                  <Link
+                    href="/agencies"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/agencies")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/agencies") ? "page" : undefined}
+                  >
+                    <Users className="w-4 h-4" aria-hidden="true" />
+                    <span>Team Management</span>
+                  </Link>
+
+                  {/* Agency Analytics */}
+                  {isFeatureEnabled('analytics') && (
+                    <Link
+                      href="/analytics"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/analytics")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/analytics") ? "page" : undefined}
+                    >
+                      <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                      <span>Agency Analytics</span>
+                    </Link>
+                  )}
+
+                  {/* Financials */}
+                  {isFeatureEnabled('finance') && (
+                    <Link
+                      href="/finance"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                        pathname?.startsWith("/finance")
+                          ? "text-accent bg-accent/10"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      }`}
+                      aria-current={pathname?.startsWith("/finance") ? "page" : undefined}
+                    >
+                      <DollarSign className="w-4 h-4" aria-hidden="true" />
+                      <span>Financials</span>
+                    </Link>
+                  )}
+
+                  {/* Agency Settings */}
+                  <Link
+                    href="/settings"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/settings")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/settings") ? "page" : undefined}
+                  >
+                    <Settings className="w-4 h-4" aria-hidden="true" />
+                    <span>Agency Settings</span>
+                  </Link>
+                </>
+              )}
+
+              {/* Admin Role Subheader */}
+              {roleView === 'admin' && (
+                <>
+                  {/* Admin Dashboard */}
+                  <Link
+                    href="/admin"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname === "/admin" || pathname?.startsWith("/admin/dashboard")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname === "/admin" || pathname?.startsWith("/admin/dashboard") ? "page" : undefined}
+                  >
+                    <Shield className="w-4 h-4" aria-hidden="true" />
+                    <span>Admin Dashboard</span>
+                  </Link>
+
+                  {/* User Management */}
+                  <Link
+                    href="/admin/users"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/users")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/users") ? "page" : undefined}
+                  >
+                    <Users className="w-4 h-4" aria-hidden="true" />
+                    <span>User Management</span>
+                  </Link>
+
+                  {/* Platform Analytics */}
+                  <Link
+                    href="/admin/analytics"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/analytics")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/analytics") ? "page" : undefined}
+                  >
+                    <BarChart3 className="w-4 h-4" aria-hidden="true" />
+                    <span>Platform Analytics</span>
+                  </Link>
+
+                  {/* System Settings */}
+                  <Link
+                    href="/admin/settings"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/settings")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/settings") ? "page" : undefined}
+                  >
+                    <Settings className="w-4 h-4" aria-hidden="true" />
+                    <span>System Settings</span>
+                  </Link>
+
+                  {/* Audit Logs */}
+                  <Link
+                    href="/admin/logs"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/logs")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/logs") ? "page" : undefined}
+                  >
+                    <FileText className="w-4 h-4" aria-hidden="true" />
+                    <span>Audit Logs</span>
+                  </Link>
+
+                  {/* Error Monitoring */}
+                  <Link
+                    href="/admin/monitoring"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      pathname?.startsWith("/admin/monitoring") || pathname?.startsWith("/admin/errors")
+                        ? "text-accent bg-accent/10"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                    }`}
+                    aria-current={pathname?.startsWith("/admin/monitoring") || pathname?.startsWith("/admin/errors") ? "page" : undefined}
+                  >
+                    <AlertTriangle className="w-4 h-4" aria-hidden="true" />
+                    <span>Error Monitoring</span>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Role Selection Modal */}
       <Modal

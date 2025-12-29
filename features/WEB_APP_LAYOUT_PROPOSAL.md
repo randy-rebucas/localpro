@@ -208,39 +208,39 @@ localpro-web-app/
 
 #### For Clients
 - 🛍️ **Marketplace** (Browse services)
-  - 📅 **My Bookings** (Quick Links under Header Section )
+- 📅 **My Bookings** (Quick Links under Header Section )
 - 💼 **Job Board**
 - 🎓 **Academy**
 - 🛒 **Supplies**
 - 🚗 **Rentals**
-  - 💰 **Wallet** (On User Menu)
+- 💰 **Wallet** (On User Menu)
 
 #### For Providers
 - 📊 **Provider Dashboard**
 - 🛠️ **My Services** (Quick Links under Header Section )
-- 📅 **Bookings** (Quick Links under Header Section )
-- 💰 **Earnings** (Quick Links under Header Section )
-- 📈 **Analytics** (Quick Links under Header Section )
-  - 🏢 **Become Agency** (if not agency) (call to action inside content)
+- 📅 **Bookings** 
+- 💰 **Earnings** 
+- 📈 **Analytics** 
+- 🏢 **Become Agency** (if not agency)
 
 #### For Suppliers
   - 📦 **My Products** (Quick Links under Header Section )
-  - 📊 **Orders** (Quick Links under Header Section )
-  - 💰 **Revenue** (Quick Links under Header Section )
-  - 📈 **Analytics** (Quick Links under Header Section )
+  - 📊 **Orders** 
+  - 💰 **Revenue** 
+  - 📈 **Analytics** 
 
 #### For Instructors
 - 🎓 **My Courses** (Quick Links under Header Section )
-- 👥 **Students** (Quick Links under Header Section )
-- 📊 **Analytics** (Quick Links under Header Section )
-- 💰 **Earnings** (Quick Links under Header Section )
+- 👥 **Students** 
+- 📊 **Analytics** 
+- 💰 **Earnings** 
 
 #### For Agency Owners/Admins
 - 🏢 **Agency Dashboard**
-- 👥 **Team Management** (Quick Links under Header Section )
-- 📊 **Agency Analytics** (Quick Links under Header Section )
-- 💰 **Financials** (Quick Links under Header Section )
-- ⚙️ **Agency Settings** (Quick Links under Header Section )
+- 👥 **Team Management** 
+- 📊 **Agency Analytics** 
+- 💰 **Financials**
+- ⚙️ **Agency Settings** 
 
 #### For Admins
 - 🎛️ **Admin Dashboard**

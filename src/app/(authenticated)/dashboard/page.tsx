@@ -365,19 +365,75 @@ function DashboardWelcomeCard() {
 export default function DashboardPage() {
   const { roleView } = useActiveRoleView();
 
+  // Determine layout structure based on role
+  const layoutConfig = useMemo(() => {
+    switch (roleView) {
+      case 'client':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'vertical', // All widgets stacked vertically
+          containerClass: 'space-y-6',
+        };
+      case 'provider':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'two-column', // Charts on left, lists on right
+          containerClass: 'grid grid-cols-1 lg:grid-cols-2 gap-6',
+        };
+      case 'supplier':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'two-column',
+          containerClass: 'grid grid-cols-1 lg:grid-cols-2 gap-6',
+        };
+      case 'instructor':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'two-column',
+          containerClass: 'grid grid-cols-1 lg:grid-cols-2 gap-6',
+        };
+      case 'agency_owner':
+      case 'agency_admin':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'three-column', // Analytics, Team, Performance
+          containerClass: 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6',
+        };
+      case 'admin':
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: false, // Admin might not need announcements
+          widgetsLayout: 'three-column', // Overview, Activity, Health
+          containerClass: 'grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6',
+        };
+      default:
+        return {
+          showWelcomeCard: true,
+          showAnnouncements: true,
+          widgetsLayout: 'vertical',
+          containerClass: 'space-y-6',
+        };
+    }
+  }, [roleView]);
+
   return (
     <ErrorBoundary>
       <Suspense fallback={<DashboardLoading />}>
         <div className="space-y-6">
           {/* Role-aware welcome card */}
-          <DashboardWelcomeCard />
+          {layoutConfig.showWelcomeCard && <DashboardWelcomeCard />}
           
-          {/* Announcements - shown for all roles */}
-          <AnnouncementCard />
+          {/* Announcements - shown based on role config */}
+          {layoutConfig.showAnnouncements && <AnnouncementCard />}
 
-          {/* Role-specific dashboard widgets - only shown if roleView is valid */}
+          {/* Role-specific dashboard widgets - arranged based on layout config */}
           {roleView && (
-            <RoleDashboardWidgets />
+            <RoleDashboardWidgets containerClass={layoutConfig.containerClass} />
           )}
         </div>
       </Suspense>
