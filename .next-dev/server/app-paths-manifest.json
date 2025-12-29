@@ -1,8 +1,9 @@
 {
-  "/(public)/page": "app/(public)/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/(auth)/auth/page": "app/(auth)/auth/page.js",
   "/(authenticated)/notifications/page": "app/(authenticated)/notifications/page.js",
+  "/(auth)/auth/page": "app/(auth)/auth/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js",
   "/(authenticated)/dashboard/page": "app/(authenticated)/dashboard/page.js",
-  "/(authenticated)/marketplace/page": "app/(authenticated)/marketplace/page.js"
+  "/(authenticated)/marketplace/bookings/[id]/page": "app/(authenticated)/marketplace/bookings/[id]/page.js",
+  "/(authenticated)/marketplace/my-bookings/page": "app/(authenticated)/marketplace/my-bookings/page.js"
 }

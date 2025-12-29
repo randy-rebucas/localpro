@@ -158,8 +158,8 @@ export default function StatsPage() {
       }, 0);
 
     // Get active services count and rating from dashboard
-    const activeServices = dashboard?.summary?.activeServices || 0;
-    const rating = dashboard?.summary?.avgRating || user?.profileCompleteness?.percentage ? 4.8 : 0; // Fallback to 4.8 if not available
+    const activeServices = dashboard?.summary?.totalServices || 0;
+    const rating = user?.profileCompleteness?.percentage ? 4.8 : 0; // Fallback to 4.8 if profile is complete, otherwise 0
 
     return {
       activeServices,
@@ -459,7 +459,7 @@ export default function StatsPage() {
             <p className="text-3xl font-bold text-gray-800 mb-1">
               {analyticsLoading ? "…" : formatNumber(adminStats?.bookingsToday || 0)}
             </p>
-            <p className="text-xs text-gray-500">Today's bookings</p>
+            <p className="text-xs text-gray-500">Today&apos;s bookings</p>
           </Link>
         </div>
       ) : (

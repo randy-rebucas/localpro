@@ -997,11 +997,13 @@ function InstructorWidgets() {
             enrollments.forEach((enrollment: unknown) => {
               const enrollmentObj = enrollment as Record<string, unknown>;
               const student = typeof enrollmentObj.student === 'object' ? enrollmentObj.student as Record<string, unknown> : null;
+              const studentName = student && typeof student.name === 'string' ? student.name : 
+                (student ? `${String(student.firstName || '')} ${String(student.lastName || '')}`.trim() : '');
               allEnrollments.push({
-                id: enrollmentObj.id || enrollmentObj._id || '',
-                name: student ? (student.name || `${student.firstName || ''} ${student.lastName || ''}`.trim()) : 'Student',
-                courseName: courseObj.title || courseObj.name || 'Course',
-                enrolledAt: enrollmentObj.enrolledAt || enrollmentObj.createdAt || '',
+                id: String(enrollmentObj.id || enrollmentObj._id || ''),
+                name: studentName || 'Student',
+                courseName: String(courseObj.title || courseObj.name || 'Course'),
+                enrolledAt: String(enrollmentObj.enrolledAt || enrollmentObj.createdAt || ''),
               });
             });
           });
@@ -1226,14 +1228,16 @@ function AgencyWidgets() {
           const providersList = firstAgency?.providers as Array<unknown> || [];
           setProviders(providersList.slice(0, 5).map((p: unknown) => {
             const provider = p as Record<string, unknown>;
+            const providerName = typeof provider.name === 'string' ? provider.name : 
+              `${String(provider.firstName || '')} ${String(provider.lastName || '')}`.trim() || 'Provider';
             return {
-              id: provider.id || provider._id || '',
-              name: provider.name || `${provider.firstName || ''} ${provider.lastName || ''}`.trim() || 'Provider',
-              bookingCount: provider.bookingCount || 0,
-              totalEarnings: provider.totalEarnings || 0,
+              id: String(provider.id || provider._id || ''),
+              name: providerName,
+              bookingCount: typeof provider.bookingCount === 'number' ? provider.bookingCount : (typeof provider.bookingCount === 'string' ? parseInt(provider.bookingCount, 10) || 0 : 0),
+              totalEarnings: typeof provider.totalEarnings === 'number' ? provider.totalEarnings : (typeof provider.totalEarnings === 'string' ? parseFloat(provider.totalEarnings) || 0 : 0),
               rating: typeof provider.rating === 'object' && provider.rating !== null && 'average' in provider.rating
                 ? (provider.rating as { average?: number }).average || 0
-                : (provider.rating as number) || 0,
+                : (typeof provider.rating === 'number' ? provider.rating : 0),
             };
           }));
         }

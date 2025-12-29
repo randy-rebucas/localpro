@@ -155,6 +155,16 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/auth/page.js"
+    ],
+    "/(authenticated)/marketplace/bookings/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/bookings/[id]/page.js"
+    ],
+    "/(authenticated)/marketplace/my-bookings/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(authenticated)/marketplace/my-bookings/page.js"
     ]
   }
 }
