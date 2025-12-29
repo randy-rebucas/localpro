@@ -35,6 +35,7 @@ import {
 import { logger } from "@/lib/logger";
 import toast from "react-hot-toast";
 import { useSession } from "@/hooks/useAuth";
+import { getNotificationTypeConfig, NOTIFICATION_TYPES } from "../../../../NOTIFICATION_TYPES";
 
 export interface NotificationItem {
   _id: string;
@@ -204,25 +205,15 @@ const getPriorityBadge = (priority: NotificationPriority) => {
 
 // Helper function to get notification type label
 const getTypeLabel = (type: NotificationType): string => {
-  const labels: Record<NotificationType, string> = {
-    'booking_created': 'Booking Created',
-    'booking_confirmed': 'Booking Confirmed',
-    'booking_cancelled': 'Booking Cancelled',
-    'booking_completed': 'Booking Completed',
-    'job_application': 'Job Application',
-    'application_status_update': 'Application Update',
-    'job_posted': 'Job Posted',
-    'message_received': 'New Message',
-    'payment_received': 'Payment Received',
-    'payment_failed': 'Payment Failed',
-    'referral_reward': 'Referral Reward',
-    'course_enrollment': 'Course Enrollment',
-    'order_confirmation': 'Order Confirmation',
-    'subscription_renewal': 'Subscription Renewal',
-    'subscription_cancelled': 'Subscription Cancelled',
-    'system_announcement': 'System Announcement'
-  };
-  return labels[type] || type;
+  const config = getNotificationTypeConfig(type);
+  if (config) {
+    return config.description;
+  }
+  // Fallback: format the type string nicely
+  return type
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 // Notification item component
@@ -895,22 +886,11 @@ export default function NotificationsPage() {
                       className="w-full px-4 py-2.5 text-sm border-2 border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-gray-700"
                     >
                       <option value="all">All Types</option>
-                      <option value="booking_created">Booking Created</option>
-                      <option value="booking_confirmed">Booking Confirmed</option>
-                      <option value="booking_cancelled">Booking Cancelled</option>
-                      <option value="booking_completed">Booking Completed</option>
-                      <option value="job_application">Job Application</option>
-                      <option value="application_status_update">Application Update</option>
-                      <option value="job_posted">Job Posted</option>
-                      <option value="message_received">New Message</option>
-                      <option value="payment_received">Payment Received</option>
-                      <option value="payment_failed">Payment Failed</option>
-                      <option value="referral_reward">Referral Reward</option>
-                      <option value="course_enrollment">Course Enrollment</option>
-                      <option value="order_confirmation">Order Confirmation</option>
-                      <option value="subscription_renewal">Subscription Renewal</option>
-                      <option value="subscription_cancelled">Subscription Cancelled</option>
-                      <option value="system_announcement">System Announcement</option>
+                      {NOTIFICATION_TYPES.map((config) => (
+                        <option key={config.type} value={config.type}>
+                          {config.description}
+                        </option>
+                      ))}
                     </select>
                   </div>
 

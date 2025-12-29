@@ -17,9 +17,6 @@ import {
   Briefcase,
   ArrowUpRight,
   Wallet,
-  Bell,
-  Heart,
-  Compass,
   Shield,
   Building,
   Wrench,
@@ -132,7 +129,6 @@ export default function StatsPage() {
     // Get current month start date
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthStartISO = monthStart.toISOString();
 
     // Fetch provider bookings for pending count
     const providerBookings = allBookings || [];
@@ -179,8 +175,6 @@ export default function StatsPage() {
     const todayEnd = new Date(today);
     todayEnd.setHours(23, 59, 59, 999);
 
-    // Get current month start
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
     // Calculate bookings today (would need to fetch or use dashboard data)
     const bookingsToday = dashboard?.summary?.totalBookings || 0; // This would ideally be filtered for today

@@ -13,22 +13,76 @@ import { logger } from "@/lib/logger";
 // ============================================================================
 
 export type NotificationType =
+  // Bookings
   | "booking_created"
   | "booking_confirmed"
   | "booking_cancelled"
   | "booking_completed"
+  | "booking_in_progress"
+  | "booking_confirmation_needed"
+  | "booking_pending_soon"
+  | "booking_overdue_completion"
+  | "booking_overdue_admin_alert"
+  // Jobs
   | "job_application"
   | "application_status_update"
   | "job_posted"
+  | "job_digest"
+  | "job_application_followup"
+  // Messages
   | "message_received"
+  | "message_moderation_flag"
+  | "message_policy_warning"
+  // Payments
   | "payment_received"
   | "payment_failed"
-  | "referral_reward"
-  | "course_enrollment"
-  | "order_confirmation"
+  // Subscriptions
   | "subscription_renewal"
   | "subscription_cancelled"
-  | "system_announcement";
+  | "subscription_dunning_reminder"
+  | "subscription_expiring_soon"
+  // Referrals
+  | "referral_reward"
+  | "referral_tier_upgraded"
+  | "referral_nudge"
+  // Academy
+  | "course_enrollment"
+  | "academy_not_started"
+  | "academy_progress_stalled"
+  | "academy_certificate_pending"
+  // Orders
+  | "order_confirmation"
+  | "order_payment_pending"
+  | "order_sla_alert"
+  | "order_delivery_confirmation"
+  | "order_delivery_late_alert"
+  | "order_auto_delivered"
+  | "supplies_reorder_reminder"
+  // Rentals
+  | "rental_due_soon"
+  | "rental_overdue"
+  // Finance
+  | "loan_repayment_due"
+  | "loan_repayment_overdue"
+  | "salary_advance_due"
+  | "salary_advance_overdue"
+  // Escrow
+  | "escrow_dispute_unresolved"
+  | "escrow_dispute_evidence_needed"
+  // Support
+  | "livechat_sla_alert"
+  // System
+  | "system_announcement"
+  // Security
+  | "security_alert"
+  | "login_alert"
+  // Marketing
+  | "marketing_reengagement"
+  | "marketing_weekly_digest"
+  // Onboarding
+  | "welcome_followup_day2"
+  | "welcome_followup_day7"
+  | "provider_activation_nudge";
 
 export type NotificationPriority = "low" | "medium" | "high" | "urgent";
 

@@ -18,15 +18,12 @@ import {
   GraduationCap,
   Briefcase,
   TrendingUp,
-  AlertCircle,
   BarChart3,
   ArrowRight,
   Building,
-  Wrench,
   Shield,
   Users,
   Star,
-  Eye,
   Activity,
   AlertTriangle,
   CheckCircle2,
@@ -362,13 +359,13 @@ function ClientWidgets() {
 
 // Provider Dashboard Widgets
 function ProviderWidgets() {
-  const { bookings: allBookings, loading: bookingsLoading, error: bookingsError } = useBookings({
+  const { bookings: allBookings, loading: bookingsLoading } = useBookings({
     limit: 50,
     sortBy: "scheduledDate",
     sortOrder: "asc",
   });
 
-  const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
+  const { loading: analyticsLoading } = useDashboardAnalytics({
     timeframe: "30d",
     enabled: true,
   });
@@ -417,23 +414,6 @@ function ProviderWidgets() {
     fetchServices();
   }, []);
 
-  const pendingBookings = useMemo(() => {
-    if (!allBookings) return [];
-    return allBookings
-      .filter((b) => {
-        const booking = b as Booking;
-        return booking.status === "pending" || booking.status === "requested";
-      })
-      .map((b) => {
-        const booking = b as Booking;
-        return {
-          ...booking,
-          id: booking.id || booking._id || '',
-        } as Booking;
-      })
-      .slice(0, 5);
-  }, [allBookings]);
-
   const upcomingBookings = useMemo(() => {
     if (!allBookings) return [];
     const now = new Date();
@@ -454,9 +434,6 @@ function ProviderWidgets() {
       })
       .slice(0, 5);
   }, [allBookings]);
-
-  const recentRevenue = dashboard?.summary?.totalRevenue || 0;
-  const totalBookings = dashboard?.summary?.totalBookings || 0;
 
   return (
     <>
@@ -651,7 +628,7 @@ function ProviderWidgets() {
 // Supplier Dashboard Widgets
 function SupplierWidgets() {
   const { orders, loading: ordersLoading, error: ordersError } = useMyOrders({ limit: 50 });
-  const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
+  const { loading: analyticsLoading } = useDashboardAnalytics({
     timeframe: "30d",
     enabled: true,
   });
@@ -716,18 +693,6 @@ function SupplierWidgets() {
       })
       .slice(0, 5);
   }, [orders]);
-
-  const completedOrders = useMemo(() => {
-    if (!orders) return [];
-    return orders
-      .filter((o) => {
-        const order = o as Order;
-        return order.status === "completed" || order.status === "delivered";
-      })
-      .length;
-  }, [orders]);
-
-  const recentRevenue = dashboard?.summary?.totalRevenue || 0;
 
   return (
     <>
@@ -918,7 +883,7 @@ function SupplierWidgets() {
 
 // Instructor Dashboard Widgets
 function InstructorWidgets() {
-  const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
+  const { loading: analyticsLoading } = useDashboardAnalytics({
     timeframe: "30d",
     enabled: true,
   });
@@ -1017,9 +982,6 @@ function InstructorWidgets() {
     };
     fetchStudents();
   }, []);
-
-  const totalEnrollments = dashboard?.summary?.totalUsers || 0;
-  const totalEarnings = dashboard?.summary?.totalRevenue || 0;
 
   return (
     <>
@@ -1444,7 +1406,7 @@ function AgencyWidgets() {
 
 // Admin Dashboard Widgets
 function AdminWidgets() {
-  const { dashboard, loading: analyticsLoading } = useDashboardAnalytics({
+  const { loading: analyticsLoading } = useDashboardAnalytics({
     timeframe: "30d",
     enabled: true,
   });
@@ -1508,7 +1470,7 @@ function AdminWidgets() {
             uptime: health.uptime || '99.9%',
           });
         }
-      } catch (error) {
+      } catch {
         // Silently fail - health endpoint might not be available
         setSystemHealth({ errors: 0, performance: 100, uptime: '99.9%' });
       }
